@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { Surah } from '../types';
-import { useLanguage } from '../contexts/LanguageContext';
+import { Surah } from '@types';
+import { useLanguage } from '@contexts/LanguageContext';
 
 type Props = {
   surah: Surah;

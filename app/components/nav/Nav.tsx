@@ -1,6 +1,6 @@
 "use client"
 
-import { useLanguage } from '@/app/contexts/LanguageContext';
+import { useLanguage } from '@contexts/LanguageContext';
 
 export const Nav = () => {
     const { language, setLanguage, isRTL } = useLanguage();

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Surah } from '../types';
-import { SurahListItem } from './SurahListItem';
-import { useLanguage } from '../contexts/LanguageContext';
+import { Surah } from '@types';
+import { SurahListItem } from '@components/SurahListItem';
+import { useLanguage } from '@contexts/LanguageContext';
 
 type Props = {
   surahs: Surah[];

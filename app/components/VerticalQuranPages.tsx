@@ -2,8 +2,8 @@
 
 import { VariableSizeList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { FONT_V1 } from "../constants/font";
-import QuranPage from "./QuranPage";
+import { FONT_V1 } from "@constants/font";
+import QuranPage from "@components/QuranPage";
 
 const getQuranPageHeight = (index: number) => {
   const lineHeight = FONT_V1.getWordHeightForScale(2);
