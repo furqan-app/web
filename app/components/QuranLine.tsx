@@ -2,10 +2,10 @@
 
 // import { AnimatePresence, motion } from "framer-motion";
 
-import BismillahSVG from "../bismillah.svg";
-import { CHAPTERS_WITHOUT_BISMILLAH } from "../constants/surah";
-import { FONT_V1 } from "../constants/font";
-import { Word } from "../types";
+import BismillahSVG from "@/app/bismillah.svg";
+import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
+import { FONT_V1 } from "@constants/font";
+import { Word } from "@types";
 
 type LineProps = {
   line: string;

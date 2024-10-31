@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
-import { Nav } from "./components/nav/Nav";
 import localFont from "next/font/local";
-import "./globals.css";
+
+import { Nav } from "./components/nav/Nav";
 import { QueryProvider } from "./providers/QueryProvider";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import "./globals.css";
+
 
 export const metadata: Metadata = {
   title: "Al-Furqan",
@@ -25,12 +28,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar">
-      <body
-        className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
-      >
-        <Nav />
-        <QueryProvider>{children}</QueryProvider>
+    <html>
+      <body className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}>
+        <QueryProvider>
+          <LanguageProvider>
+            <Nav />
+            {children}
+          </LanguageProvider>
+        </QueryProvider>
       </body>
     </html>
   );

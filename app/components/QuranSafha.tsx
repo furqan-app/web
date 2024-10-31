@@ -1,8 +1,8 @@
 "use client";
 
-import { usePageFont } from "../hooks/use-page-font";
-import { Word } from "../types";
-import { QuranLine } from "./QuranLine";
+import { usePageFont } from "@hooks/use-page-font";
+import { Word } from "@types";
+import { QuranLine } from "@components/QuranLine";
 
 type QuranSafhaProps = {
   page: number;

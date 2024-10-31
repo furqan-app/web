@@ -40,3 +40,22 @@ export type Verse = {
     timestamp_from: 6517950;
   };
 };
+
+export type Surah = {
+  id: number;
+  name_arabic: string;
+  name_simple: string;
+  name_complex: string;
+  verses_count: number;
+  revelation_place: string;
+  revelation_order: number;
+  pages: number[];
+  slug: {
+    slug: string;
+    locale: string;
+  };
+  translated_name: {
+    language_name: string;
+    text: string;
+  };
+};

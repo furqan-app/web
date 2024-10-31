@@ -1,8 +1,8 @@
 "use client";
 
 import { memo } from "react";
-import { usePage } from "../hooks/use-quran-page";
-import { QuranSafha } from "./QuranSafha";
+import { usePage } from "@hooks/use-quran-page";
+import { QuranSafha } from "@components/QuranSafha";
 
 type Props = {
   page: number;
