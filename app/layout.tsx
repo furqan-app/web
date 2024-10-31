@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Nav } from "./components/nav/Nav";
 import localFont from "next/font/local";
-import "./globals.css";
+
+import { Nav } from "./components/nav/Nav";
 import { QueryProvider } from "./providers/QueryProvider";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import "./globals.css";
 
 
 export const metadata: Metadata = {
