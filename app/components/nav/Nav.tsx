@@ -3,6 +3,7 @@
 import { useLanguage } from "@contexts/LanguageContext";
 import Link from "next/link";
 import { ThemeToggle } from "@components/ThemeToggle";
+import { LanguageToggle } from "@components/LanguageToggle";
 
 export const Nav = () => {
   const { language, setLanguage, isRTL } = useLanguage();
@@ -35,16 +36,7 @@ export const Nav = () => {
 
       <ThemeToggle />
 
-      <select
-        value={language}
-        onChange={(e) => setLanguage(e.target.value as "en" | "ar")}
-        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
-                    rounded px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors 
-                    cursor-pointer outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="en">English</option>
-        <option value="ar">العربية</option>
-      </select>
+      <LanguageToggle />
     </nav>
   );
 };
