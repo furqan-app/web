@@ -9,18 +9,24 @@ type Props = {
 };
 
 const QuranPage = memo(function QuranPage({ page }: Props) {
-  console.log("Mounted Vertical scrolling QuranPage number", page);
-  const { data: lines, isPending, error } = usePage(page);
+  const { data: lines, error } = usePage(page);
 
-  if (error) return <div>Cannot load page</div>;
+  if (error) {
+    return (
+      <div className="flex h-full justify-center items-center">
+        Cannot load page {page}
+      </div>
+    );
+  }
+
   if (!lines)
     return (
-      <div className="flex h-full justify-center items-center border">
-        Loading...
+      <div className="flex h-full justify-center items-center">
+        Loading page {page}...
       </div>
     );
 
-  return <QuranSafha page={page} lines={lines} fontLoaded={!isPending} />;
+  return <QuranSafha page={page} lines={lines} />;
 });
 
 export default QuranPage;

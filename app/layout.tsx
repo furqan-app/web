@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Nav } from "./components/nav/Nav";
 import localFont from "next/font/local";
 import "./globals.css";
-
+import { QueryProvider } from "./providers/QueryProvider";
 
 export const metadata: Metadata = {
   title: "Al-Furqan",
@@ -19,12 +19,6 @@ const Uthmanic = localFont({
   variable: "--uthmanic",
 });
 
-const page45 = localFont({
-  src: "./fonts/hafs/v1/ttf/p45.ttf",
-  variable: "--page-45",
-})
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,10 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar">
-      <body className={`${surahNames.variable} ${Uthmanic.variable} ${page45.variable} bg-white dark:bg-black antialiased`}>
+      <body
+        className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
+      >
         <Nav />
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );
 }
+
