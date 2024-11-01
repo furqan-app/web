@@ -3,10 +3,9 @@ import localFont from "next/font/local";
 
 import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "./providers/QueryProvider";
-import { LanguageProvider } from "@contexts/LanguageContext";
-import "./globals.css";
+// import { LanguageProvider } from "@contexts/LanguageContext";
 import { ThemeProvider } from "@contexts/ThemeContext";
-
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Al-Furqan",
@@ -30,14 +29,16 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}>
+      <body
+        className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
+      >
         <ThemeProvider>
-          <QueryProvider>
-            <LanguageProvider>
-            <Nav />
-            {children}
-            </LanguageProvider>
-          </QueryProvider>
+          {/* <LanguageProvider> */}
+            <QueryProvider>
+              <Nav />
+              {children}
+            </QueryProvider>
+          {/* </LanguageProvider> */}
         </ThemeProvider>
       </body>
     </html>

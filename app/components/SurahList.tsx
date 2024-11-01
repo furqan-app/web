@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Surah } from '@types';
-import { SurahListItem } from '@components/SurahListItem';
-import { useLanguage } from '@contexts/LanguageContext';
+import { useEffect, useState } from "react";
+import { Surah } from "@types";
+import { SurahListItem } from "@components/SurahListItem";
+// import { useLanguage } from '@contexts/LanguageContext';
 
 type Props = {
   surahs: Surah[];
 };
 
 export const SurahList = ({ surahs: initialSurahs }: Props) => {
-  const { language, isRTL } = useLanguage();
+  const { language, isRTL } = { language: "en", isRTL: false }; // useLanguage();
   const [surahs, setSurahs] = useState(initialSurahs);
 
   useEffect(() => {
@@ -27,19 +27,20 @@ export const SurahList = ({ surahs: initialSurahs }: Props) => {
 
   const getTitle = () => {
     switch (language) {
-      case 'ar':
-        return 'القرآن الكريم';
+      case "ar":
+        return "القرآن الكريم";
       default:
-        return 'The Holy Quran';
+        return "The Holy Quran";
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="max-w-4xl mx-auto" dir={isRTL ? "rtl" : "ltr"}>
       <h1 className="text-3xl font-bold text-center my-8 text-gray-900 dark:text-gray-100">
         {getTitle()}
       </h1>
-      <div className="bg-white dark:bg-gray-900 shadow-md dark:shadow-gray-900 
+      <div
+        className="bg-white dark:bg-gray-900 shadow-md dark:shadow-gray-900 
         rounded-lg border border-gray-200 dark:border-gray-800"
       >
         {surahs.map((surah) => (
@@ -49,3 +50,4 @@ export const SurahList = ({ surahs: initialSurahs }: Props) => {
     </div>
   );
 };
+

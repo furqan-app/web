@@ -1,12 +1,12 @@
 "use client";
 
-import { useLanguage } from "@contexts/LanguageContext";
+// import { useLanguage } from "@contexts/LanguageContext";
 import Link from "next/link";
 import { ThemeToggle } from "@components/ThemeToggle";
-import { LanguageToggle } from "@components/LanguageToggle";
+// import { LanguageToggle } from "@components/LanguageToggle";
 
 export const Nav = () => {
-  const { language, setLanguage, isRTL } = useLanguage();
+  const { isRTL } = { isRTL: false }; // useLanguage();
 
   return (
     <nav
@@ -36,7 +36,7 @@ export const Nav = () => {
 
       <ThemeToggle />
 
-      <LanguageToggle />
+      {/* <LanguageToggle /> */}
     </nav>
   );
 };
