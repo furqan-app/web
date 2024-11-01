@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 
-import { Nav } from "./components/nav/Nav";
+import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "./providers/QueryProvider";
-import { LanguageProvider } from "./contexts/LanguageContext";
+import { LanguageProvider } from "@contexts/LanguageContext";
 import "./globals.css";
+import { ThemeProvider } from "@contexts/ThemeContext";
 
 
 export const metadata: Metadata = {
@@ -30,12 +31,14 @@ export default function RootLayout({
   return (
     <html>
       <body className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}>
-        <QueryProvider>
-          <LanguageProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            <LanguageProvider>
             <Nav />
             {children}
-          </LanguageProvider>
-        </QueryProvider>
+            </LanguageProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { storage } from '@/app/utils/storage';
 
 type Language = 'en' | 'ar';
 
@@ -12,9 +13,23 @@ type LanguageContextType = {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+function getInitialLanguage(): Language {
+  const storedLanguage = storage.get('language');
+  if (storedLanguage === 'en' || storedLanguage === 'ar') {
+    return storedLanguage;
+  }
+
+  return 'en';
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
   const isRTL = language === 'ar';
+
+  const setLanguage = (newLanguage: Language) => {
+    setLanguageState(newLanguage);
+    storage.set('language', newLanguage);
+  };
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
