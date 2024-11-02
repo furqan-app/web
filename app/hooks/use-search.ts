@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-type SearchResult = {
+type VerseResult = {
   verse_key: string;
   text_imlaei_simple: string;
   text_uthmani: string;
@@ -8,18 +8,44 @@ type SearchResult = {
   chapter_name: string;
 };
 
-const searchQuran = async (query: string): Promise<SearchResult[]> => {
-  if (!query.trim()) return [];
+type ChapterResult = {
+  id: number;
+  name_arabic: string;
+  name_simple: string;
+  verses_count: number;
+  pages: string;
+};
 
-  const response = await fetch(`/api/quran/search?q=${encodeURIComponent(query)}`);
+const searchVerses = async (query: string): Promise<VerseResult[]> => {
+  if (!query.trim()) return [];
+  const response = await fetch(`/api/search/verses?q=${encodeURIComponent(query)}`);
+  const data = await response.json();
+  return data.results;
+};
+
+const searchChapters = async (query: string): Promise<ChapterResult[]> => {
+  if (!query.trim()) return [];
+  const response = await fetch(`/api/search/chapters?q=${encodeURIComponent(query)}`);
   const data = await response.json();
   return data.results;
 };
 
 export const useSearch = (query: string) => {
-  return useQuery({
-    queryKey: ["search", query],
-    queryFn: () => searchQuran(query),
+  const verses = useQuery({
+    queryKey: ["search-verses", query],
+    queryFn: () => searchVerses(query),
     enabled: query.length > 0,
   });
+
+  const chapters = useQuery({
+    queryKey: ["search-chapters", query],
+    queryFn: () => searchChapters(query),
+    enabled: query.length > 0,
+  });
+
+  return {
+    verses,
+    chapters,
+    isLoading: verses.isLoading || chapters.isLoading,
+  };
 };
