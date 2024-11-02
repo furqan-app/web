@@ -13,7 +13,7 @@ export const ThemeToggle = () => {
   }, []);
 
   if (!mounted) {
-    return <div className="w-12 h-9" />; // Placeholder with same dimensions
+    return <div className="w-12 h-9" />;
   }
 
   return (

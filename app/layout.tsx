@@ -27,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html>
-      <body
+    <html suppressHydrationWarning>
+      <body suppressHydrationWarning
         className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
       >
         {/* <LanguageProvider> */}
