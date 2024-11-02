@@ -6,6 +6,7 @@ import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { FONT_V1 } from "@constants/font";
 import { Word } from "@types";
+import { useQuranFontSize } from "@contexts/QuranFontSizeContext";
 
 type LineProps = {
   line: string;
@@ -39,6 +40,7 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
     .split(":")
     .map(Number);
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
+  const { quranFontSize } = useQuranFontSize();  
 
   return (
     <>
@@ -72,7 +74,7 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
             key={line + "" + word.id}
             className={` leading-none 
               text-[4.4vw] 
-              md:text-[${FONT_V1.getWordFontSizeByScale(8)}vh] 
+              md:text-[${FONT_V1.getWordFontSizeByScale(quranFontSize)}vh] 
               text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer`}
           >
             {fontLoaded ? (

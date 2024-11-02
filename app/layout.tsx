@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "./providers/QueryProvider";
 // import { LanguageProvider } from "@contexts/LanguageContext";
+import { QuranFontSizeProvider } from "@contexts/QuranFontSizeContext";
 import { ThemeProvider } from "@contexts/ThemeContext";
 import "./globals.css";
 
@@ -34,10 +35,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           {/* <LanguageProvider> */}
+          <QuranFontSizeProvider>
             <QueryProvider>
               <Nav />
               {children}
             </QueryProvider>
+          </QuranFontSizeProvider>
           {/* </LanguageProvider> */}
         </ThemeProvider>
       </body>
