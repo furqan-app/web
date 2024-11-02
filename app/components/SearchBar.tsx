@@ -67,7 +67,7 @@ export const SearchBar = () => {
                             className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                                {result.verse_key}
+                                {result.chapter_name} - {result.verse_key}
                             </div>
                             <div className="text-right font-uthmanic text-lg">
                                 {result.text_uthmani}

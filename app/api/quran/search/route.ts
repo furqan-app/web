@@ -14,8 +14,10 @@ export async function GET(request: Request) {
       verses.verse_key,
       verses.text_imlaei_simple,
       verses.text_uthmani,
-      verses.page_number
+      verses.page_number,
+      chapters.name_arabic AS chapter_name
     FROM verses 
+    JOIN chapters ON verses.chapter_id = chapters.id
     WHERE verses.text_imlaei_simple LIKE ?
     `,
     [`%${query}%`]

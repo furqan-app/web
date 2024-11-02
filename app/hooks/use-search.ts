@@ -5,6 +5,7 @@ type SearchResult = {
   text_imlaei_simple: string;
   text_uthmani: string;
   page_number: number;
+  chapter_name: string;
 };
 
 const searchQuran = async (query: string): Promise<SearchResult[]> => {
