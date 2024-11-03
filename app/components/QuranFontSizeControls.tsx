@@ -39,7 +39,7 @@ export const QuranFontSizeControls = () => {
         </svg>
       </button>
       <input
-        className="outline-none w-5 h-7 rounded text-center"
+        className="outline-none w-5 h-7 rounded text-center bg-gray-100 dark:bg-gray-800"
         type="text"
         value={quranFontSize}
         onChange={(e) => change(parseInt(e.target.value))}
