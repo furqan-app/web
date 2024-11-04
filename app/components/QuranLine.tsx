@@ -8,6 +8,7 @@ import { FONT_V1 } from "@constants/font";
 import { Word } from "@types";
 import { useSearchParams } from "next/navigation";
 import { highlight } from "../utils/highlight";
+import { useCallback, useMemo } from "react";
 
 type LineProps = {
   line: string;
@@ -43,8 +44,15 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
 
   const searchParams = useSearchParams();
-  const highlightedVerseKey = highlight.getHighlightedVerseKey(searchParams);
-  const highlightType = highlight.getHighlightType(searchParams);
+  const highlightedVerseKey = useMemo(() => highlight.getHighlightedVerseKey(searchParams), [searchParams]);
+  const highlightType = useMemo(() => highlight.getHighlightType(searchParams), [searchParams]);
+
+  const getHighlightClassForWord = useCallback((word: Word) => {
+    return highlight.getHighlightClass(
+      highlight.shouldHighlight(word, highlightedVerseKey),
+      highlightType
+    );
+  }, [highlightedVerseKey, highlightType]);
 
   return (
     <>
@@ -81,9 +89,7 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
               text-[4.4vw] 
               md:text-[${FONT_V1.getWordFontSizeByScale(8)}vh] 
               text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer
-              ${highlight.getHighlightClass(highlight.shouldHighlight(word, highlightedVerseKey),
-                highlightType
-              )}
+              ${getHighlightClassForWord(word)}
             `}
           >
             {fontLoaded ? (
