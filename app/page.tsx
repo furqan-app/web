@@ -1,20 +1,26 @@
 import { SurahList } from "./components/SurahList";
+import { getSurahs } from "./server/actions/getSurahs";
 
-async function getSurahs(language: string) {
-  const response = await fetch(
-    `https://api.qurancdn.com/api/qdc/chapters?language=${language}`,
-    { next: { revalidate: 3600 } }
-  );
-  const data = await response.json();
-  return data.chapters;
-}
+const AppTitle = ({ language }: { language: string }) => {
+  if (language === "ar") {
+    return <span>القرآن الكريم</span>;
+  }
+  return <span>{`Al-Qur'an`}</span>;
+};
 
 export default async function Home() {
-  const surahs = await getSurahs("ar");
+  const { language, isRTL } = { language: "ar", isRTL: true }; // useLanguage();
+  const surahs = await getSurahs(language);
 
   return (
     <main className="container mx-auto px-4 py-8 min-h-screen">
-      <SurahList surahs={surahs} />
+      <div className="max-w-4xl mx-auto" dir={isRTL ? "rtl" : "ltr"}>
+        <h1 className="text-3xl font-bold text-center my-8 text-gray-900 dark:text-gray-100">
+          <AppTitle language={language} />
+        </h1>
+        <SurahList surahs={surahs} />
+      </div>
     </main>
   );
 }
+

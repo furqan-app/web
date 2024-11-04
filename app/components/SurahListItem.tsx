@@ -6,19 +6,19 @@ type Props = {
   surah: Surah;
 };
 
-export const SurahListItem = ({ surah }: Props) => {
-  const { language, isRTL } = { language: "en", isRTL: false }; // useLanguage();
+const getName = (language: string, surah: Surah) => {
+  switch (language) {
+    case "ar":
+      return surah.name_arabic;
+    case "en":
+      return surah.name_simple;
+    default:
+      return surah.translated_name.text || surah.name_simple;
+  }
+};
 
-  const getName = () => {
-    switch (language) {
-      case "ar":
-        return surah.name_arabic;
-      case "en":
-        return surah.name_simple;
-      default:
-        return surah.translated_name.text || surah.name_simple;
-    }
-  };
+export const SurahListItem = ({ surah }: Props) => {
+  const { language, isRTL } = { language: "ar", isRTL: true }; // useLanguage();
 
   const surahStartingPage = surah.pages[0];
   return (
@@ -44,7 +44,7 @@ export const SurahListItem = ({ surah }: Props) => {
               ${language === "ar" ? "font-surahnames text-2xl" : ""}`}
               dir={language === "ar" ? "rtl" : "ltr"}
             >
-              {getName()}
+              {getName(language, surah)}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {surah.revelation_place} • {surah.verses_count} Verses
