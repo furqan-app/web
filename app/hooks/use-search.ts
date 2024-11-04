@@ -1,20 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-export type VerseResult = {
-  verse_key: string;
-  text_imlaei_simple: string;
-  text_uthmani: string;
-  page_number: number;
-  chapter_name: string;
-};
-
-export type ChapterResult = {
-  id: number;
-  name_arabic: string;
-  name_simple: string;
-  verses_count: number;
-  pages: string;
-};
+import { SurahResult, VerseResult } from "../types";
 
 const searchVerses = async (query: string): Promise<VerseResult[]> => {
   if (!query.trim()) return [];
@@ -23,7 +8,7 @@ const searchVerses = async (query: string): Promise<VerseResult[]> => {
   return data.results;
 };
 
-const searchChapters = async (query: string): Promise<ChapterResult[]> => {
+const searchChapters = async (query: string): Promise<SurahResult[]> => {
   if (!query.trim()) return [];
   const response = await fetch(`/api/search/chapters?q=${encodeURIComponent(query)}`);
   const data = await response.json();

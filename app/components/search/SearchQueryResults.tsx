@@ -1,8 +1,8 @@
-import { addHighlightParam } from "@/app/utils/highlight";
+import { highlight } from "@utils/highlight";
 import Link from "next/link";
-import { ChapterResult, VerseResult } from "@/app/hooks/use-search";
+import { SurahResult, VerseResult } from "@types";
 
-export default function SearchQueryResults({ chapters, verses, setIsOpen }: { chapters: ChapterResult[], verses: VerseResult[], setIsOpen: (isOpen: boolean) => void }) {
+export default function SearchQueryResults({ chapters, verses, setIsOpen }: { chapters: SurahResult[], verses: VerseResult[], setIsOpen: (isOpen: boolean) => void }) {
     return <div className="absolute w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg 
     border border-gray-200 dark:border-gray-700 max-h-96 overflow-auto z-50">
                {chapters && chapters.length > 0 && (
@@ -42,7 +42,7 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
                       {verses.map((verse) => (
                           <Link
                               key={verse.verse_key}
-                              href={addHighlightParam(`/pages/${verse.page_number}`, verse.verse_key)}
+                              href={highlight.addToUrl({ verseKey: verse.verse_key, pageNumber: verse.page_number })}
                               onClick={() => setIsOpen(false)}
                               className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >

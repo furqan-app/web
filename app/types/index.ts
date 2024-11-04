@@ -59,3 +59,20 @@ export type Surah = {
     text: string;
   };
 };
+
+
+export type VerseResult = {
+  verse_key: string;
+  text_imlaei_simple: string;
+  text_uthmani: string;
+  page_number: number;
+  chapter_name: string;
+};
+
+export type SurahResult = {
+  id: number;
+  name_arabic: string;
+  name_simple: string;
+  verses_count: number;
+  pages: string;
+};

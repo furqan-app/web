@@ -7,6 +7,7 @@ import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { FONT_V1 } from "@constants/font";
 import { Word } from "@types";
 import { useSearchParams } from "next/navigation";
+import { highlight } from "../utils/highlight";
 
 type LineProps = {
   line: string;
@@ -42,11 +43,8 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
 
   const searchParams = useSearchParams();
-  const highlightedVerseKey = searchParams.get('highlight');
-
-  const shouldHighlight = (word: Word) => {
-    return highlightedVerseKey === word.verse_key;
-  };
+  const highlightedVerseKey = highlight.getHighlightedVerseKey(searchParams);
+  const highlightType = highlight.getHighlightType(searchParams);
 
   return (
     <>
@@ -83,8 +81,10 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
               text-[4.4vw] 
               md:text-[${FONT_V1.getWordFontSizeByScale(8)}vh] 
               text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer
-              ${shouldHighlight(word) ? "bg-yellow-200/60 dark:bg-yellow-500/30 dark:text-white" : ""}
-              `}
+              ${highlight.getHighlightClass(highlight.shouldHighlight(word, highlightedVerseKey),
+                highlightType
+              )}
+            `}
           >
             {fontLoaded ? (
               <span>{word.code_v1}</span>
