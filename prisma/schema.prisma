@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Chapter {
+  id               Int     @id @default(autoincrement())
+  chapter_number   Int
+  bismillah_pre    Boolean @default(false)
+  revelation_order Int
+  revelation_place String
+  name_complex     String
+  name_arabic      String
+  name_simple      String
+  verses_count     Int
+  pages            String
+  translated_name  String
+  verses           Verse[]
+
+  @@map("chapters")
+}
+
+model Verse {
+  id                 Int     @id @default(autoincrement())
+  verse_number       Int
+  verse_key          String
+  hizb_number        Int
+  rub_el_hizb_number Int
+  ruku_number        Int
+  manzil_number      Int
+  sajdah_number      Int
+  text_uthmani       String
+  chapter_id         Int
+  text_imlaei_simple String
+  page_number        Int
+  juz_number         Int
+  chapter            Chapter @relation(fields: [chapter_id], references: [id])
+  Word               Word[]
+
+  @@map("verses")
+}
+
+model Word {
+  id               Int    @id @default(autoincrement())
+  position         Int
+  audio_url        String
+  verse_key        String
+  verse_id         Int
+  location         String
+  text_uthmani     String
+  code_v1          String
+  code_v2          String
+  qpc_uthmani_hafs String
+  char_type_name   String
+  page_number      Int
+  line_number      Int
+  text             String
+  verse            Verse  @relation(fields: [verse_id], references: [id])
+  // WordTranslation     WordTranslation[]
+  // WordTransliteration WordTransliteration[]
+
+  @@map("words")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  password   String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("users")
+}
+
+// model Hizb {
+//   id                  Int  @id @default(autoincrement())
+//   hizb_number         Int
+//   verse_mapping_start Int
+//   verse_mapping_end   Int
+//   verses_count        Int
+// }
+
+// model HizbVerseMapping {
+//   id             Int  @id @default(autoincrement())
+//   hizb_number    Int
+//   chapter_number Int
+//   start_verse    Int
+//   end_verse      Int
+// }
+
+// model Rub {
+//   id                  Int  @id @default(autoincrement())
+//   rub_number          Int
+//   verse_mapping_start Int
+//   verse_mapping_end   Int
+//   verses_count        Int
+// }
+
+// model RubVerseMapping {
+//   id             Int  @id @default(autoincrement())
+//   rub_number     Int
+//   chapter_number Int
+//   start_verse    Int
+//   end_verse      Int
+// }
+
+// model WordTranslation {
+//   id               Int     @id @default(autoincrement())
+//   word_id          Int
+//   translation_text String
+//   Word             Word    @relation(fields: [word_id], references: [id])
+// }
+
+// model WordTransliteration {
+//   id                   Int     @id @default(autoincrement())
+//   word_id              Int
+//   transliteration_text String
+//   Word                 Word    @relation(fields: [word_id], references: [id])
+// }
