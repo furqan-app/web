@@ -18,8 +18,7 @@ export async function GET(request: Request) {
       pages
     FROM chapters
     WHERE name_arabic LIKE ? OR name_simple LIKE ?
-    ORDER BY id
-    LIMIT 10`,
+    ORDER BY id`,
     [`%${query}%`, `%${query}%`]
   );
 
