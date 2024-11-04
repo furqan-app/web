@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-type VerseResult = {
+export type VerseResult = {
   verse_key: string;
   text_imlaei_simple: string;
   text_uthmani: string;
@@ -8,7 +8,7 @@ type VerseResult = {
   chapter_name: string;
 };
 
-type ChapterResult = {
+export type ChapterResult = {
   id: number;
   name_arabic: string;
   name_simple: string;

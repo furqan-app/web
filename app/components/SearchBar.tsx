@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSearch } from "@hooks/use-search";
-import Link from "next/link";
-import { addHighlightParam } from "@/app/utils/highlight";
+import SearchQueryResults from "./search/SearchQueryResults";
 
 export const SearchBar = () => {
     const [query, setQuery] = useState("");
@@ -59,60 +58,7 @@ export const SearchBar = () => {
             </div>
 
             {isOpen && query.length > 0 && hasResults && (
-                <div className="absolute w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg 
-          border border-gray-200 dark:border-gray-700 max-h-96 overflow-auto z-50">
-                     {chapters.data && chapters.data.length > 0 && (
-                        <div className="border-b border-gray-200 dark:border-gray-700">
-                            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900">
-                                <span className="font-medium text-gray-900 dark:text-gray-100">
-                                    Surahs ({chapters.data.length})
-                                </span>
-                            </div>
-                            {chapters.data.map((chapter) => (
-                                <Link
-                                    key={chapter.id}
-                                    href={`/pages/${chapter.pages.split('-')[0]}`}
-                                    onClick={() => setIsOpen(false)}
-                                    className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-600 dark:text-gray-400">
-                                            {chapter.name_simple}
-                                        </span>
-                                        <span className="font-surahnames text-xl">
-                                            {chapter.name_arabic}
-                                        </span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-
-                    {verses.data && verses.data.length > 0 && (
-                        <div>
-                            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900">
-                                <span className="font-medium text-gray-900 dark:text-gray-100">
-                                    Verses ({verses.data.length})
-                                </span>
-                            </div>
-                            {verses.data.map((verse) => (
-                                <Link
-                                    key={verse.verse_key}
-                                    href={addHighlightParam(`/pages/${verse.page_number}`, verse.verse_key)}
-                                    onClick={() => setIsOpen(false)}
-                                    className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                >
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                                        {verse.chapter_name} - {verse.verse_key.split(':')[1]}
-                                    </div>
-                                    <div className="text-right font-uthmanic text-lg">
-                                        {verse.text_uthmani}
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                <SearchQueryResults setIsOpen={setIsOpen} chapters={chapters.data || []} verses={verses.data || []} />
             )}
         </div>
     );
