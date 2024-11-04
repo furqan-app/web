@@ -4,7 +4,6 @@ import localFont from "next/font/local";
 import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "./providers/QueryProvider";
 // import { LanguageProvider } from "@contexts/LanguageContext";
-import { ThemeProvider } from "@contexts/ThemeContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,17 +28,15 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body
+      <body suppressHydrationWarning
         className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
       >
-        <ThemeProvider>
-          {/* <LanguageProvider> */}
-            <QueryProvider>
-              <Nav />
-              {children}
-            </QueryProvider>
-          {/* </LanguageProvider> */}
-        </ThemeProvider>
+        {/* <LanguageProvider> */}
+        <QueryProvider>
+          <Nav />
+          {children}
+        </QueryProvider>
+        {/* </LanguageProvider> */}
       </body>
     </html>
   );
