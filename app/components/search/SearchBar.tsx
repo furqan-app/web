@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSearch } from "@hooks/use-search";
-import SearchQueryResults from "./search/SearchQueryResults";
+import SearchQueryResults from "./SearchQueryResults";
 
 export const SearchBar = () => {
     const [query, setQuery] = useState("");
