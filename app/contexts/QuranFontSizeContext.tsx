@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { storage } from "@/app/utils/storage";
 import { QuranFontSize } from "@types";
 
@@ -27,7 +27,11 @@ function getInitialQuranFontSize(): QuranFontSize {
 }
 
 export function QuranFontSizeProvider({ children }: { children: ReactNode }) {
-  const [quranFontSize, setQuranFontSize] = useState<QuranFontSize>(getInitialQuranFontSize);
+  const [quranFontSize, setQuranFontSize] = useState<QuranFontSize>(1);
+
+  useEffect(() => {
+    setQuranFontSize(getInitialQuranFontSize());
+  }, [])
 
   const handleQuranFontSizeChange = (newQuranFontSize: QuranFontSize) => {
     setQuranFontSize(newQuranFontSize);
