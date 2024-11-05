@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body
+      <body suppressHydrationWarning
         className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
       >
         <ThemeProvider>
