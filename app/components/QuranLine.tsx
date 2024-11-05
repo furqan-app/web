@@ -83,4 +83,3 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
     </>
   );
 };
-

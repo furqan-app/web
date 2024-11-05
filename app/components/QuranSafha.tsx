@@ -4,7 +4,7 @@ import { usePageFont } from "@hooks/use-page-font";
 import { Word } from "@types";
 import { QuranLine } from "@components/QuranLine";
 import { FONT_V1 } from "../constants/font";
-import { useQuranFontSize } from "../contexts/QuranFontSizeContext";
+import { useQuranFontScale } from "../contexts/QuranFontScaleContext";
 
 type QuranSafhaProps = {
   page: number;
@@ -34,14 +34,14 @@ const tailwindFontUtility = [
 
 export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
   const { isPending } = usePageFont(page);
-  const { quranFontSize } = useQuranFontSize();
+  const { quranFontScale } = useQuranFontScale();
 
   return (
     <div className="fq-full-safha flex justify-center">
       <div className="w-fit py-6 border-b border-b-gray-500">
         <div
           className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
-            quranFontSize
+            quranFontScale
           )}vh]`}
           style={{ fontFamily: isPending ? "var(--uthmanic)" : `v1-p${page}` }}
         >

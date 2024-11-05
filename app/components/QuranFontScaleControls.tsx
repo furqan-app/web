@@ -1,26 +1,19 @@
 "use client";
 
-import { useQuranFontSize } from "@contexts/QuranFontSizeContext";
-import { QuranFontSize } from "@types";
+import { useQuranFontScale } from "@/app/contexts/QuranFontScaleContext";
+import { QuranFontScale } from "@types";
 
-export const QuranFontSizeControls = () => {
-  const { quranFontSize, setQuranFontSize } = useQuranFontSize();
+export const QuranFontScaleControls = () => {
+  const { quranFontScale, setQuranFontScale } = useQuranFontScale();
 
-  const increment = () => {
-    const newSize = Math.min(quranFontSize + 1, 10);
-    setQuranFontSize(newSize as QuranFontSize);
-  };
+  const increment = () => change((quranFontScale + 1) as QuranFontScale);
 
-  const decrement = () => {
-    const newSize = Math.max(quranFontSize - 1, 1);
-    setQuranFontSize(newSize as QuranFontSize);
-  };
+  const decrement = () => change((quranFontScale - 1) as QuranFontScale);
 
-  const change = (newQuranFontSize: number) => {
-    if (!isNaN(newQuranFontSize)) {
-      const validSize = Math.min(Math.max(newQuranFontSize, 1), 10);
-      setQuranFontSize(validSize as QuranFontSize);
-    }
+  const change = (newQuranFontScale: QuranFontScale) => {
+    setQuranFontScale(
+      Math.min(Math.max(newQuranFontScale, 1), 10) as QuranFontScale
+    );
   };
 
   return (
@@ -39,10 +32,10 @@ export const QuranFontSizeControls = () => {
         </svg>
       </button>
       <input
-        className="outline-none w-5 h-7 rounded text-center bg-gray-100 dark:bg-gray-800"
+        className="outline-none w-5 h-7 rounded text-center bg-transparent"
         type="text"
-        value={quranFontSize}
-        onChange={(e) => change(parseInt(e.target.value))}
+        value={quranFontScale}
+        readOnly
       />
       <button
         onClick={increment}
