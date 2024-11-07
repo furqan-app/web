@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from "@hooks/use-theme";
-import { ThemeIcon } from "@components/ThemeIcon";
+import { ThemeIcon } from "@components/icons/ThemeIcon";
 import { useEffect, useState } from "react";
 
 export const ThemeToggle = () => {

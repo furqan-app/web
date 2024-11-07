@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { QuranSafha } from "@/app/components/QuranSafha";
 import { fetchPageAPI } from "@/app/hooks/use-quran-page";
+import Sidebar from "@/app/components/nav/Sidebar";
 
 // statically generate all pages in build time
 export async function generateStaticParams() {
@@ -21,8 +22,10 @@ const QuranPageById = async ({
   // const lines = await fetchPageQurancCDN(Number(pageId));
 
   return (
-    <div className="bg:white dark:bg-black w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
-      <div className="flex items-center">
+    <div className="flex h-[calc(100vh-3.5rem)]">
+      <Sidebar />
+      <div className="bg:white dark:bg-black w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
+        <div className="flex items-center">
         <Link
           href={`/pages/${pageId === "604" ? "1" : String(Number(pageId) + 1)}`}
           className="text-dark dark:text-white"
@@ -66,6 +69,7 @@ const QuranPageById = async ({
             />
           </svg>
         </Link>
+        </div>
       </div>
     </div>
   );
