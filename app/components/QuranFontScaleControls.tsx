@@ -11,9 +11,7 @@ export const QuranFontScaleControls = () => {
   const decrement = () => change((quranFontScale - 1) as QuranFontScale);
 
   const change = (newQuranFontScale: QuranFontScale) => {
-    setQuranFontScale(
-      Math.min(Math.max(newQuranFontScale, 1), 10) as QuranFontScale
-    );
+    setQuranFontScale(Math.min(Math.max(newQuranFontScale, 1), 10) as QuranFontScale);
   };
 
   return (
