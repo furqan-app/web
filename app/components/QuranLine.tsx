@@ -63,10 +63,7 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
           <span
             key={line + "" + word.id}
             data-verse-key={word.verse_key}
-            className={` leading-none 
-              text-[4.4vw] 
-              md:text-[${FONT_V1.getWordFontSizeByScale(8)}vh] 
-              text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer
+            className={` leading-none text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer
               ${getHighlightClassForWord(word)}
             `}
           >
