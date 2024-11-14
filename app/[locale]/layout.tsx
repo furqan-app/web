@@ -9,6 +9,7 @@ import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "@/app/providers/QueryProvider";
 import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
 import "../globals.css";
+import { getLanguageDirection } from '../utils/i18n';
 
 export const metadata: Metadata = {
   title: "Al-Furqan",
@@ -25,8 +26,6 @@ const Uthmanic = localFont({
   variable: "--uthmanic",
 });
 
-const RTL_LANGUAGES = ['ar'];
-
 export function generateStaticParams() {
     return [{ locale: 'en' }, { locale: 'ar' }];
 }
@@ -40,10 +39,9 @@ export default async function LocaleLayout({ children, params: { locale } }: {
     }
 
     const messages = await getMessages();
-    const isRTL = RTL_LANGUAGES.includes(locale);
 
     return (
-        <html lang={locale} dir={isRTL ? 'rtl' : 'ltr'}>
+        <html lang={locale} dir={getLanguageDirection(locale)}>
             <body suppressHydrationWarning
                 className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
             >

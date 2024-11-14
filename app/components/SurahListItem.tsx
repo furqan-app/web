@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Surah } from "@types";
+import useTranslations from "@hooks/use-translations";
+import { getLanguageDirection } from "../utils/i18n";
 
 type Props = {
   surah: Surah;
@@ -17,7 +19,9 @@ const getName = (language: string, surah: Surah) => {
 };
 
 export const SurahListItem = ({ surah }: Props) => {
-  const { language, isRTL } = { language: "ar", isRTL: true }; // useLanguage();
+  // const language = getLanguageFromPathname(pathname);
+  const language = 'ar';
+  const t = useTranslations();
 
   const surahStartingPage = surah.pages[0];
   return (
@@ -29,7 +33,7 @@ export const SurahListItem = ({ surah }: Props) => {
       <div
         className={`flex items-center justify-center w-12 h-12 rounded-full 
         border border-gray-300 dark:border-gray-700 
-        bg-white dark:bg-gray-900 ${isRTL ? "ml-4" : "mr-4"}`}
+        bg-white dark:bg-gray-900 ${getLanguageDirection(language) === "rtl" ? "ml-4" : "mr-4"}`}
       >
         <span className="text-lg text-gray-900 dark:text-gray-100">
           {surah.id}
@@ -40,12 +44,12 @@ export const SurahListItem = ({ surah }: Props) => {
           <div>
             <h2
               className={`text-lg font-semibold text-gray-900 dark:text-gray-100 
-              ${language === "ar" ? "font-surahnames text-2xl" : ""}`}
+              ${getLanguageDirection(language) === "rtl" ? "font-surahnames text-2xl" : ""}`}
             >
               {getName(language, surah)}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {surah.revelation_place} • {surah.verses_count} Verses
+              {surah.revelation_place} • {surah.verses_count} {t('verses', 'Verses')}
             </p>
           </div>
         </div>
