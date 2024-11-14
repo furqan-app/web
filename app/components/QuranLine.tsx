@@ -4,7 +4,6 @@
 
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
-import { FONT_V1 } from "@constants/font";
 import { Word } from "@types";
 import { useSearchParams } from "next/navigation";
 import { highlight } from "../utils/highlight";
@@ -15,27 +14,6 @@ type LineProps = {
   words: Array<Word>;
   fontLoaded: boolean;
 };
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const tailwindFontUtility = [
-  "md:text-[3.4vh]",
-  "md:text-[3.6vh]",
-  "md:text-[3.8vh]",
-  "md:text-[4vh]",
-  "md:text-[4.2vh]",
-  "md:text-[4.4vh]",
-  "md:text-[4.6vh]",
-  "md:text-[4.8vh]",
-  "md:text-[5vh]",
-  "md:text-[5.2vh]",
-  "md:text-[5.4vh]",
-  "md:text-[5.6vh]",
-  "md:text-[5.8vh]",
-  "md:text-[6vh]",
-  "md:text-[6.2vh]",
-  "md:text-[6.4vh]",
-  "md:text-[6.6vh]",
-];
 
 export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
   const [surahId, verseNumber, wordNumber] = words[0].location
@@ -125,4 +103,3 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
     </>
   );
 };
-

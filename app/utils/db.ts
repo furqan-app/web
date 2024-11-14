@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import mysql from "mysql2";
 
 export const connection = mysql
@@ -8,3 +9,5 @@ export const connection = mysql
     database: "quran_db",
   })
   .promise();
+
+export const prisma = new PrismaClient();

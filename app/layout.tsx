@@ -4,7 +4,7 @@ import localFont from "next/font/local";
 import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "./providers/QueryProvider";
 // import { LanguageProvider } from "@contexts/LanguageContext";
-import { ThemeProvider } from "@contexts/ThemeContext";
+import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,19 +29,18 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body
+      <body suppressHydrationWarning
         className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
       >
-        <ThemeProvider>
           {/* <LanguageProvider> */}
+          <QuranFontScaleProvider>
             <QueryProvider>
-              <Nav />
-              {children}
-            </QueryProvider>
-          {/* </LanguageProvider> */}
-        </ThemeProvider>
+            <Nav />
+            {children}
+          </QueryProvider>
+        </QuranFontScaleProvider>
+        {/* </LanguageProvider> */}
       </body>
     </html>
   );
 }
-

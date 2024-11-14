@@ -1,16 +1,7 @@
-'use client';
-
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { storage } from '@/app/utils/storage';
 
 type Theme = 'light' | 'dark';
-
-type ThemeContextType = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-};
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function getInitialTheme(): Theme {
   if (typeof window !== "undefined") {
@@ -27,7 +18,7 @@ function getInitialTheme(): Theme {
   return "light";
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function useTheme() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   const handleThemeChange = (newTheme: Theme) => {
@@ -35,10 +26,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     storage.set("theme", newTheme);
   };
 
-
-
   useEffect(() => {
-
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
@@ -47,7 +35,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
-
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = (): void => {
@@ -61,17 +48,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme: handleThemeChange }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
+  return {
+    theme,
+    setTheme: handleThemeChange,
+  };
 }
