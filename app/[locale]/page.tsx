@@ -1,14 +1,13 @@
-import { useLocale, useTranslations } from "next-intl";
 import { SurahList } from "../components/SurahList";
+import useTranslations from "../hooks/use-translations";
 import { getSurahs } from "../server/actions/getSurahs";
 
 const AppTitle = () => {
   const t = useTranslations();
-  return <span>{t('homepage.title')}</span>;
+  return <span>{t('home.title', 'The Noble Quran')}</span>;
 };
 
 export default async function Home() {
-  // const locale = useLocale();
   const surahs = await getSurahs('ar');
 
   return (

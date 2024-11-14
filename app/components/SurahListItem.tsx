@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Surah } from "@types";
-// import { useLanguage } from '@contexts/LanguageContext';
 
 type Props = {
   surah: Surah;
@@ -23,7 +22,7 @@ export const SurahListItem = ({ surah }: Props) => {
   const surahStartingPage = surah.pages[0];
   return (
     <Link
-      href={`/pages/${surahStartingPage}`}
+      href={`/${language}/pages/${surahStartingPage}`}
       className="flex items-center p-4 border-b border-gray-200 dark:border-gray-800 
         hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
     >
@@ -42,7 +41,6 @@ export const SurahListItem = ({ surah }: Props) => {
             <h2
               className={`text-lg font-semibold text-gray-900 dark:text-gray-100 
               ${language === "ar" ? "font-surahnames text-2xl" : ""}`}
-              dir={language === "ar" ? "rtl" : "ltr"}
             >
               {getName(language, surah)}
             </h2>
