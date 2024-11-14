@@ -4,12 +4,8 @@ function useTranslations(namespace?: string) {
   const t = useNextIntlTranslations(namespace ?? undefined);
 
   return (key: string, defaultValue: string) => {
-    try {
-      const translation = t(key);
-      return translation || defaultValue;
-    } catch {
-      return defaultValue;
-    }
+    const translation = t(key);
+    return translation === key ? defaultValue : translation;
   };
 }
 
