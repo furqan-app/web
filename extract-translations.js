@@ -39,6 +39,22 @@ function extractKeysFromFile(filePath) {
   return translations;
 }
 
+// Helper function to set nested object value
+function setNestedValue(obj, path, value) {
+  const keys = path.split('.');
+  let current = obj;
+  
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i];
+    if (!(key in current)) {
+      current[key] = {};
+    }
+    current = current[key];
+  }
+  
+  current[keys[keys.length - 1]] = value;
+}
+
 // Function to update message files
 function updateMessageFiles(translations) {
   languages.forEach((lang) => {
@@ -46,8 +62,17 @@ function updateMessageFiles(translations) {
     const messages = fs.existsSync(filePath) ? fs.readJsonSync(filePath) : {};
 
     translations.forEach((defaultMessage, key) => {
-      if (!messages[key]) {
-        messages[key] = defaultMessage || ''; // Use default message if available
+      if (!key.includes('.')) {
+        // Handle non-nested keys
+        if (!messages[key]) {
+          messages[key] = defaultMessage || '';
+        }
+      } else {
+        // Handle nested keys
+        const existingValue = key.split('.').reduce((obj, k) => obj && obj[k], messages);
+        if (!existingValue) {
+          setNestedValue(messages, key, defaultMessage || '');
+        }
       }
     });
 

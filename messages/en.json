@@ -1,10 +1,10 @@
 {
   "home": {
     "title": "The Noble Quran",
-    "description": "Read and Listen to Quran",
-    "search": {
-      "placeholder": "Search surah by name or number"
-    }
+    "description": "Read and Listen to Quran"
+  },
+  "search": {
+    "placeholder": "Search surah by name or number"
   },
   "surah": {
     "number": "Number",
@@ -12,5 +12,7 @@
     "englishName": "English Name",
     "revelationType": "Revelation Type",
     "numberOfAyahs": "Number of Ayahs"
-  }
+  },
+  "surahs": "Surahs",
+  "verses": "Verses"
 }
