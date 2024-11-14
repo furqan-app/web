@@ -1,6 +1,5 @@
 "use client";
 
-// import { useLanguage } from "@contexts/LanguageContext";
 import Link from "next/link";
 import { ThemeToggle } from "@components/ThemeToggle";
 import { SearchBar } from "@components/search/SearchBar";

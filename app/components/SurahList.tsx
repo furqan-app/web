@@ -1,6 +1,5 @@
 import { Surah } from "@types";
 import { SurahListItem } from "@components/SurahListItem";
-// import { useLanguage } from '@contexts/LanguageContext';
 
 type Props = {
   surahs: Surah[];
