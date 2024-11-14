@@ -3,6 +3,7 @@
 // import { useLanguage } from "@contexts/LanguageContext";
 import Link from "next/link";
 import { ThemeToggle } from "@components/ThemeToggle";
+import { SearchBar } from "@components/search/SearchBar";
 import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
 // import { LanguageToggle } from "@components/LanguageToggle";
 
@@ -33,7 +34,9 @@ export const Nav = () => {
         </Link>
       </div>
 
-      <div className="flex-1" />
+      <div className="flex-1">
+        <SearchBar />
+      </div>
 
       <QuranFontScaleControls />
 

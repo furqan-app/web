@@ -5,6 +5,9 @@
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { Word } from "@types";
+import { useSearchParams } from "next/navigation";
+import { highlight } from "../utils/highlight";
+import { useCallback, useMemo } from "react";
 
 type LineProps = {
   line: string;
@@ -17,6 +20,17 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
     .split(":")
     .map(Number);
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
+
+  const searchParams = useSearchParams();
+  const highlightedVerseKey = useMemo(() => highlight.getHighlightedVerseKey(searchParams), [searchParams]);
+  const highlightType = useMemo(() => highlight.getHighlightType(searchParams), [searchParams]);
+
+  const getHighlightClassForWord = useCallback((word: Word) => {
+    return highlight.getHighlightClass(
+      highlight.shouldHighlight(word, highlightedVerseKey),
+      highlightType
+    );
+  }, [highlightedVerseKey, highlightType]);
 
   return (
     <>
@@ -48,7 +62,10 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
         {words.map((word) => (
           <span
             key={line + "" + word.id}
-            className={`leading-none text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer`}
+            data-verse-key={word.verse_key}
+            className={` leading-none text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer
+              ${getHighlightClassForWord(word)}
+            `}
           >
             {fontLoaded ? (
               <span>{word.code_v1}</span>
