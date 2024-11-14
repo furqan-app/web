@@ -1,18 +1,26 @@
 'use client';
 
-import { useLanguage } from '@contexts/LanguageContext';
+import { useRouter, usePathname } from 'next/navigation';
 
 export const LanguageToggle = () => {
-  const { language, setLanguage } = useLanguage();
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentLang = pathname.startsWith('/ar') ? 'ar' : 'en';
+
+  const toggleLanguage = () => {
+    const newLang = currentLang === 'en' ? 'ar' : 'en';
+    const newPath = pathname.replace(/^\/[a-z]{2}/, `/${newLang}`);
+    router.push(newPath);
+  };
 
   return (
     <button
-      onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+      onClick={toggleLanguage}
       className="hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded transition-colors"
       aria-label="Toggle language"
     >
       <span className="text-sm font-medium">
-        {language === 'en' ? 'عربي' : 'English'}
+        {currentLang === 'en' ? 'عربي' : 'English'}
       </span>
     </button>
   );

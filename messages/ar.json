@@ -1,0 +1,17 @@
+{
+  "home": {
+    "title": "القرآن الكريم",
+    "description": "اقرأ واستمع إلى القرآن",
+    "search": {
+      "placeholder": "ابحث عن السورة بالاسم أو الرقم"
+    }
+  },
+  "surah": {
+    "number": "رقم",
+    "name": "اسم",
+    "englishName": "الاسم بالإنجليزية",
+    "revelationType": "نوع الوحي",
+    "numberOfAyahs": "عدد الآيات"
+  },
+  "homepage.title": "default title"
+}
