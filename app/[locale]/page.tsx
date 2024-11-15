@@ -1,14 +1,16 @@
+import { getLocale } from "next-intl/server";
 import { SurahList } from "../components/SurahList";
 import useTranslations from "../hooks/use-translations";
 import { getSurahs } from "../server/actions/getSurahs";
 
 const AppTitle = () => {
   const t = useTranslations();
-  return <span>{t('home.title', 'The Noble Quran')}</span>;
+  return <span>{t('home.title', 'Furqan')}</span>;
 };
 
 export default async function Home() {
-  const surahs = await getSurahs('ar');
+  const locale = await getLocale();
+  const surahs = await getSurahs(locale);
 
   return (
     <main className="container mx-auto px-4 py-8 min-h-screen">
