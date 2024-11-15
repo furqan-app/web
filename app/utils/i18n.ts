@@ -9,11 +9,6 @@ export function convertFlatToNested(flatMessages: Record<string, string>): Recor
   }, {});
 }
 
-export function getLanguageFromPathname(pathname: string) {
-  const langMatch = pathname.match(/^\/([a-z]{2})/);
-  return langMatch?.[1];
-}
-
 export function getLanguageDirection(language: string) {
   return RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr';
 }
