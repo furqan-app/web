@@ -14,5 +14,9 @@
     "numberOfAyahs": "Number of Ayahs"
   },
   "surahs": "Surahs",
-  "verses": "Verses"
+  "verses": "Verses",
+  "settings": "Settings",
+  "language": "Language",
+  "quranFontSize": "Quran Font Size",
+  "appearance": "Appearance"
 }

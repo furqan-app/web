@@ -14,5 +14,9 @@
     "numberOfAyahs": "عدد الآيات"
   },
   "surahs": "السور",
-  "verses": "الآيات"
+  "verses": "الآيات",
+  "settings": "الإعدادات",
+  "language": "اللغة",
+  "quranFontSize": "حجم الخط",
+  "appearance": "المظهر"
 }
