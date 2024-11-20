@@ -1,11 +1,10 @@
-'use client';
-
+import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 
 export const LanguageToggle = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const currentLang = pathname.startsWith('/ar') ? 'ar' : 'en';
+  const currentLang = useLocale();
 
   const toggleLanguage = () => {
     const newLang = currentLang === 'en' ? 'ar' : 'en';
@@ -14,14 +13,22 @@ export const LanguageToggle = () => {
   };
 
   return (
-    <button
-      onClick={toggleLanguage}
-      className="hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded transition-colors"
-      aria-label="Toggle language"
-    >
-      <span className="text-sm font-medium">
-        {currentLang === 'en' ? 'عربي' : 'English'}
+    <div className="flex items-center justify-between">
+      <span className="mr-2 text-sm font-medium">
+        {currentLang === 'en' ? 'English' : 'عربي'}
       </span>
-    </button>
+      <button
+        onClick={toggleLanguage}
+        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+          currentLang === 'en' ? 'bg-blue-500' : 'bg-green-500'
+        }`}
+      >
+        <span
+          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+            currentLang === 'en' ? 'translate-x-1' : 'translate-x-6'
+          } ${currentLang === 'ar' ? 'rtl:translate-x-1' : 'rtl:translate-x-6'}`}
+        />
+      </button>
+    </div>
   );
 };
