@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Surah } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
+import { Link } from "@/i18n/routing";
 
 type Props = {
   surah: Surah;
@@ -26,7 +26,8 @@ export const SurahListItem = ({ surah }: Props) => {
   const surahStartingPage = surah.pages[0];
   return (
     <Link
-      href={`/${locale}/pages/${surahStartingPage}`}
+      locale={locale}
+      href={`/pages/${surahStartingPage}`}
       className="flex items-center p-4 border-b border-gray-200 dark:border-gray-800 
         hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
     >
