@@ -1,5 +1,4 @@
-import { SurahList } from "./components/SurahList";
-import { getSurahs } from "./server/actions/getSurahs";
+import { SurahListClient } from "./components/SurahListClient";
 
 const AppTitle = ({ language }: { language: string }) => {
   if (language === "ar") {
@@ -9,8 +8,8 @@ const AppTitle = ({ language }: { language: string }) => {
 };
 
 export default async function Home() {
-  const { language, isRTL } = { language: "ar", isRTL: true }; // useLanguage();
-  const surahs = await getSurahs(language);
+  // TODO: use locale from i18n
+  const { language, isRTL } = { language: "ar", isRTL: true };
 
   return (
     <main className="container mx-auto px-4 py-8 min-h-screen">
@@ -18,9 +17,8 @@ export default async function Home() {
         <h1 className="text-3xl font-bold text-center my-8 text-gray-900 dark:text-gray-100">
           <AppTitle language={language} />
         </h1>
-        <SurahList surahs={surahs} />
+        <SurahListClient />
       </div>
     </main>
   );
 }
-
