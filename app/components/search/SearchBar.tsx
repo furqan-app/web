@@ -6,9 +6,18 @@ import SearchQueryResults from "./SearchQueryResults";
 
 export const SearchBar = () => {
     const [query, setQuery] = useState("");
-    const { verses, chapters, isLoading } = useSearch(query);
+    const [debouncedQuery, setDebouncedQuery] = useState("");
+    const { verses, chapters, isLoading } = useSearch(debouncedQuery);
     const [isOpen, setIsOpen] = useState(false);
     const searchContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedQuery(query);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [query]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
