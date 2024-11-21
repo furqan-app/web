@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@components/ThemeToggle";
 import { SearchBar } from "@components/search/SearchBar";
 import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
+import { UserMenu } from "./UserMenu";
 // import { LanguageToggle } from "@components/LanguageToggle";
 
 export const Nav = () => {
@@ -12,7 +13,7 @@ export const Nav = () => {
 
   return (
     <nav
-      className="bg-white dark:bg-black text-black dark:text-white px-4 shadow dark:shadow-slate-600 h-14 flex items-center"
+      className="bg-white dark:bg-black text-black dark:text-white border-b dark:border-b-gray-800 px-4 shadow dark:shadow-slate-600 h-14 flex items-center"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded transition-colors">
@@ -41,6 +42,8 @@ export const Nav = () => {
       <QuranFontScaleControls />
 
       <ThemeToggle />
+
+      <UserMenu></UserMenu>
 
       {/* <LanguageToggle /> */}
     </nav>

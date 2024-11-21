@@ -1,4 +1,4 @@
-export type HighlightType = 'search' | 'selection' | 'bookmark' | 'last-read';
+export type HighlightType = 'search' | 'selection' | 'last-read' | 'red-mark' | 'blue-mark' | 'green-mark';
 
 type HighlightOptions = {
   verseKey: string;
@@ -8,10 +8,12 @@ type HighlightOptions = {
 };
 
 const HIGHLIGHT_COLORS: Record<HighlightType, string> = {
-  'search': 'bg-yellow-200/70 dark:bg-yellow-500/30',
+  'search': 'bg-gray-900/10 dark:bg-cyan-600/30',
   'selection': 'bg-blue-200/70 dark:bg-blue-500/30',
-  'bookmark': 'bg-green-200/70 dark:bg-green-500/30',
   'last-read': 'bg-purple-200/70 dark:bg-purple-500/30',
+  'red-mark': 'bg-red-300/50 dark:bg-red-300/80',
+  'blue-mark': 'bg-blue-300/50 dark:bg-blue-300/80',
+  'green-mark': 'bg-green-300/50 dark:bg-green-300/80',
 };
 
 export const highlight = {

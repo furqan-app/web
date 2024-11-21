@@ -32,7 +32,7 @@ model Verse {
   rub_el_hizb_number Int
   ruku_number        Int
   manzil_number      Int
-  sajdah_number      Int
+  sajdah_number      Int?
   text_uthmani       String
   chapter_id         Int
   text_imlaei_simple String
@@ -45,9 +45,9 @@ model Verse {
 }
 
 model Word {
-  id               Int    @id @default(autoincrement())
+  id               Int     @id @default(autoincrement())
   position         Int
-  audio_url        String
+  audio_url        String?
   verse_key        String
   verse_id         Int
   location         String
@@ -59,7 +59,7 @@ model Word {
   page_number      Int
   line_number      Int
   text             String
-  verse            Verse  @relation(fields: [verse_id], references: [id])
+  verse            Verse   @relation(fields: [verse_id], references: [id])
   // WordTranslation     WordTranslation[]
   // WordTransliteration WordTransliteration[]
 
@@ -75,6 +75,23 @@ model User {
   updated_at DateTime @updatedAt
 
   @@map("users")
+}
+
+model Mark {
+  id          Int    @id @default(autoincrement())
+  page_number Int
+  from        Int
+  to          Int
+  marked_type String // verse, word
+  marked_id   String // verse => verse_key , word => location
+  mark_type   String // note, highlight
+  mark_value  String // Any text, color 
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([marked_type, marked_id, mark_type, to])
+  @@map("marks")
 }
 
 // model Hizb {
