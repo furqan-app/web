@@ -2,9 +2,11 @@ import { highlight } from "@utils/highlight";
 import Link from "next/link";
 import { SurahResult, VerseResult } from "@types";
 import useTranslations from "@hooks/use-translations";
+import { useLocale } from "next-intl";
 
 export default function SearchQueryResults({ chapters, verses, setIsOpen }: { chapters: SurahResult[], verses: VerseResult[], setIsOpen: (isOpen: boolean) => void }) {
     const t = useTranslations();
+    const locale = useLocale();
 
     return <div className="absolute w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg 
     border border-gray-200 dark:border-gray-700 max-h-96 overflow-auto z-50">
@@ -17,6 +19,7 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
                 </div>
                 {chapters.map((chapter) => (
                     <Link
+                        locale={locale}
                         key={chapter.id}
                         href={`/pages/${chapter.pages.split('-')[0]}`}
                         onClick={() => setIsOpen(false)}
@@ -44,6 +47,7 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
                 </div>
                 {verses.map((verse) => (
                     <Link
+                        locale={locale}
                         key={verse.verse_key}
                         href={highlight.addToUrl({ verseKey: verse.verse_key, pageNumber: verse.page_number })}
                         onClick={() => setIsOpen(false)}
