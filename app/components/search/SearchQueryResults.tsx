@@ -54,7 +54,7 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
                         className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                         <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {verse.chapter_name} - {verse.verse_key.split(':')[1]}
+                            {locale === 'ar' ? verse.chapter.name_arabic : verse.chapter.name_simple} - {verse.verse_key.split(':')[1]}
                         </div>
                         <div className="text-right font-uthmanic text-lg">
                             {verse.text_uthmani}
