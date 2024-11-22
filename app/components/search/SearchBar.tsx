@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useSearch } from "@hooks/use-search";
 import SearchQueryResults from "./SearchQueryResults";
+import useTranslations from "@hooks/use-translations";
 
 export const SearchBar = () => {
+    const t = useTranslations();
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const { verses, chapters, isLoading } = useSearch(debouncedQuery);
@@ -54,7 +56,7 @@ export const SearchBar = () => {
                         setIsOpen(e.target.value.length > 0);
                     }}
                     onFocus={handleSearchFocus}
-                    placeholder="Search the Quran..."
+                    placeholder={t('search.placeholder', 'Search the Quran...')}
                     className="w-full px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800 
             border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none 
             focus:ring-2 focus:ring-blue-500"

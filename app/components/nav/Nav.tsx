@@ -1,19 +1,13 @@
 "use client";
 
-// import { useLanguage } from "@contexts/LanguageContext";
 import Link from "next/link";
-import { ThemeToggle } from "@components/ThemeToggle";
 import { SearchBar } from "@components/search/SearchBar";
-import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
-// import { LanguageToggle } from "@components/LanguageToggle";
+import { SettingsSidebar } from "@components/SettingsSidebar";
 
 export const Nav = () => {
-  const { isRTL } = { isRTL: false }; // useLanguage();
-
   return (
     <nav
       className="bg-white dark:bg-black text-black dark:text-white px-4 shadow dark:shadow-slate-600 h-14 flex items-center"
-      dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded transition-colors">
         <Link href={"/"}>
@@ -37,12 +31,8 @@ export const Nav = () => {
       <div className="flex-1">
         <SearchBar />
       </div>
-
-      <QuranFontScaleControls />
-
-      <ThemeToggle />
-
-      {/* <LanguageToggle /> */}
+      
+      <SettingsSidebar />
     </nav>
   );
 };

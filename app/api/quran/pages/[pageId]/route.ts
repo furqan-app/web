@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { connection } from "../../../../utils/db";
-import { groupBy } from "../../../../utils/groupBy";
-import { Word } from "../../../../types";
+import { connection } from "@/app/utils/db";
+import { groupBy } from "@/app/utils/groupBy";
+import { Word } from "@types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(request: Request, context: any) {
