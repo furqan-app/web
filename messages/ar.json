@@ -1,0 +1,27 @@
+{
+  "home": {
+    "title": "الفرقان",
+    "description": "اقرأ واستمع إلى القرآن"
+  },
+  "search": {
+    "placeholder": "ابحث عن السورة بالاسم أو الرقم"
+  },
+  "surah": {
+    "number": "رقم",
+    "name": "اسم",
+    "englishName": "الاسم بالإنجليزية",
+    "revelationType": "نوع الوحي",
+    "numberOfAyahs": "عدد الآيات"
+  },
+  "surahs": "السور",
+  "verses": "الآيات",
+  "settings": "الإعدادات",
+  "language": "اللغة",
+  "quranFontSize": "حجم الخط",
+  "appearance": "المظهر",
+  "notFound": {
+    "title": "404 - الصفحة غير موجودة",
+    "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",
+    "homeLink": "العودة إلى الصفحة الرئيسية"
+  }
+}
