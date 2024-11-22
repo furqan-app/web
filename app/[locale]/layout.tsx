@@ -13,18 +13,18 @@ import { getLanguageDirection } from '../utils/i18n';
 import { Locale } from '../types/config';
 
 export const metadata: Metadata = {
-  title: "Al-Furqan",
-  description: "The word focused Quran app",
+    title: "Al-Furqan",
+    description: "The word focused Quran app",
 };
 
 const surahNames = localFont({
-  src: "../fonts/surah/v1/sura_names.ttf",
-  variable: "--surah-names",
+    src: "../fonts/surah/v1/sura_names.ttf",
+    variable: "--surah-names",
 });
 
 const Uthmanic = localFont({
-  src: "../fonts/hafs/uthmanic/uthmanic.ttf",
-  variable: "--uthmanic",
+    src: "../fonts/hafs/uthmanic/uthmanic.ttf",
+    variable: "--uthmanic",
 });
 
 export function generateStaticParams() {
@@ -42,19 +42,15 @@ export default async function LocaleLayout({ children, params: { locale } }: {
     const messages = await getMessages();
 
     return (
-        <html lang={locale} dir={getLanguageDirection(locale)}>
-            <body suppressHydrationWarning
-                className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}
-            >
-                <NextIntlClientProvider messages={messages}>
-                    <QuranFontScaleProvider>
-                        <QueryProvider>
-                            <Nav />
-                            {children}
-                        </QueryProvider>
-                    </QuranFontScaleProvider>
-                </NextIntlClientProvider>
-            </body>
-        </html>
+        <div dir={getLanguageDirection(locale)} className={`${surahNames.variable} ${Uthmanic.variable} bg-white dark:bg-black antialiased`}>
+            <NextIntlClientProvider messages={messages}>
+                <QuranFontScaleProvider>
+                    <QueryProvider>
+                        <Nav />
+                        {children}
+                    </QueryProvider>
+                </QuranFontScaleProvider>
+            </NextIntlClientProvider>
+        </div>
     );
 }
