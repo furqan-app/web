@@ -4,6 +4,7 @@ import { QuranSafha } from "@/app/components/QuranSafha";
 import { fetchPageAPI } from "@/app/hooks/use-quran-page";
 import { getLocale } from "next-intl/server";
 import { getLanguageDirection } from "@/app/utils/i18n";
+import Sidebar from "@/app/components/nav/Sidebar";
 
 // statically generate all pages in build time
 export async function generateStaticParams() {
@@ -55,7 +56,7 @@ const QuranPageById = async ({
   const getNavigationHref = (isNext: boolean) => {
     const isFirstPage = pageId === "1";
     const isLastPage = pageId === "604";
-    
+
     if ((isRTL && !isNext) || (!isRTL && isNext)) {
       return isFirstPage ? "604" : String(Number(pageId) - 1);
     }
@@ -63,23 +64,26 @@ const QuranPageById = async ({
   };
 
   return (
-    <div className="bg:white dark:bg-black w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
-      <div className="flex items-center">
-        <NavigationButton
-          href={`/${locale}/pages/${getNavigationHref(false)}`}
-          isRTL={isRTL}
-          isNext={false}
-        />
-      </div>
-      <div className="">
-        <QuranSafha page={+pageId} lines={lines} />
-      </div>
-      <div className="flex items-center">
-        <NavigationButton
-          href={`/${locale}/pages/${getNavigationHref(true)}`}
-          isRTL={isRTL}
-          isNext={true}
-        />
+    <div className="flex h-[calc(100vh-3.5rem)]">
+      <Sidebar />
+      <div className="bg:white dark:bg-black w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
+        <div className="flex items-center">
+          <NavigationButton
+            href={`/${locale}/pages/${getNavigationHref(false)}`}
+            isRTL={isRTL}
+            isNext={false}
+          />
+        </div>
+        <div className="">
+          <QuranSafha page={+pageId} lines={lines} />
+        </div>
+        <div className="flex items-center">
+          <NavigationButton
+            href={`/${locale}/pages/${getNavigationHref(true)}`}
+            isRTL={isRTL}
+            isNext={true}
+          />
+        </div>
       </div>
     </div>
   );

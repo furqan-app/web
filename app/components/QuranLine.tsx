@@ -8,6 +8,8 @@ import { Word } from "@types";
 import { useSearchParams } from "next/navigation";
 import { highlight } from "../utils/highlight";
 import { useCallback, useMemo } from "react";
+import { getLanguageDirection } from "../utils/i18n";
+import { useLocale } from "next-intl";
 
 type LineProps = {
   line: string;
@@ -20,6 +22,8 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
     .split(":")
     .map(Number);
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
+
+  const locale = useLocale();
 
   const searchParams = useSearchParams();
   const highlightedVerseKey = useMemo(() => highlight.getHighlightedVerseKey(searchParams), [searchParams]);
@@ -53,7 +57,9 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
         </div>
       ) : null}
       <div
-        className={`text-white flex flex-row-reverse mb-4 ${
+        className={`text-white flex mb-4 ${
+          getLanguageDirection(locale) === "rtl" ? "flex-row" : "flex-row-reverse"
+        } ${
           [1, 2].includes(words[0].page_number) || fontLoaded
             ? "justify-center"
             : "justify-between"
