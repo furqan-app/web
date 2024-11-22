@@ -1,17 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Surah } from "@/app/types";
 
-const getSurahs = async (language: string): Promise<Surah[]> => {
-    const data = await fetch(
-        `https://api.qurancdn.com/api/qdc/chapters?language=${language}`
-    ).then((res) => res.json());
-    return data.chapters;
+const getSurahs = async (): Promise<Surah[]> => {
+    const response = await fetch(`/api/quran/surahs`);
+    return response.json();
 };
 
-export const useSurahs = (language: string) => {
+export const useSurahs = () => {
     return useQuery({
-        queryKey: ["surahs", language],
-        queryFn: () => getSurahs(language),
+        queryKey: ["surahs"],
+        queryFn: getSurahs,
         staleTime: Infinity,
     });
 };
