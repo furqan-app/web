@@ -18,5 +18,10 @@
   "settings": "الإعدادات",
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
-  "appearance": "المظهر"
+  "appearance": "المظهر",
+  "notFound": {
+    "title": "404 - الصفحة غير موجودة",
+    "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",
+    "homeLink": "العودة إلى الصفحة الرئيسية"
+  }
 }
