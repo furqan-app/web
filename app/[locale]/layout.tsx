@@ -10,6 +10,7 @@ import { QueryProvider } from "@/app/providers/QueryProvider";
 import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
 import "../globals.css";
 import { getLanguageDirection } from '../utils/i18n';
+import { Locale } from '../types/config';
 
 export const metadata: Metadata = {
   title: "Al-Furqan",
@@ -32,9 +33,9 @@ export function generateStaticParams() {
 
 export default async function LocaleLayout({ children, params: { locale } }: {
     children: React.ReactNode;
-    params: { locale: string };
+    params: { locale: Locale };
 }) {
-    if (!routing.locales.includes(locale as any)) {
+    if (!routing.locales.includes(locale)) {
         notFound();
     }
 
