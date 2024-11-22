@@ -1,6 +1,5 @@
 import { getRequestConfig } from 'next-intl/server';
 import { routing } from './routing';
-import { convertFlatToNested } from '@/app/utils/i18n';
 
 export default getRequestConfig(async ({ requestLocale }) => {
   let locale = await requestLocale;
@@ -8,8 +7,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = routing.defaultLocale;
   }
 
-  const flatMessages = (await import(`../messages/${locale}.json`)).default;
-  const messages = convertFlatToNested(flatMessages);
+  const messages = (await import(`../messages/${locale}.json`)).default;
 
   return {
     locale,
