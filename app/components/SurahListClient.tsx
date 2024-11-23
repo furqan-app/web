@@ -1,6 +1,5 @@
 'use client';
 
-import { useLocale } from "next-intl";
 import { useSurahs } from "../hooks/use-surahs";
 import { SurahList } from "./SurahList";
 
@@ -20,8 +19,7 @@ const ErrorMessage = ({ message }: { message: string }) => (
 );
 
 export const SurahListClient = () => {
-  const locale = useLocale();
-  const { data: surahs, error, isLoading } = useSurahs(locale);
+  const { data: surahs, error, isLoading } = useSurahs();
 
   if (isLoading) {
     return <Placeholder />;
