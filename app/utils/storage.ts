@@ -1,10 +1,9 @@
 import { QuranFontScale } from "@types";
 
-export type StorageKey = 'theme' | 'language' | 'quranFontScale';
+export type StorageKey = 'theme' | 'quranFontScale';
 
 type StorageValueType = {
   theme: 'light' | 'dark';
-  language: 'en' | 'ar';
   quranFontScale: QuranFontScale;
 };
 

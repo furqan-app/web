@@ -3,7 +3,10 @@ import { groupBy } from "../../../../utils/groupBy";
 import { prisma } from "@/app/utils/db";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function GET(request: Request, context: any) {
+export async function GET(
+  request: Request,
+  context: { params: { pageId: string } }
+) {
   const { pageId } = context.params;
 
   const words = await prisma.word.findMany({

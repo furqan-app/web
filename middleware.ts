@@ -1,37 +1,17 @@
-import { getToken } from "next-auth/jwt";
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
-import { jsonResponse } from "./app/api/response";
-import { isJSONRequest } from "./app/api/request";
+import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
+import { withAuth } from "./app/middlewares/auth-middleware";
+import { withIntl } from "./app/middlewares/intl-middleware";
+import { CustomMiddleware, pipeMiddlewares } from "./app/middlewares/pipe";
 
-export default withAuth(
-  async function middleware(req) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (!token?.email) {
-      if (isJSONRequest(req)) {
-        return jsonResponse({
-          code: 401,
-        });
-      }
-      return NextResponse.redirect("/api/auth/signin");
-    }
-    const headers = new Headers(req.headers);
-    headers.set("user", JSON.stringify(token));
-    return NextResponse.next({
-      request: {
-        headers,
-      },
-    });
-  },
-  {
-    callbacks: {
-      // Should be true to run the middleware
-      authorized: () => {
-        return true;
-      },
-    },
-  }
-);
+const withInit =
+  (middleware: CustomMiddleware) => (req: NextRequest, event: NextFetchEvent) =>
+    middleware(req, event, NextResponse.next());
 
-export const config = { matcher: ["/api/quran/pages/:pageId/marks"] };
+export default pipeMiddlewares([withInit, withIntl, withAuth]);
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|fonts/*).*)",
+  ],
+};
 

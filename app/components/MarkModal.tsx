@@ -65,8 +65,6 @@ export function MarkModal({ isOpen, close, markFor }: ModalProps) {
         }
       ).then((res) => res.json());
 
-      console.log(response);
-
       if (response.code === 401) {
         return router.push("/api/auth/signin");
       }
@@ -108,7 +106,10 @@ export function MarkModal({ isOpen, close, markFor }: ModalProps) {
             </TabList>
             <TabPanels className="mt-3">
               {categories.map(({ key, content }) => (
-                <TabPanel key={key} className="rounded-xl  bg-gray-200 dark:bg-white/5 p-3">
+                <TabPanel
+                  key={key}
+                  className="rounded-xl  bg-gray-200 dark:bg-white/5 p-3"
+                >
                   <ul>{content(markWord)}</ul>
                 </TabPanel>
               ))}
