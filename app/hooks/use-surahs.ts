@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Surah } from "@/app/types";
 
-const getSurahs = async (): Promise<Surah[]> => {
-    const response = await fetch(`/api/quran/surahs`);
+export const getSurahs = async (): Promise<Surah[]> => {
+    const response = await fetch(`http://localhost:3000/api/quran/surahs`);
     return response.json();
 };
 
