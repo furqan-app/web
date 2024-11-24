@@ -1,7 +1,6 @@
-import { getLocale } from "next-intl/server";
-import { SurahList } from "../components/SurahList";
 import useTranslations from "../hooks/use-translations";
-import { getSurahs } from "../server/actions/getSurahs";
+import { SurahList } from "../components/SurahList";
+import { getSurahs } from "../hooks/use-surahs";
 
 const AppTitle = () => {
   const t = useTranslations();
@@ -9,9 +8,7 @@ const AppTitle = () => {
 };
 
 export default async function Home() {
-  const locale = await getLocale();
-  const surahs = await getSurahs(locale);
-
+  const surahs = await getSurahs();
   return (
     <main className="container mx-auto px-4 py-8 min-h-screen">
       <div className="max-w-4xl mx-auto">

@@ -2,6 +2,8 @@
 
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
+import { useLocale } from "next-intl";
+import { getLanguageDirection } from "../utils/i18n";
 import { MouseEvent, Suspense } from "react";
 import { QuranWord } from "./QuranWord";
 import { WordWithVerse } from "../types/prisma";
@@ -24,6 +26,8 @@ export const QuranLine = ({
     .map(Number);
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
 
+  const locale = useLocale();
+
   return (
     <>
       {shouldRenderSurahHeader ? (
@@ -45,7 +49,9 @@ export const QuranLine = ({
         </div>
       ) : null}
       <div
-        className={`text-white flex flex-row-reverse mb-4 ${
+        className={`text-white flex mb-4 ${
+          getLanguageDirection(locale) === "rtl" ? "flex-row" : "flex-row-reverse"
+        } ${
           [1, 2].includes(words[0].page_number) || fontLoaded
             ? "justify-center"
             : "justify-between"

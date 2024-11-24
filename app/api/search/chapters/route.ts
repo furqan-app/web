@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connection } from "../../../utils/db";
+import { prisma } from "../../../utils/db";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,18 +9,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] });
   }
 
-  const [results] = await connection.execute(
-    `SELECT 
-      id,
-      name_arabic,
-      name_simple,
-      verses_count,
-      pages
-    FROM chapters
-    WHERE name_arabic LIKE ? OR name_simple LIKE ?
-    ORDER BY id`,
-    [`%${query}%`, `%${query}%`]
-  );
+  const results = await prisma.chapter.findMany({
+    where: {
+      OR: [
+        { name_arabic: { contains: query } },
+        { name_simple: { contains: query } }
+      ]
+    },
+    select: {
+      id: true,
+      name_arabic: true, 
+      name_simple: true,
+      verses_count: true,
+      pages: true
+    },
+    orderBy: {
+      id: 'asc'
+    }
+  });
 
   return NextResponse.json({ results });
 }

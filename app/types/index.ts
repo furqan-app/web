@@ -66,7 +66,10 @@ export type VerseResult = {
   text_imlaei_simple: string;
   text_uthmani: string;
   page_number: number;
-  chapter_name: string;
+  chapter: {
+    name_arabic: string;
+    name_simple: string;
+  };
 };
 
 export type SurahResult = {
