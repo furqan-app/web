@@ -1,0 +1,39 @@
+import { CustomMiddleware } from "./pipe";
+import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { jsonResponse } from "../api/response";
+import { isJSONRequest } from "../api/request";
+
+const protectedRoutes = [new RegExp("/api/quran/pages/[0-9]+/marks")];
+
+export const withAuth = (middleware: CustomMiddleware) => {
+  return async (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    req: NextRequest & { nextauth?: { token?: any } },
+    event: NextFetchEvent,
+    response: NextResponse
+  ) => {
+    const pathname = req.nextUrl.pathname;
+
+    if (!protectedRoutes.some((route) => route.test(pathname))) {
+      return middleware(req, event, response);
+    }
+
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
+    if (!token?.email) {
+      if (isJSONRequest(req)) {
+        return jsonResponse({
+          code: 401,
+        });
+      }
+
+      return NextResponse.redirect(`/api/auth/signin?callbackUrl=${pathname}`);
+    }
+
+    response.headers.set("user", JSON.stringify(token));
+
+    return middleware(req, event, response);
+  };
+};
+
