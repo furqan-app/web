@@ -4,15 +4,15 @@ import "./globals.css";
 import { getLanguageDirection } from "./utils/i18n";
 import localFont from "next/font/local";
 
-const Uthmanic = localFont({
-  src: "./fonts/hafs/uthmanic/uthmanic.ttf",
-  variable: "--uthmanic",
-});
-
 export const metadata: Metadata = {
   title: "Al-Furqan",
   description: "The word focused Quran app",
 };
+
+const uthmanic = localFont({
+  src: "./fonts/hafs/uthmanic/uthmanic.ttf",
+  variable: "--uthmanic",
+});
 
 const surahNames = localFont({
   src: "./fonts/surah/v1/sura_names.ttf",
@@ -27,7 +27,13 @@ export default function RootLayout({
   const locale = useLocale();
   return (
     <html lang={locale}>
-      <body suppressHydrationWarning dir={getLanguageDirection(locale)} className="bg-white dark:bg-black antialiased">{children}</body>
+      <body
+        suppressHydrationWarning
+        dir={getLanguageDirection(locale)}
+        className={`${uthmanic.variable} ${surahNames.variable} bg-white dark:bg-black antialiased`}
+      >
+        {children}
+      </body>
     </html>
   );
 }
