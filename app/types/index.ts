@@ -77,4 +77,15 @@ export type SurahResult = {
   pages: string;
 };
 
+export type Mark = {
+  id: number;
+  marked_id: number;
+  marked_type: string;
+  mark_type: string;
+  mark_value: string;
+  from_user: number;
+  to_user: number;
+  page_number: number;
+};
+
 export type QuranFontScale = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;

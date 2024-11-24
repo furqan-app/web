@@ -1,36 +1,28 @@
 "use client";
 
-// import { AnimatePresence, motion } from "framer-motion";
-
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
-import { Word } from "@types";
-import { useSearchParams } from "next/navigation";
-import { highlight } from "../utils/highlight";
-import { useCallback, useMemo } from "react";
+import { MouseEvent, Suspense } from "react";
+import { QuranWord } from "./QuranWord";
+import { WordWithVerse } from "../types/prisma";
 
 type LineProps = {
-  line: string;
-  words: Array<Word>;
+  words: Array<WordWithVerse>;
   fontLoaded: boolean;
+  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
+  marks: Record<string, Array<{ name: string; value: string }>>;
 };
 
-export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
+export const QuranLine = ({
+  words,
+  fontLoaded,
+  onWordClicked,
+  marks,
+}: LineProps) => {
   const [surahId, verseNumber, wordNumber] = words[0].location
     .split(":")
     .map(Number);
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
-
-  const searchParams = useSearchParams();
-  const highlightedVerseKey = useMemo(() => highlight.getHighlightedVerseKey(searchParams), [searchParams]);
-  const highlightType = useMemo(() => highlight.getHighlightType(searchParams), [searchParams]);
-
-  const getHighlightClassForWord = useCallback((word: Word) => {
-    return highlight.getHighlightClass(
-      highlight.shouldHighlight(word, highlightedVerseKey),
-      highlightType
-    );
-  }, [highlightedVerseKey, highlightType]);
 
   return (
     <>
@@ -60,43 +52,21 @@ export const QuranLine = ({ line, words, fontLoaded }: LineProps) => {
         } `}
       >
         {words.map((word) => (
-          <span
-            key={line + "" + word.id}
-            data-verse-key={word.verse_key}
-            className={` leading-none text-black dark:text-white hover:text-sky-600 dark:hover:indigo-sky-300 cursor-pointer
-              ${getHighlightClassForWord(word)}
-            `}
-          >
-            {fontLoaded ? (
-              <span>{word.code_v1}</span>
-            ) : (
-              <span>{word.qpc_uthmani_hafs}</span>
-            )}
-
-            {/* {fontLoaded ? (
-              <AnimatePresence>
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  {word.code_v1}
-                </motion.span>
-              </AnimatePresence>
-            ) : (
-              <AnimatePresence>
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  {word.qpc_uthmani_hafs}
-                </motion.span>
-              </AnimatePresence>
-            )} */}
-          </span>
+          <Suspense key={word.location}>
+            <QuranWord
+              onWordClicked={onWordClicked}
+              key={word.id}
+              fontLoaded={fontLoaded}
+              word={word}
+              marks={[
+                ...(marks[word.location] || []),
+                ...(marks[word.verse_key] || []),
+              ]}
+            ></QuranWord>
+          </Suspense>
         ))}
       </div>
     </>
   );
 };
+
