@@ -39,6 +39,7 @@ const tailwindFontUtility = [
 ];
 
 export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
+  // TODO: fetch page info
   const { isPending } = usePageFont(page);
   const { data: marks } = useMarks(page);
   const { quranFontScale } = useQuranFontScale();
