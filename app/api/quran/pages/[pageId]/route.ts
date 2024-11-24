@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { groupBy } from "../../../../utils/groupBy";
 import { prisma } from "@/app/utils/db";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(
   request: Request,
   context: { params: { pageId: string } }

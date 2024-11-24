@@ -1,16 +1,17 @@
 import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { prisma } from "@/app/utils/db";
+import { extractUser } from "@/app/api/request";
 
 export async function GET(
   request: NextRequest,
   context: { params: { pageId: string } }
 ) {
-  const user = JSON.parse(request.headers.get("user") as string);
+  const user = extractUser(request);
 
   const marks = await prisma.mark.findMany({
     where: {
-      to: user.id,
+      to_user: user.id,
       page_number: parseInt(context.params.pageId),
     },
   });
@@ -27,7 +28,7 @@ export async function POST(
   context: { params: { pageId: string } }
 ) {
   const body = await request.json();
-  const user = JSON.parse(request.headers.get("user") as string);
+  const user = extractUser(request);
 
   const { marked_type, marked_id, mark_type, mark_value } = body;
   const fromUser = user.id;
@@ -43,15 +44,15 @@ export async function POST(
 
   await prisma.mark.upsert({
     where: {
-      marked_type_marked_id_mark_type_to: {
-        to: toUser,
+      marked_type_marked_id_mark_type_to_user: {
+        to_user: toUser,
         marked_type,
         marked_id,
         mark_type,
       },
     },
     update: {
-      from: fromUser,
+      from_user: fromUser,
       mark_value,
     },
     create: {
@@ -60,8 +61,8 @@ export async function POST(
       marked_id,
       mark_type,
       mark_value,
-      from: fromUser,
-      to: toUser,
+      from_user: fromUser,
+      to_user: toUser,
     },
   });
 

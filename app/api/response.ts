@@ -4,14 +4,14 @@ export type ApiResponse<T> = {
   data?: T | null;
   error?: unknown | null;
   code?: number;
-  message?: string;
+  message?: string | null;
 };
 
 export const jsonResponse = <T>({
   data = null,
   code = 200,
   error = null,
-  message = undefined,
+  message = null,
 }: ApiResponse<T>) => {
   return NextResponse.json({
     data,

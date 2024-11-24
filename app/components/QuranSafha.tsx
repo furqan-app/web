@@ -67,13 +67,13 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
     <>
       {session?.data?.user && selectedForMark ? (
         <MarkModal
-          isOpen={selectedForMark !== null}
+          isOpen={true}
           close={closeMarkModal}
           markFor={selectedForMark as WordWithVerse | Verse}
         />
       ) : null}
       {!session.data?.user && selectedForMark ? (
-        <SignInModal isOpen={selectedForMark !== null} close={closeMarkModal} />
+        <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center">
         <div className="w-fit py-6 border-b border-b-gray-500">

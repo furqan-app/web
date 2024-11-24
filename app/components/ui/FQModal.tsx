@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 export type ModalProps = {
   isOpen: boolean;
   close: () => void;
-  children: ({ close }: { close: ModalProps["close"] }) => ReactNode;
+  children: ReactNode;
 };
 
 export const FQModal = ({ isOpen, close, children }: ModalProps) => {
@@ -17,7 +17,7 @@ export const FQModal = ({ isOpen, close, children }: ModalProps) => {
     >
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto bg-gray-400/50 dark:bg-gray-800/50">
         <div className="flex min-h-full items-center justify-center p-4">
-          {children({ close })}
+          {children}
         </div>
       </div>
     </Dialog>

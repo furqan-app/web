@@ -83,8 +83,8 @@ export type Mark = {
   marked_type: string;
   mark_type: string;
   mark_value: string;
-  from: number;
-  to: number;
+  from_user: number;
+  to_user: number;
   page_number: number;
 };
 

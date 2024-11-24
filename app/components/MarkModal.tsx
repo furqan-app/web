@@ -11,9 +11,9 @@ import { BookmarkIcon, PencilSquareIcon } from "@heroicons/react/16/solid";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
-import { useRouter } from "next/navigation";
 import { FQModal } from "./ui/FQModal";
 import { WordWithVerse } from "../types/prisma";
+import { addPageMark } from "../server/actions/addPageMark";
 
 type ModalProps = {
   isOpen: boolean;
@@ -39,84 +39,74 @@ const categories = [
   },
 ];
 
+const getTitle = (markFor: WordWithVerse | Verse) => {
+  if ("location" in markFor) {
+    return markFor.qpc_uthmani_hafs;
+  }
+
+  if (markFor.text_uthmani.length > 70) {
+    return `${markFor.text_uthmani.slice(0, 70)} ...`;
+  }
+
+  return markFor.text_uthmani;
+};
+
 export function MarkModal({ isOpen, close, markFor }: ModalProps) {
   const { reload: reloadMarks } = useMarks(markFor.page_number);
-  const router = useRouter();
 
   const isWord = "location" in markFor;
 
   const markWord = async (color: string) => {
-    const body = JSON.stringify({
+    const added = await addPageMark({
       marked_type: isWord ? "word" : "verse",
       marked_id: isWord ? markFor.location : markFor.verse_key,
       mark_type: "color",
       mark_value: color,
+      page_number: markFor.page_number,
     });
 
-    try {
-      const response = await fetch(
-        `http://localhost:3000/api/quran/pages/${markFor.page_number}/marks`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body,
-        }
-      ).then((res) => res.json());
-
-      if (response.code === 401) {
-        return router.push("/api/auth/signin");
-      }
-
-      if (response.success) {
-        reloadMarks();
-        close();
-      }
-    } catch (e) {
-      console.log(e);
+    if (added) {
+      reloadMarks();
+      close();
     }
   };
 
   return (
     <FQModal isOpen={isOpen} close={close}>
-      {({ close }) => (
-        <FQModal.Body close={close}>
-          <DialogTitle
-            as="h3"
-            className="flex flex-row-reverse text-black dark:text-white text-2xl font-medium mb-4"
-            style={{
-              fontFamily: `var(--uthmanic)`,
-            }}
-          >
-            {markFor.text_uthmani.length > 70
-              ? "..." + markFor.text_uthmani.slice(0, 70)
-              : markFor.text_uthmani}
-          </DialogTitle>
-          <TabGroup>
-            <TabList className="flex gap-4 text-black dark:text-white">
-              {categories.map(({ header, key }) => (
-                <Tab
-                  key={key}
-                  className="rounded-full py-1 px-3 text-sm/6 font-semibold focus:outline-none data-[selected]:bg-gray-200 dark:data-[selected]:bg-white/10 data-[hover]:bg-gray-200 dark:data-[hover]:bg-white/5 data-[selected]:data-[hover]:bg-white/10 data-[focus]:outline-1 data-[focus]:outline-black dark:data-[focus]:outline-white"
-                >
-                  {header()}
-                </Tab>
-              ))}
-            </TabList>
-            <TabPanels className="mt-3">
-              {categories.map(({ key, content }) => (
-                <TabPanel
-                  key={key}
-                  className="rounded-xl  bg-gray-200 dark:bg-white/5 p-3"
-                >
-                  <ul>{content(markWord)}</ul>
-                </TabPanel>
-              ))}
-            </TabPanels>
-          </TabGroup>
-        </FQModal.Body>
-      )}
+      <FQModal.Body close={close}>
+        <DialogTitle
+          as="h3"
+          className="flex text-black dark:text-white text-2xl font-medium mb-4"
+          style={{
+            fontFamily: "var(--uthmanic)",
+          }}
+          dir="rtl"
+        >
+          {getTitle(markFor)}
+        </DialogTitle>
+        <TabGroup>
+          <TabList className="flex gap-4 text-black dark:text-white">
+            {categories.map(({ header, key }) => (
+              <Tab
+                key={key}
+                className="rounded-full py-1 px-3 text-sm/6 font-semibold focus:outline-none data-[selected]:bg-gray-200 dark:data-[selected]:bg-white/10 data-[hover]:bg-gray-200 dark:data-[hover]:bg-white/5 data-[selected]:data-[hover]:bg-white/10 data-[focus]:outline-1 data-[focus]:outline-black dark:data-[focus]:outline-white"
+              >
+                {header()}
+              </Tab>
+            ))}
+          </TabList>
+          <TabPanels className="mt-3">
+            {categories.map(({ key, content }) => (
+              <TabPanel
+                key={key}
+                className="rounded-xl  bg-gray-200 dark:bg-white/5 p-3"
+              >
+                <ul>{content(markWord)}</ul>
+              </TabPanel>
+            ))}
+          </TabPanels>
+        </TabGroup>
+      </FQModal.Body>
     </FQModal>
   );
 }

@@ -52,25 +52,18 @@ export const QuranLine = ({
         } `}
       >
         {words.map((word) => (
-          <div
-            key={word.id}
-            data-marks={JSON.stringify(marks)}
-            data-word-marks={JSON.stringify(marks[word.id] || [])}
-            data-verse-marks={JSON.stringify(marks[word.verse_id] || [])}
-          >
-            <Suspense>
-              <QuranWord
-                onWordClicked={onWordClicked}
-                key={word.id}
-                fontLoaded={fontLoaded}
-                word={word}
-                marks={[
-                  ...(marks[word.location] || []),
-                  ...(marks[word.verse_key] || []),
-                ]}
-              ></QuranWord>
-            </Suspense>
-          </div>
+          <Suspense key={word.location}>
+            <QuranWord
+              onWordClicked={onWordClicked}
+              key={word.id}
+              fontLoaded={fontLoaded}
+              word={word}
+              marks={[
+                ...(marks[word.location] || []),
+                ...(marks[word.verse_key] || []),
+              ]}
+            ></QuranWord>
+          </Suspense>
         ))}
       </div>
     </>
