@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { WordWithVerse } from "../types/prisma";
-import { Verse } from "../types";
 
 export const fetchPageAPI = async (
   page: number

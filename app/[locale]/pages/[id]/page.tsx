@@ -75,7 +75,7 @@ const QuranPageById = async ({
           />
         </div>
         <div className="">
-          <QuranSafha page={+pageId} lines={lines}/>
+          <QuranSafha page={+pageId} lines={lines} />
         </div>
         <div className="flex items-center">
           <NavigationButton

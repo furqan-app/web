@@ -40,6 +40,8 @@ model Verse {
   juz_number         Int
   chapter            Chapter @relation(fields: [chapter_id], references: [id])
   Word               Word[]
+  startRub           Rub[]  @relation("StartVerse")
+  endRub             Rub[]  @relation("EndVerse")
 
   @@map("verses")
 }
@@ -110,21 +112,29 @@ model Mark {
 //   end_verse      Int
 // }
 
-// model Rub {
-//   id                  Int  @id @default(autoincrement())
-//   rub_number          Int
-//   verse_mapping_start Int
-//   verse_mapping_end   Int
-//   verses_count        Int
-// }
+model Rub {
+  id                  Int               @id @default(autoincrement())
+  rub_number          Int               @unique
+  verse_mapping_start Int
+  verse_mapping_end   Int
+  verses_count        Int
+  rubVerseMappings    RubVerseMapping[] @relation("RubToRubVerseMapping")
+  startVerse          Verse  @relation("StartVerse", fields: [verse_mapping_start], references: [id])
+  endVerse            Verse  @relation("EndVerse", fields: [verse_mapping_end], references: [id])
 
-// model RubVerseMapping {
-//   id             Int  @id @default(autoincrement())
-//   rub_number     Int
-//   chapter_number Int
-//   start_verse    Int
-//   end_verse      Int
-// }
+  @@map("rubs")
+}
+
+model RubVerseMapping {
+  id             Int  @id @default(autoincrement())
+  rub_number     Int
+  chapter_number Int
+  start_verse    Int
+  end_verse      Int
+  rub            Rub  @relation("RubToRubVerseMapping", fields: [rub_number], references: [rub_number])
+
+  @@map("rub_verse_mappings")
+}
 
 // model WordTranslation {
 //   id               Int     @id @default(autoincrement())
