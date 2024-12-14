@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { QuranSafha } from "@/app/components/QuranSafha";
-import { fetchPageAPI, fetchPageInfoAPI } from "@/app/hooks/use-quran-page";
+import { fetchPageAPI } from "@/app/hooks/use-quran-page";
 import { getLocale } from "next-intl/server";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import Sidebar from "@/app/components/nav/Sidebar";
@@ -51,8 +51,6 @@ const QuranPageById = async ({
 }: QuranPageByIdProps) => {
   const locale = await getLocale();
   const lines = await fetchPageAPI(Number(pageId));
-  const pageInfo = await fetchPageInfoAPI(Number(pageId));
-  
   const isRTL = getLanguageDirection(locale) === "rtl";
 
   const getNavigationHref = (isNext: boolean) => {

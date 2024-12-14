@@ -11,6 +11,9 @@ import { Verse } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { SignInModal } from "./SignInModal";
 import { WordWithVerse } from "../types/prisma";
+import { useSurahs } from "../hooks/use-surahs";
+import { useLocale } from "next-intl";
+import useTranslations from "@hooks/use-translations";
 
 type QuranSafhaProps = {
   page: number;
@@ -39,11 +42,13 @@ const tailwindFontUtility = [
 ];
 
 export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
-  // TODO: fetch page info
-  const { isPending } = usePageFont(page);
-  const { data: marks } = useMarks(page);
-  const { quranFontScale } = useQuranFontScale();
+  const locale = useLocale();
   const session = useSession();
+  const t = useTranslations();
+  const { data: marks } = useMarks(page);
+  const { data: surahs } = useSurahs();
+  const { isPending } = usePageFont(page);
+  const { quranFontScale } = useQuranFontScale();
 
   const [selectedForMark, setSelectedForMark] = useState<
     WordWithVerse | Verse | null
@@ -64,6 +69,49 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
     setSelectedForMark(null);
   };
 
+  const getPageInfo = () => {
+    const lastLineNumber = Math.max(...Object.keys(lines).map(Number));
+    const lastLine = lines[lastLineNumber];
+    const lastWordWithVerse = [...lastLine].reverse().find((word) => word.verse);
+
+    if (!lastWordWithVerse?.verse) {
+      return null;
+    }
+
+    const { verse } = lastWordWithVerse;
+    const surah = surahs?.find((s) => s.id === verse.chapter_id);
+    
+    if (!surah) {
+      return null;
+    }
+
+    // Calculate hizb position (0-3)
+    const hizbPosition = (verse.hizb_number * 4) - verse.rub_el_hizb_number;
+    let hizbText;
+    switch (hizbPosition) {
+      case 3:
+        hizbText = t("hizb", "الحزب");
+        break;
+      case 2:
+        hizbText = t("hizb-quarter", "ربع الحزب");
+        break;
+      case 1:
+        hizbText = t("hizb-half", "نصف الحزب");
+        break;
+      case 0:
+        hizbText = t("hizb-three-quarters", "ثلاث أرباع الحزب");
+        break;
+    }
+
+    return {
+      surahName: t("surah", "سورة") + " " + (locale === "ar" ? surah?.name_arabic : surah?.name_simple),
+      juz: t("juz", "الجزء") + " " + verse.juz_number,
+      hizb: hizbText + " " + verse.hizb_number,
+    };
+  };
+
+  const pageInfo = getPageInfo();
+
   return (
     <>
       {session?.data?.user && selectedForMark ? (
@@ -78,6 +126,14 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
       ) : null}
       <div className="fq-full-safha flex justify-center">
         <div className="w-fit py-6 border-b border-b-gray-500">
+          <div className="flex w-full justify-between">
+            <div className="text-black dark:text-white">
+              {pageInfo?.surahName}
+            </div>
+            <div className="text-black dark:text-white">
+              {pageInfo?.juz}, {pageInfo?.hizb}
+            </div>
+          </div>
           <div
             className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
               quranFontScale
@@ -104,4 +160,3 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
     </>
   );
 };
-
