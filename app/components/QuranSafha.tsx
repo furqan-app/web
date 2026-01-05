@@ -65,18 +65,18 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
 
   return (
     <>
-      {session?.data?.user && selectedForMark ? (
+      {session?.data?.user?.email && selectedForMark ? (
         <MarkModal
           isOpen={true}
           close={closeMarkModal}
           markFor={selectedForMark as WordWithVerse | Verse}
         />
       ) : null}
-      {!session.data?.user && selectedForMark ? (
+      {!session.data?.user?.email && selectedForMark ? (
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center">
-        <div className="w-fit py-6 border-b border-b-gray-500">
+        <div className="w-fit py-6">
           <div
             className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
               quranFontScale

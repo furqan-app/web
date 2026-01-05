@@ -4,8 +4,8 @@ import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
 import { ThemeToggle } from "@components/ThemeToggle";
 import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
-import { SettingsIcon } from "./icons/SettingsIcon";
 import useTranslations from "@hooks/use-translations";
+import { Cog8ToothIcon } from "@heroicons/react/16/solid";
 
 export const SettingsSidebar = () => {
   const locale = useLocale();
@@ -20,26 +20,39 @@ export const SettingsSidebar = () => {
   return (
     <>
       <button onClick={toggleSidebar} className={isRTL ? "mr-4" : "ml-4"}>
-        <SettingsIcon />
+        <Cog8ToothIcon fill="none" stroke="currentColor" className="w-6 h-6" />
       </button>
       <div
         dir={getLanguageDirection(locale)}
-        className={`fixed top-0 ${isRTL ? 'left-0' : 'right-0'} w-64 h-full bg-white dark:bg-gray-900 shadow-lg transition-transform transform ${
-          isOpen 
-            ? "translate-x-0" 
-            : isRTL 
-              ? "-translate-x-full"
-              : "translate-x-full"
+        className={`fixed top-0 ${
+          isRTL ? "left-0" : "right-0"
+        } w-64 h-full bg-white dark:bg-gray-900 shadow-lg transition-transform transform ${
+          isOpen
+            ? "translate-x-0"
+            : isRTL
+            ? "-translate-x-full"
+            : "translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-lg font-semibold">{t("settings", "Settings")}</h2>
-          <button 
+          <button
             onClick={toggleSidebar}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -73,3 +86,4 @@ export const SettingsSidebar = () => {
     </>
   );
 };
+

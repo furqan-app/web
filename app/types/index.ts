@@ -49,7 +49,7 @@ export type Surah = {
   verses_count: number;
   revelation_place: string;
   revelation_order: number;
-  pages: number[];
+  pages: string;
   slug: {
     slug: string;
     locale: string;

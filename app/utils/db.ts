@@ -7,6 +7,7 @@ export const connection = mysql
     user: "quran_user",
     password: "quran_password",
     database: "quran_db",
+    port: 3307,
   })
   .promise();
 

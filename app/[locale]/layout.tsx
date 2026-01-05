@@ -32,10 +32,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <div
-      dir={getLanguageDirection(locale)}
-      className="bg-white dark:bg-black antialiased"
-    >
+    <div dir={getLanguageDirection(locale)}>
       <NextIntlClientProvider messages={messages}>
         <SessionProvider session={session}>
           <QuranFontScaleProvider>

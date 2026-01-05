@@ -46,7 +46,7 @@ export const SearchBar = () => {
     const hasResults = (chapters.data?.length || 0) > 0 || (verses.data?.length || 0) > 0;
 
     return (
-        <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto">
+        <div ref={searchContainerRef} className="relative w-full max-w-3xl">
             <div className="relative">
                 <input
                     type="text"

@@ -30,7 +30,7 @@ export default function RootLayout({
       <body
         suppressHydrationWarning
         dir={getLanguageDirection(locale)}
-        className={`${uthmanic.variable} ${surahNames.variable} bg-white dark:bg-black antialiased`}
+        className={`${uthmanic.variable} ${surahNames.variable} bg-white dark:bg-neutral-950 text-black dark:text-white antialiased`}
       >
         {children}
       </body>

@@ -23,7 +23,7 @@ export const SurahListItem = ({ surah }: Props) => {
     }
   };
 
-  const surahStartingPage = surah.pages[0];
+  const surahStartingPage = surah.pages.split('-')[0];
   return (
     <Link
       locale={locale}
