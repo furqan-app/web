@@ -79,14 +79,40 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
     }
 
     const { verse } = lastWordWithVerse;
-    const surah = surahs?.find((s) => s.id === verse.chapter_id);
-    
+
+    let firstSurahIdOnPageId: number | null = null;
+
+    for (const lineValue of Object.values(lines)) {
+      const [lineSurahId, verseNumber, wordNumber] = lineValue[0].location
+        .split(":")
+        .map(Number);
+
+      if (verseNumber === 1 && wordNumber === 1) {
+        firstSurahIdOnPageId = lineSurahId;
+        break;
+      }
+    }
+
+    const surah = surahs?.find((s) => s.id === (firstSurahIdOnPageId ?? verse.chapter_id));
+
     if (!surah) {
       return null;
     }
 
-    // Calculate hizb position (0-3)
-    const hizbPosition = (verse.hizb_number * 4) - verse.rub_el_hizb_number;
+    /*
+     * Calculate hizb position (0-3)
+     * Examples:
+     * hizb_number = 1, rub_el_hizb_number = 1  => hizbPosition = 3
+     * hizb_number = 1, rub_el_hizb_number = 2  => hizbPosition = 2
+     * hizb_number = 1, rub_el_hizb_number = 3  => hizbPosition = 1
+     * hizb_number = 1, rub_el_hizb_number = 4  => hizbPosition = 0
+     *
+     * hizb_number = 35, rub_el_hizb_number = 141  => hizbPosition = 3
+     * hizb_number = 35, rub_el_hizb_number = 142  => hizbPosition = 2
+     * hizb_number = 35, rub_el_hizb_number = 143  => hizbPosition = 1
+     * hizb_number = 35, rub_el_hizb_number = 144  => hizbPosition = 0
+     */
+    const hizbPosition = verse.hizb_number * 4 - verse.rub_el_hizb_number;
     let hizbText;
     switch (hizbPosition) {
       case 3:
@@ -135,7 +161,7 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
             </div>
           </div>
           <div
-            className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
+            className={`fq-quran-safha mt-4 text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
               quranFontScale
             )}vh]`}
             style={{
