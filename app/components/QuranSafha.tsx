@@ -7,11 +7,10 @@ import { useQuranFontScale } from "../contexts/QuranFontScaleContext";
 import { MarkModal } from "./MarkModal";
 import { useState } from "react";
 import { useMarks } from "../hooks/use-marks";
-import { Verse } from "@prisma/client";
+import { Chapter, Verse } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { SignInModal } from "./SignInModal";
 import { WordWithVerse } from "../types/prisma";
-import { useSurahs } from "../hooks/use-surahs";
 import { useLocale } from "next-intl";
 import useTranslations from "@hooks/use-translations";
 
@@ -46,7 +45,6 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
   const session = useSession();
   const t = useTranslations();
   const { data: marks } = useMarks(page);
-  const { data: surahs } = useSurahs();
   const { isPending } = usePageFont(page);
   const { quranFontScale } = useQuranFontScale();
 
@@ -72,30 +70,28 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
   const getPageInfo = () => {
     const lastLineNumber = Math.max(...Object.keys(lines).map(Number));
     const lastLine = lines[lastLineNumber];
-    const lastWordWithVerse = [...lastLine].reverse().find((word) => word.verse);
+    const lastWordWithVerse = [...lastLine]
+      .reverse()
+      .find((word) => word.verse);
 
     if (!lastWordWithVerse?.verse) {
       return null;
     }
 
-    const { verse } = lastWordWithVerse;
+    let pageSurah: Chapter | null = lastWordWithVerse.verse.chapter;
 
-    let firstSurahIdOnPageId: number | null = null;
-
-    for (const lineValue of Object.values(lines)) {
-      const [lineSurahId, verseNumber, wordNumber] = lineValue[0].location
+    for (const line of Object.values(lines)) {
+      const [, verseNumber, wordNumber] = line[0].location
         .split(":")
         .map(Number);
 
       if (verseNumber === 1 && wordNumber === 1) {
-        firstSurahIdOnPageId = lineSurahId;
+        pageSurah = line[0]?.verse?.chapter;
         break;
       }
     }
 
-    const surah = surahs?.find((s) => s.id === (firstSurahIdOnPageId ?? verse.chapter_id));
-
-    if (!surah) {
+    if (!pageSurah) {
       return null;
     }
 
@@ -112,7 +108,9 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
      * hizb_number = 35, rub_el_hizb_number = 143  => hizbPosition = 1
      * hizb_number = 35, rub_el_hizb_number = 144  => hizbPosition = 0
      */
-    const hizbPosition = verse.hizb_number * 4 - verse.rub_el_hizb_number;
+    const hizbPosition =
+      lastWordWithVerse.verse.hizb_number * 4 -
+      lastWordWithVerse.verse.rub_el_hizb_number;
     let hizbText;
     switch (hizbPosition) {
       case 3:
@@ -130,9 +128,12 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
     }
 
     return {
-      surahName: t("surah", "سورة") + " " + (locale === "ar" ? surah?.name_arabic : surah?.name_simple),
-      juz: t("juz", "الجزء") + " " + verse.juz_number,
-      hizb: hizbText + " " + verse.hizb_number,
+      surahName:
+        t("surah", "سورة") +
+        " " +
+        (locale === "ar" ? pageSurah?.name_arabic : pageSurah?.name_simple),
+      juz: t("juz", "الجزء") + " " + lastWordWithVerse.verse.juz_number,
+      hizb: hizbText + " " + lastWordWithVerse.verse.hizb_number,
     };
   };
 
@@ -186,3 +187,4 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
     </>
   );
 };
+
