@@ -10,7 +10,9 @@ export async function GET(
 
   const words = await prisma.word.findMany({
     include: {
-      verse: true,
+      verse: {
+        include: { chapter: true },
+      },
     },
     where: {
       page_number: Number(pageId),

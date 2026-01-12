@@ -17,4 +17,3 @@ export const usePage = (page: number) => {
     staleTime: Infinity,
   });
 };
-
