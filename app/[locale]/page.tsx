@@ -2,6 +2,9 @@ import useTranslations from "../hooks/use-translations";
 import { SurahList } from "../components/SurahList";
 import { getSurahs } from "../hooks/use-surahs";
 
+// Remove this when the whole app is at build time
+export const dynamic = 'force-dynamic';
+
 const AppTitle = () => {
   const t = useTranslations();
   return <span>{t('home.title', 'Furqan')}</span>;

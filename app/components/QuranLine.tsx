@@ -10,17 +10,11 @@ import { WordWithVerse } from "../types/prisma";
 
 type LineProps = {
   words: Array<WordWithVerse>;
-  fontLoaded: boolean;
   onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
   marks: Record<string, Array<{ name: string; value: string }>>;
 };
 
-export const QuranLine = ({
-  words,
-  fontLoaded,
-  onWordClicked,
-  marks,
-}: LineProps) => {
+export const QuranLine = ({ words, onWordClicked, marks }: LineProps) => {
   const [surahId, verseNumber, wordNumber] = words[0].location
     .split(":")
     .map(Number);
@@ -50,19 +44,16 @@ export const QuranLine = ({
       ) : null}
       <div
         className={`text-white flex mb-4 ${
-          getLanguageDirection(locale) === "rtl" ? "flex-row" : "flex-row-reverse"
-        } ${
-          [1, 2].includes(words[0].page_number) || fontLoaded
-            ? "justify-center"
-            : "justify-between"
-        } `}
+          getLanguageDirection(locale) === "rtl"
+            ? "flex-row"
+            : "flex-row-reverse"
+        } ${[1, 2].includes(words[0].page_number) ? "justify-center" : ""} `}
       >
         {words.map((word) => (
           <Suspense key={word.location}>
             <QuranWord
               onWordClicked={onWordClicked}
               key={word.id}
-              fontLoaded={fontLoaded}
               word={word}
               marks={[
                 ...(marks[word.location] || []),
