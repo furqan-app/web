@@ -6,6 +6,8 @@ import { getLocale } from "next-intl/server";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import Sidebar from "@/app/components/nav/Sidebar";
 
+export const dynamic = 'force-dynamic';
+
 // statically generate all pages in build time
 export async function generateStaticParams() {
   return Array.from({ length: 604 }, (_, i) => ({

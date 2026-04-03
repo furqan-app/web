@@ -1,18 +1,18 @@
 "use client";
 
-import { usePageFont } from "@hooks/use-page-font";
-import { QuranLine } from "@components/QuranLine";
-import { FONT_V1 } from "../constants/font";
-import { useQuranFontScale } from "../contexts/QuranFontScaleContext";
-import { MarkModal } from "./MarkModal";
 import { useState } from "react";
-import { useMarks } from "../hooks/use-marks";
-import { Chapter, Verse } from "@prisma/client";
+import { useLocale } from "next-intl";
 import { useSession } from "next-auth/react";
+import { Chapter, Verse } from "@prisma/client";
+import { QuranLine } from "@components/QuranLine";
+import { useMarks } from "@hooks/use-marks";
+import { FONT_V1 } from "@constants/font";
+import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
+import useTranslations from "@hooks/use-translations";
+import { getPageFontFamily } from "@utils/quran-font-map";
+import { MarkModal } from "./MarkModal";
 import { SignInModal } from "./SignInModal";
 import { WordWithVerse } from "../types/prisma";
-import { useLocale } from "next-intl";
-import useTranslations from "@hooks/use-translations";
 
 type QuranSafhaProps = {
   page: number;
@@ -45,7 +45,6 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
   const session = useSession();
   const t = useTranslations();
   const { data: marks } = useMarks(page);
-  const { isPending } = usePageFont(page);
   const { quranFontScale } = useQuranFontScale();
 
   const [selectedForMark, setSelectedForMark] = useState<
@@ -166,7 +165,7 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
               quranFontScale
             )}vh]`}
             style={{
-              fontFamily: isPending ? "var(--uthmanic)" : `v1-p${page}`,
+              fontFamily: getPageFontFamily(page),
             }}
           >
             {Object.keys(lines).map((line) => (
@@ -174,7 +173,6 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
                 onWordClicked={wordClicked}
                 key={line}
                 words={lines[line]}
-                fontLoaded={!isPending}
                 marks={marks ? marks : {}}
               />
             ))}

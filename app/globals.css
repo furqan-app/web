@@ -38,4 +38,6003 @@ body {
     text-wrap: balance;
   }
 }
-
+@font-face {
+  font-family: 'quran-p1';
+  src: url('/fonts/v1/ttf/p1.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p2';
+  src: url('/fonts/v1/ttf/p2.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p3';
+  src: url('/fonts/v1/ttf/p3.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p4';
+  src: url('/fonts/v1/ttf/p4.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p5';
+  src: url('/fonts/v1/ttf/p5.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p6';
+  src: url('/fonts/v1/ttf/p6.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p7';
+  src: url('/fonts/v1/ttf/p7.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p8';
+  src: url('/fonts/v1/ttf/p8.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p9';
+  src: url('/fonts/v1/ttf/p9.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p10';
+  src: url('/fonts/v1/ttf/p10.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p11';
+  src: url('/fonts/v1/ttf/p11.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p12';
+  src: url('/fonts/v1/ttf/p12.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p11';
+  src: url('/fonts/v1/ttf/p11.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p12';
+  src: url('/fonts/v1/ttf/p12.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p13';
+  src: url('/fonts/v1/ttf/p13.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p14';
+  src: url('/fonts/v1/ttf/p14.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p15';
+  src: url('/fonts/v1/ttf/p15.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p16';
+  src: url('/fonts/v1/ttf/p16.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p17';
+  src: url('/fonts/v1/ttf/p17.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p18';
+  src: url('/fonts/v1/ttf/p18.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p19';
+  src: url('/fonts/v1/ttf/p19.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p20';
+  src: url('/fonts/v1/ttf/p20.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p21';
+  src: url('/fonts/v1/ttf/p21.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p22';
+  src: url('/fonts/v1/ttf/p22.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p23';
+  src: url('/fonts/v1/ttf/p23.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p24';
+  src: url('/fonts/v1/ttf/p24.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p25';
+  src: url('/fonts/v1/ttf/p25.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p26';
+  src: url('/fonts/v1/ttf/p26.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p27';
+  src: url('/fonts/v1/ttf/p27.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p28';
+  src: url('/fonts/v1/ttf/p28.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p29';
+  src: url('/fonts/v1/ttf/p29.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p30';
+  src: url('/fonts/v1/ttf/p30.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p31';
+  src: url('/fonts/v1/ttf/p31.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p32';
+  src: url('/fonts/v1/ttf/p32.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p33';
+  src: url('/fonts/v1/ttf/p33.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p34';
+  src: url('/fonts/v1/ttf/p34.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p35';
+  src: url('/fonts/v1/ttf/p35.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p36';
+  src: url('/fonts/v1/ttf/p36.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p37';
+  src: url('/fonts/v1/ttf/p37.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p38';
+  src: url('/fonts/v1/ttf/p38.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p39';
+  src: url('/fonts/v1/ttf/p39.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p40';
+  src: url('/fonts/v1/ttf/p40.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p41';
+  src: url('/fonts/v1/ttf/p41.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p42';
+  src: url('/fonts/v1/ttf/p42.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p43';
+  src: url('/fonts/v1/ttf/p43.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p44';
+  src: url('/fonts/v1/ttf/p44.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p45';
+  src: url('/fonts/v1/ttf/p45.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p46';
+  src: url('/fonts/v1/ttf/p46.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p47';
+  src: url('/fonts/v1/ttf/p47.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p48';
+  src: url('/fonts/v1/ttf/p48.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p49';
+  src: url('/fonts/v1/ttf/p49.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p50';
+  src: url('/fonts/v1/ttf/p50.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p51';
+  src: url('/fonts/v1/ttf/p51.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p52';
+  src: url('/fonts/v1/ttf/p52.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p53';
+  src: url('/fonts/v1/ttf/p53.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p54';
+  src: url('/fonts/v1/ttf/p54.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p55';
+  src: url('/fonts/v1/ttf/p55.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p56';
+  src: url('/fonts/v1/ttf/p56.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p57';
+  src: url('/fonts/v1/ttf/p57.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p58';
+  src: url('/fonts/v1/ttf/p58.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p59';
+  src: url('/fonts/v1/ttf/p59.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p60';
+  src: url('/fonts/v1/ttf/p60.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p61';
+  src: url('/fonts/v1/ttf/p61.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p62';
+  src: url('/fonts/v1/ttf/p62.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p63';
+  src: url('/fonts/v1/ttf/p63.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p64';
+  src: url('/fonts/v1/ttf/p64.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p65';
+  src: url('/fonts/v1/ttf/p65.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p66';
+  src: url('/fonts/v1/ttf/p66.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p67';
+  src: url('/fonts/v1/ttf/p67.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p68';
+  src: url('/fonts/v1/ttf/p68.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p69';
+  src: url('/fonts/v1/ttf/p69.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p70';
+  src: url('/fonts/v1/ttf/p70.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p71';
+  src: url('/fonts/v1/ttf/p71.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p72';
+  src: url('/fonts/v1/ttf/p72.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p73';
+  src: url('/fonts/v1/ttf/p73.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p74';
+  src: url('/fonts/v1/ttf/p74.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p75';
+  src: url('/fonts/v1/ttf/p75.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p76';
+  src: url('/fonts/v1/ttf/p76.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p77';
+  src: url('/fonts/v1/ttf/p77.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p78';
+  src: url('/fonts/v1/ttf/p78.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p79';
+  src: url('/fonts/v1/ttf/p79.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p80';
+  src: url('/fonts/v1/ttf/p80.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p81';
+  src: url('/fonts/v1/ttf/p81.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p82';
+  src: url('/fonts/v1/ttf/p82.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p83';
+  src: url('/fonts/v1/ttf/p83.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p84';
+  src: url('/fonts/v1/ttf/p84.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p85';
+  src: url('/fonts/v1/ttf/p85.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p86';
+  src: url('/fonts/v1/ttf/p86.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p87';
+  src: url('/fonts/v1/ttf/p87.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p88';
+  src: url('/fonts/v1/ttf/p88.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p89';
+  src: url('/fonts/v1/ttf/p89.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p90';
+  src: url('/fonts/v1/ttf/p90.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p91';
+  src: url('/fonts/v1/ttf/p91.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p92';
+  src: url('/fonts/v1/ttf/p92.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p93';
+  src: url('/fonts/v1/ttf/p93.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p94';
+  src: url('/fonts/v1/ttf/p94.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p95';
+  src: url('/fonts/v1/ttf/p95.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p96';
+  src: url('/fonts/v1/ttf/p96.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p97';
+  src: url('/fonts/v1/ttf/p97.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p98';
+  src: url('/fonts/v1/ttf/p98.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p99';
+  src: url('/fonts/v1/ttf/p99.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p100';
+  src: url('/fonts/v1/ttf/p100.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p101';
+  src: url('/fonts/v1/ttf/p101.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p102';
+  src: url('/fonts/v1/ttf/p102.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p103';
+  src: url('/fonts/v1/ttf/p103.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p104';
+  src: url('/fonts/v1/ttf/p104.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p105';
+  src: url('/fonts/v1/ttf/p105.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p106';
+  src: url('/fonts/v1/ttf/p106.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p107';
+  src: url('/fonts/v1/ttf/p107.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p108';
+  src: url('/fonts/v1/ttf/p108.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p109';
+  src: url('/fonts/v1/ttf/p109.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p110';
+  src: url('/fonts/v1/ttf/p110.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p111';
+  src: url('/fonts/v1/ttf/p111.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p112';
+  src: url('/fonts/v1/ttf/p112.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p113';
+  src: url('/fonts/v1/ttf/p113.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p114';
+  src: url('/fonts/v1/ttf/p114.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p115';
+  src: url('/fonts/v1/ttf/p115.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p116';
+  src: url('/fonts/v1/ttf/p116.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p117';
+  src: url('/fonts/v1/ttf/p117.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p118';
+  src: url('/fonts/v1/ttf/p118.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p119';
+  src: url('/fonts/v1/ttf/p119.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p120';
+  src: url('/fonts/v1/ttf/p120.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p121';
+  src: url('/fonts/v1/ttf/p121.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p122';
+  src: url('/fonts/v1/ttf/p122.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p123';
+  src: url('/fonts/v1/ttf/p123.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p124';
+  src: url('/fonts/v1/ttf/p124.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p125';
+  src: url('/fonts/v1/ttf/p125.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p126';
+  src: url('/fonts/v1/ttf/p126.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p127';
+  src: url('/fonts/v1/ttf/p127.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p128';
+  src: url('/fonts/v1/ttf/p128.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p129';
+  src: url('/fonts/v1/ttf/p129.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p130';
+  src: url('/fonts/v1/ttf/p130.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p131';
+  src: url('/fonts/v1/ttf/p131.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p132';
+  src: url('/fonts/v1/ttf/p132.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p133';
+  src: url('/fonts/v1/ttf/p133.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p134';
+  src: url('/fonts/v1/ttf/p134.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p135';
+  src: url('/fonts/v1/ttf/p135.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p136';
+  src: url('/fonts/v1/ttf/p136.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p137';
+  src: url('/fonts/v1/ttf/p137.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p138';
+  src: url('/fonts/v1/ttf/p138.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p139';
+  src: url('/fonts/v1/ttf/p139.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p140';
+  src: url('/fonts/v1/ttf/p140.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p141';
+  src: url('/fonts/v1/ttf/p141.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p142';
+  src: url('/fonts/v1/ttf/p142.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p143';
+  src: url('/fonts/v1/ttf/p143.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p144';
+  src: url('/fonts/v1/ttf/p144.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p145';
+  src: url('/fonts/v1/ttf/p145.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p146';
+  src: url('/fonts/v1/ttf/p146.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p147';
+  src: url('/fonts/v1/ttf/p147.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p148';
+  src: url('/fonts/v1/ttf/p148.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p149';
+  src: url('/fonts/v1/ttf/p149.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p150';
+  src: url('/fonts/v1/ttf/p150.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p151';
+  src: url('/fonts/v1/ttf/p151.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p152';
+  src: url('/fonts/v1/ttf/p152.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p153';
+  src: url('/fonts/v1/ttf/p153.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p154';
+  src: url('/fonts/v1/ttf/p154.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p155';
+  src: url('/fonts/v1/ttf/p155.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p156';
+  src: url('/fonts/v1/ttf/p156.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p157';
+  src: url('/fonts/v1/ttf/p157.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p158';
+  src: url('/fonts/v1/ttf/p158.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p159';
+  src: url('/fonts/v1/ttf/p159.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p160';
+  src: url('/fonts/v1/ttf/p160.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p161';
+  src: url('/fonts/v1/ttf/p161.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p162';
+  src: url('/fonts/v1/ttf/p162.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p163';
+  src: url('/fonts/v1/ttf/p163.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p164';
+  src: url('/fonts/v1/ttf/p164.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p165';
+  src: url('/fonts/v1/ttf/p165.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p166';
+  src: url('/fonts/v1/ttf/p166.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p167';
+  src: url('/fonts/v1/ttf/p167.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p168';
+  src: url('/fonts/v1/ttf/p168.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p169';
+  src: url('/fonts/v1/ttf/p169.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p170';
+  src: url('/fonts/v1/ttf/p170.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p171';
+  src: url('/fonts/v1/ttf/p171.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p172';
+  src: url('/fonts/v1/ttf/p172.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p173';
+  src: url('/fonts/v1/ttf/p173.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p174';
+  src: url('/fonts/v1/ttf/p174.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p175';
+  src: url('/fonts/v1/ttf/p175.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p176';
+  src: url('/fonts/v1/ttf/p176.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p177';
+  src: url('/fonts/v1/ttf/p177.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p178';
+  src: url('/fonts/v1/ttf/p178.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p179';
+  src: url('/fonts/v1/ttf/p179.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p180';
+  src: url('/fonts/v1/ttf/p180.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p181';
+  src: url('/fonts/v1/ttf/p181.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p182';
+  src: url('/fonts/v1/ttf/p182.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p183';
+  src: url('/fonts/v1/ttf/p183.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p184';
+  src: url('/fonts/v1/ttf/p184.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p185';
+  src: url('/fonts/v1/ttf/p185.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p186';
+  src: url('/fonts/v1/ttf/p186.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p187';
+  src: url('/fonts/v1/ttf/p187.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p188';
+  src: url('/fonts/v1/ttf/p188.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p189';
+  src: url('/fonts/v1/ttf/p189.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p190';
+  src: url('/fonts/v1/ttf/p190.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p191';
+  src: url('/fonts/v1/ttf/p191.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p192';
+  src: url('/fonts/v1/ttf/p192.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p193';
+  src: url('/fonts/v1/ttf/p193.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p194';
+  src: url('/fonts/v1/ttf/p194.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p195';
+  src: url('/fonts/v1/ttf/p195.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p196';
+  src: url('/fonts/v1/ttf/p196.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p197';
+  src: url('/fonts/v1/ttf/p197.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p198';
+  src: url('/fonts/v1/ttf/p198.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p199';
+  src: url('/fonts/v1/ttf/p199.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p200';
+  src: url('/fonts/v1/ttf/p200.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p201';
+  src: url('/fonts/v1/ttf/p201.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p202';
+  src: url('/fonts/v1/ttf/p202.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p203';
+  src: url('/fonts/v1/ttf/p203.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p204';
+  src: url('/fonts/v1/ttf/p204.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p205';
+  src: url('/fonts/v1/ttf/p205.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p206';
+  src: url('/fonts/v1/ttf/p206.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p207';
+  src: url('/fonts/v1/ttf/p207.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p208';
+  src: url('/fonts/v1/ttf/p208.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p209';
+  src: url('/fonts/v1/ttf/p209.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p210';
+  src: url('/fonts/v1/ttf/p210.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p211';
+  src: url('/fonts/v1/ttf/p211.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p212';
+  src: url('/fonts/v1/ttf/p212.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p213';
+  src: url('/fonts/v1/ttf/p213.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p214';
+  src: url('/fonts/v1/ttf/p214.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p215';
+  src: url('/fonts/v1/ttf/p215.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p216';
+  src: url('/fonts/v1/ttf/p216.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p217';
+  src: url('/fonts/v1/ttf/p217.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p218';
+  src: url('/fonts/v1/ttf/p218.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p219';
+  src: url('/fonts/v1/ttf/p219.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p220';
+  src: url('/fonts/v1/ttf/p220.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p221';
+  src: url('/fonts/v1/ttf/p221.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p222';
+  src: url('/fonts/v1/ttf/p222.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p223';
+  src: url('/fonts/v1/ttf/p223.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p224';
+  src: url('/fonts/v1/ttf/p224.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p225';
+  src: url('/fonts/v1/ttf/p225.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p226';
+  src: url('/fonts/v1/ttf/p226.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p227';
+  src: url('/fonts/v1/ttf/p227.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p228';
+  src: url('/fonts/v1/ttf/p228.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p229';
+  src: url('/fonts/v1/ttf/p229.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p230';
+  src: url('/fonts/v1/ttf/p230.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p231';
+  src: url('/fonts/v1/ttf/p231.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p232';
+  src: url('/fonts/v1/ttf/p232.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p233';
+  src: url('/fonts/v1/ttf/p233.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p234';
+  src: url('/fonts/v1/ttf/p234.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p235';
+  src: url('/fonts/v1/ttf/p235.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p236';
+  src: url('/fonts/v1/ttf/p236.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p237';
+  src: url('/fonts/v1/ttf/p237.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p238';
+  src: url('/fonts/v1/ttf/p238.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p239';
+  src: url('/fonts/v1/ttf/p239.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p240';
+  src: url('/fonts/v1/ttf/p240.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p241';
+  src: url('/fonts/v1/ttf/p241.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p242';
+  src: url('/fonts/v1/ttf/p242.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p243';
+  src: url('/fonts/v1/ttf/p243.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p244';
+  src: url('/fonts/v1/ttf/p244.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p245';
+  src: url('/fonts/v1/ttf/p245.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p246';
+  src: url('/fonts/v1/ttf/p246.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p247';
+  src: url('/fonts/v1/ttf/p247.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p248';
+  src: url('/fonts/v1/ttf/p248.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p249';
+  src: url('/fonts/v1/ttf/p249.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p250';
+  src: url('/fonts/v1/ttf/p250.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p251';
+  src: url('/fonts/v1/ttf/p251.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p252';
+  src: url('/fonts/v1/ttf/p252.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p253';
+  src: url('/fonts/v1/ttf/p253.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p254';
+  src: url('/fonts/v1/ttf/p254.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p255';
+  src: url('/fonts/v1/ttf/p255.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p256';
+  src: url('/fonts/v1/ttf/p256.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p257';
+  src: url('/fonts/v1/ttf/p257.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p258';
+  src: url('/fonts/v1/ttf/p258.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p259';
+  src: url('/fonts/v1/ttf/p259.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p260';
+  src: url('/fonts/v1/ttf/p260.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p261';
+  src: url('/fonts/v1/ttf/p261.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p262';
+  src: url('/fonts/v1/ttf/p262.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p263';
+  src: url('/fonts/v1/ttf/p263.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p264';
+  src: url('/fonts/v1/ttf/p264.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p265';
+  src: url('/fonts/v1/ttf/p265.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p266';
+  src: url('/fonts/v1/ttf/p266.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p267';
+  src: url('/fonts/v1/ttf/p267.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p268';
+  src: url('/fonts/v1/ttf/p268.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p269';
+  src: url('/fonts/v1/ttf/p269.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p270';
+  src: url('/fonts/v1/ttf/p270.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p271';
+  src: url('/fonts/v1/ttf/p271.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p272';
+  src: url('/fonts/v1/ttf/p272.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p273';
+  src: url('/fonts/v1/ttf/p273.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p274';
+  src: url('/fonts/v1/ttf/p274.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p275';
+  src: url('/fonts/v1/ttf/p275.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p276';
+  src: url('/fonts/v1/ttf/p276.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p277';
+  src: url('/fonts/v1/ttf/p277.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p278';
+  src: url('/fonts/v1/ttf/p278.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p279';
+  src: url('/fonts/v1/ttf/p279.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p280';
+  src: url('/fonts/v1/ttf/p280.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p281';
+  src: url('/fonts/v1/ttf/p281.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p282';
+  src: url('/fonts/v1/ttf/p282.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p283';
+  src: url('/fonts/v1/ttf/p283.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p284';
+  src: url('/fonts/v1/ttf/p284.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p285';
+  src: url('/fonts/v1/ttf/p285.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p286';
+  src: url('/fonts/v1/ttf/p286.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p287';
+  src: url('/fonts/v1/ttf/p287.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p288';
+  src: url('/fonts/v1/ttf/p288.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p289';
+  src: url('/fonts/v1/ttf/p289.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p290';
+  src: url('/fonts/v1/ttf/p290.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p291';
+  src: url('/fonts/v1/ttf/p291.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p292';
+  src: url('/fonts/v1/ttf/p292.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p293';
+  src: url('/fonts/v1/ttf/p293.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p294';
+  src: url('/fonts/v1/ttf/p294.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p295';
+  src: url('/fonts/v1/ttf/p295.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p296';
+  src: url('/fonts/v1/ttf/p296.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p297';
+  src: url('/fonts/v1/ttf/p297.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p298';
+  src: url('/fonts/v1/ttf/p298.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p299';
+  src: url('/fonts/v1/ttf/p299.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p300';
+  src: url('/fonts/v1/ttf/p300.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p301';
+  src: url('/fonts/v1/ttf/p301.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p302';
+  src: url('/fonts/v1/ttf/p302.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p303';
+  src: url('/fonts/v1/ttf/p303.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p304';
+  src: url('/fonts/v1/ttf/p304.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p305';
+  src: url('/fonts/v1/ttf/p305.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p306';
+  src: url('/fonts/v1/ttf/p306.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p307';
+  src: url('/fonts/v1/ttf/p307.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p308';
+  src: url('/fonts/v1/ttf/p308.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p309';
+  src: url('/fonts/v1/ttf/p309.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p310';
+  src: url('/fonts/v1/ttf/p310.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p311';
+  src: url('/fonts/v1/ttf/p311.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p312';
+  src: url('/fonts/v1/ttf/p312.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p313';
+  src: url('/fonts/v1/ttf/p313.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p314';
+  src: url('/fonts/v1/ttf/p314.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p315';
+  src: url('/fonts/v1/ttf/p315.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p316';
+  src: url('/fonts/v1/ttf/p316.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p317';
+  src: url('/fonts/v1/ttf/p317.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p318';
+  src: url('/fonts/v1/ttf/p318.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p319';
+  src: url('/fonts/v1/ttf/p319.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p320';
+  src: url('/fonts/v1/ttf/p320.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p321';
+  src: url('/fonts/v1/ttf/p321.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p322';
+  src: url('/fonts/v1/ttf/p322.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p323';
+  src: url('/fonts/v1/ttf/p323.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p324';
+  src: url('/fonts/v1/ttf/p324.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p325';
+  src: url('/fonts/v1/ttf/p325.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p326';
+  src: url('/fonts/v1/ttf/p326.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p327';
+  src: url('/fonts/v1/ttf/p327.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p328';
+  src: url('/fonts/v1/ttf/p328.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p329';
+  src: url('/fonts/v1/ttf/p329.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p330';
+  src: url('/fonts/v1/ttf/p330.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p331';
+  src: url('/fonts/v1/ttf/p331.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p332';
+  src: url('/fonts/v1/ttf/p332.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p333';
+  src: url('/fonts/v1/ttf/p333.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p334';
+  src: url('/fonts/v1/ttf/p334.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p335';
+  src: url('/fonts/v1/ttf/p335.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p336';
+  src: url('/fonts/v1/ttf/p336.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p337';
+  src: url('/fonts/v1/ttf/p337.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p338';
+  src: url('/fonts/v1/ttf/p338.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p339';
+  src: url('/fonts/v1/ttf/p339.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p340';
+  src: url('/fonts/v1/ttf/p340.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p341';
+  src: url('/fonts/v1/ttf/p341.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p342';
+  src: url('/fonts/v1/ttf/p342.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p343';
+  src: url('/fonts/v1/ttf/p343.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p344';
+  src: url('/fonts/v1/ttf/p344.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p345';
+  src: url('/fonts/v1/ttf/p345.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p346';
+  src: url('/fonts/v1/ttf/p346.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p347';
+  src: url('/fonts/v1/ttf/p347.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p348';
+  src: url('/fonts/v1/ttf/p348.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p349';
+  src: url('/fonts/v1/ttf/p349.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p350';
+  src: url('/fonts/v1/ttf/p350.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p351';
+  src: url('/fonts/v1/ttf/p351.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p352';
+  src: url('/fonts/v1/ttf/p352.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p353';
+  src: url('/fonts/v1/ttf/p353.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p354';
+  src: url('/fonts/v1/ttf/p354.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p355';
+  src: url('/fonts/v1/ttf/p355.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p356';
+  src: url('/fonts/v1/ttf/p356.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p357';
+  src: url('/fonts/v1/ttf/p357.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p358';
+  src: url('/fonts/v1/ttf/p358.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p359';
+  src: url('/fonts/v1/ttf/p359.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p360';
+  src: url('/fonts/v1/ttf/p360.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p361';
+  src: url('/fonts/v1/ttf/p361.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p362';
+  src: url('/fonts/v1/ttf/p362.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p363';
+  src: url('/fonts/v1/ttf/p363.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p364';
+  src: url('/fonts/v1/ttf/p364.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p365';
+  src: url('/fonts/v1/ttf/p365.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p366';
+  src: url('/fonts/v1/ttf/p366.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p367';
+  src: url('/fonts/v1/ttf/p367.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p368';
+  src: url('/fonts/v1/ttf/p368.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p369';
+  src: url('/fonts/v1/ttf/p369.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p370';
+  src: url('/fonts/v1/ttf/p370.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p371';
+  src: url('/fonts/v1/ttf/p371.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p372';
+  src: url('/fonts/v1/ttf/p372.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p373';
+  src: url('/fonts/v1/ttf/p373.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p374';
+  src: url('/fonts/v1/ttf/p374.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p375';
+  src: url('/fonts/v1/ttf/p375.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p376';
+  src: url('/fonts/v1/ttf/p376.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p377';
+  src: url('/fonts/v1/ttf/p377.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p378';
+  src: url('/fonts/v1/ttf/p378.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p379';
+  src: url('/fonts/v1/ttf/p379.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p380';
+  src: url('/fonts/v1/ttf/p380.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p381';
+  src: url('/fonts/v1/ttf/p381.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p382';
+  src: url('/fonts/v1/ttf/p382.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p383';
+  src: url('/fonts/v1/ttf/p383.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p384';
+  src: url('/fonts/v1/ttf/p384.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p385';
+  src: url('/fonts/v1/ttf/p385.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p386';
+  src: url('/fonts/v1/ttf/p386.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p387';
+  src: url('/fonts/v1/ttf/p387.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p388';
+  src: url('/fonts/v1/ttf/p388.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p389';
+  src: url('/fonts/v1/ttf/p389.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p390';
+  src: url('/fonts/v1/ttf/p390.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p391';
+  src: url('/fonts/v1/ttf/p391.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p392';
+  src: url('/fonts/v1/ttf/p392.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p393';
+  src: url('/fonts/v1/ttf/p393.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p394';
+  src: url('/fonts/v1/ttf/p394.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p395';
+  src: url('/fonts/v1/ttf/p395.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p396';
+  src: url('/fonts/v1/ttf/p396.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p397';
+  src: url('/fonts/v1/ttf/p397.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p398';
+  src: url('/fonts/v1/ttf/p398.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p399';
+  src: url('/fonts/v1/ttf/p399.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p400';
+  src: url('/fonts/v1/ttf/p400.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p401';
+  src: url('/fonts/v1/ttf/p401.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p402';
+  src: url('/fonts/v1/ttf/p402.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p403';
+  src: url('/fonts/v1/ttf/p403.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p404';
+  src: url('/fonts/v1/ttf/p404.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p405';
+  src: url('/fonts/v1/ttf/p405.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p406';
+  src: url('/fonts/v1/ttf/p406.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p407';
+  src: url('/fonts/v1/ttf/p407.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p408';
+  src: url('/fonts/v1/ttf/p408.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p409';
+  src: url('/fonts/v1/ttf/p409.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p410';
+  src: url('/fonts/v1/ttf/p410.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p411';
+  src: url('/fonts/v1/ttf/p411.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p412';
+  src: url('/fonts/v1/ttf/p412.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p413';
+  src: url('/fonts/v1/ttf/p413.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p414';
+  src: url('/fonts/v1/ttf/p414.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p415';
+  src: url('/fonts/v1/ttf/p415.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p416';
+  src: url('/fonts/v1/ttf/p416.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p417';
+  src: url('/fonts/v1/ttf/p417.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p418';
+  src: url('/fonts/v1/ttf/p418.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p419';
+  src: url('/fonts/v1/ttf/p419.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p420';
+  src: url('/fonts/v1/ttf/p420.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p421';
+  src: url('/fonts/v1/ttf/p421.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p422';
+  src: url('/fonts/v1/ttf/p422.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p423';
+  src: url('/fonts/v1/ttf/p423.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p424';
+  src: url('/fonts/v1/ttf/p424.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p425';
+  src: url('/fonts/v1/ttf/p425.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p426';
+  src: url('/fonts/v1/ttf/p426.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p427';
+  src: url('/fonts/v1/ttf/p427.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p428';
+  src: url('/fonts/v1/ttf/p428.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p429';
+  src: url('/fonts/v1/ttf/p429.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p430';
+  src: url('/fonts/v1/ttf/p430.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p431';
+  src: url('/fonts/v1/ttf/p431.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p432';
+  src: url('/fonts/v1/ttf/p432.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p433';
+  src: url('/fonts/v1/ttf/p433.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p434';
+  src: url('/fonts/v1/ttf/p434.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p435';
+  src: url('/fonts/v1/ttf/p435.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p436';
+  src: url('/fonts/v1/ttf/p436.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p437';
+  src: url('/fonts/v1/ttf/p437.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p438';
+  src: url('/fonts/v1/ttf/p438.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p439';
+  src: url('/fonts/v1/ttf/p439.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p440';
+  src: url('/fonts/v1/ttf/p440.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p441';
+  src: url('/fonts/v1/ttf/p441.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p442';
+  src: url('/fonts/v1/ttf/p442.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p443';
+  src: url('/fonts/v1/ttf/p443.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p444';
+  src: url('/fonts/v1/ttf/p444.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p445';
+  src: url('/fonts/v1/ttf/p445.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p446';
+  src: url('/fonts/v1/ttf/p446.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p447';
+  src: url('/fonts/v1/ttf/p447.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p448';
+  src: url('/fonts/v1/ttf/p448.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p449';
+  src: url('/fonts/v1/ttf/p449.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p450';
+  src: url('/fonts/v1/ttf/p450.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p451';
+  src: url('/fonts/v1/ttf/p451.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p452';
+  src: url('/fonts/v1/ttf/p452.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p453';
+  src: url('/fonts/v1/ttf/p453.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p454';
+  src: url('/fonts/v1/ttf/p454.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p455';
+  src: url('/fonts/v1/ttf/p455.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p456';
+  src: url('/fonts/v1/ttf/p456.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p457';
+  src: url('/fonts/v1/ttf/p457.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p458';
+  src: url('/fonts/v1/ttf/p458.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p459';
+  src: url('/fonts/v1/ttf/p459.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p460';
+  src: url('/fonts/v1/ttf/p460.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p461';
+  src: url('/fonts/v1/ttf/p461.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p462';
+  src: url('/fonts/v1/ttf/p462.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p463';
+  src: url('/fonts/v1/ttf/p463.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p464';
+  src: url('/fonts/v1/ttf/p464.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p465';
+  src: url('/fonts/v1/ttf/p465.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p466';
+  src: url('/fonts/v1/ttf/p466.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p467';
+  src: url('/fonts/v1/ttf/p467.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p468';
+  src: url('/fonts/v1/ttf/p468.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p469';
+  src: url('/fonts/v1/ttf/p469.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p470';
+  src: url('/fonts/v1/ttf/p470.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p471';
+  src: url('/fonts/v1/ttf/p471.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p472';
+  src: url('/fonts/v1/ttf/p472.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p473';
+  src: url('/fonts/v1/ttf/p473.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p474';
+  src: url('/fonts/v1/ttf/p474.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p475';
+  src: url('/fonts/v1/ttf/p475.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p476';
+  src: url('/fonts/v1/ttf/p476.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p477';
+  src: url('/fonts/v1/ttf/p477.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p478';
+  src: url('/fonts/v1/ttf/p478.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p479';
+  src: url('/fonts/v1/ttf/p479.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p480';
+  src: url('/fonts/v1/ttf/p480.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p481';
+  src: url('/fonts/v1/ttf/p481.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p482';
+  src: url('/fonts/v1/ttf/p482.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p483';
+  src: url('/fonts/v1/ttf/p483.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p484';
+  src: url('/fonts/v1/ttf/p484.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p485';
+  src: url('/fonts/v1/ttf/p485.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p486';
+  src: url('/fonts/v1/ttf/p486.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p487';
+  src: url('/fonts/v1/ttf/p487.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p488';
+  src: url('/fonts/v1/ttf/p488.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p489';
+  src: url('/fonts/v1/ttf/p489.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p490';
+  src: url('/fonts/v1/ttf/p490.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p491';
+  src: url('/fonts/v1/ttf/p491.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p492';
+  src: url('/fonts/v1/ttf/p492.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p493';
+  src: url('/fonts/v1/ttf/p493.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p494';
+  src: url('/fonts/v1/ttf/p494.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p495';
+  src: url('/fonts/v1/ttf/p495.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p496';
+  src: url('/fonts/v1/ttf/p496.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p497';
+  src: url('/fonts/v1/ttf/p497.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p498';
+  src: url('/fonts/v1/ttf/p498.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p499';
+  src: url('/fonts/v1/ttf/p499.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p500';
+  src: url('/fonts/v1/ttf/p500.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p501';
+  src: url('/fonts/v1/ttf/p501.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p502';
+  src: url('/fonts/v1/ttf/p502.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p503';
+  src: url('/fonts/v1/ttf/p503.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p504';
+  src: url('/fonts/v1/ttf/p504.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p505';
+  src: url('/fonts/v1/ttf/p505.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p506';
+  src: url('/fonts/v1/ttf/p506.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p507';
+  src: url('/fonts/v1/ttf/p507.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p508';
+  src: url('/fonts/v1/ttf/p508.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p509';
+  src: url('/fonts/v1/ttf/p509.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p510';
+  src: url('/fonts/v1/ttf/p510.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p511';
+  src: url('/fonts/v1/ttf/p511.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p512';
+  src: url('/fonts/v1/ttf/p512.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p513';
+  src: url('/fonts/v1/ttf/p513.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p514';
+  src: url('/fonts/v1/ttf/p514.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p515';
+  src: url('/fonts/v1/ttf/p515.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p516';
+  src: url('/fonts/v1/ttf/p516.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p517';
+  src: url('/fonts/v1/ttf/p517.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p518';
+  src: url('/fonts/v1/ttf/p518.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p519';
+  src: url('/fonts/v1/ttf/p519.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p520';
+  src: url('/fonts/v1/ttf/p520.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p521';
+  src: url('/fonts/v1/ttf/p521.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p522';
+  src: url('/fonts/v1/ttf/p522.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p523';
+  src: url('/fonts/v1/ttf/p523.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p524';
+  src: url('/fonts/v1/ttf/p524.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p525';
+  src: url('/fonts/v1/ttf/p525.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p526';
+  src: url('/fonts/v1/ttf/p526.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p527';
+  src: url('/fonts/v1/ttf/p527.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p528';
+  src: url('/fonts/v1/ttf/p528.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p529';
+  src: url('/fonts/v1/ttf/p529.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p530';
+  src: url('/fonts/v1/ttf/p530.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p531';
+  src: url('/fonts/v1/ttf/p531.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p532';
+  src: url('/fonts/v1/ttf/p532.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p533';
+  src: url('/fonts/v1/ttf/p533.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p534';
+  src: url('/fonts/v1/ttf/p534.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p535';
+  src: url('/fonts/v1/ttf/p535.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p536';
+  src: url('/fonts/v1/ttf/p536.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p537';
+  src: url('/fonts/v1/ttf/p537.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p538';
+  src: url('/fonts/v1/ttf/p538.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p539';
+  src: url('/fonts/v1/ttf/p539.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p540';
+  src: url('/fonts/v1/ttf/p540.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p541';
+  src: url('/fonts/v1/ttf/p541.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p542';
+  src: url('/fonts/v1/ttf/p542.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p543';
+  src: url('/fonts/v1/ttf/p543.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p544';
+  src: url('/fonts/v1/ttf/p544.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p545';
+  src: url('/fonts/v1/ttf/p545.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p546';
+  src: url('/fonts/v1/ttf/p546.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p547';
+  src: url('/fonts/v1/ttf/p547.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p548';
+  src: url('/fonts/v1/ttf/p548.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p549';
+  src: url('/fonts/v1/ttf/p549.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p550';
+  src: url('/fonts/v1/ttf/p550.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p551';
+  src: url('/fonts/v1/ttf/p551.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p552';
+  src: url('/fonts/v1/ttf/p552.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p553';
+  src: url('/fonts/v1/ttf/p553.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p554';
+  src: url('/fonts/v1/ttf/p554.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p555';
+  src: url('/fonts/v1/ttf/p555.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p556';
+  src: url('/fonts/v1/ttf/p556.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p557';
+  src: url('/fonts/v1/ttf/p557.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p558';
+  src: url('/fonts/v1/ttf/p558.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p559';
+  src: url('/fonts/v1/ttf/p559.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p560';
+  src: url('/fonts/v1/ttf/p560.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p561';
+  src: url('/fonts/v1/ttf/p561.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p562';
+  src: url('/fonts/v1/ttf/p562.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p563';
+  src: url('/fonts/v1/ttf/p563.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p564';
+  src: url('/fonts/v1/ttf/p564.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p565';
+  src: url('/fonts/v1/ttf/p565.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p566';
+  src: url('/fonts/v1/ttf/p566.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p567';
+  src: url('/fonts/v1/ttf/p567.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p568';
+  src: url('/fonts/v1/ttf/p568.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p569';
+  src: url('/fonts/v1/ttf/p569.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p570';
+  src: url('/fonts/v1/ttf/p570.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p571';
+  src: url('/fonts/v1/ttf/p571.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p572';
+  src: url('/fonts/v1/ttf/p572.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p573';
+  src: url('/fonts/v1/ttf/p573.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p574';
+  src: url('/fonts/v1/ttf/p574.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p575';
+  src: url('/fonts/v1/ttf/p575.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p576';
+  src: url('/fonts/v1/ttf/p576.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p577';
+  src: url('/fonts/v1/ttf/p577.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p578';
+  src: url('/fonts/v1/ttf/p578.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p579';
+  src: url('/fonts/v1/ttf/p579.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p580';
+  src: url('/fonts/v1/ttf/p580.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p581';
+  src: url('/fonts/v1/ttf/p581.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p582';
+  src: url('/fonts/v1/ttf/p582.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p583';
+  src: url('/fonts/v1/ttf/p583.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p584';
+  src: url('/fonts/v1/ttf/p584.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p585';
+  src: url('/fonts/v1/ttf/p585.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p586';
+  src: url('/fonts/v1/ttf/p586.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p587';
+  src: url('/fonts/v1/ttf/p587.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p588';
+  src: url('/fonts/v1/ttf/p588.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p589';
+  src: url('/fonts/v1/ttf/p589.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p590';
+  src: url('/fonts/v1/ttf/p590.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p591';
+  src: url('/fonts/v1/ttf/p591.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p592';
+  src: url('/fonts/v1/ttf/p592.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p593';
+  src: url('/fonts/v1/ttf/p593.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p594';
+  src: url('/fonts/v1/ttf/p594.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p595';
+  src: url('/fonts/v1/ttf/p595.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p596';
+  src: url('/fonts/v1/ttf/p596.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p597';
+  src: url('/fonts/v1/ttf/p597.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p598';
+  src: url('/fonts/v1/ttf/p598.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p599';
+  src: url('/fonts/v1/ttf/p599.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p600';
+  src: url('/fonts/v1/ttf/p600.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p601';
+  src: url('/fonts/v1/ttf/p601.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p602';
+  src: url('/fonts/v1/ttf/p602.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p603';
+  src: url('/fonts/v1/ttf/p603.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p604';
+  src: url('/fonts/v1/ttf/p604.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p11';
+  src: url('/fonts/v1/ttf/p11.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p12';
+  src: url('/fonts/v1/ttf/p12.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p13';
+  src: url('/fonts/v1/ttf/p13.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p14';
+  src: url('/fonts/v1/ttf/p14.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p15';
+  src: url('/fonts/v1/ttf/p15.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p16';
+  src: url('/fonts/v1/ttf/p16.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p17';
+  src: url('/fonts/v1/ttf/p17.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p18';
+  src: url('/fonts/v1/ttf/p18.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p19';
+  src: url('/fonts/v1/ttf/p19.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p20';
+  src: url('/fonts/v1/ttf/p20.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p21';
+  src: url('/fonts/v1/ttf/p21.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p22';
+  src: url('/fonts/v1/ttf/p22.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p23';
+  src: url('/fonts/v1/ttf/p23.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p24';
+  src: url('/fonts/v1/ttf/p24.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p25';
+  src: url('/fonts/v1/ttf/p25.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p26';
+  src: url('/fonts/v1/ttf/p26.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p27';
+  src: url('/fonts/v1/ttf/p27.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p28';
+  src: url('/fonts/v1/ttf/p28.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p29';
+  src: url('/fonts/v1/ttf/p29.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p30';
+  src: url('/fonts/v1/ttf/p30.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p31';
+  src: url('/fonts/v1/ttf/p31.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p32';
+  src: url('/fonts/v1/ttf/p32.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p33';
+  src: url('/fonts/v1/ttf/p33.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p34';
+  src: url('/fonts/v1/ttf/p34.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p35';
+  src: url('/fonts/v1/ttf/p35.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p36';
+  src: url('/fonts/v1/ttf/p36.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p37';
+  src: url('/fonts/v1/ttf/p37.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p38';
+  src: url('/fonts/v1/ttf/p38.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p39';
+  src: url('/fonts/v1/ttf/p39.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p40';
+  src: url('/fonts/v1/ttf/p40.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p41';
+  src: url('/fonts/v1/ttf/p41.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p42';
+  src: url('/fonts/v1/ttf/p42.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p43';
+  src: url('/fonts/v1/ttf/p43.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p44';
+  src: url('/fonts/v1/ttf/p44.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p45';
+  src: url('/fonts/v1/ttf/p45.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p46';
+  src: url('/fonts/v1/ttf/p46.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p47';
+  src: url('/fonts/v1/ttf/p47.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p48';
+  src: url('/fonts/v1/ttf/p48.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p49';
+  src: url('/fonts/v1/ttf/p49.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p50';
+  src: url('/fonts/v1/ttf/p50.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p51';
+  src: url('/fonts/v1/ttf/p51.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p52';
+  src: url('/fonts/v1/ttf/p52.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p53';
+  src: url('/fonts/v1/ttf/p53.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p54';
+  src: url('/fonts/v1/ttf/p54.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p55';
+  src: url('/fonts/v1/ttf/p55.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p56';
+  src: url('/fonts/v1/ttf/p56.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p57';
+  src: url('/fonts/v1/ttf/p57.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p58';
+  src: url('/fonts/v1/ttf/p58.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p59';
+  src: url('/fonts/v1/ttf/p59.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p60';
+  src: url('/fonts/v1/ttf/p60.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p61';
+  src: url('/fonts/v1/ttf/p61.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p62';
+  src: url('/fonts/v1/ttf/p62.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p63';
+  src: url('/fonts/v1/ttf/p63.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p64';
+  src: url('/fonts/v1/ttf/p64.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p65';
+  src: url('/fonts/v1/ttf/p65.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p66';
+  src: url('/fonts/v1/ttf/p66.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p67';
+  src: url('/fonts/v1/ttf/p67.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p68';
+  src: url('/fonts/v1/ttf/p68.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p69';
+  src: url('/fonts/v1/ttf/p69.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p70';
+  src: url('/fonts/v1/ttf/p70.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p71';
+  src: url('/fonts/v1/ttf/p71.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p72';
+  src: url('/fonts/v1/ttf/p72.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p73';
+  src: url('/fonts/v1/ttf/p73.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p74';
+  src: url('/fonts/v1/ttf/p74.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p75';
+  src: url('/fonts/v1/ttf/p75.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p76';
+  src: url('/fonts/v1/ttf/p76.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p77';
+  src: url('/fonts/v1/ttf/p77.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p78';
+  src: url('/fonts/v1/ttf/p78.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p79';
+  src: url('/fonts/v1/ttf/p79.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p80';
+  src: url('/fonts/v1/ttf/p80.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p81';
+  src: url('/fonts/v1/ttf/p81.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p82';
+  src: url('/fonts/v1/ttf/p82.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p83';
+  src: url('/fonts/v1/ttf/p83.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p84';
+  src: url('/fonts/v1/ttf/p84.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p85';
+  src: url('/fonts/v1/ttf/p85.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p86';
+  src: url('/fonts/v1/ttf/p86.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p87';
+  src: url('/fonts/v1/ttf/p87.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p88';
+  src: url('/fonts/v1/ttf/p88.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p89';
+  src: url('/fonts/v1/ttf/p89.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p90';
+  src: url('/fonts/v1/ttf/p90.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p91';
+  src: url('/fonts/v1/ttf/p91.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p92';
+  src: url('/fonts/v1/ttf/p92.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p93';
+  src: url('/fonts/v1/ttf/p93.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p94';
+  src: url('/fonts/v1/ttf/p94.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p95';
+  src: url('/fonts/v1/ttf/p95.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p96';
+  src: url('/fonts/v1/ttf/p96.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p97';
+  src: url('/fonts/v1/ttf/p97.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p98';
+  src: url('/fonts/v1/ttf/p98.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p99';
+  src: url('/fonts/v1/ttf/p99.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p100';
+  src: url('/fonts/v1/ttf/p100.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p101';
+  src: url('/fonts/v1/ttf/p101.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p102';
+  src: url('/fonts/v1/ttf/p102.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p103';
+  src: url('/fonts/v1/ttf/p103.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p104';
+  src: url('/fonts/v1/ttf/p104.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p105';
+  src: url('/fonts/v1/ttf/p105.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p106';
+  src: url('/fonts/v1/ttf/p106.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p107';
+  src: url('/fonts/v1/ttf/p107.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p108';
+  src: url('/fonts/v1/ttf/p108.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p109';
+  src: url('/fonts/v1/ttf/p109.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p110';
+  src: url('/fonts/v1/ttf/p110.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p111';
+  src: url('/fonts/v1/ttf/p111.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p112';
+  src: url('/fonts/v1/ttf/p112.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p113';
+  src: url('/fonts/v1/ttf/p113.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p114';
+  src: url('/fonts/v1/ttf/p114.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p115';
+  src: url('/fonts/v1/ttf/p115.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p116';
+  src: url('/fonts/v1/ttf/p116.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p117';
+  src: url('/fonts/v1/ttf/p117.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p118';
+  src: url('/fonts/v1/ttf/p118.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p119';
+  src: url('/fonts/v1/ttf/p119.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p120';
+  src: url('/fonts/v1/ttf/p120.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p121';
+  src: url('/fonts/v1/ttf/p121.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p122';
+  src: url('/fonts/v1/ttf/p122.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p123';
+  src: url('/fonts/v1/ttf/p123.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p124';
+  src: url('/fonts/v1/ttf/p124.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p125';
+  src: url('/fonts/v1/ttf/p125.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p126';
+  src: url('/fonts/v1/ttf/p126.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p127';
+  src: url('/fonts/v1/ttf/p127.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p128';
+  src: url('/fonts/v1/ttf/p128.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p129';
+  src: url('/fonts/v1/ttf/p129.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p130';
+  src: url('/fonts/v1/ttf/p130.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p131';
+  src: url('/fonts/v1/ttf/p131.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p132';
+  src: url('/fonts/v1/ttf/p132.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p133';
+  src: url('/fonts/v1/ttf/p133.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p134';
+  src: url('/fonts/v1/ttf/p134.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p135';
+  src: url('/fonts/v1/ttf/p135.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p136';
+  src: url('/fonts/v1/ttf/p136.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p137';
+  src: url('/fonts/v1/ttf/p137.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p138';
+  src: url('/fonts/v1/ttf/p138.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p139';
+  src: url('/fonts/v1/ttf/p139.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p140';
+  src: url('/fonts/v1/ttf/p140.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p141';
+  src: url('/fonts/v1/ttf/p141.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p142';
+  src: url('/fonts/v1/ttf/p142.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p143';
+  src: url('/fonts/v1/ttf/p143.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p144';
+  src: url('/fonts/v1/ttf/p144.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p145';
+  src: url('/fonts/v1/ttf/p145.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p146';
+  src: url('/fonts/v1/ttf/p146.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p147';
+  src: url('/fonts/v1/ttf/p147.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p148';
+  src: url('/fonts/v1/ttf/p148.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p149';
+  src: url('/fonts/v1/ttf/p149.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p150';
+  src: url('/fonts/v1/ttf/p150.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p151';
+  src: url('/fonts/v1/ttf/p151.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p152';
+  src: url('/fonts/v1/ttf/p152.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p153';
+  src: url('/fonts/v1/ttf/p153.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p154';
+  src: url('/fonts/v1/ttf/p154.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p155';
+  src: url('/fonts/v1/ttf/p155.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p156';
+  src: url('/fonts/v1/ttf/p156.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p157';
+  src: url('/fonts/v1/ttf/p157.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p158';
+  src: url('/fonts/v1/ttf/p158.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p159';
+  src: url('/fonts/v1/ttf/p159.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p160';
+  src: url('/fonts/v1/ttf/p160.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p161';
+  src: url('/fonts/v1/ttf/p161.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p162';
+  src: url('/fonts/v1/ttf/p162.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p163';
+  src: url('/fonts/v1/ttf/p163.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p164';
+  src: url('/fonts/v1/ttf/p164.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p165';
+  src: url('/fonts/v1/ttf/p165.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p166';
+  src: url('/fonts/v1/ttf/p166.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p167';
+  src: url('/fonts/v1/ttf/p167.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p168';
+  src: url('/fonts/v1/ttf/p168.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p169';
+  src: url('/fonts/v1/ttf/p169.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p170';
+  src: url('/fonts/v1/ttf/p170.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p171';
+  src: url('/fonts/v1/ttf/p171.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p172';
+  src: url('/fonts/v1/ttf/p172.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p173';
+  src: url('/fonts/v1/ttf/p173.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p174';
+  src: url('/fonts/v1/ttf/p174.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p175';
+  src: url('/fonts/v1/ttf/p175.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p176';
+  src: url('/fonts/v1/ttf/p176.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p177';
+  src: url('/fonts/v1/ttf/p177.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p178';
+  src: url('/fonts/v1/ttf/p178.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p179';
+  src: url('/fonts/v1/ttf/p179.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p180';
+  src: url('/fonts/v1/ttf/p180.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p181';
+  src: url('/fonts/v1/ttf/p181.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p182';
+  src: url('/fonts/v1/ttf/p182.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p183';
+  src: url('/fonts/v1/ttf/p183.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p184';
+  src: url('/fonts/v1/ttf/p184.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p185';
+  src: url('/fonts/v1/ttf/p185.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p186';
+  src: url('/fonts/v1/ttf/p186.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p187';
+  src: url('/fonts/v1/ttf/p187.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p188';
+  src: url('/fonts/v1/ttf/p188.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p189';
+  src: url('/fonts/v1/ttf/p189.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p190';
+  src: url('/fonts/v1/ttf/p190.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p191';
+  src: url('/fonts/v1/ttf/p191.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p192';
+  src: url('/fonts/v1/ttf/p192.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p193';
+  src: url('/fonts/v1/ttf/p193.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p194';
+  src: url('/fonts/v1/ttf/p194.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p195';
+  src: url('/fonts/v1/ttf/p195.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p196';
+  src: url('/fonts/v1/ttf/p196.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p197';
+  src: url('/fonts/v1/ttf/p197.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p198';
+  src: url('/fonts/v1/ttf/p198.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p199';
+  src: url('/fonts/v1/ttf/p199.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p200';
+  src: url('/fonts/v1/ttf/p200.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p201';
+  src: url('/fonts/v1/ttf/p201.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p202';
+  src: url('/fonts/v1/ttf/p202.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p203';
+  src: url('/fonts/v1/ttf/p203.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p204';
+  src: url('/fonts/v1/ttf/p204.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p205';
+  src: url('/fonts/v1/ttf/p205.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p206';
+  src: url('/fonts/v1/ttf/p206.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p207';
+  src: url('/fonts/v1/ttf/p207.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p208';
+  src: url('/fonts/v1/ttf/p208.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p209';
+  src: url('/fonts/v1/ttf/p209.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p210';
+  src: url('/fonts/v1/ttf/p210.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p211';
+  src: url('/fonts/v1/ttf/p211.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p212';
+  src: url('/fonts/v1/ttf/p212.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p213';
+  src: url('/fonts/v1/ttf/p213.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p214';
+  src: url('/fonts/v1/ttf/p214.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p215';
+  src: url('/fonts/v1/ttf/p215.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p216';
+  src: url('/fonts/v1/ttf/p216.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p217';
+  src: url('/fonts/v1/ttf/p217.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p218';
+  src: url('/fonts/v1/ttf/p218.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p219';
+  src: url('/fonts/v1/ttf/p219.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p220';
+  src: url('/fonts/v1/ttf/p220.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p221';
+  src: url('/fonts/v1/ttf/p221.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p222';
+  src: url('/fonts/v1/ttf/p222.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p223';
+  src: url('/fonts/v1/ttf/p223.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p224';
+  src: url('/fonts/v1/ttf/p224.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p225';
+  src: url('/fonts/v1/ttf/p225.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p226';
+  src: url('/fonts/v1/ttf/p226.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p227';
+  src: url('/fonts/v1/ttf/p227.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p228';
+  src: url('/fonts/v1/ttf/p228.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p229';
+  src: url('/fonts/v1/ttf/p229.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p230';
+  src: url('/fonts/v1/ttf/p230.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p231';
+  src: url('/fonts/v1/ttf/p231.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p232';
+  src: url('/fonts/v1/ttf/p232.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p233';
+  src: url('/fonts/v1/ttf/p233.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p234';
+  src: url('/fonts/v1/ttf/p234.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p235';
+  src: url('/fonts/v1/ttf/p235.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p236';
+  src: url('/fonts/v1/ttf/p236.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p237';
+  src: url('/fonts/v1/ttf/p237.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p238';
+  src: url('/fonts/v1/ttf/p238.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p239';
+  src: url('/fonts/v1/ttf/p239.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p240';
+  src: url('/fonts/v1/ttf/p240.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p241';
+  src: url('/fonts/v1/ttf/p241.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p242';
+  src: url('/fonts/v1/ttf/p242.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p243';
+  src: url('/fonts/v1/ttf/p243.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p244';
+  src: url('/fonts/v1/ttf/p244.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p245';
+  src: url('/fonts/v1/ttf/p245.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p246';
+  src: url('/fonts/v1/ttf/p246.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p247';
+  src: url('/fonts/v1/ttf/p247.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p248';
+  src: url('/fonts/v1/ttf/p248.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p249';
+  src: url('/fonts/v1/ttf/p249.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p250';
+  src: url('/fonts/v1/ttf/p250.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p251';
+  src: url('/fonts/v1/ttf/p251.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p252';
+  src: url('/fonts/v1/ttf/p252.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p253';
+  src: url('/fonts/v1/ttf/p253.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p254';
+  src: url('/fonts/v1/ttf/p254.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p255';
+  src: url('/fonts/v1/ttf/p255.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p256';
+  src: url('/fonts/v1/ttf/p256.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p257';
+  src: url('/fonts/v1/ttf/p257.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p258';
+  src: url('/fonts/v1/ttf/p258.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p259';
+  src: url('/fonts/v1/ttf/p259.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p260';
+  src: url('/fonts/v1/ttf/p260.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p261';
+  src: url('/fonts/v1/ttf/p261.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p262';
+  src: url('/fonts/v1/ttf/p262.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p263';
+  src: url('/fonts/v1/ttf/p263.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p264';
+  src: url('/fonts/v1/ttf/p264.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p265';
+  src: url('/fonts/v1/ttf/p265.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p266';
+  src: url('/fonts/v1/ttf/p266.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p267';
+  src: url('/fonts/v1/ttf/p267.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p268';
+  src: url('/fonts/v1/ttf/p268.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p269';
+  src: url('/fonts/v1/ttf/p269.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p270';
+  src: url('/fonts/v1/ttf/p270.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p271';
+  src: url('/fonts/v1/ttf/p271.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p272';
+  src: url('/fonts/v1/ttf/p272.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p273';
+  src: url('/fonts/v1/ttf/p273.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p274';
+  src: url('/fonts/v1/ttf/p274.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p275';
+  src: url('/fonts/v1/ttf/p275.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p276';
+  src: url('/fonts/v1/ttf/p276.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p277';
+  src: url('/fonts/v1/ttf/p277.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p278';
+  src: url('/fonts/v1/ttf/p278.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p279';
+  src: url('/fonts/v1/ttf/p279.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p280';
+  src: url('/fonts/v1/ttf/p280.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p281';
+  src: url('/fonts/v1/ttf/p281.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p282';
+  src: url('/fonts/v1/ttf/p282.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p283';
+  src: url('/fonts/v1/ttf/p283.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p284';
+  src: url('/fonts/v1/ttf/p284.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p285';
+  src: url('/fonts/v1/ttf/p285.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p286';
+  src: url('/fonts/v1/ttf/p286.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p287';
+  src: url('/fonts/v1/ttf/p287.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p288';
+  src: url('/fonts/v1/ttf/p288.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p289';
+  src: url('/fonts/v1/ttf/p289.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p290';
+  src: url('/fonts/v1/ttf/p290.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p291';
+  src: url('/fonts/v1/ttf/p291.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p292';
+  src: url('/fonts/v1/ttf/p292.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p293';
+  src: url('/fonts/v1/ttf/p293.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p294';
+  src: url('/fonts/v1/ttf/p294.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p295';
+  src: url('/fonts/v1/ttf/p295.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p296';
+  src: url('/fonts/v1/ttf/p296.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p297';
+  src: url('/fonts/v1/ttf/p297.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p298';
+  src: url('/fonts/v1/ttf/p298.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p299';
+  src: url('/fonts/v1/ttf/p299.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p300';
+  src: url('/fonts/v1/ttf/p300.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p301';
+  src: url('/fonts/v1/ttf/p301.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p302';
+  src: url('/fonts/v1/ttf/p302.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p303';
+  src: url('/fonts/v1/ttf/p303.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p304';
+  src: url('/fonts/v1/ttf/p304.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p305';
+  src: url('/fonts/v1/ttf/p305.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p306';
+  src: url('/fonts/v1/ttf/p306.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p307';
+  src: url('/fonts/v1/ttf/p307.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p308';
+  src: url('/fonts/v1/ttf/p308.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p309';
+  src: url('/fonts/v1/ttf/p309.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p310';
+  src: url('/fonts/v1/ttf/p310.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p311';
+  src: url('/fonts/v1/ttf/p311.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p312';
+  src: url('/fonts/v1/ttf/p312.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p313';
+  src: url('/fonts/v1/ttf/p313.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p314';
+  src: url('/fonts/v1/ttf/p314.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p315';
+  src: url('/fonts/v1/ttf/p315.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p316';
+  src: url('/fonts/v1/ttf/p316.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p317';
+  src: url('/fonts/v1/ttf/p317.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p318';
+  src: url('/fonts/v1/ttf/p318.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p319';
+  src: url('/fonts/v1/ttf/p319.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p320';
+  src: url('/fonts/v1/ttf/p320.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p321';
+  src: url('/fonts/v1/ttf/p321.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p322';
+  src: url('/fonts/v1/ttf/p322.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p323';
+  src: url('/fonts/v1/ttf/p323.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p324';
+  src: url('/fonts/v1/ttf/p324.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p325';
+  src: url('/fonts/v1/ttf/p325.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p326';
+  src: url('/fonts/v1/ttf/p326.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p327';
+  src: url('/fonts/v1/ttf/p327.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p328';
+  src: url('/fonts/v1/ttf/p328.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p329';
+  src: url('/fonts/v1/ttf/p329.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p330';
+  src: url('/fonts/v1/ttf/p330.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p331';
+  src: url('/fonts/v1/ttf/p331.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p332';
+  src: url('/fonts/v1/ttf/p332.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p333';
+  src: url('/fonts/v1/ttf/p333.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p334';
+  src: url('/fonts/v1/ttf/p334.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p335';
+  src: url('/fonts/v1/ttf/p335.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p336';
+  src: url('/fonts/v1/ttf/p336.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p337';
+  src: url('/fonts/v1/ttf/p337.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p338';
+  src: url('/fonts/v1/ttf/p338.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p339';
+  src: url('/fonts/v1/ttf/p339.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p340';
+  src: url('/fonts/v1/ttf/p340.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p341';
+  src: url('/fonts/v1/ttf/p341.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p342';
+  src: url('/fonts/v1/ttf/p342.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p343';
+  src: url('/fonts/v1/ttf/p343.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p344';
+  src: url('/fonts/v1/ttf/p344.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p345';
+  src: url('/fonts/v1/ttf/p345.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p346';
+  src: url('/fonts/v1/ttf/p346.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p347';
+  src: url('/fonts/v1/ttf/p347.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p348';
+  src: url('/fonts/v1/ttf/p348.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p349';
+  src: url('/fonts/v1/ttf/p349.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p350';
+  src: url('/fonts/v1/ttf/p350.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p351';
+  src: url('/fonts/v1/ttf/p351.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p352';
+  src: url('/fonts/v1/ttf/p352.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p353';
+  src: url('/fonts/v1/ttf/p353.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p354';
+  src: url('/fonts/v1/ttf/p354.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p355';
+  src: url('/fonts/v1/ttf/p355.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p356';
+  src: url('/fonts/v1/ttf/p356.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p357';
+  src: url('/fonts/v1/ttf/p357.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p358';
+  src: url('/fonts/v1/ttf/p358.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p359';
+  src: url('/fonts/v1/ttf/p359.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p360';
+  src: url('/fonts/v1/ttf/p360.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p361';
+  src: url('/fonts/v1/ttf/p361.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p362';
+  src: url('/fonts/v1/ttf/p362.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p363';
+  src: url('/fonts/v1/ttf/p363.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p364';
+  src: url('/fonts/v1/ttf/p364.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p365';
+  src: url('/fonts/v1/ttf/p365.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p366';
+  src: url('/fonts/v1/ttf/p366.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p367';
+  src: url('/fonts/v1/ttf/p367.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p368';
+  src: url('/fonts/v1/ttf/p368.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p369';
+  src: url('/fonts/v1/ttf/p369.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p370';
+  src: url('/fonts/v1/ttf/p370.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p371';
+  src: url('/fonts/v1/ttf/p371.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p372';
+  src: url('/fonts/v1/ttf/p372.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p373';
+  src: url('/fonts/v1/ttf/p373.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p374';
+  src: url('/fonts/v1/ttf/p374.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p375';
+  src: url('/fonts/v1/ttf/p375.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p376';
+  src: url('/fonts/v1/ttf/p376.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p377';
+  src: url('/fonts/v1/ttf/p377.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p378';
+  src: url('/fonts/v1/ttf/p378.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p379';
+  src: url('/fonts/v1/ttf/p379.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p380';
+  src: url('/fonts/v1/ttf/p380.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p381';
+  src: url('/fonts/v1/ttf/p381.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p382';
+  src: url('/fonts/v1/ttf/p382.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p383';
+  src: url('/fonts/v1/ttf/p383.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p384';
+  src: url('/fonts/v1/ttf/p384.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p385';
+  src: url('/fonts/v1/ttf/p385.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p386';
+  src: url('/fonts/v1/ttf/p386.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p387';
+  src: url('/fonts/v1/ttf/p387.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p388';
+  src: url('/fonts/v1/ttf/p388.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p389';
+  src: url('/fonts/v1/ttf/p389.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p390';
+  src: url('/fonts/v1/ttf/p390.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p391';
+  src: url('/fonts/v1/ttf/p391.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p392';
+  src: url('/fonts/v1/ttf/p392.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p393';
+  src: url('/fonts/v1/ttf/p393.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p394';
+  src: url('/fonts/v1/ttf/p394.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p395';
+  src: url('/fonts/v1/ttf/p395.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p396';
+  src: url('/fonts/v1/ttf/p396.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p397';
+  src: url('/fonts/v1/ttf/p397.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p398';
+  src: url('/fonts/v1/ttf/p398.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p399';
+  src: url('/fonts/v1/ttf/p399.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p400';
+  src: url('/fonts/v1/ttf/p400.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p401';
+  src: url('/fonts/v1/ttf/p401.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p402';
+  src: url('/fonts/v1/ttf/p402.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p403';
+  src: url('/fonts/v1/ttf/p403.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p404';
+  src: url('/fonts/v1/ttf/p404.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p405';
+  src: url('/fonts/v1/ttf/p405.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p406';
+  src: url('/fonts/v1/ttf/p406.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p407';
+  src: url('/fonts/v1/ttf/p407.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p408';
+  src: url('/fonts/v1/ttf/p408.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p409';
+  src: url('/fonts/v1/ttf/p409.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p410';
+  src: url('/fonts/v1/ttf/p410.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p411';
+  src: url('/fonts/v1/ttf/p411.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p412';
+  src: url('/fonts/v1/ttf/p412.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p413';
+  src: url('/fonts/v1/ttf/p413.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p414';
+  src: url('/fonts/v1/ttf/p414.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p415';
+  src: url('/fonts/v1/ttf/p415.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p416';
+  src: url('/fonts/v1/ttf/p416.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p417';
+  src: url('/fonts/v1/ttf/p417.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p418';
+  src: url('/fonts/v1/ttf/p418.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p419';
+  src: url('/fonts/v1/ttf/p419.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p420';
+  src: url('/fonts/v1/ttf/p420.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p421';
+  src: url('/fonts/v1/ttf/p421.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p422';
+  src: url('/fonts/v1/ttf/p422.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p423';
+  src: url('/fonts/v1/ttf/p423.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p424';
+  src: url('/fonts/v1/ttf/p424.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p425';
+  src: url('/fonts/v1/ttf/p425.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p426';
+  src: url('/fonts/v1/ttf/p426.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p427';
+  src: url('/fonts/v1/ttf/p427.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p428';
+  src: url('/fonts/v1/ttf/p428.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p429';
+  src: url('/fonts/v1/ttf/p429.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p430';
+  src: url('/fonts/v1/ttf/p430.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p431';
+  src: url('/fonts/v1/ttf/p431.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p432';
+  src: url('/fonts/v1/ttf/p432.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p433';
+  src: url('/fonts/v1/ttf/p433.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p434';
+  src: url('/fonts/v1/ttf/p434.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p435';
+  src: url('/fonts/v1/ttf/p435.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p436';
+  src: url('/fonts/v1/ttf/p436.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p437';
+  src: url('/fonts/v1/ttf/p437.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p438';
+  src: url('/fonts/v1/ttf/p438.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p439';
+  src: url('/fonts/v1/ttf/p439.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p440';
+  src: url('/fonts/v1/ttf/p440.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p441';
+  src: url('/fonts/v1/ttf/p441.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p442';
+  src: url('/fonts/v1/ttf/p442.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p443';
+  src: url('/fonts/v1/ttf/p443.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p444';
+  src: url('/fonts/v1/ttf/p444.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p445';
+  src: url('/fonts/v1/ttf/p445.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p446';
+  src: url('/fonts/v1/ttf/p446.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p447';
+  src: url('/fonts/v1/ttf/p447.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p448';
+  src: url('/fonts/v1/ttf/p448.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p449';
+  src: url('/fonts/v1/ttf/p449.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p450';
+  src: url('/fonts/v1/ttf/p450.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p451';
+  src: url('/fonts/v1/ttf/p451.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p452';
+  src: url('/fonts/v1/ttf/p452.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p453';
+  src: url('/fonts/v1/ttf/p453.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p454';
+  src: url('/fonts/v1/ttf/p454.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p455';
+  src: url('/fonts/v1/ttf/p455.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p456';
+  src: url('/fonts/v1/ttf/p456.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p457';
+  src: url('/fonts/v1/ttf/p457.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p458';
+  src: url('/fonts/v1/ttf/p458.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p459';
+  src: url('/fonts/v1/ttf/p459.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p460';
+  src: url('/fonts/v1/ttf/p460.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p461';
+  src: url('/fonts/v1/ttf/p461.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p462';
+  src: url('/fonts/v1/ttf/p462.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p463';
+  src: url('/fonts/v1/ttf/p463.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p464';
+  src: url('/fonts/v1/ttf/p464.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p465';
+  src: url('/fonts/v1/ttf/p465.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p466';
+  src: url('/fonts/v1/ttf/p466.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p467';
+  src: url('/fonts/v1/ttf/p467.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p468';
+  src: url('/fonts/v1/ttf/p468.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p469';
+  src: url('/fonts/v1/ttf/p469.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p470';
+  src: url('/fonts/v1/ttf/p470.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p471';
+  src: url('/fonts/v1/ttf/p471.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p472';
+  src: url('/fonts/v1/ttf/p472.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p473';
+  src: url('/fonts/v1/ttf/p473.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p474';
+  src: url('/fonts/v1/ttf/p474.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p475';
+  src: url('/fonts/v1/ttf/p475.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p476';
+  src: url('/fonts/v1/ttf/p476.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p477';
+  src: url('/fonts/v1/ttf/p477.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p478';
+  src: url('/fonts/v1/ttf/p478.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p479';
+  src: url('/fonts/v1/ttf/p479.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p480';
+  src: url('/fonts/v1/ttf/p480.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p481';
+  src: url('/fonts/v1/ttf/p481.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p482';
+  src: url('/fonts/v1/ttf/p482.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p483';
+  src: url('/fonts/v1/ttf/p483.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p484';
+  src: url('/fonts/v1/ttf/p484.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p485';
+  src: url('/fonts/v1/ttf/p485.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p486';
+  src: url('/fonts/v1/ttf/p486.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p487';
+  src: url('/fonts/v1/ttf/p487.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p488';
+  src: url('/fonts/v1/ttf/p488.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p489';
+  src: url('/fonts/v1/ttf/p489.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p490';
+  src: url('/fonts/v1/ttf/p490.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p491';
+  src: url('/fonts/v1/ttf/p491.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p492';
+  src: url('/fonts/v1/ttf/p492.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p493';
+  src: url('/fonts/v1/ttf/p493.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p494';
+  src: url('/fonts/v1/ttf/p494.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p495';
+  src: url('/fonts/v1/ttf/p495.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p496';
+  src: url('/fonts/v1/ttf/p496.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p497';
+  src: url('/fonts/v1/ttf/p497.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p498';
+  src: url('/fonts/v1/ttf/p498.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p499';
+  src: url('/fonts/v1/ttf/p499.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p500';
+  src: url('/fonts/v1/ttf/p500.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p501';
+  src: url('/fonts/v1/ttf/p501.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p502';
+  src: url('/fonts/v1/ttf/p502.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p503';
+  src: url('/fonts/v1/ttf/p503.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p504';
+  src: url('/fonts/v1/ttf/p504.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p505';
+  src: url('/fonts/v1/ttf/p505.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p506';
+  src: url('/fonts/v1/ttf/p506.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p507';
+  src: url('/fonts/v1/ttf/p507.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p508';
+  src: url('/fonts/v1/ttf/p508.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p509';
+  src: url('/fonts/v1/ttf/p509.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p510';
+  src: url('/fonts/v1/ttf/p510.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p511';
+  src: url('/fonts/v1/ttf/p511.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p512';
+  src: url('/fonts/v1/ttf/p512.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p513';
+  src: url('/fonts/v1/ttf/p513.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p514';
+  src: url('/fonts/v1/ttf/p514.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p515';
+  src: url('/fonts/v1/ttf/p515.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p516';
+  src: url('/fonts/v1/ttf/p516.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p517';
+  src: url('/fonts/v1/ttf/p517.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p518';
+  src: url('/fonts/v1/ttf/p518.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p519';
+  src: url('/fonts/v1/ttf/p519.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p520';
+  src: url('/fonts/v1/ttf/p520.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p521';
+  src: url('/fonts/v1/ttf/p521.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p522';
+  src: url('/fonts/v1/ttf/p522.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p523';
+  src: url('/fonts/v1/ttf/p523.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p524';
+  src: url('/fonts/v1/ttf/p524.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p525';
+  src: url('/fonts/v1/ttf/p525.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p526';
+  src: url('/fonts/v1/ttf/p526.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p527';
+  src: url('/fonts/v1/ttf/p527.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p528';
+  src: url('/fonts/v1/ttf/p528.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p529';
+  src: url('/fonts/v1/ttf/p529.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p530';
+  src: url('/fonts/v1/ttf/p530.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p531';
+  src: url('/fonts/v1/ttf/p531.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p532';
+  src: url('/fonts/v1/ttf/p532.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p533';
+  src: url('/fonts/v1/ttf/p533.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p534';
+  src: url('/fonts/v1/ttf/p534.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p535';
+  src: url('/fonts/v1/ttf/p535.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p536';
+  src: url('/fonts/v1/ttf/p536.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p537';
+  src: url('/fonts/v1/ttf/p537.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p538';
+  src: url('/fonts/v1/ttf/p538.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p539';
+  src: url('/fonts/v1/ttf/p539.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p540';
+  src: url('/fonts/v1/ttf/p540.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p541';
+  src: url('/fonts/v1/ttf/p541.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p542';
+  src: url('/fonts/v1/ttf/p542.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p543';
+  src: url('/fonts/v1/ttf/p543.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p544';
+  src: url('/fonts/v1/ttf/p544.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p545';
+  src: url('/fonts/v1/ttf/p545.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p546';
+  src: url('/fonts/v1/ttf/p546.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p547';
+  src: url('/fonts/v1/ttf/p547.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p548';
+  src: url('/fonts/v1/ttf/p548.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p549';
+  src: url('/fonts/v1/ttf/p549.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p550';
+  src: url('/fonts/v1/ttf/p550.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p551';
+  src: url('/fonts/v1/ttf/p551.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p552';
+  src: url('/fonts/v1/ttf/p552.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p553';
+  src: url('/fonts/v1/ttf/p553.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p554';
+  src: url('/fonts/v1/ttf/p554.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p555';
+  src: url('/fonts/v1/ttf/p555.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p556';
+  src: url('/fonts/v1/ttf/p556.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p557';
+  src: url('/fonts/v1/ttf/p557.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p558';
+  src: url('/fonts/v1/ttf/p558.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p559';
+  src: url('/fonts/v1/ttf/p559.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p560';
+  src: url('/fonts/v1/ttf/p560.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p561';
+  src: url('/fonts/v1/ttf/p561.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p562';
+  src: url('/fonts/v1/ttf/p562.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p563';
+  src: url('/fonts/v1/ttf/p563.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p564';
+  src: url('/fonts/v1/ttf/p564.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p565';
+  src: url('/fonts/v1/ttf/p565.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p566';
+  src: url('/fonts/v1/ttf/p566.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p567';
+  src: url('/fonts/v1/ttf/p567.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p568';
+  src: url('/fonts/v1/ttf/p568.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p569';
+  src: url('/fonts/v1/ttf/p569.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p570';
+  src: url('/fonts/v1/ttf/p570.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p571';
+  src: url('/fonts/v1/ttf/p571.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p572';
+  src: url('/fonts/v1/ttf/p572.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p573';
+  src: url('/fonts/v1/ttf/p573.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p574';
+  src: url('/fonts/v1/ttf/p574.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p575';
+  src: url('/fonts/v1/ttf/p575.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p576';
+  src: url('/fonts/v1/ttf/p576.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p577';
+  src: url('/fonts/v1/ttf/p577.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p578';
+  src: url('/fonts/v1/ttf/p578.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p579';
+  src: url('/fonts/v1/ttf/p579.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p580';
+  src: url('/fonts/v1/ttf/p580.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p581';
+  src: url('/fonts/v1/ttf/p581.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p582';
+  src: url('/fonts/v1/ttf/p582.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p583';
+  src: url('/fonts/v1/ttf/p583.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p584';
+  src: url('/fonts/v1/ttf/p584.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p585';
+  src: url('/fonts/v1/ttf/p585.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p586';
+  src: url('/fonts/v1/ttf/p586.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p587';
+  src: url('/fonts/v1/ttf/p587.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p588';
+  src: url('/fonts/v1/ttf/p588.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p589';
+  src: url('/fonts/v1/ttf/p589.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p590';
+  src: url('/fonts/v1/ttf/p590.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p591';
+  src: url('/fonts/v1/ttf/p591.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p592';
+  src: url('/fonts/v1/ttf/p592.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p593';
+  src: url('/fonts/v1/ttf/p593.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p594';
+  src: url('/fonts/v1/ttf/p594.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p595';
+  src: url('/fonts/v1/ttf/p595.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p596';
+  src: url('/fonts/v1/ttf/p596.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p597';
+  src: url('/fonts/v1/ttf/p597.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p598';
+  src: url('/fonts/v1/ttf/p598.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p599';
+  src: url('/fonts/v1/ttf/p599.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p600';
+  src: url('/fonts/v1/ttf/p600.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p601';
+  src: url('/fonts/v1/ttf/p601.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p602';
+  src: url('/fonts/v1/ttf/p602.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p603';
+  src: url('/fonts/v1/ttf/p603.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'quran-p604';
+  src: url('/fonts/v1/ttf/p604.ttf') format('truetype');
+  font-display: block;
+}

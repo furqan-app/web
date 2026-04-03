@@ -7,17 +7,11 @@ import { WordWithVerse } from "../types/prisma";
 
 export type QuranWordProps = {
   word: WordWithVerse;
-  fontLoaded: boolean;
   marks: Array<{ name: string; value: string }>;
   onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
 };
 
-export const QuranWord = ({
-  word,
-  fontLoaded,
-  marks,
-  onWordClicked,
-}: QuranWordProps) => {
+export const QuranWord = ({ word, marks, onWordClicked }: QuranWordProps) => {
   const searchParams = useSearchParams();
   const highlightedVerseKey = highlight.getHighlightedVerseKey(searchParams);
   const highlightType = highlight.getHighlightType(searchParams);
@@ -41,11 +35,7 @@ export const QuranWord = ({
       ${highlightClassForWord}
     `}
     >
-      {fontLoaded ? (
-        <span>{word.code_v1}</span>
-      ) : (
-        <span>{word.qpc_uthmani_hafs}</span>
-      )}
+      <span>{word.code_v1}</span>
     </div>
   );
 };
