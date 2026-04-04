@@ -32,6 +32,7 @@ yarn-error.log*
 
 # mcp config (contains secrets)
 .mcp.json
+.playwright-mcp
 
 # vercel
 .vercel

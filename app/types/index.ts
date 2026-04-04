@@ -77,7 +77,8 @@ export type SurahResult = {
   name_arabic: string;
   name_simple: string;
   verses_count: number;
-  pages: string;
+  revelation_place: string;
+  pages: string; // format: "startPage-endPage" e.g. "1-21"
 };
 
 export type Mark = {
