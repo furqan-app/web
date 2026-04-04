@@ -30,10 +30,14 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# mcp config (contains secrets)
+.mcp.json
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
 
