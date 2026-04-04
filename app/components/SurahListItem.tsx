@@ -1,11 +1,11 @@
-import { Surah } from "@types";
+import { SurahResult } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 
 type Props = {
-  surah: Surah;
+  surah: SurahResult;
 };
 
 export const SurahListItem = ({ surah }: Props) => {
@@ -19,11 +19,11 @@ export const SurahListItem = ({ surah }: Props) => {
       case "en":
         return surah.name_simple;
       default:
-        return surah.translated_name.text || surah.name_simple;
+        return surah.name_simple;
     }
   };
 
-  const surahStartingPage = surah.pages[0];
+  const surahStartingPage = surah.pages.split('-')[0];
   return (
     <Link
       locale={locale}

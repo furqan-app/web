@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working Style
+
+Don't make any changes until you have 95% confidence in what we need to build. Ask me follow up questions until you reach that confidence.
+
 ## Project Overview
 
 Furqan is a word-focused Qur'an reading application built with Next.js 14 (App Router), featuring multi-language support (Arabic/English), user authentication via Google OAuth, bookmarking/marking features, and customizable Quranic font scaling.
@@ -67,7 +71,7 @@ Two middleware piped in order:
 
 ### Database Schema (Prisma)
 Key models:
-- **Chapter** - Surah metadata
+- **Chapter** - Surah metadata. `pages` column is a string in `"startPage-endPage"` format (e.g. `"1-21"`), not an array — use `.split('-')[0]` to get the starting page.
 - **Verse** - Quranic verses with page/line mapping
 - **Word** - Individual words with position and formatting
 - **User** - User accounts
@@ -77,7 +81,7 @@ Key models:
 ### React Query Hooks (app/hooks/)
 - `useQuranPage(page)` - Fetch page words
 - `usePageFont(page)` - Load page-specific font
-- `useSurahs()` - Fetch chapters
+- `useSurahs()` - Fetch chapters (used by sidebar `SurahListClient`, not the home page)
 - `useMarks(page)` - Fetch user marks
 - `useRubs()` - Fetch Rub data
 - `useSearch()` - Search verses/chapters
@@ -94,6 +98,7 @@ Central utility for verse/word highlighting with support for:
 - Pages must be generated for each locale (AR/EN)
 - User interactions (marks, bookmarks, highlights) are dynamic — handled client-side via React Query + auth
 - Static data (surah list, page info like juz/hizb) should be pre-computed, not calculated at runtime
+- Home page (`app/[locale]/page.tsx`) fetches surahs directly via `getSurahs()` (Prisma) in a server component — no API call, no React Query
 
 ### Companion Projects
 - **quran-scrapper** (https://github.com/furqan-app/scraper) — Data collection and DB preparation. Temporary project; will be retired once database schema is finalized.

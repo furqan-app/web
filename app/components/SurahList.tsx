@@ -1,8 +1,8 @@
-import { Surah } from "@types";
+import { SurahResult } from "@types";
 import { SurahListItem } from "@components/SurahListItem";
 
 type Props = {
-  surahs: Surah[];
+  surahs: SurahResult[];
 };
 
 export const SurahList = ({ surahs }: Props) => (

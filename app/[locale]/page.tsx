@@ -1,16 +1,21 @@
+import { setRequestLocale } from "next-intl/server";
 import useTranslations from "../hooks/use-translations";
 import { SurahList } from "../components/SurahList";
-import { getSurahs } from "../hooks/use-surahs";
-
-// Remove this when the whole app is at build time
-export const dynamic = 'force-dynamic';
+import { getSurahs } from "../hooks/get-surahs";
+import { Locale } from "../types/config";
 
 const AppTitle = () => {
   const t = useTranslations();
-  return <span>{t('home.title', 'Furqan')}</span>;
+  return <span>{t("home.title", "Furqan")}</span>;
 };
 
-export default async function Home() {
+export default async function Home({
+  params: { locale },
+}: {
+  params: { locale: Locale };
+}) {
+  setRequestLocale(locale);
+
   const surahs = await getSurahs();
   return (
     <main className="container mx-auto px-4 py-8 min-h-screen">
