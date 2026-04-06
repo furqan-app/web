@@ -45,11 +45,11 @@ npm run extract-translations  # Extract i18n strings
 - `@/*` → `./*`
 
 ### Data Flow
-1. User requests a page → Next.js Server Component
-2. Server fetches words via Prisma from MySQL
+1. All 604 Quran pages are statically generated at build time via `generateStaticParams`
+2. Page data fetched directly via Prisma (`getPageWords`) — no API self-call
 3. Words grouped by `line_number` for rendering
-4. Client renders with React Query caching
-5. User interactions (marks/bookmarks) require authentication
+4. Sidebar data (surahs, rubs) fetched server-side in `app/[locale]/pages/layout.tsx`, Sidebar component loaded via `next/dynamic` for deferred JS hydration
+5. User interactions (marks/bookmarks) load client-side via React Query (auth required)
 
 ### Middleware Chain (middleware.ts)
 Two middleware piped in order:
@@ -57,16 +57,14 @@ Two middleware piped in order:
 2. **auth-middleware** - Protects routes matching `/api/quran/pages/[0-9]+/marks`
 
 ### Key API Routes
-- `GET /api/quran/pages/[pageId]` - Page words grouped by line
+- `GET /api/quran/pages/[pageId]` - Page words grouped by line (used by vertical reading client component)
 - `GET/POST /api/quran/pages/[pageId]/marks` - User marks (auth required)
-- `GET /api/quran/surahs` - Chapter list
-- `GET /api/quran/rubs` - Rub (quarter) divisions
 - `GET /api/search/verses` - Verse search
 - `GET /api/search/chapters` - Chapter search
 
 ### Font System
 - **Core fonts** (loaded at build time): Uthmanic script (`/app/fonts/hafs/uthmanic/`), Surah names (`/app/fonts/surah/v1/`)
-- **Page fonts** (loaded dynamically): `/public/fonts/v1/p[page].ttf` via FontFace API (page number comes from `Word.page_number`)
+- **Page fonts** (inline per-page): Each Quran page inlines a single `@font-face` for `quran-p{pageId}` pointing to `/fonts/v1/ttf/p{pageId}.ttf`, plus a `<link rel="preload">` for immediate download. No global CSS font declarations.
 - **Font scaling**: 1-10 scale persisted in localStorage via `QuranFontScaleContext`
 
 ### Database Schema (Prisma)
@@ -78,12 +76,14 @@ Key models:
 - **Mark** - User marks (verse/word level, type: note or highlight, value: text or color)
 - **Rub/RubVerseMapping** - Quarter divisions of Quran
 
+### Server Data Functions (app/hooks/)
+- `getSurahs()` - Prisma query for chapter list (used by home page and sidebar layout)
+- `getPageWords(pageId)` - Prisma query for page words grouped by line_number (used by static page generation)
+- `getRubs()` - Prisma query for rub divisions (used by sidebar layout)
+
 ### React Query Hooks (app/hooks/)
-- `useQuranPage(page)` - Fetch page words
-- `usePageFont(page)` - Load page-specific font
-- `useSurahs()` - Fetch chapters (used by sidebar `SurahListClient`, not the home page)
-- `useMarks(page)` - Fetch user marks
-- `useRubs()` - Fetch Rub data
+- `usePage(page)` - Fetch page words via API (used by vertical reading mode)
+- `useMarks(page)` - Fetch user marks (auth required, client-side)
 - `useSearch()` - Search verses/chapters
 
 ### Highlighting System (app/utils/highlight.ts)
