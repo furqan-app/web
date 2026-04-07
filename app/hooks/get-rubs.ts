@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/app/utils/db";
+import { RubWithVerses } from "@/app/types/prisma";
 
-export async function GET() {
-  const rubs = await prisma.rub.findMany({
+export const getRubs = async (): Promise<RubWithVerses[]> => {
+  return prisma.rub.findMany({
     include: {
       rubVerseMappings: true,
       startVerse: {
@@ -19,9 +19,7 @@ export async function GET() {
       },
     },
     orderBy: {
-      rub_number: 'asc',
+      rub_number: "asc",
     },
   });
-
-  return NextResponse.json(rubs);
-}
+};

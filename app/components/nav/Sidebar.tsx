@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { SurahListClient } from "../SurahListClient";
+import { SurahList } from "../SurahList";
 import { SideNavIcon } from "@components/icons/SideNavIcon";
 import useTranslations from "@/app/hooks/use-translations";
 import RubList from "../RubList";
+import { SurahResult } from "@types";
+import { RubWithVerses } from "@/app/types/prisma";
 
-const Sidebar = () => {
+type Props = {
+  surahs: SurahResult[];
+  rubs: RubWithVerses[];
+};
+
+const Sidebar = ({ surahs, rubs }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'surahs' | 'rubs'>('surahs');
   const t = useTranslations();
@@ -44,8 +51,8 @@ const Sidebar = () => {
             </button>
           </div>
 
-          {activeTab === 'surahs' && <SurahListClient />}
-          {activeTab === 'rubs' && <RubList />}
+          {activeTab === 'surahs' && <SurahList surahs={surahs} />}
+          {activeTab === 'rubs' && <RubList rubs={rubs} />}
         </div>
       </aside>
     </div>

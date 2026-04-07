@@ -1,22 +1,20 @@
 import Link from "next/link";
 
 import { QuranSafha } from "@/app/components/QuranSafha";
-import { fetchPageAPI } from "@/app/hooks/use-quran-page";
-import { getLocale } from "next-intl/server";
+import { getPageWords } from "@/app/hooks/get-page-words";
+import { setRequestLocale } from "next-intl/server";
 import { getLanguageDirection } from "@/app/utils/i18n";
-import Sidebar from "@/app/components/nav/Sidebar";
-
-export const dynamic = 'force-dynamic';
+import { Locale } from "@/app/types/config";
 
 // statically generate all pages in build time
 export async function generateStaticParams() {
   return Array.from({ length: 604 }, (_, i) => ({
-    params: { id: String(i + 1) },
+    id: String(i + 1),
   }));
 }
 
 type QuranPageByIdProps = {
-  params: { id: string };
+  params: { id: string; locale: Locale };
 };
 
 const NavigationButton = ({
@@ -28,9 +26,10 @@ const NavigationButton = ({
   isRTL: boolean;
   isNext: boolean;
 }) => {
-  const path = isRTL === isNext
-    ? "m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-    : "m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z";
+  const path =
+    isRTL === isNext
+      ? "m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+      : "m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z";
 
   return (
     <Link href={href} className="text-dark dark:text-white">
@@ -49,10 +48,11 @@ const NavigationButton = ({
 };
 
 const QuranPageById = async ({
-  params: { id: pageId },
+  params: { id: pageId, locale },
 }: QuranPageByIdProps) => {
-  const locale = await getLocale();
-  const lines = await fetchPageAPI(Number(pageId));
+  setRequestLocale(locale);
+
+  const lines = await getPageWords(Number(pageId));
   const isRTL = getLanguageDirection(locale) === "rtl";
 
   const getNavigationHref = (isNext: boolean) => {
@@ -66,8 +66,21 @@ const QuranPageById = async ({
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
-      <Sidebar />
+    <>
+      <style>{`
+        @font-face {
+          font-family: 'quran-p${pageId}';
+          src: url('/fonts/v1/ttf/p${pageId}.ttf') format('truetype');
+          font-display: block;
+        }
+      `}</style>
+      <link
+        rel="preload"
+        href={`/fonts/v1/ttf/p${pageId}.ttf`}
+        as="font"
+        type="font/truetype"
+        crossOrigin="anonymous"
+      />
       <div className="bg:white dark:bg-black w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
         <div className="flex items-center">
           <NavigationButton
@@ -87,8 +100,9 @@ const QuranPageById = async ({
           />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
 export default QuranPageById;
+

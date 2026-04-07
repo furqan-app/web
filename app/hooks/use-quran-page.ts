@@ -5,7 +5,7 @@ export const fetchPageAPI = async (
   page: number
 ): Promise<Record<string, Array<WordWithVerse>>> => {
   return fetch(
-    `http://localhost:3000/api/quran/pages/${page}`
+    `/api/quran/pages/${page}`
   ).then((response) => response.json());
 
 };
