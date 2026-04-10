@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { useSearch } from "@hooks/use-search";
 import SearchQueryResults from "./SearchQueryResults";
 import useTranslations from "@hooks/use-translations";
+import { Input } from "@/components/ui/input";
+import { Loader2, Search } from "lucide-react";
 
 export const SearchBar = () => {
     const t = useTranslations();
@@ -48,7 +50,8 @@ export const SearchBar = () => {
     return (
         <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto">
             <div className="relative">
-                <input
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                <Input
                     type="text"
                     value={query}
                     onChange={(e) => {
@@ -57,13 +60,11 @@ export const SearchBar = () => {
                     }}
                     onFocus={handleSearchFocus}
                     placeholder={t('search.placeholder', 'Search the Quran...')}
-                    className="w-full px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800 
-            border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none 
-            focus:ring-2 focus:ring-blue-500"
+                    className="ps-9 pe-9"
                 />
                 {isLoading && (
-                    <div className="absolute right-3 top-2.5">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-500 border-t-transparent"></div>
+                    <div className="absolute end-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="size-4 animate-spin text-muted-foreground" />
                     </div>
                 )}
             </div>

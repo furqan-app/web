@@ -1,7 +1,8 @@
 'use client';
 
 import { useTheme } from "@hooks/use-theme";
-import { ThemeIcon } from "@components/icons/ThemeIcon";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 export const ThemeToggle = () => {
@@ -13,16 +14,17 @@ export const ThemeToggle = () => {
   }, []);
 
   if (!mounted) {
-    return <div className="w-12 h-9" />;
+    return <div className="w-9 h-9" />;
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded transition-colors"
       aria-label="Toggle theme"
     >
-      <ThemeIcon theme={theme} />
-    </button>
+      {theme === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
+    </Button>
   );
 };
