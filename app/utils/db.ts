@@ -13,4 +13,9 @@ export const connection = mysql
   })
   .promise();
 
-export const prisma = new PrismaClient();
+const dbUrl = new URL(process.env.DATABASE_URL!);
+dbUrl.searchParams.set("connection_limit", "5");
+
+export const prisma = new PrismaClient({
+  datasources: { db: { url: dbUrl.toString() } },
+});

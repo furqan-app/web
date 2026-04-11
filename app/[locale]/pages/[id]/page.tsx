@@ -44,7 +44,7 @@ const QuranPageById = async ({
 }: QuranPageByIdProps) => {
   setRequestLocale(locale);
 
-  const lines = await getPageWords(Number(pageId));
+  const { lines, pageMetadata } = await getPageWords(Number(pageId));
   const isRTL = getLanguageDirection(locale) === "rtl";
 
   const getNavigationHref = (isNext: boolean) => {
@@ -86,7 +86,7 @@ const QuranPageById = async ({
           />
         </div>
         <div className="">
-          <QuranSafha page={+pageId} lines={lines} />
+          <QuranSafha page={+pageId} lines={lines} pageMetadata={pageMetadata} />
         </div>
         <div className="flex items-center">
           <NavigationButton

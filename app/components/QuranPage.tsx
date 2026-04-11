@@ -9,7 +9,7 @@ type Props = {
 };
 
 const QuranPage = memo(function QuranPage({ page }: Props) {
-  const { data: lines, error } = usePage(page);
+  const { data, error } = usePage(page);
 
   if (error) {
     return (
@@ -19,14 +19,14 @@ const QuranPage = memo(function QuranPage({ page }: Props) {
     );
   }
 
-  if (!lines)
+  if (!data)
     return (
       <div className="flex h-full justify-center items-center">
         Loading page {page}...
       </div>
     );
 
-  return <QuranSafha page={page} lines={lines} />;
+  return <QuranSafha page={page} lines={data.lines} pageMetadata={data.pageMetadata} />;
 });
 
 export default QuranPage;
