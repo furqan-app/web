@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { WordWithVerse } from "../types/prisma";
+import { PageMetadataWithChapter, WordWithVerse } from "../types/prisma";
 
-export const fetchPageAPI = async (
-  page: number
-): Promise<Record<string, Array<WordWithVerse>>> => {
-  return fetch(
-    `/api/quran/pages/${page}`
-  ).then((response) => response.json());
+export type PageData = {
+  lines: Record<string, Array<WordWithVerse>>;
+  pageMetadata: PageMetadataWithChapter;
+};
 
+export const fetchPageAPI = async (page: number): Promise<PageData> => {
+  return fetch(`/api/quran/pages/${page}`).then((response) => response.json());
 };
 
 export const usePage = (page: number) => {

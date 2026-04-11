@@ -42,16 +42,16 @@ const Sidebar = ({ surahs, rubs }: Props) => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 top-14 h-[calc(100%-3.5rem)] p-0 flex flex-col">
-        <div className="flex justify-end p-4 border-b">
+      <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 top-14 h-[calc(100%-3.5rem)] p-0 flex flex-col overflow-hidden">
+        <div className="flex justify-end p-4 border-b shrink-0">
           <SheetClose asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <X className="h-4 w-4" />
             </Button>
           </SheetClose>
         </div>
-        <Tabs defaultValue="surahs" className="flex-1 flex flex-col">
-          <TabsList className="w-full rounded-none justify-around">
+        <Tabs defaultValue="surahs" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="w-full rounded-none justify-around shrink-0">
             <TabsTrigger value="surahs" className="flex-1">
               {t("surahs", "Surahs")}
             </TabsTrigger>
@@ -59,10 +59,10 @@ const Sidebar = ({ surahs, rubs }: Props) => {
               {t("rubs", "Rubs")}
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="surahs" className="flex-1 overflow-y-auto p-4 mt-0">
+          <TabsContent value="surahs" className="flex-1 overflow-y-auto p-4 mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
             <SurahList surahs={surahs} />
           </TabsContent>
-          <TabsContent value="rubs" className="flex-1 overflow-y-auto p-4 mt-0">
+          <TabsContent value="rubs" className="flex-1 overflow-y-auto p-4 mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
             <RubList rubs={rubs} />
           </TabsContent>
         </Tabs>

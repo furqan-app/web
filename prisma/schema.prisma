@@ -20,6 +20,7 @@ model Chapter {
   pages            String
   translated_name  String
   verses           Verse[]
+  pageMetadata     PageMetadata[]
 
   @@map("chapters")
 }
@@ -94,6 +95,19 @@ model Mark {
 
   @@unique([marked_type, marked_id, mark_type, to_user])
   @@map("marks")
+}
+
+model PageMetadata {
+  id            Int     @id @default(autoincrement())
+  page_number   Int     @unique
+  surah_id      Int
+  page_surahs   String
+  juz_number    Int
+  hizb_number   Int
+  hizb_position String?
+  chapter       Chapter @relation(fields: [surah_id], references: [id])
+
+  @@map("page_metadata")
 }
 
 // model Hizb {

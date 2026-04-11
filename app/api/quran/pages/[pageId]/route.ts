@@ -7,26 +7,25 @@ export async function GET(
   context: { params: { pageId: string } }
 ) {
   const { pageId } = context.params;
+  const pageNumber = Number(pageId);
 
-  const words = await prisma.word.findMany({
-    include: {
-      verse: {
-        include: { chapter: true },
+  const [words, pageMetadata] = await Promise.all([
+    prisma.word.findMany({
+      include: {
+        verse: {
+          include: { chapter: true },
+        },
       },
-    },
-    where: {
-      page_number: Number(pageId),
-    },
-    orderBy: [
-      {
-        verse_id: "asc",
+      where: {
+        page_number: pageNumber,
       },
-      {
-        position: "asc",
-      },
-    ],
-  });
+      orderBy: [{ verse_id: "asc" }, { position: "asc" }],
+    }),
+    prisma.pageMetadata.findUniqueOrThrow({
+      where: { page_number: pageNumber },
+      include: { chapter: true },
+    }),
+  ]);
 
-  return NextResponse.json(groupBy(words, "line_number"));
+  return NextResponse.json({ lines: groupBy(words, "line_number"), pageMetadata });
 }
-

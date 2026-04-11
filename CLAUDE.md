@@ -74,6 +74,7 @@ Key models:
 - **Word** - Individual words with position and formatting
 - **User** - User accounts
 - **Mark** - User marks (verse/word level, type: note or highlight, value: text or color)
+- **PageMetadata** - Per-page structural info: `surah_id` (first surah starting on the page, or continuing surah), `page_surahs` (dash-separated chapter IDs), `juz_number`, `hizb_number`, `hizb_position` (nullable — `null` means no new rub starts on that page; non-null values: `"hizb"`, `"hizb-quarter"`, `"hizb-half"`, `"hizb-three-quarters"`). Populated by the scraper companion project.
 - **Rub/RubVerseMapping** - Quarter divisions of Quran
 
 ### Server Data Functions (app/hooks/)

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale } from "next-intl";
 import { useSession } from "next-auth/react";
-import { Chapter, Verse } from "@prisma/client";
+import { Verse } from "@prisma/client";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
 import { FONT_V1 } from "@constants/font";
@@ -12,11 +12,12 @@ import useTranslations from "@hooks/use-translations";
 import { getPageFontFamily } from "@utils/quran-font-map";
 import { MarkModal } from "./MarkModal";
 import { SignInModal } from "./SignInModal";
-import { WordWithVerse } from "../types/prisma";
+import { PageMetadataWithChapter, WordWithVerse } from "../types/prisma";
 
 type QuranSafhaProps = {
   page: number;
   lines: Record<string, Array<WordWithVerse>>;
+  pageMetadata: PageMetadataWithChapter;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -40,7 +41,7 @@ const tailwindFontUtility = [
   "md:text-[6.6vh]",
 ];
 
-export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
+export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
   const locale = useLocale();
   const session = useSession();
   const t = useTranslations();
@@ -66,77 +67,17 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
     setSelectedForMark(null);
   };
 
-  const getPageInfo = () => {
-    const lastLineNumber = Math.max(...Object.keys(lines).map(Number));
-    const lastLine = lines[lastLineNumber];
-    const lastWordWithVerse = [...lastLine]
-      .reverse()
-      .find((word) => word.verse);
-
-    if (!lastWordWithVerse?.verse) {
-      return null;
-    }
-
-    let pageSurah: Chapter | null = lastWordWithVerse.verse.chapter;
-
-    for (const line of Object.values(lines)) {
-      const [, verseNumber, wordNumber] = line[0].location
-        .split(":")
-        .map(Number);
-
-      if (verseNumber === 1 && wordNumber === 1) {
-        pageSurah = line[0]?.verse?.chapter;
-        break;
-      }
-    }
-
-    if (!pageSurah) {
-      return null;
-    }
-
-    /*
-     * Calculate hizb position (0-3)
-     * Examples:
-     * hizb_number = 1, rub_el_hizb_number = 1  => hizbPosition = 3
-     * hizb_number = 1, rub_el_hizb_number = 2  => hizbPosition = 2
-     * hizb_number = 1, rub_el_hizb_number = 3  => hizbPosition = 1
-     * hizb_number = 1, rub_el_hizb_number = 4  => hizbPosition = 0
-     *
-     * hizb_number = 35, rub_el_hizb_number = 141  => hizbPosition = 3
-     * hizb_number = 35, rub_el_hizb_number = 142  => hizbPosition = 2
-     * hizb_number = 35, rub_el_hizb_number = 143  => hizbPosition = 1
-     * hizb_number = 35, rub_el_hizb_number = 144  => hizbPosition = 0
-     */
-    const hizbPosition =
-      lastWordWithVerse.verse.hizb_number * 4 -
-      lastWordWithVerse.verse.rub_el_hizb_number;
-    let hizbText;
-    switch (hizbPosition) {
-      case 3:
-        hizbText = t("hizb", "الحزب");
-        break;
-      case 2:
-        hizbText = t("hizb-quarter", "ربع الحزب");
-        break;
-      case 1:
-        hizbText = t("hizb-half", "نصف الحزب");
-        break;
-      case 0:
-        hizbText = t("hizb-three-quarters", "ثلاث أرباع الحزب");
-        break;
-    }
-
-    return {
-      surahName:
-        t("surah", "سورة") +
-        " " +
-        (locale === "ar" ? pageSurah?.name_arabic : pageSurah?.name_simple),
-      juz: t("juz", "الجزء") + " " + lastWordWithVerse.verse.juz_number,
-      hizb: hizbText + " " + lastWordWithVerse.verse.hizb_number,
-    };
+  const hizbDefaults: Record<string, string> = {
+    hizb: "الحزب",
+    "hizb-quarter": "ربع الحزب",
+    "hizb-half": "نصف الحزب",
+    "hizb-three-quarters": "ثلاث أرباع الحزب",
   };
-
-  const pageInfo = getPageInfo();
+  const surahName = `${t("surah", "سورة")} ${locale === "ar" ? pageMetadata.chapter.name_arabic : pageMetadata.chapter.name_simple}`;
+  const juz = `${t("juz", "الجزء")} ${pageMetadata.juz_number}`;
+  const hizb = pageMetadata.hizb_position
+    ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${pageMetadata.hizb_number}`
+    : null;
 
   return (
     <>
@@ -154,10 +95,10 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
         <div className="w-fit py-6">
           <div className="flex w-full justify-between">
             <div className="text-black dark:text-white">
-              {pageInfo?.surahName}
+              {surahName}
             </div>
             <div className="text-black dark:text-white">
-              {pageInfo?.juz}, {pageInfo?.hizb}
+              {juz}{hizb ? `, ${hizb}` : ""}
             </div>
           </div>
           <div
