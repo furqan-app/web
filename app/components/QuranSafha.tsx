@@ -151,7 +151,7 @@ export const QuranSafha = ({ page, lines }: QuranSafhaProps) => {
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center">
-        <div className="w-fit py-6 border-b border-b-gray-500">
+        <div className="w-fit py-6">
           <div className="flex w-full justify-between">
             <div className="text-black dark:text-white">
               {pageInfo?.surahName}

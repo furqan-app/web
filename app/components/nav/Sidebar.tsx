@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { SurahList } from "../SurahList";
-import { SideNavIcon } from "@components/icons/SideNavIcon";
 import useTranslations from "@/app/hooks/use-translations";
 import RubList from "../RubList";
 import { SurahResult } from "@types";
 import { RubWithVerses } from "@/app/types/prisma";
+import { PanelLeftOpen, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useLocale } from "next-intl";
+import { getLanguageDirection } from "@/app/utils/i18n";
 
 type Props = {
   surahs: SurahResult[];
@@ -14,48 +23,51 @@ type Props = {
 };
 
 const Sidebar = ({ surahs, rubs }: Props) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'surahs' | 'rubs'>('surahs');
   const t = useTranslations();
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
+  const locale = useLocale();
+  const isRTL = getLanguageDirection(locale) === "rtl";
 
   return (
-    <div>
-      <button
-        onClick={toggleSidebar}
-        className="fixed top-1/2 left-0 transform -translate-y-1/2 z-50 p-2 bg-white dark:bg-black text-black dark:text-white rounded-r-full shadow-md"
-      >
-        <SideNavIcon isOpen={isOpen} />
-      </button>
-      <aside
-        className={`fixed top-14 left-0 h-[calc(100%-3.5rem)] w-64 bg-white dark:bg-gray-900 shadow-md dark:shadow-gray-900 transform transition-transform duration-300 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } overflow-y-auto`}
-      >
-        <div className="p-4">
-          <div className="flex justify-around mb-4">
-            <button
-              onClick={() => setActiveTab('surahs')}
-              className={`px-4 py-2 ${activeTab === 'surahs' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800'}`}
-            >
-              {t('surahs', 'Surahs')}
-            </button>
-            <button
-              onClick={() => setActiveTab('rubs')}
-              className={`px-4 py-2 ${activeTab === 'rubs' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800'}`}
-            >
-              {t('rubs', 'Rubs')}
-            </button>
-          </div>
-
-          {activeTab === 'surahs' && <SurahList surahs={surahs} />}
-          {activeTab === 'rubs' && <RubList rubs={rubs} />}
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed top-1/2 start-0 -translate-y-1/2 z-50 rounded-none rounded-e-full bg-background shadow-md"
+        >
+          {isRTL ? (
+            <PanelLeftOpen className="size-5 rotate-180" />
+          ) : (
+            <PanelLeftOpen className="size-5" />
+          )}
+        </Button>
+      </SheetTrigger>
+      <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 top-14 h-[calc(100%-3.5rem)] p-0 flex flex-col">
+        <div className="flex justify-end p-4 border-b">
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <X className="h-4 w-4" />
+            </Button>
+          </SheetClose>
         </div>
-      </aside>
-    </div>
+        <Tabs defaultValue="surahs" className="flex-1 flex flex-col">
+          <TabsList className="w-full rounded-none justify-around">
+            <TabsTrigger value="surahs" className="flex-1">
+              {t("surahs", "Surahs")}
+            </TabsTrigger>
+            <TabsTrigger value="rubs" className="flex-1">
+              {t("rubs", "Rubs")}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="surahs" className="flex-1 overflow-y-auto p-4 mt-0">
+            <SurahList surahs={surahs} />
+          </TabsContent>
+          <TabsContent value="rubs" className="flex-1 overflow-y-auto p-4 mt-0">
+            <RubList rubs={rubs} />
+          </TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -23,18 +23,18 @@ export const SurahListItem = ({ surah }: Props) => {
     }
   };
 
-  const surahStartingPage = surah.pages.split('-')[0];
+  const surahStartingPage = surah.pages.split("-")[0];
   return (
     <Link
       locale={locale}
       href={`/pages/${surahStartingPage}`}
-      className="flex items-center p-4 border-b border-gray-200 dark:border-gray-800 
-        hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+      className="flex gap-4 items-center p-4 border-b border-gray-200 dark:border-neutral-800 last:border-none 
+        hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
     >
       <div
         className={`flex items-center justify-center w-12 h-12 rounded-full 
-        border border-gray-300 dark:border-gray-700 
-        bg-white dark:bg-gray-900 ${getLanguageDirection(locale) === "rtl" ? "ml-4" : "mr-4"}`}
+        border border-gray-300 dark:border-neutral-800 
+        bg-white dark:bg-black`}
       >
         <span className="text-lg text-gray-900 dark:text-gray-100">
           {surah.id}
@@ -50,7 +50,8 @@ export const SurahListItem = ({ surah }: Props) => {
               {getSurahName(locale)}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {surah.revelation_place} • {surah.verses_count} {t('verses', 'Verses')}
+              {surah.revelation_place} • {surah.verses_count}{" "}
+              {t("verses", "Verses")}
             </p>
           </div>
         </div>
@@ -58,3 +59,4 @@ export const SurahListItem = ({ surah }: Props) => {
     </Link>
   );
 };
+

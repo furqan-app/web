@@ -1,19 +1,15 @@
-import {
-  DialogTitle,
-  Tab,
-  TabGroup,
-  TabList,
-  TabPanel,
-  TabPanels,
-} from "@headlessui/react";
 import { Verse } from "@prisma/client";
-import { BookmarkIcon, PencilSquareIcon } from "@heroicons/react/16/solid";
+import { Bookmark, SquarePen } from "lucide-react";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
-import { FQModal } from "./ui/FQModal";
 import { WordWithVerse } from "../types/prisma";
 import { addPageMark } from "../server/actions/addPageMark";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type ModalProps = {
   isOpen: boolean;
@@ -24,17 +20,17 @@ type ModalProps = {
 const categories = [
   {
     key: "bookmarks",
-    header: () => <BookmarkIcon className="w-6 h-6" />,
+    header: () => <Bookmark className="w-5 h-5" />,
     content: (markWord: (color: string) => void) => (
       <MarkerColorPicker onMark={markWord} />
     ),
   },
   {
     key: "notes",
-    header: () => <PencilSquareIcon className="w-6 h-6" />,
+    header: () => <SquarePen className="w-5 h-5" />,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     content: (markWord: (color: string) => void) => (
-      <p className="text-dark dark:text-white">Under development.</p>
+      <p className="text-foreground">Under development.</p>
     ),
   },
 ];
@@ -72,42 +68,30 @@ export function MarkModal({ isOpen, close, markFor }: ModalProps) {
   };
 
   return (
-    <FQModal isOpen={isOpen} close={close}>
-      <FQModal.Body close={close}>
-        <DialogTitle
-          as="h3"
-          className="flex text-black dark:text-white text-2xl font-medium mb-4"
-          style={{
-            fontFamily: "var(--uthmanic)",
-          }}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
+      <DialogContent className="w-full max-w-md bg-card">
+        <h3
+          className="flex text-foreground text-2xl font-medium mb-4"
+          style={{ fontFamily: "var(--uthmanic)" }}
           dir="rtl"
         >
           {getTitle(markFor)}
-        </DialogTitle>
-        <TabGroup>
-          <TabList className="flex gap-4 text-black dark:text-white">
+        </h3>
+        <Tabs defaultValue="bookmarks">
+          <TabsList className="mb-3">
             {categories.map(({ header, key }) => (
-              <Tab
-                key={key}
-                className="rounded-full py-1 px-3 text-sm/6 font-semibold focus:outline-none data-[selected]:bg-gray-200 dark:data-[selected]:bg-white/10 data-[hover]:bg-gray-200 dark:data-[hover]:bg-white/5 data-[selected]:data-[hover]:bg-white/10 data-[focus]:outline-1 data-[focus]:outline-black dark:data-[focus]:outline-white"
-              >
+              <TabsTrigger key={key} value={key}>
                 {header()}
-              </Tab>
+              </TabsTrigger>
             ))}
-          </TabList>
-          <TabPanels className="mt-3">
-            {categories.map(({ key, content }) => (
-              <TabPanel
-                key={key}
-                className="rounded-xl  bg-gray-200 dark:bg-white/5 p-3"
-              >
-                <ul>{content(markWord)}</ul>
-              </TabPanel>
-            ))}
-          </TabPanels>
-        </TabGroup>
-      </FQModal.Body>
-    </FQModal>
+          </TabsList>
+          {categories.map(({ key, content }) => (
+            <TabsContent key={key} value={key} className="rounded-xl bg-muted p-3">
+              <ul>{content(markWord)}</ul>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 }
-

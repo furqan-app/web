@@ -1,4 +1,4 @@
-import { BookmarkIcon } from "@heroicons/react/16/solid";
+import { Bookmark } from "lucide-react";
 import React from "react";
 import useTranslations from "../hooks/use-translations";
 import { getLanguageDirection } from "../utils/i18n";
@@ -19,26 +19,25 @@ export const MarkerColorPicker = ({ onMark }: Props) => {
     <div className="flex flex-col gap-4" dir={getLanguageDirection(locale)}>
       <button
         onClick={() => handlePickColor("red")}
-        className="flex gap-2 text-black dark:text-white"
+        className="flex gap-2 text-foreground"
       >
-        <BookmarkIcon className="text-red-600 w-6 h-6"></BookmarkIcon>
+        <Bookmark className="text-red-600 w-6 h-6" fill="currentColor" />
         {t("markModal.redMark", "Red Mark")}
       </button>
       <button
         onClick={() => handlePickColor("blue")}
-        className="flex gap-2 text-black dark:text-white"
+        className="flex gap-2 text-foreground"
       >
-        <BookmarkIcon className="text-blue-600 w-6 h-6"></BookmarkIcon>
+        <Bookmark className="text-blue-600 w-6 h-6" fill="currentColor" />
         {t("markModal.blueMark", "Blue Mark")}
       </button>
       <button
         onClick={() => handlePickColor("green")}
-        className="flex gap-2 text-black dark:text-white"
+        className="flex gap-2 text-foreground"
       >
-        <BookmarkIcon className="text-green-600 w-6 h-6"></BookmarkIcon>
+        <Bookmark className="text-green-600 w-6 h-6" fill="currentColor" />
         {t("markModal.greenMark", "Green Mark")}
       </button>
     </div>
   );
 };
-
