@@ -24,7 +24,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 **Rationale:** Loading all 604 page fonts globally would be prohibitively large. Inlining per-page means only the current page's font is loaded.
 
-**Font–Column Encoding Contract** (see `adr/0001-font-encoding-contract.md`):
+**Font–Column Encoding Contract** (see `adr/0002-non-page-quran-text-rendering.md`, `standards/quran-rendering.md`):
 
 | Font | Tailwind class | Column to use | Context |
 |---|---|---|---|
@@ -135,3 +135,4 @@ const user = extractUser(request); // { id, email, ... }
 **Constraints:**
 - Never put architecture detail, standards, or decisions back into CLAUDE.md.
 - Always update this file in the same commit as any new ADR.
+- Use `docs/architecture/adr/TEMPLATE.md` when creating a new ADR. A valid ADR must name alternatives and record trade-offs — if there are no alternatives, write a standards doc instead.
