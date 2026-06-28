@@ -37,7 +37,7 @@ const categories = [
 
 const getTitle = (markFor: WordWithVerse | Verse) => {
   if ("location" in markFor) {
-    return markFor.qpc_uthmani_hafs;
+    return markFor.text_uthmani;
   }
 
   if (markFor.text_uthmani.length > 70) {
