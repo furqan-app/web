@@ -49,6 +49,5 @@ Tailwind `animate-accordion-down` / `animate-accordion-up` are defined for accor
 
 ## Fonts
 
-- Quran text: per-page font (`quran-p{pageId}`) — never reference globally.
-- Surah names: loaded from `/app/fonts/surah/v1/`.
 - UI text: system font stack (no custom UI font loaded).
+- Quran and surah name fonts: see [quran-rendering.md](quran-rendering.md).
