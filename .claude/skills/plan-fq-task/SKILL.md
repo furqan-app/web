@@ -1,3 +1,8 @@
+---
+name: plan-fq-task
+description: Socratic planning and investigation for Furqan features and bugs. Produces a docs/plans/<slug>.md spec before any code is written.
+---
+
 # /plan-fq-task
 
 Socratic planning and investigation for features and bugs.

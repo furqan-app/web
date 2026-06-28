@@ -1,3 +1,8 @@
+---
+name: start-fq-task
+description: Context-aware implementation of a planned Furqan task. Loads DECISIONS.md + relevant standards + plan, then implements and records any new decisions.
+---
+
 # /start-fq-task
 
 Context-aware implementation of a planned task.
