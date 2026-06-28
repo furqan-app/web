@@ -20,13 +20,24 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 ## Font System
 
-**Decision:** Each Quran page inlines a single `@font-face` for `quran-p{pageId}` pointing to `/fonts/v1/ttf/p{pageId}.ttf`, with a `<link rel="preload">` for immediate download. No global CSS font declarations for Quran fonts.
+**Decision:** Each Quran page inlines a single `@font-face` for `quran-p{pageId}` pointing to `/fonts/v1/ttf/p{pageId}.ttf`, with a `<link rel="preload">` for immediate download. Two global fonts are loaded via `next/font/local` in `app/layout.tsx`: `--uthmanic` (for ayah text outside the page) and `--surah-names` (for surah name display).
 
 **Rationale:** Loading all 604 page fonts globally would be prohibitively large. Inlining per-page means only the current page's font is loaded.
+
+**Font–Column Encoding Contract** (see `adr/0001-font-encoding-contract.md`):
+
+| Font | Tailwind class | Column to use | Context |
+|---|---|---|---|
+| `quran-p{n}` | — (inline style) | `code_v1` | Quran page words only |
+| `uthmanic.ttf` | `font-uthmanic` | `text_uthmani` | Ayah text in search, modals, any non-page context |
+| `sura_names.ttf` | `font-surahnames` | `name_arabic` | Surah name display |
 
 **Constraints:**
 - Do not add Quran page fonts to the global CSS.
 - Font scaling (1–10) is persisted in `localStorage` via `QuranFontScaleContext`.
+- `uthmanic.ttf` is a standard Unicode font — never pair it with `qpc_uthmani_hafs` or `code_v1`.
+- When displaying a word outside the page (modal, search), always use `word.text_uthmani`.
+- `Verse` has no `qpc_uthmani_hafs` column — verse text is always `text_uthmani`.
 
 ---
 
