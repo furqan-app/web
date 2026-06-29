@@ -1,0 +1,262 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {
+      "id": "title", "type": "text", "x": 350, "y": 20, "width": 700, "height": 40,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Furqan Dev Workflow", "fontSize": 28, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "top", "baseline": 25, "containerId": null, "originalText": "Furqan Dev Workflow", "lineHeight": 1.25
+    },
+    {
+      "id": "sec1", "type": "text", "x": 30, "y": 95, "width": 120, "height": 22,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "DEV LOOP", "fontSize": 12, "fontFamily": 1,
+      "textAlign": "left", "verticalAlign": "top", "baseline": 11, "containerId": null, "originalText": "DEV LOOP", "lineHeight": 1.25
+    },
+    {
+      "id": "box1", "type": "rectangle", "x": 30, "y": 120, "width": 175, "height": 90,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "#1e2740",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "t1", "type": "text", "x": 35, "y": 128, "width": 165, "height": 74,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Task Discovery\nTrello · /discuss-with-me", "fontSize": 13, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 68, "containerId": null, "originalText": "Task Discovery\nTrello · /discuss-with-me", "lineHeight": 1.4
+    },
+    {
+      "id": "box2", "type": "rectangle", "x": 285, "y": 120, "width": 175, "height": 90,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "#1e2740",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "t2", "type": "text", "x": 290, "y": 128, "width": 165, "height": 74,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Plan\n/plan-fq-task", "fontSize": 13, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 68, "containerId": null, "originalText": "Plan\n/plan-fq-task", "lineHeight": 1.4
+    },
+    {
+      "id": "box3", "type": "rectangle", "x": 540, "y": 120, "width": 175, "height": 90,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "#1e2740",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "t3", "type": "text", "x": 545, "y": 128, "width": 165, "height": 74,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Implement\n/start-fq-task", "fontSize": 13, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 68, "containerId": null, "originalText": "Implement\n/start-fq-task", "lineHeight": 1.4
+    },
+    {
+      "id": "box4", "type": "rectangle", "x": 795, "y": 120, "width": 175, "height": 90,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "#1e2740",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "t4", "type": "text", "x": 800, "y": 128, "width": 165, "height": 74,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Review\n/review-fq-work", "fontSize": 13, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 68, "containerId": null, "originalText": "Review\n/review-fq-work", "lineHeight": 1.4
+    },
+    {
+      "id": "box5", "type": "rectangle", "x": 1050, "y": 120, "width": 175, "height": 90,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "#1e2740",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "t5", "type": "text", "x": 1055, "y": 128, "width": 165, "height": 74,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Commit\n/commit-staged", "fontSize": 13, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 68, "containerId": null, "originalText": "Commit\n/commit-staged", "lineHeight": 1.4
+    },
+    {
+      "id": "box6", "type": "rectangle", "x": 1305, "y": 120, "width": 150, "height": 90,
+      "angle": 0, "strokeColor": "#4caf88", "backgroundColor": "#0d2015",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "t6", "type": "text", "x": 1310, "y": 128, "width": 140, "height": 74,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Ship\nPR → main", "fontSize": 13, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 68, "containerId": null, "originalText": "Ship\nPR → main", "lineHeight": 1.4
+    },
+    {
+      "id": "arr12", "type": "arrow", "x": 205, "y": 165, "width": 80, "height": 0,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[0,0],[80,0]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "arr23", "type": "arrow", "x": 460, "y": 165, "width": 80, "height": 0,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[0,0],[80,0]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "arr34", "type": "arrow", "x": 715, "y": 165, "width": 80, "height": 0,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[0,0],[80,0]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "arr45", "type": "arrow", "x": 970, "y": 165, "width": 80, "height": 0,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[0,0],[80,0]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "arr56", "type": "arrow", "x": 1225, "y": 165, "width": 80, "height": 0,
+      "angle": 0, "strokeColor": "#6c8fff", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[0,0],[80,0]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "issuesArr", "type": "arrow", "x": 715, "y": 70, "width": 80, "height": 50,
+      "angle": 0, "strokeColor": "#ef4444", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "dashed", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[80,50],[80,0],[0,0],[0,50]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "issuesLabel", "type": "text", "x": 670, "y": 48, "width": 200, "height": 20,
+      "angle": 0, "strokeColor": "#ef4444", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "issues found → revise", "fontSize": 12, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "top", "baseline": 11, "containerId": null, "originalText": "issues found → revise", "lineHeight": 1.25
+    },
+    {
+      "id": "sec2", "type": "text", "x": 580, "y": 330, "width": 280, "height": 22,
+      "angle": 0, "strokeColor": "#4caf88", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "FEEDBACK & LEARNING", "fontSize": 12, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "top", "baseline": 11, "containerId": null, "originalText": "FEEDBACK & LEARNING", "lineHeight": 1.25
+    },
+    {
+      "id": "retroBox", "type": "rectangle", "x": 612, "y": 360, "width": 200, "height": 80,
+      "angle": 0, "strokeColor": "#4caf88", "backgroundColor": "#0d2015",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "tRetro", "type": "text", "x": 617, "y": 368, "width": 190, "height": 64,
+      "angle": 0, "strokeColor": "#e8eaf6", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "Retrospect\n/retrospect", "fontSize": 13, "fontFamily": 1,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 58, "containerId": null, "originalText": "Retrospect\n/retrospect", "lineHeight": 1.4
+    },
+    {
+      "id": "arrToRetro", "type": "arrow", "x": 712, "y": 210, "width": 170, "height": 150,
+      "angle": 0, "strokeColor": "#4caf88", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 2, "strokeStyle": "dashed", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[170,0],[170,150],[0,150]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "retroTriggerLabel", "type": "text", "x": 888, "y": 265, "width": 160, "height": 36,
+      "angle": 0, "strokeColor": "#9ca3af", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "triggered at\nsession end", "fontSize": 11, "fontFamily": 1,
+      "textAlign": "left", "verticalAlign": "top", "baseline": 11, "containerId": null, "originalText": "triggered at\nsession end", "lineHeight": 1.4
+    },
+    {
+      "id": "out1", "type": "rectangle", "x": 350, "y": 510, "width": 225, "height": 60,
+      "angle": 0, "strokeColor": "#8b90b8", "backgroundColor": "#1a1d27",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "tout1", "type": "text", "x": 355, "y": 518, "width": 215, "height": 44,
+      "angle": 0, "strokeColor": "#9ca3af", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "docs/architecture/DECISIONS.md", "fontSize": 12, "fontFamily": 3,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 38, "containerId": null, "originalText": "docs/architecture/DECISIONS.md", "lineHeight": 1.4
+    },
+    {
+      "id": "out2", "type": "rectangle", "x": 610, "y": 510, "width": 200, "height": 60,
+      "angle": 0, "strokeColor": "#8b90b8", "backgroundColor": "#1a1d27",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "tout2", "type": "text", "x": 615, "y": 518, "width": 190, "height": 44,
+      "angle": 0, "strokeColor": "#9ca3af", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": ".claude/skills/ (updated)", "fontSize": 12, "fontFamily": 3,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 38, "containerId": null, "originalText": ".claude/skills/ (updated)", "lineHeight": 1.4
+    },
+    {
+      "id": "out3", "type": "rectangle", "x": 845, "y": 510, "width": 240, "height": 60,
+      "angle": 0, "strokeColor": "#8b90b8", "backgroundColor": "#1a1d27",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 3}, "boundElements": [], "updated": 1, "link": null, "locked": false
+    },
+    {
+      "id": "tout3", "type": "text", "x": 850, "y": 518, "width": 230, "height": 44,
+      "angle": 0, "strokeColor": "#9ca3af", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": null, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "text": "docs/retrospectives/YYYY-MM-DD.md", "fontSize": 12, "fontFamily": 3,
+      "textAlign": "center", "verticalAlign": "middle", "baseline": 38, "containerId": null, "originalText": "docs/retrospectives/YYYY-MM-DD.md", "lineHeight": 1.4
+    },
+    {
+      "id": "arrOut1", "type": "arrow", "x": 462, "y": 440, "width": 190, "height": 70,
+      "angle": 0, "strokeColor": "#8b90b8", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[190,0],[190,70],[0,70]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "arrOut2", "type": "arrow", "x": 712, "y": 440, "width": 0, "height": 70,
+      "angle": 0, "strokeColor": "#8b90b8", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[0,0],[0,70]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    },
+    {
+      "id": "arrOut3", "type": "arrow", "x": 772, "y": 440, "width": 193, "height": 70,
+      "angle": 0, "strokeColor": "#8b90b8", "backgroundColor": "transparent",
+      "fillStyle": "solid", "strokeWidth": 1, "strokeStyle": "solid", "roughness": 0, "opacity": 100,
+      "groupIds": [], "frameId": null, "roundness": {"type": 2}, "boundElements": [], "updated": 1, "link": null, "locked": false,
+      "points": [[0,0],[193,0],[193,70]], "lastCommittedPoint": null, "startBinding": null, "endBinding": null, "startArrowhead": null, "endArrowhead": "arrow"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#111827",
+    "gridSize": null
+  },
+  "files": {}
+}

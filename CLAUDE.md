@@ -29,7 +29,7 @@ npm run extract-translations  # sync i18n keys
   - `i18n.md` — translation keys, direction, next-intl usage
   - `styling.md` — Tailwind tokens, dark mode, RTL/LTR
 - **Task plans**: `docs/plans/`
-- **Skills**: `/plan-fq-task` (plan a task), `/start-fq-task` (implement a plan)
+- **Skills**: `/plan-fq-task` (plan a task), `/start-fq-task` (implement a plan), `/retrospect` (end-of-session workflow retrospective), `/review-fq-work` (Opus code review of current branch)
 
 ## MCP Server Setup (Trello)
 
