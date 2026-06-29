@@ -21,21 +21,21 @@ export const MarkerColorPicker = ({ onMark }: Props) => {
         onClick={() => handlePickColor("red")}
         className="flex gap-2 text-foreground"
       >
-        <Bookmark className="w-6 h-6" style={{ color: 'var(--bm-red)' }} fill="currentColor" />
+        <Bookmark className="w-6 h-6 text-bm-red" fill="currentColor" />
         {t("markModal.redMark", "Red Mark")}
       </button>
       <button
         onClick={() => handlePickColor("blue")}
         className="flex gap-2 text-foreground"
       >
-        <Bookmark className="w-6 h-6" style={{ color: 'var(--bm-blue)' }} fill="currentColor" />
+        <Bookmark className="w-6 h-6 text-bm-blue" fill="currentColor" />
         {t("markModal.blueMark", "Blue Mark")}
       </button>
       <button
         onClick={() => handlePickColor("green")}
         className="flex gap-2 text-foreground"
       >
-        <Bookmark className="w-6 h-6" style={{ color: 'var(--bm-green)' }} fill="currentColor" />
+        <Bookmark className="w-6 h-6 text-bm-green" fill="currentColor" />
         {t("markModal.greenMark", "Green Mark")}
       </button>
     </div>

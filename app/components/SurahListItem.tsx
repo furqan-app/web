@@ -34,7 +34,7 @@ export const SurahListItem = ({ surah, variant = "list" }: Props) => {
         locale={locale}
         href={`/pages/${surahStartingPage}`}
         dir={isRTL ? "rtl" : "ltr"}
-        className="flex items-center gap-3.5 p-[18px] bg-card border border-border rounded-2xl shadow-sm cursor-pointer hover:bg-[var(--card-2)] hover:-translate-y-0.5 transition-[background,transform,box-shadow] duration-200"
+        className="flex items-center gap-3.5 p-[18px] bg-card border border-border rounded-2xl shadow-sm cursor-pointer hover:bg-card-2 hover:-translate-y-0.5 transition-[background,transform,box-shadow] duration-200"
       >
         <FQBadge className="shrink-0 w-11 h-11 text-sm font-bold">
           {surah.id}

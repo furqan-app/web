@@ -29,15 +29,17 @@ const Sidebar = ({ surahs, rubs }: Props) => {
 
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        <FQIconButton className="fixed top-1/2 start-0 -translate-y-1/2 z-50 rounded-none rounded-e-full bg-background shadow-md">
-          {isRTL ? (
-            <PanelLeftOpen className="size-5 rotate-180" />
-          ) : (
-            <PanelLeftOpen className="size-5" />
-          )}
-        </FQIconButton>
-      </SheetTrigger>
+      <div className="fixed top-1/2 start-0 -translate-y-1/2 z-50">
+        <SheetTrigger asChild>
+          <FQIconButton className="rounded-none rounded-e-full bg-background shadow-md">
+            {isRTL ? (
+              <PanelLeftOpen className="size-5 rotate-180" />
+            ) : (
+              <PanelLeftOpen className="size-5" />
+            )}
+          </FQIconButton>
+        </SheetTrigger>
+      </div>
       <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 top-14 h-[calc(100%-3.5rem)] p-0 flex flex-col overflow-hidden">
         <div className="flex justify-end p-4 border-b shrink-0">
           <SheetClose asChild>

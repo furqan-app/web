@@ -13,7 +13,7 @@ export const FQListItem = ({ href, locale, leading, title, subtitle }: Props) =>
     <Link
       locale={locale}
       href={href}
-      className="flex gap-4 items-center p-4 border-b border-border last:border-none hover:bg-[var(--card-2)] transition-[background] duration-[180ms]"
+      className="flex gap-4 items-center p-4 border-b border-border last:border-none hover:bg-card-2 transition-[background] duration-[180ms]"
     >
       {leading && <div className="shrink-0">{leading}</div>}
       <div className="flex-1">

@@ -69,7 +69,7 @@ const QuranPageById = async ({
           <div className="absolute left-5 top-1/2 -translate-y-1/2">
             <Link
               href={`/${locale}/pages/${getNavigationHref("left")}`}
-              className="flex items-center justify-center w-11 h-11 rounded-full border border-[var(--line-2)] bg-card text-muted-foreground hover:-translate-y-px transition-transform duration-[120ms]"
+              className="flex items-center justify-center w-11 h-11 rounded-full border border-line-2 bg-card text-muted-foreground hover:-translate-y-px transition-transform duration-[120ms]"
             >
               <ChevronLeft className="size-5" />
             </Link>
@@ -79,7 +79,7 @@ const QuranPageById = async ({
           <div className="absolute right-5 top-1/2 -translate-y-1/2">
             <Link
               href={`/${locale}/pages/${getNavigationHref("right")}`}
-              className="flex items-center justify-center w-11 h-11 rounded-full border border-[var(--line-2)] bg-card text-muted-foreground hover:-translate-y-px transition-transform duration-[120ms]"
+              className="flex items-center justify-center w-11 h-11 rounded-full border border-line-2 bg-card text-muted-foreground hover:-translate-y-px transition-transform duration-[120ms]"
             >
               <ChevronRight className="size-5" />
             </Link>

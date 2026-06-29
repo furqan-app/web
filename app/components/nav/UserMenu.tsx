@@ -1,6 +1,6 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import { User, LogIn, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FQIconButton } from "@/app/components/ui/FQIconButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +15,9 @@ export const UserMenu = () => {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="dark:hover:bg-zinc-800">
+          <FQIconButton>
             <User className="size-5" />
-          </Button>
+          </FQIconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem className="font-medium">
@@ -33,8 +33,8 @@ export const UserMenu = () => {
   }
 
   return (
-    <Button variant="ghost" size="icon" onClick={() => signIn()}>
+    <FQIconButton onClick={() => signIn()}>
       <LogIn className="size-5" />
-    </Button>
+    </FQIconButton>
   );
 };

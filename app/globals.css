@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Tier 1 — shadcn tokens (HSL space-separated, opacity-modifier capable) */
     --background: 43 41% 88%;   /* #EDE6D4 warm paper */
     --foreground: 39 26% 13%;   /* #2A2419 dark ink */
     --card: 50 38% 97%;         /* #FBFAF6 near-white parchment */
@@ -25,6 +26,7 @@
     --ring: 41 57% 43%;
     --radius: 0.75rem;
 
+    /* Tier 2 — supplementary design tokens (hex, no opacity-modifier support) */
     --card-2: #F3EDDC;
     --line-2: #D6CAAB;
     --gold-tint: #EFE6C8;
@@ -38,6 +40,7 @@
   }
 
   .dark {
+    /* Tier 1 — shadcn tokens (HSL space-separated, opacity-modifier capable) */
     --background: 40 25% 7%;    /* #16130D lamp-black vellum */
     --foreground: 42 46% 83%;   /* #E7DBBE */
     --card: 48 27% 4%;          /* #0C0B07 very dark card */
@@ -58,6 +61,7 @@
     --input: 36 25% 12%;
     --ring: 42 55% 56%;
 
+    /* Tier 2 — supplementary design tokens (hex, no opacity-modifier support) */
     --card-2: #1A1610;
     --line-2: #3A311F;
     --gold-tint: #221C10;

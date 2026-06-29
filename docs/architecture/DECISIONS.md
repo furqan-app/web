@@ -112,15 +112,17 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
-## Design System — Deep Teal + Cream Palette
+## Design System — Paper/Ink/Gold, Two-Tier Token System
 
-**Decision:** Furqan uses the "Deep Teal + Cream" color palette defined in `app/globals.css`. All color references must use semantic tokens (`bg-background`, `text-foreground`, `border`, etc.) — never raw Tailwind colors (`bg-gray-*`, `text-black`, etc.).
+**Decision:** Furqan uses the "Paper/Ink/Gold" palette via a two-tier token system (see [ADR 0003](adr/0003-two-tier-design-token-architecture.md)). **Tier 1** are shadcn tokens (`--background`, `--card`, `--primary`, etc.) in HSL space-separated format — they drive all shadcn components and support opacity modifiers. **Tier 2** are supplementary hex CSS vars (`--card-2`, `--line-2`, `--gold-tint`, `--gold-soft`, `--hl-*`, `--bm-*`) for patterns shadcn has no slot for. Both tiers are defined in `app/globals.css` and registered in `tailwind.config.ts`, so every token is a first-class Tailwind utility. The full token tables live in [`docs/standards/styling.md`](../standards/styling.md).
 
-**Rationale:** Establishes a distinct visual identity and ensures dark mode works correctly via CSS variable swapping.
+**Rationale:** Establishes a distinct visual identity, keeps shadcn components working without manual overrides, and ensures dark mode works correctly via CSS variable swapping.
 
 **Constraints:**
-- `MarkerColorPicker` uses `text-red-600`, `text-blue-600`, `text-green-600` intentionally (semantic bookmark colors) — do not change these.
-- Never use `dark:hover:bg-zinc-800` or similar raw hover overrides — use `hover:bg-accent/10` or shadcn's built-in variant hovers.
+- All color references must use registered tokens (`bg-background`, `text-foreground`, `bg-card-2`, `text-bm-red`, etc.) — never raw Tailwind colors (`bg-gray-*`, `bg-green-700`, `text-black`) and never `[var(--token)]` escape hatches.
+- Tier 2 tokens are hex and do **not** support opacity modifiers — `bg-card-2/50` silently fails.
+- Do not change token values (HSL numbers or hex) as part of unrelated work — palette changes are their own decision.
+- Never use `dark:hover:bg-zinc-800` or similar raw hover overrides — use the appropriate token or shadcn's built-in variant hovers.
 
 ---
 
@@ -130,7 +132,7 @@ const user = extractUser(request); // { id, email, ... }
 
 **Constraints:**
 - `FQIconButton` locks `variant="ghost" size="icon"` — callers cannot override these props.
-- Use `FQIconButton` for all icon-only buttons in the app (Nav, SettingsSidebar, Sidebar).
+- Use `FQIconButton` for all icon-only buttons in the app (Nav, SettingsSidebar, Sidebar, UserMenu).
 - Use `FQListItem` + `FQBadge` for all navigable list items (SurahList, etc.).
 
 ---

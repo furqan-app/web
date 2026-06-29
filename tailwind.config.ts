@@ -43,6 +43,18 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+
+        // Tier 2 — supplementary design tokens (hex CSS vars, no opacity modifier support)
+        "card-2": "var(--card-2)",
+        "line-2": "var(--line-2)",
+        "gold-tint": "var(--gold-tint)",
+        "gold-soft": "var(--gold-soft)",
+        "hl-red": "var(--hl-red)",
+        "hl-blue": "var(--hl-blue)",
+        "hl-green": "var(--hl-green)",
+        "bm-red": "var(--bm-red)",
+        "bm-blue": "var(--bm-blue)",
+        "bm-green": "var(--bm-green)",
       },
       borderRadius: {
         lg: "var(--radius)",

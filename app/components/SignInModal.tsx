@@ -17,7 +17,7 @@ export const SignInModal = ({ close, isOpen }: SignInModalProps) => {
           </h1>
           <div>
             <Button
-              className="bg-green-700 hover:bg-green-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => signIn()}
             >
               Sign in
