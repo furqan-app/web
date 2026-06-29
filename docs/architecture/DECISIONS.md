@@ -130,7 +130,13 @@ const user = extractUser(request); // { id, email, ... }
 
 ## Documentation & Workflow System
 
-**Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills (`/plan-fq-task`, `/start-fq-task`) load context on demand. Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
+**Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:
+- `/plan-fq-task` — Socratic planning → `docs/plans/<slug>.md`
+- `/start-fq-task` — load context → implement
+- `/retrospect` — end-of-session feedback loop; proposes DECISIONS.md updates, skill edits, memory saves review-before-write; saves `docs/retrospectives/YYYY-MM-DD.md`
+- `/review-fq-work` — Opus subagent quality gate on branch diff vs main (bugs, quality, plan consistency)
+
+Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
 
 **Constraints:**
 - Never put architecture detail, standards, or decisions back into CLAUDE.md.
