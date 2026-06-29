@@ -7,7 +7,7 @@ import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
-import { Button } from "@/components/ui/button";
+import { FQIconButton } from "@/app/components/ui/FQIconButton";
 import {
   Sheet,
   SheetContent,
@@ -24,13 +24,9 @@ export const SettingsSidebar = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={"dark:hover:bg-zinc-800 " + (isRTL ? "mr-4" : "ml-4")}
-        >
+        <FQIconButton className={isRTL ? "mr-4" : "ml-4"}>
           <Settings className="size-5" />
-        </Button>
+        </FQIconButton>
       </SheetTrigger>
       <SheetContent
         side={isRTL ? "left" : "right"}

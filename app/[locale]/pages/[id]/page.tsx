@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftCircle, ArrowRightCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { QuranSafha } from "@/app/components/QuranSafha";
 import { getPageWords } from "@/app/hooks/get-page-words";
@@ -18,27 +18,6 @@ type QuranPageByIdProps = {
   params: { id: string; locale: Locale };
 };
 
-const NavigationButton = ({
-  href,
-  isRTL,
-  isNext,
-}: {
-  href: string;
-  isRTL: boolean;
-  isNext: boolean;
-}) => {
-  // For RTL: isNext goes left, !isNext goes right
-  // For LTR: isNext goes right, !isNext goes left
-  const showLeft = isRTL ? isNext : !isNext;
-  const Icon = showLeft ? ArrowLeftCircle : ArrowRightCircle;
-
-  return (
-    <Link href={href} className="text-foreground hover:opacity-70 transition-opacity">
-      <Icon className="size-7" />
-    </Link>
-  );
-};
-
 const QuranPageById = async ({
   params: { id: pageId, locale },
 }: QuranPageByIdProps) => {
@@ -47,14 +26,18 @@ const QuranPageById = async ({
   const { lines, pageMetadata } = await getPageWords(Number(pageId));
   const isRTL = getLanguageDirection(locale) === "rtl";
 
-  const getNavigationHref = (isNext: boolean) => {
+  const getNavigationHref = (direction: "left" | "right") => {
     const isFirstPage = pageId === "1";
     const isLastPage = pageId === "604";
 
-    if ((isRTL && !isNext) || (!isRTL && isNext)) {
-      return isFirstPage ? "604" : String(Number(pageId) - 1);
+    // In RTL (Arabic): left = next page (higher number), right = previous page
+    // In LTR: left = previous page, right = next page
+    const isIncrement = isRTL ? direction === "left" : direction === "right";
+
+    if (isIncrement) {
+      return isLastPage ? "1" : String(Number(pageId) + 1);
     }
-    return isLastPage ? "1" : String(Number(pageId) + 1);
+    return isFirstPage ? "604" : String(Number(pageId) - 1);
   };
 
   return (
@@ -77,23 +60,30 @@ const QuranPageById = async ({
         type="font/truetype"
         crossOrigin="anonymous"
       />
-      <div className="bg:white dark:bg-black w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
-        <div className="flex items-center">
-          <NavigationButton
-            href={`/${locale}/pages/${getNavigationHref(false)}`}
-            isRTL={isRTL}
-            isNext={false}
-          />
-        </div>
-        <div className="">
+
+      <div className="flex justify-center items-start px-4 py-8 min-h-[calc(100vh-3.5rem)]">
+        <div className="relative bg-card border border-border rounded-2xl shadow-md px-20 w-full max-w-3xl">
           <QuranSafha page={+pageId} lines={lines} pageMetadata={pageMetadata} />
-        </div>
-        <div className="flex items-center">
-          <NavigationButton
-            href={`/${locale}/pages/${getNavigationHref(true)}`}
-            isRTL={isRTL}
-            isNext={true}
-          />
+
+          {/* Left arrow */}
+          <div className="absolute left-5 top-1/2 -translate-y-1/2">
+            <Link
+              href={`/${locale}/pages/${getNavigationHref("left")}`}
+              className="flex items-center justify-center w-11 h-11 rounded-full border border-[var(--line-2)] bg-card text-muted-foreground hover:-translate-y-px transition-transform duration-[120ms]"
+            >
+              <ChevronLeft className="size-5" />
+            </Link>
+          </div>
+
+          {/* Right arrow */}
+          <div className="absolute right-5 top-1/2 -translate-y-1/2">
+            <Link
+              href={`/${locale}/pages/${getNavigationHref("right")}`}
+              className="flex items-center justify-center w-11 h-11 rounded-full border border-[var(--line-2)] bg-card text-muted-foreground hover:-translate-y-px transition-transform duration-[120ms]"
+            >
+              <ChevronRight className="size-5" />
+            </Link>
+          </div>
         </div>
       </div>
     </>

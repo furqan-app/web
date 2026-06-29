@@ -31,7 +31,7 @@ export const QuranWord = ({ word, marks, onWordClicked }: QuranWordProps) => {
   return (
     <div
       onClick={(e) => onWordClicked(e, word)}
-      className={` group relative leading-none text-black dark:text-white hover:text-yellow-500 dark:hover:text-yellow-400 cursor-pointer
+      className={` group relative leading-none text-foreground hover:text-primary cursor-pointer
       ${highlightClassForWord}
     `}
     >

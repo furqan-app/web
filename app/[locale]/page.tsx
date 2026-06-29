@@ -20,10 +20,10 @@ export default async function Home({
   return (
     <main className="container mx-auto px-4 py-8 min-h-screen">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center my-8 text-gray-900 dark:text-gray-100">
+        <h1 className="text-3xl font-bold text-center my-8 text-foreground">
           <AppTitle />
         </h1>
-        <SurahList surahs={surahs} />
+        <SurahList surahs={surahs} variant="grid" />
       </div>
     </main>
   );

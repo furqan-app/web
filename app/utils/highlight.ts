@@ -8,12 +8,12 @@ type HighlightOptions = {
 };
 
 const HIGHLIGHT_COLORS: Record<HighlightType, string> = {
-  'search': 'bg-gray-900/10 dark:bg-cyan-600/30',
-  'selection': 'bg-blue-200/70 dark:bg-blue-500/30',
-  'last-read': 'bg-purple-200/70 dark:bg-purple-500/30',
-  'red-mark': 'bg-red-300/50 dark:bg-red-300/80',
-  'blue-mark': 'bg-blue-300/50 dark:bg-blue-300/80',
-  'green-mark': 'bg-green-300/50 dark:bg-green-300/80',
+  'search': 'bg-[var(--hl-blue)] rounded-sm',
+  'selection': 'bg-[var(--hl-blue)] rounded-sm',
+  'last-read': 'bg-[var(--hl-green)] rounded-sm',
+  'red-mark': 'bg-[var(--hl-red)] rounded-sm',
+  'blue-mark': 'bg-[var(--hl-blue)] rounded-sm',
+  'green-mark': 'bg-[var(--hl-green)] rounded-sm',
 };
 
 export const highlight = {

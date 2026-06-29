@@ -27,13 +27,13 @@ export const QuranLine = ({ words, onWordClicked, marks }: LineProps) => {
       {shouldRenderSurahHeader ? (
         <div className="text-center">
           <h1
-            className="text-3xl text-black dark:text-white"
+            className="text-3xl text-foreground"
             translate="no"
             style={{ fontFamily: "var(--surah-names)" }}
           >
             {`${surahId}`.padStart(3, "0")}
           </h1>
-          <div className="flex justify-center text-black dark:text-white">
+          <div className="flex justify-center text-foreground">
             {!CHAPTERS_WITHOUT_BISMILLAH.includes(`${surahId}`) ? (
               <div className="mb-4">
                 <BismillahSVG />
@@ -43,7 +43,7 @@ export const QuranLine = ({ words, onWordClicked, marks }: LineProps) => {
         </div>
       ) : null}
       <div
-        className={`text-white flex mb-4 ${
+        className={`text-foreground flex mb-4 ${
           getLanguageDirection(locale) === "rtl"
             ? "flex-row"
             : "flex-row-reverse"

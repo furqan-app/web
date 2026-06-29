@@ -5,17 +5,17 @@ import { Home } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
 import { UserMenu } from "./UserMenu";
 import { SettingsSidebar } from "../SettingsSidebar";
-import { Button } from "@/components/ui/button";
+import { FQIconButton } from "@/app/components/ui/FQIconButton";
 
 export const Nav = () => {
   return (
-    <nav className="bg-background text-foreground px-4 shadow h-14 flex items-center">
+    <nav className="sticky top-0 z-30 bg-background/85 backdrop-blur-sm text-foreground px-4 border-b border-border h-14 flex items-center">
       <div className="flex-1 flex justify-start">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={"/"} className="dark:hover:bg-zinc-800">
+        <FQIconButton asChild>
+          <Link href={"/"}>
             <Home className="size-5" />
           </Link>
-        </Button>
+        </FQIconButton>
       </div>
 
       <div className="flex-1 flex justify-center">

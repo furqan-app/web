@@ -1,62 +1,73 @@
+"use client";
+
 import { SurahResult } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
+import { FQListItem } from "./ui/FQListItem";
+import { FQBadge } from "./ui/FQBadge";
 
 type Props = {
   surah: SurahResult;
+  variant?: "grid" | "list";
 };
 
-export const SurahListItem = ({ surah }: Props) => {
+export const SurahListItem = ({ surah, variant = "list" }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
+  const isRTL = getLanguageDirection(locale) === "rtl";
 
-  const getSurahName = (locale: string) => {
+  const getSurahName = () => {
     switch (locale) {
-      case "ar":
-        return surah.name_arabic;
-      case "en":
-        return surah.name_simple;
-      default:
-        return surah.name_simple;
+      case "ar": return surah.name_arabic;
+      default: return surah.name_simple;
     }
   };
 
   const surahStartingPage = surah.pages.split("-")[0];
-  return (
-    <Link
-      locale={locale}
-      href={`/pages/${surahStartingPage}`}
-      className="flex gap-4 items-center p-4 border-b border-gray-200 dark:border-neutral-800 last:border-none 
-        hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-    >
-      <div
-        className={`flex items-center justify-center w-12 h-12 rounded-full 
-        border border-gray-300 dark:border-neutral-800 
-        bg-white dark:bg-black`}
+  const meta = `${surah.revelation_place} • ${surah.verses_count} ${t("verses", "Verses")}`;
+
+  if (variant === "grid") {
+    return (
+      <Link
+        locale={locale}
+        href={`/pages/${surahStartingPage}`}
+        dir={isRTL ? "rtl" : "ltr"}
+        className="flex items-center gap-3.5 p-[18px] bg-card border border-border rounded-2xl shadow-sm cursor-pointer hover:bg-[var(--card-2)] hover:-translate-y-0.5 transition-[background,transform,box-shadow] duration-200"
       >
-        <span className="text-lg text-gray-900 dark:text-gray-100">
+        <FQBadge className="shrink-0 w-11 h-11 text-sm font-bold">
           {surah.id}
-        </span>
-      </div>
-      <div className="flex-1">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2
-              className={`text-lg font-semibold text-gray-900 dark:text-gray-100 
-              ${getLanguageDirection(locale) === "rtl" ? "font-surahnames text-2xl" : ""}`}
-            >
-              {getSurahName(locale)}
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {surah.revelation_place} • {surah.verses_count}{" "}
-              {t("verses", "Verses")}
-            </p>
+        </FQBadge>
+        <div className="flex-1 min-w-0">
+          <div
+            className={`font-extrabold text-foreground leading-tight truncate ${isRTL ? "text-xl font-surahnames" : "text-base"}`}
+          >
+            {getSurahName()}
           </div>
+          <div className="text-xs text-muted-foreground mt-0.5">{meta}</div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    );
+  }
+
+  return (
+    <FQListItem
+      href={`/pages/${surahStartingPage}`}
+      locale={locale}
+      leading={
+        <FQBadge>
+          <span className="text-lg">{surah.id}</span>
+        </FQBadge>
+      }
+      title={
+        <h2
+          className={`text-lg font-semibold text-foreground ${isRTL ? "font-surahnames text-2xl" : ""}`}
+        >
+          {getSurahName()}
+        </h2>
+      }
+      subtitle={meta}
+    />
   );
 };
-

@@ -112,6 +112,29 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Design System — Deep Teal + Cream Palette
+
+**Decision:** Furqan uses the "Deep Teal + Cream" color palette defined in `app/globals.css`. All color references must use semantic tokens (`bg-background`, `text-foreground`, `border`, etc.) — never raw Tailwind colors (`bg-gray-*`, `text-black`, etc.).
+
+**Rationale:** Establishes a distinct visual identity and ensures dark mode works correctly via CSS variable swapping.
+
+**Constraints:**
+- `MarkerColorPicker` uses `text-red-600`, `text-blue-600`, `text-green-600` intentionally (semantic bookmark colors) — do not change these.
+- Never use `dark:hover:bg-zinc-800` or similar raw hover overrides — use `hover:bg-accent/10` or shadcn's built-in variant hovers.
+
+---
+
+## FQ Design Components
+
+**Decision:** Four `FQ`-prefixed thin wrapper components live in `app/components/ui/`: `FQIconButton`, `FQListItem`, `FQBadge`, `FQCard`. They lock in token defaults and enforce the design language across the app.
+
+**Constraints:**
+- `FQIconButton` locks `variant="ghost" size="icon"` — callers cannot override these props.
+- Use `FQIconButton` for all icon-only buttons in the app (Nav, SettingsSidebar, Sidebar).
+- Use `FQListItem` + `FQBadge` for all navigable list items (SurahList, etc.).
+
+---
+
 ## Sidebar Loading
 
 **Decision:** The `Sidebar` component is loaded via `next/dynamic` (deferred JS hydration) in `app/[locale]/pages/layout.tsx`. Sidebar data (surahs, rubs) is fetched server-side in that layout.

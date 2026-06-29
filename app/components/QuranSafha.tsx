@@ -92,12 +92,12 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center">
-        <div className="w-fit py-6">
+        <div className="w-fit py-8">
           <div className="flex w-full justify-between">
-            <div className="text-black dark:text-white">
+            <div className="text-foreground">
               {surahName}
             </div>
-            <div className="text-black dark:text-white">
+            <div className="text-foreground">
               {juz}{hizb ? `, ${hizb}` : ""}
             </div>
           </div>
@@ -118,7 +118,7 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
               />
             ))}
           </div>
-          <div className="text-black dark:text-white flex justify-center mt-4">
+          <div className="text-foreground flex justify-center mt-4">
             {page}
           </div>
         </div>

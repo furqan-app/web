@@ -21,23 +21,23 @@ const RubList = ({ rubs }: Props) => {
             {rubs.map((rub, index) => (
                 <>
                     {index > 0 && getJuzNumber(rub.rub_number) !== getJuzNumber(rubs[index - 1].rub_number) && (
-                        <div className="my-4 border-t border-gray-300 dark:border-gray-700 pt-2">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">{t('juz', 'Juz')} {getJuzNumber(rub.rub_number)}</span>
+                        <div className="my-4 border-t border-border pt-2">
+                            <span className="text-sm text-muted-foreground">{t('juz', 'Juz')} {getJuzNumber(rub.rub_number)}</span>
                         </div>
                     )}
-                    <li key={rub.id} className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    <li key={rub.id} className="hover:bg-accent/10 rounded-lg transition-colors">
                         <Link
                             href={`/pages/${rub.startVerse.page_number}`}
                             locale={locale}
-                            className="block p-3 text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                            className="block p-3 text-foreground"
                         >
                             <div className="flex items-center justify-between">
                                 <span className="font-medium">{t('rub', 'Rub')} {rub.rub_number}</span>
-                                <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                                <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
                                     {t('page', 'Page')} {rub.startVerse.page_number}
                                 </span>
                             </div>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 font-arabic">
+                            <p className="mt-1 text-sm text-muted-foreground font-arabic">
                                 {rub.startVerse.text_uthmani}
                             </p>
                         </Link>
