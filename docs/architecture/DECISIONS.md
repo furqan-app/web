@@ -30,7 +30,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 |---|---|---|---|
 | `quran-p{n}` | — (inline style) | `code_v1` | Quran page words only |
 | `uthmanic.ttf` | `font-uthmanic` | `text_uthmani` | Ayah text in search, modals, any non-page context |
-| `sura_names.ttf` | `font-surahnames` | `name_arabic` | Surah name display |
+| `sura_names.ttf` | `font-surahnames` | Zero-padded surah number e.g. `"001"` | Surah name display — font maps `001`–`114` to calligraphic glyphs, NOT Arabic text |
 
 **Constraints:**
 - Do not add Quran page fonts to the global CSS.
