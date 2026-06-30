@@ -128,6 +128,18 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Theme Architecture
+
+**Decision:** Named CSS palette classes (`.theme-light`, `.theme-dark`, etc.) on `<html>` define the full shadcn token set per theme. The `.dark` class is applied separately alongside the palette class to activate Tailwind's `dark:` utilities — so switching to dark mode means applying both `.theme-dark` and `.dark`. See [ADR 0003](adr/0003-multi-theme-architecture.md).
+
+**Constraints:**
+- Always apply `.dark` together with any dark-variant theme class; never apply one without the other.
+- The flash-prevention `<script>` in `layout.tsx` must mirror the class logic in `useTheme` — they share responsibility but cannot share code at runtime.
+- `globals.css` must use `.theme-light` / `.theme-dark` selectors, not `:root` / `.dark`, for token definitions.
+- No hardcoded color values anywhere outside theme class blocks in `globals.css`.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills (`/plan-fq-task`, `/start-fq-task`) load context on demand. Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
