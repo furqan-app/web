@@ -1,7 +1,7 @@
 # AI-First Documentation & Workflow System
 
 **Date:** 2026-06-28  
-**Status:** Agreed — ready to implement  
+**Status:** Implemented (extended 2026-06-29 with /retrospect and /review-fq-work)  
 **Applies to:** All contributors and their AI agents
 
 ---
@@ -36,6 +36,7 @@ docs/
     i18n.md
     styling.md
   plans/                # per-task implementation plans (output of /plan-fq-task skill)
+  retrospectives/       # dated retro files (output of /retrospect skill)
 
 .claude/
   skills/               # project-scoped skills (committed, shared with team)
@@ -75,6 +76,17 @@ CLAUDE.md becomes a 5-line entry point: project overview + pointers to `docs/`. 
 - Implements without needing to re-explain the project or conventions
 - **Auto-records any new decisions at end**
 
+### `/review-fq-work`
+- Spawns Opus subagent to review the branch diff vs main
+- Three dimensions: bugs & correctness, code quality & duplication, plan consistency
+- Terminal output only — findings only, no fixes
+
+### `/retrospect`
+- End-of-session feedback loop
+- Scans conversation history + DECISIONS.md for stale entries
+- Proposes changes review-before-write (one at a time, nothing written without approval)
+- Saves `docs/retrospectives/YYYY-MM-DD.md`
+
 ---
 
 ## Task Workflow
@@ -82,7 +94,9 @@ CLAUDE.md becomes a 5-line entry point: project overview + pointers to `docs/`. 
 ```
 1. /plan-fq-task   → Socratic grilling → plan file + decisions recorded
 2. /start-fq-task  → Load context → implement → decisions recorded
-3. PR + move Trello card to Done
+3. /review-fq-work → Opus quality gate (bugs, duplication, plan consistency)
+4. Commit + PR + move Trello card to Done
+5. /retrospect     → Capture learnings, update DECISIONS.md/skills/memories
 ```
 
 Same flow for every task — feature or bug, no exceptions.
@@ -104,15 +118,17 @@ Same flow for every task — feature or bug, no exceptions.
 ## Next Steps
 
 ### P1 — Foundation
-- [ ] Slim down `CLAUDE.md` to pointer-only format
-- [ ] Create `docs/` folder structure (`product/`, `architecture/`, `standards/`, `plans/`)
-- [ ] Create `docs/architecture/DECISIONS.md` pre-populated with current project decisions (static gen strategy, font system, auth, middleware chain, etc.)
-- [ ] Write the 5 initial standards files with current conventions
-- [ ] Build `/plan-fq-task` skill in `.claude/skills/`
-- [ ] Build `/start-fq-task` skill in `.claude/skills/`
+- [x] Slim down `CLAUDE.md` to pointer-only format
+- [x] Create `docs/` folder structure (`product/`, `architecture/`, `standards/`, `plans/`, `retrospectives/`)
+- [x] Create `docs/architecture/DECISIONS.md` pre-populated with current project decisions
+- [x] Write the 5 initial standards files with current conventions
+- [x] Build `/plan-fq-task` skill in `.claude/skills/`
+- [x] Build `/start-fq-task` skill in `.claude/skills/`
+- [x] Build `/retrospect` skill — end-of-session feedback loop
+- [x] Build `/review-fq-work` skill — Opus branch quality gate
 
 ### P2 — Product context
 - [ ] Write project-level PRD in `docs/product/`
 
 ### P3 — Retroactive docs
-- [ ] Document existing architecture decisions (static gen strategy, font system, etc.) in `DECISIONS.md`
+- [x] Document existing architecture decisions in `DECISIONS.md`
