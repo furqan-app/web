@@ -77,7 +77,7 @@ const QuranPageById = async ({
         type="font/truetype"
         crossOrigin="anonymous"
       />
-      <div className="bg:white dark:bg-black w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
+      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
         <div className="flex items-center">
           <NavigationButton
             href={`/${locale}/pages/${getNavigationHref(false)}`}

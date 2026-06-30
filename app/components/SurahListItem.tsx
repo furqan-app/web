@@ -28,15 +28,15 @@ export const SurahListItem = ({ surah }: Props) => {
     <Link
       locale={locale}
       href={`/pages/${surahStartingPage}`}
-      className="flex gap-4 items-center p-4 border-b border-gray-200 dark:border-neutral-800 last:border-none 
-        hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+      className="flex gap-4 items-center p-4 border-b border-border last:border-none
+        hover:bg-accent transition-colors"
     >
       <div
-        className={`flex items-center justify-center w-12 h-12 rounded-full 
-        border border-gray-300 dark:border-neutral-800 
-        bg-white dark:bg-black`}
+        className={`flex items-center justify-center w-12 h-12 rounded-full
+        border border-border
+        bg-card`}
       >
-        <span className="text-lg text-gray-900 dark:text-gray-100">
+        <span className="text-lg text-foreground">
           {surah.id}
         </span>
       </div>
@@ -44,12 +44,12 @@ export const SurahListItem = ({ surah }: Props) => {
         <div className="flex justify-between items-center">
           <div>
             <h2
-              className={`text-lg font-semibold text-gray-900 dark:text-gray-100 
+              className={`text-lg font-semibold text-foreground
               ${getLanguageDirection(locale) === "rtl" ? "font-surahnames text-2xl" : ""}`}
             >
               {getSurahName(locale)}
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {surah.revelation_place} • {surah.verses_count}{" "}
               {t("verses", "Verses")}
             </p>

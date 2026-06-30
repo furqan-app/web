@@ -27,7 +27,7 @@ export const SettingsSidebar = () => {
         <Button
           variant="ghost"
           size="icon"
-          className={"dark:hover:bg-zinc-800 " + (isRTL ? "mr-4" : "ml-4")}
+          className={"hover:bg-accent " + (isRTL ? "mr-4" : "ml-4")}
         >
           <Settings className="size-5" />
         </Button>

@@ -6,7 +6,7 @@ type Props = {
 };
 
 export const SurahList = ({ surahs }: Props) => (
-  <div className="bg-white dark:bg-black shadow-md rounded-lg border border-gray-200 dark:border-none">
+  <div className="bg-card shadow-md rounded-lg border border-border">
     {surahs.map((surah) => (
       <SurahListItem key={surah.id} surah={surah} />
     ))}

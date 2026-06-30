@@ -3,7 +3,7 @@ import { QuranFontScale } from "@types";
 export type StorageKey = 'theme' | 'quranFontScale';
 
 type StorageValueType = {
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'gold';
   quranFontScale: QuranFontScale;
 };
 

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { storage } from '@/app/utils/storage';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'gold';
 
 function getInitialTheme(): Theme {
   if (typeof window !== "undefined") {
     const storedTheme = storage.get("theme");
-    if (storedTheme === "dark" || storedTheme === "light") {
+    if (storedTheme === "dark" || storedTheme === "light" || storedTheme === "gold") {
       return storedTheme;
     }
 
@@ -30,10 +30,13 @@ export function useTheme() {
     const el = document.documentElement;
     if (theme === "dark") {
       el.classList.add("dark", "theme-dark");
-      el.classList.remove("theme-light");
+      el.classList.remove("theme-light", "theme-gold");
+    } else if (theme === "gold") {
+      el.classList.add("theme-gold");
+      el.classList.remove("dark", "theme-dark", "theme-light");
     } else {
       el.classList.add("theme-light");
-      el.classList.remove("dark", "theme-dark");
+      el.classList.remove("dark", "theme-dark", "theme-gold");
     }
   }, [theme]);
 
