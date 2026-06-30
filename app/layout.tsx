@@ -3,6 +3,7 @@ import { useLocale } from "next-intl";
 import "./globals.css";
 import { getLanguageDirection } from "./utils/i18n";
 import localFont from "next/font/local";
+import { Tajawal } from "next/font/google";
 
 export const metadata: Metadata = {
   title: "Furqan",
@@ -11,6 +12,13 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
   },
 };
+
+const tajawal = Tajawal({
+  weight: ["400", "500", "700", "800"],
+  subsets: ["arabic", "latin"],
+  variable: "--tajawal",
+  display: "swap",
+});
 
 const uthmanic = localFont({
   src: "./fonts/hafs/uthmanic/uthmanic.ttf",
@@ -40,7 +48,7 @@ export default function RootLayout({
       <body
         suppressHydrationWarning
         dir={getLanguageDirection(locale)}
-        className={`${uthmanic.variable} ${surahNames.variable} bg-background antialiased`}
+        className={`${tajawal.variable} ${uthmanic.variable} ${surahNames.variable} bg-background antialiased`}
       >
         {children}
       </body>

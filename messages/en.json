@@ -1,6 +1,8 @@
 {
   "home": {
+    "badge": "Memorize the Quran",
     "title": "Furqan",
+    "tagline": "Every word is a trust, every verse a journey — annotate, reflect, and perfect your memorization of the Noble Quran, guided step by step alongside your teacher.",
     "description": "Read and Listen to Quran"
   },
   "search": {
@@ -21,6 +23,7 @@
   "hizb-quarter": "Quarter Hizb",
   "hizb-half": "Half Hizb",
   "hizb-three-quarters": "Three Quarters Hizb",
+  "account": "Account",
   "settings": "Settings",
   "language": "Language",
   "quranFontSize": "Quran Font Size",

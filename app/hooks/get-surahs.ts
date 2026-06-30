@@ -7,6 +7,7 @@ export const getSurahs = async (): Promise<SurahResult[]> => {
             id: true,
             name_arabic: true,
             name_simple: true,
+            translated_name: true,
             verses_count: true,
             revelation_place: true,
             pages: true

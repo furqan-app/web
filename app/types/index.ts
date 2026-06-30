@@ -76,6 +76,7 @@ export type SurahResult = {
   id: number;
   name_arabic: string;
   name_simple: string;
+  translated_name: string;
   verses_count: number;
   revelation_place: string;
   pages: string; // format: "startPage-endPage" e.g. "1-21"

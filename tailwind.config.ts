@@ -64,6 +64,7 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
+        tajawal: ["var(--tajawal)", "system-ui", "sans-serif"],
         uthmanic: ["var(--uthmanic)"],
         surahnames: ["var(--surah-names)"],
       },
