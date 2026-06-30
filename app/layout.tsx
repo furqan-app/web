@@ -5,8 +5,11 @@ import { getLanguageDirection } from "./utils/i18n";
 import localFont from "next/font/local";
 
 export const metadata: Metadata = {
-  title: "Al-Furqan",
+  title: "Furqan",
   description: "The word focused Quran app",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 const uthmanic = localFont({
