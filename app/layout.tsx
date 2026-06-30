@@ -30,14 +30,14 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=JSON.parse(localStorage.getItem('theme'));if(t==='dark'||(t==null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}`,
+            __html: `try{var t=JSON.parse(localStorage.getItem('theme'));var el=document.documentElement;if(t==='dark'||(t==null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){el.classList.add('dark','theme-dark')}else{el.classList.add('theme-light')}}catch(e){}`,
           }}
         />
       </head>
       <body
         suppressHydrationWarning
         dir={getLanguageDirection(locale)}
-        className={`${uthmanic.variable} ${surahNames.variable} bg-white dark:bg-black antialiased`}
+        className={`${uthmanic.variable} ${surahNames.variable} bg-background antialiased`}
       >
         {children}
       </body>

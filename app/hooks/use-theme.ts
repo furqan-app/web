@@ -27,10 +27,13 @@ export function useTheme() {
   };
 
   useEffect(() => {
+    const el = document.documentElement;
     if (theme === "dark") {
-      document.documentElement.classList.add("dark");
+      el.classList.add("dark", "theme-dark");
+      el.classList.remove("theme-light");
     } else {
-      document.documentElement.classList.remove("dark");
+      el.classList.add("theme-light");
+      el.classList.remove("dark", "theme-dark");
     }
   }, [theme]);
 
