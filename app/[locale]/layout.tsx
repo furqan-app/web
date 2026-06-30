@@ -33,7 +33,7 @@ export default async function LocaleLayout({
   return (
     <div
       dir={getLanguageDirection(locale)}
-      className="bg-white dark:bg-black antialiased"
+      className="bg-background antialiased"
     >
       <NextIntlClientProvider messages={messages}>
         <SessionProvider>

@@ -8,12 +8,12 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
     const t = useTranslations();
     const locale = useLocale();
 
-    return <div className="absolute w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg 
-    border border-gray-200 dark:border-gray-700 max-h-96 overflow-auto z-50">
+    return <div className="absolute w-full mt-2 bg-popover rounded-lg shadow-lg
+    border border-border max-h-96 overflow-auto z-50">
         {chapters && chapters.length > 0 && (
-            <div className="border-b border-gray-200 dark:border-gray-700">
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900">
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+            <div className="border-b border-border">
+                <div className="px-4 py-2 bg-muted">
+                    <span className="font-medium text-foreground">
                         {t('surahs', 'Surahs')} ({chapters.length})
                     </span>
                 </div>
@@ -23,10 +23,10 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
                         key={chapter.id}
                         href={`/pages/${chapter.pages.split('-')[0]}`}
                         onClick={() => setIsOpen(false)}
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="block px-4 py-2 hover:bg-accent"
                     >
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-600 dark:text-gray-400">
+                            <span className="text-muted-foreground">
                                 {chapter.name_simple}
                             </span>
                             <span className="font-surahnames text-xl">
@@ -40,8 +40,8 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
 
         {verses && verses.length > 0 && (
             <div>
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900">
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                <div className="px-4 py-2 bg-muted">
+                    <span className="font-medium text-foreground">
                         {t('verses', 'Verses')} ({verses.length})
                     </span>
                 </div>
@@ -51,9 +51,9 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
                         key={verse.verse_key}
                         href={highlight.addToUrl({ verseKey: verse.verse_key, pageNumber: verse.page_number })}
                         onClick={() => setIsOpen(false)}
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="block px-4 py-2 hover:bg-accent"
                     >
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="text-sm text-muted-foreground">
                             {locale === 'ar' ? verse.chapter.name_arabic : verse.chapter.name_simple} - {verse.verse_key.split(':')[1]}
                         </div>
                         <div className="text-right font-uthmanic text-lg">
