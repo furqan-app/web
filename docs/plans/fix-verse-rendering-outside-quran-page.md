@@ -67,6 +67,10 @@ Supporting changes:
 - **`app/hooks/get-rubs.ts`** — add the same `Word` select to `startVerse` in the Prisma query
 - Only extend `startVerse` — `endVerse` is not rendered in the UI, leave it unchanged
 
+### 5. Cleanup — unused `text_uthmani` in `RubWithVerses` / `get-rubs.ts`
+
+Removed the leftover `text_uthmani` field from both `startVerse` and `endVerse` selects (`app/types/prisma.ts`, `app/hooks/get-rubs.ts`). It was never rendered — `RubList.tsx` only reads `startVerse.page_number` and `startVerse.Word`, and `endVerse` is unused entirely. Flagged in the 2026-07-01 retrospective, addressed 2026-07-01.
+
 ## Constraints
 
 - Never use `verse.text_uthmani` directly in rendered output — always join `word.qpc_uthmani_hafs`.

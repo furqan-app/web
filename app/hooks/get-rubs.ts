@@ -7,7 +7,6 @@ export const getRubs = async (): Promise<RubWithVerses[]> => {
       rubVerseMappings: true,
       startVerse: {
         select: {
-          text_uthmani: true,
           page_number: true,
           Word: {
             select: {
@@ -20,7 +19,6 @@ export const getRubs = async (): Promise<RubWithVerses[]> => {
       },
       endVerse: {
         select: {
-          text_uthmani: true,
           page_number: true,
         },
       },
