@@ -110,33 +110,58 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center">
-        <div className="w-fit py-6">
-          <div className="flex w-full justify-between">
-            <div className="text-black dark:text-white">{surahName}</div>
-            <div className="text-black dark:text-white">
-              {juz}
-              {hizb ? `, ${hizb}` : ""}
+        <div className="relative rounded-[20px] border border-border bg-card overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)]">
+          {/* Inner decorative accent frame */}
+          <div className="absolute inset-[10px] rounded-xl border border-primary/20 pointer-events-none z-10" />
+          {/* Corner star ornaments */}
+          <div className="absolute top-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
+          </div>
+          <div className="absolute top-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
+          </div>
+          <div className="absolute bottom-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
+          </div>
+          <div className="absolute bottom-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
+          </div>
+          {/* Content */}
+          <div className="relative z-0 px-7 py-6">
+            {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
+            <div dir="rtl" className="grid grid-cols-3 items-center pb-2 mb-4 border-b border-border">
+              <span className="text-[10px] font-bold tracking-widest text-muted-foreground">{juz}</span>
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+                <span className="text-sm font-bold text-foreground">{surahName}</span>
+                <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+              </div>
+              <span className="text-[10px] font-bold tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
             </div>
-          </div>
-          <div
-            className={`fq-quran-safha mt-4 text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
-              quranFontScale,
-            )}vh]`}
-            style={{
-              fontFamily: getPageFontFamily(page),
-            }}
-          >
-            {Object.keys(lines).map((line) => (
-              <QuranLine
-                onWordClicked={wordClicked}
-                key={line}
-                words={lines[line]}
-                marks={marks ? marks : {}}
-              />
-            ))}
-          </div>
-          <div className="text-black dark:text-white flex justify-center mt-4">
-            {page}
+            {/* Quran text */}
+            <div
+              className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
+                quranFontScale,
+              )}vh]`}
+              style={{
+                fontFamily: getPageFontFamily(page),
+              }}
+            >
+              {Object.keys(lines).map((line) => (
+                <QuranLine
+                  onWordClicked={wordClicked}
+                  key={line}
+                  words={lines[line]}
+                  marks={marks ? marks : {}}
+                />
+              ))}
+            </div>
+            {/* Footer */}
+            <div className="flex items-center justify-center gap-2 mt-4 pt-2 border-t border-border text-muted-foreground text-sm">
+              <span className="text-primary opacity-70 text-[10px]">◆</span>
+              <span>{page}</span>
+              <span className="text-primary opacity-70 text-[10px]">◆</span>
+            </div>
           </div>
         </div>
       </div>

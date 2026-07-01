@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftCircle, ArrowRightCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { QuranSafha } from "@/app/components/QuranSafha";
 import { getPageWords } from "@/app/hooks/get-page-words";
@@ -30,11 +30,14 @@ const NavigationButton = ({
   // For RTL: isNext goes left, !isNext goes right
   // For LTR: isNext goes right, !isNext goes left
   const showLeft = isRTL ? isNext : !isNext;
-  const Icon = showLeft ? ArrowLeftCircle : ArrowRightCircle;
+  const Icon = showLeft ? ChevronLeft : ChevronRight;
 
   return (
-    <Link href={href} className="text-foreground hover:opacity-70 transition-opacity">
-      <Icon className="size-7" />
+    <Link
+      href={href}
+      className="flex items-center justify-center w-[52px] h-[52px] rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+    >
+      <Icon size={18} strokeWidth={1.8} />
     </Link>
   );
 };
@@ -77,18 +80,16 @@ const QuranPageById = async ({
         type="font/truetype"
         crossOrigin="anonymous"
       />
-      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center gap-5">
-        <div className="flex items-center">
+      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center items-start py-8 gap-6">
+        <div className="flex items-center self-stretch">
           <NavigationButton
             href={`/${locale}/pages/${getNavigationHref(false)}`}
             isRTL={isRTL}
             isNext={false}
           />
         </div>
-        <div className="">
-          <QuranSafha page={+pageId} lines={lines} pageMetadata={pageMetadata} />
-        </div>
-        <div className="flex items-center">
+        <QuranSafha page={+pageId} lines={lines} pageMetadata={pageMetadata} />
+        <div className="flex items-center self-stretch">
           <NavigationButton
             href={`/${locale}/pages/${getNavigationHref(true)}`}
             isRTL={isRTL}

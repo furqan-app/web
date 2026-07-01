@@ -60,7 +60,7 @@ export const SearchBar = () => {
                     }}
                     onFocus={handleSearchFocus}
                     placeholder={t('search.placeholder', 'Search the Quran...')}
-                    className="ps-9 pe-9"
+                    className="font-tajawal ps-9 pe-9"
                 />
                 {isLoading && (
                     <div className="absolute end-3 top-1/2 -translate-y-1/2">
