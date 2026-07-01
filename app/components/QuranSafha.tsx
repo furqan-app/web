@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useLocale } from "next-intl";
 import { useSession } from "next-auth/react";
 import { Verse } from "@prisma/client";
 import { QuranLine } from "@components/QuranLine";
@@ -35,7 +34,6 @@ const tailwindFontUtility = [
 ];
 
 export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
-  const locale = useLocale();
   const session = useSession();
   const t = useTranslations();
   const { data: marks } = useMarks(page);
@@ -83,7 +81,7 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
     "hizb-half": "نصف الحزب",
     "hizb-three-quarters": "ثلاث أرباع الحزب",
   };
-  const surahName = `${t("surah", "سورة")} ${locale === "ar" ? pageMetadata.chapter.name_arabic : pageMetadata.chapter.name_simple}`;
+  const surahGlyph = `${pageMetadata.chapter.chapter_number}`.padStart(3, "0");
   const juz = `${t("juz", "الجزء")} ${pageMetadata.juz_number}`;
   const hizb = pageMetadata.hizb_position
     ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${pageMetadata.hizb_number}`
@@ -136,7 +134,12 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
               <span className="text-[10px] font-bold tracking-widest text-muted-foreground">{juz}</span>
               <div className="flex items-center justify-center gap-1.5">
                 <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
-                <span className="text-sm font-bold text-foreground">{surahName}</span>
+                <span
+                  translate="no"
+                  style={{ fontFamily: "var(--surah-names)", fontSize: "1.1rem", lineHeight: 1 }}
+                >
+                  {surahGlyph}
+                </span>
                 <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
               </div>
               <span className="text-[10px] font-bold tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
