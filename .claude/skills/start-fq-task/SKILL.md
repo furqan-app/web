@@ -29,7 +29,7 @@ Loads the right context (decisions + standards + plan), then implements the task
    - **UI mode** — if the task involves components, pages, layout, or styling, also:
      - Read `docs/standards/styling.md` and `docs/standards/component-patterns.md` (if not already loaded above)
      - Read `docs/architecture/APP_PURPOSE.md` for UX principles before making any layout decisions
-     - Reference `docs/design/full-design.html` as the visual design source of truth (do not modify it)
+     - Read `docs/design/design-principles.md` for aesthetic direction and component conventions
 
 3. **Implement**
    - Follow the plan exactly. If you discover the plan needs revision, pause and discuss — do not silently deviate.
