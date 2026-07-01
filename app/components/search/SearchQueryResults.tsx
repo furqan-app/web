@@ -3,13 +3,13 @@ import Link from "next/link";
 import { SurahResult, VerseResult } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { useLocale } from "next-intl";
+import { cn } from "@/lib/utils";
 
-export default function SearchQueryResults({ chapters, verses, setIsOpen }: { chapters: SurahResult[], verses: VerseResult[], setIsOpen: (isOpen: boolean) => void }) {
+export default function SearchQueryResults({ chapters, verses, setIsOpen, className }: { chapters: SurahResult[], verses: VerseResult[], setIsOpen: (isOpen: boolean) => void, className?: string }) {
     const t = useTranslations();
     const locale = useLocale();
 
-    return <div className="absolute w-full mt-2 bg-popover rounded-lg shadow-lg
-    border border-border max-h-96 overflow-auto z-50">
+    return <div className={cn("absolute w-full mt-2 bg-popover rounded-lg shadow-lg border border-border max-h-96 overflow-auto z-50", className)}>
         {chapters && chapters.length > 0 && (
             <div className="border-b border-border">
                 <div className="px-4 py-2 bg-muted">

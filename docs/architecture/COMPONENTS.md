@@ -5,22 +5,24 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-06-30
+Last updated: 2026-07-02
 
 ---
 
 ## Zone: nav
 
 ```
-Nav                          — top bar, always visible
+Nav                          — top bar, always visible; responsive (mobile/desktop layouts)
   FurqanLogo                 — brand mark (SVG, links to home)
-  SearchBar                  — Quran word/verse search trigger
-  SettingsSidebar            — font scale + theme controls panel (Sheet)
+  SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
+    SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet)
+  SettingsSidebar            — font scale + theme + account panel (Sheet); account section shown on mobile only
     QuranFontScaleControls   — 1–10 scale slider, reads/writes QuranFontScaleContext
     ThemeToggle              — cycles named themes
     LanguageToggle           — ar ↔ en locale switch
-  UserMenu                   — sign in / account dropdown
-  Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic)
+    AccountCard              — mobile-only sign in/out card (name+email+sign out, or sign in button); session via next-auth
+  UserMenu                   — sign in / account dropdown (desktop only; AccountCard is its mobile counterpart in SettingsSidebar)
+  Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic); controlled via SidebarContext
     SurahList                — grid of surah cards [SHARED — also used on home page]
       SurahListItem          — single surah card
     RubList                  — list of rub markers
@@ -65,6 +67,7 @@ app/components/ui/FQModal    — project-specific modal wrapper around shadcn Di
 
 ```
 QuranFontScaleContext        — font scale (1–10), persisted to localStorage
+SidebarContext               — sidebar open/setOpen state; bridges Nav (locale layout) → Sidebar (pages layout)
 QueryProvider                — React Query client provider (wraps everything)
 SessionProvider              — NextAuth session provider
 ```

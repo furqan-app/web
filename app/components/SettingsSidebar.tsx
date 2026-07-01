@@ -3,6 +3,7 @@
 import { LanguageToggle } from "@components/LanguageToggle";
 import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
 import { ThemeToggle } from "@components/ThemeToggle";
+import { AccountCard } from "@components/nav/AccountCard";
 import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
@@ -40,6 +41,14 @@ export const SettingsSidebar = () => {
           <SheetTitle>{t("settings", "Settings")}</SheetTitle>
         </SheetHeader>
         <div className="p-4 space-y-6 mt-2">
+          {/* Account section: mobile only */}
+          <div className="md:hidden">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              {t("account", "Account")}
+            </h3>
+            <AccountCard />
+          </div>
+
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
               {t("language", "Language")}
@@ -69,4 +78,3 @@ export const SettingsSidebar = () => {
     </Sheet>
   );
 };
-

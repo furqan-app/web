@@ -5,17 +5,17 @@ import useTranslations from "@/app/hooks/use-translations";
 import RubList from "../RubList";
 import { SurahResult } from "@types";
 import { RubWithVerses } from "@/app/types/prisma";
-import { PanelLeftOpen, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLocale } from "next-intl";
 import { getLanguageDirection } from "@/app/utils/i18n";
+import { useSidebar } from "@/app/contexts/SidebarContext";
 
 type Props = {
   surahs: SurahResult[];
@@ -26,22 +26,10 @@ const Sidebar = ({ surahs, rubs }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
+  const { open, setOpen } = useSidebar();
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="fixed top-1/2 start-0 -translate-y-1/2 z-50 rounded-none rounded-e-full bg-background shadow-md"
-        >
-          {isRTL ? (
-            <PanelLeftOpen className="size-5 rotate-180" />
-          ) : (
-            <PanelLeftOpen className="size-5" />
-          )}
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 top-14 h-[calc(100%-3.5rem)] p-0 flex flex-col overflow-hidden">
         <div className="flex justify-end p-4 border-b shrink-0">
           <SheetClose asChild>

@@ -35,9 +35,10 @@ export const ThemeToggle = () => {
           className="flex-1 gap-1.5"
           onClick={() => setTheme(value)}
           aria-pressed={theme === value}
+          aria-label={t(labelKey, labelFallback)}
         >
           <Icon className="size-4" />
-          <span>{t(labelKey, labelFallback)}</span>
+          <span className="hidden sm:inline">{t(labelKey, labelFallback)}</span>
         </Button>
       ))}
     </div>
