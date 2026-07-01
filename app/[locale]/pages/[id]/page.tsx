@@ -18,7 +18,7 @@ type QuranPageByIdProps = {
   params: { id: string; locale: Locale };
 };
 
-const NavigationButton = ({
+const NavigationArrow = ({
   href,
   isRTL,
   isNext,
@@ -27,17 +27,19 @@ const NavigationButton = ({
   isRTL: boolean;
   isNext: boolean;
 }) => {
-  // For RTL: isNext goes left, !isNext goes right
-  // For LTR: isNext goes right, !isNext goes left
+  // Flex row order flips visually under RTL, so the browser always places
+  // the first DOM child (isNext=false) at the row's main-start (right, in RTL).
+  // The chevron shape follows that visual position, not the prev/next label.
   const showLeft = isRTL ? isNext : !isNext;
   const Icon = showLeft ? ChevronLeft : ChevronRight;
 
   return (
     <Link
       href={href}
-      className="flex items-center justify-center w-9 h-9 md:w-[52px] md:h-[52px] rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+      aria-label={isNext ? "Next page" : "Previous page"}
+      className="flex items-center justify-center shrink-0 text-primary/60 hover:text-primary transition-colors"
     >
-      <Icon className="w-4 h-4 md:w-[18px] md:h-[18px]" strokeWidth={1.8} />
+      <Icon className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.6} />
     </Link>
   );
 };
@@ -80,17 +82,19 @@ const QuranPageById = async ({
         type="font/truetype"
         crossOrigin="anonymous"
       />
-      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center items-center py-4 gap-2 md:gap-6">
-        <div className="flex items-center self-stretch">
-          <NavigationButton
+      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center items-center py-4 ps-10 pe-6 md:ps-14 md:pe-10 gap-3 md:gap-8">
+        <div className="flex-1 min-w-0 flex justify-center">
+          <NavigationArrow
             href={`/${locale}/pages/${getNavigationHref(false)}`}
             isRTL={isRTL}
             isNext={false}
           />
-        </div>
-        <QuranSafha page={+pageId} lines={lines} pageMetadata={pageMetadata} />
-        <div className="flex items-center self-stretch">
-          <NavigationButton
+          <QuranSafha
+            page={+pageId}
+            lines={lines}
+            pageMetadata={pageMetadata}
+          />
+          <NavigationArrow
             href={`/${locale}/pages/${getNavigationHref(true)}`}
             isRTL={isRTL}
             isNext={true}
@@ -102,3 +106,4 @@ const QuranPageById = async ({
 };
 
 export default QuranPageById;
+
