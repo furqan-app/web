@@ -34,6 +34,7 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    - Read the parts of the codebase the feature will touch
    - Ask one adversarial question at a time — wait for the answer before asking the next
    - Questions should surface: scope ambiguity, edge cases, mobile/RTL behavior, interaction with existing systems, timing concerns
+   - If the task removes or relocates an existing UI trigger/control, explicitly verify every breakpoint and route that used it still has equivalent access before writing "unchanged" anywhere in the plan — check what else depends on it, don't assume. (A past plan removed an always-visible floating sidebar trigger and replaced it with a mobile-only one, silently leaving desktop with no way to open the sidebar — see `docs/plans/mobile-nav-ux.md` Addendum 3.)
    - Do not write the plan until you have 95% confidence in what needs to be built
 
 3. **ADR check — do this before writing the plan**

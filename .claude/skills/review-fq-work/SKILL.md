@@ -47,7 +47,7 @@ Spawn an Agent with `model: "opus"` and pass it the full diff and the following 
 
 **Subagent prompt:**
 
-You are a senior code reviewer. Review the following branch diff across three dimensions and report findings grouped by dimension. For each finding include: file + line, severity (critical / warning / note), and a one-sentence explanation. Be specific — no generic advice.
+You are a senior code reviewer. Review the following branch diff across three dimensions and report findings grouped by dimension, numbered sequentially across all dimensions (1, 2, 3, ... — do not restart the count per dimension). For each finding include: file + line, severity (critical / warning / note), and a one-sentence explanation. Be specific — no generic advice.
 
 **Dimension 1 — Bugs & Correctness**
 - Logic errors, off-by-one errors, null/undefined risks
@@ -67,7 +67,7 @@ You are a senior code reviewer. Review the following branch diff across three di
 - Are there any `docs/plans/` files that should now be marked `implemented` but aren't?
 - Does anything contradict `docs/architecture/DECISIONS.md`?
 
-If a dimension has no findings, say "No issues found." Do not pad with filler observations.
+If a dimension has no findings, say "No issues found." Do not pad with filler observations. Number findings within each dimension (1., 2., 3., ...), continuing the count across dimensions rather than restarting at 1 for each one, so every finding has a stable reference number for follow-up discussion.
 
 ---
 
@@ -77,16 +77,17 @@ Output the subagent's findings directly to the terminal, structured as:
 
 ```
 ── Bugs & Correctness ─────────────────────────
-[findings or "No issues found."]
+1. [finding] (or "No issues found.")
+2. [finding]
 
 ── Code Quality & Duplication ─────────────────
-[findings or "No issues found."]
+3. [finding] (or "No issues found.")
 
 ── Plan Consistency ────────────────────────────
-[findings or "No issues found."]
+4. [finding] (or "No issues found.")
 ```
 
-Do not summarize or editorialize beyond the subagent's report.
+Numbering continues across all three dimensions (do not restart at 1 per section). Do not summarize or editorialize beyond the subagent's report.
 
 ## Anti-patterns to avoid
 
