@@ -9,6 +9,13 @@ export const getRubs = async (): Promise<RubWithVerses[]> => {
         select: {
           text_uthmani: true,
           page_number: true,
+          Word: {
+            select: {
+              qpc_uthmani_hafs: true,
+              char_type_name: true,
+            },
+            orderBy: { position: "asc" },
+          },
         },
       },
       endVerse: {

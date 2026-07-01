@@ -51,15 +51,32 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
   const [selectedForMark, setSelectedForMark] = useState<
     WordWithVerse | Verse | null
   >(null);
+  const [verseDisplayText, setVerseDisplayText] = useState<string | undefined>(
+    undefined,
+  );
 
   const wordClicked = (
     e: React.MouseEvent<HTMLDivElement>,
-    word: WordWithVerse
+    word: WordWithVerse,
   ) => {
     if (word.char_type_name === "word") {
       setSelectedForMark(word);
+      setVerseDisplayText(undefined);
     } else if (word.char_type_name === "end") {
+      const allWords = Object.values(lines).flat();
+      const displayWords = allWords
+        .filter(
+          (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
+        )
+        .map((w) => w.qpc_uthmani_hafs);
+
+      const displayText =
+        displayWords.length > 20
+          ? `${displayWords.slice(0, 20).join(" ")} ...`
+          : displayWords.join(" ");
+
       setSelectedForMark(word.verse);
+      setVerseDisplayText(displayText);
     }
   };
 
@@ -86,6 +103,7 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
           isOpen={true}
           close={closeMarkModal}
           markFor={selectedForMark as WordWithVerse | Verse}
+          verseDisplayText={verseDisplayText}
         />
       ) : null}
       {!session.data?.user && selectedForMark ? (
@@ -94,16 +112,15 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
       <div className="fq-full-safha flex justify-center">
         <div className="w-fit py-6">
           <div className="flex w-full justify-between">
+            <div className="text-black dark:text-white">{surahName}</div>
             <div className="text-black dark:text-white">
-              {surahName}
-            </div>
-            <div className="text-black dark:text-white">
-              {juz}{hizb ? `, ${hizb}` : ""}
+              {juz}
+              {hizb ? `, ${hizb}` : ""}
             </div>
           </div>
           <div
             className={`fq-quran-safha mt-4 text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
-              quranFontScale
+              quranFontScale,
             )}vh]`}
             style={{
               fontFamily: getPageFontFamily(page),

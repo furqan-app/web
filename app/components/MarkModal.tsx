@@ -5,16 +5,14 @@ import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
 import { WordWithVerse } from "../types/prisma";
 import { addPageMark } from "../server/actions/addPageMark";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type ModalProps = {
   isOpen: boolean;
   close: () => void;
   markFor: WordWithVerse | Verse;
+  verseDisplayText?: string;
 };
 
 const categories = [
@@ -35,19 +33,23 @@ const categories = [
   },
 ];
 
-const getTitle = (markFor: WordWithVerse | Verse) => {
+const getTitle = (
+  markFor: WordWithVerse | Verse,
+  verseDisplayText?: string,
+) => {
   if ("location" in markFor) {
-    return markFor.text_uthmani;
+    return markFor.qpc_uthmani_hafs;
   }
 
-  if (markFor.text_uthmani.length > 70) {
-    return `${markFor.text_uthmani.slice(0, 70)} ...`;
-  }
-
-  return markFor.text_uthmani;
+  return verseDisplayText ?? markFor.text_uthmani;
 };
 
-export function MarkModal({ isOpen, close, markFor }: ModalProps) {
+export function MarkModal({
+  isOpen,
+  close,
+  markFor,
+  verseDisplayText,
+}: ModalProps) {
   const { reload: reloadMarks } = useMarks(markFor.page_number);
 
   const isWord = "location" in markFor;
@@ -75,7 +77,7 @@ export function MarkModal({ isOpen, close, markFor }: ModalProps) {
           style={{ fontFamily: "var(--uthmanic)" }}
           dir="rtl"
         >
-          {getTitle(markFor)}
+          {getTitle(markFor, verseDisplayText)}
         </h3>
         <Tabs defaultValue="bookmarks">
           <TabsList className="mb-3">
@@ -86,7 +88,11 @@ export function MarkModal({ isOpen, close, markFor }: ModalProps) {
             ))}
           </TabsList>
           {categories.map(({ key, content }) => (
-            <TabsContent key={key} value={key} className="rounded-xl bg-muted p-3">
+            <TabsContent
+              key={key}
+              value={key}
+              className="rounded-xl bg-muted p-3"
+            >
               <ul>{content(markWord)}</ul>
             </TabsContent>
           ))}
@@ -95,3 +101,4 @@ export function MarkModal({ isOpen, close, markFor }: ModalProps) {
     </Dialog>
   );
 }
+

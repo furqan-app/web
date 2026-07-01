@@ -2,68 +2,42 @@
 
 **Type:** bug  
 **Date:** 2026-06-28  
-**Status:** implemented
+**Revised:** 2026-07-01  
+**Status:** implemented (revised)
 
 ## Summary
 
-Quran ayah text renders in the wrong font (system fallback) in search results and the mark modal. The root cause is two separate issues: a missing Tailwind fontFamily registration, and a wrong text column being passed to the mark modal title. The global Uthmanic font (`uthmanic.ttf`) is a standard Unicode Arabic font and must only be paired with the `text_uthmani` column.
+Quran ayah text renders incorrectly in search results. Two separate issues were found and fixed across two sessions.
 
-## Font-Encoding Contract
+## Font-Encoding Contract (final)
 
 | Context | Font | Column | Status |
 |---|---|---|---|
 | Quran page words | `quran-p{n}` (per-page glyph font) | `code_v1` | ✅ Working |
-| Search results verse text | `uthmanic.ttf` (standard Unicode) | `text_uthmani` | ❌ Font not applied |
-| MarkModal word title | `uthmanic.ttf` (standard Unicode) | `qpc_uthmani_hafs` | ❌ Wrong column |
-| MarkModal verse title | `uthmanic.ttf` (standard Unicode) | `text_uthmani` | ✅ Correct column, font applied |
+| Search results verse text | `UthmanicHafs1Ver18` | `word.qpc_uthmani_hafs` (joined, filtered) | ✅ Fixed |
+| MarkModal word title | `UthmanicHafs1Ver18` | `word.text_uthmani` | ✅ Fixed |
+| MarkModal verse title | `UthmanicHafs1Ver18` | `verse.text_uthmani` | ✅ Working |
 
-`uthmanic.ttf` covers U+0600–06FF (Arabic) and U+FB50–FDFD (Arabic Presentation Forms-A). It has zero Private Use Area glyphs, so `qpc_uthmani_hafs` and `code_v1` will not render correctly with it.
+## Root Causes
 
-## Root Cause
+### Bug 1 (2026-06-28) — `font-uthmanic` Tailwind class not registered
 
-### Bug 1 — SearchQueryResults: `font-uthmanic` Tailwind class undefined
+`tailwind.config.ts` had no `fontFamily` extension → Tailwind emitted no CSS for `font-uthmanic` → system font fallback. Fixed by adding `uthmanic` and `surahnames` to `theme.extend.fontFamily`.
 
-`SearchQueryResults.tsx:59` uses `className="... font-uthmanic ..."` but `tailwind.config.ts` has no `fontFamily` extension. Tailwind generates no CSS for unknown utility classes → system font fallback. The text column (`verse.text_uthmani`) is already correct.
+### Bug 2 (2026-06-28) — MarkModal word title used wrong column
 
-### Bug 2 — MarkModal: wrong text column for words
+`MarkModal.tsx` `getTitle` returned `markFor.qpc_uthmani_hafs` for words. The then-global font (`uthmanic.ttf`) had no PUA glyphs. Fixed by switching to `markFor.text_uthmani`.
 
-`MarkModal.tsx:38–41` (`getTitle`) returns `markFor.qpc_uthmani_hafs` when `markFor` is a `Word`. The `uthmanic.ttf` font cannot render QPC-encoded text. The font itself IS applied (`var(--uthmanic)` is set on `<body>` via `app/layout.tsx`) — the issue is purely the column. The verse branch already correctly uses `text_uthmani`.
+### Bug 3 (2026-07-01) — Rub el hizb marker (۞) in `verse.text_uthmani`
 
-## Files to Change
-
-- `tailwind.config.ts` — Add `fontFamily` extension under `theme.extend`:
-  ```ts
-  fontFamily: {
-    uthmanic: ['var(--uthmanic)'],
-    surahnames: ['var(--surah-names)'],
-  }
-  ```
-  This makes `font-uthmanic` and `font-surahnames` valid Tailwind utility classes.
-
-- `app/components/MarkModal.tsx` — In `getTitle`, change:
-  ```ts
-  // Before
-  return markFor.qpc_uthmani_hafs;
-  // After
-  return markFor.text_uthmani;
-  ```
-  `WordWithVerse` has both columns; `text_uthmani` is the correct one for `uthmanic.ttf`.
+`verse.text_uthmani` contains U+06DE (۞ rub el hizb) which neither `uthmanic.ttf` nor `UthmanicHafs1Ver18` can render as a glyph — it appeared as a circle in search results. Fixed by:
+1. Replacing `uthmanic.ttf` with `UthmanicHafs1Ver18` (same font as quran.com).
+2. Rendering search verse text by joining `word.qpc_uthmani_hafs` filtered to `char_type_name === 'word'` instead of `verse.text_uthmani`.
+3. Fetching `Word` relation in the verse search API.
 
 ## Constraints
 
-- Do not use `qpc_uthmani_hafs` or `code_v1` with `uthmanic.ttf`.
-- Do not use `text_uthmani` with per-page fonts — they use `code_v1`.
-- `Verse` model has no `qpc_uthmani_hafs` column, only `text_uthmani` — this is correct.
-- The search API (`/api/search/verses`) already selects `text_uthmani` on verses; no API change needed.
-
-## Decisions Made
-
-- `uthmanic.ttf` is confirmed as a standard Unicode Arabic font (covers Arabic U+0600–06FF and Pres Forms-A; no PUA). Always pair it with `text_uthmani`.
-- Tailwind font utilities (`font-uthmanic`, `font-surahnames`) must be declared in `tailwind.config.ts` as `var(--uthmanic)` / `var(--surah-names)` — the CSS variables set by `next/font/local` in `app/layout.tsx`.
-- Font–column encoding contract formalized in `docs/architecture/adr/0001-font-encoding-contract.md` and `DECISIONS.md`.
-
-## What NOT to Do
-
-- Do not change the search API or add new DB columns.
-- Do not touch the per-page font system (`code_v1`, `quran-p{n}`).
-- Do not add `font-surahnames` to tailwind without also keeping existing inline `style={{ fontFamily: "var(--surah-names)" }}` usages — both approaches are valid once the Tailwind class exists.
+- Never use `verse.text_uthmani` directly in search results — join words instead.
+- Never use `code_v1` outside the page route.
+- `Verse` has no `qpc_uthmani_hafs` column — verse-level display must use `text_uthmani`.
+- Always filter words to `char_type_name === 'word'` when joining for display.

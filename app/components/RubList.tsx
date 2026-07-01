@@ -37,8 +37,11 @@ const RubList = ({ rubs }: Props) => {
                                     {t('page', 'Page')} {rub.startVerse.page_number}
                                 </span>
                             </div>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 font-arabic">
-                                {rub.startVerse.text_uthmani}
+                            <p className="mt-1 text-sm font-uthmanic text-right" dir="rtl">
+                                {rub.startVerse.Word
+                                    .filter(w => w.char_type_name === 'word')
+                                    .map(w => w.qpc_uthmani_hafs)
+                                    .join(' ')}
                             </p>
                         </Link>
                     </li>

@@ -21,7 +21,10 @@ const tajawal = Tajawal({
 });
 
 const uthmanic = localFont({
-  src: "./fonts/hafs/uthmanic/uthmanic.ttf",
+  src: [
+    { path: "./fonts/hafs/uthmanic/UthmanicHafs1Ver18.woff2" },
+    { path: "./fonts/hafs/uthmanic/UthmanicHafs1Ver18.ttf" },
+  ],
   variable: "--uthmanic",
 });
 

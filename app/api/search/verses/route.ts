@@ -24,6 +24,12 @@ export async function GET(request: Request) {
           name_arabic: true,
           name_simple: true
         }
+      },
+      Word: {
+        select: {
+          qpc_uthmani_hafs: true
+        },
+        orderBy: { position: 'asc' }
       }
     }
   });

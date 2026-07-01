@@ -29,15 +29,17 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 | Font | Tailwind class | Column to use | Context |
 |---|---|---|---|
 | `quran-p{n}` | — (inline style) | `code_v1` | Quran page words only |
-| `uthmanic.ttf` | `font-uthmanic` | `text_uthmani` | Ayah text in search, modals, any non-page context |
+| `UthmanicHafs1Ver18` | `font-uthmanic` | `qpc_uthmani_hafs` | Word text in search, modals, any non-page context |
+| `UthmanicHafs1Ver18` | `font-uthmanic` | `text_uthmani` | Verse-level text (Verse has no `qpc_uthmani_hafs` column) |
 | `sura_names.ttf` | `font-surahnames` | Zero-padded surah number e.g. `"001"` | Surah name display — font maps `001`–`114` to calligraphic glyphs, NOT Arabic text |
 
 **Constraints:**
 - Do not add Quran page fonts to the global CSS.
 - Font scaling (1–10) is persisted in `localStorage` via `QuranFontScaleContext`.
-- `uthmanic.ttf` is a standard Unicode font — never pair it with `qpc_uthmani_hafs` or `code_v1`.
-- When displaying a word outside the page (modal, search), always use `word.text_uthmani`.
-- `Verse` has no `qpc_uthmani_hafs` column — verse text is always `text_uthmani`.
+- `UthmanicHafs1Ver18` supports both `qpc_uthmani_hafs` (preferred for words) and `text_uthmani` (for verse-level display). Never pair it with `code_v1`.
+- When displaying a word outside the page (search, modal), use `word.qpc_uthmani_hafs`.
+- `Verse` has no `qpc_uthmani_hafs` column — when displaying verse text, prefer reconstructing from `word.qpc_uthmani_hafs` filtered to `char_type_name === 'word'` if words are in scope; fall back to `verse.text_uthmani` only when words are unavailable.
+- Never use `verse.text_uthmani` for verse display in search — always join `word.qpc_uthmani_hafs` across all words. Do **not** filter by `char_type_name` for full verse display: `UthmanicHafs1Ver18` renders markers (۞ rub el hizb, etc.) correctly and they should be visible. Filter to `char_type_name === 'word'` only in truncated/title contexts (e.g. MarkModal) where markers in a short string are unwanted.
 
 ---
 

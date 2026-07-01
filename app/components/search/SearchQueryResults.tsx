@@ -56,8 +56,8 @@ export default function SearchQueryResults({ chapters, verses, setIsOpen }: { ch
                         <div className="text-sm text-muted-foreground">
                             {locale === 'ar' ? verse.chapter.name_arabic : verse.chapter.name_simple} - {verse.verse_key.split(':')[1]}
                         </div>
-                        <div className="text-right font-uthmanic text-lg">
-                            {verse.text_uthmani}
+                        <div className="text-right font-uthmanic text-lg" dir="rtl">
+                            {verse.Word.map(w => w.qpc_uthmani_hafs).join(' ')}
                         </div>
                     </Link>
                 ))}

@@ -70,6 +70,9 @@ export type VerseResult = {
     name_arabic: string;
     name_simple: string;
   };
+  Word: {
+    qpc_uthmani_hafs: string;
+  }[];
 };
 
 export type SurahResult = {
