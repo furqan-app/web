@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { SurahResult, VerseResult } from "../types";
+import { isSearchQueryValid } from "../constants/search";
 
 const searchVerses = async (query: string): Promise<VerseResult[]> => {
   if (!query.trim()) return [];
@@ -19,13 +20,13 @@ export const useSearch = (query: string) => {
   const verses = useQuery({
     queryKey: ["search-verses", query],
     queryFn: () => searchVerses(query),
-    enabled: query.length > 0,
+    enabled: isSearchQueryValid(query),
   });
 
   const chapters = useQuery({
     queryKey: ["search-chapters", query],
     queryFn: () => searchChapters(query),
-    enabled: query.length > 0,
+    enabled: isSearchQueryValid(query),
   });
 
   return {

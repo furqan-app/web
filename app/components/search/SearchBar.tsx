@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSearch } from "@hooks/use-search";
+import { isSearchQueryValid } from "@/app/constants/search";
 import SearchQueryResults from "./SearchQueryResults";
 import useTranslations from "@hooks/use-translations";
 import { Input } from "@/components/ui/input";
@@ -38,12 +39,12 @@ export const SearchBar = () => {
     }, []);
 
     const handleSearchFocus = () => {
-        if (query.length > 0) setIsOpen(true);
+        if (isSearchQueryValid(query)) setIsOpen(true);
     };
 
     const handleQueryChange = (value: string) => {
         setQuery(value);
-        setIsOpen(value.length > 0);
+        setIsOpen(isSearchQueryValid(value));
     };
 
     const closeAll = (open: boolean) => {
@@ -73,7 +74,7 @@ export const SearchBar = () => {
                         </div>
                     )}
                 </div>
-                {isOpen && query.length > 0 && hasResults && (
+                {isOpen && isSearchQueryValid(query) && hasResults && (
                     <SearchQueryResults
                         setIsOpen={setIsOpen}
                         chapters={chapters.data || []}
@@ -125,7 +126,7 @@ export const SearchBar = () => {
                         </div>
                     </div>
                     {/* Results */}
-                    {query.length > 0 && hasResults && (
+                    {isSearchQueryValid(query) && hasResults && (
                         <div className="flex-1 overflow-y-auto">
                             <SearchQueryResults
                                 setIsOpen={closeAll}

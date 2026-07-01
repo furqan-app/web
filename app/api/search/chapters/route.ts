@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../utils/db";
+import { isSearchQueryValid } from "../../../constants/search";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q");
 
-  if (!query) {
+  if (!isSearchQueryValid(query)) {
     return NextResponse.json({ results: [] });
   }
 
@@ -18,14 +19,15 @@ export async function GET(request: Request) {
     },
     select: {
       id: true,
-      name_arabic: true, 
+      name_arabic: true,
       name_simple: true,
       verses_count: true,
       pages: true
     },
     orderBy: {
       id: 'asc'
-    }
+    },
+    take: 10
   });
 
   return NextResponse.json({ results });

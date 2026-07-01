@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../utils/db";
+import { isSearchQueryValid } from "../../../constants/search";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q");
 
-  if (!query) {
+  if (!isSearchQueryValid(query)) {
     return NextResponse.json({ results: [] });
   }
   const results = await prisma.verse.findMany({
@@ -14,6 +15,8 @@ export async function GET(request: Request) {
         contains: query
       }
     },
+    take: 10,
+    orderBy: { id: 'asc' },
     select: {
       verse_key: true,
       text_imlaei_simple: true, 
