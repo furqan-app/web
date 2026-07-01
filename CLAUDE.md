@@ -1,10 +1,15 @@
 # CLAUDE.md
 
-## Working Style
+## MANDATORY WORKFLOW — NO EXCEPTIONS
+
+**NEVER edit or create any file without going through both skills in order:**
+
+1. `/plan-fq-task` — investigate and produce a plan in `docs/plans/`
+2. `/start-fq-task` — implement from that plan
+
+This applies to every change, no matter how small: one-liner fixes, font swaps, copy changes — everything. If you find yourself about to call Edit, Write, or a Bash command that modifies a file, stop and run `/plan-fq-task` first.
 
 Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
-
-Always use `/start-fq-task` when implementing a fix or a new feature — never write code directly without going through that skill.
 
 ## Project
 
