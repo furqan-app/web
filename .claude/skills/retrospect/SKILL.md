@@ -39,7 +39,14 @@ Present each proposed change to the user individually and wait for approval befo
 
 Only write after each individual approval. Skip any category with nothing to propose.
 
-### 4 — Save the retrospective file
+### 4 — Confirm before saving
+
+After Step 3's approvals are resolved (whether or not anything was actually proposed), ask the user explicitly: "Save a retrospective file for this session?"
+
+- If they decline, stop here. Do not write the retrospective file. Anything already approved and written in Step 3 (DECISIONS.md changes, skill edits, memory saves) stays as-is — only the snapshot file itself is skipped.
+- If they agree, proceed to Step 5.
+
+### 5 — Save the retrospective file
 
 After all approved changes are written, save:
 `docs/retrospectives/YYYY-MM-DD.md`
@@ -71,3 +78,4 @@ Use the format below. Only include sections that have content.
 - Do not propose changes in bulk — one at a time.
 - Do not create the retro file if the session had no meaningful learnings.
 - Do not edit skill files directly; propose the change, let the user decide.
+- Do not write the retrospective file without an explicit save confirmation, even if all individual changes were approved.

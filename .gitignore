@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local docs/plans
 
+# retrospect skill output — never committed
+/docs/retrospectives/
+

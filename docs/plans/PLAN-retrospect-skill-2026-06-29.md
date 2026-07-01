@@ -1,7 +1,7 @@
 # Plan: /retrospect skill
 
 **Date:** 2026-06-29  
-**Status:** Agreed — ready to build
+**Status:** implemented
 
 ---
 
