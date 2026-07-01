@@ -27,27 +27,37 @@ export const QuranLine = ({ words, onWordClicked, marks }: LineProps) => {
       {shouldRenderSurahHeader ? (
         <div className="text-center">
           <h1
-            className="text-3xl text-black dark:text-white"
+            className="text-black dark:text-white"
             translate="no"
-            style={{ fontFamily: "var(--surah-names)" }}
+            style={{
+              fontFamily: "var(--surah-names)",
+              fontSize: "calc(var(--fq-heading-h) * 0.371)",
+              lineHeight: 1,
+            }}
           >
             {`${surahId}`.padStart(3, "0")}
           </h1>
           <div className="flex justify-center text-black dark:text-white">
             {!CHAPTERS_WITHOUT_BISMILLAH.includes(`${surahId}`) ? (
-              <div className="mb-4">
-                <BismillahSVG />
+              <div style={{ marginBottom: "var(--fq-line-gap)" }}>
+                <BismillahSVG
+                  style={{
+                    height: "calc(var(--fq-heading-h) * 0.629 - var(--fq-line-gap))",
+                    width: "auto",
+                  }}
+                />
               </div>
             ) : null}
           </div>
         </div>
       ) : null}
       <div
-        className={`text-white flex mb-4 ${
+        className={`text-white flex ${
           getLanguageDirection(locale) === "rtl"
             ? "flex-row"
             : "flex-row-reverse"
         } ${[1, 2].includes(words[0].page_number) ? "justify-center" : ""} `}
+        style={{ marginBottom: "var(--fq-line-gap)" }}
       >
         {words.map((word) => (
           <Suspense key={word.location}>

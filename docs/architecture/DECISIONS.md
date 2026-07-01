@@ -36,6 +36,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 **Constraints:**
 - Do not add Quran page fonts to the global CSS.
 - Font scaling (1–10) is persisted in `localStorage` via `QuranFontScaleContext`.
+- `QuranSafha`'s word font-size Tailwind class is built at runtime from `FONT_V1` and requires a matching literal-string safelist (`tailwindFontUtility` in `QuranSafha.tsx`) for Tailwind's JIT to generate the CSS. Any change to `FONT_V1.baseScaleViewHeight` or the per-scale multiplier must regenerate that safelist for the new `quranFontScale` 1–10 range in the same commit, or the font size silently fails to apply. See [ADR 0005](adr/0005-quran-font-size-safelist.md).
 - `UthmanicHafs1Ver18` supports both `qpc_uthmani_hafs` (preferred for words) and `text_uthmani` (for verse-level display). Never pair it with `code_v1`.
 - When displaying a word outside the page (search, modal), use `word.qpc_uthmani_hafs`.
 - `Verse` has no `qpc_uthmani_hafs` column — when displaying verse text, prefer reconstructing from `word.qpc_uthmani_hafs` filtered to `char_type_name === 'word'` if words are in scope; fall back to `verse.text_uthmani` only when words are unavailable.
@@ -139,6 +140,19 @@ const user = extractUser(request); // { id, email, ... }
 - The flash-prevention `<script>` in `layout.tsx` must mirror the class logic in `useTheme` — they share responsibility but cannot share code at runtime.
 - `globals.css` must use `.theme-light` / `.theme-dark` selectors, not `:root` / `.dark`, for token definitions.
 - No hardcoded color values anywhere outside theme class blocks in `globals.css`.
+
+---
+
+## Quran Safha Viewport Fit
+
+**Decision:** All vertical rhythm in `QuranSafha`/`QuranLine` below the site nav (wrapper padding, card padding, header/footer band gaps, per-line gap, surah-heading block) is derived from the same `vh`-based `FONT_V1` scale that drives word font-size, exposed as CSS custom properties on the `QuranSafha` root. Reading font size itself is never shrunk to make pages fit. See [ADR 0004](adr/0004-quran-safha-viewport-fit.md).
+
+**Constraints:**
+- Never reduce `FONT_V1.baseScaleViewHeight` (or the per-scale multiplier) as a fix for overflow — that's the reading text size, off-limits for this concern.
+- Any new fixed-`px`/`rem` vertical spacing added to `QuranSafha`/`QuranLine` reintroduces the overflow bug — new spacing must be `vh`-derived from `FONT_V1`, consistent with the existing CSS custom properties.
+- The 15-slot budget (13 normal lines + 1 two-slot heading, or 15 normal lines) is calibrated to fit at the default font scale (`quranFontScale` = 1) down to ~700px viewport height. Higher font scales are expected to scroll — that's out of scope.
+- The site nav bar's fixed 56px height is the one accepted fixed-px term in the budget; do not attempt to compensate for it inside `QuranSafha` — if it ever needs to change, recalibrate the budget in ADR 0004.
+- Word font-size, per-line gap, and the surah-heading block all have a minimum px floor (`FONT_V1.minFontSizePx = 24`, applied via CSS `max()`) so they never shrink below a readable size on very short viewports (e.g. DevTools docked open). Below the viewport height where this floor kicks in, a few px of scroll may reappear — accepted, per [ADR 0006](adr/0006-quran-font-size-minimum-floor.md). Any change to `minFontSizePx` requires the same `tailwindFontUtility` safelist regeneration as `baseScaleViewHeight` changes (ADR 0005).
 
 ---
 

@@ -35,9 +35,9 @@ const NavigationButton = ({
   return (
     <Link
       href={href}
-      className="flex items-center justify-center w-[52px] h-[52px] rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+      className="flex items-center justify-center w-9 h-9 md:w-[52px] md:h-[52px] rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
     >
-      <Icon size={18} strokeWidth={1.8} />
+      <Icon className="w-4 h-4 md:w-[18px] md:h-[18px]" strokeWidth={1.8} />
     </Link>
   );
 };
@@ -80,7 +80,7 @@ const QuranPageById = async ({
         type="font/truetype"
         crossOrigin="anonymous"
       />
-      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center items-start py-8 gap-6">
+      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center items-center py-4 gap-2 md:gap-6">
         <div className="flex items-center self-stretch">
           <NavigationButton
             href={`/${locale}/pages/${getNavigationHref(false)}`}

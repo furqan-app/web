@@ -22,23 +22,16 @@ type QuranSafhaProps = {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const tailwindFontUtility = [
-  "md:text-[3.4vh]",
-  "md:text-[3.6vh]",
-  "md:text-[3.8vh]",
-  "md:text-[4vh]",
-  "md:text-[4.2vh]",
-  "md:text-[4.4vh]",
-  "md:text-[4.6vh]",
-  "md:text-[4.8vh]",
-  "md:text-[5vh]",
-  "md:text-[5.2vh]",
-  "md:text-[5.4vh]",
-  "md:text-[5.6vh]",
-  "md:text-[5.8vh]",
-  "md:text-[6vh]",
-  "md:text-[6.2vh]",
-  "md:text-[6.4vh]",
-  "md:text-[6.6vh]",
+  "md:text-[max(24px,3.1vh)]",
+  "md:text-[max(24px,3.3vh)]",
+  "md:text-[max(24px,3.5vh)]",
+  "md:text-[max(24px,3.7vh)]",
+  "md:text-[max(24px,3.9vh)]",
+  "md:text-[max(24px,4.1vh)]",
+  "md:text-[max(24px,4.3vh)]",
+  "md:text-[max(24px,4.5vh)]",
+  "md:text-[max(24px,4.7vh)]",
+  "md:text-[max(24px,4.9vh)]",
 ];
 
 export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
@@ -127,9 +120,19 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
             <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
           </div>
           {/* Content */}
-          <div className="relative z-0 px-7 py-6">
+          <div
+            className="relative z-0 px-7 py-5"
+            style={{
+              "--fq-line-gap": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
+              "--fq-heading-h": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
+            } as React.CSSProperties}
+          >
             {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
-            <div dir="rtl" className="grid grid-cols-3 items-center pb-2 mb-4 border-b border-border">
+            <div
+              dir="rtl"
+              className="grid grid-cols-3 items-center pb-2 border-b border-border"
+              style={{ marginBottom: "var(--fq-line-gap)" }}
+            >
               <span className="text-[10px] font-bold tracking-widest text-muted-foreground">{juz}</span>
               <div className="flex items-center justify-center gap-1.5">
                 <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
@@ -140,9 +143,9 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
             </div>
             {/* Quran text */}
             <div
-              className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeByScale(
+              className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeCss(
                 quranFontScale,
-              )}vh]`}
+              )}]`}
               style={{
                 fontFamily: getPageFontFamily(page),
               }}
@@ -157,7 +160,10 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
               ))}
             </div>
             {/* Footer */}
-            <div className="flex items-center justify-center gap-2 mt-4 pt-2 border-t border-border text-muted-foreground text-sm">
+            <div
+              className="flex items-center justify-center gap-2 pt-2 border-t border-border text-muted-foreground text-sm"
+              style={{ marginTop: "var(--fq-line-gap)" }}
+            >
               <span className="text-primary opacity-70 text-[10px]">◆</span>
               <span>{page}</span>
               <span className="text-primary opacity-70 text-[10px]">◆</span>
