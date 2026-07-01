@@ -5,16 +5,36 @@ description: Quality gate for the current branch. Spawns an Opus subagent to rev
 
 # /review-fq-work
 
-Spawns an Opus subagent to review everything changed on the current branch vs main. Terminal output only.
+Spawns an Opus subagent to review code changes across three dimensions. Terminal output only.
+
+Accepts an optional scope argument:
+- _(no arg)_ — committed changes on this branch vs main (default)
+- `--staged` — staged but uncommitted changes (`git diff --cached`)
+- `--unstaged` — unstaged working-tree changes (`git diff`)
 
 ## Steps
 
 ### 1 — Get the diff
 
+Pick the right commands based on the scope argument:
+
+**Default (branch vs main):**
 ```bash
-git diff main...HEAD --name-only        # files changed
-git diff main...HEAD                    # full diff
-git log main...HEAD --oneline           # commits on this branch
+git diff main...HEAD --name-only
+git diff main...HEAD
+git log main...HEAD --oneline
+```
+
+**`--staged`:**
+```bash
+git diff --cached --name-only
+git diff --cached
+```
+
+**`--unstaged`:**
+```bash
+git diff --name-only
+git diff
 ```
 
 Also list `docs/plans/` to identify any plans associated with this branch's work.
@@ -70,6 +90,7 @@ Do not summarize or editorialize beyond the subagent's report.
 
 ## Anti-patterns to avoid
 
-- Do not review the full codebase — only the branch diff vs main.
+- Do not review the full codebase — only the diff for the chosen scope.
+- Do not default to `main...HEAD` when `--staged` or `--unstaged` was passed.
 - Do not use a non-Opus model for the subagent.
 - Do not suggest fixes — only report findings. Fixes are the user's call.
