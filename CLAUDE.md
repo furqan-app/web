@@ -4,6 +4,8 @@
 
 Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
 
+Always use `/start-fq-task` when implementing a fix or a new feature — never write code directly without going through that skill.
+
 ## Project
 
 Furqan — word-focused Qur'an reading app. Next.js 14 App Router, MySQL/Prisma, NextAuth (Google OAuth), next-intl (ar/en), Tailwind/shadcn.
