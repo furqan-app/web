@@ -57,7 +57,7 @@ Use `include` for eager-loading relations. Avoid N+1 — fetch in one query.
 
 ## Connection Limits
 
-Both Prisma clients are configured with `connection_limit: 5` (set in `app/utils/db.ts`) to avoid overwhelming the DB in serverless/edge contexts.
+Both DATABASE_URLs must include `?connection_limit=1` (set in the environment variable on the host, not in code). During `next build`, Next.js spawns multiple worker processes for static generation — each worker holds its own pool, so total connections = N_workers × 2 DBs × connection_limit. Hostinger's shared MySQL caps at 75 connections per user; `connection_limit=1` keeps total connections well under that ceiling (allows ~37 parallel workers). Confirmed broken at `connection_limit=5` in production (2026-07-02).
 
 ## Migrations
 

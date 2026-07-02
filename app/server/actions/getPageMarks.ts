@@ -8,7 +8,7 @@ export const getPageMarks = async (
 > => {
   try {
     const { data: marks, success }: { data: Array<Mark>; success: boolean } =
-      await fetch(`http://localhost:3000/api/quran/pages/${page}/marks`, {
+      await fetch(`/api/quran/pages/${page}/marks`, {
         headers: {
           "Content-Type": "application/json",
         },

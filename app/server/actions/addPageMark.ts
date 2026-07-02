@@ -11,7 +11,7 @@ export const addPageMark = async (data: AddMarkData) => {
 
   try {
     const response = await fetch(
-      `http://localhost:3000/api/quran/pages/${data.page_number}/marks`,
+      `/api/quran/pages/${data.page_number}/marks`,
       {
         method: "POST",
         headers: {
