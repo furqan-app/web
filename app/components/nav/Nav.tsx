@@ -24,6 +24,8 @@ export const Nav = () => {
     <nav className="bg-background text-foreground px-4 shadow h-14 flex items-center">
       {/* Start: sidebar trigger (mobile, pages route only) + logo */}
       <div className="flex items-center gap-2 flex-shrink-0">
+        <FurqanLogo />
+
         {isOnPagesRoute && (
           <Button
             variant="ghost"
@@ -31,10 +33,12 @@ export const Nav = () => {
             onClick={() => setOpen(true)}
             aria-label="Open navigation"
           >
-            <PanelLeftOpen className={cn("size-5", isRTL && "rotate-180")} strokeWidth={1.7} />
+            <PanelLeftOpen
+              className={cn("size-5", isRTL && "rotate-180")}
+              strokeWidth={1.7}
+            />
           </Button>
         )}
-        <FurqanLogo />
       </div>
 
       {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}
@@ -52,3 +56,4 @@ export const Nav = () => {
     </nav>
   );
 };
+

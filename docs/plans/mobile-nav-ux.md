@@ -215,3 +215,77 @@ In `app/components/nav/Nav.tsx`, remove `md:hidden` from the sidebar trigger `Bu
 - Do not change `UserMenu.tsx` — its desktop dropdown design is intentionally different from the mobile card.
 - Do not clear search query/results on mobile sheet close (explicitly deferred).
 - Do not add error-throwing to `SidebarContext`'s default value (explicitly deferred).
+
+---
+
+## Addendum 5: Logo Moves to the RTL Edge — superseded, see Addendum 5 (revised)
+
+**Date:** 2026-07-02
+**Status:** superseded
+
+The RTL-edge repositioning described below was planned and implemented, then reverted by the user in favor of a simpler outcome — see "Addendum 5 (revised)" underneath for what actually shipped. Original plan text kept for history:
+
+### What we're building (original, not shipped)
+
+Today `FurqanLogo` always renders in the leading (leftmost) `div` of `Nav.tsx`, alongside the sidebar trigger, regardless of locale — the nav has no direction-aware reordering (confirmed: no `dir`/`flex-row-reverse`/`order-*` on `Nav`'s root or its slot `div`s). The sidebar trigger's position must **not** change. Only the logo should move:
+
+- **English (LTR):** logo stays first, ahead of the trigger, in the leading `div` (unchanged from current DOM order — currently trigger renders before logo; this flips their order within the leading group).
+- **Arabic (RTL):** logo moves out of the leading `div` entirely and renders as the last element of the trailing `div` (after `SettingsSidebar`), so it sits at the true right edge of the nav.
+
+Confirmed target layout:
+```
+LTR:  [Logo][Trigger]   ...search...   [Account][Settings]
+RTL:  [Trigger]         ...search...   [Account][Settings][Logo]
+```
+
+### Approach
+
+`Nav.tsx` already computes `isRTL` via `getLanguageDirection(locale)`. Use it to conditionally place `<FurqanLogo />`:
+
+- Leading `div`: render `<FurqanLogo />` before the trigger `Button` only when `!isRTL`.
+- Trailing `div`: render `<FurqanLogo />` after `<SettingsSidebar />` only when `isRTL`.
+
+No changes to `FurqanLogo.tsx` itself — it has no direction logic today and needs none (it's a fixed-size icon link, not affected by RTL beyond its position in the tree).
+
+### Files to Change
+
+- `app/components/nav/Nav.tsx`:
+  - Leading `div` (lines 26–38): reorder so `<FurqanLogo />` renders first when `!isRTL`, and is omitted entirely when `isRTL` (trigger `Button` stays where it is, still gated by `isOnPagesRoute`).
+  - Trailing `div` (lines 46–51): append `<FurqanLogo />` after `<SettingsSidebar />`, rendered only when `isRTL`.
+
+### Edge Cases and Decisions
+
+- **Non-pages routes (no trigger rendered):** LTR leading `div` contains only the logo (unchanged visually from today, since the trigger was already absent there). RTL leading `div` renders empty (zero children) — accepted; the `div` collapses to zero width since it has no fixed size, `SearchBar`'s `flex-1` center wrapper absorbs the space. No visual regression, matches existing flex behavior.
+- **Mobile (`UserMenu` hidden below `md`):** trailing `div` on RTL mobile is `[SettingsSidebar, Logo]` — still valid, `UserMenu`'s `hidden md:flex` wrapper contributes nothing to layout when hidden.
+- **`aria-label="Home"` and `href="/"` on `FurqanLogo`:** unaffected, no change needed.
+
+### Constraints (original, not shipped)
+
+- Do not touch `FurqanLogo.tsx` — position-only change, done entirely from `Nav.tsx`.
+- Do not move or conditionally hide the sidebar trigger `Button` — it keeps its current gating (`isOnPagesRoute`) and its current side (leading `div`) in both locales.
+- Do not add `order-*` utilities or flip the nav root to `flex-row-reverse` — this app's established idiom for direction-aware placement is conditional rendering/position based on `isRTL` (see `QuranLine.tsx`, `Sidebar.tsx`, `SettingsSidebar.tsx`), not CSS-only mirroring. Follow that pattern here.
+- Do not change the `SearchBar` center slot or its breakpoint behavior.
+
+---
+
+## Addendum 5 (revised): Logo Stays Leading in Both Locales
+
+**Date:** 2026-07-02
+**Status:** implemented
+
+### What actually shipped
+
+The RTL-edge repositioning above was implemented, then the user directly edited `Nav.tsx` and reverted it. Final behavior: `FurqanLogo` renders unconditionally as the first element of the leading `div`, before the sidebar trigger `Button`, in **both** LTR and RTL. `isRTL` is no longer used for logo placement at all — it's retained only for its original purpose, rotating the `PanelLeftOpen` icon 180° (`cn("size-5", isRTL && "rotate-180")`).
+
+Actual layout, both locales:
+```
+[Logo][Trigger]   ...search...   [Account][Settings]
+```
+
+### Files Changed
+
+- `app/components/nav/Nav.tsx` — leading `div`: `<FurqanLogo />` now unconditional and first, ahead of the trigger `Button` (previously trigger-then-logo). No `isRTL` branching on the logo. Trailing `div` unchanged (no logo appended there).
+
+### Decision
+
+The original ask ("home icon first/last depending on language") is not implemented as direction-dependent positioning — the logo's position is now fixed (leading) regardless of locale. Treat this as the current source of truth for logo placement; the RTL-edge variant above is historical only.
