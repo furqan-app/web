@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../utils/db";
 import { isSearchQueryValid } from "../../../constants/search";
+import { normalizeArabicQuery } from "../../../utils/arabic-search";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
   const results = await prisma.verse.findMany({
     where: {
       text_imlaei_simple: {
-        contains: query
+        contains: normalizeArabicQuery(query)
       }
     },
     take: 10,

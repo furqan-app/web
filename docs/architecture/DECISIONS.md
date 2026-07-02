@@ -154,6 +154,12 @@ const user = extractUser(request); // { id, email, ... }
 - Do not remove the `take`/`orderBy` pair or the query-length gate as a "cleanup" — they are load-bearing for perceived typing responsiveness, not arbitrary.
 - `take: 10` is a UI-payload cap, not a hard ceiling on search capability — a "see all results" affordance to escape it is a known, deliberately deferred future addition (not yet built).
 
+**Arabic query normalization:** `Verse.text_imlaei_simple` is sourced from the upstream `qdc` API and is confirmed hamza-free across the entire table — it never contains `أ`/`إ`/`آ`, only bare `ا`. Verse search normalizes the incoming query (hamza-alif variants → bare alif) before the Prisma `contains` match; the column itself is never touched. See [ADR 0007](adr/0007-arabic-search-query-normalization.md).
+
+**Constraints:**
+- `Chapter.name_arabic` is real Arabic text and is **not** hamza-free (e.g. `الأنعام`) — the query-only normalization used for verse search does not apply to chapter search. This is an accepted characteristic, not a defect: chapter names are a small (114), low-cardinality list users can select visually rather than type from memory. Do not assume chapter search shares verse search's normalization behavior.
+- Do not extend query-only normalization to any column that isn't verified hamza-free; check the actual DB data first (see ADR 0007 Option A vs B).
+
 ---
 
 ## Theme Architecture
