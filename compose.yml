@@ -1,0 +1,65 @@
+# Local development databases for Furqan.
+# Two separate MySQL instances — one per domain (see docs/architecture/adr/0008).
+#   quran-db  → furqan_quran  (read-only Quran content)   host port 3307
+#   app-db    → furqan_app    (mutable user/interaction data) host port 3308
+# Each DB has its own credentials (quran_user / app_user) so they stay independent;
+# defaults are inlined via ${VAR:-default}. Override via a .env file or shell env.
+# Must match your .env.local: APP_DATABASE_URL uses app_user on port 3308.
+services:
+  quran-db:
+    image: mysql:8.0
+    container_name: furqan_quran_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${QURAN_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${QURAN_DB_NAME:-furqan_quran}
+      MYSQL_USER: ${QURAN_DB_USER:-quran_user}
+      MYSQL_PASSWORD: ${QURAN_DB_PASSWORD:-quran_password}
+    ports:
+      - "${QURAN_DB_PORT:-3307}:3306"
+    volumes:
+      - quran_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${QURAN_DB_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app-db:
+    image: mysql:8.0
+    container_name: furqan_app_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${APP_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${APP_DB_NAME:-furqan_app}
+      MYSQL_USER: ${APP_DB_USER:-app_user}
+      MYSQL_PASSWORD: ${APP_DB_PASSWORD:-app_password}
+    ports:
+      - "${APP_DB_PORT:-3308}:3306"
+    volumes:
+      - app_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${APP_DB_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: furqan_phpmyadmin
+    restart: always
+    environment:
+      # quran-db and app-db have distinct credentials, so no shared auto-login:
+      # pick a server from the dropdown and enter that DB's user/password.
+      PMA_HOSTS: quran-db,app-db
+    ports:
+      - "8081:80"
+    depends_on:
+      quran-db:
+        condition: service_healthy
+      app-db:
+        condition: service_healthy
+
+volumes:
+  quran_mysql_data:
+  app_mysql_data:
