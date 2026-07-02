@@ -46,12 +46,15 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 ## Database Connection
 
-**Decision:** MySQL runs on non-standard ports — `furqan_quran` on **3307**, `furqan_app` on **3308** (local dev; see "Database Split" below). Prisma is used exclusively for all DB queries: content queries go through `quranPrisma`, user/interaction queries through `appPrisma`, both exported from `app/utils/db.ts`. A raw `mysql2` connection is also exported from `app/utils/db.ts` for queries that need it, but Prisma is the default.
+**Decision:** MySQL runs on non-standard ports — `furqan_quran` on **3307**, `furqan_app` on **3308** (local dev; see "Database Split" below). Prisma is used exclusively for all DB queries: content queries go through `quranPrisma`, user/interaction queries through `appPrisma`, both exported from `app/utils/db.ts`. PrismaClient instances are constructed **without explicit datasource URLs** — Prisma reads `QURAN_DATABASE_URL`/`APP_DATABASE_URL` from the environment at query time via schema `env()` declarations. See [ADR 0010](adr/0010-prisma-no-explicit-datasource-url.md).
 
 **Constraints:**
 - Do not use port 3306 — will fail in dev.
 - Both local DBs run as separate containers via `compose.yml`; app-db is 3308, not 3307.
 - `Chapter.pages` is a `"startPage-endPage"` string (e.g. `"1-21"`), not an array. Use `.split('-')[0]` to get the starting page.
+- Do not pass explicit datasource URLs to PrismaClient constructors — `new URL()` at module scope crashes Next.js builds when env vars are absent (ADR 0010).
+- `connection_limit=5` must be embedded in the DATABASE_URL string (e.g. `?connection_limit=5`) rather than added programmatically.
+- There is no raw `mysql2` connection export from `db.ts` — if a raw connection is ever needed, create it inside the function that uses it, not at module scope.
 
 ---
 
