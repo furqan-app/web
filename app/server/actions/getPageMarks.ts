@@ -1,5 +1,5 @@
 import { groupBy } from "@/app/utils/groupBy";
-import { Mark } from "@prisma/client";
+import { Mark } from "@/app/generated/app-client";
 
 export const getPageMarks = async (
   page: number

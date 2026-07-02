@@ -1,10 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../../app/generated/quran-client"
 }
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = env("QURAN_DATABASE_URL")
 }
 
 model Chapter {
@@ -67,34 +68,6 @@ model Word {
   // WordTransliteration WordTransliteration[]
 
   @@map("words")
-}
-
-model User {
-  id         Int      @id @default(autoincrement())
-  name       String
-  email      String   @unique
-  password   String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@map("users")
-}
-
-model Mark {
-  id          Int    @id @default(autoincrement())
-  page_number Int
-  from_user   Int
-  to_user     Int
-  marked_type String // verse, word
-  marked_id   String // verse => verse_key , word => location
-  mark_type   String // note, highlight
-  mark_value  String // Any text, color 
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([marked_type, marked_id, mark_type, to_user])
-  @@map("marks")
 }
 
 model PageMetadata {

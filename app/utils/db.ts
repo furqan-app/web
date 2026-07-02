@@ -1,21 +1,29 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient as QuranPrismaClient } from "@/app/generated/quran-client";
+import { PrismaClient as AppPrismaClient } from "@/app/generated/app-client";
 import mysql from "mysql2";
 
-const databaseUrl = new URL(process.env.DATABASE_URL!);
+const withConnectionLimit = (url: string): string => {
+  const dbUrl = new URL(url);
+  dbUrl.searchParams.set("connection_limit", "5");
+  return dbUrl.toString();
+};
+
+const quranDatabaseUrl = new URL(process.env.QURAN_DATABASE_URL!);
 
 export const connection = mysql
   .createConnection({
-    host: databaseUrl.hostname,
-    user: databaseUrl.username,
-    password: databaseUrl.password,
-    database: databaseUrl.pathname.slice(1), // Remove leading "/"
-    port: parseInt(databaseUrl.port) || 3306,
+    host: quranDatabaseUrl.hostname,
+    user: quranDatabaseUrl.username,
+    password: quranDatabaseUrl.password,
+    database: quranDatabaseUrl.pathname.slice(1), // Remove leading "/"
+    port: parseInt(quranDatabaseUrl.port) || 3306,
   })
   .promise();
 
-const dbUrl = new URL(process.env.DATABASE_URL!);
-dbUrl.searchParams.set("connection_limit", "5");
+export const quranPrisma = new QuranPrismaClient({
+  datasources: { db: { url: withConnectionLimit(process.env.QURAN_DATABASE_URL!) } },
+});
 
-export const prisma = new PrismaClient({
-  datasources: { db: { url: dbUrl.toString() } },
+export const appPrisma = new AppPrismaClient({
+  datasources: { db: { url: withConnectionLimit(process.env.APP_DATABASE_URL!) } },
 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../utils/db";
+import { quranPrisma } from "../../../utils/db";
 import { isSearchQueryValid } from "../../../constants/search";
 import { normalizeArabicQuery } from "../../../utils/arabic-search";
 
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (!isSearchQueryValid(query)) {
     return NextResponse.json({ results: [] });
   }
-  const results = await prisma.verse.findMany({
+  const results = await quranPrisma.verse.findMany({
     where: {
       text_imlaei_simple: {
         contains: normalizeArabicQuery(query)

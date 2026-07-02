@@ -1,4 +1,4 @@
-import { prisma } from "@/app/utils/db";
+import { quranPrisma } from "@/app/utils/db";
 import { groupBy } from "@/app/utils/groupBy";
 import { PageMetadataWithChapter, WordWithVerse } from "@/app/types/prisma";
 
@@ -9,7 +9,7 @@ export type PageWords = {
 
 export const getPageWords = async (page: number): Promise<PageWords> => {
   const [words, pageMetadata] = await Promise.all([
-    prisma.word.findMany({
+    quranPrisma.word.findMany({
       include: {
         verse: {
           include: { chapter: true },
@@ -20,7 +20,7 @@ export const getPageWords = async (page: number): Promise<PageWords> => {
       },
       orderBy: [{ verse_id: "asc" }, { position: "asc" }],
     }),
-    prisma.pageMetadata.findUniqueOrThrow({
+    quranPrisma.pageMetadata.findUniqueOrThrow({
       where: { page_number: page },
       include: { chapter: true },
     }),

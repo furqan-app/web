@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { groupBy } from "../../../../utils/groupBy";
-import { prisma } from "@/app/utils/db";
+import { quranPrisma } from "@/app/utils/db";
 
 export async function GET(
   request: Request,
@@ -10,7 +10,7 @@ export async function GET(
   const pageNumber = Number(pageId);
 
   const [words, pageMetadata] = await Promise.all([
-    prisma.word.findMany({
+    quranPrisma.word.findMany({
       include: {
         verse: {
           include: { chapter: true },
@@ -21,7 +21,7 @@ export async function GET(
       },
       orderBy: [{ verse_id: "asc" }, { position: "asc" }],
     }),
-    prisma.pageMetadata.findUniqueOrThrow({
+    quranPrisma.pageMetadata.findUniqueOrThrow({
       where: { page_number: pageNumber },
       include: { chapter: true },
     }),

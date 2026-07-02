@@ -1,4 +1,4 @@
-import { Verse } from "@prisma/client";
+import { Verse } from "@/app/generated/quran-client";
 import { Bookmark, SquarePen } from "lucide-react";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";

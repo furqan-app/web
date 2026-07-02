@@ -1,8 +1,8 @@
 import { SurahResult } from "@/app/types";
-import { prisma } from "@/app/utils/db";
+import { quranPrisma } from "@/app/utils/db";
 
 export const getSurahs = async (): Promise<SurahResult[]> => {
-    return prisma.chapter.findMany({
+    return quranPrisma.chapter.findMany({
         select: {
             id: true,
             name_arabic: true,

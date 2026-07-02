@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../utils/db";
+import { quranPrisma } from "../../../utils/db";
 import { isSearchQueryValid } from "../../../constants/search";
 
 export async function GET(request: Request) {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] });
   }
 
-  const results = await prisma.chapter.findMany({
+  const results = await quranPrisma.chapter.findMany({
     where: {
       OR: [
         { name_arabic: { contains: query } },

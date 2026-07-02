@@ -2,9 +2,12 @@
 
 ## Stack
 
-- **MySQL** on port **3307** (non-standard — always check `.env.local`).
-- **Prisma ORM** for all queries. Raw `mysql2` connection is exported from `app/utils/db.ts` but should rarely be needed.
-- **Prisma client:** import from `@/app/utils/db` — `import { prisma } from "@/app/utils/db"`.
+- **MySQL** on non-standard ports (always check `.env.local`): `furqan_quran` on **3307**, `furqan_app` on **3308** — two separate containers via `compose.yml`.
+- **Two databases** (see [ADR 0008](../architecture/adr/0008-quran-app-database-split.md)): `furqan_quran` (read-only Quran content, `QURAN_DATABASE_URL`) and `furqan_app` (mutable user/interaction data, `APP_DATABASE_URL`). Each has its own Prisma schema (`prisma/quran/schema.prisma`, `prisma/app/schema.prisma`) and its own generated client.
+- **Prisma ORM** for all queries. Raw `mysql2` connection is also exported from `app/utils/db.ts` (points at the Quran DB) but should rarely be needed.
+- **Prisma clients:** import from `@/app/utils/db` — `import { quranPrisma, appPrisma } from "@/app/utils/db"`. Use `quranPrisma` for content (`chapter`, `verse`, `word`, `pageMetadata`, `rub`), `appPrisma` for `user`/`mark`. There is no single `prisma` export.
+- **Prisma types** (`Verse`, `Mark`, `Prisma`, …) import from the generated client, not `@prisma/client`: `@/app/generated/quran-client` for content types, `@/app/generated/app-client` for app types.
+- **Never add a foreign key or relation across the two domains** — `Mark`/`User` reference Quran locations and users by scalar id only. This keeps the Quran DB shippable as a device-local mobile DB.
 
 ## Key Schema Facts
 
@@ -35,14 +38,14 @@ User marks at verse or word granularity:
 ### Parallel fetches
 ```ts
 const [words, pageMetadata] = await Promise.all([
-  prisma.word.findMany({ ... }),
-  prisma.pageMetadata.findUniqueOrThrow({ ... }),
+  quranPrisma.word.findMany({ ... }),
+  quranPrisma.pageMetadata.findUniqueOrThrow({ ... }),
 ]);
 ```
 
 ### Upsert pattern (marks)
 ```ts
-await prisma.mark.upsert({
+await appPrisma.mark.upsert({
   where: { marked_type_marked_id_mark_type_to_user: { ... } },
   update: { mark_value },
   create: { ... },
@@ -54,8 +57,10 @@ Use `include` for eager-loading relations. Avoid N+1 — fetch in one query.
 
 ## Connection Limits
 
-The Prisma client is configured with `connection_limit: 5` (set in `app/utils/db.ts`) to avoid overwhelming the DB in serverless/edge contexts.
+Both Prisma clients are configured with `connection_limit: 5` (set in `app/utils/db.ts`) to avoid overwhelming the DB in serverless/edge contexts.
 
 ## Migrations
 
-Run via Prisma CLI. The companion scraper project (`furqan-app/scraper`) handles initial data loading and schema preparation. Do not modify schema without checking whether the scraper also needs updating.
+Schemas are applied with `prisma db push` per schema (`npm run app-db-push`; the Quran schema is applied by the seeder — see below) — no migration history, by choice, pre-prod (ADR 0008; revisit before production).
+
+**Seeding `furqan_quran`:** `npm run seed:quran -- --force` regenerates the whole Quran DB reproducibly ([ADR 0009](../architecture/adr/0009-reproducible-quran-seeder.md)) — it runs `prisma db push --force-reset` (Prisma owns the schema), fetches `chapters` + `verses`/`words` from the QDC API, and derives `page_metadata`/`rubs`/`rub_verse_mappings`. It is destructive and refuses without `--force`. Code lives in `scripts/quran-seed/`.

@@ -1,8 +1,8 @@
-import { prisma } from "@/app/utils/db";
+import { quranPrisma } from "@/app/utils/db";
 import { RubWithVerses } from "@/app/types/prisma";
 
 export const getRubs = async (): Promise<RubWithVerses[]> => {
-  return prisma.rub.findMany({
+  return quranPrisma.rub.findMany({
     include: {
       rubVerseMappings: true,
       startVerse: {

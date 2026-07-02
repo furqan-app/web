@@ -1,4 +1,4 @@
-import { prisma } from "@/app/utils/db";
+import { appPrisma } from "@/app/utils/db";
 import { NextAuthOptions } from "next-auth";
 import Google from "next-auth/providers/google";
 
@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name || profile?.name || user.email,
         };
-        await prisma.user.upsert({
+        await appPrisma.user.upsert({
           where: { email: user.email },
           update: userData,
           create: userData,
@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session }) {
       try {
         if (!session?.user?.email) throw new Error("Failed to get user data");
-        const userData = await prisma.user.findUnique({
+        const userData = await appPrisma.user.findUnique({
           where: { email: session.user.email },
         });
         if (!userData) throw new Error("Failed to get user data");
@@ -47,7 +47,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token }) {
       try {
         if (!token?.email) throw new Error("Failed to get user data");
-        const userData = await prisma.user.findUnique({
+        const userData = await appPrisma.user.findUnique({
           where: { email: token.email },
         });
         if (!userData) throw new Error("Failed to get user data");

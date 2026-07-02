@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
-import { prisma } from "@/app/utils/db";
+import { appPrisma } from "@/app/utils/db";
 import { extractUser } from "@/app/api/request";
 
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
 ) {
   const user = extractUser(request);
 
-  const marks = await prisma.mark.findMany({
+  const marks = await appPrisma.mark.findMany({
     where: {
       to_user: user.id,
       page_number: parseInt(context.params.pageId),
@@ -42,7 +42,7 @@ export async function POST(
     });
   }
 
-  await prisma.mark.upsert({
+  await appPrisma.mark.upsert({
     where: {
       marked_type_marked_id_mark_type_to_user: {
         to_user: toUser,
