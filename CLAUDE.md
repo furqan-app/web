@@ -9,7 +9,9 @@
 
 This applies to every change, no matter how small: one-liner fixes, font swaps, copy changes — everything. If you find yourself about to call Edit, Write, or a Bash command that modifies a file, stop and run `/plan-fq-task` first.
 
-Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
+**This is not limited to file edits.** It applies equally to operational, data, and infrastructure actions: running scripts (seeders, scrapers, one-off Node scripts), seeding or mutating any database, `prisma db push` / migrations, importing SQL dumps, Docker/`compose` changes, and anything that touches the environment, containers, or running services. Do not treat these as "just execution" — ask me and plan with me first, every time.
+
+When in doubt, ask. Never act unilaterally. Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
 
 ## Project
 
