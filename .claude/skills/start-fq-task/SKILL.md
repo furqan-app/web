@@ -16,6 +16,7 @@ Loads the right context (decisions + standards + plan), then implements the task
 1. **Identify the plan**
    - Ask the user which plan to implement if not specified (list `docs/plans/` to show options)
    - Read `docs/plans/<slug>.md`
+   - Find the plan's Trello card (linked in the plan) and move it to **In Progress** (`mcp__trello__move_card`) before starting implementation.
 
 2. **Load context**
    - Read `docs/architecture/DECISIONS.md`
