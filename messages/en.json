@@ -36,7 +36,8 @@
   "markModal": {
     "redMark": "Red Mark",
     "greenMark": "Green Mark",
-    "blueMark": "Blue Mark"
+    "blueMark": "Blue Mark",
+    "removeMark": "Remove Mark"
   },
   "rubs": "Rubs",
   "rub": "Rub",

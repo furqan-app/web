@@ -69,3 +69,37 @@ export async function POST(
   return jsonResponse({ message: "Marked succesfully" });
 }
 
+/**
+ *
+ * This request is protected by the global middleware in middleware.ts
+ */
+export async function DELETE(request: NextRequest) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ code: 422, message: "Invalid request body" });
+  }
+  const user = extractUser(request);
+
+  const { marked_type, marked_id, mark_type } = body;
+
+  if (!marked_type || !marked_id || !mark_type) {
+    return jsonResponse({
+      code: 422,
+      message: "Missing required fields",
+    });
+  }
+
+  await appPrisma.mark.deleteMany({
+    where: {
+      to_user: user.id,
+      marked_type,
+      marked_id,
+      mark_type,
+    },
+  });
+
+  return jsonResponse({ message: "Mark removed succesfully" });
+}
+

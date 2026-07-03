@@ -3,6 +3,7 @@
 import { MouseEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { highlight } from "../utils/highlight";
+import { getColorMark } from "../utils/marks";
 import { WordWithVerse } from "../types/prisma";
 
 export type QuranWordProps = {
@@ -16,9 +17,7 @@ export const QuranWord = ({ word, marks, onWordClicked }: QuranWordProps) => {
   const highlightedVerseKey = highlight.getHighlightedVerseKey(searchParams);
   const highlightType = highlight.getHighlightType(searchParams);
 
-  const highlightColorForMark = marks.find(
-    (action) => action.name === "color"
-  )?.value;
+  const highlightColorForMark = getColorMark(marks);
 
   const highlightClassForWord = highlight.getHighlightClass(
     highlight.shouldHighlight(word, highlightedVerseKey) ||
