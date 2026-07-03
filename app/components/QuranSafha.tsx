@@ -100,26 +100,26 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
       {!session.data?.user && selectedForMark ? (
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
-      <div className="fq-full-safha flex justify-center">
-        <div className="relative rounded-[20px] border border-border bg-card overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)]">
+      <div className="fq-full-safha flex justify-center w-full md:w-auto">
+        <div className="relative rounded-none md:rounded-[20px] md:border md:border-border md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-auto">
           {/* Inner decorative accent frame */}
-          <div className="absolute inset-[10px] rounded-xl border border-primary/20 pointer-events-none z-10" />
+          <div className="hidden md:block absolute inset-[10px] rounded-xl border border-primary/20 pointer-events-none z-10" />
           {/* Corner star ornaments */}
-          <div className="absolute top-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+          <div className="hidden md:block absolute top-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
             <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
           </div>
-          <div className="absolute top-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+          <div className="hidden md:block absolute top-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
             <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
           </div>
-          <div className="absolute bottom-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+          <div className="hidden md:block absolute bottom-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
             <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
           </div>
-          <div className="absolute bottom-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
+          <div className="hidden md:block absolute bottom-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
             <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
           </div>
           {/* Content */}
           <div
-            className="relative z-0 px-7 py-5"
+            className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full md:block md:h-auto"
             style={{
               "--fq-line-gap": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
               "--fq-heading-h": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
@@ -128,10 +128,10 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
             {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
             <div
               dir="rtl"
-              className="grid grid-cols-3 items-center pb-2 border-b border-border"
+              className="shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center pb-2 border-b border-border"
               style={{ marginBottom: "var(--fq-line-gap)" }}
             >
-              <span className="text-[10px] font-bold tracking-widest text-muted-foreground">{juz}</span>
+              <span className="whitespace-nowrap text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground">{juz}</span>
               <div className="flex items-center justify-center gap-1.5">
                 <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
                 <span
@@ -142,13 +142,11 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
                 </span>
                 <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
               </div>
-              <span className="text-[10px] font-bold tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
+              <span className="whitespace-nowrap text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
             </div>
             {/* Quran text */}
             <div
-              className={`fq-quran-safha text-[4.4vw] md:text-[${FONT_V1.getWordFontSizeCss(
-                quranFontScale,
-              )}]`}
+              className={`fq-quran-safha ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
               style={{
                 fontFamily: getPageFontFamily(page),
               }}
@@ -164,7 +162,7 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
             </div>
             {/* Footer */}
             <div
-              className="flex items-center justify-center gap-2 pt-2 border-t border-border text-muted-foreground text-sm"
+              className="shrink-0 flex items-center justify-center gap-2 pt-2 border-t border-border text-muted-foreground text-sm"
               style={{ marginTop: "var(--fq-line-gap)" }}
             >
               <span className="text-primary opacity-70 text-[10px]">◆</span>

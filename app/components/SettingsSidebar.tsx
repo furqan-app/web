@@ -57,7 +57,7 @@ export const SettingsSidebar = () => {
               <LanguageToggle />
             </div>
           </div>
-          <div>
+          <div className="hidden md:block">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
               {t("quranFontSize", "Quran Font Size")}
             </h3>

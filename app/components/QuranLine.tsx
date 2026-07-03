@@ -52,7 +52,7 @@ export const QuranLine = ({ words, onWordClicked, marks }: LineProps) => {
         </div>
       ) : null}
       <div
-        className={`text-white flex ${
+        className={`fq-safha-row text-white flex ${
           getLanguageDirection(locale) === "rtl"
             ? "flex-row"
             : "flex-row-reverse"

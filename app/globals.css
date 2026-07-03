@@ -122,3 +122,55 @@ body,
     text-wrap: balance;
   }
 }
+
+@layer base {
+  @media (max-width: 767px) {
+    .fq-content {
+      /* Font from width: every mushaf line justifies to the same width — worst-case
+         line-width/font-size ratio across all 604 pages is 14.42 (p.580). Dividing by
+         14.7 leaves ~2% margin so cross-device font-rendering variance can't push a line
+         past the width and force a word onto a new row (a "broken" line).
+         24px = px-3 side padding ×2; recalibrate if that padding changes.
+         Capped at 28px (the value at ~430px, the widest common phone width) so tablet-width
+         portrait viewports — still under this 767px breakpoint — don't render an uncapped,
+         oversized font. See ADR 0011. */
+      --fq-mobile-font: min(calc((100vw - 24px) / 14.7), 28px);
+      --fq-line-gap: 0px !important; /* inter-line gaps come from flex space-between */
+      --fq-heading-h: calc(var(--fq-mobile-font) * 2.4) !important; /* surah glyph + Bismillah internal block */
+    }
+    .fq-quran-safha {
+      font-size: var(--fq-mobile-font);
+      flex: 1 1 0%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      /* Breathing room between the text block and the header/footer bands. 1em here
+         resolves against the mobile font-size, so the gap scales with the text.
+         space-between distributes the 15 lines inside this padded box. */
+      padding-block: 0.5em;
+    }
+    .fq-quran-safha > * {
+      margin-bottom: 0 !important; /* height distributed by flex, not margin */
+    }
+    /* A mushaf line must never wrap: keep each word at its intrinsic width so a hair of
+       overflow clips invisibly (card is overflow-hidden) instead of dropping a word
+       onto a new row. Scoped to .fq-safha-row (the word row in QuranLine.tsx) rather
+       than a positional child selector, since surah-opening pages also render a
+       .text-center heading block as a direct child of .fq-quran-safha. */
+    .fq-quran-safha > .fq-safha-row {
+      flex-wrap: nowrap;
+    }
+    .fq-quran-safha > .fq-safha-row > div {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    /* Short opening pages (1–2) have far fewer than 15 lines: center them as a block
+       with a modest gap rather than stretching edge-to-edge. */
+    .fq-quran-safha.fq-safha-center {
+      justify-content: center;
+      gap: 0.55em;
+    }
+  }
+}

@@ -40,6 +40,7 @@ Nav                          — top bar, always visible; responsive (mobile/des
 
 ```
 (page — server component, statically generated)
+  QuranSwipeNav              — thin "use client" wrapper: swipe-to-navigate touch handler (mobile only); receives prevHref/nextHref (plain page-order hrefs, not locale-flipped)
   QuranSafha                 — client shell: handles word selection, mark state, scroll
     QuranLine                — one line of the page
       QuranWord              — single word; click triggers mark flow

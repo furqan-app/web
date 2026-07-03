@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { QuranSafha } from "@/app/components/QuranSafha";
+import { QuranSwipeNav } from "@/app/components/QuranSwipeNav";
 import { getPageWords } from "@/app/hooks/get-page-words";
 import { setRequestLocale } from "next-intl/server";
 import { getLanguageDirection } from "@/app/utils/i18n";
@@ -37,7 +38,7 @@ const NavigationArrow = ({
     <Link
       href={href}
       aria-label={isNext ? "Next page" : "Previous page"}
-      className="flex items-center justify-center shrink-0 text-primary/60 hover:text-primary transition-colors"
+      className="hidden md:flex items-center justify-center shrink-0 text-primary/60 hover:text-primary transition-colors"
     >
       <Icon className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.6} />
     </Link>
@@ -62,6 +63,15 @@ const QuranPageById = async ({
     return isLastPage ? "1" : String(Number(pageId) + 1);
   };
 
+  // Plain page-order hrefs for swipe: the Quran's page order (1 → 604) is
+  // fixed content, independent of UI locale — unlike getNavigationHref above,
+  // which intentionally flips by isRTL to keep desktop arrow-click direction
+  // matching the arrow's visual (RTL-flipped) position. Swipe gestures have
+  // no visual arrow to match, so they must use the unflipped page order or
+  // "swipe right" would go backward whenever the UI locale is "en".
+  const nextPageId = pageId === "604" ? "1" : String(Number(pageId) + 1);
+  const prevPageId = pageId === "1" ? "604" : String(Number(pageId) - 1);
+
   return (
     <>
       <style
@@ -82,25 +92,30 @@ const QuranPageById = async ({
         type="font/truetype"
         crossOrigin="anonymous"
       />
-      <div className="bg-background w-full min-h-[calc(100vh-3.5rem)] flex justify-center items-center py-4 ps-10 pe-6 md:ps-14 md:pe-10 gap-3 md:gap-8">
-        <div className="flex-1 min-w-0 flex justify-center">
-          <NavigationArrow
-            href={`/${locale}/pages/${getNavigationHref(false)}`}
-            isRTL={isRTL}
-            isNext={false}
-          />
-          <QuranSafha
-            page={+pageId}
-            lines={lines}
-            pageMetadata={pageMetadata}
-          />
-          <NavigationArrow
-            href={`/${locale}/pages/${getNavigationHref(true)}`}
-            isRTL={isRTL}
-            isNext={true}
-          />
+      <QuranSwipeNav
+        prevHref={`/${locale}/pages/${prevPageId}`}
+        nextHref={`/${locale}/pages/${nextPageId}`}
+      >
+        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] flex justify-center items-start md:items-center py-4 px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
+          <div className="flex-1 min-w-0 flex justify-center items-center">
+            <NavigationArrow
+              href={`/${locale}/pages/${getNavigationHref(false)}`}
+              isRTL={isRTL}
+              isNext={false}
+            />
+            <QuranSafha
+              page={+pageId}
+              lines={lines}
+              pageMetadata={pageMetadata}
+            />
+            <NavigationArrow
+              href={`/${locale}/pages/${getNavigationHref(true)}`}
+              isRTL={isRTL}
+              isNext={true}
+            />
+          </div>
         </div>
-      </div>
+      </QuranSwipeNav>
     </>
   );
 };
