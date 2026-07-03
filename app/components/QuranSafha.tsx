@@ -9,6 +9,7 @@ import { FONT_V1 } from "@constants/font";
 import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
 import useTranslations from "@hooks/use-translations";
 import { getPageFontFamily } from "@utils/quran-font-map";
+import { getColorMark } from "@utils/marks";
 import { MarkModal } from "./MarkModal";
 import { SignInModal } from "./SignInModal";
 import { PageMetadataWithChapter, WordWithVerse } from "../types/prisma";
@@ -75,6 +76,11 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
     setSelectedForMark(null);
   };
 
+  const getCurrentColor = (markFor: WordWithVerse | Verse) => {
+    const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
+    return getColorMark(marks?.[markedId] ?? []);
+  };
+
   const hizbDefaults: Record<string, string> = {
     hizb: "الحزب",
     "hizb-quarter": "ربع الحزب",
@@ -95,6 +101,7 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
           close={closeMarkModal}
           markFor={selectedForMark as WordWithVerse | Verse}
           verseDisplayText={verseDisplayText}
+          currentColor={getCurrentColor(selectedForMark as WordWithVerse | Verse)}
         />
       ) : null}
       {!session.data?.user && selectedForMark ? (

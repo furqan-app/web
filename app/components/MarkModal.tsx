@@ -1,10 +1,13 @@
+import { ReactNode } from "react";
 import { Verse } from "@/app/generated/quran-client";
-import { Bookmark, SquarePen } from "lucide-react";
+import { Bookmark, Eraser, SquarePen } from "lucide-react";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
 import { WordWithVerse } from "../types/prisma";
 import { addPageMark } from "../server/actions/addPageMark";
+import { deletePageMark } from "../server/actions/deletePageMark";
+import useTranslations from "../hooks/use-translations";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -13,23 +16,52 @@ type ModalProps = {
   close: () => void;
   markFor: WordWithVerse | Verse;
   verseDisplayText?: string;
+  currentColor?: string;
 };
 
-const categories = [
+type CategoryContentProps = {
+  markWord: (color: string) => void;
+  currentColor?: string;
+  removeMark: () => void;
+};
+
+const BookmarksTab = ({
+  markWord,
+  currentColor,
+  removeMark,
+}: CategoryContentProps) => {
+  const t = useTranslations();
+
+  return (
+    <>
+      <MarkerColorPicker onMark={markWord} />
+      {currentColor ? (
+        <button
+          onClick={removeMark}
+          className="mt-4 pt-3 w-full flex items-center justify-center gap-2 border-t border-border rounded-lg py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <Eraser className="w-4 h-4" strokeWidth={1.8} />
+          {t("markModal.removeMark", "Remove Mark")}
+        </button>
+      ) : null}
+    </>
+  );
+};
+
+const categories: Array<{
+  key: string;
+  header: () => ReactNode;
+  content: (props: CategoryContentProps) => ReactNode;
+}> = [
   {
     key: "bookmarks",
     header: () => <Bookmark className="w-5 h-5" />,
-    content: (markWord: (color: string) => void) => (
-      <MarkerColorPicker onMark={markWord} />
-    ),
+    content: (props) => <BookmarksTab {...props} />,
   },
   {
     key: "notes",
     header: () => <SquarePen className="w-5 h-5" />,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    content: (markWord: (color: string) => void) => (
-      <p className="text-foreground">Under development.</p>
-    ),
+    content: () => <p className="text-foreground">Under development.</p>,
   },
 ];
 
@@ -49,6 +81,7 @@ export function MarkModal({
   close,
   markFor,
   verseDisplayText,
+  currentColor,
 }: ModalProps) {
   const { reload: reloadMarks } = useMarks(markFor.page_number);
 
@@ -64,6 +97,20 @@ export function MarkModal({
     });
 
     if (added) {
+      reloadMarks();
+      close();
+    }
+  };
+
+  const removeMark = async () => {
+    const removed = await deletePageMark({
+      marked_type: isWord ? "word" : "verse",
+      marked_id: isWord ? markFor.location : markFor.verse_key,
+      mark_type: "color",
+      page_number: markFor.page_number,
+    });
+
+    if (removed) {
       reloadMarks();
       close();
     }
@@ -93,7 +140,7 @@ export function MarkModal({
               value={key}
               className="rounded-xl bg-muted p-3"
             >
-              <ul>{content(markWord)}</ul>
+              <ul>{content({ markWord, currentColor, removeMark })}</ul>
             </TabsContent>
           ))}
         </Tabs>

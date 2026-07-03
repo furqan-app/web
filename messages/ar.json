@@ -37,7 +37,8 @@
   "markModal": {
     "redMark": "علامة حمراء",
     "greenMark": "علامة خضراء",
-    "blueMark": "علامة زرقاء"
+    "blueMark": "علامة زرقاء",
+    "removeMark": "إزالة العلامة"
   },
   "rubs": "أرباع",
   "rub": "ربع",
