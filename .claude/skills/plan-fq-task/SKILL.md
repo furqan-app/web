@@ -57,6 +57,17 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
      - What NOT to do (constraints discovered)
      - Reference any ADRs created in step 3
 
+5. **Ensure a Trello ticket exists**
+
+   Every task must have a Trello ticket on the "Furqan" board before implementation starts (see `mcp__trello__get_active_board_info`).
+
+   - Check whether a card already covers this work (`mcp__trello__get_cards_by_list_id` across the relevant lists, or ask the user if unsure).
+   - If none exists, create one in the **Todo** list (`mcp__trello__add_card_to_list`):
+     - Title: the plan's task title
+     - Description: one-paragraph summary from the plan, plus a link/reference to `docs/plans/<slug>.md`
+     - Label: `Feature` or `Bug` matching the plan's `Type`
+   - Note the card ID/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
+
 ## Plan file format
 
 ```markdown

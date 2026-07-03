@@ -13,6 +13,8 @@ This applies to every change, no matter how small: one-liner fixes, font swaps, 
 
 When in doubt, ask. Never act unilaterally. Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
 
+**Scope note — `.claude/` tooling is exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/`, translation files, config that affects the running app, etc. Changes to Claude Code's own tooling — `.claude/skills/`, `.claude/hooks/`, `.claude/settings*.json`, `~/.claude/settings.json` — are meta/infra for the assistant, not app changes, and do not require `/plan-fq-task` → `/start-fq-task`. Still confirm with the user before making tooling changes; just don't route them through the app workflow.
+
 ## Project
 
 Furqan — word-focused Qur'an reading app. Next.js 14 App Router, MySQL/Prisma, NextAuth (Google OAuth), next-intl (ar/en), Tailwind/shadcn.
