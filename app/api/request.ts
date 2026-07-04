@@ -3,5 +3,9 @@ export const isJSONRequest = (req: Request) => {
 };
 
 export const extractUser = (req: Request) => {
-  return JSON.parse(req.headers.get("user") as string);
+  try {
+    return JSON.parse(req.headers.get("user") as string);
+  } catch {
+    return null;
+  }
 };

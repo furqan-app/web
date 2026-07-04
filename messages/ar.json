@@ -45,7 +45,8 @@
     "markVerseLabel": "تحديد آية",
     "notesComingSoon": "قريباً",
     "chooseColorLabel": "اختر لون العلامة المرجعية",
-    "saveMark": "حفظ العلامة المرجعية"
+    "saveMark": "حفظ العلامة المرجعية",
+    "actionError": "حدث خطأ ما. حاول مرة أخرى."
   },
   "rubs": "أرباع",
   "rub": "ربع",

@@ -44,7 +44,8 @@
     "markVerseLabel": "Mark verse",
     "notesComingSoon": "Coming soon",
     "chooseColorLabel": "Choose bookmark color",
-    "saveMark": "Save Bookmark"
+    "saveMark": "Save Bookmark",
+    "actionError": "Something went wrong. Try again."
   },
   "rubs": "Rubs",
   "rub": "Rub",
