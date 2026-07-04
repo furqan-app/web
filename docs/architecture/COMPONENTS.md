@@ -25,7 +25,7 @@ Nav                          — top bar, always visible; responsive (mobile/des
   Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic); controlled via SidebarContext
     SurahList                — grid of surah cards [SHARED — also used on home page]
       SurahListItem          — single surah card
-    RubList                  — list of rub markers
+    RubList                  — rich rub list: sticky juz headers, SVG hizb-aware circle badge per row, Uthmanic text snippet, surah name + ayah, page number; accepts surahs prop for chapter name lookup; Eastern Arabic numerals in ar locale
 ```
 
 ## Zone: home (`app/[locale]/page.tsx`)
