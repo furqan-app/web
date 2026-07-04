@@ -152,6 +152,7 @@ const user = extractUser(request); // { id, email, ... }
 **Constraints:**
 - Do not install a separate icon library — use `lucide-react` only.
 - Do not hand-roll components that have a shadcn equivalent.
+- `DialogContent` (`components/ui/dialog.tsx`) supports an opt-in `hideDefaultClose` prop (default `false`) to suppress its built-in absolutely-positioned close button, for callers that need to render their own `DialogClose` in-flow (e.g. `MarkModal`, whose header needs the close button vertically centered against a flex sibling rather than absolutely positioned). Default behavior for all other callers (`SignInModal`) is unchanged.
 
 ---
 

@@ -39,6 +39,13 @@
     "greenMark": "علامة خضراء",
     "blueMark": "علامة زرقاء",
     "removeMark": "إزالة العلامة",
+    "bookmarksTab": "العلامات المرجعية",
+    "notesTab": "الملاحظات",
+    "markWordLabel": "تحديد كلمة",
+    "markVerseLabel": "تحديد آية",
+    "notesComingSoon": "قريباً",
+    "chooseColorLabel": "اختر لون العلامة المرجعية",
+    "saveMark": "حفظ العلامة المرجعية",
     "actionError": "حدث خطأ ما. حاول مرة أخرى."
   },
   "rubs": "أرباع",

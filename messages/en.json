@@ -38,6 +38,13 @@
     "greenMark": "Green Mark",
     "blueMark": "Blue Mark",
     "removeMark": "Remove Mark",
+    "bookmarksTab": "Bookmarks",
+    "notesTab": "Notes",
+    "markWordLabel": "Mark word",
+    "markVerseLabel": "Mark verse",
+    "notesComingSoon": "Coming soon",
+    "chooseColorLabel": "Choose bookmark color",
+    "saveMark": "Save Bookmark",
     "actionError": "Something went wrong. Try again."
   },
   "rubs": "Rubs",
