@@ -50,8 +50,8 @@ const Sidebar = ({ surahs, rubs }: Props) => {
           <TabsContent value="surahs" className="flex-1 overflow-y-auto p-4 mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
             <SurahList surahs={surahs} className="sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-2" />
           </TabsContent>
-          <TabsContent value="rubs" className="flex-1 overflow-y-auto p-4 mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            <RubList rubs={rubs} />
+          <TabsContent value="rubs" className="flex-1 overflow-y-auto mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <RubList rubs={rubs} surahs={surahs} />
           </TabsContent>
         </Tabs>
       </SheetContent>
