@@ -17,6 +17,12 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 
 ## Steps
 
+0. **Check for an existing related plan — before anything else**
+   - Run `ls docs/plans/` and scan for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
+   - If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its `Status` to `ready-to-implement` if it had been marked `implemented`.
+   - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
+   - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just run the `ls`/grep.
+
 1. **Load context**
    - Read `docs/architecture/DECISIONS.md`
    - Read the relevant standards file(s) from `docs/standards/` based on the task domain
@@ -96,6 +102,7 @@ One paragraph.
 
 ## Anti-patterns to avoid
 
+- Do not create a new plan file without first checking `docs/plans/` for an existing related one — extend it instead if the bug/feature class matches.
 - Do not ask multiple questions at once — one at a time, always.
 - Do not write the plan before all questions are resolved.
 - Do not skip the ADR check — run it explicitly before writing the plan.
