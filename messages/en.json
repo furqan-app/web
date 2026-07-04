@@ -8,13 +8,6 @@
   "search": {
     "placeholder": "Search surah by name or number"
   },
-  "surah": {
-    "number": "Number",
-    "name": "Name",
-    "englishName": "English Name",
-    "revelationType": "Revelation Type",
-    "numberOfAyahs": "Number of Ayahs"
-  },
   "surah": "Surah",
   "surahs": "Surahs",
   "verses": "Verses",
@@ -50,5 +43,6 @@
   "rubs": "Rubs",
   "rub": "Rub",
   "page": "Page",
-  "juz": "Juz"
+  "signOut": "Sign out",
+  "signIn": "Sign in"
 }

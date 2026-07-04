@@ -8,17 +8,10 @@
   "search": {
     "placeholder": "ابحث عن السورة بالاسم أو الرقم"
   },
-  "surah": {
-    "number": "رقم",
-    "name": "اسم",
-    "englishName": "الاسم بالإنجليزية",
-    "revelationType": "نوع الوحي",
-    "numberOfAyahs": "عدد الآيات"
-  },
   "surah": "سورة",
   "surahs": "السور",
   "verses": "الآيات",
-  "juz": "الجزء",
+  "juz": "جزء",
   "hizb": "الحزب",
   "hizb-quarter": "ربع الحزب",
   "hizb-half": "نصف الحزب",
@@ -51,5 +44,6 @@
   "rubs": "أرباع",
   "rub": "ربع",
   "page": "صفحة",
-  "juz": "جزء"
+  "signOut": "تسجيل الخروج",
+  "signIn": "تسجيل الدخول"
 }
