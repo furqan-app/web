@@ -31,6 +31,7 @@ Loads the right context (decisions + standards + plan), then implements the task
      - Read `docs/standards/styling.md` and `docs/standards/component-patterns.md` (if not already loaded above)
      - Read `docs/architecture/APP_PURPOSE.md` for UX principles before making any layout decisions
      - Read `docs/design/design-principles.md` for aesthetic direction and component conventions
+     - If the task involves animation, transitions, or interactive states (press/hover/enter/exit), invoke the `ui-motion` skill for motion and polish guidance
 
 3. **Implement**
    - Follow the plan exactly. If you discover the plan needs revision, pause and discuss — do not silently deviate.
