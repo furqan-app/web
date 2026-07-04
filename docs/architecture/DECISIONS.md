@@ -117,6 +117,7 @@ const user = extractUser(request); // { id, email, ... }
 
 **Constraints:**
 - Do not attempt to read the session via `getServerSession` inside API routes — use `extractUser` instead, which reads the header the middleware sets.
+- `extractUser` returns `null` (never throws) if the `user` header is missing or malformed — every call site must check for `null` and return `jsonResponse({ code: 401, message: "Unauthorized" })` before using `user.id`. This is a defensive boundary check for a state that shouldn't occur (middleware is expected to always set the header correctly) — see `app/api/quran/pages/[pageId]/marks/route.ts` for the pattern.
 
 ---
 
