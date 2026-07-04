@@ -37,7 +37,8 @@
     "redMark": "Red Mark",
     "greenMark": "Green Mark",
     "blueMark": "Blue Mark",
-    "removeMark": "Remove Mark"
+    "removeMark": "Remove Mark",
+    "actionError": "Something went wrong. Try again."
   },
   "rubs": "Rubs",
   "rub": "Rub",
