@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { appPrisma } from "@/app/utils/db";
 import { extractUser } from "@/app/api/request";
+import {
+  withAuthorNames,
+  upsertMark,
+  deleteMark,
+} from "@/app/api/mushaf/access";
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +25,9 @@ export async function GET(
     },
   });
 
-  return jsonResponse({ data: marks });
+  // Attach author name + is_own so the owner can see who made each mark
+  // (e.g. marks a teacher added to their mushaf). See ADR 0012.
+  return jsonResponse({ data: await withAuthorNames(marks, user.id) });
 }
 
 /**
@@ -38,41 +45,15 @@ export async function POST(
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
-  const { marked_type, marked_id, mark_type, mark_value } = body;
-  const fromUser = user.id;
-  const toUser = user.id;
-
-  // FIXME: validate the input
-  if (!marked_type || !marked_id || !mark_type || !mark_value) {
-    return jsonResponse({
-      code: 422,
-      message: "Missing required fields",
-    });
+  const ok = await upsertMark(
+    user.id,
+    user.id,
+    Number(context.params.pageId),
+    body
+  );
+  if (!ok) {
+    return jsonResponse({ code: 422, message: "Missing required fields" });
   }
-
-  await appPrisma.mark.upsert({
-    where: {
-      marked_type_marked_id_mark_type_to_user: {
-        to_user: toUser,
-        marked_type,
-        marked_id,
-        mark_type,
-      },
-    },
-    update: {
-      from_user: fromUser,
-      mark_value,
-    },
-    create: {
-      page_number: Number(context.params.pageId),
-      marked_type,
-      marked_id,
-      mark_type,
-      mark_value,
-      from_user: fromUser,
-      to_user: toUser,
-    },
-  });
 
   return jsonResponse({ message: "Marked succesfully" });
 }
@@ -99,23 +80,10 @@ export async function DELETE(request: NextRequest) {
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
-  const { marked_type, marked_id, mark_type } = body;
-
-  if (!marked_type || !marked_id || !mark_type) {
-    return jsonResponse({
-      code: 422,
-      message: "Missing required fields",
-    });
+  const ok = await deleteMark(user.id, body);
+  if (!ok) {
+    return jsonResponse({ code: 422, message: "Missing required fields" });
   }
-
-  await appPrisma.mark.deleteMany({
-    where: {
-      to_user: user.id,
-      marked_type,
-      marked_id,
-      mark_type,
-    },
-  });
 
   return jsonResponse({ message: "Mark removed succesfully" });
 }

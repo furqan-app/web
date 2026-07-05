@@ -5,6 +5,9 @@ type HighlightOptions = {
   pageNumber: number;
   type?: HighlightType;
   searchParams?: URLSearchParams;
+  // Locale-less reader base path, e.g. "/pages" (default) or
+  // "/mushaf/<grant>/pages" when navigating within a granted mushaf.
+  basePath?: string;
 };
 
 const HIGHLIGHT_COLORS: Record<HighlightType, string> = {
@@ -17,12 +20,13 @@ const HIGHLIGHT_COLORS: Record<HighlightType, string> = {
 };
 
 export const highlight = {
-  addToUrl: ({ 
-    verseKey, 
-    pageNumber, 
-    type = 'search'
+  addToUrl: ({
+    verseKey,
+    pageNumber,
+    type = 'search',
+    basePath = '/pages'
   }: HighlightOptions): string => {
-    const url = new URL(`/pages/${pageNumber}`, window.location.origin);
+    const url = new URL(`${basePath}/${pageNumber}`, window.location.origin);
     url.searchParams.set('highlight', verseKey);
     url.searchParams.set('highlight-type', type);
     return url.toString();

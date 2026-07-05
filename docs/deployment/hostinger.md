@@ -124,3 +124,46 @@ https://furqan.taha7.com/api/auth/callback/google
 - [ ] `https://furqan.taha7.com` loads
 - [ ] A Quran page renders with real data
 - [ ] Google login completes successfully
+
+---
+
+## Ongoing — deploying App DB schema changes to a live database
+
+Phase 5 assumes an **empty** App DB. Once `furqan_app` holds real users/marks,
+treat every `prisma db push` as a production data operation. The command is
+declarative — it makes the DB *match* `schema.prisma`, which for additive
+changes (new tables/columns) is safe, but for anything else can **drop**
+columns/tables that exist in the DB but not in the schema.
+
+**Procedure for any schema change on a live App DB:**
+
+1. **Back up first**, always:
+   ```bash
+   mysqldump -u u123456789_furqan_app_user -p --no-tablespaces \
+     u123456789_furqan_app > ~/furqan_app_backup_$(date +%F).sql
+   ```
+2. **Dry-read the plan** — run the push and read its output *before* trusting it:
+   ```bash
+   npx prisma db push --schema prisma/app/schema.prisma
+   ```
+   For a purely additive change it should report only `CREATE TABLE` / new
+   columns and **no** data-loss warning. Example: the shared-mushaf feature adds
+   `mushaf_share_codes` + `mushaf_access_grants` and nothing else.
+3. **If it reports any DROP/ALTER you didn't expect → stop.** That means the
+   production DB has drifted from `schema.prisma`. Do not "fix" it by adding
+   `--accept-data-loss` — that flag executes the destructive changes. Investigate
+   the drift instead.
+4. Confirm `APP_DATABASE_URL` points at **production** before running. The
+   `npm run app-db-push` shortcut is hardcoded to `.env.local`; on the server run
+   the raw `npx prisma db push` above with the prod env loaded so you can't push
+   to the wrong database by accident.
+
+**Never** use `--force-reset` on the App DB — it drops the entire database
+(that flag belongs only to the Quran *seeder*, `npm run seed:quran`, which
+rebuilds reproducible content, never user data).
+
+> **Note:** `db push` keeps no migration history or rollback. This is the
+> project's deliberate pre-prod choice (ADR 0008), explicitly flagged to
+> *revisit before production*. Adopting `prisma migrate` (versioned migrations +
+> `migrate deploy` in the deploy step) is the intended next step — see
+> `docs/standards/database.md`.

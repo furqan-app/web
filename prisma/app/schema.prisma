@@ -35,3 +35,30 @@ model Mark {
   @@unique([marked_type, marked_id, mark_type, to_user])
   @@map("marks")
 }
+
+// One-time share code a user generates to grant another user access to their
+// mushaf. Spent (redeemed_at/redeemed_by set) on first successful redemption.
+// Scalar user refs only — no relation to User (mirrors Mark; ADR 0008).
+model MushafShareCode {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  owner_user  Int
+  redeemed_at DateTime?
+  redeemed_by Int?
+  created_at  DateTime  @default(now())
+
+  @@map("mushaf_share_codes")
+}
+
+// Persistent access grant: viewer_user may view/edit owner_user's mushaf marks.
+// id is random (cuid) and used in the /mushaf/[grant] URL — it is NOT a
+// capability; every grant-scoped endpoint re-checks viewer_user === self.
+model MushafAccessGrant {
+  id          String   @id @default(cuid())
+  owner_user  Int
+  viewer_user Int
+  created_at  DateTime @default(now())
+
+  @@unique([owner_user, viewer_user])
+  @@map("mushaf_access_grants")
+}

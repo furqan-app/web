@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@/app/hooks/use-translations";
 import { toLocaleNumeral } from "@/app/utils/i18n";
+import { useReaderBasePath } from "@hooks/use-reader-base-path";
 
 type Props = {
   rubs: RubWithVerses[];
@@ -33,6 +34,7 @@ function buildJuzGroups(rubs: RubWithVerses[]): JuzGroup[] {
 const RubList = ({ rubs, surahs }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
+  const basePath = useReaderBasePath();
 
   const juzGroups = buildJuzGroups(rubs);
 
@@ -71,7 +73,7 @@ const RubList = ({ rubs, surahs }: Props) => {
             return (
               <Link
                 key={rub.id}
-                href={`/pages/${rub.startVerse.page_number}`}
+                href={`${basePath}/${rub.startVerse.page_number}`}
                 locale={locale}
                 dir="rtl"
                 className="flex items-center gap-3 px-4 py-[13px] border-b border-border bg-background hover:bg-accent transition-colors"
