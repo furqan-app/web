@@ -55,7 +55,8 @@ Nav                          — top bar, always visible; responsive (mobile/des
 ## Zone: shared mushaf (`app/[locale]/mushaf/`)
 
 ```
-(page.tsx — server: header band + session gate)
+(page.tsx — server: header band + session gate; reads ?removed to show AccessRemovedBanner)
+  AccessRemovedBanner        — client: dismissible amber warning-style notice, shown when redirected here after losing grant access (?removed=1); strips the param on dismiss (amber utilities + dark: variant — no --warning token exists)
   MushafHub                  — client orchestrator; uses useAccessGrants, passes reload down
     GenerateCodeCard         — generate one-time code + copy-to-clipboard (hero card w/ layered frame)
     RedeemCodeCard           — code input + redeem; calls onRedeemed to refresh lists
@@ -64,7 +65,9 @@ Nav                          — top bar, always visible; responsive (mobile/des
     SectionCard              — shared card wrapper (icon + title + description; hero variant)
     PersonAvatar             — circular initial avatar
   SignedOutPrompt            — client: sign-in CTA when unauthenticated
-  ([grant]/layout.tsx)       — server guard: verifies viewer, renders Sidebar (viewing indicator lives in the safha header — see reader zone, ViewingChip)
+  ([grant]/layout.tsx)       — server guard: no session → redirect home; revoked/foreign grant → redirect to hub ?removed=1; else renders Sidebar (viewing indicator lives in the safha header — see reader zone, ViewingChip)
+
+app/not-found.tsx            — app-wide 404 (client), catches all unmatched URLs; themed via theme tokens + plain <a> full-load links (Home + Shared Mushaf) so navigation keeps CSS. Renders under the root layout (no Nav).
 ```
 
 ## Zone: vertical reader (`app/[locale]/pages/vertical/page.tsx`)

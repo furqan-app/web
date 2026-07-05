@@ -4,12 +4,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/options";
 import { MushafHub } from "@/app/components/mushaf/MushafHub";
 import { SignedOutPrompt } from "@/app/components/mushaf/SignedOutPrompt";
+import { AccessRemovedBanner } from "@/app/components/mushaf/AccessRemovedBanner";
 import { Locale } from "@/app/types/config";
 
 export default async function MushafHubPage({
   params: { locale },
+  searchParams,
 }: {
   params: { locale: Locale };
+  searchParams: { removed?: string };
 }) {
   setRequestLocale(locale);
 
@@ -37,7 +40,14 @@ export default async function MushafHubPage({
         </p>
       </header>
 
-      {session?.user ? <MushafHub /> : <SignedOutPrompt />}
+      {session?.user ? (
+        <div className="flex flex-col gap-5">
+          {searchParams?.removed ? <AccessRemovedBanner /> : null}
+          <MushafHub />
+        </div>
+      ) : (
+        <SignedOutPrompt />
+      )}
     </main>
   );
 }

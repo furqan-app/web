@@ -55,6 +55,8 @@
     "unknownUser": "Unknown user",
     "viewingChip": "Viewing {name}'s mushaf",
     "viewingChipGeneric": "Viewing another user's mushaf",
+    "accessRemoved": "You no longer have access to this mushaf.",
+    "dismiss": "Dismiss",
     "generate": {
       "title": "Share my mushaf",
       "description": "Generate a one-time code and share it. Whoever enters it can view and edit the marks on your mushaf. Each code works once.",

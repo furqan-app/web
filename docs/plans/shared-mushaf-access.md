@@ -596,6 +596,102 @@ home (full load ⇒ inline script ⇒ theme applied ⇒ colors intact).
   the generic 404→home path already preserves colors; the redirect removes the only path
   that didn't.
 
+## Addendum 7 — Revoked access reloads to a bare 404 + the root-404 CSS/layout gap (2026-07-05)
+
+**Type:** bug. Reported: while viewing another user's mushaf, if the owner revokes
+your access and you reload, you get a bare **404**. And (from the earlier logout
+report, now root-caused): that 404 has a **different layout and no app CSS**, so
+clicking "home" from it lands on an unstyled page.
+
+### Root cause
+
+Two coupled issues:
+
+1. **Revoked access → `notFound()`.** `app/[locale]/mushaf/[grant]/layout.tsx`
+   calls `notFound()` when the grant is missing or not the caller's. Revoking
+   *deletes* the grant row, so on reload `grantRecord` is `null` → `notFound()`.
+2. **The 404 renders outside the locale layout.** The only not-found boundary is
+   the **root** `app/not-found.tsx`, which lives above `app/[locale]/`. So it
+   renders with the bare root layout — no `Nav`, no theme providers, and (in a
+   production build) without the `[locale]` segment's CSS bundle. That's why it
+   looks unstyled, and why a client nav from it to `/{locale}` can arrive without
+   CSS. (Confirmed earlier: a plain full-load 404 keeps the theme via the inline
+   `<head>` script, but the root-404 shell is still the wrong, Nav-less layout.)
+
+### Fix
+
+**A. Themed 404 that keeps its CSS.**
+> **Correction during implementation (Next.js routing semantics):** a
+> segment-level `app/[locale]/not-found.tsx` does **not** catch unmatched URLs —
+> Next routes *all* unmatched URLs (and a `notFound()` thrown in the locale
+> *layout* itself) to the **root** `app/not-found.tsx`; segment not-found only
+> fires on an explicit `notFound()` in a *page*. Verified live: `/ar/<bogus>`
+> renders the root file. After Fix B the grant layout redirects instead of
+> `notFound()`, so nothing in the locale tree throws `notFound()` anymore — a
+> `[locale]/not-found.tsx` would be dead code. So the fix is on the **root** file.
+
+Rewrite `app/not-found.tsx` to (1) use **theme tokens**
+(`bg-background`/`text-foreground`/`text-primary` — they resolve against the theme
+class the inline `<head>` script sets) instead of the old hardcoded
+`bg-white dark:bg-black text-black`, so it's fully themed; and (2) use plain `<a>`
+links (full navigation) instead of `next/link`, so "back to home" always paints
+with the destination's complete CSS — a client nav from the root-layout 404 into
+the locale tree can arrive before that tree's CSS chunk loads in prod and flash
+unstyled. Adds a **Shared Mushaf** link (`mushaf.navLink`) beside Home, with the
+`◆` manuscript header treatment. (The root 404 has no Nav — it renders outside the
+locale layout — which is acceptable for a themed escape hatch.)
+
+**B. Revoked/unauthorized viewer → hub with a banner (user's choice).**
+`app/[locale]/mushaf/[grant]/layout.tsx` — replace the `notFound()` on the
+missing/wrong-viewer branch with a redirect to the hub carrying a flag:
+```ts
+if (!grantRecord || grantRecord.viewer_user !== viewerId) {
+  redirect(`/${locale}/mushaf?removed=1`);
+}
+```
+The hub (`app/[locale]/mushaf/page.tsx`) reads `searchParams.removed` and, for a
+signed-in user, renders a **dismissible** `AccessRemovedBanner` above `MushafHub`:
+"You no longer have access to this mushaf." Generic copy — **no owner name**:
+on a revoke the row is already deleted (no `owner_user` to show), and naming the
+owner in the wrong-viewer case would leak identity (ADR 0012 "no exposure"). The
+hub is the right landing spot: it lists the caller's *current* access (the revoked
+mushaf is gone) and is where they'd redeem a **new** code — the only re-grant path
+(ADR 0012 has no request/approval flow, so there is deliberately no "request
+access" action). The unauthenticated branch (Addendum 6) still redirects to
+`/${locale}`.
+
+### Files to change (Addendum 7)
+
+- `app/not-found.tsx` — themed (theme tokens + `◆` header) + plain `<a>` full-load
+  links (Home + Shared Mushaf). Fixes the unstyled 404 and the CSS loss on "home".
+  (Corrected from the plan's original `app/[locale]/not-found.tsx`, which Next
+  wouldn't use for unmatched URLs — see Fix A note.)
+- `app/[locale]/mushaf/[grant]/layout.tsx` — revoked/wrong-viewer branch →
+  `redirect(`/${locale}/mushaf?removed=1`)` instead of `notFound()`.
+- `app/[locale]/mushaf/page.tsx` — read `searchParams.removed`; render the banner
+  for a signed-in user when set.
+- `app/components/mushaf/AccessRemovedBanner.tsx` — **new** client, dismissible
+  banner (`useState`); strips `?removed` on dismiss via `router.replace`. **Amber
+  warning style** (`AlertTriangle` + amber utilities with a `dark:` variant, so it
+  reads as a clear warning in light, gold, and dark — the token set has no
+  `--warning`, only `destructive`).
+- `messages/{ar,en}.json` — add `mushaf.accessRemoved`.
+- `docs/architecture/DECISIONS.md` — extend the layout-guard note: an authenticated
+  viewer who lost access redirects to the hub (`?removed=1`) with a generic
+  message, never `notFound()` and never naming the owner; in-locale 404s use
+  `app/[locale]/not-found.tsx` so they stay themed.
+- `docs/architecture/COMPONENTS.md` — add `AccessRemovedBanner` and the locale
+  `not-found`.
+
+### Not doing
+
+- No "request access" button — ADR 0012 has no request/approval flow; re-grant is a
+  new code redeemed at the hub.
+- Do not name the owner on the no-access screen (deleted on revoke; identity leak
+  otherwise).
+- Do not remove the root `app/not-found.tsx` (still needed for locale-less paths).
+- No new toast system — the hub banner is a local dismissible element.
+
 ## What NOT to do
 
 - Do not add a user-search / directory endpoint (privacy; out of scope).

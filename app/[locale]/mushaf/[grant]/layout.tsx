@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { setRequestLocale } from "next-intl/server";
 
@@ -34,10 +34,14 @@ export default async function MushafGrantLayout({
     where: { id: grant },
   });
 
-  // Signed in but not this grant's viewer (or the grant is gone) → a genuine
-  // 404. The grant id is not a capability — only its viewer may open it (ADR 0012).
+  // Signed in but not this grant's viewer (or the grant was revoked/deleted) →
+  // send them to the hub with a "removed" flag, not a 404. The hub shows their
+  // current access (this mushaf is now gone from it) and is where they'd redeem a
+  // new code. Generic message only — never name the owner (deleted on revoke, and
+  // an identity leak in the wrong-viewer case). The grant id is not a capability;
+  // only its viewer may open it (ADR 0012).
   if (!grantRecord || grantRecord.viewer_user !== viewerId) {
-    notFound();
+    redirect(`/${locale}/mushaf?removed=1`);
   }
 
   const [surahs, rubs] = await Promise.all([getSurahs(), getRubs()]);
