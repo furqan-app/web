@@ -38,12 +38,54 @@
     "notesComingSoon": "Coming soon",
     "chooseColorLabel": "Choose bookmark color",
     "saveMark": "Save Bookmark",
-    "actionError": "Something went wrong. Try again."
+    "actionError": "Something went wrong. Try again.",
+    "markedBy": "Marked by"
   },
   "rubs": "Rubs",
   "rub": "Rub",
   "verse": "Verse",
   "page": "Page",
   "signOut": "Sign out",
-  "signIn": "Sign in"
+  "signIn": "Sign in",
+  "mushaf": {
+    "hubTitle": "Shared Mushaf",
+    "hubTagline": "Let others read and mark your mushaf, or open one shared with you.",
+    "navLink": "Shared mushaf",
+    "signedOut": "Sign in to share your mushaf or open one shared with you.",
+    "unknownUser": "Unknown user",
+    "viewingChip": "Viewing {name}'s mushaf",
+    "viewingChipGeneric": "Viewing another user's mushaf",
+    "accessRemoved": "You no longer have access to this mushaf.",
+    "dismiss": "Dismiss",
+    "generate": {
+      "title": "Share my mushaf",
+      "description": "Generate a one-time code and share it. Whoever enters it can view and edit the marks on your mushaf. Each code works once.",
+      "button": "Generate code",
+      "another": "Generate another code",
+      "copy": "Copy",
+      "copied": "Copied",
+      "error": "Couldn't generate a code. Try again."
+    },
+    "redeem": {
+      "title": "Access someone's mushaf",
+      "description": "Enter a code someone shared with you to view and edit their mushaf.",
+      "placeholder": "Enter code",
+      "button": "Redeem",
+      "success": "Access granted — see the list below."
+    },
+    "accessible": {
+      "title": "Mushafs I can access",
+      "description": "Mushafs others have shared with you.",
+      "empty": "No shared mushafs yet.",
+      "open": "Open"
+    },
+    "viewers": {
+      "title": "People who can access my mushaf",
+      "description": "Remove anyone to instantly cut off their access.",
+      "empty": "No one has access to your mushaf.",
+      "remove": "Remove",
+      "confirmRemove": "Remove",
+      "cancel": "Cancel"
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Verse } from "@/app/generated/quran-client";
-import { Bookmark, Eraser, SquarePen, X } from "lucide-react";
+import { Bookmark, Eraser, SquarePen, User, X } from "lucide-react";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
@@ -18,6 +18,11 @@ type ModalProps = {
   markFor: WordWithVerse | Verse;
   verseDisplayText?: string;
   currentColor?: string;
+  // Name of the mark's author, shown only when it wasn't made by the current
+  // viewer (e.g. a teacher's mark on a student's mushaf). See ADR 0012.
+  markedByName?: string | null;
+  // When set, add/remove operate on the granted mushaf instead of the viewer's.
+  grantId?: string;
 };
 
 type CategoryContentProps = {
@@ -121,8 +126,10 @@ export function MarkModal({
   markFor,
   verseDisplayText,
   currentColor,
+  markedByName,
+  grantId,
 }: ModalProps) {
-  const { reload: reloadMarks } = useMarks(markFor.page_number);
+  const { reload: reloadMarks } = useMarks(markFor.page_number, grantId);
   const t = useTranslations();
   const [error, setError] = useState(false);
 
@@ -130,13 +137,16 @@ export function MarkModal({
 
   const markWord = async (color: string) => {
     setError(false);
-    const added = await addPageMark({
-      marked_type: isWord ? "word" : "verse",
-      marked_id: isWord ? markFor.location : markFor.verse_key,
-      mark_type: "color",
-      mark_value: color,
-      page_number: markFor.page_number,
-    });
+    const added = await addPageMark(
+      {
+        marked_type: isWord ? "word" : "verse",
+        marked_id: isWord ? markFor.location : markFor.verse_key,
+        mark_type: "color",
+        mark_value: color,
+        page_number: markFor.page_number,
+      },
+      grantId,
+    );
 
     if (added) {
       reloadMarks();
@@ -148,12 +158,15 @@ export function MarkModal({
 
   const removeMark = async () => {
     setError(false);
-    const removed = await deletePageMark({
-      marked_type: isWord ? "word" : "verse",
-      marked_id: isWord ? markFor.location : markFor.verse_key,
-      mark_type: "color",
-      page_number: markFor.page_number,
-    });
+    const removed = await deletePageMark(
+      {
+        marked_type: isWord ? "word" : "verse",
+        marked_id: isWord ? markFor.location : markFor.verse_key,
+        mark_type: "color",
+        page_number: markFor.page_number,
+      },
+      grantId,
+    );
 
     if (removed) {
       reloadMarks();
@@ -188,6 +201,14 @@ export function MarkModal({
           >
             {getTitle(markFor, verseDisplayText)}
           </h3>
+          {markedByName ? (
+            <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+              <User className="size-3" strokeWidth={1.8} />
+              <span>
+                {t("markModal.markedBy", "Marked by")} {markedByName}
+              </span>
+            </p>
+          ) : null}
         </div>
         <Tabs defaultValue="bookmarks">
           <TabsList className="mb-2 bg-muted p-1 h-auto w-full">

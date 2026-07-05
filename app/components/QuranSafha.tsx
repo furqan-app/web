@@ -9,15 +9,22 @@ import { FONT_V1 } from "@constants/font";
 import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
 import useTranslations from "@hooks/use-translations";
 import { getPageFontFamily } from "@utils/quran-font-map";
-import { getColorMark } from "@utils/marks";
+import { getColorMarkMeta } from "@utils/marks";
 import { MarkModal } from "./MarkModal";
 import { SignInModal } from "./SignInModal";
+import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithVerse } from "../types/prisma";
 
 type QuranSafhaProps = {
   page: number;
   lines: Record<string, Array<WordWithVerse>>;
   pageMetadata: PageMetadataWithChapter;
+  // When set, this safha shows/edits another user's mushaf via an access grant
+  // (see ADR 0012). Undefined = the viewer's own mushaf.
+  grantId?: string;
+  // Owner of the mushaf being viewed via a grant — drives the in-header viewing
+  // indicator. Null/undefined = own mushaf, no indicator.
+  viewingOwnerName?: string | null;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,10 +41,16 @@ const tailwindFontUtility = [
   "md:text-[max(24px,4.9vh)]",
 ];
 
-export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
+export const QuranSafha = ({
+  page,
+  lines,
+  pageMetadata,
+  grantId,
+  viewingOwnerName,
+}: QuranSafhaProps) => {
   const session = useSession();
   const t = useTranslations();
-  const { data: marks } = useMarks(page);
+  const { data: marks } = useMarks(page, grantId);
   const { quranFontScale } = useQuranFontScale();
 
   const [selectedForMark, setSelectedForMark] = useState<
@@ -76,9 +89,9 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
     setSelectedForMark(null);
   };
 
-  const getCurrentColor = (markFor: WordWithVerse | Verse) => {
+  const getCurrentColorMeta = (markFor: WordWithVerse | Verse) => {
     const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
-    return getColorMark(marks?.[markedId] ?? []);
+    return getColorMarkMeta(marks?.[markedId] ?? []);
   };
 
   const hizbDefaults: Record<string, string> = {
@@ -96,13 +109,22 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
   return (
     <>
       {session?.data?.user && selectedForMark ? (
-        <MarkModal
-          isOpen={true}
-          close={closeMarkModal}
-          markFor={selectedForMark as WordWithVerse | Verse}
-          verseDisplayText={verseDisplayText}
-          currentColor={getCurrentColor(selectedForMark as WordWithVerse | Verse)}
-        />
+        (() => {
+          const meta = getCurrentColorMeta(
+            selectedForMark as WordWithVerse | Verse,
+          );
+          return (
+            <MarkModal
+              isOpen={true}
+              close={closeMarkModal}
+              markFor={selectedForMark as WordWithVerse | Verse}
+              verseDisplayText={verseDisplayText}
+              currentColor={meta?.value}
+              markedByName={meta && !meta.isOwn ? meta.authorName : null}
+              grantId={grantId}
+            />
+          );
+        })()
       ) : null}
       {!session.data?.user && selectedForMark ? (
         <SignInModal isOpen={true} close={closeMarkModal} />
@@ -138,7 +160,14 @@ export const QuranSafha = ({ page, lines, pageMetadata }: QuranSafhaProps) => {
               className="shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center pb-2 border-b border-border"
               style={{ marginBottom: "var(--fq-line-gap)" }}
             >
-              <span className="whitespace-nowrap text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground">{juz}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                {grantId ? (
+                  <ViewingChip ownerName={viewingOwnerName} />
+                ) : null}
+                <span className="min-w-0 truncate text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground">
+                  {juz}
+                </span>
+              </span>
               <div className="flex items-center justify-center gap-1.5">
                 <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
                 <span

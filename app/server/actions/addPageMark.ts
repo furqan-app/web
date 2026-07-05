@@ -6,12 +6,15 @@ export type AddMarkData = {
   mark_value: string;
 };
 
-export const addPageMark = async (data: AddMarkData) => {
+export const addPageMark = async (data: AddMarkData, grantId?: string) => {
   const body = JSON.stringify(data);
+  const url = grantId
+    ? `/api/mushaf/${grantId}/pages/${data.page_number}/marks`
+    : `/api/quran/pages/${data.page_number}/marks`;
 
   try {
     const response = await fetch(
-      `/api/quran/pages/${data.page_number}/marks`,
+      url,
       {
         method: "POST",
         headers: {
