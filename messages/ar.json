@@ -22,6 +22,8 @@
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
   "appearance": "المظهر",
+  "offlineAccess": "الوصول دون اتصال",
+  "offlinePagesReady": "{cached} من {total} صفحة متاحة دون اتصال",
   "notFound": {
     "title": "404 - الصفحة غير موجودة",
     "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",
@@ -40,7 +42,8 @@
     "chooseColorLabel": "اختر لون العلامة المرجعية",
     "saveMark": "حفظ العلامة المرجعية",
     "actionError": "حدث خطأ ما. حاول مرة أخرى.",
-    "markedBy": "علامة من"
+    "markedBy": "علامة من",
+    "offlineNotice": "اتصل بالإنترنت لعرض العلامات أو إضافتها"
   },
   "rubs": "أرباع",
   "rub": "ربع",

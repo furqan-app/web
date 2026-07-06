@@ -247,6 +247,21 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## PWA & Offline Quran Page Caching
+
+**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches all 604 Quran pages for the current locale, plus their per-page fonts, in the background — resuming on later app launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0013](adr/0013-pwa-offline-architecture.md).
+
+**Constraints:**
+- Never unconditionally pre-cache page fonts for regular web visitors — this would reintroduce the exact problem the per-page font-inlining architecture (Font System decision, above) was built to avoid. The `display-mode: standalone` gate is load-bearing.
+- Do not add offline write-queueing for marks without re-opening ADR 0013 — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers.
+- The pre-cached page/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (reader markup, font logic) — bumping it on every deploy would force ~92MB re-downloads for every installed user on every deploy.
+- Pre-cache only the current locale's 604 pages, not both `ar`/`en` — fonts are locale-independent and cached once regardless; only the thin page shell differs per locale.
+- iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; a ~92MB cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS.
+- The manual `pages-v{N}` version constant lives in `app/sw.ts` (`PAGES_CACHE_VERSION`) — bump it there when reader markup/font logic changes.
+- Serwist is disabled in development (`disable: process.env.NODE_ENV === "development"` in `next.config.mjs`) — `npm run dev` never registers a service worker. To test install/offline behavior, use `npm run build && npm start`.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:

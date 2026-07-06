@@ -21,6 +21,8 @@
   "language": "Language",
   "quranFontSize": "Quran Font Size",
   "appearance": "Appearance",
+  "offlineAccess": "Offline Access",
+  "offlinePagesReady": "{cached} of {total} pages ready offline",
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",
@@ -39,7 +41,8 @@
     "chooseColorLabel": "Choose bookmark color",
     "saveMark": "Save Bookmark",
     "actionError": "Something went wrong. Try again.",
-    "markedBy": "Marked by"
+    "markedBy": "Marked by",
+    "offlineNotice": "Connect to the internet to view or add marks"
   },
   "rubs": "Rubs",
   "rub": "Rub",

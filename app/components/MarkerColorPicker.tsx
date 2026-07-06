@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 type Props = {
   value?: string;
   onChange: (color: string) => void;
+  disabled?: boolean;
 };
 
 const COLORS: Array<{ key: string; chip: string; labelKey: string; defaultLabel: string }> = [
@@ -17,7 +18,7 @@ const COLORS: Array<{ key: string; chip: string; labelKey: string; defaultLabel:
   { key: "green", chip: "bg-green-600", labelKey: "markModal.greenMark", defaultLabel: "Green Mark" },
 ];
 
-export const MarkerColorPicker = ({ value, onChange }: Props) => {
+export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
 
@@ -25,6 +26,7 @@ export const MarkerColorPicker = ({ value, onChange }: Props) => {
     <RadioGroup
       value={value}
       onValueChange={onChange}
+      disabled={disabled}
       className="grid grid-cols-3 gap-3"
       dir={getLanguageDirection(locale)}
     >
@@ -41,6 +43,7 @@ export const MarkerColorPicker = ({ value, onChange }: Props) => {
               isSelected
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border/60 hover:border-border shadow-sm",
+              disabled && "opacity-50 cursor-not-allowed pointer-events-none",
             )}
           >
             <span className={cn("w-6 h-6 rounded-md flex items-center justify-center", chip)}>

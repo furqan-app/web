@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 import { useLocale } from "next-intl";
 import "./globals.css";
 import { getLanguageDirection } from "./utils/i18n";
@@ -8,9 +8,20 @@ import { Tajawal } from "next/font/google";
 export const metadata: Metadata = {
   title: "Furqan",
   description: "The word focused Quran app",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Furqan",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#16232F",
 };
 
 const tajawal = Tajawal({
