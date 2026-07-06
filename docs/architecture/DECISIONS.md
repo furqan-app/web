@@ -246,6 +246,20 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Mushaf Double-Page Spread
+
+**Decision:** Users can toggle between single-page and double-page (facing-spread) mushaf view, `lg` (1024px+) and up only — below `lg`, including all of mobile, the layout is forced single-page. Pages pair up in fixed pairs `(1,2), (3,4), (5,6)…(603,604)` (302 complete pairs, no singleton); `getPagePair(n)` derives a pair from either member. `/pages/[id]` keeps its existing route shape — either id of a pair renders that same pair. `ReaderPage` always fetches **both** pair members' words server-side at build time (`Promise.all`), regardless of the client-side view toggle; the toggle only shows/hides the second `QuranSafha` via CSS, so switching is instant with no extra request. See [ADR 0013](adr/0013-mushaf-double-page-spread.md).
+
+**Constraints:**
+- View preference persists in `localStorage` (`quranSafhaView`, via `QuranSafhaViewContext`, mirroring `QuranFontScaleContext`) — default `"double"`.
+- In single-page mode (including forced-single below `lg`), prev/next steps by one page (`pageId ± 1`, unchanged from before this feature). In double-page mode, prev/next steps by a whole pair (`± 2`), anchored to the odd (right-hand) id of the neighboring pair.
+- Both pair members' `@font-face` blocks are always inlined, but only the current page's font gets `<link rel="preload">` — the pair partner's font is not preloaded, so it isn't fetched at all unless that card is actually rendered (relies on browsers not fetching fonts for `display:none` content).
+- The prior corner-star/rounded-border decoration (`quran-page-mushaf-design.md`) is fully replaced by an SVG double-ruled border + corner medallions + top/bottom diamond markers plus 2 offset stacked "book" layers behind each card, styled via `currentColor` inside a `text-primary`/theme-token wrapper — no hardcoded colors. This decoration applies at `md:`+ regardless of single/double mode; only the second card and the pair-step nav are gated at `lg`.
+- Do not add a new URL scheme for pairs (no `/pages/2-3`) — the existing per-page route shape is load-bearing for `generateStaticParams` and every other basePath-deriving consumer (sidebar/search links, grant reader).
+- Applies to both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — `ReaderPage` is shared between them.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:

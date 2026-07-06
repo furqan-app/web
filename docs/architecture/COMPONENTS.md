@@ -5,7 +5,7 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-07-05
+Last updated: 2026-07-06
 
 ---
 
@@ -41,15 +41,17 @@ Nav                          — top bar, always visible; responsive (mobile/des
 
 ```
 (page — server component; self reader is statically generated, grant reader is dynamic)
-  ReaderPage                 — SHARED server body for both routes; takes basePath + optional grantId; builds nav hrefs, font-face, QuranSwipeNav, QuranSafha
-    QuranSwipeNav            — thin "use client" wrapper: swipe-to-navigate touch handler (mobile only); receives prevHref/nextHref (plain page-order hrefs, not locale-flipped)
-    QuranSafha               — client shell: handles word selection, mark state, scroll; accepts grantId (undefined = own mushaf)
-      QuranLine              — one line of the page
-        QuranWord            — single word; click triggers mark flow
-      MarkModal              — mark/highlight dialog; threads grantId to add/remove; shows "Marked by {name}" when mark author ≠ viewer
-        MarkerColorPicker    — color swatch grid
-      SignInModal            — shown instead of MarkModal when unauthenticated
-      ViewingChip            — in-header viewing indicator (client), grant reader only; static flickering eye icon (not expandable), owner name via title/aria-label (generic label when name is null); rendered inline in the safha header start cell, gated on grantId (viewingOwnerName prop optional)
+  ReaderPage                 — SHARED server body for both routes; takes basePath + optional grantId; fetches BOTH pages of the pair (getPagePair, sequential fetch — see ADR 0013) at build time; inlines both @font-face blocks (only current page preloaded); computes single-step (±1) and pair-step (±2) nav hrefs; renders QuranSafhaViewToggle + QuranSwipeNav + QuranSpread
+    QuranSafhaViewToggle      — client pill (lg+ only): single/double icon buttons, reads/writes QuranSafhaViewContext
+    QuranSwipeNav            — thin "use client" wrapper: swipe-to-navigate touch handler (mobile only); receives prevHref/nextHref (plain page-order hrefs, not locale-flipped); always steps one page even in double view
+    QuranSpread              — client: houses the two-page layout; reads QuranSafhaViewContext + useIsLgUp to decide single vs. double rendering; owns the shared NavigationArrow pair (single-step or pair-step hrefs, `relative z-20` so it always stacks above QuranSafha's absolutely-positioned decoration layers), renders two QuranSafha instances (right=odd/leftPage=even) with gap-0 between them, hides the non-current one via CSS when spread isn't active
+      QuranSafha               — client shell: handles word selection, mark state, scroll; accepts grantId (undefined = own mushaf); no decorative frame — plain bg-card + shadow, square corners; 2 offset "stacked pages" layers behind it (md+, bg-card dark:bg-muted fill — white in light/gold, existing muted fill in dark — + thin border-muted-foreground/30 edge for real contrast in every theme, small offset, pointer-events-none so they never intercept clicks); stackPeekSide prop ("left"/"right", default "left") controls which side the stack peeks toward and doubles as a left-page/right-page indicator even in single-page view (always static per pair position, not spread-state-dependent); compensateStackGap prop (default false) adds an invisible md:ml-[9px]/md:mr-[9px] margin opposite stackPeekSide so both nav arrows sit equally far from the card — QuranSpread passes it whenever the spread isn't active
+        QuranLine              — one line of the page
+          QuranWord            — single word; click triggers mark flow
+        MarkModal              — mark/highlight dialog; threads grantId to add/remove; shows "Marked by {name}" when mark author ≠ viewer
+          MarkerColorPicker    — color swatch grid
+        SignInModal            — shown instead of MarkModal when unauthenticated
+        ViewingChip            — in-header viewing indicator (client), grant reader only; static flickering eye icon (not expandable), owner name via title/aria-label (generic label when name is null); rendered inline in the safha header start cell, gated on grantId (viewingOwnerName prop optional)
 ```
 
 ## Zone: shared mushaf (`app/[locale]/mushaf/`)
@@ -89,6 +91,7 @@ app/components/ui/FQModal    — project-specific modal wrapper around shadcn Di
 
 ```
 QuranFontScaleContext        — font scale (1–10), persisted to localStorage
+QuranSafhaViewContext        — single/double page view mode, persisted to localStorage (default "double"); see ADR 0013
 SidebarContext               — sidebar open/setOpen state; bridges Nav (locale layout) → Sidebar (pages layout)
 QueryProvider                — React Query client provider (wraps everything)
 SessionProvider              — NextAuth session provider

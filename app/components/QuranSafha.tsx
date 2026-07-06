@@ -25,6 +25,16 @@ type QuranSafhaProps = {
   // Owner of the mushaf being viewed via a grant — drives the in-header viewing
   // indicator. Null/undefined = own mushaf, no indicator.
   viewingOwnerName?: string | null;
+  // Which side the "stacked pages underneath" decoration peeks toward — also
+  // doubles as a left-page/right-page indicator even in single-page view.
+  // See ADR 0013 addendum.
+  stackPeekSide?: "left" | "right";
+  // When true, adds an invisible margin on the same side as stackPeekSide to
+  // reserve space for the stack layers' ~9px protrusion, so both nav arrows sit
+  // equally far from the card. Only needed in single-page view — double view is
+  // already symmetric (each card's stack peeks toward its own outer edge).
+  // See ADR 0013 addendum.
+  compensateStackGap?: boolean;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -47,6 +57,8 @@ export const QuranSafha = ({
   pageMetadata,
   grantId,
   viewingOwnerName,
+  stackPeekSide = "left",
+  compensateStackGap = false,
 }: QuranSafhaProps) => {
   const session = useSession();
   const t = useTranslations();
@@ -130,23 +142,23 @@ export const QuranSafha = ({
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center w-full md:w-auto">
-        <div className="relative rounded-none md:rounded-[20px] md:border md:border-border md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-auto">
-          {/* Inner decorative accent frame */}
-          <div className="hidden md:block absolute inset-[10px] rounded-xl border border-primary/20 pointer-events-none z-10" />
-          {/* Corner star ornaments */}
-          <div className="hidden md:block absolute top-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          <div className="hidden md:block absolute top-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          <div className="hidden md:block absolute bottom-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          <div className="hidden md:block absolute bottom-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          {/* Content */}
+        <div
+          className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-auto ${compensateStackGap ? (stackPeekSide === "right" ? "md:mr-[9px]" : "md:ml-[9px]") : ""}`}
+        >
+          {/* Stacked "pages underneath" layers — peek toward the outer (spine-away)
+              edge; also doubles as a left-page/right-page indicator in single view.
+              border-muted-foreground/30 for real contrast in every theme
+              (border-border was too close in lightness to bg-card in light/gold).
+              bg-card dark:bg-muted: white fill in light/gold, existing muted fill
+              kept in dark (already approved). */}
+          <div
+            className={`hidden md:block absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/10 opacity-100 pointer-events-none ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
+          />
+          <div
+            className={`hidden md:block absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/10 opacity-100 pointer-events-none ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
+          />
+          <div className="relative rounded-none md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-full md:h-auto">
+            {/* Content */}
           <div
             className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full md:block md:h-auto"
             style={{
@@ -206,6 +218,7 @@ export const QuranSafha = ({
               <span className="text-primary opacity-70 text-[10px]">◆</span>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </>
