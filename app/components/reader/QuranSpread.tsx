@@ -61,21 +61,31 @@ export const QuranSpread = ({
 }: QuranSpreadProps) => {
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
-  const isSpreadActive = view === "double" && isLgUp;
-  const nav = isSpreadActive ? pairStepNav : singleStepNav;
+  // useIsLgUp is used ONLY to pick the nav-arrow href (single-step vs pair-step).
+  // The double-vs-single *display* is gated entirely by CSS (the pre-paint
+  // `html[data-safha-view]` attribute + the `lg` media query on `.fq-spread`),
+  // so it's correct at first paint on slow connections — no matchMedia in the
+  // display path. See ADR 0013 Addendum 4. The arrow href's pre-hydration
+  // staleness is invisible (same icon, only the target differs).
+  const nav = view === "double" && isLgUp ? pairStepNav : singleStepNav;
 
-  const hideRight = !isSpreadActive && rightPage.pageId !== currentPageId;
-  const hideLeft = !isSpreadActive && leftPage.pageId !== currentPageId;
+  // The non-current pair member is the "partner": CSS hides it unless the spread
+  // is actually showing (lg + data-safha-view="double"). Exactly one of the two
+  // always equals currentPageId.
+  const rightIsPartner = rightPage.pageId !== currentPageId;
+  const leftIsPartner = leftPage.pageId !== currentPageId;
 
   return (
     <div className="flex-1 min-w-0 flex justify-center items-center">
       <NavigationArrow href={nav.prevHref} isRTL={isRTL} isNext={false} />
-      {/* gap-0: the two cards' spine-adjacent edges touch directly, matching a
+      {/* `.fq-spread` (static) scopes every CSS display/cap/margin gate to cards
+          inside a spread, so the standalone QuranSafha in QuranPage is unaffected.
+          gap-0: the two cards' spine-adjacent edges touch directly, matching a
           closed book — see ADR 0013 addendum. Each card's own stacked "pages
           underneath" layers peek toward its outer (spine-away) edge via
           stackPeekSide, never bridging the seam. */}
-      <div dir="rtl" className="flex items-stretch gap-0">
-        <div className={hideRight ? "hidden" : undefined}>
+      <div className={`flex ${!isRTL ? "flex-row-reverse" : ""} items-stretch gap-0 fq-spread`}>
+        <div className={rightIsPartner ? "fq-safha-partner" : undefined}>
           <QuranSafha
             page={rightPage.pageId}
             lines={rightPage.lines}
@@ -83,10 +93,10 @@ export const QuranSpread = ({
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
             stackPeekSide="right"
-            compensateStackGap={!isSpreadActive}
+            compensateStackGap
           />
         </div>
-        <div className={hideLeft ? "hidden" : undefined}>
+        <div className={leftIsPartner ? "fq-safha-partner" : undefined}>
           <QuranSafha
             page={leftPage.pageId}
             lines={leftPage.lines}
@@ -94,7 +104,7 @@ export const QuranSpread = ({
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
             stackPeekSide="left"
-            compensateStackGap={!isSpreadActive}
+            compensateStackGap
           />
         </div>
       </div>

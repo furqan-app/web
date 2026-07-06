@@ -25,12 +25,19 @@ export function QuranSafhaViewProvider({ children }: { children: ReactNode }) {
   const [view, setViewState] = useState<QuranSafhaView>("double");
 
   useEffect(() => {
-    setViewState(getInitialView());
+    const initial = getInitialView();
+    setViewState(initial);
+    // Keep the pre-paint <html data-safha-view> attribute (set by the inline
+    // script in app/layout.tsx) in sync with the resolved preference — the CSS
+    // display gate keys off it, not off React state. See ADR 0013 Addendum 4.
+    document.documentElement.setAttribute("data-safha-view", initial);
   }, []);
 
   const setView = (newView: QuranSafhaView) => {
     setViewState(newView);
     storage.set("quranSafhaView", newView);
+    // Re-drive the CSS display gate live on toggle, without a reload.
+    document.documentElement.setAttribute("data-safha-view", newView);
   };
 
   return (

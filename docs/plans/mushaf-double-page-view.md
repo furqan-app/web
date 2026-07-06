@@ -309,3 +309,215 @@ Magnitude (9px) and the `compensateStackGap={!isSpreadActive}` gating are unchan
 - Keep using physical `ml-`/`mr-` (not logical `ms-`/`me-`) — the peek itself is physical (`translate-x`, unaffected by `dir`), so the compensation must be too. This corrects Addendum 6's "opposite side" instruction, but not its "physical, not logical" instruction — that part stays.
 - Double view (`isSpreadActive` true, `compensateStackGap` false) still gets no margin — unchanged and already symmetric.
 - 9px must continue to track the stack protrusion (`translate-x-2` 8px + 1px border); if Addendum 3's offset ever changes, this value follows it — same caveat as Addendum 6.
+
+---
+
+## Post-review fixes (round 2)
+
+Three issues reported after the feature shipped to PR #44 (Trello #50), plus fixes for the `/review-fq-work` findings on the branch. A fourth issue reported at the same time — facing pages rendering different heights because the surah-name banner line is missing (madani layout puts the next surah's banner at the end of a surah's last page) — was diagnosed as a **data/rendering gap** (our `Word` table has no `line_type`; surah names are drawn inline at the surah's start in `QuranLine.tsx`, never as end-of-page banners), and split out to its own task, **Trello #72** (`project_surah_banner_gap` memory). It is explicitly **out of scope here** — Addenda 8–10 are layout/doc only and do not attempt to equalise or mask the banner-driven height difference.
+
+## Addendum 8: restore md single-page vertical centering (regression)
+
+**Date:** 2026-07-06
+
+### Bug
+
+On `md`-range screens (≥768px, below `lg` where the toggle is hidden and the layout is forced single-page), the safha sits at the **top** of the viewport instead of vertically centered — lots of empty space below it.
+
+### Root cause
+
+The `ReaderPage` rewrite (section 5 above) split the old single row wrapper into a `flex flex-col` column (to stack the `lg`-only toggle above the page row) but dropped the wrapper's height. The pre-feature wrapper was `... min-h-[calc(100dvh-3.5rem)] flex ... md:items-center py-4 ...`; the new outer column is `bg-background w-full flex flex-col items-center justify-start md:justify-center px-0 gap-2` — it has `md:justify-center` but **no height**, so the column is only as tall as its content and `justify-center` has nothing to center within. (Mobile was unaffected because the card there is a fixed `h-[calc(100dvh-5.5rem)]` and top-alignment is fine full-bleed.)
+
+### Fix
+
+Restore the dropped height and vertical padding on the outer `flex flex-col` wrapper (`ReaderPage.tsx`, the `bg-background w-full flex flex-col …` div): add `min-h-[calc(100dvh-3.5rem)]` and `py-4`, matching the pre-feature wrapper. `justify-start md:justify-center` then centers the toggle+row group vertically on `md`+ while leaving mobile top-aligned.
+
+### Files to Change
+
+- `app/components/reader/ReaderPage.tsx` — add `min-h-[calc(100dvh-3.5rem)] py-4` to the outer `bg-background w-full flex flex-col …` wrapper.
+
+### Constraints
+
+- Do not reintroduce these on the inner row wrapper — the column wrapper is the one that must own the height now (it holds toggle + row).
+- Mobile (`<md`) must stay visually identical — the card's own `h-[calc(100dvh-5.5rem)]` and top alignment are unchanged; `min-h`/`py-4` reproduce exactly the pre-feature mobile budget (`100dvh − 56px` container − `32px` padding = `100dvh − 88px` = the card height), so no new scroll appears.
+- Verify centering at `md` (e.g. 820px), and that `lg` double view still lays out correctly (toggle above, spread centered).
+
+## Addendum 9: double-view "scale to fit width" (issue 3)
+
+**Date:** 2026-07-06
+
+### Bug
+
+In double view at some `lg` widths (reported at ~1256px), the two full-size cards are wider than the viewport and the outer (right) card is **clipped** — part of it is not visible.
+
+### Root cause
+
+Per ADR 0004 the word font is `max(24px, X vh)` (height-driven), and per ADR 0011 a justified mushaf line is ~`14.42 × font-size` wide. So each card's **width scales with viewport height**, independent of viewport width. Two such cards + arrows + padding exceed the viewport width whenever the viewport is tall relative to its width (common on tablets around 1256px). The original plan flagged this and deferred it ("accept it… unless a follow-up reports real overflow"); this is that follow-up. User chose **scale-to-fit** (both pages always fully visible, shrinking together) over raising the double-view breakpoint or horizontal scroll.
+
+### Approach — CSS-only width cap (no JS, no flash)
+
+In **double view only**, cap the reading font (and its dependent vertical-rhythm vars) by a from-width budget, taking the smaller of the height-based value and the width-based value — the same width-driven technique ADR 0011 uses on mobile, applied per half-width. See ADR 0013 Addendum 3.
+
+Mechanism:
+
+1. **Expose the vh-based values as CSS vars** on `QuranSafha` so a stylesheet rule can cap them. Today `--fq-line-gap`/`--fq-heading-h` are set inline on `.fq-content` and the word font is a Tailwind arbitrary class (`md:text-[max(24px,Xvh)]`, safelisted per ADR 0005). Add a `--fq-word-font: max(24px, {getWordFontSizeCss})` inline var alongside them. **Keep** the existing Tailwind class and its safelist for the single-view path untouched (ADR 0005) — the var is additive, only the double-view rule consumes it.
+2. **Spread-active class:** `QuranSpread` adds an `fq-spread-active` class on its container (or the cards wrapper) when `isSpreadActive` (already computed). Single view / forced-single never gets the class, so nothing changes there.
+3. **globals.css double-view rule** under `@media (min-width: 1024px)`:
+   - Define the width budget `--fq-dv-word-cap: calc((50vw - <chrome>px) / 14.7)` — half the viewport minus per-card chrome (half of arrows + `ps-14`/`pe-10` + inter-card seam) minus the card's `px-7` (56px) padding, over ADR 0011's `14.7` never-wrap divisor. `<chrome>` is calibrated by browser measurement (Playwright), same as ADR 0011's constants were.
+   - `.fq-spread-active .fq-quran-safha { font-size: min(var(--fq-word-font), var(--fq-dv-word-cap)); }`
+   - Cap the rhythm vars consistently so spacing shrinks with the font (otherwise gaps stay vh-large while text shrinks): derive them from the *capped* font, e.g. `--fq-line-gap: min(<inline vh gap>, calc(var(--fq-dv-word-cap) * 0.417))` and `--fq-heading-h` from the same cap (`2 × cap + gap`), using the `lineGapRatio`/heading formulas already in `FONT_V1`. Expose the inline vh values as vars (`--fq-line-gap`, `--fq-heading-h` already are) so the rule can `min()` against them.
+4. Because font drives both width and height, the capped cards also become **shorter** than `100dvh`; the Addendum 8 `md:justify-center` centers them vertically — no extra work.
+
+### Files to Change
+
+- `app/components/QuranSafha.tsx` — set `--fq-word-font` (and ensure `--fq-line-gap`/`--fq-heading-h`) as inline vars usable by the double-view rule; no change to the single-view Tailwind font class or safelist.
+- `app/components/reader/QuranSpread.tsx` — add `fq-spread-active` class when `isSpreadActive`.
+- `app/globals.css` — add the `@media (min-width:1024px) .fq-spread-active …` block: `--fq-dv-word-cap` budget + `min()` overrides for font, line-gap, heading.
+
+### Constraints
+
+- **Single-page view is never touched** — it keeps `max(24px, X vh)` exactly (ADR 0004). The cap applies only under `.fq-spread-active` at `lg+`.
+- No new Tailwind JIT safelist for the double-view expression (ADR 0005) — the capped size is a stylesheet `min()` on a CSS var, not a per-scale arbitrary class.
+- Preserve the never-wrap invariant (ADR 0011): reuse the `14.7` divisor; the card stays `overflow-hidden` so any sub-pixel excess clips invisibly rather than wrapping.
+- Calibrate `<chrome>` in-browser across the `lg`→`xl` range (verify at ~1024px, ~1256px, ~1440px, ~1920px) with Playwright pixel-sampling — both cards fully visible, no clipping, arrows still flanking symmetrically. Confirm all three themes.
+- **Considered and rejected:** a JS `transform: scale()` measured via `ResizeObserver`/`useLayoutEffect`. Uniformly scales rhythm for free, but (a) the static-exported HTML paints at scale 1 first, so an overflow case flashes a clipped frame before hydration re-scales it, and (b) it would also shrink the nav arrows, which the width-budget approach leaves at full size. CSS width-cap avoids both.
+
+### Implementation note (as built)
+
+- `QuranSafha` exposes three **independent literal** base vars on `.fq-content` — `--fq-word-base`, `--fq-line-gap-base`, `--fq-heading-base` (each the same `max(minPx, Xvh)` expression as the effective var, **not** `var(--fq-line-gap)` — a var reference would self-cycle once the double-view rule overrides `--fq-line-gap`). The single-view Tailwind font class (`md:text-[…]`) and its ADR 0005 safelist are untouched.
+- `QuranSpread` adds `fq-spread-active` on the `dir="rtl"` cards row when `isSpreadActive`.
+- `globals.css` `@media (min-width:1024px)`: `.fq-spread-active { --fq-dv-word: calc((50vw - 136px) / 14.7) }`; `.fq-spread-active .fq-quran-safha { font-size: min(var(--fq-word-base), var(--fq-dv-word)) }` (beats the Tailwind class by specificity, no `!important`); `.fq-spread-active .fq-content { --fq-line-gap / --fq-heading-h: min(base, cap×0.417 / cap×2.417) !important }` (`!important` needed to beat QuranSafha's inline `--fq-line-gap`/`--fq-heading-h`). `--fq-dv-word` is undefined in single view, so nothing there changes.
+- **Verified (Playwright):** md single-page centered (59/59px at 900×820); double view at 1256×1350 caps the font to 33.5px with both cards inside the viewport (was clipped); 1920×1080 leaves full size (cap not biting); single view at 1256×1180 is byte-for-byte the old base font (36.6px, `--fq-dv-word` unset); `ar` toggle aria-labels render Arabic. The `136px` chrome constant = half of (`ps-14` + `pe-10` + two arrows) + card `px-7`; slightly conservative (leaves a small gap on lighter pages), safe against clipping.
+
+## Addendum 10: /review-fq-work finding fixes
+
+**Date:** 2026-07-06
+
+Fixes for the Opus branch review. (Docs findings 6 and 7 are **already applied** in this same planning pass — `DECISIONS.md` "Mushaf Double-Page Spread" now says sequential-not-`Promise.all` and describes the frame-removed final decoration, and `adr/0013` gained Addenda 2–3 correcting the same. Listed here for traceability only.)
+
+### Finding 5 — stack-layer border contrast regression (warning)
+
+The stack layers use `border border-muted-foreground/10` (`QuranSafha.tsx:155,158`), but Addenda 4/5, the adjacent code comment, and `COMPONENTS.md` all specify `/30`. `/10` is fainter than the `border-border` token Addendum 4 replaced *for being too low-contrast*, silently regressing that fix.
+
+- **Fix:** `QuranSafha.tsx` — change `border-muted-foreground/10` → `border-muted-foreground/30` on both stack-layer divs. Code now matches the comment + docs. (Re-verify the layers read as distinct pages, not a shadow, in all three themes.)
+
+### Finding 2 — toggle aria-labels hardcoded English (note)
+
+`QuranSafhaViewToggle.tsx:26,35` hardcodes `aria-label="Single page view"` / `"Double page view"`, so screen-reader labels stay English under the `ar` locale.
+
+- **Fix:** route both through `useTranslations` (the `@hooks/use-translations` wrapper, as `QuranSafha` does), adding `singlePageView` / `doublePageView` keys to the ar/en message catalogs (English text as the fallback default). Run `npm run extract-translations`.
+
+### Finding 3 — pairIndex re-derivation (note)
+
+`ReaderPage.tsx:57` computes `pairIndex = Math.ceil(pageNumber / 2)`, re-deriving the pairing `getPagePair` already did one line earlier.
+
+- **Fix (light):** derive `pairIndex` from the already-computed `rightPageId` (`(rightPageId + 1) / 2`) so the pairing formula lives only in `getPagePair`. Cosmetic; skip if it reads worse.
+
+### Finding 4 — JSX indentation (note)
+
+The inner card `<div>` and its `{/* Content */}` child added in the decoration edit (`QuranSafha.tsx:160-162`, closing tags `:221-222`) were left at the old indentation under the new wrapper.
+
+- **Fix:** re-indent the block for readability. Pure formatting, no behavior change.
+
+### Finding 1 — SSR single→double flash (note, accepted)
+
+`isSpreadActive` needs `useIsLgUp` (`false` until the post-hydration `useEffect`), so a `lg+` viewer whose stored preference is `double` sees a single-page first paint that flips to the spread after hydration. Inherent to not knowing viewport width server-side on a static export; **accepted, not fixed** (documented here so it isn't re-flagged).
+
+### Files to Change (Addendum 10)
+
+- `app/components/QuranSafha.tsx` — finding 5 (`/10`→`/30`), finding 4 (re-indent).
+- `app/components/QuranSafhaViewToggle.tsx` + message catalogs — finding 2 (i18n aria-labels).
+- `app/components/reader/ReaderPage.tsx` — finding 3 (derive `pairIndex` from `rightPageId`).
+
+## Addendum 11: fix the slow-connection pre-hydration flash (finding 1, now fixed)
+
+**Date:** 2026-07-06
+
+Supersedes Finding 1's "accepted, not fixed" note (Addendum 10) and the `.fq-spread-active` gating from Addendum 9. See ADR 0013 Addendum 4.
+
+### Bug
+
+On big screens (`lg+`) with a slow connection, the toggle shows **double** selected (the default) but a **single** page is displayed until JS finishes loading/hydrating.
+
+### Root cause
+
+`QuranSpread` gates the entire display on `isSpreadActive = view === "double" && isLgUp`. `useIsLgUp()` returns `false` on the server and the first client paint (it only learns the real viewport in a post-hydration `useEffect` via `matchMedia`). So before hydration — the whole slow-connection window — `isSpreadActive` is `false` and the spread renders single, while the toggle (reading `view`, default `"double"`) already shows double. A naive CSS gate on a context `view` class doesn't fix it cleanly: `view` also starts `"double"` for everyone (localStorage is read in an effect), so a reader who chose **single** would then get a brief *double* flash — trading one flash for another.
+
+### Fix — pre-paint attribute + CSS (mirror the theme flash-prevention pattern)
+
+`app/layout.tsx`'s `<head>` already runs an inline script that reads `localStorage.theme` and sets a class on `<html>` before first paint. Do the same for the view, so the correct display is known at paint time for **both** preferences:
+
+1. **Inline pre-paint script** (`app/layout.tsx`, alongside the theme script): read `localStorage.quranSafhaView` (JSON-stringified, e.g. `"double"`) and set `data-safha-view` on `document.documentElement` before paint; default `"double"` on null/parse-error.
+2. **CSS gates** (`globals.css`), all keyed on `:root[data-safha-view="double"] .fq-spread …` inside `@media (min-width: 1024px)`:
+   - **Partner-card visibility:** `.fq-spread .fq-safha-partner { display: none }`; shown (`display: block`) only under the attribute+lg gate.
+   - **Width cap (Addendum 9):** move the `--fq-dv-word` / `min()` font + rhythm overrides off the JS `.fq-spread-active` class and onto `:root[data-safha-view="double"] .fq-spread …` (same declarations, new selector).
+   - **Compensate margin (Addendum 7):** apply `margin-left/right: 9px` (physical, per Addendum 7) at `md+` on `.fq-compensate-l`/`.fq-compensate-r`, and *remove* it under the attribute+lg gate. So the margin is present in every single-page display and gone only when the spread actually shows both — matching the old `compensateStackGap = !isSpreadActive` behavior, now flash-free.
+3. **`.fq-spread` is a static class** on `QuranSpread`'s cards row (always present), so every gate is scoped to cards *inside a spread* — the standalone `QuranSafha` in `QuranPage.tsx` (no `.fq-spread` ancestor) is untouched.
+4. **`QuranSafhaViewContext.setView`** also sets `document.documentElement.dataset.safhaView = newView` (mirroring `useTheme`) so a live toggle re-drives the CSS with no reload; the init effect syncs it as well.
+5. **`QuranSpread` JS simplified:** drop `isLgUp`/`isSpreadActive` from the *display* path — render the static `.fq-spread` row, mark the non-current card `.fq-safha-partner`, and pass `compensateStackGap` for both cards (now meaning "part of a spread"). Keep `useIsLgUp` for **one** thing only: choosing the nav-arrow href (`view === "double" && isLgUp ? pairStepNav : singleStepNav`).
+
+### Residual (intentionally accepted)
+
+- **Nav-arrow href** still depends on `useIsLgUp`, so for the pre-hydration window an arrow click on `lg+` double could step ±1 instead of ±2. Invisible (identical icon/position, only the target differs) and self-corrects on hydration.
+- **Toggle highlight** reads context `view` (default `"double"`), so a single-preferrer's `lg`-only toggle pill can show double-selected for a beat before the init effect corrects it. The *page display* is already correct pre-paint via the attribute; this is just the small pill.
+
+### Files to Change (Addendum 11)
+
+- `app/layout.tsx` — add the `data-safha-view` pre-paint inline script in `<head>`.
+- `app/contexts/QuranSafhaViewContext.tsx` — `setView` (and the init effect) set `data-safha-view` on `<html>`.
+- `app/components/reader/QuranSpread.tsx` — static `.fq-spread` row; `.fq-safha-partner` on the non-current wrapper; `compensateStackGap` for both; `useIsLgUp` used only for arrow hrefs; remove the `isSpreadActive`-based `hidden` classes and the `.fq-spread-active` class.
+- `app/components/QuranSafha.tsx` — replace the `compensateStackGap ? md:ml/mr` inline logic with a stable `.fq-compensate-l`/`.fq-compensate-r` class (margin now applied/removed in `globals.css`).
+- `app/globals.css` — attribute+lg gates for partner visibility, the width cap (re-keyed from `.fq-spread-active`), and the compensate margin.
+- `docs/architecture/DECISIONS.md` + `adr/0013` — note the display is gated by the pre-paint attribute + CSS, not JS `matchMedia` (ADR 0013 Addendum 4 already added).
+
+### Constraints
+
+- `QuranPage.tsx`'s standalone `QuranSafha` must be visually unchanged — verified by scoping every gate to `.fq-spread`, which it has no ancestor of.
+- Keep the compensate margin **physical** (`margin-left/right`, not logical), per Addendum 7.
+- Default must be `"double"` everywhere the value is read (inline script, context, attribute) so they never disagree at first paint.
+- Verify with Playwright, ideally with JS disabled or throttled: `lg` + default → double at first paint; `lg` + stored `"single"` → single at first paint (no double flash); `<lg` → single regardless; live toggling still flips display + width cap; `QuranPage` (if reachable) unaffected.
+
+## Addendum 12: fix Quran line word order reversed in English locale (bug)
+
+**Date:** 2026-07-06
+
+### Bug
+
+In the English locale, words within each Quran line are rendered left-to-right (reversed) instead of right-to-left.
+
+### Root Cause
+
+`QuranSpread.tsx` puts a hardcoded `dir="rtl"` on the `.fq-spread` cards container (line 87). This was intended to make the first DOM child (rightPage) appear visually on the right in a flex row. However, the attribute leaks down through `QuranSafha` into `QuranLine`, changing each line's inherited direction context.
+
+`QuranLine.tsx:56-58` computes flex direction from the **locale**, not from the DOM direction:
+- `ar` locale → `flex-row` (correct in a `dir="rtl"` context, first word ends up on the right)
+- `en` locale → `flex-row-reverse` (correct in a `dir="ltr"` context, first word ends up on the right)
+
+In the main branch (before this feature), neither `ReaderPage` nor the old single-card layout set any `dir` attribute — the Quran content inherited `dir` solely from `<html>`. The `en` locale page had `dir="ltr"`, so `flex-row-reverse` correctly placed the first word on the right. With `dir="rtl"` injected by the spread container, the `en` locale now inherits `dir="rtl"`, which reverses `flex-row-reverse`'s effect: first word ends up on the left.
+
+### Fix
+
+Remove `dir="rtl"` from the spread container and instead conditionally apply `flex-row-reverse` based on the `isRTL` prop (already available in scope):
+
+```tsx
+<div className={`flex ${!isRTL ? "flex-row-reverse" : ""} items-stretch gap-0 fq-spread`}>
+```
+
+This achieves the same visual page ordering in both locales without changing the inherited direction context for children:
+
+- `ar` locale (`isRTL=true`): no `flex-row-reverse`, inherits `dir="rtl"` from `<html>` → `QuranLine` uses `flex-row` in RTL context → first word on right ✓
+- `en` locale (`isRTL=false`): `flex-row-reverse`, inherits `dir="ltr"` from `<html>` → `QuranLine` uses `flex-row-reverse` in LTR context → first word on right ✓
+
+In both cases, rightPage (first DOM child) ends up visually on the right.
+
+### Files to Change
+
+- `app/components/reader/QuranSpread.tsx` — replace `dir="rtl"` with `className={...isRTL ? "" : "flex-row-reverse"...}` on the `.fq-spread` div.
+
+### Constraints
+
+- Do not touch `QuranLine.tsx`, `QuranSafha.tsx`, or the globals.css spread rules — the fix is entirely in `QuranSpread.tsx`.
+- No `dir` attribute of any kind on the spread container — children must inherit from `<html>` only.
+- The `NavigationArrow` components sit in the outer `flex justify-center` row (sibling of the spread div), not inside it — they are unaffected by this change.
+
+**Implementation status:** implemented; `npm run lint` + `tsc --noEmit` clean. Browser verification was **skipped at the user's request** — correctness rests on the mechanism (display driven solely by the synchronous pre-paint `html[data-safha-view]` attribute + CSS `@media` gate, no React/`matchMedia` in the display path) rather than an observed run. Worth a manual look on a throttled connection before merge: confirm no single→double or double→single flash at `lg` for either stored preference, and that `<lg` stays single.

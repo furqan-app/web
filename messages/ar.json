@@ -8,6 +8,10 @@
   "search": {
     "placeholder": "ابحث عن السورة بالاسم أو الرقم"
   },
+  "reader": {
+    "singlePageView": "عرض صفحة واحدة",
+    "doublePageView": "عرض صفحتين"
+  },
   "surah": "سورة",
   "surahs": "السور",
   "verses": "الآيات",

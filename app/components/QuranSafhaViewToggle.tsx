@@ -2,9 +2,11 @@
 
 import { RectangleVertical, BookOpen } from "lucide-react";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
+import useTranslations from "@hooks/use-translations";
 
 export const QuranSafhaViewToggle = () => {
   const { view, setView } = useQuranSafhaView();
+  const t = useTranslations();
 
   const buttonClass = (active: boolean) =>
     `flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
@@ -15,7 +17,7 @@ export const QuranSafhaViewToggle = () => {
     <div className="hidden lg:flex gap-0.5 p-1 rounded-xl border border-border bg-card">
       <button
         type="button"
-        aria-label="Single page view"
+        aria-label={t("reader.singlePageView", "Single page view")}
         aria-pressed={view === "single"}
         className={buttonClass(view === "single")}
         onClick={() => setView("single")}
@@ -24,7 +26,7 @@ export const QuranSafhaViewToggle = () => {
       </button>
       <button
         type="button"
-        aria-label="Double page view"
+        aria-label={t("reader.doublePageView", "Double page view")}
         aria-pressed={view === "double"}
         className={buttonClass(view === "double")}
         onClick={() => setView("double")}

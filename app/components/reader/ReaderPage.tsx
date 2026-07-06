@@ -54,7 +54,9 @@ export const ReaderPage = async ({
 
   // Pair-step nav: steps a whole pair at a time, anchored to the neighbor
   // pair's odd (right-hand) page id. Used when the double-page spread is active.
-  const pairIndex = Math.ceil(pageNumber / 2);
+  // rightPageId is the odd (right-hand) member = pairIndex * 2 - 1, so the pair
+  // index is derivable from it — no need to re-run the pairing formula here.
+  const pairIndex = (rightPageId + 1) / 2;
   const getPairNavigationHref = (isNext: boolean) => {
     const isFirstPair = pairIndex === 1;
     const isLastPair = pairIndex === TOTAL_PAIRS;
@@ -121,7 +123,7 @@ export const ReaderPage = async ({
         prevHref={`${basePath}/${prevPageId}`}
         nextHref={`${basePath}/${nextPageId}`}
       >
-        <div className="bg-background w-full flex flex-col items-center justify-start md:justify-center px-0 gap-2">
+        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] py-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
           <QuranSafhaViewToggle />
           <div className="w-full flex justify-center items-start md:items-center px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
             <QuranSpread
