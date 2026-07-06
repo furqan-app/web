@@ -26,6 +26,11 @@
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
   "appearance": "المظهر",
+  "theme": {
+    "light": "فاتح",
+    "dark": "داكن",
+    "gold": "ذهبي"
+  },
   "notFound": {
     "title": "404 - الصفحة غير موجودة",
     "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",
