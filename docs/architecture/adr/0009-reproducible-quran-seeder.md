@@ -31,3 +31,7 @@ Adopt **Option B**. A self-contained seeder subfolder regenerates `furqan_quran`
 - **-** Seeding requires network access to QDC at run time and tracks upstream state (not pinned) — acceptable since the Quran text is stable and `verses`/`words` already depend on it.
 - **-** Destructive by design; the `--force` guard is the only thing preventing an accidental wipe of whatever `QURAN_DATABASE_URL` points at.
 - **-** `hizbs`/`hizb_verse_mappings` remain unseeded and out of scope — they are not in the Prisma schema; adding them means adding the models first.
+
+## Addendum (2026-07-06)
+
+`Verse.text_uthmani` and `Verse.text_imlaei_simple` hold **full verse text** and must be `String @db.Text` in `prisma/quran/schema.prisma`, not plain `String` (Prisma's default `VARCHAR(191)` overflows on long verses, e.g. 2:282). Word-level text columns (`Word.text_uthmani`, `code_v1`, `code_v2`, `qpc_uthmani_hafs`, `text`) are single-word strings and correctly stay plain `String`. See `docs/plans/reproducible-quran-seeder.md` Addendum 1.
