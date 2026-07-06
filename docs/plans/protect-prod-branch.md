@@ -53,3 +53,23 @@ After the workflow is pushed and visible in GitHub Actions, go to:
 
 - Use `github.head_ref` (source branch name) rather than `github.base_ref` — `base_ref` is always `prod` for these PRs, which tells us nothing; `head_ref` is the source we want to gate.
 - One-step `run:` check rather than a reusable action — the logic is two lines; no abstraction warranted.
+
+## Addendum 1 — Gate release/* instead of main (2026-07-06)
+
+**Context:** [ADR 0015](../architecture/adr/0015-release-branch-workflow.md) introduces a required `release/x.y.z` stabilization branch between `main` and `prod`. Direct `main → prod` PRs are no longer part of the process — see `docs/plans/release-branch-workflow.md`.
+
+**Change:** `check-source` now allows `github.head_ref` to be any branch starting with `release/`, and rejects `main` (and everything else):
+
+```yaml
+      - name: Only allow merges from a release branch
+        run: |
+          if [[ "${{ github.head_ref }}" != release/* ]]; then
+            echo "PRs to prod must come from a release/* branch. Got: ${{ github.head_ref }}"
+            exit 1
+          fi
+          echo "Source branch is ${{ github.head_ref }} — OK"
+```
+
+**Constraints:**
+- No exception for `main` — every prod update, including hotfixes, goes through a release branch (ADR 0015).
+- The job name `check-source` stays the same — it's already registered as the required status check in GitHub branch protection for `prod`; no branch-protection settings change needed.
