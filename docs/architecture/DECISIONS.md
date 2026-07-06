@@ -247,6 +247,22 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Mushaf Double-Page Spread
+
+**Decision:** Users can toggle between single-page and double-page (facing-spread) mushaf view, `lg` (1024px+) and up only — below `lg`, including all of mobile, the layout is forced single-page. Pages pair up in fixed pairs `(1,2), (3,4), (5,6)…(603,604)` (302 complete pairs, no singleton); `getPagePair(n)` derives a pair from either member. `/pages/[id]` keeps its existing route shape — either id of a pair renders that same pair. `ReaderPage` always fetches **both** pair members' words server-side at build time, regardless of the client-side view toggle; the toggle only shows/hides the second `QuranSafha` via CSS, so switching is instant with no extra request. The two fetches run **sequentially, not via `Promise.all`** — each `getPageWords` already issues 2 concurrent queries, so fetching both pair members concurrently would peak at 4 connections per static-generation worker and can exceed the dev DB's `max_connections` during a full 604-page build. See [ADR 0013](adr/0013-mushaf-double-page-spread.md).
+
+**Constraints:**
+- View preference persists in `localStorage` (`quranSafhaView`, via `QuranSafhaViewContext`, mirroring `QuranFontScaleContext`) — default `"double"`.
+- The single-vs-double **display** is gated by CSS, not JS: a pre-paint inline script (`app/layout.tsx`, alongside the theme flash-preventer) sets `html[data-safha-view]` from `localStorage` before first paint, and CSS (`:root[data-safha-view="double"] .fq-spread …` at `@media(min-width:1024px)`) shows the second card / applies the width cap / drops the compensate margin. This is correct at first paint even on slow connections (no `matchMedia` in the display path). `useIsLgUp` survives only to choose the nav-arrow href. `setView` updates the attribute for live toggling. See ADR 0013 Addendum 4.
+- In single-page mode (including forced-single below `lg`), prev/next steps by one page (`pageId ± 1`, unchanged from before this feature). In double-page mode, prev/next steps by a whole pair (`± 2`), anchored to the odd (right-hand) id of the neighboring pair.
+- Both pair members' `@font-face` blocks are always inlined, but only the current page's font gets `<link rel="preload">` — the pair partner's font is not preloaded, so it isn't fetched at all unless that card is actually rendered (relies on browsers not fetching fonts for `display:none` content).
+- The prior corner-star/rounded-border decoration (`quran-page-mushaf-design.md`) was replaced, and after iteration the ornamental frame was removed **entirely** (no SVG border, medallions, or diamond markers). The card is now a plain `bg-card` surface with its `md:`-only shadow, plus 2 small offset stacked "pages underneath" layers (`bg-card dark:bg-muted`, `border-muted-foreground/30`) that peek toward each card's outer edge via `stackPeekSide` and double as a left/right-page indicator. All theme-token driven, no hardcoded colors. Renders at `md:`+ regardless of single/double mode; only the second card and the pair-step nav are gated at `lg`.
+- **Double-view width fit:** in single-page view the card is sized purely by the `vh`-driven font (ADR 0004), so its width tracks viewport *height* (~14.42× the font size, per ADR 0011's justified-line ratio). Two such cards can overflow the viewport width at some `lg` sizes. In **double** view only, the word font is therefore capped by a from-width budget — `min(vh-font, per-half-width budget)`, the same width-driven technique as ADR 0011's mobile formula — so both facing pages always fit and shrink together on narrower `lg` screens. Single-page reading size is never touched (ADR 0004 holds). This is a deliberate, double-view-only exception to "reading size is height-controlled."
+- Do not add a new URL scheme for pairs (no `/pages/2-3`) — the existing per-page route shape is load-bearing for `generateStaticParams` and every other basePath-deriving consumer (sidebar/search links, grant reader).
+- Applies to both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — `ReaderPage` is shared between them.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:

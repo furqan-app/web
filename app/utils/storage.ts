@@ -1,10 +1,11 @@
-import { QuranFontScale } from "@types";
+import { QuranFontScale, QuranSafhaView } from "@types";
 
-export type StorageKey = 'theme' | 'quranFontScale';
+export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
   quranFontScale: QuranFontScale;
+  quranSafhaView: QuranSafhaView;
 };
 
 export const storage = {
