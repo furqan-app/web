@@ -71,3 +71,45 @@ Convert the app into an installable PWA (manifest, icons, `theme-color`, install
 ## Trello
 
 Card to be created in the "Todo" list on the Furqan board: "PWA conversion + offline Quran page reading", linking this plan, labeled `Feature`.
+
+Card: https://trello.com/c/ZatnLnVT/65-add-pwa
+
+---
+
+## Addendum 1: Fix icon 404s + deprecated Apple meta tag
+
+**Type:** bug
+**Date:** 2026-07-06
+**Status:** implemented
+
+### Bug 1: Service worker precache fails on all three icons (404)
+
+**Symptoms:** After `npm run build && npm start`, installing/loading the app throws in the console:
+```
+Uncaught (in promise) bad-precaching-response :: [{"url":"http://localhost:3000/icons/icon-512.png","status":404}]
+```
+for all three generated icons (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`), and a direct `GET /icons/icon-512.png` also returns 404.
+
+**Root cause:** `middleware.ts`'s `config.matcher` excludes known static routes from `intl-middleware` locale routing (`_next/static`, `_next/image`, `icon\.svg`, `sitemap.xml`, `robots.txt`, `fonts/*`, `manifest\.webmanifest`, `sw\.js`) — but the new `public/icons/` directory (added in this feature) was never added to that list. Requests to `/icons/icon-*.png` fall through to `intl-middleware`, which redirects them into a locale prefix (`/en/icons/icon-512.png`), and no such path exists, so it 404s. Serwist's build-time precache manifest includes these icons (referenced from `app/manifest.ts`), so its install step fails outright on every one of them.
+
+**Fix:** Add `icons/*` to the `matcher` exclusion list in `middleware.ts`, alongside the existing `fonts/*` entry.
+
+### Bug 2: Deprecated `apple-mobile-web-app-capable` meta tag warning
+
+**Symptoms:** Console warning: `<meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">`.
+
+**Root cause:** `app/layout.tsx`'s `metadata.appleWebApp = { capable: true, ... }` only makes Next.js emit the legacy `apple-mobile-web-app-capable` tag. Next's typed `Metadata` object has no first-class field for the newer standard `mobile-web-app-capable` tag, so it's never emitted.
+
+**Fix:** Add an explicit `<meta name="mobile-web-app-capable" content="yes" />` tag in `app/layout.tsx`'s `<head>`, alongside the existing inline theme script. Keep `appleWebApp.capable` as-is for older iOS Safari, which only honors the legacy tag.
+
+### Files to Change (Addendum 1)
+
+- `middleware.ts` — add `icons/*` to the `config.matcher` negative-lookahead exclusion list.
+- `app/layout.tsx` — add `<meta name="mobile-web-app-capable" content="yes" />` in `<head>`.
+- `docs/architecture/DECISIONS.md` — added a constraint under "Middleware Chain" documenting that new `public/` asset directories must be added to the middleware matcher (done).
+
+### Out of Scope (deferred, pre-existing bugs unrelated to PWA — filed separately)
+
+- Theme `localStorage` `JSON.parse` crash on the raw string `"dark"` (pre-existing, predates this feature).
+- Missing `themeLight`/`themeDark`/`themeGold` translation keys referenced by `ThemeToggle.tsx` (pre-existing).
+- `DialogContent` missing `Description`/`aria-describedby` accessibility warning in `MarkModal.tsx` (pre-existing).

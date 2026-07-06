@@ -103,6 +103,7 @@ Schemas live at `prisma/quran/schema.prisma` and `prisma/app/schema.prisma`; cli
 **Constraints:**
 - Do not add new protected routes without updating the auth-middleware matcher pattern.
 - The middleware chain uses the `pipeMiddlewares` utility in `app/middlewares/pipe.ts`.
+- Any new top-level static asset directory served from `public/` (or a new Next metadata-route file) must be added to the root `middleware.ts` `config.matcher` exclusion list, alongside `_next/static`, `fonts/*`, `manifest.webmanifest`, `sw.js`, etc. Without it, `intl-middleware` treats the request as a page route and redirects it into a locale prefix (e.g. `/icons/icon-512.png` → `/en/icons/icon-512.png`), 404ing the asset. This bit the PWA icons (`public/icons/`) — see `docs/plans/pwa-offline-support.md` Addendum 1 — because the matcher was updated for `fonts/*`/`manifest.webmanifest`/`sw.js` but not the new `icons/` directory added in the same feature.
 
 ---
 
