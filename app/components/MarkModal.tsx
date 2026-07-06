@@ -4,6 +4,7 @@ import { Bookmark, Eraser, SquarePen, User, X } from "lucide-react";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
+import { useOnlineStatus } from "../hooks/use-online-status";
 import { WordWithVerse } from "../types/prisma";
 import { addPageMark } from "../server/actions/addPageMark";
 import { deletePageMark } from "../server/actions/deletePageMark";
@@ -30,6 +31,7 @@ type CategoryContentProps = {
   currentColor?: string;
   removeMark: () => void;
   error: boolean;
+  isOffline: boolean;
 };
 
 const BookmarksTab = ({
@@ -37,6 +39,7 @@ const BookmarksTab = ({
   currentColor,
   removeMark,
   error,
+  isOffline,
 }: CategoryContentProps) => {
   const t = useTranslations();
   const [selectedColor, setSelectedColor] = useState(currentColor);
@@ -46,10 +49,14 @@ const BookmarksTab = ({
       <p className="text-xs font-medium text-muted-foreground mb-2.5">
         {t("markModal.chooseColorLabel", "Choose bookmark color")}
       </p>
-      <MarkerColorPicker value={selectedColor} onChange={setSelectedColor} />
+      <MarkerColorPicker
+        value={selectedColor}
+        onChange={setSelectedColor}
+        disabled={isOffline}
+      />
       <button
         onClick={() => selectedColor && markWord(selectedColor)}
-        disabled={!selectedColor}
+        disabled={!selectedColor || isOffline}
         className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium bg-primary text-primary-foreground transition-[background-color,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none"
       >
         <Bookmark className="w-4 h-4" strokeWidth={1.8} />
@@ -58,13 +65,21 @@ const BookmarksTab = ({
       {currentColor ? (
         <button
           onClick={removeMark}
-          className="mt-1.5 w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-destructive hover:bg-destructive/10 active:scale-[0.97] transition-[background-color,transform] duration-150"
+          disabled={isOffline}
+          className="mt-1.5 w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-destructive hover:bg-destructive/10 active:scale-[0.97] transition-[background-color,transform] duration-150 disabled:opacity-50 disabled:pointer-events-none"
         >
           <Eraser className="w-4 h-4" strokeWidth={1.8} />
           {t("markModal.removeMark", "Remove Mark")}
         </button>
       ) : null}
-      {error ? (
+      {isOffline ? (
+        <p className="mt-1.5 text-xs text-muted-foreground text-center">
+          {t(
+            "markModal.offlineNotice",
+            "Connect to the internet to view or add marks",
+          )}
+        </p>
+      ) : error ? (
         <p className="mt-1.5 text-xs text-destructive text-center">
           {t("markModal.actionError", "Something went wrong. Try again.")}
         </p>
@@ -132,6 +147,8 @@ export function MarkModal({
   const { reload: reloadMarks } = useMarks(markFor.page_number, grantId);
   const t = useTranslations();
   const [error, setError] = useState(false);
+  const isOnline = useOnlineStatus();
+  const isOffline = !isOnline;
 
   const isWord = "location" in markFor;
 
@@ -234,7 +251,7 @@ export function MarkModal({
               value={key}
               className="rounded-xl bg-muted border border-border/60 p-2.5"
             >
-              {content({ markWord, currentColor, removeMark, error })}
+              {content({ markWord, currentColor, removeMark, error, isOffline })}
             </TabsContent>
           ))}
         </Tabs>

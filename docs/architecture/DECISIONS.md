@@ -103,6 +103,7 @@ Schemas live at `prisma/quran/schema.prisma` and `prisma/app/schema.prisma`; cli
 **Constraints:**
 - Do not add new protected routes without updating the auth-middleware matcher pattern.
 - The middleware chain uses the `pipeMiddlewares` utility in `app/middlewares/pipe.ts`.
+- Any new top-level static asset directory served from `public/` (or a new Next metadata-route file) must be added to the root `middleware.ts` `config.matcher` exclusion list, alongside `_next/static`, `fonts/*`, `manifest.webmanifest`, `sw.js`, etc. Without it, `intl-middleware` treats the request as a page route and redirects it into a locale prefix (e.g. `/icons/icon-512.png` → `/en/icons/icon-512.png`), 404ing the asset. This bit the PWA icons (`public/icons/`) — see `docs/plans/pwa-offline-support.md` Addendum 1 — because the matcher was updated for `fonts/*`/`manifest.webmanifest`/`sw.js` but not the new `icons/` directory added in the same feature.
 
 ---
 
@@ -260,6 +261,21 @@ const user = extractUser(request); // { id, email, ... }
 - **Double-view width fit:** in single-page view the card is sized purely by the `vh`-driven font (ADR 0004), so its width tracks viewport *height* (~14.42× the font size, per ADR 0011's justified-line ratio). Two such cards can overflow the viewport width at some `lg` sizes. In **double** view only, the word font is therefore capped by a from-width budget — `min(vh-font, per-half-width budget)`, the same width-driven technique as ADR 0011's mobile formula — so both facing pages always fit and shrink together on narrower `lg` screens. Single-page reading size is never touched (ADR 0004 holds). This is a deliberate, double-view-only exception to "reading size is height-controlled."
 - Do not add a new URL scheme for pairs (no `/pages/2-3`) — the existing per-page route shape is load-bearing for `generateStaticParams` and every other basePath-deriving consumer (sidebar/search links, grant reader).
 - Applies to both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — `ReaderPage` is shared between them.
+
+---
+
+## PWA & Offline Quran Page Caching
+
+**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches all 604 Quran pages for the current locale, plus their per-page fonts, in the background — resuming on later app launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](adr/0014-pwa-offline-architecture.md).
+
+**Constraints:**
+- Never unconditionally pre-cache page fonts for regular web visitors — this would reintroduce the exact problem the per-page font-inlining architecture (Font System decision, above) was built to avoid. The `display-mode: standalone` gate is load-bearing.
+- Do not add offline write-queueing for marks without re-opening ADR 0014 — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers.
+- The pre-cached page/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (reader markup, font logic) — bumping it on every deploy would force ~92MB re-downloads for every installed user on every deploy.
+- Pre-cache only the current locale's 604 pages, not both `ar`/`en` — fonts are locale-independent and cached once regardless; only the thin page shell differs per locale.
+- iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; a ~92MB cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS.
+- The manual `pages-v{N}` version constant lives in `app/sw.ts` (`PAGES_CACHE_VERSION`) — bump it there when reader markup/font logic changes.
+- Serwist is disabled in development (`disable: process.env.NODE_ENV === "development"` in `next.config.mjs`) — `npm run dev` never registers a service worker. To test install/offline behavior, use `npm run build && npm start`.
 
 ---
 

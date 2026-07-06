@@ -17,11 +17,12 @@ Nav                          — top bar, always visible; responsive (mobile/des
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
   SharedMushafLink           — always-visible link to /mushaf hub (signed in or out); icon+label on desktop, icon-only on mobile
-  SettingsSidebar            — font scale + theme + account panel (Sheet); account section shown on mobile only
+  SettingsSidebar            — font scale + theme + account + offline access panel (Sheet); account section shown on mobile only
     QuranFontScaleControls   — 1–10 scale slider, reads/writes QuranFontScaleContext
     ThemeToggle              — cycles named themes
     LanguageToggle           — ar ↔ en locale switch
     AccountCard              — mobile-only sign in/out card (name+email+sign out, or sign in button); session via next-auth
+    (Offline Access section) — installed-PWA-only; shows cached/604 progress via usePwaPrecache
   UserMenu                   — sign in / account dropdown (desktop only; AccountCard is its mobile counterpart in SettingsSidebar)
   Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic); controlled via SidebarContext; also rendered by the grant reader layout
     SurahList                — grid of surah cards [SHARED — also used on home page]
