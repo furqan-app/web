@@ -6,6 +6,7 @@ import { routing } from "@/i18n/routing";
 import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "@/app/providers/QueryProvider";
 import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
+import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
@@ -39,12 +40,14 @@ export default async function LocaleLayout({
       <NextIntlClientProvider messages={messages}>
         <SessionProvider>
           <QuranFontScaleProvider>
-            <QueryProvider>
-              <SidebarProvider>
-                <Nav />
-                {children}
-              </SidebarProvider>
-            </QueryProvider>
+            <QuranSafhaViewProvider>
+              <QueryProvider>
+                <SidebarProvider>
+                  <Nav />
+                  {children}
+                </SidebarProvider>
+              </QueryProvider>
+            </QuranSafhaViewProvider>
           </QuranFontScaleProvider>
         </SessionProvider>
       </NextIntlClientProvider>

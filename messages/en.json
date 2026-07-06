@@ -8,6 +8,10 @@
   "search": {
     "placeholder": "Search surah by name or number"
   },
+  "reader": {
+    "singlePageView": "Single page view",
+    "doublePageView": "Double page view"
+  },
   "surah": "Surah",
   "surahs": "Surahs",
   "verses": "Verses",
@@ -21,6 +25,11 @@
   "language": "Language",
   "quranFontSize": "Quran Font Size",
   "appearance": "Appearance",
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "gold": "Gold"
+  },
   "offlineAccess": "Offline Access",
   "offlinePagesReady": "{cached} of {total} pages ready offline",
   "notFound": {

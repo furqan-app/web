@@ -6,7 +6,7 @@
 
 ## Summary
 
-Convert the app into an installable PWA (manifest, icons, `theme-color`, install metadata) and add offline Quran page reading for users who've installed it: a service worker (via Serwist) pre-caches all 604 pages of the current locale plus their per-page fonts in the background, only when running as the installed app. Marks stay online-only. See [ADR 0013](../architecture/adr/0013-pwa-offline-architecture.md) for the full rationale and rejected alternatives, and the new "PWA & Offline Quran Page Caching" section in `DECISIONS.md` for the standing constraints.
+Convert the app into an installable PWA (manifest, icons, `theme-color`, install metadata) and add offline Quran page reading for users who've installed it: a service worker (via Serwist) pre-caches all 604 pages of the current locale plus their per-page fonts in the background, only when running as the installed app. Marks stay online-only. See [ADR 0014](../architecture/adr/0014-pwa-offline-architecture.md) for the full rationale and rejected alternatives, and the new "PWA & Offline Quran Page Caching" section in `DECISIONS.md` for the standing constraints.
 
 ## Approach
 

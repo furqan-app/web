@@ -7,14 +7,14 @@ import { useEffect, useState } from "react";
 import useTranslations from "@hooks/use-translations";
 
 const themes = [
-  { value: 'light', icon: Sun, labelKey: 'themeLight', labelFallback: 'Light' },
-  { value: 'dark', icon: Moon, labelKey: 'themeDark', labelFallback: 'Dark' },
-  { value: 'gold', icon: Sparkles, labelKey: 'themeGold', labelFallback: 'Gold' },
+  { value: 'light', icon: Sun, labelKey: 'light', labelFallback: 'Light' },
+  { value: 'dark', icon: Moon, labelKey: 'dark', labelFallback: 'Dark' },
+  { value: 'gold', icon: Sparkles, labelKey: 'gold', labelFallback: 'Gold' },
 ] as const;
 
 export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
-  const t = useTranslations();
+  const t = useTranslations("theme");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

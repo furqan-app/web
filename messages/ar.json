@@ -8,6 +8,10 @@
   "search": {
     "placeholder": "ابحث عن السورة بالاسم أو الرقم"
   },
+  "reader": {
+    "singlePageView": "عرض صفحة واحدة",
+    "doublePageView": "عرض صفحتين"
+  },
   "surah": "سورة",
   "surahs": "السور",
   "verses": "الآيات",
@@ -22,6 +26,11 @@
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
   "appearance": "المظهر",
+  "theme": {
+    "light": "فاتح",
+    "dark": "داكن",
+    "gold": "ذهبي"
+  },
   "offlineAccess": "الوصول دون اتصال",
   "offlinePagesReady": "{cached} من {total} صفحة متاحة دون اتصال",
   "notFound": {

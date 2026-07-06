@@ -42,15 +42,17 @@ Nav                          — top bar, always visible; responsive (mobile/des
 
 ```
 (page — server component; self reader is statically generated, grant reader is dynamic)
-  ReaderPage                 — SHARED server body for both routes; takes basePath + optional grantId; builds nav hrefs, font-face, QuranSwipeNav, QuranSafha
-    QuranSwipeNav            — thin "use client" wrapper: swipe-to-navigate touch handler (mobile only); receives prevHref/nextHref (plain page-order hrefs, not locale-flipped)
-    QuranSafha               — client shell: handles word selection, mark state, scroll; accepts grantId (undefined = own mushaf)
-      QuranLine              — one line of the page
-        QuranWord            — single word; click triggers mark flow
-      MarkModal              — mark/highlight dialog; threads grantId to add/remove; shows "Marked by {name}" when mark author ≠ viewer
-        MarkerColorPicker    — color swatch grid
-      SignInModal            — shown instead of MarkModal when unauthenticated
-      ViewingChip            — in-header viewing indicator (client), grant reader only; static flickering eye icon (not expandable), owner name via title/aria-label (generic label when name is null); rendered inline in the safha header start cell, gated on grantId (viewingOwnerName prop optional)
+  ReaderPage                 — SHARED server body for both routes; takes basePath + optional grantId; fetches BOTH pages of the pair (getPagePair, sequential fetch — see ADR 0013) at build time; inlines both @font-face blocks (only current page preloaded); computes single-step (±1) and pair-step (±2) nav hrefs; renders QuranSafhaViewToggle + QuranSwipeNav + QuranSpread
+    QuranSafhaViewToggle      — client pill (lg+ only): single/double icon buttons, reads/writes QuranSafhaViewContext
+    QuranSwipeNav            — thin "use client" wrapper: swipe-to-navigate touch handler (mobile only); receives prevHref/nextHref (plain page-order hrefs, not locale-flipped); always steps one page even in double view
+    QuranSpread              — client: houses the two-page layout; owns the shared NavigationArrow pair (single-step or pair-step hrefs, `relative z-20` so it always stacks above QuranSafha's absolutely-positioned decoration layers), renders two QuranSafha instances (right=odd/leftPage=even) with gap-0 between them on a static `.fq-spread` row. The single-vs-double DISPLAY is CSS-driven, not JS: it marks the non-current card `.fq-safha-partner`, and globals.css (keyed on `html[data-safha-view="double"] .fq-spread` at lg) reveals the partner + applies the width cap + drops the compensate margin — correct at first paint pre-hydration (ADR 0013 Addendum 4). `useIsLgUp`+view survive ONLY to pick the arrow href (pair-step vs single-step)
+      QuranSafha               — client shell: handles word selection, mark state, scroll; accepts grantId (undefined = own mushaf); no decorative frame — plain bg-card + shadow, square corners; 2 offset "stacked pages" layers behind it (md+, bg-card dark:bg-muted fill — white in light/gold, existing muted fill in dark — + thin border-muted-foreground/30 edge for real contrast in every theme, small offset, pointer-events-none so they never intercept clicks); stackPeekSide prop ("left"/"right", default "left") controls which side the stack peeks toward and doubles as a left-page/right-page indicator even in single-page view (always static per pair position, not spread-state-dependent); compensateStackGap prop (default false) tags the card `.fq-compensate-l`/`.fq-compensate-r`; globals.css then reserves a physical 9px margin on the SAME side as stackPeekSide (for the stack's ~9px protrusion) at md+ and removes it only when the spread actually shows both pages — so single-page display keeps both nav arrows equidistant. QuranSpread passes it for both cards; standalone QuranPage leaves it false (no `.fq-spread` ancestor → unaffected). Exposes `--fq-word-base`/`--fq-line-gap-base`/`--fq-heading-base` inline so the double-view width cap (the `html[data-safha-view="double"] .fq-spread` rule in globals.css, ADR 0013 Addenda 3–4) can shrink the reading font when two pages would overflow the viewport width
+        QuranLine              — one line of the page
+          QuranWord            — single word; click triggers mark flow
+        MarkModal              — mark/highlight dialog; threads grantId to add/remove; shows "Marked by {name}" when mark author ≠ viewer
+          MarkerColorPicker    — color swatch grid
+        SignInModal            — shown instead of MarkModal when unauthenticated
+        ViewingChip            — in-header viewing indicator (client), grant reader only; static flickering eye icon (not expandable), owner name via title/aria-label (generic label when name is null); rendered inline in the safha header start cell, gated on grantId (viewingOwnerName prop optional)
 ```
 
 ## Zone: shared mushaf (`app/[locale]/mushaf/`)
@@ -90,6 +92,7 @@ app/components/ui/FQModal    — project-specific modal wrapper around shadcn Di
 
 ```
 QuranFontScaleContext        — font scale (1–10), persisted to localStorage
+QuranSafhaViewContext        — single/double page view mode, persisted to localStorage (default "double"); see ADR 0013
 SidebarContext               — sidebar open/setOpen state; bridges Nav (locale layout) → Sidebar (pages layout)
 QueryProvider                — React Query client provider (wraps everything)
 SessionProvider              — NextAuth session provider

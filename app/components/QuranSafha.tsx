@@ -25,6 +25,18 @@ type QuranSafhaProps = {
   // Owner of the mushaf being viewed via a grant — drives the in-header viewing
   // indicator. Null/undefined = own mushaf, no indicator.
   viewingOwnerName?: string | null;
+  // Which side the "stacked pages underneath" decoration peeks toward — also
+  // doubles as a left-page/right-page indicator even in single-page view.
+  // See ADR 0013 addendum.
+  stackPeekSide?: "left" | "right";
+  // Marks this card as part of a spread so it gets the `fq-compensate-*` class:
+  // globals.css then reserves a physical ~9px margin (same side as stackPeekSide)
+  // for the stack layers' protrusion at md+, and removes it only when the spread
+  // actually shows both pages (lg + data-safha-view="double") — so single-page
+  // display keeps both nav arrows equidistant while double view stays symmetric.
+  // Standalone QuranSafha (QuranPage) leaves this false → no margin. See ADR 0013
+  // Addenda 4 & 7.
+  compensateStackGap?: boolean;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -47,6 +59,8 @@ export const QuranSafha = ({
   pageMetadata,
   grantId,
   viewingOwnerName,
+  stackPeekSide = "left",
+  compensateStackGap = false,
 }: QuranSafhaProps) => {
   const session = useSession();
   const t = useTranslations();
@@ -130,80 +144,87 @@ export const QuranSafha = ({
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center w-full md:w-auto">
-        <div className="relative rounded-none md:rounded-[20px] md:border md:border-border md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-auto">
-          {/* Inner decorative accent frame */}
-          <div className="hidden md:block absolute inset-[10px] rounded-xl border border-primary/20 pointer-events-none z-10" />
-          {/* Corner star ornaments */}
-          <div className="hidden md:block absolute top-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          <div className="hidden md:block absolute top-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          <div className="hidden md:block absolute bottom-[7px] left-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          <div className="hidden md:block absolute bottom-[7px] right-[7px] w-[18px] h-[18px] text-primary opacity-60 z-20 pointer-events-none">
-            <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z"/></svg>
-          </div>
-          {/* Content */}
+        <div
+          className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-auto ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
+        >
+          {/* Stacked "pages underneath" layers — peek toward the outer (spine-away)
+              edge; also doubles as a left-page/right-page indicator in single view.
+              border-muted-foreground/30 for real contrast in every theme
+              (border-border was too close in lightness to bg-card in light/gold).
+              bg-card dark:bg-muted: white fill in light/gold, existing muted fill
+              kept in dark (already approved). */}
           <div
-            className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full md:block md:h-auto"
-            style={{
-              "--fq-line-gap": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
-              "--fq-heading-h": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
-            } as React.CSSProperties}
-          >
-            {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
+            className={`hidden md:block absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
+          />
+          <div
+            className={`hidden md:block absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
+          />
+          <div className="relative rounded-none md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-full md:h-auto">
+            {/* Content. The three `--fq-*-base` vars mirror the single-view vh
+                sizing so the double-view width cap (the `[data-safha-view="double"]
+                .fq-spread` rule in globals.css, ADR 0013 Addenda 3 & 4) can `min()`
+                against them without a var self-reference. Single view ignores them. */}
             <div
-              dir="rtl"
-              className="shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center pb-2 border-b border-border"
-              style={{ marginBottom: "var(--fq-line-gap)" }}
-            >
-              <span className="flex min-w-0 items-center gap-1.5">
-                {grantId ? (
-                  <ViewingChip ownerName={viewingOwnerName} />
-                ) : null}
-                <span className="min-w-0 truncate text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground">
-                  {juz}
-                </span>
-              </span>
-              <div className="flex items-center justify-center gap-1.5">
-                <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
-                <span
-                  translate="no"
-                  style={{ fontFamily: "var(--surah-names)", fontSize: "1.1rem", lineHeight: 1 }}
-                >
-                  {surahGlyph}
-                </span>
-                <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
-              </div>
-              <span className="whitespace-nowrap text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
-            </div>
-            {/* Quran text */}
-            <div
-              className={`fq-quran-safha ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
+              className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full md:block md:h-auto"
               style={{
-                fontFamily: getPageFontFamily(page),
-              }}
+                "--fq-line-gap": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
+                "--fq-heading-h": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
+                "--fq-word-base": FONT_V1.getWordFontSizeCss(quranFontScale),
+                "--fq-line-gap-base": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
+                "--fq-heading-base": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
+              } as React.CSSProperties}
             >
-              {Object.keys(lines).map((line) => (
-                <QuranLine
-                  onWordClicked={wordClicked}
-                  key={line}
-                  words={lines[line]}
-                  marks={marks ? marks : {}}
-                />
-              ))}
-            </div>
-            {/* Footer */}
-            <div
-              className="shrink-0 flex items-center justify-center gap-2 pt-2 border-t border-border text-muted-foreground text-sm"
-              style={{ marginTop: "var(--fq-line-gap)" }}
-            >
-              <span className="text-primary opacity-70 text-[10px]">◆</span>
-              <span>{page}</span>
-              <span className="text-primary opacity-70 text-[10px]">◆</span>
+              {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
+              <div
+                dir="rtl"
+                className="shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center pb-2 border-b border-border"
+                style={{ marginBottom: "var(--fq-line-gap)" }}
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {grantId ? (
+                    <ViewingChip ownerName={viewingOwnerName} />
+                  ) : null}
+                  <span className="min-w-0 truncate text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground">
+                    {juz}
+                  </span>
+                </span>
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+                  <span
+                    translate="no"
+                    style={{ fontFamily: "var(--surah-names)", fontSize: "1.1rem", lineHeight: 1 }}
+                  >
+                    {surahGlyph}
+                  </span>
+                  <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+                </div>
+                <span className="whitespace-nowrap text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
+              </div>
+              {/* Quran text */}
+              <div
+                className={`fq-quran-safha ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
+                style={{
+                  fontFamily: getPageFontFamily(page),
+                }}
+              >
+                {Object.keys(lines).map((line) => (
+                  <QuranLine
+                    onWordClicked={wordClicked}
+                    key={line}
+                    words={lines[line]}
+                    marks={marks ? marks : {}}
+                  />
+                ))}
+              </div>
+              {/* Footer */}
+              <div
+                className="shrink-0 flex items-center justify-center gap-2 pt-2 border-t border-border text-muted-foreground text-sm"
+                style={{ marginTop: "var(--fq-line-gap)" }}
+              >
+                <span className="text-primary opacity-70 text-[10px]">◆</span>
+                <span>{page}</span>
+                <span className="text-primary opacity-70 text-[10px]">◆</span>
+              </div>
             </div>
           </div>
         </div>
