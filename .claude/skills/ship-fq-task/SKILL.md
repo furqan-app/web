@@ -16,10 +16,14 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 ## Steps
 
+0. **Resolve ambiguity upfront — ask once, then proceed without further confirmation**
+   - Identify the Trello ticket from: the plan file, the current branch name, or context from the conversation. If there is any ambiguity about which ticket this work belongs to, ask now and only now — do not ask again mid-flow.
+   - Once the ticket is confirmed, execute steps 1–6 in sequence without pausing for approval.
+
 1. **Sync with main**
    - `git fetch origin`
-   - Check the current branch. If on `main`, confirm there's no uncommitted work you'd lose, then `git pull` (fast-forward) to be current.
-   - If already on a feature branch, `git merge origin/main` (or rebase, ask if ambiguous) to bring it up to date before continuing.
+   - Check the current branch. If on `main`, `git pull` (fast-forward).
+   - If already on a feature branch, `git merge origin/main` to bring it up to date.
 
 2. **Create the branch** (skip if already on a feature branch created for this ticket)
    - Name it from the Trello card: `<type>/<card-id-or-short-slug>-<short-description>` (e.g. `fix/142-search-debounce`)
@@ -28,11 +32,11 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 3. **Commit**
    - `git add` the relevant files (never `git add -A` blindly — review what's staged)
    - Invoke `commit-staged` to draft the message
-   - Show the user the drafted message and staged files, get explicit confirmation, then `git commit`
+   - Run `git commit` immediately — do not pause for confirmation
+   - See "No AI signatures" section — no AI attribution anywhere in this flow
 
 4. **Push**
-   - Confirm with the user before pushing (state the branch name and commit(s) being pushed)
-   - `git push -u origin <branch-name>`
+   - `git push -u origin <branch-name>` — do not pause for confirmation
 
 5. **Create the PR**
    - `gh pr create` with a title matching the Trello card title and a body summarizing the change (what/why), linking the Trello card URL
@@ -41,6 +45,10 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 6. **Update the Trello ticket**
    - `mcp__trello__update_card_details`: append the PR URL and a short summary to the card description
    - Move the card to **In Review** (`mcp__trello__move_card`)
+
+## No AI signatures — anywhere
+
+Never add any AI attribution in this flow: no `Co-Authored-By: Claude` in commit messages, no "Generated with Claude Code" or similar in PR titles, bodies, or comments, no AI footer/trailer anywhere.
 
 ## What NOT to do
 
