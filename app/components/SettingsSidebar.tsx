@@ -15,6 +15,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
@@ -41,6 +42,12 @@ export const SettingsSidebar = () => {
       >
         <SheetHeader>
           <SheetTitle>{t("settings", "Settings")}</SheetTitle>
+          <SheetDescription className="sr-only">
+            {t(
+              "settingsDescription",
+              "Adjust language, font size, appearance, and offline access.",
+            )}
+          </SheetDescription>
         </SheetHeader>
         <div className="p-4 space-y-6 mt-2">
           {/* Account section: mobile only */}

@@ -157,6 +157,7 @@ const user = extractUser(request); // { id, email, ... }
 - Do not install a separate icon library — use `lucide-react` only.
 - Do not hand-roll components that have a shadcn equivalent.
 - `DialogContent` (`components/ui/dialog.tsx`) supports an opt-in `hideDefaultClose` prop (default `false`) to suppress its built-in absolutely-positioned close button, for callers that need to render their own `DialogClose` in-flow (e.g. `MarkModal`, whose header needs the close button vertically centered against a flex sibling rather than absolutely positioned). Default behavior for all other callers (`SignInModal`) is unchanged.
+- Every `DialogContent`/`SheetContent` (both wrap the same underlying `@radix-ui/react-dialog` primitive) **must** render a `DialogTitle`/`SheetTitle` — Radix hard-errors without one — and a `DialogDescription`/`SheetDescription` (or explicit `aria-describedby={undefined}` opt-out) to avoid a console warning. If the dialog already has a natural visible heading, promote it to `DialogTitle`/`SheetTitle` directly (its default classes are safely overridden via `cn()`'s `tailwind-merge`); otherwise add both as `sr-only`. See `docs/plans/fix-dialog-missing-description.md` for the fix across `MarkModal`, `SignInModal`, `Sidebar`, `SearchBar`, and `SettingsSidebar`.
 
 ---
 

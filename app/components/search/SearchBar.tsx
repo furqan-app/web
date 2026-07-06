@@ -7,7 +7,12 @@ import SearchQueryResults from "./SearchQueryResults";
 import useTranslations from "@hooks/use-translations";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, ArrowLeft } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+    Sheet,
+    SheetContent,
+    SheetTitle,
+    SheetDescription,
+} from "@/components/ui/sheet";
 
 export const SearchBar = () => {
     const t = useTranslations();
@@ -99,6 +104,12 @@ export const SearchBar = () => {
                     hideDefaultClose
                     className="h-screen p-0 flex flex-col"
                 >
+                    <SheetTitle className="sr-only">
+                        {t("search.placeholder", "Search the Quran...")}
+                    </SheetTitle>
+                    <SheetDescription className="sr-only">
+                        {t("search.description", "Search for a surah or verse by name or number.")}
+                    </SheetDescription>
                     {/* Input row */}
                     <div className="flex items-center gap-2 h-14 px-3 border-b border-border shrink-0">
                         <button
