@@ -35,9 +35,9 @@ model Verse {
   ruku_number        Int
   manzil_number      Int
   sajdah_number      Int?
-  text_uthmani       String
+  text_uthmani       String  @db.Text
   chapter_id         Int
-  text_imlaei_simple String
+  text_imlaei_simple String  @db.Text
   page_number        Int
   juz_number         Int
   chapter            Chapter @relation(fields: [chapter_id], references: [id])
