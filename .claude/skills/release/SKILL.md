@@ -7,7 +7,7 @@ description: Drive the full release process from cut to prod to main-sync in one
 
 Orchestrates `/cut-release` → `/promote-release` → `/sync-main-from-prod` as one continuous flow. See `docs/plans/release-branch-workflow.md` and [ADR 0015](../../../docs/architecture/adr/0015-release-branch-workflow.md).
 
-**Never pause between purely mechanical steps.** Only stop at the four checkpoints below, where the flow genuinely cannot proceed without the user doing something outside this chat. At each checkpoint, state plainly what you're waiting for.
+**Never pause between purely mechanical steps.** Only stop at the three checkpoints below, where the flow genuinely cannot proceed without the user doing something outside this chat. At each checkpoint, state plainly what you're waiting for.
 
 ## Precondition
 
@@ -21,13 +21,11 @@ Orchestrates `/cut-release` → `/promote-release` → `/sync-main-from-prod` as
 
 3. **Run `/promote-release <version>`.** Opens the `release/x.y.z → prod` PR. Proceed immediately once testing is confirmed — no extra pause here.
 
-4. **Checkpoint 2 — prod PR merged.** Tell the user the PR is open and ask them to merge it on GitHub. Do not trust a bare "done": check with `gh pr view <number> --json state -q .state` (or `gh pr view release/<version> --json state -q .state` if the number wasn't captured) and only continue once it reports `MERGED`. If the user says they merged it but the check disagrees, say so and keep waiting — re-check rather than proceeding on their word alone.
+4. **Checkpoint 2 — prod PR merged.** Tell the user the PR is open and ask them to merge it on GitHub. Hostinger auto-deploys on any push to `prod` — no manual redeploy click is needed. Do not trust a bare "done": check with `gh pr view <number> --json state -q .state` (or `gh pr view release/<version> --json state -q .state` if the number wasn't captured) and only continue once it reports `MERGED`. If the user says they merged it but the check disagrees, say so and keep waiting — re-check rather than proceeding on their word alone.
 
-5. **Checkpoint 3 — Hostinger redeploy.** Once the prod PR is confirmed merged, remind the user to manually trigger the redeploy in hPanel (`docs/deployment/hostinger.md` Phase 4). There is no API to verify or trigger this — take the user's confirmation on trust, since no independent check exists.
+5. **Run `/sync-main-from-prod`.** Opens the `prod → main` PR. Proceed immediately once the prod PR is confirmed merged — no extra pause here.
 
-6. **Run `/sync-main-from-prod`.** Opens the `prod → main` PR. Proceed immediately once the redeploy is confirmed — no extra pause here.
-
-7. **Checkpoint 4 — final merge.** Tell the user the sync PR is open and ask them to merge it (resolving any conflicts if needed). Verify via `gh pr view` the same way as Checkpoint 2. Once merged, report the release complete — nothing further to do.
+6. **Checkpoint 3 — final merge.** Tell the user the sync PR is open and ask them to merge it (resolving any conflicts if needed). Verify via `gh pr view` the same way as Checkpoint 2. Once merged, report the release complete — nothing further to do.
 
 ## Failure handling
 
@@ -35,7 +33,7 @@ If any `git`/`gh` step fails partway (e.g. the prod PR can't be created because 
 
 ## What NOT to do
 
-- Do not ask "should I continue?" between mechanical steps (after cutting, before opening the prod PR; after the redeploy confirmation, before opening the sync PR) — only the four checkpoints above warrant a pause.
-- Do not merge any PR or trigger the Hostinger redeploy yourself, even to "save a step" — those stay explicit human actions.
-- Do not skip Checkpoint 4 — the sync PR must actually merge, or fixes made on the release branch during stabilization are silently lost from `main`.
+- Do not ask "should I continue?" between mechanical steps (after cutting, before opening the prod PR; after Checkpoint 2, before opening the sync PR) — only the three checkpoints above warrant a pause.
+- Do not merge any PR yourself, even to "save a step" — those stay explicit human actions.
+- Do not skip Checkpoint 3 — the sync PR must actually merge, or fixes made on the release branch during stabilization are silently lost from `main`.
 - Do not trust the user's word over `gh`'s reported state for any PR-merge checkpoint — always re-verify.

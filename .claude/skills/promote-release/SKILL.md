@@ -19,11 +19,9 @@ Opens the `release/<version>` → `prod` PR once local testing has passed. See `
 3. `gh pr create --base prod --head release/<version> --title "Release v<version>"` with a body summarizing the release (linking the Trello cards found above, if any).
 4. Report the PR URL. Tell the user plainly:
    - The `check-source` gate on `prod` requires this PR's head branch to start with `release/` — it will pass automatically.
-   - Merge the PR on GitHub once testing has passed.
-   - After merging, manually trigger a redeploy in hPanel (`docs/deployment/hostinger.md` Phase 4) — this is **not** automatic; Hostinger's connected-repo deploy only reacts to a manual "redeploy" click on this hosting plan.
+   - Merge the PR on GitHub. Hostinger auto-deploys on any push to `prod` — no manual redeploy click is needed.
 
 ## What NOT to do
 
 - Do not merge the PR — only open it.
-- Do not trigger the Hostinger redeploy — that's a manual, explicit human action outside this skill's reach (no API for it).
 - Do not touch Trello — labeling/moving cards already happened in `/cut-release`.
