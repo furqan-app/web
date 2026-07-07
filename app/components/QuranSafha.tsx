@@ -120,6 +120,9 @@ export const QuranSafha = ({
     ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${pageMetadata.hizb_number}`
     : null;
 
+  // lineKeys must be sorted numerically; Object.keys() order is not guaranteed.
+  const lineKeys = Object.keys(lines).sort((a, b) => Number(a) - Number(b));
+
   return (
     <>
       {session?.data?.user && selectedForMark ? (
@@ -143,9 +146,9 @@ export const QuranSafha = ({
       {!session.data?.user && selectedForMark ? (
         <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
-      <div className="fq-full-safha flex justify-center w-full md:w-auto">
+      <div className="fq-full-safha flex justify-center w-full md:w-auto md:h-full">
         <div
-          className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-auto ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
+          className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
           {/* Stacked "pages underneath" layers — peek toward the outer (spine-away)
               edge; also doubles as a left-page/right-page indicator in single view.
@@ -159,13 +162,13 @@ export const QuranSafha = ({
           <div
             className={`hidden md:block absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
           />
-          <div className="relative rounded-none md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-full md:h-auto">
+          <div className="relative rounded-none md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-full md:h-full">
             {/* Content. The three `--fq-*-base` vars mirror the single-view vh
                 sizing so the double-view width cap (the `[data-safha-view="double"]
                 .fq-spread` rule in globals.css, ADR 0013 Addenda 3 & 4) can `min()`
                 against them without a var self-reference. Single view ignores them. */}
             <div
-              className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full md:block md:h-auto"
+              className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full"
               style={{
                 "--fq-line-gap": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
                 "--fq-heading-h": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
@@ -207,7 +210,7 @@ export const QuranSafha = ({
                   fontFamily: getPageFontFamily(page),
                 }}
               >
-                {Object.keys(lines).map((line) => (
+                {lineKeys.map((line) => (
                   <QuranLine
                     onWordClicked={wordClicked}
                     key={line}
