@@ -51,7 +51,7 @@ export default function RootLayout({
 }) {
   const locale = useLocale();
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <script
