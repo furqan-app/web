@@ -76,7 +76,7 @@ export const QuranSpread = ({
   const leftIsPartner = leftPage.pageId !== currentPageId;
 
   return (
-    <div className="flex-1 min-w-0 flex justify-center items-center">
+    <div className="flex-1 min-w-0 flex justify-center items-center md:h-full md:items-stretch">
       <NavigationArrow href={nav.prevHref} isRTL={isRTL} isNext={false} />
       {/* `.fq-spread` (static) scopes every CSS display/cap/margin gate to cards
           inside a spread, so the standalone QuranSafha in QuranPage is unaffected.
@@ -84,7 +84,7 @@ export const QuranSpread = ({
           closed book — see ADR 0013 addendum. Each card's own stacked "pages
           underneath" layers peek toward its outer (spine-away) edge via
           stackPeekSide, never bridging the seam. */}
-      <div className={`flex ${!isRTL ? "flex-row-reverse" : ""} items-stretch gap-0 fq-spread`}>
+      <div className={`flex ${!isRTL ? "flex-row-reverse" : ""} items-stretch gap-0 fq-spread md:h-full`}>
         <div className={rightIsPartner ? "fq-safha-partner" : undefined}>
           <QuranSafha
             page={rightPage.pageId}
