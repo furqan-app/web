@@ -521,3 +521,32 @@ In both cases, rightPage (first DOM child) ends up visually on the right.
 - The `NavigationArrow` components sit in the outer `flex justify-center` row (sibling of the spread div), not inside it — they are unaffected by this change.
 
 **Implementation status:** implemented; `npm run lint` + `tsc --noEmit` clean. Browser verification was **skipped at the user's request** — correctness rests on the mechanism (display driven solely by the synchronous pre-paint `html[data-safha-view]` attribute + CSS `@media` gate, no React/`matchMedia` in the display path) rather than an observed run. Worth a manual look on a throttled connection before merge: confirm no single→double or double→single flash at `lg` for either stored preference, and that `<lg` stays single.
+
+## Addendum 13: fix HTML hydration mismatch warning (class, data-safha-view) (bug)
+
+**Date:** 2026-07-07
+
+### Bug
+
+React logs `Warning: Extra attributes from the server: class,data-safha-view` on every page load.
+
+### Root Cause
+
+`app/layout.tsx`'s `<html>` element is missing `suppressHydrationWarning`. The two inline pre-paint scripts in `<head>` both mutate `document.documentElement` before React hydrates: the theme script sets `class`, and the `data-safha-view` script (Addendum 11) sets `data-safha-view`. React sees these server-absent attributes as a mismatch and warns. `<body>` already has `suppressHydrationWarning` for the same reason — `<html>` was missed.
+
+### Fix
+
+Add `suppressHydrationWarning` to the `<html>` element in `app/layout.tsx`.
+
+### Files to Change
+
+- `app/layout.tsx` — add `suppressHydrationWarning` to `<html>` (line 54).
+
+### Constraints
+
+- Do not remove `suppressHydrationWarning` from `<body>` — it is still needed.
+- No other files require changes.
+
+### What NOT to Do
+
+- Do not move or remove the inline pre-paint scripts as a fix — they are load-bearing for flash prevention.
