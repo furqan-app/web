@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye } from "lucide-react";
-import useTranslations from "@hooks/use-translations";
+import { useTranslations } from "next-intl";
 
 type Props = {
   ownerName?: string | null;
@@ -18,13 +18,10 @@ type Props = {
  * under prefers-reduced-motion.
  */
 export const ViewingChip = ({ ownerName }: Props) => {
-  const t = useTranslations();
+  const t = useTranslations("mushaf");
   const label = ownerName
-    ? t("mushaf.viewingChip", "Viewing {name}'s mushaf").replace(
-        "{name}",
-        ownerName,
-      )
-    : t("mushaf.viewingChipGeneric", "Viewing another user's mushaf");
+    ? t("viewingChip", { name: ownerName })
+    : t("viewingChipGeneric");
 
   return (
     <span
