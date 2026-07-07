@@ -12,19 +12,24 @@ type LineProps = {
   words: Array<WordWithVerse>;
   onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
   marks: Record<string, Array<{ name: string; value: string }>>;
+  // When set, QuranSafha has already rendered standalone banner/bismillah slots
+  // for this surah — suppress the inline combined heading block for it.
+  // Mid-page surahs (prop absent or non-matching) keep the existing inline block.
+  suppressInlineHeaderForSurahId?: number;
 };
 
-export const QuranLine = ({ words, onWordClicked, marks }: LineProps) => {
+export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderForSurahId }: LineProps) => {
   const [surahId, verseNumber, wordNumber] = words[0].location
     .split(":")
     .map(Number);
   const shouldRenderSurahHeader = verseNumber === 1 && wordNumber === 1;
+  const isBannerHandled = suppressInlineHeaderForSurahId === surahId;
 
   const locale = useLocale();
 
   return (
     <>
-      {shouldRenderSurahHeader ? (
+      {shouldRenderSurahHeader && !isBannerHandled ? (
         <div className="text-center">
           <h1
             className="text-black dark:text-white"

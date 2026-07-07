@@ -10,10 +10,35 @@ import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
 import useTranslations from "@hooks/use-translations";
 import { getPageFontFamily } from "@utils/quran-font-map";
 import { getColorMarkMeta } from "@utils/marks";
+import BismillahSVG from "@/app/bismillah.svg";
+import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { MarkModal } from "./MarkModal";
 import { SignInModal } from "./SignInModal";
 import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithVerse } from "../types/prisma";
+
+const SurahBannerLine = ({ surahId }: { surahId: number }) => (
+  <div
+    className="leading-none text-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)" }}
+  >
+    <span
+      translate="no"
+      style={{ fontFamily: "var(--surah-names)", fontSize: "1em", lineHeight: 1 }}
+    >
+      {`${surahId}`.padStart(3, "0")}
+    </span>
+  </div>
+);
+
+const BismillahLine = () => (
+  <div
+    className="leading-none flex justify-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)" }}
+  >
+    <BismillahSVG style={{ height: "1em", width: "auto" }} />
+  </div>
+);
 
 type QuranSafhaProps = {
   page: number;
@@ -123,6 +148,76 @@ export const QuranSafha = ({
   // lineKeys must be sorted numerically; Object.keys() order is not guaranteed.
   const lineKeys = Object.keys(lines).sort((a, b) => Number(a) - Number(b));
 
+  type RenderItem =
+    | { type: "words"; slot: number; lineKey: string; suppressSurahId?: number }
+    | { type: "surahBanner"; slot: number; surahId: number }
+    | { type: "bismillah"; slot: number };
+
+  // Find consecutive runs of slot numbers (1–15) absent from lineKeys — each run
+  // is a banner/bismillah group in the printed mushaf layout.
+  const occupiedSet = new Set(lineKeys.map(Number));
+  const missing = Array.from({ length: 15 }, (_, i) => i + 1).filter(
+    (n) => !occupiedSet.has(n),
+  );
+  const gapGroups: Array<{ start: number; end: number; size: number }> = [];
+  for (const slot of missing) {
+    const last = gapGroups[gapGroups.length - 1];
+    if (last && last.end === slot - 1) {
+      last.end = slot;
+      last.size++;
+    } else {
+      gapGroups.push({ start: slot, end: slot, size: 1 });
+    }
+  }
+
+  const renderItems: RenderItem[] = lineKeys.map((k) => ({
+    type: "words" as const,
+    slot: Number(k),
+    lineKey: k,
+  }));
+
+  for (const gap of gapGroups) {
+    const lineAfterKey = lineKeys.find((k) => Number(k) > gap.end);
+    const lineBeforeKey = [...lineKeys]
+      .reverse()
+      .find((k) => Number(k) < gap.start);
+
+    if (lineAfterKey) {
+      const firstWord = lines[lineAfterKey][0];
+      const [surahIdStr, verseNumStr, wordNumStr] = firstWord.location.split(":");
+      if (verseNumStr === "1" && wordNumStr === "1") {
+        const surahId = Number(surahIdStr);
+        const hasBismillah = !CHAPTERS_WITHOUT_BISMILLAH.includes(surahIdStr);
+        if (gap.size >= 2 || !hasBismillah) {
+          renderItems.push({ type: "surahBanner", slot: gap.start, surahId });
+        }
+        if (hasBismillah) {
+          renderItems.push({
+            type: "bismillah",
+            slot: gap.size >= 2 ? gap.start + 1 : gap.start,
+          });
+        }
+        const wordItem = renderItems.find(
+          (item) => item.type === "words" && item.lineKey === lineAfterKey,
+        );
+        if (wordItem && wordItem.type === "words") {
+          wordItem.suppressSurahId = surahId;
+        }
+      }
+    } else if (lineBeforeKey) {
+      const wordsOnLine = lines[lineBeforeKey];
+      const lastWord = wordsOnLine[wordsOnLine.length - 1];
+      const [surahIdStr, verseNumStr] = lastWord.verse_key.split(":");
+      const surahId = Number(surahIdStr);
+      const versesCount = lastWord.verse.chapter.verses_count;
+      if (Number(verseNumStr) === versesCount && surahId < 114) {
+        renderItems.push({ type: "surahBanner", slot: gap.start, surahId: surahId + 1 });
+      }
+    }
+  }
+
+  renderItems.sort((a, b) => a.slot - b.slot);
+
   return (
     <>
       {session?.data?.user && selectedForMark ? (
@@ -210,14 +305,28 @@ export const QuranSafha = ({
                   fontFamily: getPageFontFamily(page),
                 }}
               >
-                {lineKeys.map((line) => (
-                  <QuranLine
-                    onWordClicked={wordClicked}
-                    key={line}
-                    words={lines[line]}
-                    marks={marks ? marks : {}}
-                  />
-                ))}
+                {renderItems.map((item) => {
+                  if (item.type === "surahBanner") {
+                    return (
+                      <SurahBannerLine
+                        key={`banner-${item.slot}`}
+                        surahId={item.surahId}
+                      />
+                    );
+                  }
+                  if (item.type === "bismillah") {
+                    return <BismillahLine key={`bismillah-${item.slot}`} />;
+                  }
+                  return (
+                    <QuranLine
+                      key={item.lineKey}
+                      onWordClicked={wordClicked}
+                      words={lines[item.lineKey]}
+                      marks={marks ?? {}}
+                      suppressInlineHeaderForSurahId={item.suppressSurahId}
+                    />
+                  );
+                })}
               </div>
               {/* Footer */}
               <div

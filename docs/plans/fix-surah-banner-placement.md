@@ -2,7 +2,7 @@
 
 **Type:** bug  
 **Date:** 2026-07-07  
-**Status:** PARTIAL — equal-height spread (Addendum 2) + inter-line gap (Addendum 3) shipped; **banner placement + frame REVERTED and deferred** (Trello #72). See Addendum 2 → "Revert" and Addendum 3 below.  
+**Status:** PARTIAL — equal-height spread (Addendum 2) + inter-line gap (Addendum 3) shipped; Addendum 4 (gap-based banner placement) **implemented**. See Addendum 2 → "Revert" for the reverted attempt.  
 **Trello:** https://trello.com/c/sRC6NhMS/72-surah-name-banners-render-at-end-of-page-madani-layout
 
 ## Summary
@@ -417,3 +417,153 @@ Because the taller page's natural content height now **includes** the gaps, it d
 ### Verification (Playwright, 1440×900, double view)
 
 Pages 75/76: both `.fq-quran-safha` now report `justify-content: flex-start` and `gap: 11.61px` (= the resolved `--fq-line-gap`). Both cards measure **728px, equal height** — the equalizer is untouched. The measured vertical distance between the first two word rows is **11.61px** (was ≈0 before). Page 75 (14 word rows) and page 76 (15 rows) stay equal height, with page 75's surplus collecting at the bottom (flex-start), matching the chosen "uniform gap, top-aligned" model. `npm run lint` clean.
+
+---
+
+## Addendum 4 — Gap-based surah banner placement (2026-07-07)
+
+**Type:** bug  
+**Status:** ready-to-implement  
+**Trello:** https://trello.com/c/sRC6NhMS
+
+### What we're building
+
+Surah name banners and bismillah lines rendered at their correct mushaf slot positions, derived from `line_number` gaps in the already-fetched `lines` prop. No DB changes, no seeder changes.
+
+### Root cause (previously documented in Addendum 2 Deferred section)
+
+The `lines` prop in `QuranSafha` is `Record<string, WordWithVerse[]>` keyed by `line_number` (1–15). Pages never have all 15 slots filled with word content — the missing slot numbers are exactly where surah-name and bismillah lines belong in the printed mushaf. The prior heuristic (`wordLineCount === 15`) only checked the count, not which slots were missing, so it couldn't handle mid-page surah starts or multiple surahs per page.
+
+### Algorithm
+
+**Step 1 — find gaps:**
+```ts
+const occupiedSet = new Set(lineKeys.map(Number));
+const missing = Array.from({ length: 15 }, (_, i) => i + 1).filter(n => !occupiedSet.has(n));
+```
+
+**Step 2 — group consecutive missing slots into gap groups:**
+```ts
+// e.g. missing [1,2,7,8,11,12] → [{start:1,end:2},{start:7,end:8},{start:11,end:12}]
+```
+
+**Step 3 — classify each gap group:**
+
+| Condition | Classification | What to render |
+|-----------|---------------|----------------|
+| Line exists AFTER the gap AND its first word is `surahId:1:1` | Start/mid banner | See table below |
+| No line after the gap AND last word before the gap ends its surah (`verseNum === chapter.verses_count`) | End banner | SurahBannerLine for `surahId + 1` at `gap.start` |
+
+For start/mid banners, the gap size + surah's bismillah status determines what to render:
+
+| Gap size | Surah has bismillah? | Render |
+|----------|---------------------|--------|
+| 2 | yes | SurahBannerLine at `gap.start`, BismillahLine at `gap.start + 1` |
+| 1 | yes | BismillahLine at `gap.start` (surah name was on the previous page's end banner) |
+| 1 | no | SurahBannerLine at `gap.start` |
+
+`hasBismillah = !CHAPTERS_WITHOUT_BISMILLAH.includes(\`${surahId}\`)`
+
+**Step 4 — build ordered render list:**
+
+Collect word-line items and banner items, sort by slot number, render in one pass:
+
+```ts
+type RenderItem =
+  | { type: "words"; slot: number; lineKey: string; suppressSurahId?: number }
+  | { type: "surahBanner"; slot: number; surahId: number }
+  | { type: "bismillah"; slot: number };
+```
+
+Word items carry `suppressSurahId` when a banner in the same page handles that surah's header, so `QuranLine` skips its inline `shouldRenderSurahHeader` block for that line.
+
+### Page 1 and 2 handling
+
+The algorithm runs unchanged on pages 1 and 2:
+- **Page 1** (`lineKeys` start at 9): 8-slot gap → first word after = Al-Fatiha `1:1:1`, no bismillah → SurahBannerLine at slot 1. Slots 2–8 render nothing (they are the mushaf's decorative opening space — not replicated). Combined with `fq-safha-center` the result is acceptable.
+- **Page 2** (`lineKeys` start at 10): 9-slot gap → first word after = Al-Baqarah `2:1:1`, has bismillah → SurahBannerLine at slot 1, BismillahLine at slot 2.
+
+No special-casing needed.
+
+### Banner component helpers (local to QuranSafha)
+
+```tsx
+// No border frame — kept plain for now, to be styled in a later task.
+const SurahBannerLine = ({ surahId }: { surahId: number }) => (
+  <div
+    className="leading-none text-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)" }}
+  >
+    <span
+      translate="no"
+      style={{ fontFamily: "var(--surah-names)", fontSize: "1em", lineHeight: 1 }}
+    >
+      {`${surahId}`.padStart(3, "0")}
+    </span>
+  </div>
+);
+
+const BismillahLine = () => (
+  <div
+    className="leading-none flex justify-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)" }}
+  >
+    <BismillahSVG style={{ height: "1em", width: "auto" }} />
+  </div>
+);
+```
+
+`leading-none` on both outer divs prevents the Tailwind body `line-height: 1.5` strut from making the div 1.5em tall (Bug A from Addendum 1 — now fixed at construction, not as a follow-on). `fontSize: "1em"` and `height: "1em"` inherit `.fq-quran-safha`'s effective font-size, which is correct across mobile, single-page, and double-page modes.
+
+### QuranLine change
+
+Add `suppressInlineHeaderForSurahId?: number` prop. When set and the line's surahId matches, skip the `shouldRenderSurahHeader` block entirely. This prevents the inline glyph+bismillah block from double-rendering when a banner already covers that surah.
+
+```tsx
+type LineProps = {
+  words: Array<WordWithVerse>;
+  onWordClicked: ...;
+  marks: ...;
+  suppressInlineHeaderForSurahId?: number;
+};
+
+const shouldRenderSurahHeader =
+  verseNumber === 1 &&
+  wordNumber === 1 &&
+  surahId !== suppressInlineHeaderForSurahId;
+```
+
+Mid-page surahs with no gap (none exist in practice — every surah start has a dedicated line slot) keep the existing inline rendering untouched.
+
+### Spacing in the desktop spread
+
+The existing `.fq-spread .fq-quran-safha > * { margin-bottom: 0 !important }` rule (from Addendum 1/3) applies to ALL direct children, including the new banner divs. `gap: var(--fq-line-gap)` (Addendum 3) then provides uniform spacing between every slot — word rows and banner rows alike. No special CSS needed for the banner elements.
+
+On mobile, `space-between` counts every direct child of `.fq-quran-safha` as a slot. Banner elements are direct children, so they distribute identically to word rows. No mobile CSS changes needed.
+
+### Files to change
+
+| File | Change |
+|------|--------|
+| `app/components/QuranSafha.tsx` | Add `BismillahSVG` and `CHAPTERS_WITHOUT_BISMILLAH` imports; add `SurahBannerLine` and `BismillahLine` local helpers; compute gap groups from `lineKeys`; build ordered `RenderItem[]`; render the list (replacing the current `lineKeys.map(...)`) |
+| `app/components/QuranLine.tsx` | Add `suppressInlineHeaderForSurahId?: number` to `LineProps`; guard `shouldRenderSurahHeader` against it |
+
+No changes to: Prisma schema, DB, seeder, `getPageWords`, `app/types/prisma.ts`, `PageMetadata`, `globals.css`, `QuranSpread.tsx`, `ReaderPage.tsx`.
+
+### Constraints
+
+- Banner elements must be direct children of `.fq-quran-safha` — not wrapped in any extra div.
+- Use `1em` for banner/bismillah height. Never `var(--fq-word-base)` (single-view literal) or `--fq-heading-h` fractions (sized for the old 2-slot combined block).
+- `leading-none` is required on both banner outer divs — without it the div is 1.5em tall (CSS strut from body line-height).
+- `suppressInlineHeaderForSurahId` must only suppress when the surahId matches — not a blanket boolean — to avoid accidentally suppressing mid-page surahs on pages with multiple surahs.
+- Do not suppress the inline header in `QuranLine` unless a banner was actually rendered for that surah on this page.
+- `endingSurahId < 114` guard required for end banners — surah 114 has no successor.
+- For end banners, confirm the last word's `verseNum === word.verse.chapter.verses_count` before rendering — not every page ending on line 14 has an end banner.
+
+### What NOT to do
+
+- Do not re-introduce the old `wordLineCount === 15` heuristic (Addendum 2 Deferred: it cannot handle mid-page or multi-surah pages).
+- Do not add `start_banner_surah_id`/`end_banner_surah_id` fields to `PageMetadata` (ADR 0016 — superseded; those columns were never seeded).
+- Do not render banner elements outside `.fq-quran-safha` (e.g. in the header band).
+- Do not add a border frame to `SurahBannerLine` — deferred to a later styling task.
+- Do not special-case pages 1 and 2 — the general algorithm handles them correctly.
