@@ -24,9 +24,9 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just run the `ls`/grep.
 
 1. **Load context — mandatory gate, before investigating or writing anything**
-   - Read `docs/architecture/DECISIONS.md`, **then open the specific ADR file(s) in `docs/architecture/adr/` that it links for any decision touching this task's area.** DECISIONS.md is only a summary — the binding constraints, encoding contracts, and invariants live in the ADRs. Treat both as non-negotiable: the plan must not contradict them, and if it needs to, that is a decision to raise with the user explicitly, not to override silently.
+   - Read `docs/architecture/DECISIONS.md` — its entries are your working set of active decisions. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat both as non-negotiable: the plan must not contradict them, and if it needs to, raise that with the user explicitly and supersede it — never override silently.
    - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
-   - **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches that a later addendum revised or reverted are dead — never re-propose them. Your new addendum must stay consistent with every still-active constraint above it. Most of the past back-and-forth came from re-proposing something the docs had already ruled out — this read is what prevents it.
+   - **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches a later addendum revised or reverted are dead — never re-propose them (that is where most past rework came from). Your new addendum must stay consistent with every still-active constraint above it.
 
 2. **Investigate (bugs) or clarify (features)**
 
@@ -97,9 +97,14 @@ One paragraph.
 ## Constraints
 - ...
 
+## What NOT to Do
+- ... (approaches ruled out, superseded, or explicitly out of scope)
+
 ## Decisions Made
 - ...
 ```
+
+`## What NOT to Do` is a required section — `/start-fq-task` reads it to avoid re-implementing a superseded approach. If nothing is ruled out yet, keep the heading with a single "None known" bullet rather than omitting it.
 
 ## Anti-patterns to avoid
 
