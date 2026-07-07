@@ -19,7 +19,7 @@ Loads the right context (decisions + standards + plan), then implements the task
    - Find the plan's Trello card (linked in the plan) and move it to **In Progress** (`mcp__trello__move_card`) before starting implementation.
 
 2. **Load context — mandatory gate, before writing any code**
-   - Read `docs/architecture/DECISIONS.md`, **then open the specific ADR file(s) in `docs/architecture/adr/` it links for any decision the task touches** (and any ADR the plan itself references). DECISIONS.md is a summary — the binding invariants live in the ADRs. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
+   - Read `docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
    - Read `docs/architecture/COMPONENTS.md`
    - Read the relevant standards file(s) from `docs/standards/` based on task type:
      - UI/component work → `component-patterns.md` + `styling.md`
@@ -53,8 +53,8 @@ Loads the right context (decisions + standards + plan), then implements the task
 ## Anti-patterns to avoid
 
 - Do not load all standards files when only one is relevant.
-- Do not start implementing before reading the plan in full (all addenda) and opening the ADRs its decisions rest on — the load-context gate is not optional.
-- Do not implement an approach an earlier addendum used if a later addendum revised or reverted it — the newest addendum wins.
+- Do not start implementing before both gates are done: the whole plan read (all addenda, Step 1) and DECISIONS.md + its linked ADRs loaded (Step 2).
+- Do not implement an approach a later addendum revised or reverted — the newest addendum wins.
 - Do not act on a stale doc claim without checking the code first — verify current state before editing.
 - Do not undo or contradict an ADR, a `Constraints` item, or a `What NOT to Do` item as a side effect of the change.
 - Do not skip the decisions check at the end.
