@@ -125,3 +125,38 @@ shadcn tokens use bare HSL triplets (no `hsl()` wrapper).
 - `theme-dark` keeps the `dark` name even though it renders as navy — "dark" is the user-facing label.
 - System dark-mode preference auto-selects `theme-dark` (navy) when no preference is stored.
 - Gold has no dark variant in the design; none was added.
+
+---
+
+## Addendum 1: Fix corrupted-localStorage crash + missing theme i18n keys
+
+**Type:** bug
+**Date:** 2026-07-06
+**Status:** implemented
+
+### Bug 1: `storage.get('theme')` crashes on legacy/corrupted raw value
+
+**Symptoms:** Console shows `Error reading theme from localStorage: SyntaxError: Unexpected token 'd', "dark" is not valid JSON`, repeating on every page load.
+
+**Root cause:** `storage.set()` (`app/utils/storage.ts`) always `JSON.stringify`s writes, and both readers — `storage.get()` and the inline flash-prevention `<script>` in `app/layout.tsx` — correctly `JSON.parse`. Going forward, every write/read round-trip is internally consistent. The crash only happens when `localStorage`'s `theme` key already holds a **raw, non-JSON string** (e.g. bare `dark`, 4 characters, no quotes) — leftover from before this JSON-encoding convention existed, or a manually-edited devtools value. `storage.get()` catches the parse failure and logs a warning, then correctly falls back to system preference — so behavior is never broken for the user — but nothing ever clears the corrupted key, so the warning refires on every load until the user manually re-picks a theme (which overwrites it via `storage.set`).
+
+**Fix:** In `storage.get()`'s catch block, call `localStorage.removeItem(key)` after logging the warning, so a corrupted value self-heals on first read instead of persisting indefinitely. The inline `<script>` in `layout.tsx` already silently swallows its own parse failure (`catch(e){}`) and doesn't log — no change needed there beyond ensuring it still falls back to system preference correctly (already the case).
+
+### Bug 2: Missing `theme.light`/`theme.dark`/`theme.gold` translation keys
+
+**Symptoms:** Console shows `MISSING_MESSAGE: themeLight (en)` (and `themeDark`, `themeGold`) on every render that includes `ThemeToggle`.
+
+**Root cause:** `ThemeToggle.tsx` calls `useTranslations()` with no namespace and passes `labelKey`s (`themeLight`, `themeDark`, `themeGold`) that were never added to `messages/en.json`/`messages/ar.json`. The app's `useTranslations` wrapper (`app/hooks/use-translations.ts`) falls back to `labelFallback` when next-intl returns the key unchanged, so the UI always renders correctly (English fallback labels) — but next-intl's default `onError` still logs `MISSING_MESSAGE` to console on every miss, since the underlying `next-intl` `t()` call always runs first.
+
+**Fix:** Add a `theme` namespace to both message files (`theme.light`, `theme.dark`, `theme.gold`), matching this codebase's i18n convention of feature-prefixed keys (e.g. `markModal.*`). Update `ThemeToggle.tsx`'s `labelKey` values from `themeLight`/`themeDark`/`themeGold` to `theme.light`/`theme.dark`/`theme.gold` and pass `"theme"` as the namespace to `useTranslations("theme")`, then use bare keys (`light`/`dark`/`gold`) — matching how other namespaced components call `useTranslations`.
+
+### Files to Change (Addendum 1)
+
+- `app/utils/storage.ts` — `get()`'s catch block calls `localStorage.removeItem(key)` after `console.warn`, so a corrupted value is cleared on first failed read.
+- `app/components/ThemeToggle.tsx` — call `useTranslations("theme")`; change `labelKey` values to `light`/`dark`/`gold`.
+- `messages/en.json`, `messages/ar.json` — add `theme: { light, dark, gold }` keys.
+
+### Constraints
+
+- Do not touch the inline `<script>` in `layout.tsx` beyond what's already there — its silent catch is intentional (a `<script>` tag can't import `storage.ts`, and it must stay a standalone string per the Theme Architecture decision: "the flash-prevention script... cannot share code at runtime").
+- Arabic (`ar.json`) must get the new `theme.*` keys too, per the i18n standard (Arabic is default and must stay complete).

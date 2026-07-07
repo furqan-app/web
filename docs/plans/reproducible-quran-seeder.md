@@ -1,6 +1,6 @@
 # Reproducible Quran database seeder
 
-**Type:** feature
+**Type:** bug
 **Date:** 2026-07-02
 **Status:** implemented
 **ADR:** [0009-reproducible-quran-seeder](../architecture/adr/0009-reproducible-quran-seeder.md)
@@ -68,3 +68,26 @@ A single Node (CommonJS) orchestrator, run via npm through `dotenv -e .env.local
 - Confirm QDC `/chapters?language=en` supplies all 10 non-derived chapters columns for all 114 (esp. `pages`, `bismillah_pre`, `revelation_order`) — verified reachable (HTTP 200) during planning.
 - Confirm `prisma db push --force-reset` picks up `QURAN_DATABASE_URL` from the `dotenv -e .env.local` wrapper (matches existing `quran-db-push`).
 - After implementation, run `npm run seed:quran -- --force` and re-verify counts (expect chapters 114, verses 6236, words 83665, page_metadata 604, rubs 240, rub_verse_mappings 313) + zero cross-table orphans.
+
+## Addendum 1 (2026-07-06) — bug: `Verse.text_uthmani` too short for full verse text
+
+**Bug:** `npm run seed:quran -- --force` fails during `[4/4] Inserting` on the `verses` `createMany` (`insertChunked(prisma.verse, verses)`) with:
+```
+Invalid `delegate.createMany()` invocation ... The provided value for the column is too long for the column's type. Column: text_uthmani
+```
+
+**Root cause:** `Verse.text_uthmani` and `Verse.text_imlaei_simple` in `prisma/quran/schema.prisma` are declared as plain `String`, which Prisma maps to `VARCHAR(191)` in MySQL. These two columns hold the **full verse text** (not a single word) — long verses (e.g. 2:282) exceed 191 characters and overflow the column. Word-level text columns (`Word.text_uthmani`, `code_v1`, `code_v2`, `qpc_uthmani_hafs`, `text`) hold single-word strings and stay well under 191 chars, so they are unaffected and out of scope for this fix.
+
+**Fix:** Add `@db.Text` to `Verse.text_uthmani` and `Verse.text_imlaei_simple` only.
+
+### Files to Change
+- `prisma/quran/schema.prisma` — `Verse.text_uthmani String` → `Verse.text_uthmani String @db.Text`; `Verse.text_imlaei_simple String` → `Verse.text_imlaei_simple String @db.Text`.
+
+### Constraints
+- Do not widen any `Word`-level string column — they're single-word text and not the source of this failure; changing them is unnecessary schema churn.
+- Neither column has a `@unique` or is used in an exact-match `where` today (verse search only does `contains` on `text_imlaei_simple`), so switching to `@db.Text` (no fixed length, no index) is safe.
+
+### Verification
+- Re-run `npm run app-db-push` is unaffected (app schema untouched).
+- Re-run `npm run seed:quran -- --force` end to end; must complete through `[4/4] Inserting` and print final counts (chapters 114, verses 6236, words 83665, page_metadata 604, rubs 240, rub_verse_mappings 313).
+- **Confirmed 2026-07-06:** `npm run seed:quran -- --force` completed with exactly these counts — `chapters=114 verses=6236 words=83665 rubs=240 rub_verse_mappings=313 page_metadata=604`. `npm run lint` clean.

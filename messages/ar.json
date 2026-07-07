@@ -6,7 +6,20 @@
     "description": "اقرأ واستمع إلى القرآن"
   },
   "search": {
-    "placeholder": "ابحث عن السورة بالاسم أو الرقم"
+    "placeholder": "ابحث عن السورة بالاسم أو الرقم",
+    "description": "ابحث عن سورة أو آية بالاسم أو الرقم."
+  },
+  "sidebar": {
+    "title": "التنقل في القرآن",
+    "description": "تصفح السور والأرباع للانتقال إلى صفحة."
+  },
+  "signInModal": {
+    "description": "سجّل الدخول لتحديد الكلمات والآيات في القرآن."
+  },
+  "settingsDescription": "عدّل اللغة وحجم الخط والمظهر والوصول دون اتصال.",
+  "reader": {
+    "singlePageView": "عرض صفحة واحدة",
+    "doublePageView": "عرض صفحتين"
   },
   "surah": "سورة",
   "surahs": "السور",
@@ -22,6 +35,13 @@
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
   "appearance": "المظهر",
+  "theme": {
+    "light": "فاتح",
+    "dark": "داكن",
+    "gold": "ذهبي"
+  },
+  "offlineAccess": "الوصول دون اتصال",
+  "offlinePagesReady": "{cached} من {total} صفحة متاحة دون اتصال",
   "notFound": {
     "title": "404 - الصفحة غير موجودة",
     "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",
@@ -40,7 +60,8 @@
     "chooseColorLabel": "اختر لون العلامة المرجعية",
     "saveMark": "حفظ العلامة المرجعية",
     "actionError": "حدث خطأ ما. حاول مرة أخرى.",
-    "markedBy": "علامة من"
+    "markedBy": "علامة من",
+    "offlineNotice": "اتصل بالإنترنت لعرض العلامات أو إضافتها"
   },
   "rubs": "أرباع",
   "rub": "ربع",

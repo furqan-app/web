@@ -173,4 +173,112 @@ body,
       gap: 0.55em;
     }
   }
+
+  /* Desktop spread (md+): both facing pages fill the same fixed parent height
+     (the ReaderPage background is a fixed 100dvh-3.5rem, propagated down through
+     h-full to fq-content), and the text block distributes its lines with the same
+     flex `space-between` model as mobile — so the two pages are always identical
+     height regardless of slot-height variance (surah banners, bismillah, etc.).
+     Scoped to `.fq-spread` so the standalone QuranSafha in VerticalQuranPages
+     (no `.fq-spread` ancestor) keeps its natural content-height block layout.
+     Mirrors the `@media (max-width: 767px)` mobile block above. */
+  @media (min-width: 768px) {
+    .fq-spread .fq-quran-safha {
+      flex: 1 1 0%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      /* Uniform inter-line spacing. The spread is content-driven (Addendum 2), so
+         `space-between` would have ~0 surplus on a full 15-line page and pack the
+         lines flush; a real `gap` gives every line the same breathing room (matching
+         the header/footer `--fq-line-gap` margins) and `flex-start` lets any surplus
+         on the shorter, items-stretch'd page collect at the bottom instead of
+         stretching the gaps unevenly. See Addendum 3. */
+      justify-content: flex-start;
+      gap: var(--fq-line-gap);
+      align-items: center;
+      padding-block: 0.5em;
+    }
+    .fq-spread .fq-quran-safha > * {
+      margin-bottom: 0 !important; /* height distributed by flex, not margin */
+    }
+    .fq-spread .fq-quran-safha > .fq-safha-row {
+      flex-wrap: nowrap;
+    }
+    .fq-spread .fq-quran-safha > .fq-safha-row > div {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    /* Short opening pages (1–2): center as a block with a modest gap rather than
+       stretching their few lines edge-to-edge — mirrors the mobile rule above. */
+    .fq-spread .fq-quran-safha.fq-safha-center {
+      justify-content: center;
+      gap: 0.55em;
+    }
+  }
+
+  /* Double-page display gating — see ADR 0013 Addendum 4.
+     The single-vs-double *display* is driven by CSS, not JS, so it's correct at
+     first paint on slow connections (the old JS `useIsLgUp` gate rendered single
+     until hydration). The pre-paint inline script in app/layout.tsx sets
+     `html[data-safha-view]` before first paint; the `lg` media query supplies the
+     breakpoint. Every rule is scoped to the static `.fq-spread` class on
+     QuranSpread's cards row, so the standalone QuranSafha in QuranPage (no
+     `.fq-spread` ancestor) is never affected. */
+
+  /* The non-current pair member is hidden by default (single-page display) and
+     revealed only when the spread is actually showing (lg + double). */
+  .fq-spread .fq-safha-partner {
+    display: none;
+  }
+
+  /* Compensate margin (ADR 0013 Addendum 7): reserve physical space for the
+     stack layers' ~9px protrusion so both nav arrows sit equidistant in
+     single-page display. Applied at md+ (matching the stack layers) and removed
+     only when both pages actually show — see the lg block below. Physical
+     ml/mr, not logical, because the stack peek itself is physical (translate-x). */
+  @media (min-width: 768px) {
+    .fq-compensate-r {
+      margin-right: 9px;
+    }
+    .fq-compensate-l {
+      margin-left: 9px;
+    }
+  }
+
+  /* Double-view width cap — see ADR 0013 Addendum 3.
+     In single-page view a card is sized purely by the vh-driven reading font
+     (ADR 0004), so its width tracks viewport *height* (~14.42× the font size,
+     ADR 0011's justified-line ratio). Two such cards can overflow the viewport
+     width on some lg screens, clipping the outer page. In *double* view only,
+     cap the reading font (and its dependent rhythm vars) by a from-width budget
+     — half the row minus per-card chrome, over ADR 0011's 14.7 never-wrap
+     divisor — so both facing pages always fit and shrink together.
+     `--fq-dv-word` is defined only under the attribute+lg gate, so single view
+     falls through to `--fq-word-base` untouched. The rhythm vars use `!important`
+     to beat QuranSafha's inline `--fq-line-gap`/`--fq-heading-h`; `-base` vars are
+     independent literals so the min() never self-references. Chrome constant
+     (136px) = half of (ps-14 + pe-10 + two nav arrows) + the card's px-7 padding;
+     calibrated by browser measurement, same spirit as ADR 0011's constants. */
+  @media (min-width: 1024px) {
+    :root[data-safha-view="double"] .fq-spread .fq-safha-partner {
+      display: block;
+    }
+    :root[data-safha-view="double"] .fq-spread {
+      --fq-dv-word: calc((50vw - 136px) / 14.7);
+    }
+    :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
+      font-size: min(var(--fq-word-base), var(--fq-dv-word));
+    }
+    :root[data-safha-view="double"] .fq-spread .fq-content {
+      --fq-line-gap: min(var(--fq-line-gap-base), calc(var(--fq-dv-word) * 0.417)) !important;
+      --fq-heading-h: min(var(--fq-heading-base), calc(var(--fq-dv-word) * 2.417)) !important;
+    }
+    /* Both pages showing → symmetric, so drop the single-display compensate margin. */
+    :root[data-safha-view="double"] .fq-spread .fq-compensate-r,
+    :root[data-safha-view="double"] .fq-spread .fq-compensate-l {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
 }

@@ -15,11 +15,11 @@ Loads the right context (decisions + standards + plan), then implements the task
 
 1. **Identify the plan**
    - Ask the user which plan to implement if not specified (list `docs/plans/` to show options)
-   - Read `docs/plans/<slug>.md`
+   - **Read `docs/plans/<slug>.md` in full — every addendum, and especially the `Constraints` and `What NOT to Do` sections.** If the plan has multiple addenda, the newest one is the source of truth: implement the approach it settled on, not an earlier one it revised or reverted. Re-implementing a superseded approach is the single biggest cause of the rework this workflow exists to prevent.
    - Find the plan's Trello card (linked in the plan) and move it to **In Progress** (`mcp__trello__move_card`) before starting implementation.
 
-2. **Load context**
-   - Read `docs/architecture/DECISIONS.md`
+2. **Load context — mandatory gate, before writing any code**
+   - Read `docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
    - Read `docs/architecture/COMPONENTS.md`
    - Read the relevant standards file(s) from `docs/standards/` based on task type:
      - UI/component work → `component-patterns.md` + `styling.md`
@@ -34,8 +34,9 @@ Loads the right context (decisions + standards + plan), then implements the task
      - If the task involves animation, transitions, or interactive states (press/hover/enter/exit), invoke the `ui-motion` skill for motion and polish guidance
 
 3. **Implement**
-   - Follow the plan exactly. If you discover the plan needs revision, pause and discuss — do not silently deviate.
-   - Follow the relevant standards strictly.
+   - **Before editing, verify the current code matches what the plan/docs describe.** Open the files the plan names and confirm their present state lines up with the plan's assumptions — plans can go stale, and acting on a stale claim ("X is unchanged", "Y still renders here") is how documented behavior gets broken. If reality and the doc disagree, stop and reconcile with the user before changing anything.
+   - Follow the plan exactly (the latest addendum's approach). If you discover the plan needs revision, pause and discuss — do not silently deviate.
+   - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
    - Apply decisions from `DECISIONS.md` — do not re-litigate them.
    - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
 
@@ -52,6 +53,9 @@ Loads the right context (decisions + standards + plan), then implements the task
 ## Anti-patterns to avoid
 
 - Do not load all standards files when only one is relevant.
-- Do not re-read the plan multiple times — read once, implement.
+- Do not start implementing before both gates are done: the whole plan read (all addenda, Step 1) and DECISIONS.md + its linked ADRs loaded (Step 2).
+- Do not implement an approach a later addendum revised or reverted — the newest addendum wins.
+- Do not act on a stale doc claim without checking the code first — verify current state before editing.
+- Do not undo or contradict an ADR, a `Constraints` item, or a `What NOT to Do` item as a side effect of the change.
 - Do not skip the decisions check at the end.
 - Do not add features beyond what the plan specifies.

@@ -6,7 +6,20 @@
     "description": "Read and Listen to Quran"
   },
   "search": {
-    "placeholder": "Search surah by name or number"
+    "placeholder": "Search surah by name or number",
+    "description": "Search for a surah or verse by name or number."
+  },
+  "sidebar": {
+    "title": "Quran navigation",
+    "description": "Browse surahs and rubs to jump to a page."
+  },
+  "signInModal": {
+    "description": "Sign in to mark words and verses in the Quran."
+  },
+  "settingsDescription": "Adjust language, font size, appearance, and offline access.",
+  "reader": {
+    "singlePageView": "Single page view",
+    "doublePageView": "Double page view"
   },
   "surah": "Surah",
   "surahs": "Surahs",
@@ -21,6 +34,13 @@
   "language": "Language",
   "quranFontSize": "Quran Font Size",
   "appearance": "Appearance",
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "gold": "Gold"
+  },
+  "offlineAccess": "Offline Access",
+  "offlinePagesReady": "{cached} of {total} pages ready offline",
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",
@@ -39,7 +59,8 @@
     "chooseColorLabel": "Choose bookmark color",
     "saveMark": "Save Bookmark",
     "actionError": "Something went wrong. Try again.",
-    "markedBy": "Marked by"
+    "markedBy": "Marked by",
+    "offlineNotice": "Connect to the internet to view or add marks"
   },
   "rubs": "Rubs",
   "rub": "Rub",

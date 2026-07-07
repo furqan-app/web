@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 import { useLocale } from "next-intl";
 import "./globals.css";
 import { getLanguageDirection } from "./utils/i18n";
@@ -8,9 +8,20 @@ import { Tajawal } from "next/font/google";
 export const metadata: Metadata = {
   title: "Furqan",
   description: "The word focused Quran app",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Furqan",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#16232F",
 };
 
 const tajawal = Tajawal({
@@ -40,11 +51,12 @@ export default function RootLayout({
 }) {
   const locale = useLocale();
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <head>
+        <meta name="mobile-web-app-capable" content="yes" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=JSON.parse(localStorage.getItem('theme'));var el=document.documentElement;if(t==='dark'||(t==null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){el.classList.add('dark','theme-dark')}else if(t==='gold'){el.classList.add('theme-gold')}else{el.classList.add('theme-light')}}catch(e){}`,
+            __html: `try{var el=document.documentElement;var t=JSON.parse(localStorage.getItem('theme'));if(t==='dark'||(t==null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){el.classList.add('dark','theme-dark')}else if(t==='gold'){el.classList.add('theme-gold')}else{el.classList.add('theme-light')}var v=JSON.parse(localStorage.getItem('quranSafhaView'));el.setAttribute('data-safha-view',v==='single'?'single':'double')}catch(e){document.documentElement.setAttribute('data-safha-view','double')}`,
           }}
         />
       </head>

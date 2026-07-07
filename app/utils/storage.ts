@@ -1,10 +1,11 @@
-import { QuranFontScale } from "@types";
+import { QuranFontScale, QuranSafhaView } from "@types";
 
-export type StorageKey = 'theme' | 'quranFontScale';
+export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
   quranFontScale: QuranFontScale;
+  quranSafhaView: QuranSafhaView;
 };
 
 export const storage = {
@@ -15,6 +16,7 @@ export const storage = {
       return item ? JSON.parse(item) : null;
     } catch (error) {
       console.warn(`Error reading ${key} from localStorage:`, error);
+      localStorage.removeItem(key);
       return null;
     }
   },

@@ -1,6 +1,6 @@
 {
   "name": "furqan",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -25,6 +25,7 @@
     "@radix-ui/react-radio-group": "^1.4.2",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@serwist/next": "^9.5.11",
     "@tanstack/react-query": "^5.59.16",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.1",
@@ -39,6 +40,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-virtuoso": "^4.12.0",
+    "serwist": "^9.5.11",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
@@ -54,6 +56,7 @@
     "eslint-config-next": "14.2.15",
     "fs-extra": "^11.2.0",
     "postcss": "^8",
+    "sharp": "^0.35.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
