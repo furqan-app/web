@@ -23,9 +23,10 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
    - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just run the `ls`/grep.
 
-1. **Load context**
-   - Read `docs/architecture/DECISIONS.md`
-   - Read the relevant standards file(s) from `docs/standards/` based on the task domain
+1. **Load context — mandatory gate, before investigating or writing anything**
+   - Read `docs/architecture/DECISIONS.md`, **then open the specific ADR file(s) in `docs/architecture/adr/` that it links for any decision touching this task's area.** DECISIONS.md is only a summary — the binding constraints, encoding contracts, and invariants live in the ADRs. Treat both as non-negotiable: the plan must not contradict them, and if it needs to, that is a decision to raise with the user explicitly, not to override silently.
+   - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
+   - **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches that a later addendum revised or reverted are dead — never re-propose them. Your new addendum must stay consistent with every still-active constraint above it. Most of the past back-and-forth came from re-proposing something the docs had already ruled out — this read is what prevents it.
 
 2. **Investigate (bugs) or clarify (features)**
 
@@ -103,6 +104,8 @@ One paragraph.
 ## Anti-patterns to avoid
 
 - Do not create a new plan file without first checking `docs/plans/` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not write a plan that contradicts an ADR or a still-active constraint/`What NOT to Do` item in the plan you are extending. If the task genuinely requires overriding one, surface it to the user and supersede it explicitly — never silently.
+- Do not re-propose an approach that a later addendum already revised or reverted.
 - Do not ask multiple questions at once — one at a time, always.
 - Do not write the plan before all questions are resolved.
 - Do not skip the ADR check — run it explicitly before writing the plan.
