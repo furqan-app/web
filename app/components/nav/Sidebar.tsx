@@ -11,6 +11,8 @@ import {
   Sheet,
   SheetContent,
   SheetClose,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLocale } from "next-intl";
@@ -31,6 +33,12 @@ const Sidebar = ({ surahs, rubs }: Props) => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 top-14 h-[calc(100%-3.5rem)] p-0 flex flex-col overflow-hidden">
+        <SheetTitle className="sr-only">
+          {t("sidebar.title", "Quran navigation")}
+        </SheetTitle>
+        <SheetDescription className="sr-only">
+          {t("sidebar.description", "Browse surahs and rubs to jump to a page.")}
+        </SheetDescription>
         <div className="flex justify-end p-4 border-b shrink-0">
           <SheetClose asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">

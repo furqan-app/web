@@ -9,7 +9,13 @@ import { WordWithVerse } from "../types/prisma";
 import { addPageMark } from "../server/actions/addPageMark";
 import { deletePageMark } from "../server/actions/deletePageMark";
 import useTranslations from "../hooks/use-translations";
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -211,13 +217,18 @@ export function MarkModal({
               <span className="sr-only">Close</span>
             </DialogClose>
           </div>
-          <h3
-            className="flex text-foreground text-xl font-medium mt-1.5"
+          <DialogTitle
+            className="flex text-foreground text-xl font-medium leading-normal tracking-normal mt-1.5"
             style={{ fontFamily: "var(--uthmanic)" }}
             dir="rtl"
           >
             {getTitle(markFor, verseDisplayText)}
-          </h3>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {isWord
+              ? t("markModal.markWordLabel", "Mark word")
+              : t("markModal.markVerseLabel", "Mark verse")}
+          </DialogDescription>
           {markedByName ? (
             <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
               <User className="size-3" strokeWidth={1.8} />
