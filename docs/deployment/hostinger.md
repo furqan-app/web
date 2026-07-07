@@ -49,11 +49,14 @@ hPanel → Databases → phpMyAdmin → select the Quran DB → Import tab → u
 
 ## Phase 4 — Deploy the latest code
 
-Deployment is **GitHub-connected**: in hPanel → **Websites → your site → Node.js**
-(the **Git** / deployment panel), trigger a **redeploy** of your connected repo.
-Hostinger pulls `main` and automatically runs `npm install` (which fires the
-`postinstall` Prisma client generation for both schemas) and your build
-(`npm run build`) — you don't run these by hand.
+Deployment is **GitHub-connected** and **automatic**: Hostinger monitors the `prod`
+branch and triggers a redeploy on every push to it — merging the release PR into
+`prod` is sufficient. No manual "redeploy" click in hPanel is needed for routine
+releases.
+
+Hostinger automatically runs `npm install` (which fires the `postinstall` Prisma
+client generation for both schemas) and your build (`npm run build`) — you don't
+run these by hand.
 
 ### Where the app is installed & the SSH limitation
 
@@ -143,7 +146,7 @@ APP_DATABASE_URL="mysql://u123456789_furqan_app_user:<password>@localhost:3306/u
 > (standard port — no Docker port offset). The `<prod-host>` in Phase 5 Option 1 is
 > different: that's the external Remote-MySQL host you connect to from your laptop.
 
-After saving, trigger a redeploy (Phase 4) so the new values take effect.
+After saving, push any change to `prod` (or manually trigger a redeploy in hPanel → **Websites → your site → Node.js → Git**) so the new values take effect.
 
 ---
 
