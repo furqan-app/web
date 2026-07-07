@@ -279,6 +279,28 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Release & Deployment Workflow
+
+**Decision:** Prod deploys go through a required `release/x.y.z` stabilization branch, not directly from `main`. See [ADR 0015](adr/0015-release-branch-workflow.md).
+
+```
+main → /cut-release → release/x.y.z → (local testing) → /promote-release → prod → /sync-main-from-prod → main
+```
+
+- `/cut-release <major|minor|patch>` — branches `release/x.y.z` off `main`, bumps `package.json` version + tags `vX.Y.Z`, labels every card in **"To Be Released"** with the version and moves them to **Done**, then creates a GitHub Release whose notes are built from those same cards (title + URL) — not `--generate-notes`, since Trello is the curated "what's included" source, not raw commit/PR history.
+- `/promote-release <version>` — opens the PR `release/x.y.z` → `prod`. Merge and the manual Hostinger "redeploy" click (hPanel) both happen outside the skill.
+- `/sync-main-from-prod` — opens the PR `prod` → `main` afterward, to capture any fixes made on the release branch back into `main`.
+- `/release <major|minor|patch>` — orchestrator that runs the above three in one continuous flow, pausing only at genuine human checkpoints (confirm local testing passed, confirm the prod PR merged, confirm the Hostinger redeploy was clicked). Verifies PR merges via `gh pr view` rather than trusting the user's word where that's possible.
+
+**Constraints:**
+- `protect-prod.yml` only accepts PRs into `prod` whose source branch starts with `release/` — direct `main → prod` PRs are no longer permitted, including for hotfixes (cut a release branch for those too).
+- Testing happens locally (`npm run build && npm start` against the release branch) — there is no staging deployment. Hostinger hosts prod only.
+- Cards move into "To Be Released" manually when their PR merges to `main`; `/cut-release` is what stamps the version label and moves them to `Done`, not the merge itself.
+- Do not skip `/sync-main-from-prod` after a release — without it, fixes made directly on a release branch during stabilization silently disappear from `main`'s history.
+- `/release` must not skip its checkpoints — only local testing and the Hostinger redeploy lack a programmatic check, so those two must always be taken on the user's word; PR merges must always be verified via `gh`, never assumed.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:
