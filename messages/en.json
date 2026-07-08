@@ -46,6 +46,12 @@
     "description": "Sorry, the page you are looking for does not exist.",
     "homeLink": "Go back to Home"
   },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "retryLink": "Try again",
+    "homeLink": "Go back to Home"
+  },
   "markModal": {
     "redMark": "Red Mark",
     "greenMark": "Green Mark",
