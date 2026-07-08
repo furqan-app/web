@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma migrate deploy --schema prisma/app/schema.prisma && next build",
+    "build:local": "dotenv -e .env.local -- npx prisma migrate deploy --schema prisma/app/schema.prisma && next build",
     "start": "next start",
     "lint": "next lint",
     "quran-studio": "dotenv -e .env.local -- npx prisma studio --schema prisma/quran/schema.prisma",
