@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { useLocale } from "next-intl";
 import { usePage } from "@hooks/use-quran-page";
 import { QuranSafha } from "@components/QuranSafha";
 
@@ -9,6 +10,7 @@ type Props = {
 };
 
 const QuranPage = memo(function QuranPage({ page }: Props) {
+  const locale = useLocale();
   const { data, error } = usePage(page);
 
   if (error) {
@@ -26,7 +28,7 @@ const QuranPage = memo(function QuranPage({ page }: Props) {
       </div>
     );
 
-  return <QuranSafha page={page} lines={data.lines} pageMetadata={data.pageMetadata} />;
+  return <QuranSafha page={page} lines={data.lines} pageMetadata={data.pageMetadata} locale={locale} />;
 });
 
 export default QuranPage;
