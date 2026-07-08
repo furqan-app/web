@@ -54,3 +54,40 @@ This is the only build-time public env var that must be baked into the static ou
 - Option C from ADR 0010: no explicit datasource URL in PrismaClient constructors.
 - ESLint suppressed during build (`ignoreDuringBuilds`) rather than fixed at the config level — the ESLint failure is an environment artifact specific to Hostinger, not a local issue.
 - `.env.production` committed with only the public base URL — safe because it contains no credentials.
+
+---
+
+## Addendum — Local `npm run build` fails: missing `APP_DATABASE_URL`
+
+**Date:** 2026-07-08  
+**Status:** implemented
+
+### Summary
+
+Running `npm run build` locally crashes at the `prisma migrate deploy` step with `P1012: Environment variable not found: APP_DATABASE_URL`. The `build` script runs Prisma bare — no env-file prefix — so Prisma looks for `.env` at the project root, which doesn't exist. `APP_DATABASE_URL` lives in `.env.local`, which Next.js loads for its own build phase but which Prisma never sees when it runs first.
+
+On Hostinger this doesn't fail because `APP_DATABASE_URL` is set in the hosting panel and is already in `process.env` before the build starts. A `--env-file .env.local` flag on the CLI would fix the local case but break Hostinger (`.env.local` doesn't exist on the server, and Prisma 5 errors on a missing `--env-file` path).
+
+### Fix
+
+Add a `build:local` script to `package.json`, following the identical pattern used by every other local DB script (`app-migrate-dev`, `app-studio`, `quran-studio`, etc.):
+
+```json
+"build:local": "dotenv -e .env.local -- npx prisma migrate deploy --schema prisma/app/schema.prisma && next build"
+```
+
+Keep `build` unchanged — Hostinger continues to use it.
+
+### Files to Change
+
+- `package.json` — add `build:local` script alongside `build`
+
+### Usage
+
+- **Local testing** (release workflow): `npm run build:local && npm start`
+- **Hostinger production**: `npm run build` (unchanged, reads `APP_DATABASE_URL` from panel env)
+
+### What NOT to Do
+
+- Do not add `dotenv -e .env.local --` to the existing `build` script — `.env.local` doesn't exist on Hostinger and dotenv-cli v7 throws `ENOENT` on a missing file, breaking the production deploy.
+- Do not use `--env-file .env.local` as a Prisma CLI flag — same problem: Prisma 5 errors if the specified file is absent.
