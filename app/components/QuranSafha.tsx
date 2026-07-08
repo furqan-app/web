@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Verse } from "@/app/generated/quran-client";
 import { QuranLine } from "@components/QuranLine";
@@ -308,28 +308,30 @@ export const QuranSafha = ({
                   fontFamily: getPageFontFamily(page),
                 }}
               >
-                {renderItems.map((item) => {
-                  if (item.type === "surahBanner") {
+                <Suspense fallback={null}>
+                  {renderItems.map((item) => {
+                    if (item.type === "surahBanner") {
+                      return (
+                        <SurahBannerLine
+                          key={`banner-${item.slot}`}
+                          surahId={item.surahId}
+                        />
+                      );
+                    }
+                    if (item.type === "bismillah") {
+                      return <BismillahLine key={`bismillah-${item.slot}`} />;
+                    }
                     return (
-                      <SurahBannerLine
-                        key={`banner-${item.slot}`}
-                        surahId={item.surahId}
+                      <QuranLine
+                        key={item.lineKey}
+                        onWordClicked={wordClicked}
+                        words={lines[item.lineKey]}
+                        marks={marks ?? {}}
+                        suppressInlineHeaderForSurahId={item.suppressSurahId}
                       />
                     );
-                  }
-                  if (item.type === "bismillah") {
-                    return <BismillahLine key={`bismillah-${item.slot}`} />;
-                  }
-                  return (
-                    <QuranLine
-                      key={item.lineKey}
-                      onWordClicked={wordClicked}
-                      words={lines[item.lineKey]}
-                      marks={marks ?? {}}
-                      suppressInlineHeaderForSurahId={item.suppressSurahId}
-                    />
-                  );
-                })}
+                  })}
+                </Suspense>
               </div>
               {/* Footer */}
               <div

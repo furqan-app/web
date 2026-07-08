@@ -4,7 +4,7 @@ import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { useLocale } from "next-intl";
 import { getLanguageDirection } from "../utils/i18n";
-import { MouseEvent, Suspense } from "react";
+import { MouseEvent } from "react";
 import { QuranWord } from "./QuranWord";
 import { WordWithVerse } from "../types/prisma";
 
@@ -65,17 +65,15 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
         style={{ marginBottom: "var(--fq-line-gap)" }}
       >
         {words.map((word) => (
-          <Suspense key={word.location}>
-            <QuranWord
-              onWordClicked={onWordClicked}
-              key={word.id}
-              word={word}
-              marks={[
-                ...(marks[word.location] || []),
-                ...(marks[word.verse_key] || []),
-              ]}
-            ></QuranWord>
-          </Suspense>
+          <QuranWord
+            key={word.location}
+            onWordClicked={onWordClicked}
+            word={word}
+            marks={[
+              ...(marks[word.location] || []),
+              ...(marks[word.verse_key] || []),
+            ]}
+          />
         ))}
       </div>
     </>
