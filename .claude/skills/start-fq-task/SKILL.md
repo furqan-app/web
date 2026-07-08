@@ -14,19 +14,20 @@ Loads the right context (decisions + standards + plan), then implements the task
 ## Steps
 
 1. **Identify the plan**
-   - Ask the user which plan to implement if not specified (list `docs/plans/` to show options)
-   - **Read `docs/plans/<slug>.md` in full — every addendum, and especially the `Constraints` and `What NOT to Do` sections.** If the plan has multiple addenda, the newest one is the source of truth: implement the approach it settled on, not an earlier one it revised or reverted. Re-implementing a superseded approach is the single biggest cause of the rework this workflow exists to prevent.
+   - Ask the user which plan to implement if not specified
+   - Derive the slug from the plan filename (e.g. `fix-search-debounce`)
+   - **Read the plan in full from the worktree path: `../furqan-<slug>/docs/plans/<slug>.md`**. If that path does not exist, fall back to `docs/plans/<slug>.md` in the main repo (older tasks pre-dating the worktree-first flow). Read every addendum, especially `Constraints` and `What NOT to Do` — the newest addendum is the source of truth.
    - Find the plan's Trello card (linked in the plan) and move it to **In Progress** (`mcp__trello__move_card`) before starting implementation.
 
-1b. **Create worktree and start dev server**
-
-   Derive the slug from the plan filename (e.g. `fix-search-debounce` from `docs/plans/fix-search-debounce.md`). Then:
+1b. **Set up worktree and start dev server**
 
    **Check for an existing worktree first:**
    - Run `git worktree list` and look for a path ending in `furqan-<slug>`
-   - If found: read `~/.claude/furqan-worktrees.json`, find the entry for this slug, and print `Worktree already running at http://localhost:<port>` — skip the rest of this step and proceed to step 2
+   - If found: read `~/.claude/furqan-worktrees.json` and find the entry for this slug.
+     - If the entry has a `port`: print `Worktree running at http://localhost:<port>` and skip to step 2.
+     - If the entry has no `port` (worktree was created by `/plan-fq-task` before the dev server step): skip steps 1–3 below and continue from step 4 to assign a port and start the dev server.
 
-   **If no existing worktree:**
+   **If no existing worktree** (rare — `/plan-fq-task` normally creates it; this path covers tasks planned before that flow or worktree revival):
    1. Derive the branch name from the Trello card using the project convention: `<type>/<card-short-id>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
    2. Create the worktree — check whether the branch already exists first:
       ```bash
@@ -55,7 +56,7 @@ Loads the right context (decisions + standards + plan), then implements the task
       ```json
       { "<slug>": { "worktreePath": "../furqan-<slug>", "port": <port>, "branch": "<branch-name>" } }
       ```
-      Merge with any existing entries — do not overwrite the whole file
+      Merge with any existing entries — do not overwrite the whole file. If `/plan-fq-task` already wrote an entry for this slug without a `port`, update it in place by adding the port field.
    8. Start the dev server in the background:
       ```bash
       cd ../furqan-<slug> && PORT=<port> npm run dev &
@@ -63,8 +64,8 @@ Loads the right context (decisions + standards + plan), then implements the task
    9. Print clearly: `Task dev server: http://localhost:<port>`
 
 2. **Load context — mandatory gate, before writing any code**
-   - Read `docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
-   - Read `docs/architecture/COMPONENTS.md`
+   - Read `../furqan-<slug>/docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
+   - Read `../furqan-<slug>/docs/architecture/COMPONENTS.md`
    - Read the relevant standards file(s) from `docs/standards/` based on task type:
      - UI/component work → `component-patterns.md` + `styling.md`
      - API work → `api-conventions.md`
