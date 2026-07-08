@@ -327,6 +327,19 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 
 ---
 
+## Sentry-to-Slack Alerting
+
+**Decision:** Sentry's native Slack alert-rule action requires a paid (Team+) plan; the app is on the free Developer plan. Instead, a self-hosted relay endpoint (`app/api/webhooks/sentry/route.ts`) receives Sentry's Internal Integration webhook for triggered alert-rule events, verifies its signature, and forwards a formatted message to a Slack Incoming Webhook. See [ADR 0018](adr/0018-sentry-slack-relay-webhook.md).
+
+**Constraints:**
+- Only the `event_alert` resource is relayed to Slack; other `sentry-hook-resource` values (e.g. `installation`) are acknowledged with `200` and dropped, not forwarded or rejected.
+- The route must verify `sentry-hook-signature` (HMAC-SHA256 of the raw body using `SENTRY_WEBHOOK_SECRET`) before doing anything else — this is a public, unauthenticated-by-user endpoint.
+- A failed Slack post must `throw`, not be swallowed — it needs to propagate to `instrumentation.ts`'s `onRequestError` (ADR 0017) so it's captured by Sentry itself and shows as a failed delivery in Sentry's own integration dashboard.
+- `SENTRY_WEBHOOK_SECRET` and `SLACK_WEBHOOK_URL` are Hostinger-panel-only env vars, never committed with real values, mirroring the pattern from the Error Tracking decision above.
+- If the org ever upgrades to Sentry Team+, this relay can be retired in favor of Sentry's native Slack action — revisit ADR 0018 rather than running both in parallel.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:
