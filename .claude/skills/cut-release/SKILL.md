@@ -18,7 +18,7 @@ Branches a new `release/x.y.z` off `main`, bumps and tags the version, and stamp
 2. `git checkout main && git pull` (fast-forward only).
 3. Read `"version"` from `package.json`. Compute the new version by applying the given bump type (semver: major resets minor+patch to 0, minor resets patch to 0, patch increments only the patch number).
 4. `git checkout -b release/<new-version>`.
-5. Edit `package.json`'s `"version"` field to `<new-version>`. Commit directly (no need to route through `commit-staged` — this is a single mechanical field change): `chore(release): bump version to <new-version>`. No AI signature (see "No AI signatures" below).
+5. Edit `package.json`'s `"version"` field to `<new-version>`. Run `npm install --package-lock-only` so `package-lock.json`'s top-level `version` field stays in sync (do not run a full `npm install` — this must not touch `node_modules` or resolved dependency versions). Stage both files and commit directly (no need to route through `commit-staged` — this is a single mechanical field change): `chore(release): bump version to <new-version>`. No AI signature (see "No AI signatures" below).
 6. `git tag v<new-version>`.
 7. `git push -u origin release/<new-version>` then `git push origin v<new-version>`.
 8. Trello: `mcp__trello__get_cards_by_list_id` on the **"To Be Released"** list (board "Furqan"). Keep the fetched card list — it's reused in step 9 for the GitHub Release body. For each card there:

@@ -24,6 +24,7 @@
   "surah": "Surah",
   "surahs": "Surahs",
   "verses": "Verses",
+  "count_verses": "Verses",
   "juz": "Juz",
   "hizb": "Hizb",
   "hizb-quarter": "Quarter Hizb",
@@ -44,6 +45,12 @@
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",
+    "homeLink": "Go back to Home"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "retryLink": "Try again",
     "homeLink": "Go back to Home"
   },
   "markModal": {

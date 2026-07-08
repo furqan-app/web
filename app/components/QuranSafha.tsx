@@ -8,6 +8,7 @@ import { useMarks } from "@hooks/use-marks";
 import { FONT_V1 } from "@constants/font";
 import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
 import useTranslations from "@hooks/use-translations";
+import { toLocaleNumeral } from "@utils/i18n";
 import { getPageFontFamily } from "@utils/quran-font-map";
 import { getColorMarkMeta } from "@utils/marks";
 import BismillahSVG from "@/app/bismillah.svg";
@@ -44,6 +45,7 @@ type QuranSafhaProps = {
   page: number;
   lines: Record<string, Array<WordWithVerse>>;
   pageMetadata: PageMetadataWithChapter;
+  locale: string;
   // When set, this safha shows/edits another user's mushaf via an access grant
   // (see ADR 0012). Undefined = the viewer's own mushaf.
   grantId?: string;
@@ -82,6 +84,7 @@ export const QuranSafha = ({
   page,
   lines,
   pageMetadata,
+  locale,
   grantId,
   viewingOwnerName,
   stackPeekSide = "left",
@@ -140,9 +143,9 @@ export const QuranSafha = ({
     "hizb-three-quarters": "ثلاث أرباع الحزب",
   };
   const surahGlyph = `${pageMetadata.chapter.chapter_number}`.padStart(3, "0");
-  const juz = `${t("juz", "الجزء")} ${pageMetadata.juz_number}`;
+  const juz = `${t("juz", "الجزء")} ${toLocaleNumeral(pageMetadata.juz_number, locale)}`;
   const hizb = pageMetadata.hizb_position
-    ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${pageMetadata.hizb_number}`
+    ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${toLocaleNumeral(pageMetadata.hizb_number, locale)}`
     : null;
 
   // lineKeys must be sorted numerically; Object.keys() order is not guaranteed.
@@ -334,7 +337,7 @@ export const QuranSafha = ({
                 style={{ marginTop: "var(--fq-line-gap)" }}
               >
                 <span className="text-primary opacity-70 text-[10px]">◆</span>
-                <span>{page}</span>
+                <span>{toLocaleNumeral(page, locale)}</span>
                 <span className="text-primary opacity-70 text-[10px]">◆</span>
               </div>
             </div>

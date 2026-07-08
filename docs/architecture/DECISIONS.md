@@ -314,6 +314,32 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 
 ---
 
+## Error Tracking
+
+**Decision:** Sentry (`@sentry/nextjs`) captures production errors only — no performance tracing (`tracesSampleRate: 0`), no session replay. Gating is by DSN presence, not `NODE_ENV`: `Sentry.init({ dsn: process.env.NEXT_PUBLIC_SENTRY_DSN })` runs unconditionally in `sentry.client.config.ts`/`sentry.server.config.ts`/`sentry.edge.config.ts`, and the SDK no-ops when the DSN is unset. The var is left empty in `.env.local`/`.env.example` and set only in Hostinger's build/runtime env panel, so dev and local builds stay silent by default. Server/Route Handler/Server Component errors are captured automatically via `instrumentation.ts`'s `onRequestError = Sentry.captureRequestError` hook — no per-route code changes. Client render errors are captured via `app/[locale]/error.tsx` (nested inside the locale layout, so `Nav`/`NextIntlClientProvider`/theme stay mounted — not bare `app/error.tsx`, which would sit outside them) and `app/global-error.tsx` (root-layout-crashing last resort; replaces `app/layout.tsx` entirely, so it uses plain inline-safe CSS instead of theme tokens, since the theme flash-prevention script never runs there). Both call `Sentry.captureException` before rendering their fallback. See [ADR 0017](adr/0017-sentry-error-tracking.md).
+
+**Constraints:**
+- Do not add `NODE_ENV` branching around `Sentry.init()` — DSN presence is the only gate; keeping it that way means dev/prod behavior is controlled entirely by which env file sets the var, with no code to keep in sync.
+- Never commit a real `NEXT_PUBLIC_SENTRY_DSN` to `.env.production` or `.env.example` — both are checked in; only Hostinger's panel should hold the real value.
+- `experimental.instrumentationHook: true` in `next.config.mjs` is required for `instrumentation.ts` to run on Next.js 14.2.15 (pre-15). Do not remove it without first confirming the installed Next major version makes it a no-op.
+- `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` are build-time-only, read inside `next.config.mjs`'s `withSentryConfig` call for source-map upload — never expose them as `NEXT_PUBLIC_*` or reference them from client code.
+- If performance tracing or session replay is added later, revisit ADR 0017 rather than silently bumping `tracesSampleRate` or adding `replayIntegration()` — both were deliberately scoped out (cost, and replay's privacy surface against the sign-in/marks flows).
+
+---
+
+## Sentry-to-Slack Alerting
+
+**Decision:** Sentry's native Slack alert-rule action requires a paid (Team+) plan; the app is on the free Developer plan. Instead, a self-hosted relay endpoint (`app/api/webhooks/sentry/route.ts`) receives Sentry's Internal Integration webhook for triggered alert-rule events, verifies its signature, and forwards a formatted message to a Slack Incoming Webhook. See [ADR 0018](adr/0018-sentry-slack-relay-webhook.md).
+
+**Constraints:**
+- Only the `event_alert` resource is relayed to Slack; other `sentry-hook-resource` values (e.g. `installation`) are acknowledged with `200` and dropped, not forwarded or rejected.
+- The route must verify `sentry-hook-signature` (HMAC-SHA256 of the raw body using `SENTRY_WEBHOOK_SECRET`) before doing anything else — this is a public, unauthenticated-by-user endpoint.
+- A failed Slack post must `throw`, not be swallowed — it needs to propagate to `instrumentation.ts`'s `onRequestError` (ADR 0017) so it's captured by Sentry itself and shows as a failed delivery in Sentry's own integration dashboard.
+- `SENTRY_WEBHOOK_SECRET` and `SLACK_WEBHOOK_URL` are Hostinger-panel-only env vars, never committed with real values, mirroring the pattern from the Error Tracking decision above.
+- If the org ever upgrades to Sentry Team+, this relay can be retired in favor of Sentry's native Slack action — revisit ADR 0018 rather than running both in parallel.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:

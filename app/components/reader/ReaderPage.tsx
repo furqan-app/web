@@ -131,6 +131,7 @@ export const ReaderPage = async ({
               rightPage={{ pageId: rightPageId, ...rightPageWords }}
               leftPage={{ pageId: leftPageId, ...leftPageWords }}
               isRTL={isRTL}
+              locale={locale}
               grantId={grantId}
               viewingOwnerName={viewingOwnerName}
               singleStepNav={singleStepNav}
