@@ -29,16 +29,19 @@ async function fetchPage(page) {
 }
 
 /**
- * Fetches all 604 pages from QDC and flattens them into `verses` + `words` rows
- * (word translation/transliteration are intentionally dropped — not in the Prisma
- * Word model). Fails hard (throws) on a page that won't load, so a partial seed
- * is never silently produced; re-run to retry. `onPage(page)` reports progress.
+ * Fetches the given pages from QDC (all 604 by default) and flattens them into
+ * `verses` + `words` rows (word translation/transliteration are intentionally
+ * dropped — not in the Prisma Word model). Fails hard (throws) on a page that
+ * won't load, so a partial seed is never silently produced; re-run to retry.
+ * `onPage(page)` reports progress. `pages` lets callers (e.g. the e2e fixture
+ * generator) fetch a small subset instead of the full book.
  */
-async function fetchVersesAndWords(onPage) {
+async function fetchVersesAndWords(onPage, pages) {
   const verses = [];
   const words = [];
+  const pageList = pages ?? Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1);
 
-  for (let page = 1; page <= TOTAL_PAGES; page++) {
+  for (const page of pageList) {
     const data = await fetchPage(page);
     for (const verse of data.verses) {
       verses.push({

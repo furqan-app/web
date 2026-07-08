@@ -314,6 +314,20 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 
 ---
 
+## Visual E2E Testing
+
+**Decision:** Playwright (`@playwright/test`) drives visual regression tests against a committed, **full-dataset** fixture database (all 604 pages) — not a trimmed slice. This is required, not optional: `app/[locale]/pages/[id]/page.tsx`'s `generateStaticParams` hardcodes all 604 page ids, so `next build` always statically generates every page regardless of which ones the tests visit; a trimmed fixture would crash the build on every page outside the trim. A fixture-generation script (`scripts/e2e-fixture/generate.js`, reusing the seeder's fetch/derive modules) produces one committed SQL dump (`e2e/fixtures/quran-fixture.sql`) with all 114 `chapters` + all 604 pages' `verses`/`words`/`page_metadata`/`rubs`/`rub_verse_mappings`. CI (GitHub Actions) and local baseline regeneration both load this file into a **dedicated, disposable** MySQL setup (`compose.e2e.yml` locally — separate ports/volumes from dev's `compose.yml`; GitHub Actions service containers in CI), then `next build && next start` against it. Five fixed screens are screenshotted across `{ar, en} × {light, dark}` (home/surah-list, Quran page 1, Quran pages 2–3 double-spread, search results, settings sheet), with a mobile viewport added for 4 of the 5 (the double-spread is desktop/`lg`-only by design) — 36 baseline PNGs total. See [ADR 0018](adr/0018-visual-e2e-testing.md).
+
+**Constraints:**
+- Never point `e2e:setup` (or `compose.e2e.yml`) at the dev databases in `compose.yml` — it force-resets both schemas on every run. The e2e DBs are separate containers/ports (`quran-db-e2e` 3309, `app-db-e2e` 3310) specifically so this is never destructive to real dev data.
+- `app-db` gets its Prisma schema pushed but no seed rows for these tests — none of the five screens require authentication; do not add auth-gated screens to this suite without also adding seed data and re-opening this decision.
+- A visual diff fails the GitHub Actions check but is not added to `protect-prod.yml`'s hard source-branch rule — it's a soft-blocking check like any other, not a merge-gate rule.
+- Baselines are only ever regenerated via the `workflow_dispatch` CI job (`playwright test --update-snapshots` run inside CI, pushed back to the PR branch) — never by committing locally-generated PNGs, which would reintroduce font-rendering/anti-aliasing drift between a developer's machine and CI.
+- If the Quran schema (ADR 0009) changes, `scripts/e2e-fixture/generate.js` must be re-run and `e2e/fixtures/quran-fixture.sql` regenerated — it is a full derivative of the same seeder logic, not an independent source of truth. Regenerating re-fetches all 604 pages from QDC (slow, one-time), not part of any CI run.
+- Screenshot coverage (which pages get *screenshotted*) is intentionally limited to pages 1–3 even though the fixture *data* now covers all 604 — do not assume this suite catches rendering bugs on other pages (multi-surah pages, page-metadata edge cases, etc.). Expanding screenshot coverage is a deliberate future addition.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:
