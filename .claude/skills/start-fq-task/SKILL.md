@@ -18,6 +18,45 @@ Loads the right context (decisions + standards + plan), then implements the task
    - **Read `docs/plans/<slug>.md` in full — every addendum, and especially the `Constraints` and `What NOT to Do` sections.** If the plan has multiple addenda, the newest one is the source of truth: implement the approach it settled on, not an earlier one it revised or reverted. Re-implementing a superseded approach is the single biggest cause of the rework this workflow exists to prevent.
    - Find the plan's Trello card (linked in the plan) and move it to **In Progress** (`mcp__trello__move_card`) before starting implementation.
 
+1b. **Create worktree and start dev server**
+
+   Derive the slug from the plan filename (e.g. `fix-search-debounce` from `docs/plans/fix-search-debounce.md`). Then:
+
+   **Check for an existing worktree first:**
+   - Run `git worktree list` and look for a path ending in `furqan-<slug>`
+   - If found: read `~/.claude/furqan-worktrees.json`, find the entry for this slug, and print `Worktree already running at http://localhost:<port>` — skip the rest of this step and proceed to step 2
+
+   **If no existing worktree:**
+   1. Derive the branch name from the Trello card using the project convention: `<type>/<card-short-id>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
+   2. Create the worktree and branch:
+      ```bash
+      git worktree add ../furqan-<slug> -b <branch-name>
+      ```
+   3. Symlink shared dependencies into the worktree:
+      ```bash
+      ln -s $(pwd)/node_modules ../furqan-<slug>/node_modules
+      ```
+   4. **Determine whether a dev server is needed** — scan the plan's "Files to Change" section:
+      - If **every** listed path is under `docs/` or `.claude/` → this is a docs/tooling task; skip steps 5–8 (no port, no state file entry, no dev server)
+      - If **any** path is under `app/`, `components/`, `lib/`, `prisma/`, or other app directories → proceed with steps 5–8
+   5. Symlink `.env.local` if it exists:
+      ```bash
+      # if .env.local exists:
+      ln -s $(pwd)/.env.local ../furqan-<slug>/.env.local
+      # if not: warn the user ("No .env.local found — dev server may fail auth") and continue
+      ```
+   6. Assign a port — read `~/.claude/furqan-worktrees.json` (treat as `{}` if missing or empty), collect all `.port` values from existing entries, then find the lowest integer ≥ 3001 not already in use
+   7. Record the entry in `~/.claude/furqan-worktrees.json`:
+      ```json
+      { "<slug>": { "worktreePath": "../furqan-<slug>", "port": <port>, "branch": "<branch-name>" } }
+      ```
+      Merge with any existing entries — do not overwrite the whole file
+   8. Start the dev server in the background:
+      ```bash
+      cd ../furqan-<slug> && PORT=<port> npm run dev &
+      ```
+   9. Print clearly: `Task dev server: http://localhost:<port>`
+
 2. **Load context — mandatory gate, before writing any code**
    - Read `docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
    - Read `docs/architecture/COMPONENTS.md`

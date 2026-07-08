@@ -46,6 +46,20 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
    - `mcp__trello__update_card_details`: append the PR URL and a short summary to the card description
    - Move the card to **In Review** (`mcp__trello__move_card`)
 
+7. **Clean up the worktree** (if one exists for this task)
+   - Read the current branch name (`git branch --show-current`)
+   - Read `~/.claude/furqan-worktrees.json` — if the file doesn't exist or has no entry whose `branch` matches the current branch, skip this step entirely
+   - If an entry is found:
+     1. Kill the dev server on that port (gracefully):
+        ```bash
+        lsof -ti :<port> | xargs kill -TERM 2>/dev/null || true
+        ```
+     2. Remove the worktree:
+        ```bash
+        git worktree remove <worktreePath> --force
+        ```
+     3. Remove the entry from `~/.claude/furqan-worktrees.json` and write the updated file back (preserve all other entries)
+
 ## No AI signatures — anywhere
 
 Never add any AI attribution in this flow: no `Co-Authored-By: Claude` in commit messages, no "Generated with Claude Code" or similar in PR titles, bodies, or comments, no AI footer/trailer anywhere.
