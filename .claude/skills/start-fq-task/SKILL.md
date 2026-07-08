@@ -28,10 +28,15 @@ Loads the right context (decisions + standards + plan), then implements the task
 
    **If no existing worktree:**
    1. Derive the branch name from the Trello card using the project convention: `<type>/<card-short-id>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
-   2. Create the worktree and branch:
+   2. Create the worktree — check whether the branch already exists first:
       ```bash
+      # If branch does NOT exist yet (new task):
       git worktree add ../furqan-<slug> -b <branch-name>
+
+      # If branch already exists (e.g. PR was opened, continuing after review):
+      git worktree add ../furqan-<slug> <branch-name>
       ```
+      Use `git branch --list <branch-name>` to decide which form to run.
    3. Symlink shared dependencies into the worktree:
       ```bash
       ln -s $(pwd)/node_modules ../furqan-<slug>/node_modules
