@@ -68,9 +68,9 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 | Quran content (read-only, portable) | `furqan_quran` | `QURAN_DATABASE_URL` | `quranPrisma` | `Chapter`, `Verse`, `Word`, `PageMetadata`, `Rub`, `RubVerseMapping` |
 | Application data (mutable, shared remote) | `furqan_app` | `APP_DATABASE_URL` | `appPrisma` | `User`, `Mark` |
 
-Schemas live at `prisma/quran/schema.prisma` and `prisma/app/schema.prisma`; clients generate to `app/generated/quran-client` and `app/generated/app-client` (imported via `@/app/generated/…`) and are both re-exported from `app/utils/db.ts`. Applied with `prisma db push` per schema — no migration history.
+Schemas live at `prisma/quran/schema.prisma` and `prisma/app/schema.prisma`; clients generate to `app/generated/quran-client` and `app/generated/app-client` (imported via `@/app/generated/…`) and are both re-exported from `app/utils/db.ts`. `furqan_app` uses **versioned Prisma migrations** (`migrate dev` locally, `migrate deploy` in the build script) — see [ADR 0017](adr/0017-prisma-migrations-app-db.md). `furqan_quran` is applied with `prisma db push --force-reset` by the seeder (ADR 0009) — no migration history, by design.
 
-`app/generated/` is git-ignored (build artifact). A `postinstall` script regenerates both clients on `npm install` (no `.env.local` needed — `prisma generate` reads no DB URL), so CI/builds always have them. `npm run prisma-generate` runs both; per-domain scripts are `quran-generate`/`app-generate`, `quran-studio`/`app-studio`, `quran-db-push`/`app-db-push`.
+`app/generated/` is git-ignored (build artifact). A `postinstall` script regenerates both clients on `npm install` (no `.env.local` needed — `prisma generate` reads no DB URL), so CI/builds always have them. `npm run prisma-generate` runs both; per-domain scripts are `quran-generate`/`app-generate`, `quran-studio`/`app-studio`, `quran-db-push` (Quran only — App DB schema changes use `app-migrate-dev`).
 
 **Constraints:**
 - **Never add a foreign key or Prisma relation that crosses the two domains.** `Mark`/`User` reference Quran locations and users by scalar id only (`marked_id`, `page_number`, `from_user`, `to_user`). A cross-domain relation would make the databases inseparable and break the future device-local Quran DB (mobile). This is the load-bearing invariant of the split.
@@ -301,7 +301,7 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 ```
 
 - `/cut-release <major|minor|patch>` — branches `release/x.y.z` off `main`, bumps `package.json` version + tags `vX.Y.Z`, labels every card in **"To Be Released"** with the version and moves them to **Done**, then creates a GitHub Release whose notes are built from those same cards (title + URL) — not `--generate-notes`, since Trello is the curated "what's included" source, not raw commit/PR history.
-- `/promote-release <version>` — opens the PR `release/x.y.z` → `prod`. Merge and the manual Hostinger "redeploy" click (hPanel) both happen outside the skill.
+- `/promote-release <version>` — opens the PR `release/x.y.z` → `prod`. Hostinger auto-deploys on any push to `prod`, so merging the PR is sufficient — no manual hPanel redeploy click needed.
 - `/sync-main-from-prod` — opens the PR `prod` → `main` afterward, to capture any fixes made on the release branch back into `main`.
 - `/release <major|minor|patch>` — orchestrator that runs the above three in one continuous flow, pausing only at genuine human checkpoints (confirm local testing passed, confirm the prod PR merged, confirm the Hostinger redeploy was clicked). Verifies PR merges via `gh pr view` rather than trusting the user's word where that's possible.
 
@@ -310,7 +310,20 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 - Testing happens locally (`npm run build && npm start` against the release branch) — there is no staging deployment. Hostinger hosts prod only.
 - Cards move into "To Be Released" manually when their PR merges to `main`; `/cut-release` is what stamps the version label and moves them to `Done`, not the merge itself.
 - Do not skip `/sync-main-from-prod` after a release — without it, fixes made directly on a release branch during stabilization silently disappear from `main`'s history.
-- `/release` must not skip its checkpoints — only local testing and the Hostinger redeploy lack a programmatic check, so those two must always be taken on the user's word; PR merges must always be verified via `gh`, never assumed.
+- `/release` must not skip its checkpoints — only local testing lacks a programmatic check and must be taken on the user's word; PR merges must always be verified via `gh`, never assumed.
+
+---
+
+## Error Tracking
+
+**Decision:** Sentry (`@sentry/nextjs`) captures production errors only — no performance tracing (`tracesSampleRate: 0`), no session replay. Gating is by DSN presence, not `NODE_ENV`: `Sentry.init({ dsn: process.env.NEXT_PUBLIC_SENTRY_DSN })` runs unconditionally in `sentry.client.config.ts`/`sentry.server.config.ts`/`sentry.edge.config.ts`, and the SDK no-ops when the DSN is unset. The var is left empty in `.env.local`/`.env.example` and set only in Hostinger's build/runtime env panel, so dev and local builds stay silent by default. Server/Route Handler/Server Component errors are captured automatically via `instrumentation.ts`'s `onRequestError = Sentry.captureRequestError` hook — no per-route code changes. Client render errors are captured via `app/[locale]/error.tsx` (nested inside the locale layout, so `Nav`/`NextIntlClientProvider`/theme stay mounted — not bare `app/error.tsx`, which would sit outside them) and `app/global-error.tsx` (root-layout-crashing last resort; replaces `app/layout.tsx` entirely, so it uses plain inline-safe CSS instead of theme tokens, since the theme flash-prevention script never runs there). Both call `Sentry.captureException` before rendering their fallback. See [ADR 0017](adr/0017-sentry-error-tracking.md).
+
+**Constraints:**
+- Do not add `NODE_ENV` branching around `Sentry.init()` — DSN presence is the only gate; keeping it that way means dev/prod behavior is controlled entirely by which env file sets the var, with no code to keep in sync.
+- Never commit a real `NEXT_PUBLIC_SENTRY_DSN` to `.env.production` or `.env.example` — both are checked in; only Hostinger's panel should hold the real value.
+- `experimental.instrumentationHook: true` in `next.config.mjs` is required for `instrumentation.ts` to run on Next.js 14.2.15 (pre-15). Do not remove it without first confirming the installed Next major version makes it a no-op.
+- `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` are build-time-only, read inside `next.config.mjs`'s `withSentryConfig` call for source-map upload — never expose them as `NEXT_PUBLIC_*` or reference them from client code.
+- If performance tracing or session replay is added later, revisit ADR 0017 rather than silently bumping `tracesSampleRate` or adding `replayIntegration()` — both were deliberately scoped out (cost, and replay's privacy surface against the sign-in/marks flows).
 
 ---
 

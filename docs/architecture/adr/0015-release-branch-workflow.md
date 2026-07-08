@@ -26,7 +26,7 @@ Option B. Branch flow becomes:
 main (feature branches merge here, as today)
   └─ /cut-release <major|minor|patch> → release/x.y.z (branched from main, version bumped + tagged)
        └─ manual local testing (npm run build && npm start)
-            └─ /promote-release → PR release/x.y.z → prod (merge, then manual Hostinger redeploy)
+            └─ /promote-release → PR release/x.y.z → prod (merge → Hostinger auto-deploys)
                  └─ /sync-main-from-prod → PR prod → main (captures any release-branch fixes back into main)
 ```
 
@@ -41,4 +41,4 @@ Release scope is tracked in Trello: a new **"To Be Released"** list holds cards 
 - **+** Trello's "To Be Released" list + per-release version label gives a permanent, searchable record of what was in each release, without needing a separate changelog system.
 - **-** No staging deployment — testing relies on local `npm run build && npm start`, which won't catch environment-specific issues (Hostinger env vars, real DB) the way a deployed staging site would. Accepted for now; revisit if local testing proves insufficient (Option C).
 - **-** Every prod update now requires a release branch, even urgent hotfixes — no direct main→prod escape hatch. Accepted deliberately to keep the process consistent; a hotfix just means cutting a (possibly same-day) release branch too.
-- **-** Deploy to prod is still a manual "redeploy" click in hPanel (Hostinger has no push-triggered CI/CD on this plan) — `/promote-release` can only remind the user to do this, not automate it.
+- **+** Merging the release PR into `prod` is sufficient to deploy — Hostinger auto-deploys on any push to `prod`, so no manual hPanel click is needed for routine releases.

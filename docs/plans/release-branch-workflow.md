@@ -102,3 +102,25 @@ If any `gh`/`git` step fails partway (e.g. the prod PR can't be created because 
 - Do not infer the version bump automatically from commit messages/conventional commits — the user specifies it.
 - Do not reuse/recolor an existing Trello label across releases — create a new one per version.
 - Do not have `/release` ask "continue?" between purely mechanical steps (e.g. after cutting, before opening the prod PR) — only pause at the four checkpoints that require human action.
+
+---
+
+## Addendum 1 — Hostinger auto-deploys on push to prod (2026-07-07)
+
+**Type:** correction  
+**Status:** implemented
+
+### What changed
+
+Hostinger is connected to the `prod` branch and auto-deploys on any push to it. The original plan (and ADR 0015) incorrectly stated that a manual "redeploy" click in hPanel was required after merging a release PR into `prod`. This was never true — merging the `release/x.y.z → prod` PR is sufficient to trigger the deploy.
+
+### Files to change
+
+- `docs/deployment/hostinger.md` — Phase 4: replace "trigger a redeploy" instruction with a note that Hostinger auto-deploys on any push to `prod`; remove the instruction to click Redeploy manually.
+- `docs/architecture/adr/0015-release-branch-workflow.md` — remove the consequence bullet stating deploy is a manual click; update branch flow diagram to drop the "manual Hostinger redeploy" step.
+- `.claude/skills/promote-release/SKILL.md` — remove the reminder to manually trigger redeploy in hPanel after merging.
+- `.claude/skills/release/SKILL.md` — remove Checkpoint 3 (Hostinger redeploy); collapse the flow from 4 checkpoints to 3.
+
+### What NOT to Do
+
+- Do not add a manual confirmation step for the deploy — Hostinger handles it automatically on push to `prod`; no programmatic verification exists and none is needed.

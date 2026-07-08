@@ -1,5 +1,6 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 import withSerwistInit from '@serwist/next';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const withNextIntl = createNextIntlPlugin();
 
@@ -13,6 +14,10 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Required pre-Next-15 for instrumentation.ts to run (see ADR 0017).
+  experimental: {
+    instrumentationHook: true,
   },
   async headers() {
     return [
@@ -39,5 +44,10 @@ const nextConfig = {
   reactStrictMode: false
 };
 
-export default withSerwist(withNextIntl(nextConfig));
+export default withSentryConfig(withSerwist(withNextIntl(nextConfig)), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+});
 
