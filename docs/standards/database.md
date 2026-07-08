@@ -61,6 +61,13 @@ Both DATABASE_URLs must include `?connection_limit=1` (set in the environment va
 
 ## Migrations
 
-Schemas are applied with `prisma db push` per schema (`npm run app-db-push`; the Quran schema is applied by the seeder — see below) — no migration history, by choice, pre-prod (ADR 0008; revisit before production).
+**`furqan_app`** uses versioned Prisma migrations ([ADR 0017](../architecture/adr/0017-prisma-migrations-app-db.md)):
+- Locally, after any schema change: `npm run app-migrate-dev -- --name <name>` — creates `prisma/app/migrations/TIMESTAMP_<name>/migration.sql`, applies it to the dev DB, regenerates the client. Commit both the schema file and the new migrations file.
+- Production: `prisma migrate deploy` runs automatically in the `build` npm script before `next build`. Applies pending migrations silently with no risk of accidental column drops.
+- On a fresh environment with an empty App DB: `migrate deploy` applies all migrations on first deploy — no manual step.
+- On an existing DB with no migration history (baselining): see `docs/plans/adopt-prisma-migrations.md`.
+- Never use `npm run app-db-push` on the App DB — it was removed to prevent post-baseline schema drift.
+
+**`furqan_quran`** stays on `prisma db push --force-reset` via the seeder — it is always fully recreated from scratch, so migration history is unnecessary and incompatible with the seeder model.
 
 **Seeding `furqan_quran`:** `npm run seed:quran -- --force` regenerates the whole Quran DB reproducibly ([ADR 0009](../architecture/adr/0009-reproducible-quran-seeder.md)) — it runs `prisma db push --force-reset` (Prisma owns the schema), fetches `chapters` + `verses`/`words` from the QDC API, and derives `page_metadata`/`rubs`/`rub_verse_mappings`. It is destructive and refuses without `--force`. Code lives in `scripts/quran-seed/`.

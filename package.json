@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma migrate deploy --schema prisma/app/schema.prisma && next build",
     "start": "next start",
     "lint": "next lint",
     "quran-studio": "dotenv -e .env.local -- npx prisma studio --schema prisma/quran/schema.prisma",
@@ -12,8 +12,8 @@
     "quran-generate": "dotenv -e .env.local -- npx prisma generate --schema prisma/quran/schema.prisma",
     "app-generate": "dotenv -e .env.local -- npx prisma generate --schema prisma/app/schema.prisma",
     "prisma-generate": "npm run quran-generate && npm run app-generate",
+    "app-migrate-dev": "dotenv -e .env.local -- npx prisma migrate dev --schema prisma/app/schema.prisma",
     "quran-db-push": "dotenv -e .env.local -- npx prisma db push --schema prisma/quran/schema.prisma",
-    "app-db-push": "dotenv -e .env.local -- npx prisma db push --schema prisma/app/schema.prisma",
     "extract-translations": "node extract-translations.js",
     "seed:quran": "dotenv -e .env.local -- node scripts/quran-seed/seed.js",
     "postinstall": "prisma generate --schema prisma/quran/schema.prisma && prisma generate --schema prisma/app/schema.prisma"
