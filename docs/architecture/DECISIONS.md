@@ -340,6 +340,20 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 
 ---
 
+## Structured Logging (fq-logger)
+
+**Decision:** `lib/fq-logger/` wraps `pino` for structured, leveled, request-correlated server-side logs (stdout only — JSON in prod, `pino-pretty` in dev; no hosted log vendor). It has two separate entry points rather than one runtime-branching module: `@/lib/fq-logger` (Node — API routes, Server Actions, NextAuth callbacks) and `@/lib/fq-logger/edge` (Edge — `middleware.ts`/`auth-middleware.ts`), both exposing the identical 6-level API (`trace/debug/info/warn/error/fatal` + `.child()`). `logger.error()` both emits the structured log line and calls `Sentry.captureException`, amending [ADR 0017](adr/0017-sentry-error-tracking.md)'s "Sentry = exceptions only" scope — see [ADR 0019](adr/0019-fq-logger-sentry-integration.md). A generated `x-request-id` is set by a `withRequestId` middleware wrapper (first in `middleware.ts`'s pipe) and forwarded on request headers the same way `auth-middleware.ts` already forwards the `user` header; Node call sites obtain a request-scoped child logger via `getLogger()` (reads the header via `next/headers`). A fixed key list (`email`, `password`, `token`, `accessToken`, `refreshToken`, `authorization`, `cookie`, `secret`) is redacted before either the log line or the Sentry `extra` payload is emitted.
+
+**Constraints:**
+- Client-side code (e.g. `app/utils/storage.ts`'s `console.warn` calls) is out of scope — fq-logger is server-only; do not import it from client components. This also covers `app/server/actions/**` — despite the directory name, those files have no `"use server"` directive, call `fetch()` with relative paths, and are invoked from `useQuery` hooks in client components, so they run in the browser, not on the server.
+- Never import `@/lib/fq-logger` (the Node/pino entry) from an Edge-runtime file (`middleware.ts`, `auth-middleware.ts`, anything reachable from them) — it statically imports `pino`, which needs `worker_threads`/`fs` and isn't available in the Edge bundle. Edge files import `@/lib/fq-logger/edge` instead.
+- Do not pass `pino-pretty` via pino's `transport` option — that spawns a worker thread that resolves the target module from disk, which fails inside Next's webpack-bundled Route Handlers (`unable to determine transport target for "pino-pretty"`). `lib/fq-logger/node.ts` instead passes a `PinoPretty(...)` stream directly as pino's second constructor argument, which works bundled.
+- Reserve `.error()` for true dead-ends — an error caught and NOT rethrown. Anywhere an error is caught only to rethrow, or is left to propagate to `instrumentation.ts`'s `onRequestError` (which already reports it to Sentry per ADR 0017), do not also call `.error()` on it — that double-reports the same failure to Sentry. Use `.warn()` there instead (log line only, no Sentry call). This also means every `.error()` call consumes Sentry's free-tier event quota (ADR 0018's context) beyond just uncaught exceptions, so it should stay reserved for genuine, non-propagating failures.
+- Any new sensitive field logged anywhere (auth, sessions, mushaf codes) must be added to `lib/fq-logger/redact.ts`'s key list, not redacted ad hoc at the call site. `redact()` special-cases `Error` instances (extracting `name`/`message`/`stack`) since `Object.entries()` on an `Error` returns nothing — its properties are non-enumerable.
+- Do not call `getLogger()` outside a request context (e.g. build-time scripts) — it depends on `headers()`, which throws outside Server Components/Actions/Route Handlers.
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:

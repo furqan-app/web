@@ -7,6 +7,7 @@ import {
   upsertMark,
   deleteMark,
 } from "@/app/api/mushaf/access";
+import { getLogger } from "@/lib/fq-logger";
 
 export async function GET(
   request: NextRequest,
@@ -15,6 +16,7 @@ export async function GET(
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("marks.list.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
@@ -42,6 +44,7 @@ export async function POST(
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("marks.create.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
@@ -52,6 +55,7 @@ export async function POST(
     body
   );
   if (!ok) {
+    getLogger().warn("marks.create.invalid_fields", { userId: user.id });
     return jsonResponse({ code: 422, message: "Missing required fields" });
   }
 
@@ -72,16 +76,19 @@ export async function DELETE(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
+    getLogger().warn("marks.delete.invalid_body");
     return jsonResponse({ code: 422, message: "Invalid request body" });
   }
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("marks.delete.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
   const ok = await deleteMark(user.id, body);
   if (!ok) {
+    getLogger().warn("marks.delete.invalid_fields", { userId: user.id });
     return jsonResponse({ code: 422, message: "Missing required fields" });
   }
 

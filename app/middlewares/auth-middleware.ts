@@ -3,6 +3,8 @@ import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { jsonResponse } from "../api/response";
 import { isJSONRequest } from "../api/request";
+import { edgeLogger } from "@/lib/fq-logger/edge";
+import { REQUEST_ID_HEADER } from "./request-id-middleware";
 
 const protectedRoutes = [
   new RegExp("/api/quran/pages/[0-9]+/marks"),
@@ -26,12 +28,18 @@ export const withAuth = (middleware: CustomMiddleware) => {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
     if (!token?.email) {
+      const log = edgeLogger.child({
+        requestId: req.headers.get(REQUEST_ID_HEADER) ?? undefined,
+      });
+
       if (isJSONRequest(req)) {
+        log.warn("auth.denied", { pathname, reason: "no_token" });
         return jsonResponse({
           code: 401,
         });
       }
 
+      log.warn("auth.redirect_to_signin", { pathname });
       return NextResponse.redirect(`/api/auth/signin?callbackUrl=${pathname}`);
     }
 

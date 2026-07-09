@@ -8,6 +8,7 @@ import {
   upsertMark,
   deleteMark,
 } from "@/app/api/mushaf/access";
+import { getLogger } from "@/lib/fq-logger";
 
 /**
  * Grant-scoped mirror of /api/quran/pages/[pageId]/marks. Every method first
@@ -21,11 +22,16 @@ export async function GET(
 ) {
   const user = extractUser(request);
   if (!user) {
+    getLogger().warn("mushaf.marks.list.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
   const grant = await getGrantForViewer(context.params.grantId, user.id);
   if (!grant) {
+    getLogger().warn("mushaf.marks.list.forbidden", {
+      userId: user.id,
+      grantId: context.params.grantId,
+    });
     return jsonResponse({ code: 403, message: "Forbidden" });
   }
 
@@ -45,11 +51,16 @@ export async function POST(
 ) {
   const user = extractUser(request);
   if (!user) {
+    getLogger().warn("mushaf.marks.create.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
   const grant = await getGrantForViewer(context.params.grantId, user.id);
   if (!grant) {
+    getLogger().warn("mushaf.marks.create.forbidden", {
+      userId: user.id,
+      grantId: context.params.grantId,
+    });
     return jsonResponse({ code: 403, message: "Forbidden" });
   }
 
@@ -62,6 +73,7 @@ export async function POST(
     body
   );
   if (!ok) {
+    getLogger().warn("mushaf.marks.create.invalid_fields", { userId: user.id });
     return jsonResponse({ code: 422, message: "Missing required fields" });
   }
 
@@ -74,11 +86,16 @@ export async function DELETE(
 ) {
   const user = extractUser(request);
   if (!user) {
+    getLogger().warn("mushaf.marks.delete.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
   const grant = await getGrantForViewer(context.params.grantId, user.id);
   if (!grant) {
+    getLogger().warn("mushaf.marks.delete.forbidden", {
+      userId: user.id,
+      grantId: context.params.grantId,
+    });
     return jsonResponse({ code: 403, message: "Forbidden" });
   }
 
@@ -86,11 +103,13 @@ export async function DELETE(
   try {
     body = await request.json();
   } catch {
+    getLogger().warn("mushaf.marks.delete.invalid_body", { userId: user.id });
     return jsonResponse({ code: 422, message: "Invalid request body" });
   }
 
   const ok = await deleteMark(grant.owner_user, body);
   if (!ok) {
+    getLogger().warn("mushaf.marks.delete.invalid_fields", { userId: user.id });
     return jsonResponse({ code: 422, message: "Missing required fields" });
   }
 
