@@ -327,6 +327,19 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 
 ---
 
+## Swipe Animation — Core Gesture Only
+
+**Decision:** `QuranSwipeNav` is a single-slot wrapper: one `overflow-hidden` outer div with a `stripRef` inner div that holds only the current page content. On drag it translates `stripRef` live. On commit (≥80px threshold) it animates to `translateX(±100%)` over 220ms then calls `router.push(href)`. On sub-threshold release it snaps back. `prefers-reduced-motion` skips the animation and calls `router.push()` directly. No adjacent page prefetching, no `startTransition`, no `router.prefetch()`. A post-navigation flicker (browser compositor artifact) is accepted as a platform limitation; the View Transitions API would address it but requires Safari 18+ and experimental Next.js support — out of scope. ADR 0019 (the original sessionStorage approach) and the three-page strip approach (Addenda 2–8) are both superseded. See Addendum 9.
+
+**Constraints:**
+- Swipe right = next page, swipe left = previous page (Quran RTL convention — constant regardless of UI locale).
+- Do not add adjacent page fetches back — investigated in Addenda 2–8, confirmed zero benefit for the flicker, removed in Addendum 9.
+- Do not add a positional/transform entry animation on mount — a transform-based entry reads as a second swipe (Addendum 4/5 incident).
+- Do not add `startTransition` — Next.js App Router already wraps its router dispatch in `startTransition` internally; double-wrapping is a no-op (confirmed in Addendum 8/9).
+- Do not use `sessionStorage` or `document.documentElement` attributes as fade-signal carriers — these mechanisms are superseded.
+
+---
+
 ## Sentry-to-Slack Alerting
 
 **Decision:** Sentry's native Slack alert-rule action requires a paid (Team+) plan; the app is on the free Developer plan. Instead, a self-hosted relay endpoint (`app/api/webhooks/sentry/route.ts`) receives Sentry's Internal Integration webhook for triggered alert-rule events, verifies its signature, and forwards a formatted message to a Slack Incoming Webhook. See [ADR 0018](adr/0018-sentry-slack-relay-webhook.md).
