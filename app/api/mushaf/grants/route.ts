@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
+import { getLogger } from "@/lib/fq-logger";
 
 /**
  * The caller's access relationships, both directions:
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("mushaf.grants.list.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
