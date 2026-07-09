@@ -45,11 +45,16 @@ Loads the right context (decisions + standards + plan), then implements the task
    4. **Determine whether a dev server is needed** — scan the plan's "Files to Change" section:
       - If **every** listed path is under `docs/` or `.claude/` → this is a docs/tooling task; skip steps 5–8 (no port, no state file entry, no dev server)
       - If **any** path is under `app/`, `components/`, `lib/`, `prisma/`, or other app directories → proceed with steps 5–8
-   5. Symlink `.env.local` if it exists:
+   5. Symlink `.env.local` and `.mcp.json` if they exist:
       ```bash
       # if .env.local exists:
       ln -s $(pwd)/.env.local ../furqan-<slug>/.env.local
       # if not: warn the user ("No .env.local found — dev server may fail auth") and continue
+
+      # if .mcp.json exists:
+      ln -s $(pwd)/.mcp.json ../furqan-<slug>/.mcp.json
+      # .mcp.json must be present in the worktree so MCP servers (e.g. Trello) are
+      # available in sessions started from the worktree directory
       ```
    6. Assign a port — read `~/.claude/furqan-worktrees.json` (treat as `{}` if missing or empty), collect all `.port` values from existing entries, then find the lowest integer ≥ 3001 not already in use
    7. Record the entry in `~/.claude/furqan-worktrees.json`:
