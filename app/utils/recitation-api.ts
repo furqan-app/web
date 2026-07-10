@@ -13,8 +13,8 @@ async function unwrap<T>(res: Response): Promise<T> {
   return body.data;
 }
 
-export const fetchReciters = async (): Promise<Reciter[]> => {
-  const res = await fetch("/api/quran/recitations/reciters");
+export const fetchReciters = async (language: string): Promise<Reciter[]> => {
+  const res = await fetch(`/api/quran/recitations/reciters?language=${language}`);
   return unwrap<Reciter[]>(res);
 };
 

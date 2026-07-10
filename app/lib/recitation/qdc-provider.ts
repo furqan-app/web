@@ -23,8 +23,8 @@ type QdcAudioFile = {
   verse_timings: QdcVerseTiming[];
 };
 
-async function getReciters(): Promise<Reciter[]> {
-  const res = await fetch(`${QDC_BASE_URL}/audio/reciters`, {
+async function getReciters(language: string): Promise<Reciter[]> {
+  const res = await fetch(`${QDC_BASE_URL}/audio/reciters?language=${language}`, {
     next: { revalidate: 86400 },
   });
 

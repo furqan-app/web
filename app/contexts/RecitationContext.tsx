@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { storage } from "@/app/utils/storage";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
@@ -68,6 +69,7 @@ function getInitialSettings(): RecitationSettings {
 export function RecitationProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const locale = useLocale();
   const { view: safhaView } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
 
@@ -99,10 +101,10 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetchReciters()
+    fetchReciters(locale)
       .then(setReciters)
       .catch(() => setReciters([]));
-  }, []);
+  }, [locale]);
 
   // Default to the first reciter once the live list loads, if the user has
   // never explicitly chosen one — lets the header quick-play button start

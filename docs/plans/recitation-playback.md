@@ -193,3 +193,29 @@ export class RecitationProviderError extends Error {}
 - Do not touch `verse-pages/route.ts` — it's a DB query, not a QDC integration, and is out of scope for this adapter.
 - Do not build a provider registry/factory for provider selection — explicitly out of scope until a second provider is real.
 - Do not change the client-side `RecitationContext`/`recitation-api.ts` — this refactor is confined to the two server route handlers and the new `app/lib/recitation/` files.
+
+## Addendum 3: Localize reciter names
+
+**Date:** 2026-07-10
+
+Bug: `qdcRecitationProvider.getReciters()` calls QDC's `/audio/reciters` with no `language` param, so `translated_name` always comes back in QDC's default (English) regardless of the viewer's locale — Arabic-locale users saw English reciter names.
+
+### Fix
+
+- `RecitationContext.tsx` reads the current locale via `useLocale()` (same pattern as `QuranFontScaleControls.tsx`/`SurahListItem.tsx`/`SettingsSidebar.tsx`) and passes it into `fetchReciters(locale)`.
+- `app/utils/recitation-api.ts` — `fetchReciters(language: string)` appends `?language=${language}` to the request.
+- `app/api/quran/recitations/reciters/route.ts` — reads `language` from `request.nextUrl.searchParams` (default `"en"` if missing), passes it to `qdcRecitationProvider.getReciters(language)`.
+- `app/lib/recitation/provider.ts` — `getReciters(language: string): Promise<Reciter[]>`.
+- `app/lib/recitation/qdc-provider.ts` — `getReciters(language)` appends `?language=${language}` to the QDC `fetch()` call.
+
+### Files to Change
+
+- `app/lib/recitation/provider.ts` — add `language: string` param to `getReciters`.
+- `app/lib/recitation/qdc-provider.ts` — add `language` param, pass through to QDC's `?language=` query param.
+- `app/api/quran/recitations/reciters/route.ts` — read `language` query param (default `"en"`), pass to the adapter.
+- `app/utils/recitation-api.ts` — `fetchReciters(language: string)`, appends `?language=` to the internal request.
+- `app/contexts/RecitationContext.tsx` — `useLocale()` + pass to `fetchReciters(locale)`.
+
+### What NOT to Do (Addendum 3)
+
+- Do not hardcode `"ar"` — the fix must follow the app's actual locale (ar/en) so English-locale users keep English names, not just fix the Arabic case.
