@@ -6,7 +6,7 @@
 
 ## Summary
 
-Introduce automated visual regression testing using Playwright, wired into a new GitHub Actions CI workflow that runs on pull requests. Since the repo has no automated testing today, this is a from-scratch addition: a committed fixture database (see **Addendum 1** below — this must be the *full* 604-page dataset, not a trimmed slice) lets CI build and boot the real app without hitting the live QDC API on every run. Five fixed screens are screenshotted across locale × theme × viewport combinations (36 baseline images total) and diffed against committed baselines on every PR. See [ADR 0018](../architecture/adr/0018-visual-e2e-testing.md) for the full rationale and alternatives considered.
+Introduce automated visual regression testing using Playwright, wired into a new GitHub Actions CI workflow that runs on pull requests. Since the repo has no automated testing today, this is a from-scratch addition: a committed fixture database (see **Addendum 1** below — this must be the *full* 604-page dataset, not a trimmed slice) lets CI build and boot the real app without hitting the live QDC API on every run. Five fixed screens are screenshotted across locale × theme × viewport combinations (36 baseline images total) and diffed against committed baselines on every PR. See [ADR 0022](../architecture/adr/0022-visual-e2e-testing.md) for the full rationale and alternatives considered.
 
 ## Approach
 
@@ -28,7 +28,7 @@ Introduce automated visual regression testing using Playwright, wired into a new
 
 ## Addendum 1 — Fixture must be the full dataset, not trimmed to pages 1–3
 
-**Discovered during implementation** (superseding the original trimmed-fixture approach described in the initial version of this plan and ADR 0018): `app/[locale]/pages/[id]/page.tsx`'s `generateStaticParams` hardcodes `Array.from({ length: 604 }, ...)`, so `next build` always statically generates all 604 pages × 2 locales regardless of which pages the tests actually visit. A fixture trimmed to pages 1–3 crashes the build the moment page 4 statically generates and its `pageMetadata.findUniqueOrThrow` finds no row.
+**Discovered during implementation** (superseding the original trimmed-fixture approach described in the initial version of this plan and ADR 0022): `app/[locale]/pages/[id]/page.tsx`'s `generateStaticParams` hardcodes `Array.from({ length: 604 }, ...)`, so `next build` always statically generates all 604 pages × 2 locales regardless of which pages the tests actually visit. A fixture trimmed to pages 1–3 crashes the build the moment page 4 statically generates and its `pageMetadata.findUniqueOrThrow` finds no row.
 
 **Resolution (user-confirmed):** the committed fixture SQL contains the **full** dataset — all 604 pages' `verses`/`words`/`page_metadata`/`rubs`/`rub_verse_mappings`, plus all 114 `chapters` — not a trimmed slice. `generateStaticParams` is left unmodified (no production code changed for a testing concern). The trade-off is a larger committed SQL file and a slower one-time fixture-generation step (re-fetches all 604 pages from QDC), but this only happens when the fixture is (re)generated, never on a CI run — CI always loads the pre-generated, already-committed file.
 
@@ -71,7 +71,7 @@ Total: (4 screens × 2 viewports + 1 screen × 1 viewport) × 2 locales × 2 the
 
 ## Constraints
 
-- Do not seed `app-db` with rows for this suite — schema push only. If a future screen needs auth, add seed data and revisit ADR 0018/this plan rather than silently expanding scope.
+- Do not seed `app-db` with rows for this suite — schema push only. If a future screen needs auth, add seed data and revisit ADR 0022/this plan rather than silently expanding scope.
 - Do not add the visual-e2e check to `protect-prod.yml`'s branch-source rule — it's a normal PR check, not a merge-gate rule (see Release & Deployment Workflow decision).
 - Never regenerate baselines by committing locally-produced PNGs — always go through the `workflow_dispatch` job so baselines are produced in the same environment that will later compare against them.
 - Reuse `scripts/quran-seed/chapters.js`/`derive.js` rather than re-deriving chapter-fetch or rub/hizb logic independently — the fixture must stay consistent with the real seeder's output shape.
