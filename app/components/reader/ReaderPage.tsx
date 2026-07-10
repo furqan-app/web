@@ -5,6 +5,7 @@ import { Locale } from "@/app/types/config";
 import { QuranSwipeNav } from "@/app/components/QuranSwipeNav";
 import { QuranSafhaViewToggle } from "@/app/components/QuranSafhaViewToggle";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
+import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
 
 type ReaderPageProps = {
   pageId: string;
@@ -32,9 +33,9 @@ export const ReaderPage = async ({
   const { rightPage: rightPageId, leftPage: leftPageId } = getPagePair(pageNumber);
 
   // Sequential, not Promise.all: each getPageWords already issues 2 concurrent
-  // queries. Fetching both pair members concurrently would double peak
-  // concurrent connections per static-generation worker (4 vs the original 2),
-  // which can exceed the DB's max_connections during a full 604-page build.
+  // queries. Fetching pair members concurrently would double peak concurrent
+  // connections per static-generation worker (4 vs the original 2), which can
+  // exceed the DB's max_connections during a full 604-page build. (ADR 0013)
   const rightPageWords = await getPageWords(rightPageId);
   const leftPageWords = await getPageWords(leftPageId);
 
@@ -82,46 +83,27 @@ export const ReaderPage = async ({
     nextHref: `${basePath}/${getPairNavigationHref(true)}`,
   };
 
-  // Plain page-order hrefs for swipe: the Quran's page order (1 → 604) is
-  // fixed content, independent of UI locale — unlike getNavigationHref above,
-  // which intentionally flips by isRTL to keep desktop arrow-click direction
-  // matching the arrow's visual (RTL-flipped) position. Swipe gestures have
-  // no visual arrow to match, so they must use the unflipped page order, and
-  // stay page-by-page even in double-view (no arrow to anchor a pair-jump to).
-  const nextPageId = pageId === String(TOTAL_PAGES) ? "1" : String(pageNumber + 1);
-  const prevPageId = pageId === "1" ? String(TOTAL_PAGES) : String(pageNumber - 1);
+  // Plain page-order hrefs for swipe (locale-independent page order, see
+  // fix-mobile-swipe-direction.md Addendum).
+  const nextPageNum = pageNumber === TOTAL_PAGES ? 1 : pageNumber + 1;
+  const prevPageNum = pageNumber === 1 ? TOTAL_PAGES : pageNumber - 1;
 
   return (
     <>
-      {/* Both pair members' fonts are always inlined so double view never
-          needs an extra request. Only the current page's font is preloaded —
-          the pair partner loads lazily (if at all) only once its card renders. */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @font-face {
-          font-family: 'quran-p${rightPageId}';
-          src: url('/fonts/v1/ttf/p${rightPageId}.ttf') format('truetype');
-          font-display: block;
-        }
-        @font-face {
-          font-family: 'quran-p${leftPageId}';
-          src: url('/fonts/v1/ttf/p${leftPageId}.ttf') format('truetype');
-          font-display: block;
-        }
-      `,
-        }}
-      />
+      {/* FontFaceInjector must be a "use client" component — see ADR 0020.
+          Inline <style> in a Server Component is hoisted differently by the
+          Next.js RSC pipeline on client vs SSR, causing hydration mismatches. */}
+      <FontFaceInjector pageIds={[rightPageId, leftPageId]} />
       <link
         rel="preload"
         href={`/fonts/v1/ttf/p${pageId}.ttf`}
         as="font"
-        type="font/truetype"
+        type="font/ttf"
         crossOrigin="anonymous"
       />
       <QuranSwipeNav
-        prevHref={`${basePath}/${prevPageId}`}
-        nextHref={`${basePath}/${nextPageId}`}
+        prevHref={`${basePath}/${prevPageNum}`}
+        nextHref={`${basePath}/${nextPageNum}`}
       >
         <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] py-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
           <QuranSafhaViewToggle />

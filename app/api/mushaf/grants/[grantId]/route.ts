@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
+import { getLogger } from "@/lib/fq-logger";
 
 /**
  * Revoke an access grant. Allowed for either party: the owner removing a viewer,
@@ -16,6 +17,7 @@ export async function DELETE(
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("mushaf.grants.revoke.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
@@ -24,10 +26,12 @@ export async function DELETE(
   });
 
   if (!grant) {
+    getLogger().warn("mushaf.grants.revoke.not_found", { userId: user.id, grantId: context.params.grantId });
     return jsonResponse({ code: 404, message: "Grant not found" });
   }
 
   if (grant.owner_user !== user.id && grant.viewer_user !== user.id) {
+    getLogger().warn("mushaf.grants.revoke.forbidden", { userId: user.id, grantId: grant.id });
     return jsonResponse({ code: 403, message: "Forbidden" });
   }
 
