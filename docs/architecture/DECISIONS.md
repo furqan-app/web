@@ -20,7 +20,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 ## Font System
 
-**Decision:** Each Quran page inlines a single `@font-face` for `quran-p{pageId}` pointing to `/fonts/v1/ttf/p{pageId}.ttf`, with a `<link rel="preload">` for immediate download. Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
+**Decision:** Each Quran page inlines `@font-face` rules for both pages in the current pair (`quran-p{rightPageId}` and `quran-p{leftPageId}`), pointing to `/fonts/v1/ttf/p{id}.ttf`. Only the current page's font gets a `<link rel="preload">` — the pair partner's font is not preloaded. The `@font-face` rules are injected via `FontFaceInjector` (`"use client"`) rather than inline in `ReaderPage` — see [ADR 0020](adr/0020-client-component-for-inline-style-injection.md). Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
 
 **Rationale:** Loading all 604 page fonts globally would be prohibitively large. Inlining per-page means only the current page's font is loaded.
 
@@ -35,6 +35,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 **Constraints:**
 - Do not add Quran page fonts to the global CSS.
+- `<style dangerouslySetInnerHTML>` for per-page `@font-face` rules **must** live in a `"use client"` component (`FontFaceInjector`), never in a Server Component. Next.js App Router treats `<style>` in RSC output as a resource and hoists it to a different DOM position on the client, causing React hydration mismatches. `<link rel="preload">` is NOT affected and may remain in the Server Component. See [ADR 0020](adr/0020-client-component-for-inline-style-injection.md).
 - Font scaling (1–10) is persisted in `localStorage` via `QuranFontScaleContext`.
 - `QuranSafha`'s word font-size Tailwind class is built at runtime from `FONT_V1` and requires a matching literal-string safelist (`tailwindFontUtility` in `QuranSafha.tsx`) for Tailwind's JIT to generate the CSS. Any change to `FONT_V1.baseScaleViewHeight` or the per-scale multiplier must regenerate that safelist for the new `quranFontScale` 1–10 range in the same commit, or the font size silently fails to apply. See [ADR 0005](adr/0005-quran-font-size-safelist.md).
 - `UthmanicHafs1Ver18` supports both `qpc_uthmani_hafs` (preferred for words) and `text_uthmani` (for verse-level display). Never pair it with `code_v1`.
