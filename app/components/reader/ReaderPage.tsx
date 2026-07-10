@@ -1,9 +1,11 @@
 import { getPageWords } from "@/app/hooks/get-page-words";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { getPagePair } from "@/app/utils/quran-pages";
+import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { Locale } from "@/app/types/config";
 import { QuranSwipeNav } from "@/app/components/QuranSwipeNav";
 import { QuranSafhaViewToggle } from "@/app/components/QuranSafhaViewToggle";
+import { RecitationPlayButton } from "@/app/components/RecitationPlayButton";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
 
@@ -88,6 +90,12 @@ export const ReaderPage = async ({
   const nextPageNum = pageNumber === TOTAL_PAGES ? 1 : pageNumber + 1;
   const prevPageNum = pageNumber === 1 ? TOTAL_PAGES : pageNumber - 1;
 
+  // The currently-displayed page's first verse — where the header "listen"
+  // button starts from. pageNumber is whichever pair member was requested
+  // (rightPageId or leftPageId), so pick the matching fetched page's words.
+  const currentPageWords = pageNumber === rightPageId ? rightPageWords : leftPageWords;
+  const firstVerseKey = getFirstVerseKeyOfPage(currentPageWords.lines);
+
   return (
     <>
       {/* FontFaceInjector must be a "use client" component — see ADR 0020.
@@ -106,7 +114,10 @@ export const ReaderPage = async ({
         nextHref={`${basePath}/${nextPageNum}`}
       >
         <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] py-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
-          <QuranSafhaViewToggle />
+          <div className="flex items-center gap-2">
+            <QuranSafhaViewToggle />
+            <RecitationPlayButton firstVerseKey={firstVerseKey} />
+          </div>
           <div className="w-full flex justify-center items-start md:items-center px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
             <QuranSpread
               currentPageId={pageNumber}

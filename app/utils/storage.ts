@@ -1,11 +1,13 @@
 import { QuranFontScale, QuranSafhaView } from "@types";
+import { RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView';
+export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView' | 'recitationSettings';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
   quranFontScale: QuranFontScale;
   quranSafhaView: QuranSafhaView;
+  recitationSettings: RecitationSettings;
 };
 
 export const storage = {
