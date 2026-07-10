@@ -79,7 +79,8 @@
     "navLink": "My Marks",
     "pageTitle": "My Marks",
     "signedOut": "Sign in to see your marks.",
-    "empty": "No marks yet."
+    "empty": "No marks yet.",
+    "emptyColor": "No marks in this color yet."
   },
   "mushaf": {
     "hubTitle": "Shared Mushaf",

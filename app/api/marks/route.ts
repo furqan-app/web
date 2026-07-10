@@ -23,6 +23,17 @@ const buildVerseSnippet = (words: Array<{ qpc_uthmani_hafs: string }>) => {
 };
 
 /**
+ * (surah, verse, wordPosition) so the list reads in natural Quran order.
+ * `marked_id` is `location` ("s:v:w") for word marks, `verse_key` ("s:v")
+ * for verse marks — a verse mark has no word segment, so it sorts after
+ * every word of that verse (it's triggered at the end-of-verse glyph).
+ */
+const getSortKey = (item: Pick<MarkListItem, "marked_type" | "marked_id">) => {
+  const [surah, verse, word] = item.marked_id.split(":").map(Number);
+  return [surah, verse, item.marked_type === "word" ? word : Infinity];
+};
+
+/**
  * This request is protected by the global middleware in middleware.ts
  */
 export async function GET(request: NextRequest) {
@@ -34,7 +45,6 @@ export async function GET(request: NextRequest) {
 
   const marks = await appPrisma.mark.findMany({
     where: { to_user: user.id, mark_type: "color" },
-    orderBy: { page_number: "asc" },
   });
 
   const wordMarks = marks.filter((m) => m.marked_type === "word");
@@ -98,6 +108,12 @@ export async function GET(request: NextRequest) {
         snippet: buildVerseSnippet(verse.Word),
       },
     ];
+  });
+
+  items.sort((a, b) => {
+    const [aSurah, aVerse, aWord] = getSortKey(a);
+    const [bSurah, bVerse, bWord] = getSortKey(b);
+    return aSurah - bSurah || aVerse - bVerse || aWord - bWord;
   });
 
   return jsonResponse({ data: items });
