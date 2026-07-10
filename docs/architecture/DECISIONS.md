@@ -20,7 +20,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 ## Font System
 
-**Decision:** Each Quran page inlines a single `@font-face` for `quran-p{pageId}` pointing to `/fonts/v1/ttf/p{pageId}.ttf`, with a `<link rel="preload">` for immediate download. Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
+**Decision:** Each Quran page inlines `@font-face` rules for both pages in the current pair (`quran-p{rightPageId}` and `quran-p{leftPageId}`), pointing to `/fonts/v1/ttf/p{id}.ttf`. Only the current page's font gets a `<link rel="preload">` — the pair partner's font is not preloaded. The `@font-face` rules are injected via `FontFaceInjector` (`"use client"`) rather than inline in `ReaderPage` — see [ADR 0020](adr/0020-client-component-for-inline-style-injection.md). Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
 
 **Rationale:** Loading all 604 page fonts globally would be prohibitively large. Inlining per-page means only the current page's font is loaded.
 
