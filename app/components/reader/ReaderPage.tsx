@@ -5,6 +5,7 @@ import { Locale } from "@/app/types/config";
 import { QuranSwipeNav } from "@/app/components/QuranSwipeNav";
 import { QuranSafhaViewToggle } from "@/app/components/QuranSafhaViewToggle";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
+import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
 
 type ReaderPageProps = {
   pageId: string;
@@ -89,22 +90,10 @@ export const ReaderPage = async ({
 
   return (
     <>
-      {/* Inline @font-face for both pages in the pair. Only the current page's
-          font gets <link rel="preload"> — the pair partner loads lazily. */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: [rightPageId, leftPageId]
-            .map(
-              (id) => `
-        @font-face {
-          font-family: 'quran-p${id}';
-          src: url('/fonts/v1/ttf/p${id}.ttf') format('truetype');
-          font-display: block;
-        }`
-            )
-            .join("\n"),
-        }}
-      />
+      {/* FontFaceInjector must be a "use client" component — see ADR 0020.
+          Inline <style> in a Server Component is hoisted differently by the
+          Next.js RSC pipeline on client vs SSR, causing hydration mismatches. */}
+      <FontFaceInjector pageIds={[rightPageId, leftPageId]} />
       <link
         rel="preload"
         href={`/fonts/v1/ttf/p${pageId}.ttf`}
