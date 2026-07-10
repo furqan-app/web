@@ -13,6 +13,7 @@ import { getPageFontFamily } from "@utils/quran-font-map";
 import { getColorMarkMeta } from "@utils/marks";
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
+import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
 import { SignInModal } from "./SignInModal";
 import { ViewingChip } from "./reader/ViewingChip";
@@ -118,8 +119,8 @@ export const QuranSafha = ({
         .map((w) => w.qpc_uthmani_hafs);
 
       const displayText =
-        displayWords.length > 20
-          ? `${displayWords.slice(0, 20).join(" ")} ...`
+        displayWords.length > VERSE_SNIPPET_WORD_LIMIT
+          ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
           : displayWords.join(" ");
 
       setSelectedForMark(word.verse);

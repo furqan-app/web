@@ -5,7 +5,7 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-07-08 (Addendum 2)
+Last updated: 2026-07-10
 
 ---
 
@@ -17,6 +17,7 @@ Nav                          — top bar, always visible; responsive (mobile/des
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
   SharedMushafLink           — always-visible link to /mushaf hub (signed in or out); icon+label on desktop, icon-only on mobile
+  MarksLink                  — always-visible link to /marks (self marks list); icon+label on desktop, icon-only on mobile; mirrors SharedMushafLink
   SettingsSidebar            — font scale + theme + account + offline access panel (Sheet); account section shown on mobile only
     QuranFontScaleControls   — 1–10 scale slider, reads/writes QuranFontScaleContext
     ThemeToggle              — cycles named themes
@@ -74,6 +75,14 @@ Nav                          — top bar, always visible; responsive (mobile/des
 app/not-found.tsx            — app-wide 404 (client), catches all unmatched URLs; themed via theme tokens + plain <a> full-load links (Home + Shared Mushaf) so navigation keeps CSS. Renders under the root layout (no Nav).
 app/[locale]/error.tsx       — error boundary for the locale-nested tree (client); keeps Nav/theme/i18n mounted (nested under [locale]/layout.tsx, unlike not-found.tsx). Reports to Sentry via Sentry.captureException, themed like not-found.tsx, with a "try again" (reset()) + home link. See ADR 0017.
 app/global-error.tsx         — last-resort error boundary for the root layout itself (client); replaces app/layout.tsx entirely, so it renders its own <html>/<body> with plain inline-safe CSS (no theme tokens/fonts/i18n available). Reports to Sentry. See ADR 0017.
+```
+
+## Zone: marks (`app/[locale]/marks/page.tsx`)
+
+```
+(page.tsx — server: header + session gate, self-marks only, no grant equivalent)
+  MyMarksList                — client: fetches all of the caller's color marks via useAllMarks, groups into red/blue/green sections (mushaf order within each), each row links to /pages/[page] and has an inline remove button (deletePageMark, reused from delete-my-marks)
+  MarksSignedOutPrompt       — client: sign-in CTA when unauthenticated (own copy — not shared with mushaf/SignedOutPrompt)
 ```
 
 ## Zone: vertical reader (`app/[locale]/pages/vertical/page.tsx`)
