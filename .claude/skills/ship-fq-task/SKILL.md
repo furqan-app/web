@@ -50,10 +50,11 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
    - Read the current branch name (`git branch --show-current`)
    - Read `~/.claude/furqan-worktrees.json` — if the file doesn't exist or has no entry whose `branch` matches the current branch, skip this step entirely
    - If an entry is found:
-     1. Kill the dev server on that port (gracefully):
+     1. Kill the dev server on that port:
         ```bash
-        lsof -ti :<port> | xargs kill -TERM 2>/dev/null || true
+        lsof -ti :<port> | xargs kill -9 2>/dev/null || true
         ```
+        Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and the process stays alive.
      2. Remove the worktree — use the **absolute path** so this works whether the session is inside the worktree or the main repo:
         ```bash
         git worktree remove /absolute/path/to/furqan-<slug> --force
