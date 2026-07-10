@@ -1,6 +1,7 @@
 import { appPrisma } from "@/app/utils/db";
 import { NextAuthOptions } from "next-auth";
 import Google from "next-auth/providers/google";
+import { getLogger } from "@/lib/fq-logger";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET as string,
@@ -25,7 +26,7 @@ export const authOptions: NextAuthOptions = {
         });
         return true;
       } catch (e) {
-        console.error(e);
+        getLogger().error("auth.signIn.failed", { err: e, email: user.email });
         return false;
       }
     },
@@ -38,8 +39,11 @@ export const authOptions: NextAuthOptions = {
         if (!userData) throw new Error("Failed to get user data");
         session.user = userData;
         return session;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
+        getLogger().warn("auth.session.lookup_failed", {
+          err: e,
+          email: session?.user?.email,
+        });
         return session;
       }
     },
@@ -51,8 +55,8 @@ export const authOptions: NextAuthOptions = {
         });
         if (!userData) throw new Error("Failed to get user data");
         return { ...token, ...userData };
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
+        getLogger().warn("auth.jwt.lookup_failed", { err: e, email: token?.email });
         return token;
       }
     },

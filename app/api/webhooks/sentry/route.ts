@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { jsonResponse } from "@/app/api/response";
+import { getLogger } from "@/lib/fq-logger";
 
 type SentryAlertPayload = {
   data: {
@@ -63,10 +64,12 @@ export async function POST(request: Request) {
   const resource = request.headers.get("sentry-hook-resource");
 
   if (!isValidSignature(rawBody, signature)) {
+    getLogger().warn("webhooks.sentry.invalid_signature");
     return jsonResponse({ code: 401, message: "Invalid signature" });
   }
 
   if (resource !== "event_alert") {
+    getLogger().info("webhooks.sentry.dropped", { resource });
     return jsonResponse({ data: { relayed: false } });
   }
 
@@ -78,9 +81,14 @@ export async function POST(request: Request) {
     body: JSON.stringify(buildSlackMessage(payload)),
   });
 
+  // Deliberately not logged via getLogger().error() here — this throw
+  // propagates to instrumentation.ts's onRequestError, which already reports
+  // it to Sentry (ADR 0018). A second logger.error() call would double-report
+  // the same failure (ADR 0019's correction, see fq-logger plan).
   if (!slackResponse.ok) {
     throw new Error(`Slack webhook post failed with status ${slackResponse.status}`);
   }
 
+  getLogger().info("webhooks.sentry.relayed", { triggeredRule: payload.data.triggered_rule });
   return jsonResponse({ data: { relayed: true } });
 }

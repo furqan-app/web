@@ -7,7 +7,10 @@ import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "@/app/providers/QueryProvider";
 import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
 import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
+import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
+import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
+import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -41,12 +44,16 @@ export default async function LocaleLayout({
         <SessionProvider>
           <QuranFontScaleProvider>
             <QuranSafhaViewProvider>
-              <QueryProvider>
-                <SidebarProvider>
-                  <Nav />
-                  {children}
-                </SidebarProvider>
-              </QueryProvider>
+              <RecitationProvider>
+                <QueryProvider>
+                  <SidebarProvider>
+                    <Nav />
+                    {children}
+                    <RecitationPlayerBar />
+                    <RecitationSettingsSheet />
+                  </SidebarProvider>
+                </QueryProvider>
+              </RecitationProvider>
             </QuranSafhaViewProvider>
           </QuranFontScaleProvider>
         </SessionProvider>

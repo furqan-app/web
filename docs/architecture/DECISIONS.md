@@ -20,7 +20,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 ## Font System
 
-**Decision:** Each Quran page inlines a single `@font-face` for `quran-p{pageId}` pointing to `/fonts/v1/ttf/p{pageId}.ttf`, with a `<link rel="preload">` for immediate download. Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
+**Decision:** Each Quran page inlines `@font-face` rules for both pages in the current pair (`quran-p{rightPageId}` and `quran-p{leftPageId}`), pointing to `/fonts/v1/ttf/p{id}.ttf`. Only the current page's font gets a `<link rel="preload">` — the pair partner's font is not preloaded. The `@font-face` rules are injected via `FontFaceInjector` (`"use client"`) rather than inline in `ReaderPage` — see [ADR 0020](adr/0020-client-component-for-inline-style-injection.md). Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
 
 **Rationale:** Loading all 604 page fonts globally would be prohibitively large. Inlining per-page means only the current page's font is loaded.
 
@@ -35,6 +35,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 **Constraints:**
 - Do not add Quran page fonts to the global CSS.
+- `<style dangerouslySetInnerHTML>` for per-page `@font-face` rules **must** live in a `"use client"` component (`FontFaceInjector`), never in a Server Component. Next.js App Router treats `<style>` in RSC output as a resource and hoists it to a different DOM position on the client, causing React hydration mismatches. `<link rel="preload">` is NOT affected and may remain in the Server Component. See [ADR 0020](adr/0020-client-component-for-inline-style-injection.md).
 - Font scaling (1–10) is persisted in `localStorage` via `QuranFontScaleContext`.
 - `QuranSafha`'s word font-size Tailwind class is built at runtime from `FONT_V1` and requires a matching literal-string safelist (`tailwindFontUtility` in `QuranSafha.tsx`) for Tailwind's JIT to generate the CSS. Any change to `FONT_V1.baseScaleViewHeight` or the per-scale multiplier must regenerate that safelist for the new `quranFontScale` 1–10 range in the same commit, or the font size silently fails to apply. See [ADR 0005](adr/0005-quran-font-size-safelist.md).
 - `UthmanicHafs1Ver18` supports both `qpc_uthmani_hafs` (preferred for words) and `text_uthmani` (for verse-level display). Never pair it with `code_v1`.
@@ -327,6 +328,19 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 
 ---
 
+## Swipe Animation — Core Gesture Only
+
+**Decision:** `QuranSwipeNav` is a single-slot wrapper: one `overflow-hidden` outer div with a `stripRef` inner div that holds only the current page content. On drag it translates `stripRef` live. On commit (≥80px threshold) it animates to `translateX(±100%)` over 220ms then calls `router.push(href)`. On sub-threshold release it snaps back. `prefers-reduced-motion` skips the animation and calls `router.push()` directly. No adjacent page prefetching, no `startTransition`, no `router.prefetch()`. A post-navigation flicker (browser compositor artifact) is accepted as a platform limitation; the View Transitions API would address it but requires Safari 18+ and experimental Next.js support — out of scope. ADR 0019 (the original sessionStorage approach) and the three-page strip approach (Addenda 2–8) are both superseded. See Addendum 9.
+
+**Constraints:**
+- Swipe right = next page, swipe left = previous page (Quran RTL convention — constant regardless of UI locale).
+- Do not add adjacent page fetches back — investigated in Addenda 2–8, confirmed zero benefit for the flicker, removed in Addendum 9.
+- Do not add a positional/transform entry animation on mount — a transform-based entry reads as a second swipe (Addendum 4/5 incident).
+- Do not add `startTransition` — Next.js App Router already wraps its router dispatch in `startTransition` internally; double-wrapping is a no-op (confirmed in Addendum 8/9).
+- Do not use `sessionStorage` or `document.documentElement` attributes as fade-signal carriers — these mechanisms are superseded.
+
+---
+
 ## Sentry-to-Slack Alerting
 
 **Decision:** Sentry's native Slack alert-rule action requires a paid (Team+) plan; the app is on the free Developer plan. Instead, a self-hosted relay endpoint (`app/api/webhooks/sentry/route.ts`) receives Sentry's Internal Integration webhook for triggered alert-rule events, verifies its signature, and forwards a formatted message to a Slack Incoming Webhook. See [ADR 0018](adr/0018-sentry-slack-relay-webhook.md).
@@ -337,6 +351,20 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 - A failed Slack post must `throw`, not be swallowed — it needs to propagate to `instrumentation.ts`'s `onRequestError` (ADR 0017) so it's captured by Sentry itself and shows as a failed delivery in Sentry's own integration dashboard.
 - `SENTRY_WEBHOOK_SECRET` and `SLACK_WEBHOOK_URL` are Hostinger-panel-only env vars, never committed with real values, mirroring the pattern from the Error Tracking decision above.
 - If the org ever upgrades to Sentry Team+, this relay can be retired in favor of Sentry's native Slack action — revisit ADR 0018 rather than running both in parallel.
+
+---
+
+## Structured Logging (fq-logger)
+
+**Decision:** `lib/fq-logger/` wraps `pino` for structured, leveled, request-correlated server-side logs (stdout only — JSON in prod, `pino-pretty` in dev; no hosted log vendor). It has two separate entry points rather than one runtime-branching module: `@/lib/fq-logger` (Node — API routes, Server Actions, NextAuth callbacks) and `@/lib/fq-logger/edge` (Edge — `middleware.ts`/`auth-middleware.ts`), both exposing the identical 6-level API (`trace/debug/info/warn/error/fatal` + `.child()`). `logger.error()` both emits the structured log line and calls `Sentry.captureException`, amending [ADR 0017](adr/0017-sentry-error-tracking.md)'s "Sentry = exceptions only" scope — see [ADR 0019](adr/0019-fq-logger-sentry-integration.md). A generated `x-request-id` is set by a `withRequestId` middleware wrapper (first in `middleware.ts`'s pipe) and forwarded on request headers the same way `auth-middleware.ts` already forwards the `user` header; Node call sites obtain a request-scoped child logger via `getLogger()` (reads the header via `next/headers`). A fixed key list (`email`, `password`, `token`, `accessToken`, `refreshToken`, `authorization`, `cookie`, `secret`) is redacted before either the log line or the Sentry `extra` payload is emitted.
+
+**Constraints:**
+- Client-side code (e.g. `app/utils/storage.ts`'s `console.warn` calls) is out of scope — fq-logger is server-only; do not import it from client components. This also covers `app/server/actions/**` — despite the directory name, those files have no `"use server"` directive, call `fetch()` with relative paths, and are invoked from `useQuery` hooks in client components, so they run in the browser, not on the server.
+- Never import `@/lib/fq-logger` (the Node/pino entry) from an Edge-runtime file (`middleware.ts`, `auth-middleware.ts`, anything reachable from them) — it statically imports `pino`, which needs `worker_threads`/`fs` and isn't available in the Edge bundle. Edge files import `@/lib/fq-logger/edge` instead.
+- Do not pass `pino-pretty` via pino's `transport` option — that spawns a worker thread that resolves the target module from disk, which fails inside Next's webpack-bundled Route Handlers (`unable to determine transport target for "pino-pretty"`). `lib/fq-logger/node.ts` instead passes a `PinoPretty(...)` stream directly as pino's second constructor argument, which works bundled.
+- Reserve `.error()` for true dead-ends — an error caught and NOT rethrown. Anywhere an error is caught only to rethrow, or is left to propagate to `instrumentation.ts`'s `onRequestError` (which already reports it to Sentry per ADR 0017), do not also call `.error()` on it — that double-reports the same failure to Sentry. Use `.warn()` there instead (log line only, no Sentry call). This also means every `.error()` call consumes Sentry's free-tier event quota (ADR 0018's context) beyond just uncaught exceptions, so it should stay reserved for genuine, non-propagating failures.
+- Any new sensitive field logged anywhere (auth, sessions, mushaf codes) must be added to `lib/fq-logger/redact.ts`'s key list, not redacted ad hoc at the call site. `redact()` special-cases `Error` instances (extracting `name`/`message`/`stack`) since `Object.entries()` on an `Error` returns nothing — its properties are non-enumerable.
+- Do not call `getLogger()` outside a request context (e.g. build-time scripts) — it depends on `headers()`, which throws outside Server Components/Actions/Route Handlers.
 
 ---
 
@@ -354,3 +382,20 @@ Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
 - Never put architecture detail, standards, or decisions back into CLAUDE.md.
 - Always update this file in the same commit as any new ADR.
 - Use `docs/architecture/adr/TEMPLATE.md` when creating a new ADR. A valid ADR must name alternatives and record trade-offs — if there are no alternatives, write a standards doc instead.
+
+---
+
+## Recitation Playback
+
+**Decision:** Full-Quran recitation audio, reciter selection, and word-level ("karaoke") highlighting are powered by QDC's audio API, proxied live through new internal routes (`app/api/quran/recitations/...`) rather than seeded into the DB or called directly from the client. QDC serves one audio file **per chapter** (not per page), so a `RecitationContext` mounted once in `app/[locale]/layout.tsx` owns the `<audio>` element and drives page auto-navigation via `router.push` whenever the recited verse's `page_number` falls outside the currently-visible page set (single page, or the pair in double-page view). See [ADR 0021](adr/0021-recitation-playback.md).
+
+**Rationale:** Keeps the Quran DB/seeder untouched (no new schema, no re-seed) while still delivering continuous, page-following playback — reusing `/pages/[id]`'s existing pair-derivation instead of new routing logic. Mounting the context above the reader's route tree is what lets playback survive both page navigation (auto-advance) and leaving the reader entirely (background mini-player).
+
+**Constraints:**
+- QDC is now a **runtime** dependency, not just a seed-time one (previously only `scripts/quran-seed/` called it at build time) — if QDC is down, playback breaks, not just re-seeding.
+- Word-level highlight updates use a direct DOM ref registry, not React state/re-renders down the `QuranSafha`/`QuranWord` tree — `timeupdate` fires ~4×/second and re-rendering the full word list at that rate is a real perf risk. Do not copy this pattern for lower-frequency UI; the existing URL-param-driven `highlight.ts` approach remains the norm elsewhere.
+- Auto-advance always navigates by exact target page number (`router.push(`${basePath}/${versePageNumber}`)`) — never by the locale-flipped `next`/`prev` href logic (`ReaderPage.tsx`'s `getNavigationHref`), which encodes *visual* swipe direction, not reading-order page sequence.
+- Manual navigation (arrows/swipe/sidebar) during playback does **not** pause or sync with audio — audio keeps running on its own timeline and may auto-navigate again once the recited verse leaves the manually-viewed page. Do not add logic that pauses playback on manual nav; this was explicitly decided against.
+- Chapter-end stops playback (no auto-continue into the next surah) — do not add cross-chapter auto-continue without revisiting this decision.
+- Recitation is available on both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — any new recitation UI/context must not assume it's only reachable from the self-reader route tree.
+- The QDC integration itself sits behind a `RecitationProvider` adapter (`app/lib/recitation/provider.ts` interface, `qdc-provider.ts` implementation) rather than being inlined in the route handlers — `app/lib/recitation/` is the established location for server-only third-party integrations (distinct from `app/providers/`, which is React context providers, and `app/server/actions/`, which is Next.js server actions). The adapter throws `RecitationProviderError` on fetch failure and returns `null` for "valid response, nothing found" (e.g. no audio for a reciter/chapter) — routes map throw → `502`, `null` → `404`. No provider registry/factory exists; add one only when a second provider is real.

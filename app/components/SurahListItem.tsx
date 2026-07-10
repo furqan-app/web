@@ -3,6 +3,7 @@
 import { SurahResult } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { useLocale } from "next-intl";
+import { toLocaleNumeral } from "@utils/i18n";
 import { Link } from "@/i18n/routing";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
 
@@ -25,7 +26,7 @@ export const SurahListItem = ({ surah }: Props) => {
       className="flex items-center gap-3 p-4 bg-card border border-border rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
     >
       <div className="flex-none w-10 h-10 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground font-bold text-sm">
-        {surah.id}
+        {toLocaleNumeral(surah.id, locale)}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -42,9 +43,13 @@ export const SurahListItem = ({ surah }: Props) => {
           {glyphCode}
         </div>
         <div className="text-xs text-muted-foreground whitespace-nowrap">
-          {surah.verses_count} {t("verses", "Verses")}
+          {toLocaleNumeral(surah.verses_count, locale)}{" "}
+          {surah.verses_count > 10
+            ? t("count_verses", "Verses")
+            : t("verses", "Verses")}
         </div>
       </div>
     </Link>
   );
 };
+

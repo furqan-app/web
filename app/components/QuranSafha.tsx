@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Verse } from "@/app/generated/quran-client";
 import { QuranLine } from "@components/QuranLine";
@@ -8,10 +8,12 @@ import { useMarks } from "@hooks/use-marks";
 import { FONT_V1 } from "@constants/font";
 import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
 import useTranslations from "@hooks/use-translations";
+import { toLocaleNumeral } from "@utils/i18n";
 import { getPageFontFamily } from "@utils/quran-font-map";
 import { getColorMarkMeta } from "@utils/marks";
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
+import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
 import { SignInModal } from "./SignInModal";
 import { ViewingChip } from "./reader/ViewingChip";
@@ -44,6 +46,7 @@ type QuranSafhaProps = {
   page: number;
   lines: Record<string, Array<WordWithVerse>>;
   pageMetadata: PageMetadataWithChapter;
+  locale: string;
   // When set, this safha shows/edits another user's mushaf via an access grant
   // (see ADR 0012). Undefined = the viewer's own mushaf.
   grantId?: string;
@@ -82,6 +85,7 @@ export const QuranSafha = ({
   page,
   lines,
   pageMetadata,
+  locale,
   grantId,
   viewingOwnerName,
   stackPeekSide = "left",
@@ -115,8 +119,8 @@ export const QuranSafha = ({
         .map((w) => w.qpc_uthmani_hafs);
 
       const displayText =
-        displayWords.length > 20
-          ? `${displayWords.slice(0, 20).join(" ")} ...`
+        displayWords.length > VERSE_SNIPPET_WORD_LIMIT
+          ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
           : displayWords.join(" ");
 
       setSelectedForMark(word.verse);
@@ -140,9 +144,9 @@ export const QuranSafha = ({
     "hizb-three-quarters": "ثلاث أرباع الحزب",
   };
   const surahGlyph = `${pageMetadata.chapter.chapter_number}`.padStart(3, "0");
-  const juz = `${t("juz", "الجزء")} ${pageMetadata.juz_number}`;
+  const juz = `${t("juz", "الجزء")} ${toLocaleNumeral(pageMetadata.juz_number, locale)}`;
   const hizb = pageMetadata.hizb_position
-    ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${pageMetadata.hizb_number}`
+    ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${toLocaleNumeral(pageMetadata.hizb_number, locale)}`
     : null;
 
   // lineKeys must be sorted numerically; Object.keys() order is not guaranteed.
@@ -305,28 +309,30 @@ export const QuranSafha = ({
                   fontFamily: getPageFontFamily(page),
                 }}
               >
-                {renderItems.map((item) => {
-                  if (item.type === "surahBanner") {
+                <Suspense fallback={null}>
+                  {renderItems.map((item) => {
+                    if (item.type === "surahBanner") {
+                      return (
+                        <SurahBannerLine
+                          key={`banner-${item.slot}`}
+                          surahId={item.surahId}
+                        />
+                      );
+                    }
+                    if (item.type === "bismillah") {
+                      return <BismillahLine key={`bismillah-${item.slot}`} />;
+                    }
                     return (
-                      <SurahBannerLine
-                        key={`banner-${item.slot}`}
-                        surahId={item.surahId}
+                      <QuranLine
+                        key={item.lineKey}
+                        onWordClicked={wordClicked}
+                        words={lines[item.lineKey]}
+                        marks={marks ?? {}}
+                        suppressInlineHeaderForSurahId={item.suppressSurahId}
                       />
                     );
-                  }
-                  if (item.type === "bismillah") {
-                    return <BismillahLine key={`bismillah-${item.slot}`} />;
-                  }
-                  return (
-                    <QuranLine
-                      key={item.lineKey}
-                      onWordClicked={wordClicked}
-                      words={lines[item.lineKey]}
-                      marks={marks ?? {}}
-                      suppressInlineHeaderForSurahId={item.suppressSurahId}
-                    />
-                  );
-                })}
+                  })}
+                </Suspense>
               </div>
               {/* Footer */}
               <div
@@ -334,7 +340,7 @@ export const QuranSafha = ({
                 style={{ marginTop: "var(--fq-line-gap)" }}
               >
                 <span className="text-primary opacity-70 text-[10px]">◆</span>
-                <span>{page}</span>
+                <span>{toLocaleNumeral(page, locale)}</span>
                 <span className="text-primary opacity-70 text-[10px]">◆</span>
               </div>
             </div>

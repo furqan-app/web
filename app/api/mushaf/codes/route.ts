@@ -4,6 +4,7 @@ import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
 import { generateShareCode } from "@/app/utils/share-code";
 import { Prisma } from "@/app/generated/app-client";
+import { getLogger } from "@/lib/fq-logger";
 
 /**
  * List the caller's unredeemed (still-active) one-time codes.
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("mushaf.codes.list.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
@@ -33,6 +35,7 @@ export async function POST(request: NextRequest) {
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("mushaf.codes.create.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
@@ -48,9 +51,14 @@ export async function POST(request: NextRequest) {
       const isUniqueViolation =
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002";
+      // Not rethrown below — this is a genuine dead end, not a propagated
+      // error already headed to onRequestError/Sentry, so .error() here is
+      // the only report it gets (ADR 0019).
       if (!isUniqueViolation) throw error;
+      getLogger().warn("mushaf.codes.create.collision", { attempt, userId: user.id });
     }
   }
 
+  getLogger().error("mushaf.codes.create.exhausted", { userId: user.id });
   return jsonResponse({ code: 500, message: "Could not generate a code" });
 }
