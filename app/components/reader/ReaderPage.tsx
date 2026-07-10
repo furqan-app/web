@@ -109,7 +109,7 @@ export const ReaderPage = async ({
         rel="preload"
         href={`/fonts/v1/ttf/p${pageId}.ttf`}
         as="font"
-        type="font/truetype"
+        type="font/ttf"
         crossOrigin="anonymous"
       />
       <QuranSwipeNav
