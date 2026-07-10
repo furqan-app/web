@@ -1,4 +1,4 @@
-# ADR 0018: Visual E2E Testing via Playwright + Trimmed Fixture DB
+# ADR 0022: Visual E2E Testing via Playwright + Full-Dataset Fixture DB
 
 **Date:** 2026-07-07
 **Status:** Accepted

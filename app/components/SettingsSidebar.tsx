@@ -4,7 +4,7 @@ import { LanguageToggle } from "@components/LanguageToggle";
 import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
 import { ThemeToggle } from "@components/ThemeToggle";
 import { AccountCard } from "@components/nav/AccountCard";
-import { getLanguageDirection } from "../utils/i18n";
+import { getLanguageDirection, toLocaleNumeral } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
@@ -97,8 +97,8 @@ export const SettingsSidebar = () => {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t("offlinePagesReady", "{cached} of {total} pages ready offline")
-                    .replace("{cached}", String(cached))
-                    .replace("{total}", String(total))}
+                    .replace("{cached}", toLocaleNumeral(cached, locale))
+                    .replace("{total}", toLocaleNumeral(total, locale))}
                 </p>
               </div>
             </div>

@@ -6,6 +6,7 @@ import { PanelLeftOpen } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
 import { UserMenu } from "./UserMenu";
 import { SharedMushafLink } from "./SharedMushafLink";
+import { MarksLink } from "./MarksLink";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
@@ -47,9 +48,10 @@ export const Nav = () => {
         <SearchBar />
       </div>
 
-      {/* End: shared-mushaf link (always visible) + user menu (desktop only) + settings */}
+      {/* End: shared-mushaf + marks links (always visible) + user menu (desktop only) + settings */}
       <div className="flex items-center gap-1 flex-shrink-0">
         <SharedMushafLink />
+        <MarksLink />
         <div className="hidden md:flex items-center">
           <UserMenu />
         </div>

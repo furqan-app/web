@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
+import { getLogger } from "@/lib/fq-logger";
 
 /**
  * Redeem a one-time share code. On success the code is spent and a persistent
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
   const user = extractUser(request);
 
   if (!user) {
+    getLogger().warn("mushaf.codes.redeem.unauthorized");
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
@@ -20,11 +22,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
+    getLogger().warn("mushaf.codes.redeem.invalid_body", { userId: user.id });
     return jsonResponse({ code: 422, message: "Invalid request body" });
   }
 
   const code = typeof body?.code === "string" ? body.code.trim() : "";
   if (!code) {
+    getLogger().warn("mushaf.codes.redeem.missing_code", { userId: user.id });
     return jsonResponse({ code: 422, message: "Missing code" });
   }
 
@@ -33,6 +37,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!shareCode || shareCode.redeemed_at) {
+    getLogger().warn("mushaf.codes.redeem.invalid_or_used", { userId: user.id });
     return jsonResponse({
       code: 404,
       message: "This code is invalid or has already been used",
@@ -40,6 +45,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (shareCode.owner_user === user.id) {
+    getLogger().warn("mushaf.codes.redeem.self_redeem", { userId: user.id });
     return jsonResponse({
       code: 422,
       message: "You can't redeem your own code",
@@ -73,6 +79,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!grant) {
+    getLogger().warn("mushaf.codes.redeem.race_lost", { userId: user.id });
     return jsonResponse({
       code: 404,
       message: "This code is invalid or has already been used",

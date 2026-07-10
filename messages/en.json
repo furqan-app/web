@@ -24,6 +24,7 @@
   "surah": "Surah",
   "surahs": "Surahs",
   "verses": "Verses",
+  "count_verses": "Verses",
   "juz": "Juz",
   "hizb": "Hizb",
   "hizb-quarter": "Quarter Hizb",
@@ -46,6 +47,12 @@
     "description": "Sorry, the page you are looking for does not exist.",
     "homeLink": "Go back to Home"
   },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "retryLink": "Try again",
+    "homeLink": "Go back to Home"
+  },
   "markModal": {
     "redMark": "Red Mark",
     "greenMark": "Green Mark",
@@ -60,7 +67,8 @@
     "saveMark": "Save Bookmark",
     "actionError": "Something went wrong. Try again.",
     "markedBy": "Marked by",
-    "offlineNotice": "Connect to the internet to view or add marks"
+    "offlineNotice": "Connect to the internet to view or add marks",
+    "playFromHere": "Play from here"
   },
   "rubs": "Rubs",
   "rub": "Rub",
@@ -68,6 +76,13 @@
   "page": "Page",
   "signOut": "Sign out",
   "signIn": "Sign in",
+  "marks": {
+    "navLink": "My Marks",
+    "pageTitle": "My Marks",
+    "signedOut": "Sign in to see your marks.",
+    "empty": "No marks yet.",
+    "emptyColor": "No marks in this color yet."
+  },
   "mushaf": {
     "hubTitle": "Shared Mushaf",
     "hubTagline": "Let others read and mark your mushaf, or open one shared with you.",
@@ -108,5 +123,23 @@
       "confirmRemove": "Remove",
       "cancel": "Cancel"
     }
+  },
+  "recitation": {
+    "settingsTitle": "Recitation settings",
+    "settingsDescription": "Choose a reciter and configure playback.",
+    "reciter": "Reciter",
+    "stopPoint": "Stop at",
+    "stopPointPage": "End of page",
+    "stopPointSurah": "End of surah",
+    "repeatEachAyah": "Repeat each ayah",
+    "repeatRange": "Repeat whole range",
+    "playbackSpeed": "Playback speed",
+    "pauseBetweenRepeats": "Pause between repeats",
+    "play": "Play",
+    "listen": "Listen",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop",
+    "nowPlaying": "Recitation"
   }
 }

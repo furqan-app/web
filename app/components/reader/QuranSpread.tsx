@@ -17,6 +17,7 @@ type QuranSpreadProps = {
   rightPage: PagePayload;
   leftPage: PagePayload;
   isRTL: boolean;
+  locale: string;
   grantId?: string;
   viewingOwnerName?: string | null;
   singleStepNav: NavHrefs;
@@ -54,6 +55,7 @@ export const QuranSpread = ({
   rightPage,
   leftPage,
   isRTL,
+  locale,
   grantId,
   viewingOwnerName,
   singleStepNav,
@@ -90,6 +92,7 @@ export const QuranSpread = ({
             page={rightPage.pageId}
             lines={rightPage.lines}
             pageMetadata={rightPage.pageMetadata}
+            locale={locale}
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
             stackPeekSide="right"
@@ -101,6 +104,7 @@ export const QuranSpread = ({
             page={leftPage.pageId}
             lines={leftPage.lines}
             pageMetadata={leftPage.pageMetadata}
+            locale={locale}
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
             stackPeekSide="left"
