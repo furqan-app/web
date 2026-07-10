@@ -382,3 +382,19 @@ Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
 - Never put architecture detail, standards, or decisions back into CLAUDE.md.
 - Always update this file in the same commit as any new ADR.
 - Use `docs/architecture/adr/TEMPLATE.md` when creating a new ADR. A valid ADR must name alternatives and record trade-offs — if there are no alternatives, write a standards doc instead.
+
+---
+
+## Recitation Playback
+
+**Decision:** Full-Quran recitation audio, reciter selection, and word-level ("karaoke") highlighting are powered by QDC's audio API, proxied live through new internal routes (`app/api/quran/recitations/...`) rather than seeded into the DB or called directly from the client. QDC serves one audio file **per chapter** (not per page), so a `RecitationContext` mounted once in `app/[locale]/layout.tsx` owns the `<audio>` element and drives page auto-navigation via `router.push` whenever the recited verse's `page_number` falls outside the currently-visible page set (single page, or the pair in double-page view). See [ADR 0021](adr/0021-recitation-playback.md).
+
+**Rationale:** Keeps the Quran DB/seeder untouched (no new schema, no re-seed) while still delivering continuous, page-following playback — reusing `/pages/[id]`'s existing pair-derivation instead of new routing logic. Mounting the context above the reader's route tree is what lets playback survive both page navigation (auto-advance) and leaving the reader entirely (background mini-player).
+
+**Constraints:**
+- QDC is now a **runtime** dependency, not just a seed-time one (previously only `scripts/quran-seed/` called it at build time) — if QDC is down, playback breaks, not just re-seeding.
+- Word-level highlight updates use a direct DOM ref registry, not React state/re-renders down the `QuranSafha`/`QuranWord` tree — `timeupdate` fires ~4×/second and re-rendering the full word list at that rate is a real perf risk. Do not copy this pattern for lower-frequency UI; the existing URL-param-driven `highlight.ts` approach remains the norm elsewhere.
+- Auto-advance always navigates by exact target page number (`router.push(`${basePath}/${versePageNumber}`)`) — never by the locale-flipped `next`/`prev` href logic (`ReaderPage.tsx`'s `getNavigationHref`), which encodes *visual* swipe direction, not reading-order page sequence.
+- Manual navigation (arrows/swipe/sidebar) during playback does **not** pause or sync with audio — audio keeps running on its own timeline and may auto-navigate again once the recited verse leaves the manually-viewed page. Do not add logic that pauses playback on manual nav; this was explicitly decided against.
+- Chapter-end stops playback (no auto-continue into the next surah) — do not add cross-chapter auto-continue without revisiting this decision.
+- Recitation is available on both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — any new recitation UI/context must not assume it's only reachable from the self-reader route tree.

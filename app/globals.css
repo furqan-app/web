@@ -281,4 +281,15 @@ body,
       margin-right: 0;
     }
   }
+
+  /* Recitation word-level highlight (ADR 0021) — applied via direct DOM
+     classList toggling from RecitationContext's timeupdate handler, not React
+     state/className, since it fires ~4x/second and re-rendering the word tree
+     at that rate is a real perf risk. Plain CSS (not a Tailwind utility
+     string) because there's no JSX call site for Tailwind's JIT to scan. */
+  .fq-recitation-active-word {
+    background-color: hsl(var(--primary) / 0.22);
+    border-radius: 0.2em;
+    transition: background-color 150ms ease-out;
+  }
 }
