@@ -1,7 +1,5 @@
 import { RecitationSettings } from "@/app/types/recitation";
 
-export const QDC_BASE_URL = "https://api.qurancdn.com/api/qdc";
-
 export const DEFAULT_RECITATION_SETTINGS: RecitationSettings = {
   reciterId: null,
   stopPoint: "page",

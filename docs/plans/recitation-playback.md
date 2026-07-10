@@ -138,3 +138,58 @@ Click ayah 2:5 in `MarkModal` on a page spanning 2:1–2:8, with `stopPoint=page
 - Do not build a separate arbitrary end-ayah picker — stop point is limited to "end of page" or "end of surah," not a custom verse-range picker (explicitly ruled out in favor of the simpler two-option scope).
 - Do not implement auto-continue past the stop point once repeats are exhausted — explicitly ruled out; terminal state is always "stop."
 - Do not lock settings once playback starts — they must remain editable mid-playback via the bottom player bar's gear icon.
+
+## Addendum 2: Adapter pattern for the QDC integration
+
+**Date:** 2026-07-10
+
+Refactors the two routes that call QDC directly (`app/api/quran/recitations/reciters/route.ts` and `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts`) to go through a `RecitationProvider` adapter instead of inlining QDC's response shape and `fetch()` calls in the route handlers. Goal is both testability/isolation (routes and any future caller don't need to know QDC's JSON shape) and a real seam for a second audio provider later, without building a registry/factory for a single-provider case today.
+
+### Interface
+
+```ts
+// app/lib/recitation/provider.ts
+interface RecitationProvider {
+  getReciters(): Promise<Reciter[]>;
+  getChapterAudio(reciterId: number, chapterId: number): Promise<ChapterAudio | null>;
+}
+
+export class RecitationProviderError extends Error {}
+```
+
+`Reciter` and `ChapterAudio` are the existing domain types already in `app/types/recitation.ts` — unchanged.
+
+### Decision Tree / Algorithm
+
+| Condition | Adapter (`qdc-provider.ts`) | Route |
+|---|---|---|
+| `reciterId`/`chapterId` not integers | n/a — validated before the adapter is called | `422` (unchanged — param validation stays in the route) |
+| QDC fetch fails (network error or non-2xx) | throws `RecitationProviderError` | `catch` → `502` |
+| QDC `audio_files` fetch succeeds but the array is empty | `getChapterAudio` returns `null` | `null` → `404` |
+| QDC `reciters` fetch succeeds (even an empty array) | returns `Reciter[]` (possibly `[]`) | `200` with that data — an empty list is valid, not a 404 |
+
+### Verified Test Cases
+
+- **`reciters/route.ts`:** becomes `try { const data = await qdcRecitationProvider.getReciters(); return jsonResponse({ data }); } catch { return jsonResponse({ code: 502, message: "Failed to fetch reciters" }); }`. The inline `QdcReciter` type and the QDC `fetch()`/mapping move entirely into `qdc-provider.ts`.
+- **`[reciterId]/chapters/[chapterId]/route.ts`:** keeps its existing `422` id validation (adapter is never called with invalid ids), then wraps `qdcRecitationProvider.getChapterAudio(reciterId, chapterId)` in `try/catch` — `null` result → `404 "No audio found for this reciter/chapter"`, thrown `RecitationProviderError` → `502 "Failed to fetch chapter audio"`.
+- **`verse-pages/route.ts`:** untouched — it queries `quranPrisma` directly, never calls QDC, so it's outside this adapter's scope.
+
+### Files to Change
+
+- `app/lib/recitation/provider.ts` — new. `RecitationProvider` interface + `RecitationProviderError` class.
+- `app/lib/recitation/qdc-provider.ts` — new. `qdcRecitationProvider: RecitationProvider` — the actual QDC `fetch()` calls (moved from the two routes), the inline `QdcReciter`/`QdcAudioFile` DTO types and their mapping to `Reciter`/`ChapterAudio` (moved from the two routes), `QDC_BASE_URL`, and the `{ next: { revalidate: 86400 } }` cache config (both moved from `app/constants/recitation.ts`, since they're QDC-specific implementation details, not general recitation constants).
+- `app/api/quran/recitations/reciters/route.ts` — simplified to call `qdcRecitationProvider.getReciters()` inside a `try/catch`; no more QDC-shape knowledge.
+- `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts` — simplified to call `qdcRecitationProvider.getChapterAudio()` inside a `try/catch`; keeps its existing id validation.
+- `app/constants/recitation.ts` — remove `QDC_BASE_URL` (moved into `qdc-provider.ts`); UI-facing constants (`DEFAULT_RECITATION_SETTINGS`, repeat/speed bounds, `RECITATION_HIGHLIGHT_CLASS`) stay.
+
+### Constraints
+
+- `RecitationContext.tsx` and `app/utils/recitation-api.ts` (the client-side fetch wrapper hitting our own `/api/quran/recitations/...` routes) are unaffected — this refactor is server-side only, behind the existing route boundary. No client-visible behavior change.
+- Keep the `try/catch` + typed-error convention (matches `docs/standards/api-conventions.md`'s existing pattern of catching specific error types, e.g. `Prisma.NotFoundError` → `404`) — do not introduce a Result-type/discriminated-union return convention, which isn't used elsewhere in the codebase.
+- No registry, factory, or provider-selection config — `qdcRecitationProvider` is the only implementation and is imported directly by both routes. Do not build multi-provider plumbing until a second provider actually exists.
+
+### What NOT to Do (Addendum 2)
+
+- Do not touch `verse-pages/route.ts` — it's a DB query, not a QDC integration, and is out of scope for this adapter.
+- Do not build a provider registry/factory for provider selection — explicitly out of scope until a second provider is real.
+- Do not change the client-side `RecitationContext`/`recitation-api.ts` — this refactor is confined to the two server route handlers and the new `app/lib/recitation/` files.
