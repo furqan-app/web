@@ -75,6 +75,12 @@
   "page": "Page",
   "signOut": "Sign out",
   "signIn": "Sign in",
+  "marks": {
+    "navLink": "My Marks",
+    "pageTitle": "My Marks",
+    "signedOut": "Sign in to see your marks.",
+    "empty": "No marks yet."
+  },
   "mushaf": {
     "hubTitle": "Shared Mushaf",
     "hubTagline": "Let others read and mark your mushaf, or open one shared with you.",

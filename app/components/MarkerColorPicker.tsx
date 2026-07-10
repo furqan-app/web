@@ -5,18 +5,13 @@ import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { MARK_COLORS } from "@/app/constants/marks";
 
 type Props = {
   value?: string;
   onChange: (color: string) => void;
   disabled?: boolean;
 };
-
-const COLORS: Array<{ key: string; chip: string; labelKey: string; defaultLabel: string }> = [
-  { key: "red", chip: "bg-red-600", labelKey: "markModal.redMark", defaultLabel: "Red Mark" },
-  { key: "blue", chip: "bg-blue-600", labelKey: "markModal.blueMark", defaultLabel: "Blue Mark" },
-  { key: "green", chip: "bg-green-600", labelKey: "markModal.greenMark", defaultLabel: "Green Mark" },
-];
 
 export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
   const t = useTranslations();
@@ -30,7 +25,7 @@ export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
       className="grid grid-cols-3 gap-3"
       dir={getLanguageDirection(locale)}
     >
-      {COLORS.map(({ key, chip, labelKey, defaultLabel }) => {
+      {MARK_COLORS.map(({ key, chip, labelKey, defaultLabel }) => {
         const isSelected = value === key;
         const label = t(labelKey, defaultLabel);
 
