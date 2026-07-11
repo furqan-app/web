@@ -3,7 +3,7 @@
 import { MouseEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { highlight } from "../utils/highlight";
-import { getColorMark } from "../utils/marks";
+import { getColorMark, getNoteMark } from "../utils/marks";
 import { WordWithVerse } from "../types/prisma";
 
 export type QuranWordProps = {
@@ -18,6 +18,7 @@ export const QuranWord = ({ word, marks, onWordClicked }: QuranWordProps) => {
   const highlightType = highlight.getHighlightType(searchParams);
 
   const highlightColorForMark = getColorMark(marks);
+  const hasNote = !!getNoteMark(marks);
 
   const highlightClassForWord = highlight.getHighlightClass(
     highlight.shouldHighlight(word, highlightedVerseKey) ||
@@ -32,6 +33,7 @@ export const QuranWord = ({ word, marks, onWordClicked }: QuranWordProps) => {
       onClick={(e) => onWordClicked(e, word)}
       className={` group relative leading-none text-black dark:text-white hover:text-yellow-500 dark:hover:text-yellow-400 cursor-pointer
       ${highlightClassForWord}
+      ${hasNote ? "border-b-2 border-dotted border-primary" : ""}
     `}
     >
       <span>{word.code_v1}</span>

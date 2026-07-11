@@ -2,18 +2,27 @@
 
 import { useState, MouseEvent } from "react";
 import { useLocale } from "next-intl";
-import { Bookmark, Trash2 } from "lucide-react";
+import { Bookmark, SquarePen, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { useAllMarks } from "@hooks/use-all-marks";
 import { deletePageMark } from "@/app/server/actions/deletePageMark";
 import { MarkListItem } from "@/app/server/actions/getAllMarks";
-import { MARK_COLORS } from "@constants/marks";
+import { MARK_COLORS, NOTE_PREVIEW_CHAR_LIMIT } from "@constants/marks";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-const markKey = (mark: MarkListItem) => `${mark.marked_type}:${mark.marked_id}`;
+const notePreview = (comment: string) =>
+  comment.length > NOTE_PREVIEW_CHAR_LIMIT
+    ? `${comment.slice(0, NOTE_PREVIEW_CHAR_LIMIT)}…`
+    : comment;
+
+// Includes mark_type: the same marked_id can now carry an independent color
+// mark AND note mark (two separate rows, one per tab) — without mark_type
+// they'd collide in removingKeys/failedKeys tracking across tabs.
+const markKey = (mark: MarkListItem) =>
+  `${mark.marked_type}:${mark.marked_id}:${mark.mark_type}`;
 
 type SurahGroup = {
   chapterNameSimple: string;
@@ -80,7 +89,7 @@ export const MyMarksList = () => {
       page_number: mark.page_number,
       marked_type: mark.marked_type,
       marked_id: mark.marked_id,
-      mark_type: "color",
+      mark_type: mark.mark_type,
     });
 
     setRemovingKeys((prev) => {
@@ -106,10 +115,26 @@ export const MyMarksList = () => {
     );
   }
 
-  const buckets = MARK_COLORS.map((color) => ({
-    ...color,
-    items: (marks ?? []).filter((m) => m.color === color.key),
+  const colorBuckets = MARK_COLORS.map((color) => ({
+    kind: "color" as const,
+    key: color.key,
+    labelKey: color.labelKey,
+    defaultLabel: color.defaultLabel,
+    chip: color.chip,
+    items: (marks ?? []).filter(
+      (m) => m.mark_type === "color" && m.mark_value === color.key,
+    ),
   }));
+
+  const noteBucket = {
+    kind: "note" as const,
+    key: "notes",
+    labelKey: "markModal.notesTab",
+    defaultLabel: "Notes",
+    items: (marks ?? []).filter((m) => m.mark_type === "note"),
+  };
+
+  const buckets = [...colorBuckets, noteBucket];
 
   const hasAnyMarks = buckets.some((bucket) => bucket.items.length > 0);
 
@@ -122,7 +147,7 @@ export const MyMarksList = () => {
   }
 
   return (
-    <Tabs defaultValue="red">
+    <Tabs defaultValue={buckets.find((b) => b.items.length > 0)?.key ?? "red"}>
       <TabsList className="mb-4 bg-muted p-1 h-auto w-full">
         {buckets.map((bucket) => (
           <TabsTrigger
@@ -130,7 +155,11 @@ export const MyMarksList = () => {
             value={bucket.key}
             className="flex-1 gap-1.5 px-3 py-1.5 rounded-lg text-muted-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
           >
-            <span className={cn("size-3 rounded-full", bucket.chip)} />
+            {bucket.kind === "color" ? (
+              <span className={cn("size-3 rounded-full", bucket.chip)} />
+            ) : (
+              <SquarePen className="size-3.5" strokeWidth={1.8} />
+            )}
             <span className="text-xs font-medium">
               {t(bucket.labelKey, bucket.defaultLabel)}
             </span>
@@ -142,7 +171,9 @@ export const MyMarksList = () => {
         <TabsContent key={bucket.key} value={bucket.key} className="flex flex-col gap-2">
           {bucket.items.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-8">
-              {t("marks.emptyColor", "No marks in this color yet.")}
+              {bucket.kind === "color"
+                ? t("marks.emptyColor", "No marks in this color yet.")
+                : t("marks.emptyNotes", "No notes yet.")}
             </p>
           ) : (
             groupBySurah(bucket.items).map((group) => (
@@ -171,18 +202,24 @@ export const MyMarksList = () => {
                         locale={locale}
                         className="flex items-center gap-3 flex-1 min-w-0"
                       >
-                        <span
-                          className={cn(
-                            "grid place-items-center size-6 rounded-md flex-none",
-                            bucket.chip
-                          )}
-                        >
-                          <Bookmark
-                            className="size-3.5 text-white"
-                            strokeWidth={2}
-                            fill="currentColor"
-                          />
-                        </span>
+                        {bucket.kind === "color" ? (
+                          <span
+                            className={cn(
+                              "grid place-items-center size-6 rounded-md flex-none",
+                              bucket.chip
+                            )}
+                          >
+                            <Bookmark
+                              className="size-3.5 text-white"
+                              strokeWidth={2}
+                              fill="currentColor"
+                            />
+                          </span>
+                        ) : (
+                          <span className="grid place-items-center size-6 rounded-md flex-none bg-primary/10">
+                            <SquarePen className="size-3.5 text-primary" strokeWidth={2} />
+                          </span>
+                        )}
 
                         <div className="flex-1 min-w-0">
                           <div className="text-xs text-muted-foreground">
@@ -197,6 +234,17 @@ export const MyMarksList = () => {
                           >
                             {mark.snippet}
                           </div>
+                          {bucket.kind === "note" && (
+                            <div
+                              dir="auto"
+                              className="mt-1 flex items-center gap-1 rounded-md border border-border/60 bg-muted/50 px-2.5 py-1.5"
+                            >
+                              <SquarePen className="size-3 text-muted-foreground flex-none" strokeWidth={1.8} />
+                              <span className="text-xs text-muted-foreground truncate">
+                                {notePreview(mark.mark_value)}
+                              </span>
+                            </div>
+                          )}
                           {hasFailed && (
                             <div className="text-xs text-destructive mt-1">
                               {t("markModal.actionError", "Something went wrong. Try again.")}
@@ -212,7 +260,11 @@ export const MyMarksList = () => {
                       <button
                         onClick={(e) => handleRemove(e, mark)}
                         disabled={isRemoving}
-                        aria-label={t("markModal.removeMark", "Remove Mark")}
+                        aria-label={
+                          bucket.kind === "color"
+                            ? t("markModal.removeMark", "Remove Mark")
+                            : t("markModal.removeNote", "Remove Note")
+                        }
                         className="text-muted-foreground hover:text-destructive transition-colors flex-none disabled:opacity-50"
                       >
                         <Trash2 className="size-4" strokeWidth={1.8} />

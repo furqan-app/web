@@ -62,9 +62,11 @@
     "notesTab": "Notes",
     "markWordLabel": "Mark word",
     "markVerseLabel": "Mark verse",
-    "notesComingSoon": "Coming soon",
     "chooseColorLabel": "Choose bookmark color",
     "saveMark": "Save Bookmark",
+    "notePlaceholder": "Write a note…",
+    "saveNote": "Save Note",
+    "removeNote": "Remove Note",
     "actionError": "Something went wrong. Try again.",
     "markedBy": "Marked by",
     "offlineNotice": "Connect to the internet to view or add marks"
@@ -80,7 +82,8 @@
     "pageTitle": "My Marks",
     "signedOut": "Sign in to see your marks.",
     "empty": "No marks yet.",
-    "emptyColor": "No marks in this color yet."
+    "emptyColor": "No marks in this color yet.",
+    "emptyNotes": "No notes yet."
   },
   "mushaf": {
     "hubTitle": "Shared Mushaf",

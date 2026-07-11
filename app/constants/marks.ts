@@ -11,3 +11,6 @@ export const MARK_COLORS: Array<{
 
 /** Word cap for a truncated verse-text preview (MarkModal target text, marks-list snippet). */
 export const VERSE_SNIPPET_WORD_LIMIT = 20;
+
+/** Character cap for a truncated comment preview in the My Marks Notes tab. */
+export const NOTE_PREVIEW_CHAR_LIMIT = 60;
