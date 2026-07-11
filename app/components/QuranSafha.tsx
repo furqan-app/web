@@ -10,7 +10,7 @@ import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { getPageFontFamily } from "@utils/quran-font-map";
-import { getColorMarkMeta } from "@utils/marks";
+import { getColorMarkMeta, getNoteMarkMeta } from "@utils/marks";
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
@@ -137,6 +137,11 @@ export const QuranSafha = ({
     return getColorMarkMeta(marks?.[markedId] ?? []);
   };
 
+  const getCurrentNoteMeta = (markFor: WordWithVerse | Verse) => {
+    const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
+    return getNoteMarkMeta(marks?.[markedId] ?? []);
+  };
+
   const hizbDefaults: Record<string, string> = {
     hizb: "الحزب",
     "hizb-quarter": "ربع الحزب",
@@ -226,7 +231,10 @@ export const QuranSafha = ({
     <>
       {session?.data?.user && selectedForMark ? (
         (() => {
-          const meta = getCurrentColorMeta(
+          const colorMeta = getCurrentColorMeta(
+            selectedForMark as WordWithVerse | Verse,
+          );
+          const noteMeta = getCurrentNoteMeta(
             selectedForMark as WordWithVerse | Verse,
           );
           return (
@@ -235,8 +243,10 @@ export const QuranSafha = ({
               close={closeMarkModal}
               markFor={selectedForMark as WordWithVerse | Verse}
               verseDisplayText={verseDisplayText}
-              currentColor={meta?.value}
-              markedByName={meta && !meta.isOwn ? meta.authorName : null}
+              currentColor={colorMeta?.value}
+              colorAuthorName={colorMeta && !colorMeta.isOwn ? colorMeta.authorName : null}
+              currentNote={noteMeta?.value}
+              noteAuthorName={noteMeta && !noteMeta.isOwn ? noteMeta.authorName : null}
               grantId={grantId}
             />
           );

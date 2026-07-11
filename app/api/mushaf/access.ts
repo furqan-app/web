@@ -34,8 +34,9 @@ export const withAuthorNames = async (
 ): Promise<MarkWithAuthor[]> => {
   // Only resolve names for FOREIGN authors. The common self-only page (every
   // author is the viewer) needs no extra query — own marks render via `is_own`,
-  // never `author_name` (see QuranSafha's `markedByName`), so their name is left
-  // null. This keeps the self-marks GET (hit on every page turn) a single query.
+  // never `author_name` (see QuranSafha's `colorAuthorName`/`noteAuthorName`),
+  // so their name is left null. This keeps the self-marks GET (hit on every
+  // page turn) a single query.
   const foreignIds = Array.from(
     new Set(marks.map((m) => m.from_user).filter((id) => id !== viewerId))
   );

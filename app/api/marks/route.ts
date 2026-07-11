@@ -5,7 +5,10 @@ import { extractUser } from "@/app/api/request";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@/app/constants/marks";
 
 export type MarkListItem = {
-  color: string;
+  // Discriminates what mark_value holds: a color key ("red"/"blue"/"green")
+  // for mark_type "color", or free-text comment for mark_type "note".
+  mark_type: string;
+  mark_value: string;
   marked_type: string;
   marked_id: string;
   page_number: number;
@@ -44,7 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   const marks = await appPrisma.mark.findMany({
-    where: { to_user: user.id, mark_type: "color" },
+    where: { to_user: user.id, mark_type: { in: ["color", "note"] } },
   });
 
   const wordMarks = marks.filter((m) => m.marked_type === "word");
@@ -81,7 +84,8 @@ export async function GET(request: NextRequest) {
 
       return [
         {
-          color: mark.mark_value,
+          mark_type: mark.mark_type,
+          mark_value: mark.mark_value,
           marked_type: mark.marked_type,
           marked_id: mark.marked_id,
           page_number: mark.page_number,
@@ -98,7 +102,8 @@ export async function GET(request: NextRequest) {
 
     return [
       {
-        color: mark.mark_value,
+        mark_type: mark.mark_type,
+        mark_value: mark.mark_value,
         marked_type: mark.marked_type,
         marked_id: mark.marked_id,
         page_number: mark.page_number,
