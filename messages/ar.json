@@ -63,12 +63,15 @@
     "notesTab": "الملاحظات",
     "markWordLabel": "تحديد كلمة",
     "markVerseLabel": "تحديد آية",
-    "notesComingSoon": "قريباً",
     "chooseColorLabel": "اختر لون العلامة المرجعية",
     "saveMark": "حفظ العلامة المرجعية",
+    "notePlaceholder": "اكتب ملاحظة…",
+    "saveNote": "حفظ الملاحظة",
+    "removeNote": "إزالة الملاحظة",
     "actionError": "حدث خطأ ما. حاول مرة أخرى.",
     "markedBy": "علامة من",
-    "offlineNotice": "اتصل بالإنترنت لعرض العلامات أو إضافتها"
+    "offlineNotice": "اتصل بالإنترنت لعرض العلامات أو إضافتها",
+    "playFromHere": "التشغيل من هنا"
   },
   "rubs": "أرباع",
   "rub": "ربع",
@@ -76,6 +79,14 @@
   "page": "صفحة",
   "signOut": "تسجيل الخروج",
   "signIn": "تسجيل الدخول",
+  "marks": {
+    "navLink": "علاماتي",
+    "pageTitle": "علاماتي",
+    "signedOut": "سجّل الدخول لرؤية علاماتك.",
+    "empty": "لا توجد علامات بعد.",
+    "emptyColor": "لا توجد علامات بهذا اللون بعد.",
+    "emptyNotes": "لا توجد ملاحظات بعد."
+  },
   "mushaf": {
     "hubTitle": "المصحف المشترك",
     "hubTagline": "اسمح للآخرين بقراءة مصحفك ووضع العلامات عليه، أو افتح مصحفًا شاركه معك أحدهم.",
@@ -116,5 +127,23 @@
       "confirmRemove": "إزالة",
       "cancel": "إلغاء"
     }
+  },
+  "recitation": {
+    "settingsTitle": "إعدادات التلاوة",
+    "settingsDescription": "اختر قارئًا واضبط إعدادات التشغيل.",
+    "reciter": "القارئ",
+    "stopPoint": "التوقف عند",
+    "stopPointPage": "نهاية الصفحة",
+    "stopPointSurah": "نهاية السورة",
+    "repeatEachAyah": "تكرار كل آية",
+    "repeatRange": "تكرار النطاق بالكامل",
+    "playbackSpeed": "سرعة التشغيل",
+    "pauseBetweenRepeats": "توقف بين التكرارات",
+    "play": "تشغيل",
+    "listen": "استماع",
+    "pause": "إيقاف مؤقت",
+    "resume": "متابعة",
+    "stop": "إيقاف",
+    "nowPlaying": "تلاوة"
   }
 }

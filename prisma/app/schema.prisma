@@ -26,8 +26,8 @@ model Mark {
   to_user     Int
   marked_type String // verse, word
   marked_id   String // verse => verse_key , word => location
-  mark_type   String // note, highlight
-  mark_value  String // Any text, color
+  mark_type   String // color, note
+  mark_value  String @db.Text // color name, or free-text comment
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

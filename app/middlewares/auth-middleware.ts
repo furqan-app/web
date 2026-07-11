@@ -8,6 +8,7 @@ import { REQUEST_ID_HEADER } from "./request-id-middleware";
 
 const protectedRoutes = [
   new RegExp("/api/quran/pages/[0-9]+/marks"),
+  new RegExp("^/api/marks$"),
   // All shared-mushaf endpoints require an authenticated user (ADR 0012).
   new RegExp("^/api/mushaf/"),
 ];
