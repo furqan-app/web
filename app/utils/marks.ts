@@ -28,7 +28,7 @@ export const getNoteMark = (marks: Array<MarkAction>) =>
 /**
  * The note mark plus who made it, for attribution in the mark dialog. Read
  * independently from getColorMarkMeta — a shared mushaf can have a different
- * author per mark_type on the same word/verse (ADR 0021).
+ * author per mark_type on the same word/verse (ADR 0022).
  * `isOwn` defaults to true when absent (older/self-only shapes).
  */
 export const getNoteMarkMeta = (marks: Array<MarkAction>) => {

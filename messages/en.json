@@ -69,7 +69,8 @@
     "removeNote": "Remove Note",
     "actionError": "Something went wrong. Try again.",
     "markedBy": "Marked by",
-    "offlineNotice": "Connect to the internet to view or add marks"
+    "offlineNotice": "Connect to the internet to view or add marks",
+    "playFromHere": "Play from here"
   },
   "rubs": "Rubs",
   "rub": "Rub",
@@ -125,5 +126,23 @@
       "confirmRemove": "Remove",
       "cancel": "Cancel"
     }
+  },
+  "recitation": {
+    "settingsTitle": "Recitation settings",
+    "settingsDescription": "Choose a reciter and configure playback.",
+    "reciter": "Reciter",
+    "stopPoint": "Stop at",
+    "stopPointPage": "End of page",
+    "stopPointSurah": "End of surah",
+    "repeatEachAyah": "Repeat each ayah",
+    "repeatRange": "Repeat whole range",
+    "playbackSpeed": "Playback speed",
+    "pauseBetweenRepeats": "Pause between repeats",
+    "play": "Play",
+    "listen": "Listen",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop",
+    "nowPlaying": "Recitation"
   }
 }

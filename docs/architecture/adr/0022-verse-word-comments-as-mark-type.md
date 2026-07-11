@@ -1,4 +1,4 @@
-# ADR 0021: Store word/verse comments as a new Mark.mark_type, with mark_value widened to TEXT
+# ADR 0022: Store word/verse comments as a new Mark.mark_type, with mark_value widened to TEXT
 
 **Date:** 2026-07-11
 **Status:** Accepted

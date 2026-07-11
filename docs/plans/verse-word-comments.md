@@ -9,7 +9,7 @@
 
 Users can already color-mark a word or verse. This adds a second, independent kind of mark — a free-text **comment** — on the same word/verse, using the `Mark` model's already-documented (but unimplemented) `mark_type: "note"`. A word/verse carrying a comment gets a `border-b-2 border-dotted border-primary` indicator in the reader; there is no hover tooltip. Reading/writing the comment happens in `MarkModal`'s existing "Notes" tab, which today just shows a "Coming soon" placeholder. The My Marks page gets a 4th tab listing comments alongside the existing 3 color tabs.
 
-See [ADR 0021](../architecture/adr/0021-verse-word-comments-as-mark-type.md) for why this reuses `Mark` instead of a new model, and the "Verse/Word Comments" entry in `DECISIONS.md` for the resulting constraints.
+See [ADR 0022](../architecture/adr/0022-verse-word-comments-as-mark-type.md) for why this reuses `Mark` instead of a new model, and the "Verse/Word Comments" entry in `DECISIONS.md` for the resulting constraints.
 
 ## Approach
 
@@ -38,7 +38,7 @@ Comments are **not** a new feature surface — they're a second `mark_type` flow
 | Tab | Author shown | Why |
 |---|---|---|
 | Bookmarks | `getColorMarkMeta(marks).authorName`, shown only if `!isOwn` | Unchanged from today |
-| Notes | `getNoteMarkMeta(marks).authorName`, shown only if `!isOwn` | New — independent because a shared mushaf can have a different author per `mark_type` on the same spot (ADR 0021) |
+| Notes | `getNoteMarkMeta(marks).authorName`, shown only if `!isOwn` | New — independent because a shared mushaf can have a different author per `mark_type` on the same spot (ADR 0022) |
 
 **My Marks page bucketing:**
 
@@ -86,7 +86,7 @@ A word/verse with both a color and a note appears once in its color tab and once
 
 ## Constraints
 
-- Do not create a new Prisma model for comments — reuse `Mark` with `mark_type: "note"` (ADR 0021).
+- Do not create a new Prisma model for comments — reuse `Mark` with `mark_type: "note"` (ADR 0022).
 - Do not add a hover tooltip anywhere — the border-bottom is the only passive indicator; reading the comment always goes through `MarkModal`.
 - Do not merge color and note attribution into one `markedByName` — they must be read and displayed independently per tab, since a shared mushaf can have different authors per `mark_type` on the same word/verse.
 - Do not special-case verse-level notes with new spread logic — reuse the existing `marks[verse_key]` → every word in `QuranLine` mechanism that color marks already rely on.
@@ -179,7 +179,7 @@ Confirmed live: `getComputedStyle(box).direction` was `"ltr"` for a box wrapping
 **Root cause 3 (stale comment):** `app/api/mushaf/access.ts:37`'s comment says "own marks render via `is_own`, never `author_name` (see QuranSafha's `markedByName`)" — this feature (main plan, Files to Change) renamed `MarkModal`'s single `markedByName` prop to `colorAuthorName`/`noteAuthorName`, so the pointer is now dangling. Found by `/review-fq-work`.
 
 **Decision:**
-1. Replace `MarkModal`'s single `error` boolean with `const [errors, setErrors] = useState({ color: false, note: false })`. `saveMark`/`removeMarkType` set/clear only `errors[markType]` (`setErrors(prev => ({ ...prev, [markType]: value }))`). `BookmarksTab` receives `error={errors.color}`, `NotesTab` receives `error={errors.note}` — independent, matching the per-`mark_type` attribution pattern this feature already established for `colorAuthorName`/`noteAuthorName` (ADR 0021).
+1. Replace `MarkModal`'s single `error` boolean with `const [errors, setErrors] = useState({ color: false, note: false })`. `saveMark`/`removeMarkType` set/clear only `errors[markType]` (`setErrors(prev => ({ ...prev, [markType]: value }))`). `BookmarksTab` receives `error={errors.color}`, `NotesTab` receives `error={errors.note}` — independent, matching the per-`mark_type` attribution pattern this feature already established for `colorAuthorName`/`noteAuthorName` (ADR 0022).
 2. Compute `MyMarksList`'s default tab from data instead of hardcoding: `defaultValue={buckets.find((b) => b.items.length > 0)?.key ?? "red"}`. Safe because `MyMarksList` already early-returns before the `<Tabs>` render whenever every bucket is empty (the `!hasAnyMarks` check), so at least one bucket always has items at this point — the `?? "red"` fallback is defensive only, never actually reached.
 3. Update the stale comment in `app/api/mushaf/access.ts` to reference the current prop names.
 

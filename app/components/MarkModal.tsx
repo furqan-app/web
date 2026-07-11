@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Verse } from "@/app/generated/quran-client";
-import { Bookmark, Eraser, SquarePen, User, X } from "lucide-react";
+import { Bookmark, Eraser, SquarePen, User, Volume2, X } from "lucide-react";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
 import { useOnlineStatus } from "../hooks/use-online-status";
 import { WordWithVerse } from "../types/prisma";
+import { useRecitation } from "@/app/contexts/RecitationContext";
 import { addPageMark } from "../server/actions/addPageMark";
 import { deletePageMark } from "../server/actions/deletePageMark";
 import useTranslations from "../hooks/use-translations";
@@ -33,7 +34,7 @@ type ModalProps = {
   colorAuthorName?: string | null;
   currentNote?: string;
   // Name of the note's author — read independently from colorAuthorName, since
-  // a shared mushaf can have a different author per mark_type (ADR 0021).
+  // a shared mushaf can have a different author per mark_type (ADR 0022).
   noteAuthorName?: string | null;
   // When set, add/remove operate on the granted mushaf instead of the viewer's.
   grantId?: string;
@@ -230,8 +231,14 @@ export function MarkModal({
   const [errors, setErrors] = useState({ color: false, note: false });
   const isOnline = useOnlineStatus();
   const isOffline = !isOnline;
+  const { openSettings } = useRecitation();
 
   const isWord = "location" in markFor;
+
+  const playFromHere = () => {
+    openSettings(markFor.verse_key);
+    close();
+  };
 
   const saveMark = async (markType: "color" | "note", value: string) => {
     setErrors((prev) => ({ ...prev, [markType]: false }));
@@ -305,6 +312,14 @@ export function MarkModal({
               : t("markModal.markVerseLabel", "Mark verse")}
           </DialogDescription>
         </div>
+        <button
+          type="button"
+          onClick={playFromHere}
+          className="mb-3 w-full flex items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium border border-border text-foreground hover:bg-accent active:scale-[0.97] transition-[background-color,transform] duration-150"
+        >
+          <Volume2 className="w-4 h-4" strokeWidth={1.8} />
+          {t("markModal.playFromHere", "Play from here")}
+        </button>
         <Tabs defaultValue="bookmarks">
           <TabsList className="mb-2 bg-muted p-1 h-auto w-full">
             {tabs.map(({ icon, key, labelKey, defaultLabel }) => (
