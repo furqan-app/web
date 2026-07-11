@@ -1,12 +1,13 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { Verse } from "@/app/generated/quran-client";
-import { Bookmark, Eraser, SquarePen, User, Volume2, X } from "lucide-react";
+import { Bookmark, Eraser, SquarePen, User, Volume1, Volume2, X } from "lucide-react";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
 import { useOnlineStatus } from "../hooks/use-online-status";
 import { WordWithVerse } from "../types/prisma";
 import { useRecitation } from "@/app/contexts/RecitationContext";
+import { getWordAudioUrl } from "../constants/word-audio";
 import { addPageMark } from "../server/actions/addPageMark";
 import { deletePageMark } from "../server/actions/deletePageMark";
 import useTranslations from "../hooks/use-translations";
@@ -156,13 +157,25 @@ export function MarkModal({
   const [error, setError] = useState(false);
   const isOnline = useOnlineStatus();
   const isOffline = !isOnline;
-  const { openSettings } = useRecitation();
+  const { openSettings, status: recitationStatus, togglePlayPause } = useRecitation();
+  const wordAudioRef = useRef<HTMLAudioElement>(null);
 
   const isWord = "location" in markFor;
 
   const playFromHere = () => {
     openSettings(markFor.verse_key);
     close();
+  };
+
+  const playWordPronunciation = () => {
+    if (!isWord || !markFor.audio_url) return;
+    if (recitationStatus === "playing") togglePlayPause();
+
+    const audio = wordAudioRef.current;
+    if (!audio) return;
+    audio.src = getWordAudioUrl(markFor.audio_url);
+    audio.currentTime = 0;
+    audio.play();
   };
 
   const markWord = async (color: string) => {
@@ -224,13 +237,27 @@ export function MarkModal({
               <span className="sr-only">Close</span>
             </DialogClose>
           </div>
-          <DialogTitle
-            className="flex text-foreground text-xl font-medium leading-normal tracking-normal mt-1.5"
-            style={{ fontFamily: "var(--uthmanic)" }}
-            dir="rtl"
-          >
-            {getTitle(markFor, verseDisplayText)}
-          </DialogTitle>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <DialogTitle
+              className="flex text-foreground text-xl font-medium leading-normal tracking-normal"
+              style={{ fontFamily: "var(--uthmanic)" }}
+              dir="rtl"
+            >
+              {getTitle(markFor, verseDisplayText)}
+            </DialogTitle>
+            {isWord && markFor.audio_url ? (
+              <button
+                type="button"
+                onClick={playWordPronunciation}
+                className="rounded-full p-1.5 text-muted-foreground opacity-70 transition-[opacity,background-color,color] duration-150 hover:opacity-100 hover:bg-accent hover:text-accent-foreground active:scale-90"
+              >
+                <Volume1 className="h-4 w-4" strokeWidth={1.8} />
+                <span className="sr-only">
+                  {t("markModal.playPronunciation", "Hear pronunciation")}
+                </span>
+              </button>
+            ) : null}
+          </div>
           <DialogDescription className="sr-only">
             {isWord
               ? t("markModal.markWordLabel", "Mark word")
@@ -281,6 +308,7 @@ export function MarkModal({
             </TabsContent>
           ))}
         </Tabs>
+        {isWord ? <audio ref={wordAudioRef} preload="none" /> : null}
       </DialogContent>
     </Dialog>
   );
