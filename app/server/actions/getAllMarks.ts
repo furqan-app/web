@@ -3,9 +3,9 @@ import type { MarkListItem } from "@/app/api/marks/route";
 export type { MarkListItem };
 
 /**
- * Fetch every color mark on the caller's own mushaf, enriched with the
- * marked word/verse's location (chapter, verse number, page) and a display
- * snippet. Self-marks only — there is no grant-scoped equivalent.
+ * Fetch every color and note mark on the caller's own mushaf, enriched with
+ * the marked word/verse's location (chapter, verse number, page) and a
+ * display snippet. Self-marks only — there is no grant-scoped equivalent.
  */
 export const getAllMarks = async (): Promise<Array<MarkListItem>> => {
   try {

@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Verse } from "@/app/generated/quran-client";
 import { Bookmark, Eraser, SquarePen, User, Volume1, Volume2, X } from "lucide-react";
 
@@ -19,7 +19,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+
+const NOTE_MAX_LENGTH = 500;
 
 type ModalProps = {
   isOpen: boolean;
@@ -27,16 +30,36 @@ type ModalProps = {
   markFor: WordWithVerse | Verse;
   verseDisplayText?: string;
   currentColor?: string;
-  // Name of the mark's author, shown only when it wasn't made by the current
-  // viewer (e.g. a teacher's mark on a student's mushaf). See ADR 0012.
-  markedByName?: string | null;
+  // Name of the color mark's author, shown only when it wasn't made by the
+  // current viewer (e.g. a teacher's mark on a student's mushaf). See ADR 0012.
+  colorAuthorName?: string | null;
+  currentNote?: string;
+  // Name of the note's author — read independently from colorAuthorName, since
+  // a shared mushaf can have a different author per mark_type (ADR 0022).
+  noteAuthorName?: string | null;
   // When set, add/remove operate on the granted mushaf instead of the viewer's.
   grantId?: string;
 };
 
-type CategoryContentProps = {
+const MarkedByLine = ({ authorName }: { authorName?: string | null }) => {
+  const t = useTranslations();
+
+  if (!authorName) return null;
+
+  return (
+    <p className="mb-2.5 flex items-center gap-1 text-xs text-muted-foreground">
+      <User className="size-3" strokeWidth={1.8} />
+      <span>
+        {t("markModal.markedBy", "Marked by")} {authorName}
+      </span>
+    </p>
+  );
+};
+
+type BookmarksTabProps = {
   markWord: (color: string) => void;
   currentColor?: string;
+  authorName?: string | null;
   removeMark: () => void;
   error: boolean;
   isOffline: boolean;
@@ -45,15 +68,17 @@ type CategoryContentProps = {
 const BookmarksTab = ({
   markWord,
   currentColor,
+  authorName,
   removeMark,
   error,
   isOffline,
-}: CategoryContentProps) => {
+}: BookmarksTabProps) => {
   const t = useTranslations();
   const [selectedColor, setSelectedColor] = useState(currentColor);
 
   return (
     <>
+      <MarkedByLine authorName={authorName} />
       <p className="text-xs font-medium text-muted-foreground mb-2.5">
         {t("markModal.chooseColorLabel", "Choose bookmark color")}
       </p>
@@ -96,39 +121,87 @@ const BookmarksTab = ({
   );
 };
 
-const NotesTab = () => {
+type NotesTabProps = {
+  saveNote: (text: string) => void;
+  currentNote?: string;
+  authorName?: string | null;
+  removeNote: () => void;
+  error: boolean;
+  isOffline: boolean;
+};
+
+const NotesTab = ({
+  saveNote,
+  currentNote,
+  authorName,
+  removeNote,
+  error,
+  isOffline,
+}: NotesTabProps) => {
   const t = useTranslations();
+  const [text, setText] = useState(currentNote ?? "");
 
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
-      <SquarePen className="w-5 h-5 text-muted-foreground" strokeWidth={1.6} />
-      <p className="text-sm text-muted-foreground">
-        {t("markModal.notesComingSoon", "Coming soon")}
+    <>
+      <MarkedByLine authorName={authorName} />
+      <Textarea
+        value={text}
+        onChange={(e) => setText(e.target.value.slice(0, NOTE_MAX_LENGTH))}
+        maxLength={NOTE_MAX_LENGTH}
+        disabled={isOffline}
+        placeholder={t("markModal.notePlaceholder", "Write a note…")}
+        dir="auto"
+        className="bg-card min-h-[96px] resize-none"
+      />
+      <p className="mt-1 text-end text-[10px] text-muted-foreground">
+        {text.length}/{NOTE_MAX_LENGTH}
       </p>
-    </div>
+      <button
+        onClick={() => text.trim() && saveNote(text.trim())}
+        disabled={!text.trim() || isOffline}
+        className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium bg-primary text-primary-foreground transition-[background-color,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none"
+      >
+        <SquarePen className="w-4 h-4" strokeWidth={1.8} />
+        {t("markModal.saveNote", "Save Note")}
+      </button>
+      {currentNote ? (
+        <button
+          onClick={removeNote}
+          disabled={isOffline}
+          className="mt-1.5 w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-destructive hover:bg-destructive/10 active:scale-[0.97] transition-[background-color,transform] duration-150 disabled:opacity-50 disabled:pointer-events-none"
+        >
+          <Eraser className="w-4 h-4" strokeWidth={1.8} />
+          {t("markModal.removeNote", "Remove Note")}
+        </button>
+      ) : null}
+      {isOffline ? (
+        <p className="mt-1.5 text-xs text-muted-foreground text-center">
+          {t(
+            "markModal.offlineNotice",
+            "Connect to the internet to view or add marks",
+          )}
+        </p>
+      ) : error ? (
+        <p className="mt-1.5 text-xs text-destructive text-center">
+          {t("markModal.actionError", "Something went wrong. Try again.")}
+        </p>
+      ) : null}
+    </>
   );
 };
 
-const categories: Array<{
-  key: string;
-  labelKey: string;
-  defaultLabel: string;
-  header: () => ReactNode;
-  content: (props: CategoryContentProps) => ReactNode;
-}> = [
+const tabs = [
   {
     key: "bookmarks",
     labelKey: "markModal.bookmarksTab",
     defaultLabel: "Bookmarks",
-    header: () => <Bookmark className="w-4 h-4" strokeWidth={1.8} />,
-    content: (props) => <BookmarksTab {...props} />,
+    icon: () => <Bookmark className="w-4 h-4" strokeWidth={1.8} />,
   },
   {
     key: "notes",
     labelKey: "markModal.notesTab",
     defaultLabel: "Notes",
-    header: () => <SquarePen className="w-4 h-4" strokeWidth={1.8} />,
-    content: () => <NotesTab />,
+    icon: () => <SquarePen className="w-4 h-4" strokeWidth={1.8} />,
   },
 ];
 
@@ -149,12 +222,14 @@ export function MarkModal({
   markFor,
   verseDisplayText,
   currentColor,
-  markedByName,
+  colorAuthorName,
+  currentNote,
+  noteAuthorName,
   grantId,
 }: ModalProps) {
   const { reload: reloadMarks } = useMarks(markFor.page_number, grantId);
   const t = useTranslations();
-  const [error, setError] = useState(false);
+  const [errors, setErrors] = useState({ color: false, note: false });
   const isOnline = useOnlineStatus();
   const isOffline = !isOnline;
   const { openSettings, status: recitationStatus, togglePlayPause } = useRecitation();
@@ -178,14 +253,14 @@ export function MarkModal({
     audio.play();
   };
 
-  const markWord = async (color: string) => {
-    setError(false);
+  const saveMark = async (markType: "color" | "note", value: string) => {
+    setErrors((prev) => ({ ...prev, [markType]: false }));
     const added = await addPageMark(
       {
         marked_type: isWord ? "word" : "verse",
         marked_id: isWord ? markFor.location : markFor.verse_key,
-        mark_type: "color",
-        mark_value: color,
+        mark_type: markType,
+        mark_value: value,
         page_number: markFor.page_number,
       },
       grantId,
@@ -195,17 +270,17 @@ export function MarkModal({
       reloadMarks();
       close();
     } else {
-      setError(true);
+      setErrors((prev) => ({ ...prev, [markType]: true }));
     }
   };
 
-  const removeMark = async () => {
-    setError(false);
+  const removeMarkType = async (markType: "color" | "note") => {
+    setErrors((prev) => ({ ...prev, [markType]: false }));
     const removed = await deletePageMark(
       {
         marked_type: isWord ? "word" : "verse",
         marked_id: isWord ? markFor.location : markFor.verse_key,
-        mark_type: "color",
+        mark_type: markType,
         page_number: markFor.page_number,
       },
       grantId,
@@ -215,7 +290,7 @@ export function MarkModal({
       reloadMarks();
       close();
     } else {
-      setError(true);
+      setErrors((prev) => ({ ...prev, [markType]: true }));
     }
   };
 
@@ -263,14 +338,6 @@ export function MarkModal({
               ? t("markModal.markWordLabel", "Mark word")
               : t("markModal.markVerseLabel", "Mark verse")}
           </DialogDescription>
-          {markedByName ? (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-              <User className="size-3" strokeWidth={1.8} />
-              <span>
-                {t("markModal.markedBy", "Marked by")} {markedByName}
-              </span>
-            </p>
-          ) : null}
         </div>
         <button
           type="button"
@@ -282,7 +349,7 @@ export function MarkModal({
         </button>
         <Tabs defaultValue="bookmarks">
           <TabsList className="mb-2 bg-muted p-1 h-auto w-full">
-            {categories.map(({ header, key, labelKey, defaultLabel }) => (
+            {tabs.map(({ icon, key, labelKey, defaultLabel }) => (
               <TabsTrigger
                 key={key}
                 value={key}
@@ -291,22 +358,39 @@ export function MarkModal({
                   "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
                 )}
               >
-                {header()}
+                {icon()}
                 <span className="text-xs font-medium">
                   {t(labelKey, defaultLabel)}
                 </span>
               </TabsTrigger>
             ))}
           </TabsList>
-          {categories.map(({ key, content }) => (
-            <TabsContent
-              key={key}
-              value={key}
-              className="rounded-xl bg-muted border border-border/60 p-2.5"
-            >
-              {content({ markWord, currentColor, removeMark, error, isOffline })}
-            </TabsContent>
-          ))}
+          <TabsContent
+            value="bookmarks"
+            className="rounded-xl bg-muted border border-border/60 p-2.5"
+          >
+            <BookmarksTab
+              markWord={(color) => saveMark("color", color)}
+              currentColor={currentColor}
+              authorName={colorAuthorName}
+              removeMark={() => removeMarkType("color")}
+              error={errors.color}
+              isOffline={isOffline}
+            />
+          </TabsContent>
+          <TabsContent
+            value="notes"
+            className="rounded-xl bg-muted border border-border/60 p-2.5"
+          >
+            <NotesTab
+              saveNote={(text) => saveMark("note", text)}
+              currentNote={currentNote}
+              authorName={noteAuthorName}
+              removeNote={() => removeMarkType("note")}
+              error={errors.note}
+              isOffline={isOffline}
+            />
+          </TabsContent>
         </Tabs>
         {isWord ? <audio ref={wordAudioRef} preload="none" /> : null}
       </DialogContent>

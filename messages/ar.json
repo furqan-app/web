@@ -63,9 +63,11 @@
     "notesTab": "الملاحظات",
     "markWordLabel": "تحديد كلمة",
     "markVerseLabel": "تحديد آية",
-    "notesComingSoon": "قريباً",
     "chooseColorLabel": "اختر لون العلامة المرجعية",
     "saveMark": "حفظ العلامة المرجعية",
+    "notePlaceholder": "اكتب ملاحظة…",
+    "saveNote": "حفظ الملاحظة",
+    "removeNote": "إزالة الملاحظة",
     "actionError": "حدث خطأ ما. حاول مرة أخرى.",
     "markedBy": "علامة من",
     "offlineNotice": "اتصل بالإنترنت لعرض العلامات أو إضافتها",
@@ -83,7 +85,8 @@
     "pageTitle": "علاماتي",
     "signedOut": "سجّل الدخول لرؤية علاماتك.",
     "empty": "لا توجد علامات بعد.",
-    "emptyColor": "لا توجد علامات بهذا اللون بعد."
+    "emptyColor": "لا توجد علامات بهذا اللون بعد.",
+    "emptyNotes": "لا توجد ملاحظات بعد."
   },
   "mushaf": {
     "hubTitle": "المصحف المشترك",
