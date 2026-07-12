@@ -17,7 +17,14 @@
     "quran-db-push": "dotenv -e .env.local -- npx prisma db push --schema prisma/quran/schema.prisma",
     "extract-translations": "node extract-translations.js",
     "seed:quran": "dotenv -e .env.local -- node scripts/quran-seed/seed.js",
-    "postinstall": "prisma generate --schema prisma/quran/schema.prisma && prisma generate --schema prisma/app/schema.prisma"
+    "postinstall": "prisma generate --schema prisma/quran/schema.prisma && prisma generate --schema prisma/app/schema.prisma",
+    "e2e:generate-fixture": "node scripts/e2e-fixture/generate.js",
+    "e2e:db:up": "docker compose -f compose.e2e.yml up -d --wait",
+    "e2e:db:down": "docker compose -f compose.e2e.yml down -v",
+    "e2e:setup": "dotenv -e .env.e2e -- node scripts/e2e-fixture/setup.js",
+    "e2e:build": "dotenv -e .env.e2e -- next build",
+    "e2e:start": "dotenv -e .env.e2e -- next start",
+    "e2e:test": "dotenv -e .env.e2e -- playwright test"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
@@ -49,6 +56,7 @@
   "devDependencies": {
     "@babel/parser": "^7.26.2",
     "@babel/traverse": "^7.25.9",
+    "@playwright/test": "^1.61.1",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^20",
     "@types/react": "^18",
