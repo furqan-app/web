@@ -127,3 +127,31 @@ git add e2e/tests/visual.spec.ts-snapshots
 **What NOT to Do (Addendum 2)**
 - Do not rename the committed baseline directory to match the workflow instead — `e2e/tests/visual.spec.ts-snapshots/` is Playwright's own default derived from the spec filename; fix the workflow to match reality, not the other way around.
 - Do not touch `visual-e2e.yml` (the PR-triggered check) — it only reads/compares against the existing baselines and never runs `git add`, so it isn't affected by this bug.
+
+## Addendum 3 — Baseline push fails with 403 (missing `contents: write` permission)
+
+**Discovered running the workflow after Addendum 2 landed** (Trello card [99](https://trello.com/c/RafKCwtt)): with the path fixed, `git add`/`git commit` in the "Commit updated baselines" step now succeed (confirmed — a real run committed all 36 regenerated PNGs locally in the job). But `git push origin HEAD:${{ inputs.branch }}` then fails:
+
+```
+remote: Permission to furqan-app/web.git denied to github-actions[bot].
+fatal: unable to access 'https://github.com/furqan-app/web/': The requested URL returned error: 403
+Error: Process completed with exit code 128.
+```
+
+None of this repo's workflows (`update-visual-baselines.yml`, `visual-e2e.yml`, `protect-prod.yml`) declare an explicit `permissions:` block, so the auto-generated `GITHUB_TOKEN` each job receives falls back to the repository/organization's default workflow permissions setting — which is evidently **read-only** (GitHub's own default for newer repos). `actions/checkout@v4` authenticates with that same read-only token, so the subsequent `git push` is rejected.
+
+**Fix:** declare an explicit `permissions` block on this workflow so it doesn't depend on (or get silently broken by) the repo-wide default:
+
+```yaml
+permissions:
+  contents: write
+```
+
+Added at the workflow level (top-level, alongside `on:`/`jobs:`), scoping write access to just this one workflow rather than changing the repo/org default for every workflow.
+
+**Files to Change (Addendum 3)**
+- `.github/workflows/update-visual-baselines.yml` — add a top-level `permissions: contents: write` block.
+
+**What NOT to Do (Addendum 3)**
+- Do not change the repository/organization's default Actions workflow-permissions setting (Settings → Actions → General) — that would grant write access to every workflow including `visual-e2e.yml` (a read-only PR check) and `protect-prod.yml`, widening the blast radius unnecessarily. Scope the fix to this one workflow's `permissions:` block instead.
+- Do not add `--admin` or force-push logic to work around the 403 — the actual fix is the token's permission scope, not the push command.

@@ -12,6 +12,9 @@ on:
         description: "Branch to update baselines on"
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   update-baselines:
     runs-on: ubuntu-latest
