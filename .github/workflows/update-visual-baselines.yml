@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-baselines:
@@ -69,6 +70,8 @@ jobs:
         run: npm run e2e:test -- --update-snapshots
 
       - name: Commit updated baselines
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -77,5 +80,16 @@ jobs:
             echo "No baseline changes."
             exit 0
           fi
+
+          sanitized_target=$(echo "${{ inputs.branch }}" | tr '/' '-')
+          update_branch="update-baselines/${sanitized_target}-${{ github.run_id }}"
+
+          git checkout -b "$update_branch"
           git commit -m "chore(e2e): update visual baselines"
-          git push origin HEAD:${{ inputs.branch }}
+          git push origin HEAD:"$update_branch"
+
+          gh pr create \
+            --base "${{ inputs.branch }}" \
+            --head "$update_branch" \
+            --title "chore(e2e): update visual baselines (${{ inputs.branch }})" \
+            --body "Automated baseline regeneration from the \"Update visual e2e baselines\" workflow (run ${{ github.run_id }}), targeting \`${{ inputs.branch }}\`."
