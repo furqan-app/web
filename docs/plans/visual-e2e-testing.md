@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-07-07
-**Status:** ready-to-implement
+**Status:** implemented
 
 ## Summary
 
@@ -97,3 +97,33 @@ Total: (4 screens × 2 viewports + 1 screen × 1 viewport) × 2 locales × 2 the
 - Viewports: desktop always; mobile added for 4 of 5 screens (double-spread excluded, desktop/`lg`-only by design).
 - Diff behavior: fails the CI check (soft-blocking).
 - Baseline updates: dedicated `workflow_dispatch` CI job, not local regeneration + commit.
+
+## Addendum 2 — Baseline commit step targets the wrong snapshot directory (bug fix)
+
+**Discovered post-merge** (Trello card [98](https://trello.com/c/ndkZ5zN2)): this plan (and ADR 0022) assumed baselines would live under `e2e/tests/__screenshots__/`, matching Playwright's directory in some setups. In practice, Playwright's default snapshot path is derived from the spec filename: with `testDir: e2e/tests` and a single spec `visual.spec.ts`, snapshots are written to `e2e/tests/visual.spec.ts-snapshots/` (confirmed via `git ls-tree` on `main` — that's where all 36 committed baseline PNGs actually live).
+
+The `update-visual-baselines.yml` workflow's "Commit updated baselines" step still references the never-existent `e2e/tests/__screenshots__` path:
+
+```yaml
+- name: Commit updated baselines
+  run: |
+    git config user.name "github-actions[bot]"
+    git config user.email "github-actions[bot]@users.noreply.github.com"
+    git add e2e/tests/__screenshots__
+    ...
+```
+
+`git add e2e/tests/__screenshots__` fails with `fatal: pathspec 'e2e/tests/__screenshots__' did not match any files` (exit 128) every time the workflow runs, right after the `git config` steps succeed — so the baseline-regeneration workflow has never been able to commit anything.
+
+**Fix:** change the `git add` target to the real snapshot directory:
+
+```yaml
+git add e2e/tests/visual.spec.ts-snapshots
+```
+
+**Files to Change (Addendum 2)**
+- `.github/workflows/update-visual-baselines.yml` — fix the `git add` path in the "Commit updated baselines" step.
+
+**What NOT to Do (Addendum 2)**
+- Do not rename the committed baseline directory to match the workflow instead — `e2e/tests/visual.spec.ts-snapshots/` is Playwright's own default derived from the spec filename; fix the workflow to match reality, not the other way around.
+- Do not touch `visual-e2e.yml` (the PR-triggered check) — it only reads/compares against the existing baselines and never runs `git add`, so it isn't affected by this bug.
