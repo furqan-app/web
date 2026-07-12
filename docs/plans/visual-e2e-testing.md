@@ -155,3 +155,41 @@ Added at the workflow level (top-level, alongside `on:`/`jobs:`), scoping write 
 **What NOT to Do (Addendum 3)**
 - Do not change the repository/organization's default Actions workflow-permissions setting (Settings → Actions → General) — that would grant write access to every workflow including `visual-e2e.yml` (a read-only PR check) and `protect-prod.yml`, widening the blast radius unnecessarily. Scope the fix to this one workflow's `permissions:` block instead.
 - Do not add `--admin` or force-push logic to work around the 403 — the actual fix is the token's permission scope, not the push command.
+
+## Addendum 4 — Baseline push rejected by main's PR-required ruleset (GH013)
+
+**Discovered running the workflow after Addendum 3 landed** (Trello card [100](https://trello.com/c/3ovWi5sS)): with `contents: write` granted, `git push origin HEAD:${{ inputs.branch }}` now authenticates fine but is rejected by `main`'s repository ruleset:
+
+```
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: - Changes must be made through a pull request.
+! [remote rejected] HEAD -> main (push declined due to repository rule violations)
+```
+
+`main` requires all changes to land via a PR — no direct push is permitted regardless of token permissions. **Decision (user-confirmed): fix the workflow to open a PR instead of pushing directly, not add a ruleset bypass for `github-actions[bot]`** — a bypass would let this workflow (or a stolen token) land unreviewed changes on `main` outside the normal PR path used by every other change in this repo; scoping the fix to the workflow keeps the ruleset's guarantee intact for everything.
+
+**New flow for the "Commit updated baselines" step:**
+
+1. If there's nothing to commit (unchanged), keep today's early exit: echo "No baseline changes." and exit 0 — no branch or PR created.
+2. Otherwise, create a new branch off the current checkout: `update-baselines/<sanitized-target>-<run_id>`, where `<sanitized-target>` is `${{ inputs.branch }}` with `/` replaced by `-` (e.g. `release/1.3.0` → `release-1.3.0`), and `<run_id>` is `${{ github.run_id }}` — guarantees a unique branch per run, so reruns never collide.
+3. Commit the baseline PNGs on that new branch (same `git config`/`git add`/`git commit` as before).
+4. Push the new branch: `git push origin HEAD:update-baselines/<sanitized-target>-<run_id>`.
+5. Open a PR via `gh pr create --base ${{ inputs.branch }} --head update-baselines/<sanitized-target>-<run_id> --title "chore(e2e): update visual baselines (<inputs.branch>)" --body "..."`. Requires `GH_TOKEN: ${{ github.token }}` in the step's env for `gh` to authenticate, and the job needs `permissions: pull-requests: write` in addition to the existing `contents: write`.
+6. The workflow does **not** auto-merge this PR — merging goes through the same manual/`/merge-fq-task` path as any other PR in this repo (user-confirmed: no `--auto`/`gh pr merge` step here).
+
+**Verified Test Cases**
+
+| Case | `inputs.branch` | Baseline diff? | Result |
+|---|---|---|---|
+| 1 | `main` | Yes | New branch `update-baselines/main-<run_id>`, commit pushed, PR opened `head → base=main` |
+| 2 | `main` | No | Unchanged: "No baseline changes.", exit 0, no branch/PR |
+| 3 | `release/1.3.0` | Yes | New branch `update-baselines/release-1.3.0-<run_id>` (slash sanitized), PR opened `head → base=release/1.3.0` |
+
+**Files to Change (Addendum 4)**
+- `.github/workflows/update-visual-baselines.yml` — rework the "Commit updated baselines" step to branch/push/PR instead of pushing directly to `${{ inputs.branch }}`; add `permissions: pull-requests: write`.
+- `docs/architecture/DECISIONS.md` — the "Visual E2E Testing" section's constraint bullet currently says baselines are "pushed back to the PR branch"; update it to describe the PR-based flow instead (now stale as of this addendum).
+
+**What NOT to Do (Addendum 4)**
+- Do not add a ruleset bypass/exception for `github-actions[bot]` on `main` — user-confirmed this stays fixed in the workflow, not in repo settings, to avoid widening what can land on `main` without going through a PR.
+- Do not auto-merge the opened PR from within this workflow — user-confirmed merging stays a separate, explicit step (manual or `/merge-fq-task`), consistent with every other PR in this repo.
+- Do not reuse/update a prior baseline-update branch across runs — each run gets its own uniquely-named branch (`<run_id>` suffix) to avoid collisions; stale branches/PRs from failed or superseded runs are a human/manual cleanup, not handled by this workflow.
