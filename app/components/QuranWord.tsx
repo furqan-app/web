@@ -4,18 +4,20 @@ import { MouseEvent, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { highlight } from "../utils/highlight";
 import { getColorMark, getNoteMark } from "../utils/marks";
-import { WordWithVerse } from "../types/prisma";
+import { WordWithLayouts } from "../types/prisma";
 import { useRecitation } from "@/app/contexts/RecitationContext";
+import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
 
 export type QuranWordProps = {
-  word: WordWithVerse;
+  word: WordWithLayouts;
   marks: Array<{ name: string; value: string }>;
-  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
+  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithLayouts) => void;
 };
 
 export const QuranWord = ({ word, marks, onWordClicked }: QuranWordProps) => {
   const searchParams = useSearchParams();
   const { registerWordRef } = useRecitation();
+  const { tajweedMode } = useQuranTajweed();
   // Stable per word.location so re-renders (e.g. searchParams changes) don't
   // needlessly unregister/re-register this word's DOM ref every time.
   const wordRefCallback = useCallback(
@@ -40,12 +42,13 @@ export const QuranWord = ({ word, marks, onWordClicked }: QuranWordProps) => {
     <div
       ref={wordRefCallback}
       onClick={(e) => onWordClicked(e, word)}
-      className={` group relative leading-none text-black dark:text-white hover:text-yellow-500 dark:hover:text-yellow-400 cursor-pointer
+      className={` group relative leading-none text-black dark:text-white cursor-pointer
+      ${tajweedMode ? "hover:bg-primary/25" : "hover:text-yellow-500 dark:hover:text-yellow-400"}
       ${highlightClassForWord}
       ${hasNote ? "border-b-2 border-dotted border-primary" : ""}
     `}
     >
-      <span>{word.code_v1}</span>
+      <span>{tajweedMode ? word.code_v2 : word.code_v1}</span>
     </div>
   );
 };

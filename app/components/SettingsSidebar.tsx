@@ -9,7 +9,9 @@ import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
+import { useQuranTajweed } from "@contexts/QuranTajweedContext";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
@@ -24,6 +26,7 @@ export const SettingsSidebar = () => {
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { isStandalone, cached, total } = usePwaPrecache();
+  const { tajweedMode, setTajweedMode } = useQuranTajweed();
 
   return (
     <Sheet>
@@ -81,6 +84,29 @@ export const SettingsSidebar = () => {
             </h3>
             <div className="p-4 rounded-lg bg-muted">
               <ThemeToggle />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              {t("tajweedMode", "Tajweed Colors")}
+            </h3>
+            <div className="p-4 rounded-lg bg-muted flex items-center justify-between gap-3">
+              <label htmlFor="tajweed-mode-switch" className="cursor-pointer">
+                <span className="text-sm font-medium">
+                  {t("tajweedModeLabel", "Color-code Tajweed rules")}
+                </span>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t(
+                    "tajweedModeDescription",
+                    "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
+                  )}
+                </p>
+              </label>
+              <Switch
+                id="tajweed-mode-switch"
+                checked={tajweedMode}
+                onCheckedChange={setTajweedMode}
+              />
             </div>
           </div>
           {isStandalone ? (

@@ -151,6 +151,12 @@ body,
          space-between distributes the 15 lines inside this padded box. */
       padding-block: 0.5em;
     }
+    /* Tajweed COLRv1 glyphs measure ~1.42x taller than the base font at the same
+       font-size (different font design, not a bug) — see ADR 0023 Addendum 1.
+       --fq-tajweed-scale is defined once, below, on .fq-tajweed itself. */
+    .fq-quran-safha.fq-tajweed {
+      font-size: calc(var(--fq-mobile-font) * var(--fq-tajweed-scale));
+    }
     .fq-quran-safha > * {
       margin-bottom: 0 !important; /* height distributed by flex, not margin */
     }
@@ -183,6 +189,13 @@ body,
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
      Mirrors the `@media (max-width: 767px)` mobile block above. */
   @media (min-width: 768px) {
+    /* Tajweed size correction, desktop single-page/standalone — not scoped to
+       .fq-spread, so it also covers the standalone QuranSafha in VerticalQuranPages.
+       --fq-word-base is set on the ancestor .fq-content regardless. See ADR 0023
+       Addendum 1; the double-view width-cap variant is further below. */
+    .fq-quran-safha.fq-tajweed {
+      font-size: calc(var(--fq-word-base) * var(--fq-tajweed-scale));
+    }
     .fq-spread .fq-quran-safha {
       flex: 1 1 0%;
       min-height: 0;
@@ -270,6 +283,9 @@ body,
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
       font-size: min(var(--fq-word-base), var(--fq-dv-word));
     }
+    :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
+      font-size: calc(min(var(--fq-word-base), var(--fq-dv-word)) * var(--fq-tajweed-scale));
+    }
     :root[data-safha-view="double"] .fq-spread .fq-content {
       --fq-line-gap: min(var(--fq-line-gap-base), calc(var(--fq-dv-word) * 0.417)) !important;
       --fq-heading-h: min(var(--fq-heading-base), calc(var(--fq-dv-word) * 2.417)) !important;
@@ -291,5 +307,33 @@ body,
     background-color: hsl(var(--primary) / 0.22);
     border-radius: 0.2em;
     transition: background-color 150ms ease-out;
+  }
+
+  /* Tajweed color-coded mode (ADR 0023) — the COLRv1 fonts embed 3 baked-in
+     color palettes at fixed indices matching Furqan's 3 themes 1:1. The
+     @font-palette-values custom idents are injected per page by
+     FontFaceInjector, only while the mode is on; .fq-tajweed (added to
+     .fq-quran-safha by QuranSafha in that case) selects the right one. */
+  .theme-light .fq-tajweed {
+    font-palette: --Light;
+  }
+  .theme-dark .fq-tajweed {
+    font-palette: --Dark;
+  }
+  .theme-gold .fq-tajweed {
+    font-palette: --Gold;
+  }
+
+  /* Tajweed font-size correction (ADR 0023 Addendum 1) — the COLRv1 font is a
+     different design, not a recolored clone of the base font: its glyphs
+     measure ~1.42x taller at the same font-size (measured via fontTools across
+     20 real word pairs). This single constant is consumed by the three
+     .fq-tajweed-scoped font-size overrides elsewhere in this file (mobile,
+     desktop single, desktop double-view — CSS custom property resolution
+     doesn't depend on declaration order), layered on top of each existing
+     sizing mechanism rather than editing FONT_V1 or either formula. Starting
+     calibration — tune this value, not the mechanism, if the visual match is off. */
+  .fq-tajweed {
+    --fq-tajweed-scale: 0.7;
   }
 }

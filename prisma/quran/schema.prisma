@@ -63,11 +63,27 @@ model Word {
   page_number      Int
   line_number      Int
   text             String
-  verse            Verse   @relation(fields: [verse_id], references: [id])
+  verse            Verse              @relation(fields: [verse_id], references: [id])
+  mushafLayouts    WordMushafLayout[]
   // WordTranslation     WordTranslation[]
   // WordTransliteration WordTransliteration[]
 
   @@map("words")
+}
+
+// Generic per-mushaf line-layout override, keyed by mushaf id. Word.line_number
+// above is seeded under mushaf=2; other mushaf editions (e.g. mushaf=19, used
+// for Tajweed mode) group words into lines differently. A new mushaf edition
+// is a new set of rows here, not a new column/table. See ADR 0023 Addendum 6.
+model WordMushafLayout {
+  id          Int  @id @default(autoincrement())
+  word_id     Int
+  mushaf_id   Int
+  line_number Int
+  word        Word @relation(fields: [word_id], references: [id])
+
+  @@unique([word_id, mushaf_id])
+  @@map("word_mushaf_layouts")
 }
 
 model PageMetadata {

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { PageMetadataWithChapter, WordWithVerse } from "../types/prisma";
+import type { PageWords } from "./get-page-words";
 
-export type PageData = {
-  lines: Record<string, Array<WordWithVerse>>;
-  pageMetadata: PageMetadataWithChapter;
-};
+// Same shape the /api/quran/pages/[pageId] route returns (it wraps
+// getPageWords server-side) — reusing the type here instead of a separate
+// hand-declared one keeps the two from drifting apart.
+export type PageData = PageWords;
 
 export const fetchPageAPI = async (page: number): Promise<PageData> => {
   return fetch(`/api/quran/pages/${page}`).then((response) => response.json());
