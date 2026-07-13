@@ -27,7 +27,7 @@ Used only inside `app/[locale]/pages/[id]/page.tsx`.
 
 ### 2. Word Outside Page Context
 
-Used in mark modal, search results, tooltips, or any component that displays a word independently.
+Used in mark modal, search results, tooltips — any context outside the page route.
 
 ```tsx
 <span className="font-uthmanic" dir="rtl">
@@ -39,7 +39,7 @@ Used in mark modal, search results, tooltips, or any component that displays a w
 
 ### 3. Standalone Verse (joined from words)
 
-Used in search results or any non-page verse display. Never use `verse.text_uthmani` directly — it contains rub el hizb markers (۞ U+06DE) that the font cannot render.
+For non-page verse display. Never use `verse.text_uthmani` directly — it contains rub el hizb markers (U+06DE) the font can't render.
 
 ```tsx
 <p className="font-uthmanic text-right" dir="rtl">
@@ -55,7 +55,7 @@ Used in search results or any non-page verse display. Never use `verse.text_uthm
 
 ### 4. Verse-Level Display (when words are unavailable)
 
-When only the `Verse` model is available (e.g. MarkModal receiving a `Verse`):
+When only `Verse` is available (e.g. MarkModal):
 
 ```tsx
 <p className="font-uthmanic text-right" dir="rtl">
@@ -63,7 +63,7 @@ When only the `Verse` model is available (e.g. MarkModal receiving a `Verse`):
 </p>
 ```
 
-- `UthmanicHafs1Ver18` supports standard Unicode Arabic — `text_uthmani` will render correctly except for rub el hizb markers.
+- `text_uthmani` renders correctly with `UthmanicHafs1Ver18` except for rub el hizb markers.
 
 ### 5. Surah Name
 

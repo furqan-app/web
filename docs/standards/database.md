@@ -53,7 +53,7 @@ await appPrisma.mark.upsert({
 ```
 
 ### Include relations
-Use `include` for eager-loading relations. Avoid N+1 — fetch in one query.
+Use `include` for eager-loading. Avoid N+1 — fetch in one query.
 
 ## Connection Limits
 
@@ -68,6 +68,6 @@ Both DATABASE_URLs must include `?connection_limit=1` (set in the environment va
 - On an existing DB with no migration history (baselining): see `docs/plans/adopt-prisma-migrations.md`.
 - Never use `npm run app-db-push` on the App DB — it was removed to prevent post-baseline schema drift.
 
-**`furqan_quran`** stays on `prisma db push --force-reset` via the seeder — it is always fully recreated from scratch, so migration history is unnecessary and incompatible with the seeder model.
+**`furqan_quran`** stays on `prisma db push --force-reset` via the seeder — it is always recreated from scratch, so migration history is unnecessary and incompatible with the seeder model.
 
 **Seeding `furqan_quran`:** `npm run seed:quran -- --force` regenerates the whole Quran DB reproducibly ([ADR 0009](../architecture/adr/0009-reproducible-quran-seeder.md)) — it runs `prisma db push --force-reset` (Prisma owns the schema), fetches `chapters` + `verses`/`words` from the QDC API, and derives `page_metadata`/`rubs`/`rub_verse_mappings`. It is destructive and refuses without `--force`. Code lives in `scripts/quran-seed/`.

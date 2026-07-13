@@ -4,24 +4,16 @@
 **Date:** 2026-07-02  
 **Status:** implemented
 
-## Summary
-
-Hostinger's CI/CD pipeline clones the repo fresh and runs `npm run build` without access to `.env.local`. Two things crash the build: (1) `db.ts` calls `new URL(process.env.QURAN_DATABASE_URL!)` at module load time — `undefined` when the env var is absent during build, producing `TypeError: Invalid URL`; (2) ESLint fails to resolve `next/core-web-vitals` in Hostinger's build environment. Additionally, `NEXT_PUBLIC_BASE_URL` must be baked into the static output as `https://furqan.taha7.com`, not `http://localhost:3000`.
-
 ## Root Cause
 
-`app/utils/db.ts` constructs PrismaClients and a mysql2 connection at module scope, which Next.js executes during "Collecting page data." Any missing env var causes an unrecoverable crash before the build can finish. See [ADR 0010](../architecture/adr/0010-prisma-no-explicit-datasource-url.md).
+`app/utils/db.ts` called `new URL(process.env.QURAN_DATABASE_URL!)` at module scope. Next.js executes module scope during "Collecting page data" — missing env var during Hostinger's build causes an unrecoverable `TypeError: Invalid URL`. ESLint also failed to resolve `next/core-web-vitals` in Hostinger's environment. `NEXT_PUBLIC_BASE_URL` needed to be baked into static output as `https://furqan.taha7.com`. See [ADR 0010](../architecture/adr/0010-prisma-no-explicit-datasource-url.md).
 
-## Files to Change
+Running `npm run build` locally also failed at the `prisma migrate deploy` step: the `build` script runs Prisma bare, Prisma looks for `.env` at root (doesn't exist), and `APP_DATABASE_URL` lives in `.env.local` which Next.js loads but Prisma doesn't.
 
-### `app/utils/db.ts`
-Replace the entire file. Remove:
-- Top-level `new URL(process.env.QURAN_DATABASE_URL!)` 
-- `withConnectionLimit` utility (no longer needed here)
-- `mysql2` `connection` export (unused by any caller)
-- Explicit datasource URL from both PrismaClient constructors
+## Files Changed
 
-New content — just two constructor calls with no args:
+**`app/utils/db.ts`** — replaced entirely. Remove top-level `new URL(...)`, `withConnectionLimit`, the `mysql2` connection export (zero callers), and explicit datasource URLs from both PrismaClient constructors. Prisma reads `QURAN_DATABASE_URL`/`APP_DATABASE_URL` from env at query time via schema `env()` declarations:
+
 ```typescript
 import { PrismaClient as QuranPrismaClient } from "@/app/generated/quran-client";
 import { PrismaClient as AppPrismaClient } from "@/app/generated/app-client";
@@ -30,64 +22,25 @@ export const quranPrisma = new QuranPrismaClient();
 export const appPrisma = new AppPrismaClient();
 ```
 
-Prisma reads `QURAN_DATABASE_URL` and `APP_DATABASE_URL` from the environment at query time via the schema's `env()` declarations. No call-site changes needed.
+**`next.config.mjs`** — add `eslint: { ignoreDuringBuilds: true }`. Hostinger env artifact; linting runs locally and in CI.
 
-### `next.config.mjs`
-Add `eslint: { ignoreDuringBuilds: true }` to `nextConfig`. Hostinger's build environment fails to resolve `next/core-web-vitals`; linting is already covered locally and in a separate CI step.
+**`.env.production`** (new, committed) — one line: `NEXT_PUBLIC_BASE_URL=https://furqan.taha7.com`. No secrets. Next.js loads it during `next build` in production; `.env.local` overrides locally.
 
-### `.env.production` (new, committed)
-Create this file at the repo root with one line:
-```
-NEXT_PUBLIC_BASE_URL=https://furqan.taha7.com
-```
-This is the only build-time public env var that must be baked into the static output. It contains no secrets. Next.js loads `.env.production` during `next build` in production mode; `.env.local` (gitignored) overrides it locally so dev builds are unaffected.
-
-## Constraints
-
-- Do not add DB URLs or secrets to `.env.production` — this file is committed.
-- `connection_limit=5` is no longer automatically appended. The server's `.env.local` should include it in the URL strings: `mysql://user:pass@host:3306/db?connection_limit=5`. This is a documentation/ops concern, not a code change.
-- No call-site changes to `quranPrisma` or `appPrisma` imports — the exported names are identical.
-- The `connection` (mysql2) export is removed; it had zero callers. If a raw connection is needed in future, create it inside the function that uses it, not at module scope (per ADR 0010).
-
-## Decisions Made
-
-- Option C from ADR 0010: no explicit datasource URL in PrismaClient constructors.
-- ESLint suppressed during build (`ignoreDuringBuilds`) rather than fixed at the config level — the ESLint failure is an environment artifact specific to Hostinger, not a local issue.
-- `.env.production` committed with only the public base URL — safe because it contains no credentials.
-
----
-
-## Addendum — Local `npm run build` fails: missing `APP_DATABASE_URL`
-
-**Date:** 2026-07-08  
-**Status:** implemented
-
-### Summary
-
-Running `npm run build` locally crashes at the `prisma migrate deploy` step with `P1012: Environment variable not found: APP_DATABASE_URL`. The `build` script runs Prisma bare — no env-file prefix — so Prisma looks for `.env` at the project root, which doesn't exist. `APP_DATABASE_URL` lives in `.env.local`, which Next.js loads for its own build phase but which Prisma never sees when it runs first.
-
-On Hostinger this doesn't fail because `APP_DATABASE_URL` is set in the hosting panel and is already in `process.env` before the build starts. A `--env-file .env.local` flag on the CLI would fix the local case but break Hostinger (`.env.local` doesn't exist on the server, and Prisma 5 errors on a missing `--env-file` path).
-
-### Fix
-
-Add a `build:local` script to `package.json`, following the identical pattern used by every other local DB script (`app-migrate-dev`, `app-studio`, `quran-studio`, etc.):
-
+**`package.json`** — add `build:local` script:
 ```json
 "build:local": "dotenv -e .env.local -- npx prisma migrate deploy --schema prisma/app/schema.prisma && next build"
 ```
+`build` stays unchanged — Hostinger uses it with `APP_DATABASE_URL` already in platform env.
 
-Keep `build` unchanged — Hostinger continues to use it.
+## Constraints
 
-### Files to Change
+- Do not add DB URLs or secrets to `.env.production` — it's committed.
+- `connection_limit=5` must be included in the URL strings in `.env.local` (`?connection_limit=5`) — no longer auto-appended.
+- Do not add `dotenv -e .env.local --` to the existing `build` script — `.env.local` doesn't exist on Hostinger and `dotenv-cli` v7 throws `ENOENT` on a missing file.
+- Do not use `--env-file .env.local` as a Prisma CLI flag — Prisma 5 errors if the file is absent.
+- The `mysql2` connection export is removed; it had zero callers. If raw connection is needed in future, create it inside the function that uses it (per ADR 0010).
 
-- `package.json` — add `build:local` script alongside `build`
+## Usage
 
-### Usage
-
-- **Local testing** (release workflow): `npm run build:local && npm start`
-- **Hostinger production**: `npm run build` (unchanged, reads `APP_DATABASE_URL` from panel env)
-
-### What NOT to Do
-
-- Do not add `dotenv -e .env.local --` to the existing `build` script — `.env.local` doesn't exist on Hostinger and dotenv-cli v7 throws `ENOENT` on a missing file, breaking the production deploy.
-- Do not use `--env-file .env.local` as a Prisma CLI flag — same problem: Prisma 5 errors if the specified file is absent.
+- **Local testing:** `npm run build:local && npm start`
+- **Hostinger production:** `npm run build` (unchanged)

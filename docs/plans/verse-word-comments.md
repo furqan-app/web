@@ -96,101 +96,36 @@ A word/verse with both a color and a note appears once in its color tab and once
 
 - None known — this is a net-new feature with no prior superseded approach.
 
-## Addendum 1 — RTL rendering fixes + comment box styling
+## Addendum 1 — RTL rendering + `dir="auto"` on comment elements
 
 **Date:** 2026-07-11
 
-**Root cause:** Every other RTL-sensitive element in this codebase sets `dir` explicitly rather than relying on inherited direction from `<html dir>` (e.g. `MyMarksList.tsx`'s chapter header line already does `dir={locale === "ar" ? "rtl" : "ltr"}`; `MarkerColorPicker`, `SettingsSidebar` do the same; Quran text uses `dir="rtl"` unconditionally). The two elements added by this feature — the Notes tab `<Textarea>` in `MarkModal.tsx` and the comment-preview `<div>` in `MyMarksList.tsx` — never got a `dir` attribute, so they render LTR regardless of locale or content, confirmed by the user's screenshots.
+The Notes `<Textarea>` and comment-preview box had no `dir`, rendering LTR regardless of content.
 
-**Decision:** Unlike the rest of the codebase (which locks `dir` to the active UI locale), comment text gets `dir="auto"` — the browser auto-detects direction from the first strong-directional character in the actual comment, correct even when an `ar`-locale user writes a note in English or vice versa. This is a deliberate one-off deviation from the locale-locked convention, chosen because comment text is free-form user content, not UI chrome or Quran text.
+**Decision:** Comment text gets `dir="auto"` (browser detects from the first strong-directional character) — a deliberate deviation from the rest of the codebase's locale-locked `dir`, because comment text is free-form user content. Do not apply `dir="auto"` elsewhere.
 
-**Files to Change:**
-- `app/components/MarkModal.tsx` — add `dir="auto"` to the `<Textarea>` in `NotesTab`.
-- `app/components/marks/MyMarksList.tsx`:
-  - Add `dir="auto"` to the comment-preview line.
-  - Restyle the comment-preview line into a boxed treatment to distinguish it from the plain verse snippet above: `rounded-md bg-muted/50 border border-border/60 px-2 py-1 flex items-center gap-1`, with a small `SquarePen` icon (`size-3 text-muted-foreground`) prefixed inside the box before the comment text.
+**Final state (after multiple iterations):**
+- `<Textarea dir="auto">` in `NotesTab` — form controls need explicit `dir`; inherited direction doesn't apply to them.
+- Note box `<div dir="auto" className="mt-1 rounded-md bg-muted/50 border border-border/60 px-2.5 py-1.5 flex items-center gap-1">` — `dir="auto"` on the outer container only.
+- Inner `<span>` (comment text): **no `dir` attribute** — critical: per the HTML living standard, `dir="auto"` on a container scans descendants for the first strong-directional character, but **skips any descendant that itself has a `dir` attribute**. With `dir="auto"` on both container and span, the container's scan skips the span, finds no strong characters (only an SVG icon), and always resolves to LTR. Verified live: `getComputedStyle(box).direction` was `"ltr"` for `"هذا اختبار"` while the span had `dir="auto"`; removing span's `dir` immediately flipped it to `"rtl"`.
 
-**Constraints:**
-- `dir="auto"` is scoped to these two comment-text elements only — do not apply it elsewhere; every other element in the codebase keeps the existing locale-locked or Quran-text-locked `dir` convention.
-- Do not change the box treatment's read/write logic — this is styling-only on top of the already-implemented Notes tab and My Marks Notes tab list item.
-
-**What NOT to Do (addendum-specific):**
-- Do not rely on inherited `direction` from `<html dir>` for any new form control (`input`/`textarea`/`select`) added in future work — this codebase's real-world experience (this bug) confirms form controls need an explicit `dir`, unlike plain block elements.
-
-## Addendum 2 — note box packing order still wrong after Addendum 1
-
-**Date:** 2026-07-11
-
-**Root cause:** `dir="auto"` on the comment `<span>` (Addendum 1) fixes the bidi run direction of the text's own characters, but not which side of the icon it packs against — that's controlled by the flex container's own resolved direction, and the note box `<div className="mt-1 flex items-center gap-1 ...">` (MyMarksList.tsx) had no `dir` set. Its packing order was therefore following an ambient direction that isn't `rtl`, so the icon+text order still read wrong for the `ar` locale even though the Arabic glyphs themselves rendered correctly shaped.
-
-**Decision:** Add `dir={locale === "ar" ? "rtl" : "ltr"}` to the note box container itself (locale-driven, matching the rest of this codebase's layout-direction convention) — this fixes icon/text packing order. Keep `dir="auto"` on the inner text `<span>` unchanged (still correct for bidi-detecting the actual comment content, e.g. an English note typed in the `ar` locale). The two `dir`s serve different purposes on the same element tree: the container's locale-driven `dir` controls layout/packing order; the span's content-driven `dir="auto"` controls text run direction.
+**Rule:** Only one element in a "detect direction from this text" chain should carry `dir`. Let CSS inheritance carry the resolved direction to plain (non-form-control) descendants.
 
 **Files to Change:**
-- `app/components/marks/MyMarksList.tsx` — add `dir={locale === "ar" ? "rtl" : "ltr"}` to the note box container div (~line 238); bump its padding from `px-2 py-1` to `px-2.5 py-1.5`.
+- `app/components/MarkModal.tsx` — `dir="auto"` on `<Textarea>` in `NotesTab`.
+- `app/components/marks/MyMarksList.tsx` — `dir="auto"` on note box `<div>`, no `dir` on inner `<span>`; box padding `px-2.5 py-1.5`; `SquarePen` icon inside.
 
-**Constraints:**
-- Do not remove the `dir="auto"` on the inner span — both `dir`s are needed, on different elements, for different reasons (see Decision above).
+## Addendum 5 — cross-tab error leakage, wrong default tab, stale comment
 
-## Addendum 3 — note box container should also be content-based, not locale-based
+**Date:** 2026-07-11 (found by `/review-fq-work`)
 
-**Date:** 2026-07-11
+1. **Cross-tab error leakage:** Single `const [error, setError]` shared by both tabs. A failed note save leaves `error: true` on the open modal; switching to Bookmarks renders "Something went wrong" there too. Fix: `const [errors, setErrors] = useState({ color: false, note: false })` — `saveMark`/`removeMarkType` set only `errors[markType]`. `BookmarksTab` gets `error={errors.color}`, `NotesTab` gets `error={errors.note}`.
 
-**Supersedes:** Addendum 2's "locale-driven container `dir`" decision. Per user request: the whole note box (icon packing order + text) should follow the comment's own detected language, exactly like the Notes tab `Textarea`, rather than being locked to the UI locale. A locale-locked container `dir` was inconsistent — an English comment written in the `ar` locale would still pack the box in RTL order even though the text itself reads LTR.
+2. **Wrong default tab:** `<Tabs defaultValue="red">` hardcoded. Users with only blue/green marks land on empty "No marks in this color" tab. Fix: `defaultValue={buckets.find((b) => b.items.length > 0)?.key ?? "red"}` (early-return for all-empty happens before `<Tabs>`, so fallback is never actually reached).
 
-**Decision:** Change the note box container's `dir` from `{locale === "ar" ? "rtl" : "ltr"}` to `"auto"`. The `locale` variable is no longer needed for this element (still used elsewhere in the file). The inner `<span dir="auto">` is unchanged (redundant with the now-auto container, but harmless).
-
-**Files to Change:**
-- `app/components/marks/MyMarksList.tsx` — note box container `dir` → `"auto"`.
-
-**What NOT to Do (addendum-specific):**
-- Do not reintroduce a locale-based `dir` on any comment-text-related element (Notes tab `Textarea`, note box container, note preview span) — all three are now consistently content-based (`dir="auto"`), not locale-based, per this and the prior addenda.
-
-## Addendum 4 — actual root cause: nested dir="auto" excludes the descendant from detection
-
-**Date:** 2026-07-11
-
-**Supersedes:** the "redundant with the now-auto container, but harmless" claim in Addendum 3's Decision — it was not harmless, it was the actual bug. Verified live via `getComputedStyle` in the browser (with permission).
-
-**Root cause:** Per the HTML living standard, an element's `dir="auto"` auto-detection algorithm scans its flattened descendant text content for the first strongly-typed character, but **excludes the text of any descendant that itself has its own `dir` attribute set** (that descendant establishes its own bidi context). The note box `<div dir="auto">` contained an icon `<svg>` (no text) followed by `<span dir="auto">{comment}</span>`. Because the span had its own `dir` attribute, the box's scan skipped it entirely, found no strong characters anywhere else (the icon contributes none), and always resolved to `ltr` — regardless of the actual comment language. This is why the icon never moved to the right for Arabic notes even after Addendum 3's fix: the box's `dir="auto"` was never actually seeing the Arabic text at all.
-
-Confirmed live: `getComputedStyle(box).direction` was `"ltr"` for a box wrapping `"هذا اختبار"` while the span had `dir="auto"`; removing the span's `dir` attribute (leaving only the box's) immediately flipped it to `"rtl"`.
-
-**Decision:** Remove `dir="auto"` from the inner `<span>` — keep it only on the outer box `<div>`. The span has no `dir` of its own, so it inherits the box's correctly-detected resolved direction via normal CSS inheritance (this works fine for plain elements with no explicit `dir`, per Addendum 1's "form controls vs plain elements" distinction).
-
-**Verified Test Cases (live, via `fetch('/api/marks')` + `getComputedStyle`):**
-- Arabic comment ("هذا اختبار", "هذه ملاحظة", "ملاحظة أخرى") → box computed `direction: rtl`, icon visually right, text right-aligned.
-- English comment ("This is just a note") → box computed `direction: ltr`, icon visually left, text left-aligned.
-- Both in the same `en`-locale My Marks page render, confirming detection is content-based, not locale-based, per Addendum 3's intent.
+3. **Stale comment:** `app/api/mushaf/access.ts:37` references `markedByName` (renamed to `colorAuthorName`/`noteAuthorName`). Fix: update the comment.
 
 **Files to Change:**
-- `app/components/marks/MyMarksList.tsx` — remove `dir="auto"` from the note-preview `<span>` (~line 243). The box container keeps its `dir="auto"` (Addendum 3).
-
-**What NOT to Do (addendum-specific):**
-- Do not set `dir="auto"` (or any explicit `dir`) on both a container and a text-bearing descendant within it when the container's own `dir="auto"` is meant to auto-detect from that descendant's content — the descendant's own `dir` attribute makes the container's algorithm skip it entirely. Only one element in a "detect direction from this text" chain should carry the `dir` attribute; let inheritance carry the resolved direction to plain (non-form-control) descendants.
-
-## Addendum 5 — cross-tab error leakage, wrong default My Marks tab, stale comment
-
-**Date:** 2026-07-11
-
-**Root cause 1 (cross-tab error leakage):** `MarkModal.tsx` has a single `const [error, setError] = useState(false)`, passed as the `error` prop to both `BookmarksTab` and `NotesTab`. `saveMark`/`removeMarkType` — the one handler both tabs' actions funnel through — sets this same flag regardless of which `markType` failed. A failed save does not close the modal (only success does), so a failed note save leaves `error: true` and the modal open; switching to the Bookmarks tab then renders "Something went wrong. Try again." there too, even though nothing was attempted on that tab (and vice versa). Found by `/review-fq-work`.
-
-**Root cause 2 (wrong default My Marks tab):** `MyMarksList.tsx`'s `<Tabs defaultValue="red">` is hardcoded. A user with notes and/or blue/green marks but no red marks lands on an empty "No marks in this color yet." tab on open, hiding their actual content. Found by `/review-fq-work`.
-
-**Root cause 3 (stale comment):** `app/api/mushaf/access.ts:37`'s comment says "own marks render via `is_own`, never `author_name` (see QuranSafha's `markedByName`)" — this feature (main plan, Files to Change) renamed `MarkModal`'s single `markedByName` prop to `colorAuthorName`/`noteAuthorName`, so the pointer is now dangling. Found by `/review-fq-work`.
-
-**Decision:**
-1. Replace `MarkModal`'s single `error` boolean with `const [errors, setErrors] = useState({ color: false, note: false })`. `saveMark`/`removeMarkType` set/clear only `errors[markType]` (`setErrors(prev => ({ ...prev, [markType]: value }))`). `BookmarksTab` receives `error={errors.color}`, `NotesTab` receives `error={errors.note}` — independent, matching the per-`mark_type` attribution pattern this feature already established for `colorAuthorName`/`noteAuthorName` (ADR 0022).
-2. Compute `MyMarksList`'s default tab from data instead of hardcoding: `defaultValue={buckets.find((b) => b.items.length > 0)?.key ?? "red"}`. Safe because `MyMarksList` already early-returns before the `<Tabs>` render whenever every bucket is empty (the `!hasAnyMarks` check), so at least one bucket always has items at this point — the `?? "red"` fallback is defensive only, never actually reached.
-3. Update the stale comment in `app/api/mushaf/access.ts` to reference the current prop names.
-
-**Files to Change:**
-- `app/components/MarkModal.tsx` — replace `error`/`setError` with `errors`/`setErrors` as above; update both `TabsContent` blocks' `error` prop.
-- `app/components/marks/MyMarksList.tsx` — `<Tabs defaultValue="red">` → `<Tabs defaultValue={buckets.find((b) => b.items.length > 0)?.key ?? "red"}>`.
-- `app/api/mushaf/access.ts` — line 37 comment: `markedByName` → `colorAuthorName`/`noteAuthorName`.
-
-**Constraints:**
-- Do not add a shared/global error banner — errors stay scoped per tab, consistent with Decision 1.
-- Do not change `saveMark`/`removeMarkType`'s signature or the `addPageMark`/`deletePageMark` call shape — only the error-state bookkeeping around them changes.
-
-**What NOT to Do (addendum-specific):**
-- Do not "fix" the `.slice()` truncation in `notePreview` (MyMarksList) or `NotesTab`'s textarea `onChange` (MarkModal) for UTF-16 surrogate-pair edge cases, or remove the redundant `maxLength` + `onChange` slice combo in `NotesTab` — both were reviewed and judged not worth the churn (cosmetic edge case; harmless defense-in-depth, respectively).
+- `app/components/MarkModal.tsx` — per-tab `errors` object.
+- `app/components/marks/MyMarksList.tsx` — `defaultValue` from data.
+- `app/api/mushaf/access.ts` — stale comment at line 37.

@@ -29,9 +29,9 @@ Standard Tailwind breakpoints apply. The app is primarily a reading app — mobi
 
 ## RTL / LTR
 
-- Arabic (`ar`) is RTL, English (`en`) is LTR. The `<html dir="...">` attribute is set at the layout level.
-- Use `start`/`end` Tailwind variants (`ps-`, `pe-`, `ms-`, `me-`) instead of `left`/`right` for paddings/margins on elements that need to mirror in RTL.
-- For Quran text specifically, always use `dir="rtl"` explicitly — do not rely on inherited direction.
+- `<html dir="...">` is set at the layout level (ar=RTL, en=LTR).
+- Use `start`/`end` variants (`ps-`, `pe-`, `ms-`, `me-`) instead of `left`/`right` for elements that mirror in RTL.
+- For Quran text, always set `dir="rtl"` explicitly.
 
 ## Border Radius
 
@@ -50,7 +50,7 @@ The `tailwindcss-animate` plugin (`animate-in`, `fade-in-0`, `zoom-in-95`, `slid
 
 ## Themes
 
-Themes are defined as named CSS classes on `<html>` (e.g. `.theme-light`, `.theme-dark`). Each class defines the full shadcn token set. The `.dark` class is applied alongside any dark-variant theme class to activate Tailwind `dark:` utilities.
+Themes are named CSS classes on `<html>` (e.g. `.theme-light`, `.theme-dark`), each defining the full shadcn token set. Apply `.dark` alongside any dark-variant theme class to activate `dark:` utilities.
 
 ### Token contract
 
@@ -80,6 +80,5 @@ Every theme class must define all of these CSS custom properties:
 
 ### Rules
 
-- Never define tokens in `:root` or `.dark` — the theme class is always present (set by the flash-prevention script before first paint), so bare `:root` definitions are dead code.
-- Always apply `.dark` together with any dark-variant theme class — never one without the other.
-- The flash-prevention `<script>` in `layout.tsx` and the `useTheme` hook must stay in sync: both apply the same classes.
+- Never define tokens in `:root` or `.dark` — the flash-prevention script always sets the theme class before first paint, so bare `:root` definitions are dead code.
+- The flash-prevention `<script>` in `layout.tsx` and `useTheme` must stay in sync: both apply the same classes.
