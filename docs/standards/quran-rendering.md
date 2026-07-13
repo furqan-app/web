@@ -25,9 +25,6 @@ Used only inside `app/[locale]/pages/[id]/page.tsx`.
 </span>
 ```
 
-- Never use `code_v1` outside this route — the font is not loaded elsewhere.
-- Never use `qpc_uthmani_hafs` here — it requires the UthmanicHafs font, not the per-page glyph font.
-
 ### 2. Word Outside Page Context
 
 Used in mark modal, search results, tooltips, or any component that displays a word independently.
@@ -38,7 +35,6 @@ Used in mark modal, search results, tooltips, or any component that displays a w
 </span>
 ```
 
-- Use `word.qpc_uthmani_hafs`, not `word.text_uthmani` or `word.code_v1`.
 - `font-uthmanic` must be declared in `tailwind.config.ts` (the CSS variable alone is not enough for Tailwind class usage).
 
 ### 3. Standalone Verse (joined from words)

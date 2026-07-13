@@ -10,11 +10,6 @@
 - React Query hooks (`useQuery`, `useMutation`)
 - Context consumers
 
-**Never add `"use client"` to:**
-- Layout files that only pass data to children
-- Components that only receive props and render HTML
-- Files that just re-export types
-
 ## Component Location
 
 | Type | Location |
@@ -37,13 +32,7 @@ const Sidebar = dynamic(() => import("@/app/components/nav/Sidebar"));
 
 ## Props Pattern
 
-Use an explicit `type Props = { ... }` at the top of the file. Do not use `React.FC<Props>` — just type the function parameter directly:
-
-```tsx
-type Props = { page: number; lines: Lines };
-
-export default function QuranSafha({ page, lines }: Props) { ... }
-```
+Use an explicit `type Props = { ... }` at the top of the file. Do not use `React.FC<Props>` — type the function parameter directly.
 
 ## Memoization
 

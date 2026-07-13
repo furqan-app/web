@@ -25,13 +25,7 @@ Never use `bg-white`, `text-black`, `bg-gray-*`, etc. — they break dark mode.
 
 ## Responsive Breakpoints
 
-Standard Tailwind breakpoints apply:
-- `sm`: 640px
-- `md`: 768px
-- `lg`: 1024px
-- `xl`: 1280px
-
-The app is primarily a reading app — mobile layout is secondary to desktop for now, but RTL/LTR must work at all breakpoints.
+Standard Tailwind breakpoints apply. The app is primarily a reading app — mobile layout is secondary to desktop for now, but RTL/LTR must work at all breakpoints.
 
 ## RTL / LTR
 

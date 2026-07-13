@@ -12,11 +12,7 @@
 ## Key Schema Facts
 
 ### Chapter.pages
-Stored as `"startPage-endPage"` string (e.g. `"1-21"`). **Not an array.**
-
-```ts
-const startPage = chapter.pages.split('-')[0]; // "1"
-```
+Stored as `"startPage-endPage"` string (e.g. `"1-21"`). **Not an array.** Split on `'-'` to extract start/end.
 
 ### PageMetadata
 Per-page structural info. Key fields:
@@ -34,14 +30,6 @@ User marks at verse or word granularity:
 - `from_user` / `to_user`: both set to the authenticated user's ID (self-marks only for now)
 
 ## Query Patterns
-
-### Parallel fetches
-```ts
-const [words, pageMetadata] = await Promise.all([
-  quranPrisma.word.findMany({ ... }),
-  quranPrisma.pageMetadata.findUniqueOrThrow({ ... }),
-]);
-```
 
 ### Upsert pattern (marks)
 ```ts
