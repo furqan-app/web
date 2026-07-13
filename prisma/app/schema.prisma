@@ -26,13 +26,13 @@ model Mark {
   to_user     Int
   marked_type String // verse, word
   marked_id   String // verse => verse_key , word => location
-  mark_type   String // color, note
-  mark_value  String @db.Text // color name, or free-text comment
+  category    String // memorization category key (see MARK_CATEGORIES)
+  comment     String? @db.Text // optional free-text comment attached to the mark
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@unique([marked_type, marked_id, mark_type, to_user])
+  @@unique([marked_type, marked_id, to_user])
   @@map("marks")
 }
 

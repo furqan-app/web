@@ -5,7 +5,7 @@ import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { MARK_COLORS } from "@/app/constants/marks";
+import { MARK_CATEGORIES } from "@/app/constants/marks";
 
 type Props = {
   value?: string;
@@ -22,10 +22,10 @@ export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
       value={value}
       onValueChange={onChange}
       disabled={disabled}
-      className="grid grid-cols-3 gap-3"
+      className="grid grid-cols-2 gap-3"
       dir={getLanguageDirection(locale)}
     >
-      {MARK_COLORS.map(({ key, chip, labelKey, defaultLabel }) => {
+      {MARK_CATEGORIES.map(({ key, chip, labelKey, defaultLabel }) => {
         const isSelected = value === key;
         const label = t(labelKey, defaultLabel);
 

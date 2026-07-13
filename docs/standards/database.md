@@ -27,11 +27,12 @@ Per-page structural info. Key fields:
 - `hizb_position` — `null` (no new rub) or `"hizb"` | `"hizb-quarter"` | `"hizb-half"` | `"hizb-three-quarters"`
 
 ### Mark
-User marks at verse or word granularity:
+One mark per spot per mushaf at verse or word granularity (ADR 0025):
 - `marked_type`: `"verse"` | `"word"`
-- `mark_type`: `"note"` | `"highlight"`
-- `mark_value`: text (for notes) or color (for highlights)
-- `from_user` / `to_user`: both set to the authenticated user's ID (self-marks only for now)
+- `category`: memorization category key (see `MARK_CATEGORIES` — `forgetting`, `similar`, …); required
+- `comment`: optional free-text note attached to the mark (`String? @db.Text`, `null` when none)
+- unique key: `[marked_type, marked_id, to_user]`
+- `from_user` / `to_user`: `to_user` owns the mushaf; `from_user` is the author (they differ on a shared mushaf — ADR 0012)
 
 ## Query Patterns
 
@@ -46,8 +47,8 @@ const [words, pageMetadata] = await Promise.all([
 ### Upsert pattern (marks)
 ```ts
 await appPrisma.mark.upsert({
-  where: { marked_type_marked_id_mark_type_to_user: { ... } },
-  update: { mark_value },
+  where: { marked_type_marked_id_to_user: { ... } },
+  update: { category, comment },
   create: { ... },
 });
 ```
