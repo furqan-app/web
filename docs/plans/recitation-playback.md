@@ -85,11 +85,11 @@ We proxy both through new internal API routes (our `jsonResponse()` envelope), n
 - Chapter-end behavior: stop, no auto-continue into next surah.
 - Manual-nav-during-playback behavior: audio is not paused/synced; it drives navigation independently.
 
-## Addendum 1: Play-from-ayah + player settings (repeat, stop point, speed)
+## Addendum 1: Play-from-ayah + player settings
 
 **Date:** 2026-07-10
 
-Adds a "play from here" trigger to `MarkModal` and a settings sheet (reciter, stop point, per-ayah repeat, whole-range repeat, playback speed, pause-between-repeats) reachable both from `MarkModal` and from a gear icon on the bottom player bar. This changes `RecitationContext` from "always plays from page start to chapter end" to "plays a configurable range, with repeat."
+Adds a "play from here" trigger to `MarkModal` and a settings sheet (reciter, stop point, per-ayah repeat, whole-range repeat, speed, pause-between-repeats) from both `MarkModal` and the player bar's gear icon. Changes `RecitationContext` from "always plays page start to chapter end" to "configurable range with repeat."
 
 ### New/changed state (`RecitationContext`)
 
@@ -100,11 +100,11 @@ Adds a "play from here" trigger to `MarkModal` and a settings sheet (reciter, st
 - `playbackSpeed: number` (0.5–2, step 0.25) — sets `audio.playbackRate`.
 - `pauseBetweenRepeatsMs: number` (0–5000) — silence inserted before each repeat (per-ayah or whole-range) via `setTimeout` before seeking/resuming.
 
-All of the above (including reciter) persist to `localStorage` via `app/utils/storage.ts`, same pattern as the rest of the context.
+All persist to `localStorage` via `app/utils/storage.ts`.
 
 ### Updated `timeupdate` algorithm
 
-Replaces the base plan's "End of current chapter's audio file reached → stop" row. Page-follow (visible-set/`router.push`) logic from the base plan is unchanged and runs independently on every tick.
+Replaces the base plan's "End of chapter → stop" row. Page-follow logic is unchanged and runs independently on every tick.
 
 | Condition | Action |
 |---|---|
@@ -120,30 +120,20 @@ Click ayah 2:5 in `MarkModal` on a page spanning 2:1–2:8, with `stopPoint=page
 2. `rangeRepeat=2` not exhausted → seek back to 2:5, repeat the whole 2:5→2:8 sequence (×3 each) again
 3. After range pass 2 → range-repeats exhausted → stop
 
-### Additional Files to Change
+### Files to Change (Addendum 1)
 
-- `app/components/MarkModal.tsx` — add a "Play from here" button (outside the existing Bookmarks/Notes tabs, since it applies regardless of tab). Resolves the target verse from `markFor` (word case: `markFor.verse_key`; verse case: `markFor.verse_key` directly), opens `RecitationSettingsSheet` pre-filled with persisted defaults and this verse as `startVerseKey`, then starts playback and closes the modal.
-- `app/components/RecitationSettingsSheet.tsx` — new. Replaces the standalone `RecitationReciterPicker` from the base plan (folded in as one field of this sheet) — a single settings surface (shadcn `Sheet`) for reciter, stop point, per-ayah repeat, range repeat, speed, pause-between-repeats. Opened from `MarkModal`'s new button and from a gear icon on `RecitationPlayerBar`.
-- `app/components/RecitationPlayerBar.tsx` — add a settings (gear) icon that opens `RecitationSettingsSheet` for mid-playback edits.
-- `app/components/RecitationPlayButton.tsx` (header quick-play) — unaffected in behavior (still starts at current page's first verse, `stopPoint`/repeat defaults apply), but now goes through the same generalized range/repeat engine instead of a special-cased "play to chapter end" path.
+- `app/components/MarkModal.tsx` — "Play from here" button (outside Bookmarks/Notes tabs). Resolves verse from `markFor.verse_key`, opens `RecitationSettingsSheet` pre-filled with persisted defaults + this verse as `startVerseKey`, starts playback, closes modal.
+- `app/components/RecitationSettingsSheet.tsx` — new. Replaces the base plan's standalone `RecitationReciterPicker` (folded in as one field). Single shadcn `Sheet` for reciter, stop point, repeat counts, speed, pause. Opened from `MarkModal` and `RecitationPlayerBar`'s gear icon.
+- `app/components/RecitationPlayerBar.tsx` — add gear icon opening `RecitationSettingsSheet`.
+- `app/components/RecitationPlayButton.tsx` — behavior unchanged, now goes through the generalized range/repeat engine.
 
-### Additional Constraints
-
-- `RecitationReciterPicker` from the base plan's Files to Change is superseded — do not build it as a separate component; reciter selection is one field inside `RecitationSettingsSheet`.
-- Per-ayah/range repeat counts support an explicit `Infinity` ("∞") option — the UI must let the user stop playback manually at any time regardless of remaining repeat count (the existing play/pause control on the bottom bar already covers this, no new stop affordance needed).
-- `stopPoint` defaults must not break the base plan's existing behavior when playback starts from the header quick-play button (i.e. default `stopPoint` should still result in the previously-verified page/chapter-boundary walk-throughs unless the user has explicitly changed settings).
-
-### What NOT to Do (Addendum 1)
-
-- Do not build a separate arbitrary end-ayah picker — stop point is limited to "end of page" or "end of surah," not a custom verse-range picker (explicitly ruled out in favor of the simpler two-option scope).
-- Do not implement auto-continue past the stop point once repeats are exhausted — explicitly ruled out; terminal state is always "stop."
-- Do not lock settings once playback starts — they must remain editable mid-playback via the bottom player bar's gear icon.
+**Constraints:** Stop point limited to "end of page" or "end of surah" — no custom range picker. Settings remain editable mid-playback. Do not auto-continue past stop once repeats exhausted.
 
 ## Addendum 2: Adapter pattern for the QDC integration
 
 **Date:** 2026-07-10
 
-Refactors the two routes that call QDC directly (`app/api/quran/recitations/reciters/route.ts` and `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts`) to go through a `RecitationProvider` adapter instead of inlining QDC's response shape and `fetch()` calls in the route handlers. Goal is both testability/isolation (routes and any future caller don't need to know QDC's JSON shape) and a real seam for a second audio provider later, without building a registry/factory for a single-provider case today.
+Refactors the two QDC-calling routes to go through a `RecitationProvider` adapter instead of inlining QDC's response shape and `fetch()` calls in the route handlers. Goal: testability and a real seam for a second provider, without building a registry/factory for the single-provider case today.
 
 ### Interface
 
@@ -159,63 +149,28 @@ export class RecitationProviderError extends Error {}
 
 `Reciter` and `ChapterAudio` are the existing domain types already in `app/types/recitation.ts` — unchanged.
 
-### Decision Tree / Algorithm
-
-| Condition | Adapter (`qdc-provider.ts`) | Route |
+| Condition | Adapter | Route |
 |---|---|---|
-| `reciterId`/`chapterId` not integers | n/a — validated before the adapter is called | `422` (unchanged — param validation stays in the route) |
-| QDC fetch fails (network error or non-2xx) | throws `RecitationProviderError` | `catch` → `502` |
-| QDC `audio_files` fetch succeeds but the array is empty | `getChapterAudio` returns `null` | `null` → `404` |
-| QDC `reciters` fetch succeeds (even an empty array) | returns `Reciter[]` (possibly `[]`) | `200` with that data — an empty list is valid, not a 404 |
+| Invalid ids | n/a — validated in route before adapter is called | `422` |
+| QDC fetch fails | throws `RecitationProviderError` | `502` |
+| `audio_files` empty | `getChapterAudio` returns `null` | `404` |
+| `reciters` succeeds (even `[]`) | returns `Reciter[]` | `200` |
 
-### Verified Test Cases
+**Files to Change:**
+- `app/lib/recitation/provider.ts` — new. `RecitationProvider` interface + `RecitationProviderError`.
+- `app/lib/recitation/qdc-provider.ts` — new. `qdcRecitationProvider`: actual QDC `fetch()`, `QdcReciter`/`QdcAudioFile` DTOs and their mapping, `QDC_BASE_URL`, `{ next: { revalidate: 86400 } }` (moved from `app/constants/recitation.ts`).
+- `app/api/quran/recitations/reciters/route.ts` — simplified to `qdcRecitationProvider.getReciters()` in `try/catch`.
+- `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts` — same, keeps id validation.
+- `app/constants/recitation.ts` — remove `QDC_BASE_URL`; keep UI constants.
 
-- **`reciters/route.ts`:** becomes `try { const data = await qdcRecitationProvider.getReciters(); return jsonResponse({ data }); } catch { return jsonResponse({ code: 502, message: "Failed to fetch reciters" }); }`. The inline `QdcReciter` type and the QDC `fetch()`/mapping move entirely into `qdc-provider.ts`.
-- **`[reciterId]/chapters/[chapterId]/route.ts`:** keeps its existing `422` id validation (adapter is never called with invalid ids), then wraps `qdcRecitationProvider.getChapterAudio(reciterId, chapterId)` in `try/catch` — `null` result → `404 "No audio found for this reciter/chapter"`, thrown `RecitationProviderError` → `502 "Failed to fetch chapter audio"`.
-- **`verse-pages/route.ts`:** untouched — it queries `quranPrisma` directly, never calls QDC, so it's outside this adapter's scope.
-
-### Files to Change
-
-- `app/lib/recitation/provider.ts` — new. `RecitationProvider` interface + `RecitationProviderError` class.
-- `app/lib/recitation/qdc-provider.ts` — new. `qdcRecitationProvider: RecitationProvider` — the actual QDC `fetch()` calls (moved from the two routes), the inline `QdcReciter`/`QdcAudioFile` DTO types and their mapping to `Reciter`/`ChapterAudio` (moved from the two routes), `QDC_BASE_URL`, and the `{ next: { revalidate: 86400 } }` cache config (both moved from `app/constants/recitation.ts`, since they're QDC-specific implementation details, not general recitation constants).
-- `app/api/quran/recitations/reciters/route.ts` — simplified to call `qdcRecitationProvider.getReciters()` inside a `try/catch`; no more QDC-shape knowledge.
-- `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts` — simplified to call `qdcRecitationProvider.getChapterAudio()` inside a `try/catch`; keeps its existing id validation.
-- `app/constants/recitation.ts` — remove `QDC_BASE_URL` (moved into `qdc-provider.ts`); UI-facing constants (`DEFAULT_RECITATION_SETTINGS`, repeat/speed bounds, `RECITATION_HIGHLIGHT_CLASS`) stay.
-
-### Constraints
-
-- `RecitationContext.tsx` and `app/utils/recitation-api.ts` (the client-side fetch wrapper hitting our own `/api/quran/recitations/...` routes) are unaffected — this refactor is server-side only, behind the existing route boundary. No client-visible behavior change.
-- Keep the `try/catch` + typed-error convention (matches `docs/standards/api-conventions.md`'s existing pattern of catching specific error types, e.g. `Prisma.NotFoundError` → `404`) — do not introduce a Result-type/discriminated-union return convention, which isn't used elsewhere in the codebase.
-- No registry, factory, or provider-selection config — `qdcRecitationProvider` is the only implementation and is imported directly by both routes. Do not build multi-provider plumbing until a second provider actually exists.
-
-### What NOT to Do (Addendum 2)
-
-- Do not touch `verse-pages/route.ts` — it's a DB query, not a QDC integration, and is out of scope for this adapter.
-- Do not build a provider registry/factory for provider selection — explicitly out of scope until a second provider is real.
-- Do not change the client-side `RecitationContext`/`recitation-api.ts` — this refactor is confined to the two server route handlers and the new `app/lib/recitation/` files.
+**Constraints:** Server-side only — `RecitationContext`/`recitation-api.ts` unaffected. No registry/factory until a second provider exists. Do not touch `verse-pages/route.ts`.
 
 ## Addendum 3: Localize reciter names
 
 **Date:** 2026-07-10
 
-Bug: `qdcRecitationProvider.getReciters()` calls QDC's `/audio/reciters` with no `language` param, so `translated_name` always comes back in QDC's default (English) regardless of the viewer's locale — Arabic-locale users saw English reciter names.
+`getReciters()` called QDC with no `language` param — Arabic-locale users saw English reciter names.
 
-### Fix
+**Fix:** Pass `?language=` through the whole call chain. `RecitationContext.tsx` → `useLocale()` → `fetchReciters(locale)` → `recitation-api.ts` appends `?language=` → route reads `language` from `searchParams` (default `"en"`) → `qdcRecitationProvider.getReciters(language)` appends to QDC URL.
 
-- `RecitationContext.tsx` reads the current locale via `useLocale()` (same pattern as `QuranFontScaleControls.tsx`/`SurahListItem.tsx`/`SettingsSidebar.tsx`) and passes it into `fetchReciters(locale)`.
-- `app/utils/recitation-api.ts` — `fetchReciters(language: string)` appends `?language=${language}` to the request.
-- `app/api/quran/recitations/reciters/route.ts` — reads `language` from `request.nextUrl.searchParams` (default `"en"` if missing), passes it to `qdcRecitationProvider.getReciters(language)`.
-- `app/lib/recitation/provider.ts` — `getReciters(language: string): Promise<Reciter[]>`.
-- `app/lib/recitation/qdc-provider.ts` — `getReciters(language)` appends `?language=${language}` to the QDC `fetch()` call.
-
-### Files to Change
-
-- `app/lib/recitation/provider.ts` — add `language: string` param to `getReciters`.
-- `app/lib/recitation/qdc-provider.ts` — add `language` param, pass through to QDC's `?language=` query param.
-- `app/api/quran/recitations/reciters/route.ts` — read `language` query param (default `"en"`), pass to the adapter.
-- `app/utils/recitation-api.ts` — `fetchReciters(language: string)`, appends `?language=` to the internal request.
-- `app/contexts/RecitationContext.tsx` — `useLocale()` + pass to `fetchReciters(locale)`.
-
-### What NOT to Do (Addendum 3)
-
-- Do not hardcode `"ar"` — the fix must follow the app's actual locale (ar/en) so English-locale users keep English names, not just fix the Arabic case.
+Files: `provider.ts` (`language` param), `qdc-provider.ts` (appends to QDC URL), `reciters/route.ts` (reads param), `recitation-api.ts` (appends param), `RecitationContext.tsx` (`useLocale()`). Do not hardcode `"ar"` — must follow actual app locale.

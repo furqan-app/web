@@ -10,11 +10,6 @@
 - React Query hooks (`useQuery`, `useMutation`)
 - Context consumers
 
-**Never add `"use client"` to:**
-- Layout files that only pass data to children
-- Components that only receive props and render HTML
-- Files that just re-export types
-
 ## Component Location
 
 | Type | Location |
