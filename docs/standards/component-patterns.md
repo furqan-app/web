@@ -32,7 +32,13 @@ const Sidebar = dynamic(() => import("@/app/components/nav/Sidebar"));
 
 ## Props Pattern
 
-Use an explicit `type Props = { ... }` at the top of the file. Do not use `React.FC<Props>` — type the function parameter directly.
+Use an explicit `type Props = { ... }` at the top of the file. Do not use `React.FC<Props>` — just type the function parameter directly:
+
+```tsx
+type Props = { page: number; lines: Lines };
+
+export default function QuranSafha({ page, lines }: Props) { ... }
+```
 
 ## Memoization
 

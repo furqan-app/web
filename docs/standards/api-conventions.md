@@ -51,7 +51,14 @@ Do not call `getServerSession()` inside API route handlers.
 
 ## Input Validation
 
-Validate required body fields before touching the DB. Return `422` with a `message` on failure.
+Validate required body fields before touching the DB. Return `422` with a `message` on failure:
+
+```ts
+const { field1, field2 } = await request.json();
+if (!field1 || !field2) {
+  return jsonResponse({ code: 422, message: "Missing required fields" });
+}
+```
 
 ## Query Parameters
 
