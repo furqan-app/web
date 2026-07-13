@@ -35,6 +35,9 @@
   "language": "Language",
   "quranFontSize": "Quran Font Size",
   "appearance": "Appearance",
+  "tajweedMode": "Tajweed Colors",
+  "tajweedModeLabel": "Color-code Tajweed rules",
+  "tajweedModeDescription": "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
   "theme": {
     "light": "Light",
     "dark": "Dark",
@@ -145,5 +148,6 @@
     "resume": "Resume",
     "stop": "Stop",
     "nowPlaying": "Recitation"
-  }
+  },
+  "viewingChipGeneric": ""
 }

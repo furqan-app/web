@@ -36,6 +36,9 @@
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
   "appearance": "المظهر",
+  "tajweedMode": "ألوان التجويد",
+  "tajweedModeLabel": "تلوين أحكام التجويد",
+  "tajweedModeDescription": "إبراز أحكام التلاوة مثل الإدغام والإخفاء والقلقلة والمد بالألوان",
   "theme": {
     "light": "فاتح",
     "dark": "داكن",
@@ -146,5 +149,6 @@
     "resume": "متابعة",
     "stop": "إيقاف",
     "nowPlaying": "تلاوة"
-  }
+  },
+  "viewingChipGeneric": ""
 }

@@ -6,11 +6,12 @@ import { useLocale } from "next-intl";
 import { getLanguageDirection } from "../utils/i18n";
 import { MouseEvent } from "react";
 import { QuranWord } from "./QuranWord";
-import { WordWithVerse } from "../types/prisma";
+import { WordWithLayouts } from "../types/prisma";
+import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
 
 type LineProps = {
-  words: Array<WordWithVerse>;
-  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
+  words: Array<WordWithLayouts>;
+  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithLayouts) => void;
   marks: Record<string, Array<{ name: string; value: string }>>;
   // When set, QuranSafha has already rendered standalone banner/bismillah slots
   // for this surah — suppress the inline combined heading block for it.
@@ -26,6 +27,7 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
   const isBannerHandled = suppressInlineHeaderForSurahId === surahId;
 
   const locale = useLocale();
+  const { tajweedMode } = useQuranTajweed();
 
   return (
     <>
@@ -61,7 +63,11 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
           getLanguageDirection(locale) === "rtl"
             ? "flex-row"
             : "flex-row-reverse"
-        } ${[1, 2].includes(words[0].page_number) ? "justify-center" : ""} `}
+        } ${
+          [1, 2].includes(words[0].page_number) || tajweedMode
+            ? "justify-center"
+            : ""
+        } `}
         style={{ marginBottom: "var(--fq-line-gap)" }}
       >
         {words.map((word) => (
