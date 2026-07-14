@@ -67,9 +67,8 @@ export async function POST(
  * This request is protected by the global middleware in middleware.ts
  *
  * The `[pageId]` route segment is intentionally unused here: a mark's
- * Prisma unique key (`marked_type_marked_id_mark_type_to_user`) is
- * page-independent, so deletion is scoped by `to_user` + that compound
- * key only, not by page.
+ * Prisma unique key (`marked_type_marked_id_to_user`) is page-independent,
+ * so deletion is scoped by `to_user` + that compound key only, not by page.
  */
 export async function DELETE(request: NextRequest) {
   let body;

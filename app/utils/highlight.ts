@@ -1,4 +1,13 @@
-export type HighlightType = 'search' | 'selection' | 'last-read' | 'red-mark' | 'blue-mark' | 'green-mark';
+export type HighlightType =
+  | 'search'
+  | 'selection'
+  | 'last-read'
+  | 'forgetting-mark'
+  | 'similar-mark'
+  | 'tashkeel-error-mark'
+  | 'tajweed-error-mark'
+  | 'linking-mark'
+  | 'other-mark';
 
 type HighlightOptions = {
   verseKey: string;
@@ -14,9 +23,12 @@ const HIGHLIGHT_COLORS: Record<HighlightType, string> = {
   'search': 'bg-gray-900/10 dark:bg-cyan-600/30',
   'selection': 'bg-blue-200/70 dark:bg-blue-500/30',
   'last-read': 'bg-purple-200/70 dark:bg-purple-500/30',
-  'red-mark': 'bg-red-300/50 dark:bg-red-300/80',
-  'blue-mark': 'bg-blue-300/50 dark:bg-blue-300/80',
-  'green-mark': 'bg-green-300/50 dark:bg-green-300/80',
+  'forgetting-mark': 'bg-red-400/60 dark:bg-red-400/80',
+  'similar-mark': 'bg-orange-300/50 dark:bg-orange-300/80',
+  'tashkeel-error-mark': 'bg-yellow-200/60 dark:bg-yellow-300/80',
+  'tajweed-error-mark': 'bg-purple-300/50 dark:bg-purple-300/80',
+  'linking-mark': 'bg-blue-300/50 dark:bg-blue-300/80',
+  'other-mark': 'bg-slate-300/50 dark:bg-slate-300/80',
 };
 
 export const highlight = {
@@ -40,12 +52,17 @@ export const highlight = {
   },
 
   getHighlightClass: (
-    isHighlighted: boolean, 
+    isHighlighted: boolean,
     type: HighlightType = 'search'
   ): string => {
     if (!isHighlighted) return '';
-    
-    return `${HIGHLIGHT_COLORS[type]} dark:text-white transition-colors duration-300`;
+
+    // Defensive: a stale/unknown HighlightType (e.g. legacy "red-mark") has no
+    // entry in HIGHLIGHT_COLORS — render nothing instead of crashing.
+    const colorClass = HIGHLIGHT_COLORS[type];
+    if (!colorClass) return '';
+
+    return `${colorClass} dark:text-white transition-colors duration-300`;
   },
 
   getHighlightType: (searchParams: URLSearchParams): HighlightType => {

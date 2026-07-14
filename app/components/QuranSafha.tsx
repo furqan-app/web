@@ -11,7 +11,7 @@ import { useQuranTajweed } from "@contexts/QuranTajweedContext";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { getPageFontFamily } from "@utils/quran-font-map";
-import { getColorMarkMeta, getNoteMarkMeta } from "@utils/marks";
+import { getMarkMeta } from "@utils/marks";
 import { groupBy } from "@utils/groupBy";
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
@@ -135,14 +135,9 @@ export const QuranSafha = ({
     setSelectedForMark(null);
   };
 
-  const getCurrentColorMeta = (markFor: WordWithLayouts | Verse) => {
+  const getCurrentMarkMeta = (markFor: WordWithLayouts | Verse) => {
     const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
-    return getColorMarkMeta(marks?.[markedId] ?? []);
-  };
-
-  const getCurrentNoteMeta = (markFor: WordWithLayouts | Verse) => {
-    const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
-    return getNoteMarkMeta(marks?.[markedId] ?? []);
+    return getMarkMeta(marks?.[markedId]);
   };
 
   const hizbDefaults: Record<string, string> = {
@@ -243,10 +238,7 @@ export const QuranSafha = ({
     <>
       {session?.data?.user && selectedForMark ? (
         (() => {
-          const colorMeta = getCurrentColorMeta(
-            selectedForMark as WordWithLayouts | Verse,
-          );
-          const noteMeta = getCurrentNoteMeta(
+          const markMeta = getCurrentMarkMeta(
             selectedForMark as WordWithLayouts | Verse,
           );
           return (
@@ -255,10 +247,9 @@ export const QuranSafha = ({
               close={closeMarkModal}
               markFor={selectedForMark as WordWithLayouts | Verse}
               verseDisplayText={verseDisplayText}
-              currentColor={colorMeta?.value}
-              colorAuthorName={colorMeta && !colorMeta.isOwn ? colorMeta.authorName : null}
-              currentNote={noteMeta?.value}
-              noteAuthorName={noteMeta && !noteMeta.isOwn ? noteMeta.authorName : null}
+              currentCategory={markMeta?.category}
+              currentComment={markMeta?.comment ?? undefined}
+              authorName={markMeta && !markMeta.isOwn ? markMeta.authorName : null}
               grantId={grantId}
             />
           );
