@@ -151,12 +151,9 @@ body,
          space-between distributes the 15 lines inside this padded box. */
       padding-block: 0.5em;
     }
-    /* Tajweed COLRv1 glyphs measure ~1.42x taller than the base font at the same
-       font-size (different font design, not a bug) — see ADR 0023 Addendum 1.
-       --fq-tajweed-scale is defined once, below, on .fq-tajweed itself. */
-    .fq-quran-safha.fq-tajweed {
-      font-size: calc(var(--fq-mobile-font) * var(--fq-tajweed-scale));
-    }
+    /* Tajweed font-size stays at the same value as regular — do not scale it.
+       Line-height tightening (line-height:1 on .fq-safha-row) prevents COLRv1's
+       larger declared metrics from inflating line boxes. See globals.css @layer base. */
     .fq-quran-safha > * {
       margin-bottom: 0 !important; /* height distributed by flex, not margin */
     }
@@ -189,12 +186,14 @@ body,
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
      Mirrors the `@media (max-width: 767px)` mobile block above. */
   @media (min-width: 768px) {
-    /* Tajweed size correction, desktop single-page/standalone — not scoped to
-       .fq-spread, so it also covers the standalone QuranSafha in VerticalQuranPages.
-       --fq-word-base is set on the ancestor .fq-content regardless. See ADR 0023
-       Addendum 1; the double-view width-cap variant is further below. */
+    /* Tajweed font-size correction — desktop single-page and standalone QuranSafha.
+       COLRv1 glyphs render ~1.15× taller visually than the base font at the same
+       font-size (measured: regular 1.92×, COLRv1 2.56× the CSS font-size), so
+       0.87 ≈ 1.92/2.56 matches glyph density to the regular mushaf.
+       Not scoped to .fq-spread so it also covers the standalone QuranSafha
+       in VerticalQuranPages. Double-view overrides this below. */
     .fq-quran-safha.fq-tajweed {
-      font-size: calc(var(--fq-word-base) * var(--fq-tajweed-scale));
+      font-size: calc(var(--fq-word-base) * 0.87);
     }
     .fq-spread .fq-quran-safha {
       flex: 1 1 0%;
@@ -283,8 +282,9 @@ body,
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
       font-size: min(var(--fq-word-base), var(--fq-dv-word));
     }
+    /* Tajweed double-view: preserve the dv-word cap while applying the 0.87 scale. */
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
-      font-size: calc(min(var(--fq-word-base), var(--fq-dv-word)) * var(--fq-tajweed-scale));
+      font-size: calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.87);
     }
     :root[data-safha-view="double"] .fq-spread .fq-content {
       --fq-line-gap: min(var(--fq-line-gap-base), calc(var(--fq-dv-word) * 0.417)) !important;
@@ -324,16 +324,12 @@ body,
     font-palette: --Gold;
   }
 
-  /* Tajweed font-size correction (ADR 0023 Addendum 1) — the COLRv1 font is a
-     different design, not a recolored clone of the base font: its glyphs
-     measure ~1.42x taller at the same font-size (measured via fontTools across
-     20 real word pairs). This single constant is consumed by the three
-     .fq-tajweed-scoped font-size overrides elsewhere in this file (mobile,
-     desktop single, desktop double-view — CSS custom property resolution
-     doesn't depend on declaration order), layered on top of each existing
-     sizing mechanism rather than editing FONT_V1 or either formula. Starting
-     calibration — tune this value, not the mechanism, if the visual match is off. */
-  .fq-tajweed {
-    --fq-tajweed-scale: 0.7;
-  }
+  /* Tajweed font size — no correction needed (ADR 0023 Addendum 1 revised).
+     The COLRv1 font's CSS line boxes resolve to exactly 1.0× font-size (same
+     as the base font), so the same font-size fills the page identically to
+     the regular mushaf. Visual glyphs extend outside the line box (diacritics
+     overlap adjacent rows), but this is inherent to the font design and
+     matches how print tajweed mushafs look. Any font-size override here
+     shrinks the card width (card is md:w-auto, sized to line content width;
+     COLRv1 has no kashida justification so lines don't stretch full-width). */
 }

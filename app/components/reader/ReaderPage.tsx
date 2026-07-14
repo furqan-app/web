@@ -115,7 +115,7 @@ export const ReaderPage = async ({
         prevHref={`${basePath}/${prevPageNum}`}
         nextHref={`${basePath}/${nextPageNum}`}
       >
-        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] py-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
+        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
           <div className="hidden md:flex items-center gap-2">
             <QuranSafhaViewToggle />
             <RecitationPlayButton firstVerseKey={firstVerseKey} />
