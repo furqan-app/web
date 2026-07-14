@@ -3,17 +3,23 @@
 import { Play, Pause } from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import useTranslations from "@/app/hooks/use-translations";
+import { cn } from "@/lib/utils";
 
 type Props = {
-  // verse_key of the current page's first word — the header quick-play
-  // button always starts here when idle. Null when the page has no words
-  // (shouldn't happen in practice, but keeps this defensive).
-  firstVerseKey: string | null;
+  // verse_key of the current page's first word. Optional: when omitted (Nav
+  // mobile usage), falls back to pageFirstVerseKey from RecitationContext,
+  // which RecitationPageSync keeps current as the reader navigates.
+  // Explicit null means "page has no words" — do not fall back to context.
+  firstVerseKey?: string | null;
+  className?: string;
 };
 
-export const RecitationPlayButton = ({ firstVerseKey }: Props) => {
-  const { status, currentVerseKey, play, togglePlayPause } = useRecitation();
+export const RecitationPlayButton = ({ firstVerseKey: firstVerseKeyProp, className }: Props) => {
+  const { status, currentVerseKey, pageFirstVerseKey, play, togglePlayPause } = useRecitation();
   const t = useTranslations();
+
+  // Distinguish absent prop (fall back to context) from explicit null (no words on page → hide).
+  const firstVerseKey = firstVerseKeyProp !== undefined ? firstVerseKeyProp : pageFirstVerseKey;
 
   if (!firstVerseKey) return null;
 
@@ -36,7 +42,7 @@ export const RecitationPlayButton = ({ firstVerseKey }: Props) => {
       aria-pressed={isPlaying}
       onClick={handleClick}
       disabled={isLoading}
-      className="flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
+      className={cn("flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60", className)}
     >
       {isLoading ? (
         <span className="size-[18px] animate-spin rounded-full border-2 border-current border-t-transparent" />

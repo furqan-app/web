@@ -11,6 +11,7 @@ import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/app/contexts/SidebarContext";
+import { RecitationPlayButton } from "@/app/components/RecitationPlayButton";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,8 @@ export const Nav = () => {
             />
           </Button>
         )}
+
+        {isOnPagesRoute && <RecitationPlayButton className="md:hidden" />}
       </div>
 
       {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}
