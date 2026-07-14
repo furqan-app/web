@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useSession } from "next-auth/react";
 import { Verse } from "@/app/generated/quran-client";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
@@ -17,7 +16,6 @@ import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
-import { SignInModal } from "./SignInModal";
 import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
 
@@ -93,7 +91,6 @@ export const QuranSafha = ({
   stackPeekSide = "left",
   compensateStackGap = false,
 }: QuranSafhaProps) => {
-  const session = useSession();
   const t = useTranslations();
   const { data: marks } = useMarks(page, grantId);
   const { quranFontScale } = useQuranFontScale();
@@ -236,7 +233,7 @@ export const QuranSafha = ({
 
   return (
     <>
-      {session?.data?.user && selectedForMark ? (
+      {selectedForMark ? (
         (() => {
           const markMeta = getCurrentMarkMeta(
             selectedForMark as WordWithLayouts | Verse,
@@ -254,9 +251,6 @@ export const QuranSafha = ({
             />
           );
         })()
-      ) : null}
-      {!session.data?.user && selectedForMark ? (
-        <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center w-full md:w-auto md:h-full">
         <div
