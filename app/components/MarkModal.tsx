@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { Verse } from "@/app/generated/quran-client";
 import { Bookmark, Eraser, User, Volume1, Volume2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
@@ -76,6 +78,8 @@ export function MarkModal({
   grantId,
 }: ModalProps) {
   const { reload: reloadMarks } = useMarks(markFor.page_number, grantId);
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
   const t = useTranslations();
   const [error, setError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(currentCategory);
@@ -201,67 +205,81 @@ export function MarkModal({
           {t("markModal.playFromHere", "Play from here")}
         </button>
 
-        <div className="rounded-xl bg-muted border border-border/60 p-2.5">
-          <MarkedByLine authorName={authorName} />
-          <p className="text-xs font-medium text-muted-foreground mb-2.5">
-            {t("markModal.chooseCategoryLabel", "Choose a category")}
-          </p>
-          <MarkerColorPicker
-            value={selectedCategory}
-            onChange={setSelectedCategory}
-            disabled={isOffline}
-          />
-
-          <div className={cn("mt-3", !canComment && "opacity-50")}>
-            <Textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
-              maxLength={COMMENT_MAX_LENGTH}
-              disabled={!canComment}
-              placeholder={
-                selectedCategory
-                  ? t("markModal.commentPlaceholder", "Add a comment (optional)…")
-                  : t("markModal.commentDisabledHint", "Choose a category to add a comment")
-              }
-              dir="auto"
-              className="bg-card min-h-[80px] resize-none"
-            />
-            <p className="mt-1 text-end text-[10px] text-muted-foreground">
-              {comment.length}/{COMMENT_MAX_LENGTH}
+        {isAuthenticated ? (
+          <div className="rounded-xl bg-muted border border-border/60 p-2.5">
+            <MarkedByLine authorName={authorName} />
+            <p className="text-xs font-medium text-muted-foreground mb-2.5">
+              {t("markModal.chooseCategoryLabel", "Choose a category")}
             </p>
-          </div>
-
-          <button
-            onClick={saveMark}
-            disabled={!selectedCategory || isOffline}
-            className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium bg-primary text-primary-foreground transition-[background-color,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none"
-          >
-            <Bookmark className="w-4 h-4" strokeWidth={1.8} />
-            {t("markModal.saveMark", "Save Mark")}
-          </button>
-          {currentCategory ? (
-            <button
-              onClick={removeMark}
+            <MarkerColorPicker
+              value={selectedCategory}
+              onChange={setSelectedCategory}
               disabled={isOffline}
-              className="mt-1.5 w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-destructive hover:bg-destructive/10 active:scale-[0.97] transition-[background-color,transform] duration-150 disabled:opacity-50 disabled:pointer-events-none"
+            />
+
+            <div className={cn("mt-3", !canComment && "opacity-50")}>
+              <Textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
+                maxLength={COMMENT_MAX_LENGTH}
+                disabled={!canComment}
+                placeholder={
+                  selectedCategory
+                    ? t("markModal.commentPlaceholder", "Add a comment (optional)…")
+                    : t("markModal.commentDisabledHint", "Choose a category to add a comment")
+                }
+                dir="auto"
+                className="bg-card min-h-[80px] resize-none"
+              />
+              <p className="mt-1 text-end text-[10px] text-muted-foreground">
+                {comment.length}/{COMMENT_MAX_LENGTH}
+              </p>
+            </div>
+
+            <button
+              onClick={saveMark}
+              disabled={!selectedCategory || isOffline}
+              className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium bg-primary text-primary-foreground transition-[background-color,transform] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none"
             >
-              <Eraser className="w-4 h-4" strokeWidth={1.8} />
-              {t("markModal.removeMark", "Remove Mark")}
+              <Bookmark className="w-4 h-4" strokeWidth={1.8} />
+              {t("markModal.saveMark", "Save Mark")}
             </button>
-          ) : null}
-          {isOffline ? (
-            <p className="mt-1.5 text-xs text-muted-foreground text-center">
-              {t(
-                "markModal.offlineNotice",
-                "Connect to the internet to view or add marks",
-              )}
+            {currentCategory ? (
+              <button
+                onClick={removeMark}
+                disabled={isOffline}
+                className="mt-1.5 w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-destructive hover:bg-destructive/10 active:scale-[0.97] transition-[background-color,transform] duration-150 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Eraser className="w-4 h-4" strokeWidth={1.8} />
+                {t("markModal.removeMark", "Remove Mark")}
+              </button>
+            ) : null}
+            {isOffline ? (
+              <p className="mt-1.5 text-xs text-muted-foreground text-center">
+                {t(
+                  "markModal.offlineNotice",
+                  "Connect to the internet to view or add marks",
+                )}
+              </p>
+            ) : error ? (
+              <p className="mt-1.5 text-xs text-destructive text-center">
+                {t("markModal.actionError", "Something went wrong. Try again.")}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-xl bg-muted border border-border/60 p-2.5 flex flex-col items-center gap-3">
+            <p className="text-sm text-muted-foreground text-center">
+              {t("markModal.signInToMark", "Sign in to mark words and verses")}
             </p>
-          ) : error ? (
-            <p className="mt-1.5 text-xs text-destructive text-center">
-              {t("markModal.actionError", "Something went wrong. Try again.")}
-            </p>
-          ) : null}
-        </div>
+            <Button
+              className="bg-green-700 hover:bg-green-600 text-white"
+              onClick={() => signIn()}
+            >
+              {t("signIn", "Sign in")}
+            </Button>
+          </div>
+        )}
         {isWord ? <audio ref={wordAudioRef} preload="none" /> : null}
       </DialogContent>
     </Dialog>
