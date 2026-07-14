@@ -16,8 +16,13 @@ category is the escape hatch for "I just want to comment." The schema drops
 `mark_type` and `mark_value`, gaining `category` (VARCHAR) + `comment`
 (nullable TEXT); the modal drops its Bookmarks/Notes tabs for a single
 picker-then-comment flow. Test data is disposable — a versioned Prisma
-migration reshapes the table (App DB uses migrations, not `db push` — ADR 0017);
-existing rows are cleared, not data-migrated.
+migration reshapes the table (App DB uses migrations, not `db push` — ADR 0017).
+The migration's **first statement is `DELETE FROM marks;`** so `migrate deploy`
+runs cleanly on any environment: no NOT-NULL backfill for `category`, and the
+new `[marked_type, marked_id, to_user]` unique index can't collide with legacy
+spots that had both a color and a note row. Rollback is roll-forward only
+(Prisma has no down migrations); the dropped columns' data is not recoverable
+except from a DB backup.
 
 ## Approach
 - **Schema** (`prisma/app/schema.prisma`): on `Mark`, replace `mark_type` +
@@ -71,8 +76,8 @@ existing rows are cleared, not data-migrated.
   gone from My Marks.
 - **Open modal with no category selected** → comment textarea dimmed/disabled,
   Save disabled until a category chip is tapped.
-- **Legacy `mark_value:"red"` / old `note` rows** → cleared before the migration
-  (schema reshape on disposable data); not data-migrated.
+- **Legacy `mark_value:"red"` / old `note` rows** → cleared by the migration's
+  `DELETE FROM marks;` first statement (disposable data); not data-migrated.
 
 ## My Marks Filter & Layout (follow-on)
 Six category tabs (`flex-1` + `w-full`) overflow the viewport on mobile — a
