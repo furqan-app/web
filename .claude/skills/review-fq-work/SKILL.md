@@ -1,16 +1,24 @@
 ---
 name: review-fq-work
-description: Quality gate for the current branch. Spawns an Opus subagent to review the branch diff vs main across three dimensions: bugs & correctness, code quality & duplication, and plan consistency (stale docs/plans).
+description: Quality gate for the current branch. Spawns a review subagent (model of your choice — Opus by default) to review the branch diff vs main across three dimensions: bugs & correctness, code quality & duplication, and plan consistency (stale docs/plans).
 ---
 
 # /review-fq-work
 
-Spawns an Opus subagent to review code changes across three dimensions. Terminal output only.
+Spawns a subagent to review code changes across three dimensions. Terminal output only.
 
 Accepts an optional scope argument:
 - _(no arg)_ — committed changes on this branch vs main (default)
 - `--staged` — staged but uncommitted changes (`git diff --cached`)
 - `--unstaged` — unstaged working-tree changes (`git diff`)
+
+## Choosing the review model
+
+Before spawning, decide which model runs the review:
+- If the caller already specified a model (e.g. `/review-fq-work sonnet`, or `/ship-fq-task` passing a choice), use it.
+- Otherwise ask once, presenting: **Opus** (recommended — most thorough), **Sonnet** (faster/cheaper), **Haiku** (fastest, light sanity check).
+
+Map the choice to the Agent `model` value: `opus` / `sonnet` / `haiku`. Opus is the default if the user gives no preference.
 
 ## Steps
 
@@ -41,7 +49,7 @@ Also list `docs/plans/` to identify any plans associated with this branch's work
 
 ### 2 — Spawn the review subagent
 
-Spawn an Agent with `model: "opus"` and pass it the full diff and the following instructions:
+Spawn an Agent with `model` set to the chosen model (see "Choosing the review model"; `opus` by default) and pass it the full diff and the following instructions:
 
 ---
 
@@ -93,5 +101,4 @@ Numbering continues across all three dimensions (do not restart at 1 per section
 
 - Do not review the full codebase — only the diff for the chosen scope.
 - Do not default to `main...HEAD` when `--staged` or `--unstaged` was passed.
-- Do not use a non-Opus model for the subagent.
 - Do not suggest fixes — only report findings. Fixes are the user's call.
