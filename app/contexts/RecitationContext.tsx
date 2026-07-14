@@ -46,6 +46,8 @@ type RecitationContextType = {
   status: RecitationStatus;
   currentVerseKey: string | null;
   currentWordLocation: string | null;
+  pageFirstVerseKey: string | null;
+  setPageFirstVerseKey: (key: string | null) => void;
   play: (startVerseKey: string) => void;
   togglePlayPause: () => void;
   stop: () => void;
@@ -78,6 +80,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
   const [currentWordLocation, setCurrentWordLocation] = useState<string | null>(null);
+  const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsStartVerseKey, setSettingsStartVerseKey] = useState<string | null>(null);
 
@@ -396,6 +399,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         status,
         currentVerseKey,
         currentWordLocation,
+        pageFirstVerseKey,
+        setPageFirstVerseKey,
         play,
         togglePlayPause,
         stop,
