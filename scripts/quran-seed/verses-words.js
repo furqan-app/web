@@ -14,6 +14,15 @@ const PARAMS = {
 const TOTAL_PAGES = 604;
 const RETRIES = 3;
 
+// QDC's audio_url file number counts Rub-el-hizb/waqf marks it fuses into an
+// adjacent word's text_uthmani as their own audio track, so it silently drifts
+// ahead of `position` in verses containing one. `position` is already the
+// correct sequential real-word ordinal per verse, so force the file number to
+// match it. See ADR 0009 Addendum (2026-07-15).
+function correctAudioUrl(audioUrl, position) {
+  return audioUrl.replace(/\d+(\.mp3)$/, `${String(position).padStart(3, "0")}$1`);
+}
+
 async function fetchPage(page) {
   let lastErr;
   for (let attempt = 1; attempt <= RETRIES; attempt++) {
@@ -63,7 +72,10 @@ async function fetchVersesAndWords(onPage, pages) {
         words.push({
           id: word.id,
           position: word.position,
-          audio_url: word.audio_url,
+          audio_url:
+            word.char_type_name === "word" && word.audio_url
+              ? correctAudioUrl(word.audio_url, word.position)
+              : word.audio_url,
           verse_key: word.verse_key,
           verse_id: word.verse_id,
           location: word.location,
