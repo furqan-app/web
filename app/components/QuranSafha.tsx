@@ -15,6 +15,7 @@ import { groupBy } from "@utils/groupBy";
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
+import { adjustWordAudioUrl } from "@constants/word-audio";
 import { MarkModal } from "./MarkModal";
 import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
@@ -108,7 +109,20 @@ export const QuranSafha = ({
     word: WordWithLayouts,
   ) => {
     if (word.char_type_name === "word") {
-      setSelectedForMark(word);
+      const allWords = Object.values(lines).flat();
+      const nonWordsBefore = allWords.filter(
+        (w) =>
+          w.verse_key === word.verse_key &&
+          w.char_type_name !== "word" &&
+          w.position < word.position,
+      ).length;
+
+      const adjustedWord =
+        nonWordsBefore > 0 && word.audio_url
+          ? { ...word, audio_url: adjustWordAudioUrl(word.audio_url, nonWordsBefore) }
+          : word;
+
+      setSelectedForMark(adjustedWord);
       setVerseDisplayText(undefined);
     } else if (word.char_type_name === "end") {
       const allWords = Object.values(lines).flat();
