@@ -79,7 +79,7 @@ jobs:
           retention-days: 14
 
       - name: Publish report to GitHub Pages
-        if: steps.run-tests.outcome == 'failure'
+        if: failure() && steps.run-tests.outcome == 'failure'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

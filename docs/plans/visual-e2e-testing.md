@@ -96,6 +96,7 @@ Total: (4 screens × 2 viewports + 1 screen × 1 viewport) × 2 locales × 2 the
 - The sticky comment must be identified by a stable hidden marker and edited in place — never create a new comment per run (would spam the PR on every push).
 - This CI change is additive to `visual-e2e.yml`'s existing behavior (artifact upload on failure stays as-is) — do not remove the existing `Upload Playwright report` / `Upload test-results` steps.
 - Cleanup only runs on PR close, not on every push — do not delete a PR's report while it's still open, even between runs.
+- Any step's `if:` condition that needs to run after a failed prior step must include one of GitHub Actions' status-check functions (`failure()`, `success()`, `always()`, `cancelled()`) — a bare expression like `steps.run-tests.outcome == 'failure'` gets an implicit `success() &&` prepended by GitHub Actions and silently evaluates to skip. First shipped version of the "Publish report to GitHub Pages" step hit exactly this (condition was `if: steps.run-tests.outcome == 'failure'`, step showed as `skipped` on PR #105's own failing run, so the report link 404'd); fixed to `if: failure() && steps.run-tests.outcome == 'failure'`.
 
 ### What NOT to Do
 
