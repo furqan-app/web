@@ -60,3 +60,28 @@ Total: (4 screens × 2 viewports + 1 screen × 1 viewport) × 2 locales × 2 the
 - Baseline updates must go through a PR, never a direct push to `main` (repository ruleset: Changes must be made through a pull request).
 - Each update-baselines run creates a unique branch (`<run_id>` suffix) — no reuse across runs.
 - Visual diffs fail the CI check (soft-blocking, not merge-gate).
+
+## Addendum (2026-07-16): Refresh fixture after the word-audio seeder fix
+
+**Problem (Trello #116):** `scripts/e2e-fixture/generate.js` reuses `fetchVersesAndWords` from `scripts/quran-seed/verses-words.js` to build `e2e/fixtures/quran-fixture.sql`. PR #104 (merged) patched that exact function to correct `Word.audio_url`'s trailing file number to always equal `Word.position` (see ADR 0009 Addendum 2026-07-15). The committed fixture SQL predates that fix, so it still has the old, uncorrected `audio_url` values — stale relative to what a real seed run (and the fixture generator, if re-run today) now produces.
+
+**Impact:** None on current test outcomes — `audio_url` isn't rendered on any of the 5 screenshotted screens, so no baseline is affected. This is pure data-consistency drift between the fixture and the real seeder logic it's supposed to mirror (per ADR 0022: "The fixture SQL duplicates the full output of what the reproducible seeder already knows how to produce").
+
+**Approach:** Re-run `npm run e2e:generate-fixture` (re-fetches all 604 pages from QDC via the now-patched `fetchVersesAndWords`) and commit the regenerated `e2e/fixtures/quran-fixture.sql`. Simple, single-file change — no branching logic, no new decisions.
+
+### Files to Change
+
+- `e2e/fixtures/quran-fixture.sql` — regenerated via `npm run e2e:generate-fixture`
+
+### Constraints
+
+- Regeneration re-fetches all 604 pages from QDC (slow, one-time) — same cost profile as a full `seed:quran` run, per existing ADR 0022 constraint.
+- Do not hand-edit the fixture SQL — it must come from running the generator, so it stays a faithful derivative of the seeder logic.
+
+### What NOT to Do
+
+- Do not touch `scripts/e2e-fixture/generate.js`, `playwright.config.ts`, or any test file — this task is a data refresh only, not a logic change.
+
+### Decisions Made
+
+- Confirmed with user 2026-07-16: regenerate now rather than defer.
