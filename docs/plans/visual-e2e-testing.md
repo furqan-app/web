@@ -60,3 +60,51 @@ Total: (4 screens × 2 viewports + 1 screen × 1 viewport) × 2 locales × 2 the
 - Baseline updates must go through a PR, never a direct push to `main` (repository ruleset: Changes must be made through a pull request).
 - Each update-baselines run creates a unique branch (`<run_id>` suffix) — no reuse across runs.
 - Visual diffs fail the CI check (soft-blocking, not merge-gate).
+
+## Addendum (2026-07-15): Post visual diffs directly on the PR
+
+**Problem (Trello #115):** `visual-e2e.yml` only uploads `playwright-report/`/`test-results/` as artifacts on failure — the PR shows a red X with no indication of which screens broke or what the diff looks like. Seeing it requires opening the Actions run, downloading a zip, and unzipping locally.
+
+**Approach:** Host the Playwright HTML report (built-in side-by-side actual/expected/diff viewer) on GitHub Pages per PR, and post a sticky PR comment linking to it. The repo is public, so GitHub Pages is free.
+
+### Decision Tree
+
+| Trigger | Condition | Action |
+|---|---|---|
+| `visual-e2e` job finishes | Any test failed | Push `playwright-report/` to the `gh-pages` branch at `reports/pr-<PR_NUMBER>/` (additive — other PRs' folders untouched); post/update a sticky PR comment (identified by a hidden `<!-- visual-e2e-report -->` marker so re-runs edit the same comment instead of piling up) listing each failed screen (e.g. "Home (en, dark, desktop)") and linking to `https://furqan-app.github.io/web/reports/pr-<PR_NUMBER>/` |
+| `visual-e2e` job finishes | All passed, sticky comment exists from a prior failed run | Update that comment to "✅ now passing" |
+| `visual-e2e` job finishes | All passed, no prior sticky comment | No comment posted |
+| A PR is closed (merged or not) | — | New workflow (`pull_request: types: [closed]`) deletes `reports/pr-<PR_NUMBER>/` from `gh-pages` |
+
+### Verified Test Cases
+
+- **PR with a failing screen** (e.g. a font-size regression breaks "Quran page 1 (ar, light, desktop)"): job fails → report pushed to `reports/pr-<N>/` → comment posted listing "Quran page 1 (ar, light, desktop)" + the hosted link → clicking it opens Playwright's report showing the actual/expected/diff images in-browser, no download.
+- **Same PR, pushed a fix, now passing**: job succeeds → existing sticky comment (matched by its marker) is edited in place to "✅ now passing" — not a second comment.
+- **A different PR failing concurrently**: its report lands at `reports/pr-<M>/`, distinct from `reports/pr-<N>/` — pushing one PR's report never overwrites or removes another's (this is why `gh-pages` is used directly via an additive push rather than `actions/deploy-pages`, which replaces the entire Pages deployment from a single artifact each run and would clobber concurrent PRs' reports).
+- **PR #104 merges**: `pull_request: closed` fires → `reports/pr-104/` is deleted from `gh-pages`, keeping the branch from growing unbounded.
+
+### Files to Change
+
+- `.github/workflows/visual-e2e.yml` — after the existing `Run visual e2e tests` step: parse `playwright-report/results.json` for failed test titles, push `playwright-report/` to `gh-pages` under `reports/pr-<PR_NUMBER>/` on failure, and post/update the sticky PR comment (`actions/github-script` or equivalent) in both the failure and now-passing cases. Needs `permissions: contents: write` and `permissions: pull-requests: write` added to the job.
+- `playwright.config.ts` — add a `json` reporter alongside the existing `html` one in the CI branch (`reporter: [["html", ...], ["json", { outputFile: "playwright-report/results.json" }]]`) so failed test titles can be parsed programmatically; the `html` reporter output is unchanged and remains what gets hosted.
+- `.github/workflows/visual-e2e-report-cleanup.yml` — new, `pull_request: types: [closed]`, deletes `reports/pr-<PR_NUMBER>/` from `gh-pages`.
+
+### Constraints
+
+- Publish to `gh-pages` via a direct additive push (e.g. `keep_files: true`-style branch push), never `actions/deploy-pages` — that action replaces the whole Pages deployment from one artifact per run, which would delete every other open PR's report each time one PR's workflow runs.
+- The repo's Pages source must be set to "Deploy from branch: `gh-pages`" in Settings — a one-time manual/`gh api` change, confirm with the user before applying (repo setting, not code).
+- The sticky comment must be identified by a stable hidden marker and edited in place — never create a new comment per run (would spam the PR on every push).
+- This CI change is additive to `visual-e2e.yml`'s existing behavior (artifact upload on failure stays as-is) — do not remove the existing `Upload Playwright report` / `Upload test-results` steps.
+- Cleanup only runs on PR close, not on every push — do not delete a PR's report while it's still open, even between runs.
+- Any step's `if:` condition that needs to run after a failed prior step must include one of GitHub Actions' status-check functions (`failure()`, `success()`, `always()`, `cancelled()`) — a bare expression like `steps.run-tests.outcome == 'failure'` gets an implicit `success() &&` prepended by GitHub Actions and silently evaluates to skip. First shipped version of the "Publish report to GitHub Pages" step hit exactly this (condition was `if: steps.run-tests.outcome == 'failure'`, step showed as `skipped` on PR #105's own failing run, so the report link 404'd); fixed to `if: failure() && steps.run-tests.outcome == 'failure'`.
+
+### What NOT to Do
+
+- Do not use `actions/deploy-pages` / `actions/upload-pages-artifact` — not additive, would clobber concurrent PRs' reports (see Constraints).
+- Do not automate `update-visual-baselines.yml`'s trigger as part of this task — explicitly out of scope per user (2026-07-15).
+- Do not post a new PR comment on every run — must be a single sticky comment, updated in place.
+
+### Decisions Made
+
+- Hosted GitHub Pages report (not just an artifact-download link) — confirmed with user 2026-07-15, given the repo is public so Pages is free.
+- Comment behavior: only post on failure or transition-to-passing; no comment on a clean pass with no prior failure — confirmed with user 2026-07-15.

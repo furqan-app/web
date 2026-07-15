@@ -1,0 +1,35 @@
+name: Clean up visual e2e report
+
+# Deletes a PR's hosted Playwright report (published by visual-e2e.yml to the
+# gh-pages branch at reports/pr-<number>/) once the PR closes, so gh-pages
+# doesn't grow unbounded — see docs/plans/visual-e2e-testing.md Addendum
+# (2026-07-15) and ADR 0022 Addendum (2026-07-15).
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Remove this PR's report folder
+        run: |
+          dir="reports/pr-${{ github.event.pull_request.number }}"
+          if [ -d "$dir" ]; then
+            git rm -r --ignore-unmatch "$dir"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore(e2e): remove visual report for PR #${{ github.event.pull_request.number }}"
+            git push
+          else
+            echo "No report folder for this PR — nothing to clean up."
+          fi
