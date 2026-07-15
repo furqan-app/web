@@ -134,3 +134,74 @@ const activeLines = tajweedMode
 **Why `code_v2` can't self-justify:** `code_v1` fonts contain `just`/`morx`/`feat`/`prop` (Apple AAT tables) — `just` carries the font's kashida-insertion data, consumed by the text-shaping engine to fill lines to a target width. `code_v2` COLRv1 fonts have `COLR`/`CPAL` but no AAT tables — line width is the natural advance-width sum of the glyphs. quran.com itself uses `text-align: center` + a hardcoded per-scale line-width lookup table, the same trade-off Furqan ships. Getting both properties in one font would require splicing `code_v1`'s AAT tables onto `code_v2`'s COLR/CPAL-layered glyphs — a real font-engineering task, not attempted.
 
 <!-- Addendum 11 (palette-color overrides) was reverted; Addendum 12 (legend) was never implemented and depended on it. Both removed. -->
+
+## Addendum 13 — Tajweed palette color overrides + legend (2026-07-15)
+
+**Trello:** [#113 Tajweed color palette overrides + legend](https://trello.com/c/2NjsII7R/113-tajweed-color-palette-overrides-legend)  
+**Status:** implemented
+
+### Summary
+
+Replace the font's built-in CPAL colors with brand-specific colors for each tajweed rule, using CSS `override-colors` inside `@font-palette-values`. Add a collapsible `TajweedLegend` component that appears as a sticky bar below the navbar in tajweed mode, showing each rule's color dot and Arabic label.
+
+### How it works
+
+`@font-palette-values` supports an `override-colors` descriptor that remaps individual CPAL palette slots by index. The font's built-in colors are replaced at render time — no font file modification needed. The `font-palette` property on the element must reference the named palette for overrides to take effect; this is already handled in `globals.css` via `.theme-light .fq-tajweed { font-palette: --Light; }` etc.
+
+**Critical:** `override-colors` has no effect unless `font-palette` is applied to the element. In the real reader this is already wired — do not remove those globals.css rules.
+
+### CPAL index → tajweed rule mapping (verified via fontTools on page 343)
+
+| Index | Original color | Tajweed rule | Light/Gold override |
+|---|---|---|---|
+| 3 | `rgba(181,0,0)` | المد اللازم (6 حركات) | `#E70D8A` |
+| 4 | `rgba(255,123,0)` | مد (2 / 4 / 6) جوازاً | `#BC7F22` |
+| 5 | `rgba(206,158,0)` | مد حركتان | `#C4A94D` |
+| 6 | `rgba(9,176,0)` | غنة / إخفاء | `#029E48` |
+| 7 | `rgba(63,72,230)` | تفخيم الصوت | `#067497` |
+| 8 | `rgba(47,173,255)` | قلقلة | `#0FAEC1` |
+| 9 | `rgba(244,0,0)` | المد المتصل (4 أو 5 حركات) | `#E70D8A` |
+| 10 | `rgba(44,164,171)` | verse frame ornament (teal layer) | `#ffffff` |
+| 11 | `rgba(255,0,128)` | verse frame ornament (pink layer) | `#ffffff` |
+| 12 | `rgba(216,233,216)` | verse frame fill (green) | `#ffffff` |
+
+Indices 0–2, 13–15 are used for base text and outlines — do not override them.
+
+Indices 3 and 9 (المد اللازم and المد المتصل) intentionally share the same color `#E70D8A`.
+
+Indices 10, 11, 12 are set to `#ffffff` (white) to make the verse number frame colorless, leaving only the black outline and numeral visible. This matches the clean mushaf style shown in the design reference.
+
+**Dark theme:** The implementer must determine appropriate colors for the `--Dark` palette. White (#ffffff) for the frame fill will not work in dark mode — use the dark card background color instead. All tajweed rule colors should be reviewed for contrast against the dark background.
+
+### `TajweedLegend` component
+
+A sticky bar rendered immediately below the navbar, visible only when `tajweedMode` is true. Collapsed by default — shows "ألوان التجويد ▲" toggle. Expands to a row of color dot + Arabic label pairs, RTL, wrapping on mobile.
+
+**Legend entries (in display order):**
+
+| Color dot | Label |
+|---|---|
+| `#a5a5a5` | الحرف الساكن |
+| `#C4A94D` | مد حركتان |
+| `#BC7F22` | مد (2 / 4 / 6) جوازاً |
+| `#E70D8A` | المد المتصل (4 أو 5 حركات) |
+| `#E70D8A` | المد اللازم (6 حركات) |
+| `#029E48` | غنة / إخفاء |
+| `#0FAEC1` | قلقلة |
+| `#067497` | تفخيم الصوت |
+
+الحرف الساكن (index 1, `#a5a5a5`) appears only in the legend — its CPAL color is close enough to the brand shade and is not overridden.
+
+### Files to change
+
+- `app/components/reader/FontFaceInjector.tsx` — add `override-colors` to the `--Light` and `--Gold` `@font-palette-values` blocks; leave `--Dark` with a `TODO` comment for the implementer
+- `app/components/TajweedLegend.tsx` (new) — collapsible legend client component
+- Wherever `TajweedLegend` is mounted (e.g. `app/components/QuranSafha.tsx` or the reader layout) — render it conditionally when `tajweedMode` is true, above the safha card
+
+### What NOT to do
+
+- Do not use `transparent` or `#00000000` in `override-colors` — they do not work for this font (COLRv0). Use `#ffffff` or the appropriate theme background color instead.
+- Do not remove the `.theme-* .fq-tajweed { font-palette: ... }` rules from `globals.css` — the overrides have no effect without them.
+- Do not override indices 0–2, 13–15 (base text and outline colors).
+- Do not show `TajweedLegend` when `tajweedMode` is false.
+- Do not hardcode Dark theme colors as white — they will be invisible against a dark background.
