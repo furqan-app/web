@@ -6,6 +6,10 @@ name: Visual e2e tests
 on:
   pull_request:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   visual-e2e:
     runs-on: ubuntu-latest
@@ -55,6 +59,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run visual e2e tests
+        id: run-tests
         run: npm run e2e:test
 
       - name: Upload Playwright report
@@ -72,3 +77,87 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 14
+
+      - name: Publish report to GitHub Pages
+        if: steps.run-tests.outcome == 'failure'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playwright-report
+          destination_dir: reports/pr-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Comment failure summary on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- visual-e2e-report -->";
+            const testsFailed = "${{ steps.run-tests.outcome }}" === "failure";
+            const prNumber = context.issue.number;
+            const reportUrl = `https://furqan-app.github.io/web/reports/pr-${prNumber}/`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            if (!testsFailed) {
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body: `${marker}\n✅ Visual regression tests are now passing.`,
+                });
+              }
+              return;
+            }
+
+            const resultsPath = "playwright-report/results.json";
+            const failed = [];
+            if (fs.existsSync(resultsPath)) {
+              const report = JSON.parse(fs.readFileSync(resultsPath, "utf8"));
+              const walk = (suite, trail) => {
+                const nextTrail = suite.title ? [...trail, suite.title] : trail;
+                for (const s of suite.suites || []) walk(s, nextTrail);
+                for (const spec of suite.specs || []) {
+                  const specFailed = spec.tests.some((t) =>
+                    t.results.some((r) => r.status !== "passed" && r.status !== "skipped"),
+                  );
+                  if (specFailed) {
+                    const projects = [...new Set(spec.tests.map((t) => t.projectName))].join(", ");
+                    failed.push(`- ${[...nextTrail, spec.title].filter(Boolean).join(" > ")} [${projects}]`);
+                  }
+                }
+              };
+              for (const s of report.suites || []) walk(s, []);
+            }
+
+            const body = [
+              marker,
+              "❌ Visual regression tests failed.",
+              "",
+              failed.length ? failed.join("\n") : "(failed screen list unavailable — see the report)",
+              "",
+              `[View the interactive diff report](${reportUrl})`,
+            ].join("\n");
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
