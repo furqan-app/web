@@ -18,10 +18,11 @@ import {
   fetchChapterAudio,
   fetchChapterVersePages,
   fetchReciters,
+  fetchStopPoint,
 } from "@/app/utils/recitation-api";
 import {
-  computeStopVerseKey,
   computeVisiblePageSet,
+  decideChapterEnd,
   findActiveVerseTiming,
   findActiveWordLocation,
   parseChapterIdFromVerseKey,
@@ -30,14 +31,43 @@ import {
 } from "@/app/utils/recitation";
 import {
   DEFAULT_RECITATION_SETTINGS,
+  QURAN_LAST_CHAPTER_ID,
+  QURAN_LAST_VERSE_KEY,
   RECITATION_HIGHLIGHT_CLASS,
 } from "@/app/constants/recitation";
 import {
   RecitationSettings,
   RecitationStatus,
   Reciter,
+  StopPoint,
   VerseTiming,
 } from "@/app/types/recitation";
+
+// Resolves where stopPoint should end playback, as a { verseKey, chapterId }
+// target — the chapter may be later than the currently loaded one (e.g. a
+// juz/hizb/rub/page can span a surah boundary). "none" is a hardcoded
+// constant (no fetch). "surah" needs the chapter's own verseTimings, so it
+// awaits chapterAudioPromise — but page/rub/hizb/juz only need verseKey, so
+// their fetchStopPoint call can run concurrently with the chapter-audio
+// fetch instead of waiting on it; callers should Promise.all this alongside
+// chapterAudioPromise, not await chapterAudioPromise first. See
+// docs/plans/recitation-playback.md Addendum 5.
+async function resolveStopTarget(
+  verseKey: string,
+  stopPoint: StopPoint,
+  chapterAudioPromise: Promise<{ verseTimings: VerseTiming[] }>,
+  chapterId: number,
+): Promise<{ verseKey: string; chapterId: number }> {
+  if (stopPoint === "none") {
+    return { verseKey: QURAN_LAST_VERSE_KEY, chapterId: QURAN_LAST_CHAPTER_ID };
+  }
+  if (stopPoint === "surah") {
+    const { verseTimings } = await chapterAudioPromise;
+    const lastVerseKey = verseTimings[verseTimings.length - 1]?.verseKey ?? verseKey;
+    return { verseKey: lastVerseKey, chapterId };
+  }
+  return fetchStopPoint(verseKey, stopPoint);
+}
 
 type RecitationContextType = {
   settings: RecitationSettings;
@@ -90,6 +120,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const versePagesCacheRef = useRef<Map<number, Record<string, number>>>(new Map());
   const startVerseKeyRef = useRef<string | null>(null);
   const stopVerseKeyRef = useRef<string | null>(null);
+  const stopChapterIdRef = useRef<number | null>(null);
   const perAyahRepeatsDoneRef = useRef(0);
   const rangeRepeatsDoneRef = useRef(0);
   const currentVerseKeyRef = useRef<string | null>(null);
@@ -184,9 +215,15 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       setStatus("loading");
 
       try {
-        const [chapterAudio, versePages] = await Promise.all([
-          fetchChapterAudio(reciterId, chapterId),
+        // resolveStopTarget's DB-backed scopes (page/rub/hizb/juz) only need
+        // verseKey, not chapterAudio — so it's kicked off alongside the
+        // chapter-audio fetch instead of after it. "surah" internally awaits
+        // the same chapterAudioPromise, so this never double-fetches.
+        const chapterAudioPromise = fetchChapterAudio(reciterId, chapterId);
+        const [chapterAudio, versePages, stopTarget] = await Promise.all([
+          chapterAudioPromise,
           getVersePages(chapterId),
+          resolveStopTarget(verseKey, settings.stopPoint, chapterAudioPromise, chapterId),
         ]);
 
         const startTiming = chapterAudio.verseTimings.find((vt) => vt.verseKey === verseKey);
@@ -199,12 +236,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         verseTimingsRef.current = chapterAudio.verseTimings;
         versePagesRef.current = versePages;
         startVerseKeyRef.current = verseKey;
-        stopVerseKeyRef.current = computeStopVerseKey(
-          chapterAudio.verseTimings,
-          versePages,
-          verseKey,
-          settings.stopPoint,
-        );
+        stopVerseKeyRef.current = stopTarget.verseKey;
+        stopChapterIdRef.current = stopTarget.chapterId;
         perAyahRepeatsDoneRef.current = 0;
         rangeRepeatsDoneRef.current = 0;
         currentVerseKeyRef.current = verseKey;
@@ -249,6 +282,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       }, pauseMs);
     } else {
       audio.currentTime = timestampFromMs / 1000;
+      // Always (re)start playback here, not just in the pauseMs>0 branch —
+      // scheduleSeek is also called from handleChapterEnded, where the audio
+      // is already paused (the native "ended" event fires with audio.paused
+      // === true). Calling play() on already-playing audio (the
+      // handleTimeUpdate call site) is a harmless no-op.
+      audio.play();
     }
   }, []);
 
@@ -265,6 +304,107 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       }
     },
     [pathname, safhaView, isLgUp, router],
+  );
+
+  // Fetches chapterId's audio + verse-pages, loads it into the shared refs
+  // and the <audio> element, seeks to seekVerseKey's timestampFrom (or the
+  // chapter's first verse if omitted), and plays. Shared by chainToNextChapter
+  // and seekToRangeStart's cross-chapter reload — both need the identical
+  // "swap the loaded chapter" sequence; keeping one copy avoids the two
+  // silently drifting apart. Returns false (caller should stop()) if the
+  // audio element is gone or seekVerseKey isn't actually in the fetched
+  // chapter (a stale/incorrect stop target).
+  const loadChapter = useCallback(
+    async (reciterId: number, chapterId: number, seekVerseKey?: string): Promise<boolean> => {
+      const audio = audioRef.current;
+      if (!audio) return false;
+
+      const [chapterAudio, versePages] = await Promise.all([
+        fetchChapterAudio(reciterId, chapterId),
+        getVersePages(chapterId),
+      ]);
+      const targetVerseKey = seekVerseKey ?? chapterAudio.verseTimings[0]?.verseKey ?? null;
+      const targetTiming = targetVerseKey
+        ? chapterAudio.verseTimings.find((vt) => vt.verseKey === targetVerseKey)
+        : undefined;
+      if (seekVerseKey && !targetTiming) return false;
+
+      verseTimingsRef.current = chapterAudio.verseTimings;
+      versePagesRef.current = versePages;
+      currentChapterIdRef.current = chapterId;
+      perAyahRepeatsDoneRef.current = 0;
+      currentVerseKeyRef.current = targetVerseKey;
+      setCurrentVerseKey(targetVerseKey);
+      if (targetVerseKey) followPage(targetVerseKey);
+
+      audio.src = chapterAudio.audioUrl;
+      audio.playbackRate = settings.playbackSpeed;
+      audio.currentTime = (targetTiming?.timestampFrom ?? 0) / 1000;
+      await audio.play();
+      return true;
+    },
+    [settings.playbackSpeed, getVersePages, followPage],
+  );
+
+  // Loads chapterId + 1's audio and keeps playing from its start — the
+  // currently-loaded chapter's audio has ended but the resolved stop verse
+  // is in a later chapter (juz/hizb/rub/page spanning a surah boundary, or
+  // stopPoint "none"). See docs/plans/recitation-playback.md Addendum 5 —
+  // supersedes ADR 0021's original "no cross-chapter auto-continue".
+  const chainToNextChapter = useCallback(
+    async (nextChapterId: number) => {
+      const reciterId = settings.reciterId ?? reciters[0]?.id;
+      if (!reciterId) {
+        stop();
+        return;
+      }
+      try {
+        const ok = await loadChapter(reciterId, nextChapterId);
+        if (!ok) stop();
+      } catch {
+        stop();
+      }
+    },
+    [settings.reciterId, reciters, loadChapter, stop],
+  );
+
+  // Seeks playback back to startVerseKey for a whole-range repeat. If
+  // startVerseKey's chapter is still the one currently loaded, this is a
+  // plain in-place seek (unchanged behavior). If we've since chained forward
+  // into a later chapter, reload startVerseKey's chapter's audio via
+  // loadChapter first.
+  const seekToRangeStart = useCallback(
+    (pauseMs: number) => {
+      const startVerseKey = startVerseKeyRef.current;
+      const audio = audioRef.current;
+      if (!startVerseKey || !audio) return;
+
+      const startChapterId = parseChapterIdFromVerseKey(startVerseKey);
+      if (startChapterId === currentChapterIdRef.current) {
+        const startTiming = verseTimingsRef.current.find((vt) => vt.verseKey === startVerseKey);
+        if (startTiming) scheduleSeek(startTiming.timestampFrom, pauseMs);
+        return;
+      }
+
+      const reciterId = settings.reciterId ?? reciters[0]?.id;
+      if (!reciterId) return;
+
+      const reload = async () => {
+        const ok = await loadChapter(reciterId, startChapterId, startVerseKey);
+        if (!ok) stop();
+      };
+
+      if (pauseMs > 0) {
+        audio.pause();
+        pendingSeekTimeoutRef.current = setTimeout(() => {
+          reload();
+          pendingSeekTimeoutRef.current = null;
+        }, pauseMs);
+      } else {
+        reload();
+      }
+    },
+    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop],
   );
 
   const handleTimeUpdate = useCallback(() => {
@@ -288,18 +428,15 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // verse_key is globally unique ("2:141" only exists in chapter 2), so
+      // matching it alone is sufficient — no need to also compare chapter id.
       const isStopVerse = previousVerseKey === stopVerseKeyRef.current;
       if (previousTiming && isStopVerse) {
         const rangeTarget = resolveRepeatTarget(settings.rangeRepeatCount);
         if (rangeRepeatsDoneRef.current + 1 < rangeTarget) {
           rangeRepeatsDoneRef.current += 1;
           perAyahRepeatsDoneRef.current = 0;
-          const startTiming = verseTimings.find(
-            (vt) => vt.verseKey === startVerseKeyRef.current,
-          );
-          if (startTiming) {
-            scheduleSeek(startTiming.timestampFrom, settings.pauseBetweenRepeatsMs);
-          }
+          seekToRangeStart(settings.pauseBetweenRepeatsMs);
           return;
         }
         stop();
@@ -313,7 +450,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     }
 
     applyWordHighlight(findActiveWordLocation(activeTiming, currentTimeMs));
-  }, [settings, scheduleSeek, stop, followPage, applyWordHighlight]);
+  }, [settings, scheduleSeek, seekToRangeStart, stop, followPage, applyWordHighlight]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -322,21 +459,88 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     return () => audio.removeEventListener("timeupdate", handleTimeUpdate);
   }, [handleTimeUpdate]);
 
+  // Fires when the currently-loaded chapter's audio physically finishes.
+  // `timeupdate`'s verse-transition detection (above) only fires when moving
+  // FROM one verse INTO another within the same loaded audio — it can never
+  // fire for the chapter's literal last verse, since findActiveVerseTiming
+  // clamps to it forever once reached. This was a latent gap even before
+  // this addendum (stopPoint: "surah" reaching the chapter's actual last
+  // verse never called stop() via code, only via the browser silently
+  // pausing) and is also the only place cross-chapter chaining can hook in.
+  // See docs/plans/recitation-playback.md Addendum 5.
+  const handleChapterEnded = useCallback(() => {
+    const chapterId = currentChapterIdRef.current;
+    const verseTimings = verseTimingsRef.current;
+    const lastTiming = verseTimings[verseTimings.length - 1];
+    if (chapterId == null || !lastTiming) return;
+
+    const perAyahTarget = resolveRepeatTarget(settings.perAyahRepeatCount);
+    if (perAyahRepeatsDoneRef.current + 1 < perAyahTarget) {
+      perAyahRepeatsDoneRef.current += 1;
+      scheduleSeek(lastTiming.timestampFrom, settings.pauseBetweenRepeatsMs);
+      return;
+    }
+
+    const decision = decideChapterEnd(
+      chapterId,
+      stopChapterIdRef.current,
+      settings.stopPoint,
+      rangeRepeatsDoneRef.current,
+      resolveRepeatTarget(settings.rangeRepeatCount),
+    );
+    switch (decision.action) {
+      case "repeat-range":
+        rangeRepeatsDoneRef.current += 1;
+        perAyahRepeatsDoneRef.current = 0;
+        seekToRangeStart(settings.pauseBetweenRepeatsMs);
+        return;
+      case "chain":
+        chainToNextChapter(decision.nextChapterId);
+        return;
+      case "stop":
+        stop();
+        return;
+    }
+  }, [settings, scheduleSeek, seekToRangeStart, chainToNextChapter, stop]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.addEventListener("ended", handleChapterEnded);
+    return () => audio.removeEventListener("ended", handleChapterEnded);
+  }, [handleChapterEnded]);
+
   // Live playback speed changes (no reload needed).
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = settings.playbackSpeed;
   }, [settings.playbackSpeed]);
 
   // Stop-point changed mid-session (via the player bar's settings sheet) —
-  // recompute where the current range should end without restarting playback.
+  // recompute where the range should end without restarting playback.
+  // Recomputed relative to the verse currently playing (not the original
+  // startVerseKey) — if playback has already chained past the original
+  // verse's chapter, "end of surah/hizb/rub/juz/page" should mean the one
+  // containing where we are now, not one already behind us.
   useEffect(() => {
-    if (status === "idle" || !startVerseKeyRef.current) return;
-    stopVerseKeyRef.current = computeStopVerseKey(
-      verseTimingsRef.current,
-      versePagesRef.current,
-      startVerseKeyRef.current,
-      settings.stopPoint,
-    );
+    if (status === "idle") return;
+    const referenceVerseKey = currentVerseKeyRef.current ?? startVerseKeyRef.current;
+    if (!referenceVerseKey) return;
+    let cancelled = false;
+    (async () => {
+      const target = await resolveStopTarget(
+        referenceVerseKey,
+        settings.stopPoint,
+        Promise.resolve({ verseTimings: verseTimingsRef.current }),
+        currentChapterIdRef.current ?? parseChapterIdFromVerseKey(referenceVerseKey),
+      );
+      if (!cancelled) {
+        stopVerseKeyRef.current = target.verseKey;
+        stopChapterIdRef.current = target.chapterId;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.stopPoint]);
 

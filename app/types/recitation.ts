@@ -24,7 +24,7 @@ export type ChapterAudio = {
   verseTimings: VerseTiming[];
 };
 
-export type StopPoint = "page" | "surah";
+export type StopPoint = "page" | "surah" | "rub" | "hizb" | "juz" | "none";
 
 // A finite count (1-10) or "infinite" — JSON/localStorage-safe stand-in for
 // Infinity, which JSON.stringify would otherwise silently turn into null.

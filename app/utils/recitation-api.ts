@@ -32,3 +32,13 @@ export const fetchChapterVersePages = async (
   const res = await fetch(`/api/quran/chapters/${chapterId}/verse-pages`);
   return unwrap<Record<string, number>>(res);
 };
+
+export const fetchStopPoint = async (
+  verseKey: string,
+  scope: "page" | "rub" | "hizb" | "juz",
+): Promise<{ verseKey: string; chapterId: number }> => {
+  const res = await fetch(
+    `/api/quran/verses/${encodeURIComponent(verseKey)}/stop-point?scope=${scope}`,
+  );
+  return unwrap<{ verseKey: string; chapterId: number }>(res);
+};
