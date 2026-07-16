@@ -83,8 +83,7 @@ type RecitationContextType = {
   stop: () => void;
   registerWordRef: (location: string, el: HTMLElement | null) => void;
   isSettingsOpen: boolean;
-  settingsStartVerseKey: string | null;
-  openSettings: (startVerseKey?: string) => void;
+  openSettings: () => void;
   closeSettings: () => void;
 };
 
@@ -112,7 +111,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [currentWordLocation, setCurrentWordLocation] = useState<string | null>(null);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settingsStartVerseKey, setSettingsStartVerseKey] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const verseTimingsRef = useRef<VerseTiming[]>([]);
@@ -584,14 +582,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.reciterId]);
 
-  const openSettings = useCallback((startVerseKey?: string) => {
-    setSettingsStartVerseKey(startVerseKey ?? null);
+  const openSettings = useCallback(() => {
     setIsSettingsOpen(true);
   }, []);
 
   const closeSettings = useCallback(() => {
     setIsSettingsOpen(false);
-    setSettingsStartVerseKey(null);
   }, []);
 
   return (
@@ -610,7 +606,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         stop,
         registerWordRef,
         isSettingsOpen,
-        settingsStartVerseKey,
         openSettings,
         closeSettings,
       }}
