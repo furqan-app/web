@@ -150,7 +150,15 @@
     "pause": "إيقاف مؤقت",
     "resume": "متابعة",
     "stop": "إيقاف",
-    "nowPlaying": "تلاوة"
+    "nowPlaying": "تلاوة",
+    "stopPointRub": "نهاية الربع",
+    "stopPointHizb": "نهاية الحزب",
+    "stopPointJuz": "نهاية الجزء",
+    "stopPointNone": "بدون توقف",
+    "repeatSectionLabel": "التكرار",
+    "reciterPlaceholder": "اختر قارئًا",
+    "reciterSearchPlaceholder": "ابحث عن قارئ…",
+    "reciterEmpty": "لم يتم العثور على قارئ."
   },
   "viewingChipGeneric": ""
 }

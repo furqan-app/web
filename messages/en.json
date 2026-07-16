@@ -149,7 +149,15 @@
     "pause": "Pause",
     "resume": "Resume",
     "stop": "Stop",
-    "nowPlaying": "Recitation"
+    "nowPlaying": "Recitation",
+    "stopPointRub": "End of rub",
+    "stopPointHizb": "End of hizb",
+    "stopPointJuz": "End of Juz'",
+    "stopPointNone": "No stop",
+    "repeatSectionLabel": "Repeats",
+    "reciterPlaceholder": "Choose a reciter",
+    "reciterSearchPlaceholder": "Search reciters…",
+    "reciterEmpty": "No reciter found."
   },
   "viewingChipGeneric": ""
 }

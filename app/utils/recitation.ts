@@ -1,6 +1,38 @@
 import { getPagePair } from "@/app/utils/quran-pages";
+import { QURAN_LAST_CHAPTER_ID } from "@/app/constants/recitation";
 import { RepeatCount, StopPoint, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
+
+export type ChapterEndDecision =
+  | { action: "repeat-range" }
+  | { action: "chain"; nextChapterId: number }
+  | { action: "stop" };
+
+// Decides what should happen once a chapter's audio has fully ended and any
+// per-ayah repeat on its last verse is exhausted — the three-way branch from
+// docs/plans/recitation-playback.md Addendum 5's chaining decision tree.
+// "none" never repeats a range (there's no bounded range to repeat back to —
+// the whole-range stepper is hidden for it in the UI, but the engine must
+// not trust that alone since a stale rangeRepeatCount from a previous
+// stopPoint could still be stored).
+export const decideChapterEnd = (
+  currentChapterId: number,
+  stopChapterId: number | null,
+  stopPoint: StopPoint,
+  rangeRepeatsDone: number,
+  rangeRepeatTarget: number,
+): ChapterEndDecision => {
+  if (currentChapterId === stopChapterId) {
+    if (stopPoint !== "none" && rangeRepeatsDone + 1 < rangeRepeatTarget) {
+      return { action: "repeat-range" };
+    }
+    return { action: "stop" };
+  }
+  if (currentChapterId < QURAN_LAST_CHAPTER_ID) {
+    return { action: "chain", nextChapterId: currentChapterId + 1 };
+  }
+  return { action: "stop" };
+};
 
 export const parseChapterIdFromVerseKey = (verseKey: string): number =>
   Number(verseKey.split(":")[0]);
@@ -37,37 +69,6 @@ export const findActiveWordLocation = (
     ([, startMs, endMs]) => currentTimeMs >= startMs && currentTimeMs < endMs,
   );
   return segment ? `${verseTiming.verseKey}:${segment[0]}` : null;
-};
-
-// The last verse of the stop-scope range, scanning forward from startVerseKey.
-// - "surah": always the chapter's last verse (verseTimings' last entry).
-// - "page": the last verse in verseTimings that shares startVerseKey's page
-//   number, scanning forward while the page stays the same. If the page's
-//   last verse actually belongs to the NEXT chapter (a page spanning two
-//   surahs), we can't play past this chapter's audio anyway — falls back to
-//   this chapter's last verse.
-export const computeStopVerseKey = (
-  verseTimings: VerseTiming[],
-  versePages: Record<string, number>,
-  startVerseKey: string,
-  stopPoint: StopPoint,
-): string => {
-  const lastVerseKey = verseTimings[verseTimings.length - 1]?.verseKey ?? startVerseKey;
-  if (stopPoint === "surah") return lastVerseKey;
-
-  const startPage = versePages[startVerseKey];
-  if (startPage == null) return lastVerseKey;
-
-  const startIndex = verseTimings.findIndex((vt) => vt.verseKey === startVerseKey);
-  if (startIndex === -1) return lastVerseKey;
-
-  let stopVerseKey = startVerseKey;
-  for (let i = startIndex; i < verseTimings.length; i++) {
-    const verseKey = verseTimings[i].verseKey;
-    if (versePages[verseKey] !== startPage) break;
-    stopVerseKey = verseKey;
-  }
-  return stopVerseKey;
 };
 
 // Page ids currently visible in the reader: just the current page in single
