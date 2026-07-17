@@ -17,3 +17,15 @@ export const VERSE_SNIPPET_WORD_LIMIT = 20;
 
 /** Character cap for a truncated comment preview in a My Marks row. */
 export const COMMENT_PREVIEW_CHAR_LIMIT = 60;
+
+/** Marks returned per page by GET /api/marks (cursor pagination). */
+export const MARKS_PAGE_LIMIT = 20;
+
+/**
+ * A mark's identity as `marked_type + marked_id` — unique per user (ADR
+ * 0025). Used both as the pagination cursor (`GET /api/marks`) and as the
+ * row key for remove-in-place tracking (MyMarksList), so both stay in sync
+ * off one definition.
+ */
+export const markKey = (mark: { marked_type: string; marked_id: string }) =>
+  `${mark.marked_type}:${mark.marked_id}`;

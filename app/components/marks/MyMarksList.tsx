@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, MouseEvent } from "react";
+import { useEffect, useRef, useState, MouseEvent } from "react";
 import { useLocale } from "next-intl";
 import { Bookmark, Check, ChevronDown, List, MessageSquare, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
@@ -9,7 +9,7 @@ import { toLocaleNumeral } from "@utils/i18n";
 import { useAllMarks } from "@hooks/use-all-marks";
 import { deletePageMark } from "@/app/server/actions/deletePageMark";
 import { MarkListItem } from "@/app/server/actions/getAllMarks";
-import { MARK_CATEGORIES, COMMENT_PREVIEW_CHAR_LIMIT } from "@constants/marks";
+import { MARK_CATEGORIES, COMMENT_PREVIEW_CHAR_LIMIT, markKey } from "@constants/marks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,11 +22,6 @@ const commentPreview = (comment: string) =>
   comment.length > COMMENT_PREVIEW_CHAR_LIMIT
     ? `${comment.slice(0, COMMENT_PREVIEW_CHAR_LIMIT)}…`
     : comment;
-
-// One mark per spot (ADR 0025), so marked_type + marked_id uniquely identifies
-// a row for removingKeys/failedKeys tracking.
-const markKey = (mark: MarkListItem) =>
-  `${mark.marked_type}:${mark.marked_id}`;
 
 // Solid chip class per category key, for the row icon (a mark's colour comes
 // from its own category, independent of the active filter — matters in "All").
@@ -65,8 +60,9 @@ type SurahGroup = {
 };
 
 /**
- * `items` is already sorted (surah, verse, wordPos) by the API, so surah runs
- * are always contiguous — this is a linear scan, not a re-sort.
+ * `items` is already sorted (surah, verse, wordPos) by the API — pages arrive
+ * in that order too, so surah runs stay contiguous across page boundaries.
+ * This is a linear scan, not a re-sort.
  */
 const groupBySurah = (items: Array<MarkListItem>): Array<SurahGroup> => {
   const groups: Array<SurahGroup> = [];
@@ -100,10 +96,32 @@ const MarkRowSkeleton = () => (
 export const MyMarksList = () => {
   const t = useTranslations();
   const locale = useLocale();
-  const { data: marks, isLoading, reload } = useAllMarks();
   const [active, setActive] = useState("all");
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    reload,
+  } = useAllMarks(active);
   const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
   const [failedKeys, setFailedKeys] = useState<Set<string>>(new Set());
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) {
+        fetchNextPage();
+      }
+    });
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleRemove = async (
     e: MouseEvent<HTMLButtonElement>,
@@ -149,9 +167,17 @@ export const MyMarksList = () => {
     );
   }
 
-  const allMarks = marks ?? [];
+  const activeItems = data?.pages.flatMap((page) => page.data) ?? [];
 
-  if (allMarks.length === 0) {
+  // A page can come back with zero enriched items (its raw marks all failed
+  // Quran lookup) while still carrying a nextCursor — don't treat that as
+  // "no more marks" or the sentinel below would never get a chance to fetch
+  // the pages after it.
+  const exhausted = activeItems.length === 0 && !hasNextPage;
+
+  // "all" tab empty means the user has zero marks at all — hide the tab
+  // strip entirely, same as before pagination.
+  if (active === "all" && exhausted) {
     return (
       <p className="text-center text-sm text-muted-foreground py-12">
         {t("marks.empty", "No marks yet.")}
@@ -160,10 +186,6 @@ export const MyMarksList = () => {
   }
 
   const activeFilter = FILTERS.find((f) => f.key === active) ?? FILTERS[0];
-  const activeItems =
-    active === "all"
-      ? allMarks
-      : allMarks.filter((m) => m.category === active);
 
   return (
     <>
@@ -224,7 +246,7 @@ export const MyMarksList = () => {
         })}
       </div>
 
-      {activeItems.length === 0 ? (
+      {exhausted ? (
         <p className="text-center text-sm text-muted-foreground py-8">
           {t("marks.emptyCategory", "No marks in this category yet.")}
         </p>
@@ -321,6 +343,12 @@ export const MyMarksList = () => {
               })}
             </div>
           ))}
+
+          {hasNextPage ? (
+            <div ref={sentinelRef}>
+              {isFetchingNextPage ? <MarkRowSkeleton /> : null}
+            </div>
+          ) : null}
         </div>
       )}
     </>
