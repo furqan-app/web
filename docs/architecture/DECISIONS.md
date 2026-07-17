@@ -297,23 +297,27 @@ const user = extractUser(request); // { id, email, ... }
 
 ## Release & Deployment Workflow
 
-**Decision:** Prod deploys go through a required `release/x.y.z` stabilization branch, not directly from `main`. See [ADR 0015](adr/0015-release-branch-workflow.md).
+**Decision:** Prod deploys go through a required `release/x.y.z` stabilization branch, not directly from `main`, and now stage through a `stg` deploy step first. See [ADR 0015](adr/0015-release-branch-workflow.md) and [ADR 0026](adr/0026-staging-environment.md).
 
 ```
-main → /cut-release → release/x.y.z → (local testing) → /promote-release → prod → /sync-main-from-prod → main
+main → /cut-release → release/x.y.z → /promote-to-staging → stg → /promote-release → prod → /sync-main-from-prod → main
 ```
 
-- `/cut-release <major|minor|patch>` — branches `release/x.y.z` off `main`, bumps `package.json` version + tags `vX.Y.Z`, labels every card in **"To Be Released"** with the version and moves them to **Done**, then creates a GitHub Release whose notes are built from those same cards (title + URL) — not `--generate-notes`, since Trello is the curated "what's included" source, not raw commit/PR history.
+- `/cut-release <major|minor|patch>` — branches `release/x.y.z` off `main`, bumps `package.json` version + tags `vX.Y.Z`, labels every card in **"To Be Released"** with the version and moves them to **Done**, then creates a GitHub Release whose notes are built from those same cards (title + URL) — not `--generate-notes`, since Trello is the curated "what's included" source, not raw commit/PR history. It also diffs the previous release tag against the new release branch for Quran/App DB changes and, if any are found, appends a `## Manual Action Required` section to the release notes and calls it out in its chat report — non-blocking, reminder-only (see below).
+- `/promote-to-staging <version>` — opens the PR `release/x.y.z` → `stg`. Hostinger's staging site auto-deploys on any push to `stg`, so merging the PR is sufficient.
 - `/promote-release <version>` — opens the PR `release/x.y.z` → `prod`. Hostinger auto-deploys on any push to `prod`, so merging the PR is sufficient — no manual hPanel redeploy click needed.
 - `/sync-main-from-prod` — opens the PR `prod` → `main` afterward, to capture any fixes made on the release branch back into `main`.
-- `/release <major|minor|patch>` — orchestrator that runs the above three in one continuous flow, pausing only at genuine human checkpoints (confirm local testing passed, confirm the prod PR merged, confirm the Hostinger redeploy was clicked). Verifies PR merges via `gh pr view` rather than trusting the user's word where that's possible.
+- `/release <major|minor|patch>` — orchestrator that runs the above four in one continuous flow, pausing only at genuine human checkpoints (confirm the `stg` PR merged and staging looks right, confirm the prod PR merged, confirm the `main`-sync PR merged). Verifies PR merges via `gh pr view` rather than trusting the user's word where that's possible.
 
 **Constraints:**
 - `protect-prod.yml` only accepts PRs into `prod` whose source branch starts with `release/` — direct `main → prod` PRs are no longer permitted, including for hotfixes (cut a release branch for those too).
-- Testing happens locally (`npm run build && npm start` against the release branch) — there is no staging deployment. Hostinger hosts prod only.
+- `protect-stg.yml` mirrors `protect-prod.yml`: PRs into `stg` must come from a `release/*` branch.
+- Staging (`stg`) has its own fresh `furqan_quran`/`furqan_app` databases, independent of prod's — never a snapshot of prod data, to avoid copying real user data into a lower-security environment.
+- The `release → stg` merge goes through a reviewed PR like `release → prod` (not a direct push), even though there's typically nothing new to review — keeps the promotion steps symmetric and leaves an audit trail of when staging was refreshed.
 - Cards move into "To Be Released" manually when their PR merges to `main`; `/cut-release` is what stamps the version label and moves them to `Done`, not the merge itself.
 - Do not skip `/sync-main-from-prod` after a release — without it, fixes made directly on a release branch during stabilization silently disappear from `main`'s history.
-- `/release` must not skip its checkpoints — only local testing lacks a programmatic check and must be taken on the user's word; PR merges must always be verified via `gh`, never assumed.
+- `/release` must not skip its checkpoints — PR merges must always be verified via `gh`, never assumed; only the "staging looks right" judgment at Checkpoint 1 has no programmatic check and is taken on the user's word.
+- `/cut-release`'s DB-change detection is file-path-based only (`prisma/quran/schema.prisma`, `scripts/quran-seed/**`, `prisma/app/migrations/**`) and never blocks the flow — it exists because the Quran DB has no automatic migration path (`prisma/migrations` is explicitly unused for it; re-sync is the destructive `npm run seed:quran -- --force`), so a schema/seed change merged to `main` silently doesn't reach prod without a manual re-seed. It does not attempt to detect generic application-level breaking changes — that's left to PR review.
 
 ---
 
