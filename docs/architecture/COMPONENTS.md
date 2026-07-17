@@ -84,7 +84,7 @@ app/global-error.tsx         — last-resort error boundary for the root layout 
 
 ```
 (page.tsx — server: header + session gate, self-marks only, no grant equivalent)
-  MyMarksList                — client: fetches all the caller's marks via useAllMarks; a controlled filter (default "All") over "All" + one entry per MARK_CATEGORIES, rendered responsively — a Radix DropdownMenu on mobile (`< md`, so 7 filters never overflow) and a wrapping pill-chip row on `md+`; the selected filter's marks are grouped by surah (mushaf order), full-width rows, each row's icon coloured by its own category (matters in All), comment previewed inline when present; each row links to /pages/[page] and has an inline remove button (deletePageMark, reused from delete-my-marks)
+  MyMarksList                — client: fetches the caller's marks page-by-page via useAllMarks (useInfiniteQuery, cursor-paginated, one query per active category); a controlled filter (default "All") over "All" + one entry per MARK_CATEGORIES, rendered responsively — a Radix DropdownMenu on mobile (`< md`, so 7 filters never overflow) and a wrapping pill-chip row on `md+`; switching the filter is a fresh paginated query (own cache — flipping back to a previously-viewed tab is instant); the loaded pages' marks are grouped by surah (mushaf order), full-width rows, each row's icon coloured by its own category (matters in All), comment previewed inline when present; each row links to /pages/[page] and has an inline remove button (deletePageMark, reused from delete-my-marks); an IntersectionObserver sentinel below the last row auto-loads the next page on scroll
   MarksSignedOutPrompt       — client: sign-in CTA when unauthenticated (own copy — not shared with mushaf/SignedOutPrompt)
 ```
 

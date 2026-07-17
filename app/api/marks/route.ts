@@ -2,7 +2,12 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { appPrisma, quranPrisma } from "@/app/utils/db";
 import { extractUser } from "@/app/api/request";
-import { VERSE_SNIPPET_WORD_LIMIT } from "@/app/constants/marks";
+import {
+  VERSE_SNIPPET_WORD_LIMIT,
+  MARKS_PAGE_LIMIT,
+  MARK_CATEGORIES,
+  markKey,
+} from "@/app/constants/marks";
 
 export type MarkListItem = {
   // A mark is one row (ADR 0025): a category key (see MARK_CATEGORIES, e.g.
@@ -18,6 +23,11 @@ export type MarkListItem = {
   snippet: string;
 };
 
+export type MarksPage = {
+  data: Array<MarkListItem>;
+  nextCursor: string | null;
+};
+
 const buildVerseSnippet = (words: Array<{ qpc_uthmani_hafs: string }>) => {
   const displayWords = words.map((w) => w.qpc_uthmani_hafs);
   return displayWords.length > VERSE_SNIPPET_WORD_LIMIT
@@ -31,10 +41,12 @@ const buildVerseSnippet = (words: Array<{ qpc_uthmani_hafs: string }>) => {
  * for verse marks — a verse mark has no word segment, so it sorts after
  * every word of that verse (it's triggered at the end-of-verse glyph).
  */
-const getSortKey = (item: Pick<MarkListItem, "marked_type" | "marked_id">) => {
+const getSortKey = (item: { marked_type: string; marked_id: string }) => {
   const [surah, verse, word] = item.marked_id.split(":").map(Number);
   return [surah, verse, item.marked_type === "word" ? word : Infinity];
 };
+
+const VALID_CATEGORIES = new Set(MARK_CATEGORIES.map((c) => c.key));
 
 /**
  * This request is protected by the global middleware in middleware.ts
@@ -46,12 +58,43 @@ export async function GET(request: NextRequest) {
     return jsonResponse({ code: 401, message: "Unauthorized" });
   }
 
+  const category = request.nextUrl.searchParams.get("category");
+  const cursor = request.nextUrl.searchParams.get("cursor");
+
+  if (category && category !== "all" && !VALID_CATEGORIES.has(category)) {
+    return jsonResponse({ code: 422, message: "Invalid category" });
+  }
+
   const marks = await appPrisma.mark.findMany({
-    where: { to_user: user.id },
+    where: {
+      to_user: user.id,
+      ...(category && category !== "all" ? { category } : {}),
+    },
   });
 
-  const wordMarks = marks.filter((m) => m.marked_type === "word");
-  const verseMarks = marks.filter((m) => m.marked_type === "verse");
+  marks.sort((a, b) => {
+    const [aSurah, aVerse, aWord] = getSortKey(a);
+    const [bSurah, bVerse, bWord] = getSortKey(b);
+    // aWord/bWord are both Infinity when comparing two verse marks in the
+    // same verse — Infinity - Infinity is NaN, which Array.sort treats as 0
+    // (stable, no crash), but `|| 0` makes that explicit rather than relying
+    // on sort's NaN handling.
+    return aSurah - bSurah || aVerse - bVerse || (aWord - bWord || 0);
+  });
+
+  // Cursor not found (e.g. that mark was deleted mid-scroll) falls back to
+  // the start rather than erroring — a safe restart, not expected in normal use.
+  const startIndex = cursor
+    ? Math.max(0, marks.findIndex((m) => markKey(m) === cursor) + 1)
+    : 0;
+  const pageMarks = marks.slice(startIndex, startIndex + MARKS_PAGE_LIMIT);
+  const nextCursor =
+    startIndex + MARKS_PAGE_LIMIT < marks.length
+      ? markKey(pageMarks[pageMarks.length - 1])
+      : null;
+
+  const wordMarks = pageMarks.filter((m) => m.marked_type === "word");
+  const verseMarks = pageMarks.filter((m) => m.marked_type === "verse");
 
   const [words, verses] = await Promise.all([
     wordMarks.length
@@ -77,7 +120,7 @@ export async function GET(request: NextRequest) {
   const wordByLocation = new Map(words.map((w) => [w.location, w]));
   const verseByKey = new Map(verses.map((v) => [v.verse_key, v]));
 
-  const items: Array<MarkListItem> = marks.flatMap((mark) => {
+  const items: Array<MarkListItem> = pageMarks.flatMap((mark) => {
     if (mark.marked_type === "word") {
       const word = wordByLocation.get(mark.marked_id);
       if (!word) return [];
@@ -115,11 +158,7 @@ export async function GET(request: NextRequest) {
     ];
   });
 
-  items.sort((a, b) => {
-    const [aSurah, aVerse, aWord] = getSortKey(a);
-    const [bSurah, bVerse, bWord] = getSortKey(b);
-    return aSurah - bSurah || aVerse - bVerse || aWord - bWord;
-  });
+  const page: MarksPage = { data: items, nextCursor };
 
-  return jsonResponse({ data: items });
+  return jsonResponse({ data: page });
 }
