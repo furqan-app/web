@@ -13,7 +13,6 @@ import {
   Infinity as InfinityIcon,
   Minus,
   Plus,
-  Play,
   Repeat2,
   Timer,
   Users,
@@ -204,26 +203,10 @@ export const RecitationSettingsSheet = () => {
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const {
-    settings,
-    updateSettings,
-    reciters,
-    isSettingsOpen,
-    settingsStartVerseKey,
-    closeSettings,
-    play,
-  } = useRecitation();
+  const { settings, updateSettings, reciters, isSettingsOpen, closeSettings } = useRecitation();
   // Popovers rendered inside this Sheet (e.g. ReciterCombobox) must portal
   // here instead of document.body — see components/ui/popover.tsx.
   const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
-
-  const isStartMode = settingsStartVerseKey != null;
-
-  const handlePlay = () => {
-    if (!settingsStartVerseKey) return;
-    play(settingsStartVerseKey);
-    closeSettings();
-  };
 
   return (
     <Sheet open={isSettingsOpen} onOpenChange={(open) => !open && closeSettings()}>
@@ -392,18 +375,6 @@ export const RecitationSettingsSheet = () => {
               </div>
             </div>
           </div>
-
-          {isStartMode ? (
-            <Button
-              type="button"
-              className="w-full flex items-center justify-center gap-2"
-              disabled={settings.reciterId == null}
-              onClick={handlePlay}
-            >
-              <Play className="size-4" strokeWidth={1.8} />
-              {t("recitation.play", "Play")}
-            </Button>
-          ) : null}
         </div>
       </SheetContent>
     </Sheet>

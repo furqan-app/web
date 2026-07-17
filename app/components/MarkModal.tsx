@@ -86,7 +86,7 @@ export function MarkModal({
   const [comment, setComment] = useState(currentComment ?? "");
   const isOnline = useOnlineStatus();
   const isOffline = !isOnline;
-  const { openSettings, status: recitationStatus, togglePlayPause } = useRecitation();
+  const { play, status: recitationStatus, togglePlayPause } = useRecitation();
   const wordAudioRef = useRef<HTMLAudioElement>(null);
 
   const isWord = "location" in markFor;
@@ -95,7 +95,7 @@ export function MarkModal({
   const canComment = !!selectedCategory && !isOffline;
 
   const playFromHere = () => {
-    openSettings(markFor.verse_key);
+    play(markFor.verse_key);
     close();
   };
 
