@@ -172,3 +172,64 @@ Mirrors `/promote-release`'s structure exactly, targeting `stg` instead of `prod
 - Do not route staging through Vercel or any non-Hostinger platform — rejected because it wouldn't validate the Hostinger-specific behavior staging exists to catch.
 - Do not fold the `release → stg` PR into `/cut-release` — keep it a separate skill.
 - Do not write a new Hostinger staging runbook doc — the user has already provisioned the site/DBs manually.
+
+## Addendum 2 — DB change flags in release notes (2026-07-17)
+
+**Type:** feature
+**Trello:** [#118](https://trello.com/c/tvAO937e/118-flag-quran-app-db-manual-actions-in-release-notes)
+
+### Summary
+
+`/cut-release` now detects Quran DB and App DB changes since the previous release tag and surfaces them **non-blockingly**: a `## Manual Action Required` section is appended to the GitHub Release notes it already creates, and the same content is called out in its chat report. This is a reminder mechanism only — it never pauses the flow or requires acknowledgment, unlike the `/release` orchestrator's PR-merge checkpoints.
+
+This exists because the Quran DB has **no automatic migration path** — per `docs/plans/split-quran-app-databases.md`'s constraint, `prisma/migrations` is explicitly not used for the Quran schema; it's fully re-synced via the destructive `npm run seed:quran -- --force` (`prisma db push --force-reset`). A schema or seed-logic change merged to `main` does **not** take effect in prod until someone remembers to re-run that manually. The App DB, by contrast, already auto-applies migrations safely via `prisma migrate deploy` on every deploy (`docs/deployment/hostinger.md`) — no action is required there, but a heads-up is still useful.
+
+### Decision Tree — detection rules
+
+Diff range: previous `vX.Y.Z` tag → the new `release/x.y.z` branch (catches everything merged since the last release, not just the latest commit). If no previous release tag exists (first-ever release), skip the check entirely.
+
+| Path touched in the diff | Flag | Notes wording |
+|---|---|---|
+| `prisma/quran/schema.prisma` | Quran DB | "Quran DB schema changed — re-seed prod manually (`npm run seed:quran -- --force`) if this release should reflect it." |
+| `scripts/quran-seed/**` (any file) | Quran DB | "Quran seed logic/data changed — re-seed prod manually if you want this release's data live." |
+| `prisma/app/migrations/**` (new or changed files) | App DB | "New Prisma migration(s) — will auto-apply via `prisma migrate deploy` on deploy. No action needed; consider backing up the App DB first." |
+| Anything else | — | No flag |
+
+Both Quran-DB triggers (schema and seed-logic) share the same category and urgency — deliberately not split further, since either one requires the same manual decision (re-seed or don't) and splitting them added complexity without changing what the release-cutter actually needs to do.
+
+### Verified Test Cases
+
+- **A** — only `prisma/quran/schema.prisma` changed → Quran DB flag.
+- **B** — only `scripts/quran-seed/derive.js` changed, no schema touched → Quran DB flag (same category/wording as A).
+- **C** — only a new `prisma/app/migrations/*/migration.sql` file → App DB flag (FYI wording).
+- **D** — only `app/components/*` changed → no flag, no `## Manual Action Required` section, nothing extra in the chat report.
+- **E** — both A and C in the same release → both sections appear in the release notes and both are called out in the chat report.
+
+### `/cut-release` — updated steps
+
+New step inserted after Trello labeling (existing step 8) and before `gh release create` (existing step 9):
+
+1. Find the previous release tag: the most recent `v*` tag reachable from `main` before the new one. If none exists, skip this step entirely (no error).
+2. `git diff --name-only <previous-tag>..release/<new-version>` — check the returned paths against the table above.
+3. If any flags fire, build a `## Manual Action Required` section (one bullet per flag, using the wording above, listing the specific files that triggered it).
+4. Pass that section into the `gh release create` body (existing step 9), appended after the Trello cards list.
+5. In the final report (existing step 10), explicitly restate any flags that fired — this is the "notify me so I don't forget" part; if no flags fired, say nothing extra.
+
+### Files to Change
+
+- `.claude/skills/cut-release/SKILL.md` — insert the new detection step (between Trello labeling and GitHub Release creation) and update the final report step to restate flags
+- `docs/architecture/DECISIONS.md` — Release & Deployment Workflow section gets a line documenting this behavior
+
+### Constraints
+
+- Non-blocking, always — no checkpoint, no pause, no required acknowledgment, regardless of what's flagged.
+- Detection is file-path-based only — no attempt to detect generic "breaking changes" in application code; that's explicitly out of scope (see What NOT to Do).
+- Diff range is always "since the previous release tag," not "since the last commit" — a release can bundle several merges to `main`.
+- If no previous release tag exists, skip silently rather than erroring — must not block a first-ever release.
+
+### What NOT to Do
+
+- Do not block or pause the release flow for any flag — this was explicitly decided against after initially considering it; the mechanism is reminder-only.
+- Do not attempt to detect generic/non-DB breaking changes (API contract changes, removed routes, etc.) via heuristics or a manual prompt — considered and explicitly ruled out; left to PR review and the release-cutter's own judgment.
+- Do not split Quran DB schema-changes and seed-logic-changes into different categories or wording — they share the same "you may need to re-seed" action, so treat them identically.
+- Do not add this detection to `/release` or any other skill — it lives entirely inside `/cut-release`, since that's what already builds the GitHub Release body and has the version/tag context.
