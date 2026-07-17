@@ -1,0 +1,44 @@
+# Ephemeral, disposable databases for the visual e2e suite (see ADR 0018 and
+# docs/plans/visual-e2e-testing.md). Deliberately separate containers/ports/
+# volumes from compose.yml's dev quran-db/app-db — e2e:setup force-resets
+# these on every run, and must never touch a developer's real seeded dev DB.
+# A distinct project `name` keeps this out of compose.yml's default project
+# namespace, so `docker compose -f compose.e2e.yml down` never lists the dev
+# containers as "orphans" of the same project.
+name: furqan-e2e
+services:
+  quran-db-e2e:
+    image: mysql:8.0
+    container_name: furqan_quran_db_e2e
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: furqan_quran_e2e
+      MYSQL_USER: quran_user
+      MYSQL_PASSWORD: quran_password
+    ports:
+      - "3309:3306"
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app-db-e2e:
+    image: mysql:8.0
+    container_name: furqan_app_db_e2e
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: furqan_app_e2e
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+    ports:
+      - "3310:3306"
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

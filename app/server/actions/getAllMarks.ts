@@ -1,24 +1,37 @@
-import type { MarkListItem } from "@/app/api/marks/route";
+import type { MarkListItem, MarksPage } from "@/app/api/marks/route";
 
-export type { MarkListItem };
+export type { MarkListItem, MarksPage };
+
+const EMPTY_PAGE: MarksPage = { data: [], nextCursor: null };
 
 /**
- * Fetch every color mark on the caller's own mushaf, enriched with the
+ * Fetch one page of the caller's own color/note marks, enriched with the
  * marked word/verse's location (chapter, verse number, page) and a display
  * snippet. Self-marks only — there is no grant-scoped equivalent.
  */
-export const getAllMarks = async (): Promise<Array<MarkListItem>> => {
+export const getAllMarks = async ({
+  category,
+  cursor,
+}: {
+  category: string;
+  cursor?: string;
+}): Promise<MarksPage> => {
   try {
-    const { data, success }: { data: Array<MarkListItem>; success: boolean } =
-      await fetch("/api/marks", {
+    const params = new URLSearchParams({ category });
+    if (cursor) params.set("cursor", cursor);
+
+    const { data, success }: { data: MarksPage; success: boolean } = await fetch(
+      `/api/marks?${params.toString()}`,
+      {
         headers: {
           "Content-Type": "application/json",
         },
-      }).then((response) => response.json());
+      }
+    ).then((response) => response.json());
 
-    return success && data ? data : [];
+    return success && data ? data : EMPTY_PAGE;
   } catch (e) {
     console.error(e);
-    return [];
+    return EMPTY_PAGE;
   }
 };

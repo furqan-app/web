@@ -5,7 +5,7 @@ description: Drive the full release process from cut to prod to main-sync in one
 
 # /release <major|minor|patch>
 
-Orchestrates `/cut-release` → `/promote-release` → `/sync-main-from-prod` as one continuous flow. See `docs/plans/release-branch-workflow.md` and [ADR 0015](../../../docs/architecture/adr/0015-release-branch-workflow.md).
+Orchestrates `/cut-release` → `/promote-to-staging` → `/promote-release` → `/sync-main-from-prod` as one continuous flow. See `docs/plans/release-branch-workflow.md` (Addendum 1), [ADR 0015](../../../docs/architecture/adr/0015-release-branch-workflow.md), and [ADR 0026](../../../docs/architecture/adr/0026-staging-environment.md).
 
 **Never pause between purely mechanical steps.** Only stop at the three checkpoints below, where the flow genuinely cannot proceed without the user doing something outside this chat. At each checkpoint, state plainly what you're waiting for.
 
@@ -15,17 +15,19 @@ Orchestrates `/cut-release` → `/promote-release` → `/sync-main-from-prod` as
 
 ## Steps
 
-1. **Run `/cut-release <bump>` in full.** Its own preconditions (clean tree, on main) apply as normal. Do not pause before or after this step — proceed straight to Checkpoint 1.
+1. **Run `/cut-release <bump>` in full.** Its own preconditions (clean tree, on main) apply as normal. Do not pause before or after this step.
 
-2. **Checkpoint 1 — local testing.** Report the new release branch and tag. Ask the user to run local testing (`npm run build && npm start` against `release/x.y.z`) and confirm when it has passed. This cannot be verified programmatically — wait for an explicit confirmation before continuing.
+2. **Run `/promote-to-staging <version>`.** Opens the `release/x.y.z → stg` PR. Proceed straight to Checkpoint 1 — no pause before this step, it's mechanical.
 
-3. **Run `/promote-release <version>`.** Opens the `release/x.y.z → prod` PR. Proceed immediately once testing is confirmed — no extra pause here.
+3. **Checkpoint 1 — staging.** Tell the user the PR is open and ask them to merge it on GitHub. Hostinger auto-deploys the staging site on any push to `stg` — no manual redeploy click is needed. Do not trust a bare "done" for the merge: check with `gh pr view <number> --json state -q .state` (or `gh pr view release/<version> --json state -q .state` if the number wasn't captured) and only continue once it reports `MERGED`. Once merged, ask the user to verify the deployed staging site looks right — that judgment call is the user's; wait for their explicit confirmation before continuing.
 
-4. **Checkpoint 2 — prod PR merged.** Tell the user the PR is open and ask them to merge it on GitHub. Hostinger auto-deploys on any push to `prod` — no manual redeploy click is needed. Do not trust a bare "done": check with `gh pr view <number> --json state -q .state` (or `gh pr view release/<version> --json state -q .state` if the number wasn't captured) and only continue once it reports `MERGED`. If the user says they merged it but the check disagrees, say so and keep waiting — re-check rather than proceeding on their word alone.
+4. **Run `/promote-release <version>`.** Opens the `release/x.y.z → prod` PR. Proceed immediately once staging is confirmed — no extra pause here.
 
-5. **Run `/sync-main-from-prod`.** Opens the `prod → main` PR. Proceed immediately once the prod PR is confirmed merged — no extra pause here.
+5. **Checkpoint 2 — prod PR merged.** Tell the user the PR is open and ask them to merge it on GitHub. Hostinger auto-deploys on any push to `prod` — no manual redeploy click is needed. Do not trust a bare "done": check with `gh pr view <number> --json state -q .state` (or `gh pr view release/<version> --json state -q .state` if the number wasn't captured) and only continue once it reports `MERGED`. If the user says they merged it but the check disagrees, say so and keep waiting — re-check rather than proceeding on their word alone.
 
-6. **Checkpoint 3 — final merge.** Tell the user the sync PR is open and ask them to merge it (resolving any conflicts if needed). Verify via `gh pr view` the same way as Checkpoint 2. Once merged, report the release complete — nothing further to do.
+6. **Run `/sync-main-from-prod`.** Opens the `prod → main` PR. Proceed immediately once the prod PR is confirmed merged — no extra pause here.
+
+7. **Checkpoint 3 — final merge.** Tell the user the sync PR is open and ask them to merge it (resolving any conflicts if needed). Verify via `gh pr view` the same way as Checkpoint 2. Once merged, report the release complete — nothing further to do.
 
 ## Failure handling
 
@@ -33,7 +35,8 @@ If any `git`/`gh` step fails partway (e.g. the prod PR can't be created because 
 
 ## What NOT to do
 
-- Do not ask "should I continue?" between mechanical steps (after cutting, before opening the prod PR; after Checkpoint 2, before opening the sync PR) — only the three checkpoints above warrant a pause.
+- Do not ask "should I continue?" between mechanical steps (after cutting, before opening the stg PR; after Checkpoint 1, before opening the prod PR; after Checkpoint 2, before opening the sync PR) — only the three checkpoints above warrant a pause.
 - Do not merge any PR yourself, even to "save a step" — those stay explicit human actions.
+- Do not skip Checkpoint 1 or treat a merged stg PR alone as sufficient — the user must also confirm staging looks right before promoting to prod.
 - Do not skip Checkpoint 3 — the sync PR must actually merge, or fixes made on the release branch during stabilization are silently lost from `main`.
 - Do not trust the user's word over `gh`'s reported state for any PR-merge checkpoint — always re-verify.

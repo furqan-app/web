@@ -33,7 +33,7 @@ The legacy page words route (`/api/quran/pages/[pageId]`) returns raw `NextRespo
 
 ## Auth in API Routes
 
-Protected routes have auth enforced by `auth-middleware` in `middleware.ts`. The middleware injects the user as a JSON-stringified `user` header. Read it with:
+`auth-middleware` in `middleware.ts` enforces auth and injects the user as a JSON-stringified `user` header. Read it with:
 
 ```ts
 import { extractUser } from "@/app/api/request";
@@ -70,4 +70,4 @@ const query = request.nextUrl.searchParams.get("q") ?? "";
 
 ## Error Handling
 
-Unhandled errors propagate to Next.js error boundaries. Only catch errors when you can handle them meaningfully (e.g. `Prisma.NotFoundError` → `404`).
+Only catch errors you can handle meaningfully (e.g. `Prisma.NotFoundError` → `404`). Others propagate to Next.js error boundaries.

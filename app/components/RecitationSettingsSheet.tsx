@@ -1,11 +1,36 @@
 "use client";
 
-import { Minus, Plus, Play } from "lucide-react";
+import { useState } from "react";
+import {
+  BookMarked,
+  BookOpen,
+  Check,
+  ChevronsUpDown,
+  CircleDashed,
+  CircleDot,
+  FileText,
+  Gauge,
+  Infinity as InfinityIcon,
+  Minus,
+  Plus,
+  Repeat2,
+  Timer,
+  Users,
+} from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import useTranslations from "@/app/hooks/use-translations";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Sheet,
@@ -23,7 +48,7 @@ import {
   REPEAT_COUNT_MAX,
   REPEAT_COUNT_MIN,
 } from "@/app/constants/recitation";
-import { RepeatCount, StopPoint } from "@/app/types/recitation";
+import { RepeatCount, Reciter, StopPoint } from "@/app/types/recitation";
 
 const nextRepeatCount = (value: RepeatCount, direction: 1 | -1): RepeatCount => {
   if (direction === 1) {
@@ -32,6 +57,109 @@ const nextRepeatCount = (value: RepeatCount, direction: 1 | -1): RepeatCount => 
   }
   if (value === "infinite") return REPEAT_COUNT_MAX;
   return value <= REPEAT_COUNT_MIN ? REPEAT_COUNT_MIN : ((value - 1) as RepeatCount);
+};
+
+const SectionHeader = ({
+  icon: Icon,
+  label,
+}: {
+  icon: typeof Users;
+  label: string;
+}) => (
+  <h3 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground mb-2">
+    <Icon className="size-3.5 text-primary" strokeWidth={1.8} />
+    {label}
+  </h3>
+);
+
+const STOP_POINT_OPTIONS: { value: StopPoint; icon: typeof Users; labelKey: string; fallback: string }[] = [
+  { value: "page", icon: FileText, labelKey: "recitation.stopPointPage", fallback: "End of page" },
+  { value: "rub", icon: CircleDot, labelKey: "recitation.stopPointRub", fallback: "End of rub" },
+  { value: "hizb", icon: CircleDashed, labelKey: "recitation.stopPointHizb", fallback: "End of hizb" },
+  { value: "juz", icon: BookOpen, labelKey: "recitation.stopPointJuz", fallback: "End of Juz'" },
+  { value: "surah", icon: BookMarked, labelKey: "recitation.stopPointSurah", fallback: "End of surah" },
+  { value: "none", icon: InfinityIcon, labelKey: "recitation.stopPointNone", fallback: "No stop" },
+];
+
+const ReciterCombobox = ({
+  reciters,
+  value,
+  onChange,
+  portalContainer,
+}: {
+  reciters: Reciter[];
+  value: number | null;
+  onChange: (id: number) => void;
+  portalContainer: HTMLElement | null;
+}) => {
+  const t = useTranslations();
+  const [open, setOpen] = useState(false);
+  const selected = reciters.find((r) => r.id === value) ?? null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between rounded-xl border-border bg-card font-normal h-auto py-2.5"
+        >
+          {selected ? (
+            <span className="flex flex-col items-start text-start">
+              <span className="text-foreground">{selected.translatedName}</span>
+              {selected.style ? (
+                <span className="text-xs text-muted-foreground">{selected.style}</span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">
+              {t("recitation.reciterPlaceholder", "Choose a reciter")}
+            </span>
+          )}
+          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-0"
+        align="start"
+        container={portalContainer}
+      >
+        <Command>
+          <CommandInput
+            placeholder={t("recitation.reciterSearchPlaceholder", "Search reciters…")}
+          />
+          <CommandList>
+            <CommandEmpty>{t("recitation.reciterEmpty", "No reciter found.")}</CommandEmpty>
+            <CommandGroup>
+              {reciters.map((reciter) => (
+                <CommandItem
+                  key={reciter.id}
+                  value={`${reciter.translatedName} ${reciter.style ?? ""}`}
+                  onSelect={() => {
+                    onChange(reciter.id);
+                    setOpen(false);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Check
+                    className={`me-2 size-4 ${reciter.id === value ? "opacity-100 text-primary" : "opacity-0"}`}
+                  />
+                  <span className="flex flex-col">
+                    <span className="text-foreground">{reciter.translatedName}</span>
+                    {reciter.style ? (
+                      <span className="text-xs text-muted-foreground">{reciter.style}</span>
+                    ) : null}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 };
 
 const RepeatStepper = ({
@@ -75,27 +203,18 @@ export const RecitationSettingsSheet = () => {
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const {
-    settings,
-    updateSettings,
-    reciters,
-    isSettingsOpen,
-    settingsStartVerseKey,
-    closeSettings,
-    play,
-  } = useRecitation();
-
-  const isStartMode = settingsStartVerseKey != null;
-
-  const handlePlay = () => {
-    if (!settingsStartVerseKey) return;
-    play(settingsStartVerseKey);
-    closeSettings();
-  };
+  const { settings, updateSettings, reciters, isSettingsOpen, closeSettings } = useRecitation();
+  // Popovers rendered inside this Sheet (e.g. ReciterCombobox) must portal
+  // here instead of document.body — see components/ui/popover.tsx.
+  const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
 
   return (
     <Sheet open={isSettingsOpen} onOpenChange={(open) => !open && closeSettings()}>
-      <SheetContent side={isRTL ? "left" : "right"} dir={getLanguageDirection(locale)}>
+      <SheetContent
+        ref={setSheetContentEl}
+        side={isRTL ? "left" : "right"}
+        dir={getLanguageDirection(locale)}
+      >
         <SheetHeader>
           <SheetTitle>{t("recitation.settingsTitle", "Recitation settings")}</SheetTitle>
           <SheetDescription className="sr-only">
@@ -108,68 +227,69 @@ export const RecitationSettingsSheet = () => {
 
         <div className="p-4 space-y-6 mt-2 overflow-y-auto">
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("recitation.reciter", "Reciter")}
-            </h3>
-            <RadioGroup
-              value={settings.reciterId != null ? String(settings.reciterId) : undefined}
-              onValueChange={(value) => updateSettings({ reciterId: Number(value) })}
-              className="max-h-48 overflow-y-auto rounded-lg bg-muted p-2 gap-0"
-            >
-              {reciters.map((reciter) => (
-                <label
-                  key={reciter.id}
-                  htmlFor={`reciter-${reciter.id}`}
-                  className="flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-accent cursor-pointer"
-                >
-                  <RadioGroupItem value={String(reciter.id)} id={`reciter-${reciter.id}`} />
-                  <span className="flex flex-col">
-                    <span className="text-foreground">{reciter.translatedName}</span>
-                    {reciter.style ? (
-                      <span className="text-xs text-muted-foreground">{reciter.style}</span>
-                    ) : null}
-                  </span>
-                </label>
-              ))}
-            </RadioGroup>
+            <SectionHeader icon={Users} label={t("recitation.reciter", "Reciter")} />
+            <ReciterCombobox
+              reciters={reciters}
+              value={settings.reciterId}
+              onChange={(id) => updateSettings({ reciterId: id })}
+              portalContainer={sheetContentEl}
+            />
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("recitation.stopPoint", "Stop at")}
-            </h3>
+            <SectionHeader icon={CircleDashed} label={t("recitation.stopPoint", "Stop at")} />
             <RadioGroup
               value={settings.stopPoint}
               onValueChange={(value) => updateSettings({ stopPoint: value as StopPoint })}
-              className="flex gap-4 rounded-lg bg-muted p-3"
+              className="grid grid-cols-2 gap-2"
             >
-              <label htmlFor="stop-page" className="flex items-center gap-2 text-sm cursor-pointer">
-                <RadioGroupItem value="page" id="stop-page" />
-                {t("recitation.stopPointPage", "End of page")}
-              </label>
-              <label htmlFor="stop-surah" className="flex items-center gap-2 text-sm cursor-pointer">
-                <RadioGroupItem value="surah" id="stop-surah" />
-                {t("recitation.stopPointSurah", "End of surah")}
-              </label>
+              {STOP_POINT_OPTIONS.map(({ value, icon: Icon, labelKey, fallback }) => {
+                const isSelected = settings.stopPoint === value;
+                return (
+                  <label
+                    key={value}
+                    htmlFor={`stop-${value}`}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border bg-card text-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <RadioGroupItem value={value} id={`stop-${value}`} className="sr-only" />
+                    <Icon
+                      className={`size-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                      strokeWidth={1.8}
+                    />
+                    {t(labelKey, fallback)}
+                  </label>
+                );
+              })}
             </RadioGroup>
           </div>
 
-          <div className="rounded-lg bg-muted p-3 space-y-3">
+          <div className="rounded-xl border border-border bg-card p-3 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Repeat2 className="size-3.5 text-primary" strokeWidth={1.8} />
+              {t("recitation.repeatSectionLabel", "Repeats")}
+            </div>
             <RepeatStepper
               label={t("recitation.repeatEachAyah", "Repeat each ayah")}
               value={settings.perAyahRepeatCount}
               onChange={(value) => updateSettings({ perAyahRepeatCount: value })}
             />
-            <RepeatStepper
-              label={t("recitation.repeatRange", "Repeat whole range")}
-              value={settings.rangeRepeatCount}
-              onChange={(value) => updateSettings({ rangeRepeatCount: value })}
-            />
+            {settings.stopPoint !== "none" ? (
+              <RepeatStepper
+                label={t("recitation.repeatRange", "Repeat whole range")}
+                value={settings.rangeRepeatCount}
+                onChange={(value) => updateSettings({ rangeRepeatCount: value })}
+              />
+            ) : null}
           </div>
 
-          <div className="rounded-lg bg-muted p-3 space-y-3">
+          <div className="rounded-xl border border-border bg-card p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground">
+              <span className="flex items-center gap-1.5 text-sm text-foreground">
+                <Gauge className="size-3.5 text-primary" strokeWidth={1.8} />
                 {t("recitation.playbackSpeed", "Playback speed")}
               </span>
               <div className="flex items-center gap-2">
@@ -212,7 +332,8 @@ export const RecitationSettingsSheet = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground">
+              <span className="flex items-center gap-1.5 text-sm text-foreground">
+                <Timer className="size-3.5 text-primary" strokeWidth={1.8} />
                 {t("recitation.pauseBetweenRepeats", "Pause between repeats")}
               </span>
               <div className="flex items-center gap-2">
@@ -254,18 +375,6 @@ export const RecitationSettingsSheet = () => {
               </div>
             </div>
           </div>
-
-          {isStartMode ? (
-            <Button
-              type="button"
-              className="w-full flex items-center justify-center gap-2"
-              disabled={settings.reciterId == null}
-              onClick={handlePlay}
-            >
-              <Play className="size-4" strokeWidth={1.8} />
-              {t("recitation.play", "Play")}
-            </Button>
-          ) : null}
         </div>
       </SheetContent>
     </Sheet>

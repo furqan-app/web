@@ -1,0 +1,95 @@
+name: Update visual e2e baselines
+
+# Manually regenerates the committed Playwright baseline screenshots inside the
+# same CI environment that later compares against them (see docs/plans/
+# visual-e2e-testing.md and ADR 0018) — never regenerate baselines locally and
+# commit them, to avoid font-rendering/anti-aliasing drift vs CI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to update baselines on"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-baselines:
+    runs-on: ubuntu-latest
+    services:
+      quran-db-e2e:
+        image: mysql:8.0
+        ports:
+          - 3309:3306
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: furqan_quran_e2e
+          MYSQL_USER: quran_user
+          MYSQL_PASSWORD: quran_password
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -prootpassword"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+      app-db-e2e:
+        image: mysql:8.0
+        ports:
+          - 3310:3306
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: furqan_app_e2e
+          MYSQL_USER: app_user
+          MYSQL_PASSWORD: app_password
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -prootpassword"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Set up e2e databases
+        run: npm run e2e:setup
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Update snapshots
+        run: npm run e2e:test -- --update-snapshots
+
+      - name: Commit updated baselines
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add e2e/tests/visual.spec.ts-snapshots
+          if git diff --cached --quiet; then
+            echo "No baseline changes."
+            exit 0
+          fi
+
+          sanitized_target=$(echo "${{ inputs.branch }}" | tr '/' '-')
+          update_branch="update-baselines/${sanitized_target}-${{ github.run_id }}"
+
+          git checkout -b "$update_branch"
+          git commit -m "chore(e2e): update visual baselines"
+          git push origin HEAD:"$update_branch"
+
+          gh pr create \
+            --base "${{ inputs.branch }}" \
+            --head "$update_branch" \
+            --title "chore(e2e): update visual baselines (${{ inputs.branch }})" \
+            --body "Automated baseline regeneration from the \"Update visual e2e baselines\" workflow (run ${{ github.run_id }}), targeting \`${{ inputs.branch }}\`."

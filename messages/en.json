@@ -35,6 +35,9 @@
   "language": "Language",
   "quranFontSize": "Quran Font Size",
   "appearance": "Appearance",
+  "tajweedMode": "Tajweed Colors",
+  "tajweedModeLabel": "Color-code Tajweed rules",
+  "tajweedModeDescription": "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
   "theme": {
     "light": "Light",
     "dark": "Dark",
@@ -54,21 +57,25 @@
     "homeLink": "Go back to Home"
   },
   "markModal": {
-    "redMark": "Red Mark",
-    "greenMark": "Green Mark",
-    "blueMark": "Blue Mark",
+    "forgetting": "Forgetting",
+    "similar": "Similar",
+    "tashkeelError": "Tashkeel error",
+    "tajweedError": "Tajweed error",
+    "linking": "Linking",
+    "other": "Other",
     "removeMark": "Remove Mark",
-    "bookmarksTab": "Bookmarks",
-    "notesTab": "Notes",
     "markWordLabel": "Mark word",
     "markVerseLabel": "Mark verse",
-    "notesComingSoon": "Coming soon",
-    "chooseColorLabel": "Choose bookmark color",
-    "saveMark": "Save Bookmark",
+    "chooseCategoryLabel": "Choose a category",
+    "saveMark": "Save Mark",
+    "commentPlaceholder": "Add a comment (optional)…",
+    "commentDisabledHint": "Choose a category to add a comment",
     "actionError": "Something went wrong. Try again.",
     "markedBy": "Marked by",
     "offlineNotice": "Connect to the internet to view or add marks",
-    "playFromHere": "Play from here"
+    "playFromHere": "Play from here",
+    "playPronunciation": "Hear pronunciation",
+    "signInToMark": "Sign in to mark words and verses"
   },
   "rubs": "Rubs",
   "rub": "Rub",
@@ -81,7 +88,9 @@
     "pageTitle": "My Marks",
     "signedOut": "Sign in to see your marks.",
     "empty": "No marks yet.",
-    "emptyColor": "No marks in this color yet."
+    "emptyCategory": "No marks in this category yet.",
+    "allLabel": "All",
+    "filterLabel": "Filter marks"
   },
   "mushaf": {
     "hubTitle": "Shared Mushaf",
@@ -135,11 +144,19 @@
     "repeatRange": "Repeat whole range",
     "playbackSpeed": "Playback speed",
     "pauseBetweenRepeats": "Pause between repeats",
-    "play": "Play",
     "listen": "Listen",
     "pause": "Pause",
     "resume": "Resume",
     "stop": "Stop",
-    "nowPlaying": "Recitation"
-  }
+    "nowPlaying": "Recitation",
+    "stopPointRub": "End of rub",
+    "stopPointHizb": "End of hizb",
+    "stopPointJuz": "End of Juz'",
+    "stopPointNone": "No stop",
+    "repeatSectionLabel": "Repeats",
+    "reciterPlaceholder": "Choose a reciter",
+    "reciterSearchPlaceholder": "Search reciters…",
+    "reciterEmpty": "No reciter found."
+  },
+  "viewingChipGeneric": ""
 }

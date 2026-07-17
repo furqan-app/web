@@ -2,8 +2,8 @@ export type AddMarkData = {
   page_number: number;
   marked_type: string;
   marked_id: string;
-  mark_type: string;
-  mark_value: string;
+  category: string;
+  comment?: string | null;
 };
 
 export const addPageMark = async (data: AddMarkData, grantId?: string) => {

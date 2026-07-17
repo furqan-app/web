@@ -1,23 +1,23 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useSession } from "next-auth/react";
 import { Verse } from "@/app/generated/quran-client";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
 import { FONT_V1 } from "@constants/font";
 import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
+import { useQuranTajweed } from "@contexts/QuranTajweedContext";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { getPageFontFamily } from "@utils/quran-font-map";
-import { getColorMarkMeta } from "@utils/marks";
+import { getMarkMeta } from "@utils/marks";
+import { groupBy } from "@utils/groupBy";
 import BismillahSVG from "@/app/bismillah.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
-import { SignInModal } from "./SignInModal";
 import { ViewingChip } from "./reader/ViewingChip";
-import { PageMetadataWithChapter, WordWithVerse } from "../types/prisma";
+import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
 
 const SurahBannerLine = ({ surahId }: { surahId: number }) => (
   <div
@@ -44,7 +44,7 @@ const BismillahLine = () => (
 
 type QuranSafhaProps = {
   page: number;
-  lines: Record<string, Array<WordWithVerse>>;
+  lines: Record<string, Array<WordWithLayouts>>;
   pageMetadata: PageMetadataWithChapter;
   locale: string;
   // When set, this safha shows/edits another user's mushaf via an access grant
@@ -91,13 +91,13 @@ export const QuranSafha = ({
   stackPeekSide = "left",
   compensateStackGap = false,
 }: QuranSafhaProps) => {
-  const session = useSession();
   const t = useTranslations();
   const { data: marks } = useMarks(page, grantId);
   const { quranFontScale } = useQuranFontScale();
+  const { tajweedMode } = useQuranTajweed();
 
   const [selectedForMark, setSelectedForMark] = useState<
-    WordWithVerse | Verse | null
+    WordWithLayouts | Verse | null
   >(null);
   const [verseDisplayText, setVerseDisplayText] = useState<string | undefined>(
     undefined,
@@ -105,7 +105,7 @@ export const QuranSafha = ({
 
   const wordClicked = (
     e: React.MouseEvent<HTMLDivElement>,
-    word: WordWithVerse,
+    word: WordWithLayouts,
   ) => {
     if (word.char_type_name === "word") {
       setSelectedForMark(word);
@@ -132,9 +132,9 @@ export const QuranSafha = ({
     setSelectedForMark(null);
   };
 
-  const getCurrentColorMeta = (markFor: WordWithVerse | Verse) => {
+  const getCurrentMarkMeta = (markFor: WordWithLayouts | Verse) => {
     const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
-    return getColorMarkMeta(marks?.[markedId] ?? []);
+    return getMarkMeta(marks?.[markedId]);
   };
 
   const hizbDefaults: Record<string, string> = {
@@ -149,8 +149,17 @@ export const QuranSafha = ({
     ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${toLocaleNumeral(pageMetadata.hizb_number, locale)}`
     : null;
 
+  // In Tajweed mode, re-group by mushaf=19's line_number instead of the
+  // default (mushaf=2) grouping already computed server-side in `lines` —
+  // the two mushafs break lines differently (ADR 0023 Addendum 6). Every
+  // line-keyed computation below (banner/bismillah gap-detection, line
+  // rendering) reads from whichever grouping is active.
+  const activeLines = tajweedMode
+    ? groupBy(Object.values(lines).flat(), (w) => w.layouts[19] ?? w.line_number)
+    : lines;
+
   // lineKeys must be sorted numerically; Object.keys() order is not guaranteed.
-  const lineKeys = Object.keys(lines).sort((a, b) => Number(a) - Number(b));
+  const lineKeys = Object.keys(activeLines).sort((a, b) => Number(a) - Number(b));
 
   type RenderItem =
     | { type: "words"; slot: number; lineKey: string; suppressSurahId?: number }
@@ -187,7 +196,7 @@ export const QuranSafha = ({
       .find((k) => Number(k) < gap.start);
 
     if (lineAfterKey) {
-      const firstWord = lines[lineAfterKey][0];
+      const firstWord = activeLines[lineAfterKey][0];
       const [surahIdStr, verseNumStr, wordNumStr] = firstWord.location.split(":");
       if (verseNumStr === "1" && wordNumStr === "1") {
         const surahId = Number(surahIdStr);
@@ -209,7 +218,7 @@ export const QuranSafha = ({
         }
       }
     } else if (lineBeforeKey) {
-      const wordsOnLine = lines[lineBeforeKey];
+      const wordsOnLine = activeLines[lineBeforeKey];
       const lastWord = wordsOnLine[wordsOnLine.length - 1];
       const [surahIdStr, verseNumStr] = lastWord.verse_key.split(":");
       const surahId = Number(surahIdStr);
@@ -224,26 +233,24 @@ export const QuranSafha = ({
 
   return (
     <>
-      {session?.data?.user && selectedForMark ? (
+      {selectedForMark ? (
         (() => {
-          const meta = getCurrentColorMeta(
-            selectedForMark as WordWithVerse | Verse,
+          const markMeta = getCurrentMarkMeta(
+            selectedForMark as WordWithLayouts | Verse,
           );
           return (
             <MarkModal
               isOpen={true}
               close={closeMarkModal}
-              markFor={selectedForMark as WordWithVerse | Verse}
+              markFor={selectedForMark as WordWithLayouts | Verse}
               verseDisplayText={verseDisplayText}
-              currentColor={meta?.value}
-              markedByName={meta && !meta.isOwn ? meta.authorName : null}
+              currentCategory={markMeta?.category}
+              currentComment={markMeta?.comment ?? undefined}
+              authorName={markMeta && !markMeta.isOwn ? markMeta.authorName : null}
               grantId={grantId}
             />
           );
         })()
-      ) : null}
-      {!session.data?.user && selectedForMark ? (
-        <SignInModal isOpen={true} close={closeMarkModal} />
       ) : null}
       <div className="fq-full-safha flex justify-center w-full md:w-auto md:h-full">
         <div
@@ -304,9 +311,9 @@ export const QuranSafha = ({
               </div>
               {/* Quran text */}
               <div
-                className={`fq-quran-safha ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
+                className={`fq-quran-safha ${tajweedMode ? "fq-tajweed" : ""} ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
                 style={{
-                  fontFamily: getPageFontFamily(page),
+                  fontFamily: getPageFontFamily(page, tajweedMode),
                 }}
               >
                 <Suspense fallback={null}>
@@ -326,7 +333,7 @@ export const QuranSafha = ({
                       <QuranLine
                         key={item.lineKey}
                         onWordClicked={wordClicked}
-                        words={lines[item.lineKey]}
+                        words={activeLines[item.lineKey]}
                         marks={marks ?? {}}
                         suppressInlineHeaderForSurahId={item.suppressSurahId}
                       />

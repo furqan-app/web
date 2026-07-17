@@ -8,6 +8,7 @@ import { QuranSafhaViewToggle } from "@/app/components/QuranSafhaViewToggle";
 import { RecitationPlayButton } from "@/app/components/RecitationPlayButton";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
+import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 
 type ReaderPageProps = {
   pageId: string;
@@ -102,6 +103,7 @@ export const ReaderPage = async ({
           Inline <style> in a Server Component is hoisted differently by the
           Next.js RSC pipeline on client vs SSR, causing hydration mismatches. */}
       <FontFaceInjector pageIds={[rightPageId, leftPageId]} />
+      <RecitationPageSync firstVerseKey={firstVerseKey} />
       <link
         rel="preload"
         href={`/fonts/v1/ttf/p${pageId}.ttf`}
@@ -113,8 +115,8 @@ export const ReaderPage = async ({
         prevHref={`${basePath}/${prevPageNum}`}
         nextHref={`${basePath}/${nextPageNum}`}
       >
-        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] py-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
-          <div className="flex items-center gap-2">
+        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <QuranSafhaViewToggle />
             <RecitationPlayButton firstVerseKey={firstVerseKey} />
           </div>

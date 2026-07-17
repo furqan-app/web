@@ -92,6 +92,7 @@ Schemas live at `prisma/quran/schema.prisma` and `prisma/app/schema.prisma`; cli
 - `Verse.rub_el_hizb_number` is a **global** rub index (1–240), not within-hizb 1–4 — the seeder groups by it directly to build `rubs`/`rub_verse_mappings` (same fact behind the page-metadata `hizb_number*4 - rub_el_hizb_number` math). QDC `chapters.pages` is an array → store as `"start-end"` string; `translated_name` is an object → store `.name`.
 - `Verse.text_uthmani`/`Verse.text_imlaei_simple` hold **full verse text** and are `String @db.Text` — Prisma's default `VARCHAR(191)` overflows on long verses (e.g. 2:282). Word-level text columns (`Word.text_uthmani`, `code_v1`, `code_v2`, `qpc_uthmani_hafs`, `text`) are single-word and correctly stay plain `String`; don't widen those "for consistency."
 - If a compose DB container ever comes up with a host-port conflict, it can end up detached from the compose network (no service-name DNS — phpMyAdmin can't resolve it); `docker compose down && docker compose up -d` recreates it cleanly. Check `ss -tlnp | grep 3307` before starting if the scraper project's own MySQL (also 3307) might be running.
+- `Word.audio_url`'s trailing file number is rewritten to always equal `Word.position` for `char_type_name === "word"` rows — QDC's raw number double-counts Rub-el-hizb/waqf marks it fuses into the adjacent word's `text_uthmani` instead of giving them their own row (see ADR 0009 Addendum 2026-07-15). Never trust the raw QDC `audio_url` number as-is.
 
 ---
 
@@ -160,6 +161,7 @@ const user = extractUser(request); // { id, email, ... }
 - Do not hand-roll components that have a shadcn equivalent.
 - `DialogContent` (`components/ui/dialog.tsx`) supports an opt-in `hideDefaultClose` prop (default `false`) to suppress its built-in absolutely-positioned close button, for callers that need to render their own `DialogClose` in-flow (e.g. `MarkModal`, whose header needs the close button vertically centered against a flex sibling rather than absolutely positioned). Default behavior for all other callers (`SignInModal`) is unchanged.
 - Every `DialogContent`/`SheetContent` (both wrap the same underlying `@radix-ui/react-dialog` primitive) **must** render a `DialogTitle`/`SheetTitle` — Radix hard-errors without one — and a `DialogDescription`/`SheetDescription` (or explicit `aria-describedby={undefined}` opt-out) to avoid a console warning. If the dialog already has a natural visible heading, promote it to `DialogTitle`/`SheetTitle` directly (its default classes are safely overridden via `cn()`'s `tailwind-merge`); otherwise add both as `sr-only`. See `docs/plans/fix-dialog-missing-description.md` for the fix across `MarkModal`, `SignInModal`, `Sidebar`, `SearchBar`, and `SettingsSidebar`.
+- `components/ui/popover.tsx`'s `PopoverContent` takes an optional `container` prop (forwarded to `PopoverPrimitive.Portal`). **Always pass it, pointed at the enclosing `DialogContent`/`SheetContent`'s DOM node, whenever nesting a `Popover` (or `Command` combobox) inside a `Dialog`/`Sheet`.** Radix's Dialog `FocusScope` traps focus by DOM containment, not visual nesting — a `Popover.Content` portaled to the default `document.body` is a DOM sibling of the Dialog's own portal, so the Dialog keeps yanking focus back into itself on every keystroke, breaking typing and scroll inside the Popover. Fixed for `RecitationSettingsSheet`'s reciter combobox by capturing `SheetContent`'s node via a callback ref (`useState`, since a plain `useRef` wouldn't trigger a re-render once populated) and passing it as `container`. See `docs/plans/recitation-playback.md` Addendum 5b.
 
 ---
 
@@ -295,23 +297,27 @@ const user = extractUser(request); // { id, email, ... }
 
 ## Release & Deployment Workflow
 
-**Decision:** Prod deploys go through a required `release/x.y.z` stabilization branch, not directly from `main`. See [ADR 0015](adr/0015-release-branch-workflow.md).
+**Decision:** Prod deploys go through a required `release/x.y.z` stabilization branch, not directly from `main`, and now stage through a `stg` deploy step first. See [ADR 0015](adr/0015-release-branch-workflow.md) and [ADR 0026](adr/0026-staging-environment.md).
 
 ```
-main → /cut-release → release/x.y.z → (local testing) → /promote-release → prod → /sync-main-from-prod → main
+main → /cut-release → release/x.y.z → /promote-to-staging → stg → /promote-release → prod → /sync-main-from-prod → main
 ```
 
-- `/cut-release <major|minor|patch>` — branches `release/x.y.z` off `main`, bumps `package.json` version + tags `vX.Y.Z`, labels every card in **"To Be Released"** with the version and moves them to **Done**, then creates a GitHub Release whose notes are built from those same cards (title + URL) — not `--generate-notes`, since Trello is the curated "what's included" source, not raw commit/PR history.
+- `/cut-release <major|minor|patch>` — branches `release/x.y.z` off `main`, bumps `package.json` version + tags `vX.Y.Z`, labels every card in **"To Be Released"** with the version and moves them to **Done**, then creates a GitHub Release whose notes are built from those same cards (title + URL) — not `--generate-notes`, since Trello is the curated "what's included" source, not raw commit/PR history. It also diffs the previous release tag against the new release branch for Quran/App DB changes and, if any are found, appends a `## Manual Action Required` section to the release notes and calls it out in its chat report — non-blocking, reminder-only (see below).
+- `/promote-to-staging <version>` — opens the PR `release/x.y.z` → `stg`. Hostinger's staging site auto-deploys on any push to `stg`, so merging the PR is sufficient.
 - `/promote-release <version>` — opens the PR `release/x.y.z` → `prod`. Hostinger auto-deploys on any push to `prod`, so merging the PR is sufficient — no manual hPanel redeploy click needed.
 - `/sync-main-from-prod` — opens the PR `prod` → `main` afterward, to capture any fixes made on the release branch back into `main`.
-- `/release <major|minor|patch>` — orchestrator that runs the above three in one continuous flow, pausing only at genuine human checkpoints (confirm local testing passed, confirm the prod PR merged, confirm the Hostinger redeploy was clicked). Verifies PR merges via `gh pr view` rather than trusting the user's word where that's possible.
+- `/release <major|minor|patch>` — orchestrator that runs the above four in one continuous flow, pausing only at genuine human checkpoints (confirm the `stg` PR merged and staging looks right, confirm the prod PR merged, confirm the `main`-sync PR merged). Verifies PR merges via `gh pr view` rather than trusting the user's word where that's possible.
 
 **Constraints:**
 - `protect-prod.yml` only accepts PRs into `prod` whose source branch starts with `release/` — direct `main → prod` PRs are no longer permitted, including for hotfixes (cut a release branch for those too).
-- Testing happens locally (`npm run build && npm start` against the release branch) — there is no staging deployment. Hostinger hosts prod only.
+- `protect-stg.yml` mirrors `protect-prod.yml`: PRs into `stg` must come from a `release/*` branch.
+- Staging (`stg`) has its own fresh `furqan_quran`/`furqan_app` databases, independent of prod's — never a snapshot of prod data, to avoid copying real user data into a lower-security environment.
+- The `release → stg` merge goes through a reviewed PR like `release → prod` (not a direct push), even though there's typically nothing new to review — keeps the promotion steps symmetric and leaves an audit trail of when staging was refreshed.
 - Cards move into "To Be Released" manually when their PR merges to `main`; `/cut-release` is what stamps the version label and moves them to `Done`, not the merge itself.
 - Do not skip `/sync-main-from-prod` after a release — without it, fixes made directly on a release branch during stabilization silently disappear from `main`'s history.
-- `/release` must not skip its checkpoints — only local testing lacks a programmatic check and must be taken on the user's word; PR merges must always be verified via `gh`, never assumed.
+- `/release` must not skip its checkpoints — PR merges must always be verified via `gh`, never assumed; only the "staging looks right" judgment at Checkpoint 1 has no programmatic check and is taken on the user's word.
+- `/cut-release`'s DB-change detection is file-path-based only (`prisma/quran/schema.prisma`, `scripts/quran-seed/**`, `prisma/app/migrations/**`) and never blocks the flow — it exists because the Quran DB has no automatic migration path (`prisma/migrations` is explicitly unused for it; re-sync is the destructive `npm run seed:quran -- --force`), so a schema/seed change merged to `main` silently doesn't reach prod without a manual re-seed. It does not attempt to detect generic application-level breaking changes — that's left to PR review.
 
 ---
 
@@ -368,6 +374,21 @@ main → /cut-release → release/x.y.z → (local testing) → /promote-release
 
 ---
 
+## Visual E2E Testing
+
+**Decision:** Playwright (`@playwright/test`) drives visual regression tests against a committed, **full-dataset** fixture database (all 604 pages) — not a trimmed slice. This is required, not optional: `app/[locale]/pages/[id]/page.tsx`'s `generateStaticParams` hardcodes all 604 page ids, so `next build` always statically generates every page regardless of which ones the tests visit; a trimmed fixture would crash the build on every page outside the trim. A fixture-generation script (`scripts/e2e-fixture/generate.js`, reusing the seeder's fetch/derive modules) produces one committed SQL dump (`e2e/fixtures/quran-fixture.sql`) with all 114 `chapters` + all 604 pages' `verses`/`words`/`page_metadata`/`rubs`/`rub_verse_mappings`. CI (GitHub Actions) and local baseline regeneration both load this file into a **dedicated, disposable** MySQL setup (`compose.e2e.yml` locally — separate ports/volumes from dev's `compose.yml`; GitHub Actions service containers in CI), then `next build && next start` against it. Five fixed screens are screenshotted across `{ar, en} × {light, dark}` (home/surah-list, Quran page 1, Quran pages 2–3 double-spread, search results, settings sheet), with a mobile viewport added for 4 of the 5 (the double-spread is desktop/`lg`-only by design) — 36 baseline PNGs total. See [ADR 0022](adr/0022-visual-e2e-testing.md).
+
+**Constraints:**
+- Never point `e2e:setup` (or `compose.e2e.yml`) at the dev databases in `compose.yml` — it force-resets both schemas on every run. The e2e DBs are separate containers/ports (`quran-db-e2e` 3309, `app-db-e2e` 3310) specifically so this is never destructive to real dev data.
+- `app-db` gets its Prisma schema pushed but no seed rows for these tests — none of the five screens require authentication; do not add auth-gated screens to this suite without also adding seed data and re-opening this decision.
+- A visual diff fails the GitHub Actions check but is not added to `protect-prod.yml`'s hard source-branch rule — it's a soft-blocking check like any other, not a merge-gate rule.
+- Baselines are only ever regenerated via the `workflow_dispatch` CI job (`playwright test --update-snapshots` run inside CI) — never by committing locally-generated PNGs, which would reintroduce font-rendering/anti-aliasing drift between a developer's machine and CI. Because the target branch (e.g. `main`) enforces a PR-required repository ruleset, the job cannot push its commit directly to it: it pushes to a uniquely-named `update-baselines/<target>-<run_id>` branch instead and opens a PR into the target branch, which is then merged like any other PR (never auto-merged by the workflow itself).
+- If the Quran schema (ADR 0009) changes, `scripts/e2e-fixture/generate.js` must be re-run and `e2e/fixtures/quran-fixture.sql` regenerated — it is a full derivative of the same seeder logic, not an independent source of truth. Regenerating re-fetches all 604 pages from QDC (slow, one-time), not part of any CI run.
+- Screenshot coverage (which pages get *screenshotted*) is intentionally limited to pages 1–3 even though the fixture *data* now covers all 604 — do not assume this suite catches rendering bugs on other pages (multi-surah pages, page-metadata edge cases, etc.). Expanding screenshot coverage is a deliberate future addition.
+- On failure, the Playwright HTML report is published to the `gh-pages` branch at `reports/pr-<PR_NUMBER>/` (additive push, never `actions/deploy-pages` — that replaces the whole Pages site per run and would clobber concurrent PRs) and linked from a sticky PR comment; a separate `pull_request: closed` workflow deletes a PR's report folder when it closes. See ADR 0022 Addendum (2026-07-15).
+
+---
+
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:
@@ -385,6 +406,80 @@ Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
 
 ---
 
+## Verse/Word Comments
+
+> **SUPERSEDED by [ADR 0025](adr/0025-mark-is-category-plus-comment.md) / "A Mark Is a Category Plus an Optional Comment" below.** Comments are no longer an independent `mark_type: "note"` row — they are an optional `comment` column on the single mark row. The `dir="auto"` free-text rules below still apply.
+
+**Decision:** Comments are a new `Mark.mark_type: "note"` value, not a new model — `mark_value` is widened from `VARCHAR(191)` to `@db.Text` to hold free text. See [ADR 0022](adr/0022-verse-word-comments-as-mark-type.md).
+
+**Constraints:**
+- The generic `upsertMark`/`deleteMark`/marks API routes/`getPageMarks`/`useMarks` require no changes — they already parameterize over `mark_type`.
+- A word/verse can carry an independent `"color"` mark and `"note"` mark simultaneously (separate rows under the same unique key shape), each with its own author. Any UI showing "Marked by X" attribution must read it **per `mark_type`**, never once for the whole word/verse — `MarkModal`'s Bookmarks and Notes tabs each show their own author independently, since a shared-mushaf color and note on the same spot can come from different people.
+- A verse-level note (added via the end-of-verse marker, same trigger as verse color marks) reuses the existing mechanism where `marks[verse_key]` is spread onto every word in that verse (`QuranLine`) — no separate code path for "note belongs to a verse vs a word."
+- No hover tooltip — the reader shows only a `border-b-2 border-dotted border-primary` indicator on any word carrying a note; reading/editing the comment happens in `MarkModal`'s Notes tab (same click/tap that already opens the modal for color marks).
+- `/api/marks` (My Marks page) fetches both `"color"` and `"note"` mark types; `MyMarksList` buckets by `mark_type`, not by color key alone — a word/verse with both a color and a note appears once in its color tab and once in the new Notes tab, since they are independent `Mark` rows.
+- Comment text (the Notes tab `<Textarea>`, the My Marks comment preview) uses `dir="auto"`, not the locale-locked `dir={getLanguageDirection(locale)}` pattern every other RTL-sensitive element in this codebase uses — free-form user text should render by its own content direction (an `ar`-locale user can write an English note and vice versa). Every other element (UI chrome, Quran text) keeps the existing locale-locked or Quran-text-locked convention; do not spread `dir="auto"` beyond actual free-text user content. Form controls (`input`/`textarea`/`select`) do not reliably inherit `direction` from an ancestor `<html dir>` in this codebase's experience — always set `dir` explicitly on them, never rely on inheritance.
+- When a container's `dir="auto"` is meant to auto-detect direction from a specific text-bearing descendant (e.g. the My Marks note box — a flex row with an icon + comment text, where the icon's side should flip with the comment's language), **do not also put `dir="auto"` (or any explicit `dir`) on that descendant.** Per the HTML living standard, an element's `dir="auto"` scan for the first strongly-typed character explicitly **excludes the text of any descendant that has its own `dir` attribute** (that descendant is treated as its own bidi context). Two `dir="auto"` on both container and descendant means the container's scan finds nothing (skips the only text-bearing child) and always resolves to `ltr`, regardless of actual content — confirmed live via `getComputedStyle` (`docs/plans/verse-word-comments.md` Addendum 4). Put `dir="auto"` on exactly one element in the chain — the outermost one whose layout should react to the content — and let plain (non-form-control) descendants inherit the resolved `direction` via normal CSS inheritance.
+
+---
+
+## Color Marks Are Semantic Categories
+
+**Decision:** A mark stores a stable **category key** (`forgetting`, `similar`,
+`tashkeel-error`, `tajweed-error`, `linking`, `other`), not a color. The display
+color is **derived** from the category via a single `MARK_CATEGORIES` table
+(`app/constants/marks.ts`) — color is never persisted. See
+[ADR 0024](adr/0024-color-marks-encode-category.md).
+
+> **Amended by [ADR 0025](adr/0025-mark-is-category-plus-comment.md) below:** the
+> category is stored in a dedicated `category` column (not `mark_value`), and
+> `mark_type` is dropped — a mark is one row (category + optional comment). The
+> category → color derivation and the fixed-constant / literal-Tailwind rules
+> below are unchanged.
+
+**Constraints:**
+- The unique key `[marked_type, marked_id, to_user]` (per ADR 0025) allows one
+  category per spot per mushaf (a word/verse is a single classification).
+- The category set is a fixed app-side constant, not a DB model/FK — a
+  cross-domain FK would break the DB split (ADR 0008). New categories are added
+  by extending `MARK_CATEGORIES`.
+- Two class sets are keyed by the same category key and must stay in sync:
+  the **solid** picker/My-Marks chip classes live in `MARK_CATEGORIES`; the
+  **translucent** on-page highlight classes live in `highlight.ts`
+  (`HIGHLIGHT_COLORS`, keyed `${categoryKey}-mark`). Both must be **literal**
+  Tailwind class strings (never interpolated) so JIT emits them.
+- The render path must fall back to **no highlight** for any unrecognized
+  `category` — legacy `red`/`blue`/`green` rows are unknown keys. No data
+  migration is written (test data is disposable); do not add one.
+
+---
+
+## A Mark Is a Category Plus an Optional Comment
+
+**Decision:** A `Mark` is **one row per spot per mushaf** carrying a required
+`category` (VARCHAR, the ADR 0024 key) and an optional `comment` (`String? @db.Text`,
+`null` when absent). `mark_type` and `mark_value` are **dropped**; the unique key
+is `[marked_type, marked_id, to_user]`. A comment cannot exist without a category
+— the `other` category is the comment-only escape hatch. See
+[ADR 0025](adr/0025-mark-is-category-plus-comment.md) (supersedes ADR 0022,
+amends ADR 0024).
+
+**Constraints:**
+- One `from_user` per mark (last-author-wins on a shared mushaf) — the
+  per-`mark_type` split authorship of ADR 0022/0012 is gone. "Marked by X" is
+  shown once per mark, not per field.
+- The modal is a single flow (no Bookmarks/Notes tabs): category picker + a
+  comment textarea disabled until a category is selected. Save writes both;
+  Remove deletes the whole row.
+- Reader page shows the category highlight only — **no on-page comment
+  indicator** (the old dotted-underline note cue is removed).
+- My Marks buckets by category only; a row renders its `comment` preview inline
+  when present. The `dir="auto"` free-text rules (Verse/Word Comments section
+  above) still govern the comment textarea and preview.
+- Schema reshape via `prisma db push` on disposable data — no migration script.
+
+---
+
 ## Recitation Playback
 
 **Decision:** Full-Quran recitation audio, reciter selection, and word-level ("karaoke") highlighting are powered by QDC's audio API, proxied live through new internal routes (`app/api/quran/recitations/...`) rather than seeded into the DB or called directly from the client. QDC serves one audio file **per chapter** (not per page), so a `RecitationContext` mounted once in `app/[locale]/layout.tsx` owns the `<audio>` element and drives page auto-navigation via `router.push` whenever the recited verse's `page_number` falls outside the currently-visible page set (single page, or the pair in double-page view). See [ADR 0021](adr/0021-recitation-playback.md).
@@ -396,6 +491,32 @@ Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
 - Word-level highlight updates use a direct DOM ref registry, not React state/re-renders down the `QuranSafha`/`QuranWord` tree — `timeupdate` fires ~4×/second and re-rendering the full word list at that rate is a real perf risk. Do not copy this pattern for lower-frequency UI; the existing URL-param-driven `highlight.ts` approach remains the norm elsewhere.
 - Auto-advance always navigates by exact target page number (`router.push(`${basePath}/${versePageNumber}`)`) — never by the locale-flipped `next`/`prev` href logic (`ReaderPage.tsx`'s `getNavigationHref`), which encodes *visual* swipe direction, not reading-order page sequence.
 - Manual navigation (arrows/swipe/sidebar) during playback does **not** pause or sync with audio — audio keeps running on its own timeline and may auto-navigate again once the recited verse leaves the manually-viewed page. Do not add logic that pauses playback on manual nav; this was explicitly decided against.
-- Chapter-end stops playback (no auto-continue into the next surah) — do not add cross-chapter auto-continue without revisiting this decision.
+- ~~Chapter-end stops playback (no auto-continue into the next surah) — do not add cross-chapter auto-continue without revisiting this decision.~~ **Superseded 2026-07-16** — cross-chapter chaining was added to support `stopPoint: "hizb" | "juz" | "none"` (and to correctly fix `"page"` when a page spans two chapters). See ADR 0021 Addendum (2026-07-16) and `docs/plans/recitation-playback.md` Addendum 5.
 - Recitation is available on both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — any new recitation UI/context must not assume it's only reachable from the self-reader route tree.
 - The QDC integration itself sits behind a `RecitationProvider` adapter (`app/lib/recitation/provider.ts` interface, `qdc-provider.ts` implementation) rather than being inlined in the route handlers — `app/lib/recitation/` is the established location for server-only third-party integrations (distinct from `app/providers/`, which is React context providers, and `app/server/actions/`, which is Next.js server actions). The adapter throws `RecitationProviderError` on fetch failure and returns `null` for "valid response, nothing found" (e.g. no audio for a reciter/chapter) — routes map throw → `502`, `null` → `404`. No provider registry/factory exists; add one only when a second provider is real.
+- `Verse.verse_key` is **not** a unique/indexed field in `prisma/quran/schema.prisma` — always look it up with `findFirst`, never `findUnique` (which requires a unique field like `id`).
+
+---
+
+## Tajweed Mushaf Mode
+
+**Decision:** An opt-in reading mode color-codes Quran text by Tajweed rule using per-page COLRv1 (color-glyph) fonts — one font file per Mushaf page (`public/fonts/v4/colrv1/ttf/p{n}.ttf`, ~161MB total, committed to git same as the existing non-colored per-page font). No new schema/seed work: the font pairs with the **already-seeded, previously-unused** `Word.code_v2` column. See [ADR 0023](adr/0023-tajweed-mushaf-mode.md) for why `code_v2` — not a new column — is correct.
+
+**Constraints:**
+- Font/glyph pairing is mode-gated, not a free choice: `tajweedMode=false` → render `word.code_v1` with font `quran-p{page}`; `tajweedMode=true` → render `word.code_v2` with font `quran-p{page}-tajweed`. Never mix `code_v1` with the tajweed font or `code_v2` with the base font.
+- The tajweed `@font-face` (and its `@font-palette-values` block) must only be injected when `tajweedMode` is true, for the page pair actually being viewed — never unconditionally. This keeps the ~9-10x-heavier font (avg 266KB/page vs 28KB/page) out of the load path for users who don't enable the mode.
+- `FontFaceInjector` reads `QuranTajweedContext` itself rather than receiving the mode as a prop — `ReaderPage` (its only caller) is an `async` Server Component and cannot call a context hook, and the self reader is statically generated at build time so it has no per-request client preference to thread through anyway. Any future caller must follow the same pattern (read the context inside the client leaf), not prop-drill from a server component.
+- The COLRv1 files embed 3 baked-in color palettes at fixed indices — `0` = light, `1` = dark, `2` = sepia/gold — matching Furqan's three themes 1:1. Theme→palette selection is a global CSS rule (`font-palette: --Light/--Dark/--Gold` scoped to `.theme-light`/`.theme-dark`/`.theme-gold`), not per-component logic.
+- Tajweed fonts are **excluded** from the PWA offline pre-cache (`app/sw.ts`'s `fontUrl()`/`precacheAllPages()`, per the PWA & Offline decision above) — they load over the network on demand, same as any other opt-in asset. Do not add them to the install-time pre-cache list; doing so would nearly triple the installed-PWA cache size against an already-fragile iOS quota (see PWA decision).
+- No Firefox COLRv1 dark-mode fallback (the reference project ships a second full OT-SVG font set + UA-sniffing for this) — accepted as a known v1 limitation, not replicated. Revisit only if it becomes a real user complaint.
+- Toggle state (`tajweedMode: boolean`, default `false`) persists in `localStorage`, mirroring the `QuranSafhaViewContext`/`QuranFontScaleContext` pattern — provided globally so both the self reader and the shared-mushaf grant reader, and both single- and double-page view, pick it up automatically with no route-specific wiring.
+- The COLRv1 font is a different font design, not a recolored clone of the base font — its glyphs measure ~1.42x taller at the same CSS `font-size` (measured via `fontTools` bounding-box comparison across 20 real word pairs). A single CSS custom property, `--fq-tajweed-scale` (starting at `0.7`), is layered on top of all three existing font-sizing mechanisms (mobile `--fq-mobile-font` ADR 0011, desktop single Tailwind-class-driven, desktop double-view `--fq-dv-word` width cap ADR 0013) via `.fq-tajweed`-scoped override rules in `globals.css` — never by editing `FONT_V1` or either formula directly. See Addendum 1 of `docs/plans/tajweed-mushaf-mode.md`.
+- COLRv1 glyphs ignore the CSS `color` property outright — they paint their own baked-in palette colors. Any interactive/hover state on tajweed-mode text must use `background-color` (or `text-shadow`/opacity), never `color`; `QuranWord`'s hover cue branches on `tajweedMode` for exactly this reason (`hover:bg-primary/25` in tajweed mode vs `hover:text-yellow-500` otherwise). Use `--primary`, not `--accent`, for background tints on top of `--card` surfaces (the Quran page card) — `--accent`'s lightness is nearly identical to `--card`'s in all 3 themes (same lightness in dark theme) and is effectively invisible there regardless of opacity; `--accent` is calibrated for hover states over `--background`-level chrome (nav/buttons), not over cards.
+- **Resolved: `mushaf=19` is final.** `code_v2` is confirmed mushaf-independent; `line_number` is not (diffing `mushaf=19` vs `mushaf=2` on page 343 showed 23% of words on a different line). Two mushaf-ID candidates were evaluated — `mushaf=19` (matches the font asset naming, and the live quran.com web app's own rendering) and `mushaf=11` (matched the original reference screenshot from the Quran Android app more closely on one boundary check). `mushaf=11` was abandoned: the Android app that produced that screenshot has **no Tajweed rendering code at all** (confirmed via a full-history search of its repo — it only downloads pre-rendered page images), so there is no reachable algorithm to replicate its exact layout. `mushaf=19` is used going forward — see [ADR 0023's Addendum 2](adr/0023-tajweed-mushaf-mode.md) and Addendum 6 of `docs/plans/tajweed-mushaf-mode.md`.
+- **Alternative approach explored and rejected:** an alternative, non-font-based rendering technique using QDC's `text_uthmani_tajweed` field (CSS-colored `<rule class=X>` spans over the same standard Uthmani text/line-layout as `code_v1`, instead of a second COLRv1 glyph font) was built and visually evaluated. Rejected: plain Unicode Uthmani text has no per-line kashida calibration at all (unlike `code_v1`/`code_v2`, typeset per mushaf page with kashida baked in), so lines fell visibly short of the container edge regardless of line grouping — a structural data limitation, not a fixable bug. The diagnostic code was removed; the COLRv1/`mushaf=19` approach remains the shipped one. See [ADR 0023's Addendum 3](adr/0023-tajweed-mushaf-mode.md) and Addendum 7 of `docs/plans/tajweed-mushaf-mode.md` for the full record (kept for future reference in case this path is revisited with a real justification algorithm).
+- **Implemented and seeded:** production wiring of `mushaf=19` (Addendum 4's deferred schema change) — see [ADR 0023's Addendum 6](adr/0023-tajweed-mushaf-mode.md) and Addendum 10 of `docs/plans/tajweed-mushaf-mode.md`. A new generic `WordMushafLayout` table (`word_id`, `mushaf_id`, `line_number`) is seeded from QDC's `mushaf=19` response; `getPageWords` attaches a `layouts: Record<number, number>` map per word (mushafId → lineNumber, only mushafs with divergent groupings); `QuranSafha` is the only component that re-groups client-side into `activeLines` when `tajweedMode` is true, and its existing surah-banner gap-detection algorithm runs against that grouping unmodified (verified: the gap position is identical between mushaf=2/19 groupings on a real mid-page surah-transition page, even though other words on that page shift lines). QDC has no `line_type`/`is_centered` fields at all (confirmed live) — those stay out of scope here and remain tracked solely under Trello #72. The diagnostic test pages that stood in for this (`app/[locale]/test-tajweed-mushaf/[page]/page.tsx`, `test-tajweed-mushaf-11`) are deleted — superseded by real seeded data.
+- **`mushaf=19` and `mushaf=2` disagree on page *boundaries*, not just line groupings within a page** — discovered when the seeder's first run failed: verse 5:77's words sit on `mushaf=2`'s page 121 but `mushaf=19`'s page 120 (same word ids either way). The tajweed-layout seed step (`scripts/quran-seed/tajweed-layout.js`) therefore aggregates `word_id → line_number` **globally** across all 604 of `mushaf=19`'s own pages rather than validating page-by-page — a word only needs to resolve *somewhere* in mushaf=19's pagination, not on the same page number mushaf=2 assigned it. Any future per-mushaf data fetch (e.g. if Trello #72 is picked up later) should assume page boundaries can shift between mushaf editions, not just line breaks within a page.
+- **`app/api/quran/pages/[pageId]/route.ts` now calls `getPageWords` instead of re-querying independently.** Discovered during the above: this route (used by the vertical/virtualized reader's `usePage` hook) had its own untracked duplicate of `getPageWords`'s query, predating it. Any future change to `getPageWords`'s shape (this one included) must not assume it's the only place building `{ lines, pageMetadata }` — check this route too, or better, keep it delegating like this rather than reintroducing a second copy.
+- **CPAL palette-slot → Tajweed rule mapping (empirically derived):** the COLRv1 font's 16 shared palette slots already encode per-rule coloring at the glyph layer (each word-glyph is built from multiple color-layered sub-glyphs) — recoloring Tajweed to match a different reference palette is therefore a CSS-only `@font-palette-values`/`override-color` change, never a font, schema, or `code_v1`/`code_v2`-alignment change (both fields encode a whole word as one glyph — there is no sub-word granularity to align against `text_uthmani_tajweed`'s per-character rule tags, and none is needed). Slot→rule correlation (e.g. slot 8=`qalaqah`/cyan, slot 5=`madda_normal`/gold, slot 9=`madda_obligatory_*`/red, slot 6=`ikhafa`/`ghunnah`/`iqlab`/green, slot 2=`slnt`/`idgham_wo_ghunnah`/grey) was verified across ~600 words on 13 pages, most at 100% confidence. See [ADR 0023's Addendum 4](adr/0023-tajweed-mushaf-mode.md) and Addendum 8 of `docs/plans/tajweed-mushaf-mode.md` for the full table.
+- **Tajweed color + always-edge-to-edge lines is not achievable with current font assets.** Root cause (found via direct `fontTools` inspection): `code_v1`'s font has Apple AAT justification tables (`just`/`morx`/`feat`/`prop`, carrying real kashida-stretch data used by the text engine to self-justify) but zero color capability (no `COLR`/`CPAL` — cannot be recolored by any means); `code_v2`'s Tajweed font has `COLR`/`CPAL` but is missing the AAT justification tables entirely, which is the direct explanation for its 7.7%-CV line-width inconsistency (vs `code_v1`'s 2.7%). No current font asset has both. The reference project (quran.com) has the same gap and uses the same centering work-around Furqan already ships (Addendum 3) — this is an ecosystem-wide asset limitation, not fixable from CSS. The only real path to both properties at once would be constructing a merged font (splicing AAT tables onto COLR/CPAL glyphs) — a real font-engineering effort, not attempted, and a legitimate future option if this becomes a priority. See [ADR 0023's Addendum 5](adr/0023-tajweed-mushaf-mode.md) and Addendum 9 of `docs/plans/tajweed-mushaf-mode.md`.
+- Furqan's mushaf lines rely on the per-page font's own glyph kerning (kashida baked into the text/glyph data at specific points, chosen by the original typesetter) to "self-justify" — no `text-align: justify` anywhere. This holds for `code_v1` (measured: 13.9–15.1×font-size across all 604 pages, ~2.7% coefficient of variation) but **not** for `code_v2`/the tajweed COLRv1 font (measured: 5.8–22.7×font-size, ~7.7% CV, ~3x the relative spread) — so many tajweed lines don't naturally reach the container edges. **Do not "fix" this with `justify-content: space-between`** — inserting gaps *between* whole words has nothing to do with where the font's kashida actually is, and visibly shifts every word off its authentic mushaf position (confirmed by direct screenshot comparison; tried and reverted, see Addendum 2→3 of `docs/plans/tajweed-mushaf-mode.md`). The correct technique — matching how quran.com itself handles this (hardcoded per-scale line-width lookup table + `text-align: center`, never `space-between`) — is to **center** each tajweed line as a rigid block when it falls short of the container width (`QuranLine.tsx`: `justify-center` for tajweed mode on every page, not just 1–2); centering only shifts the whole line, never the relative gaps between words. The raw per-line width-ratio measurement (worst case `22.73×font-size` at p.123 l.8) is retained in Addendum 3 for a still-**deferred** follow-up: the mobile/double-view font-size formulas still derive from `code_v1`'s `14.7` divisor, so the rare worst-case tajweed line could clip slightly (accepted for now) — revisit only after visually confirming it's actually a problem, since calibrating to the true worst case up front would leave *typical* lines filling only ~70% of the container (median ratio 16.08 vs worst-case 22.73), a worse-looking tradeoff than the rare clip it would prevent.

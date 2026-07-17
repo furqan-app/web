@@ -18,7 +18,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 0. **Resolve ambiguity upfront — ask once, then proceed without further confirmation**
    - Identify the Trello ticket from: the plan file, the current branch name, or context from the conversation. If there is any ambiguity about which ticket this work belongs to, ask now and only now — do not ask again mid-flow.
-   - Once the ticket is confirmed, execute steps 1–7 in sequence without pausing for approval. Step 7 (worktree cleanup) is mandatory — do not skip it.
+   - **Offer a review pass:** ask once whether the user wants to run `/review-fq-work` on the branch before shipping. If yes, **also ask which model to run the review with** — present the list Opus (recommended, most thorough), Sonnet (faster/cheaper), Haiku (fastest, light sanity check) — then run `/review-fq-work` with the chosen model and let the user act on the findings. Do **not** continue to step 1 until they say to ship. If no (or already reviewed this session), proceed. Ask this together with the ticket question so there is a single upfront pause.
+   - Once the ticket is confirmed and the review offer is answered, execute steps 1–7 in sequence without pausing for approval. Step 7 (worktree cleanup) is mandatory — do not skip it.
 
 1. **Sync with main**
    - `git fetch origin`
@@ -49,18 +50,27 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 7. **Clean up the worktree** (mandatory — always run, even if Trello step 6 was skipped)
    - Read the current branch name (`git branch --show-current`)
    - Read `~/.claude/furqan-worktrees.json` — if the file doesn't exist or has no entry whose `branch` matches the current branch, skip this step entirely
+   - Derive the **absolute** worktree path first (`<abs>`) by resolving `<worktreePath>` from the registry against the main repo root (`git worktree list | head -1 | awk '{print $1}'`), not the relative `../furqan-<slug>` form. Use `<abs>` for every command below so this works whether the session is inside the worktree or the main repo.
    - If an entry is found:
-     1. Kill the dev server on that port:
+     1. Kill the dev server. The recorded port can be **stale** — Next.js auto-increments (3000→3001→…) when the port is busy — so kill by *both* the recorded port and any process rooted in the worktree:
         ```bash
-        lsof -ti :<port> | xargs kill -9 2>/dev/null || true
+        lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
+        lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 || true
         ```
-        Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and the process stays alive.
-     2. Remove the worktree — use the **absolute path** so this works whether the session is inside the worktree or the main repo:
+        Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and stay alive. `xargs -r` skips the kill when nothing matched.
+     2. Remove the worktree, then force-delete the folder — `git worktree remove` **leaves gitignored dirs behind** (`.next`, `node_modules` symlink, etc.), so the folder always survives unless you also `rm -rf` it. Run both unconditionally:
         ```bash
-        git worktree remove /absolute/path/to/furqan-<slug> --force
+        git worktree remove <abs> --force || true
+        rm -rf <abs>
+        git worktree prune
         ```
-        Derive the absolute path by resolving `<worktreePath>` from the registry against the main repo root (`git worktree list | head -1 | awk '{print $1}'`), not by using the relative `../furqan-<slug>` form.
-     3. Remove the entry from `~/.claude/furqan-worktrees.json` and write the updated file back (preserve all other entries)
+        Do **not** rely on `git worktree remove` alone — it never fully cleans the directory.
+     3. Verify the folder is actually gone with a real filesystem check:
+        ```bash
+        ls <abs> 2>/dev/null && echo "WARNING: folder still exists at <abs>" || echo "Worktree removed successfully"
+        ```
+        `[ ! -e <abs> ]` can silently pass on some shells even when the directory exists — use `ls` instead so a leftover folder is always reported.
+     4. Remove the entry from `~/.claude/furqan-worktrees.json` and write the updated file back (preserve all other entries)
 
 ## No AI signatures — anywhere
 

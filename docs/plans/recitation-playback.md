@@ -85,11 +85,11 @@ We proxy both through new internal API routes (our `jsonResponse()` envelope), n
 - Chapter-end behavior: stop, no auto-continue into next surah.
 - Manual-nav-during-playback behavior: audio is not paused/synced; it drives navigation independently.
 
-## Addendum 1: Play-from-ayah + player settings (repeat, stop point, speed)
+## Addendum 1: Play-from-ayah + player settings
 
 **Date:** 2026-07-10
 
-Adds a "play from here" trigger to `MarkModal` and a settings sheet (reciter, stop point, per-ayah repeat, whole-range repeat, playback speed, pause-between-repeats) reachable both from `MarkModal` and from a gear icon on the bottom player bar. This changes `RecitationContext` from "always plays from page start to chapter end" to "plays a configurable range, with repeat."
+Adds a "play from here" trigger to `MarkModal` and a settings sheet (reciter, stop point, per-ayah repeat, whole-range repeat, speed, pause-between-repeats) from both `MarkModal` and the player bar's gear icon. Changes `RecitationContext` from "always plays page start to chapter end" to "configurable range with repeat."
 
 ### New/changed state (`RecitationContext`)
 
@@ -100,11 +100,11 @@ Adds a "play from here" trigger to `MarkModal` and a settings sheet (reciter, st
 - `playbackSpeed: number` (0.5–2, step 0.25) — sets `audio.playbackRate`.
 - `pauseBetweenRepeatsMs: number` (0–5000) — silence inserted before each repeat (per-ayah or whole-range) via `setTimeout` before seeking/resuming.
 
-All of the above (including reciter) persist to `localStorage` via `app/utils/storage.ts`, same pattern as the rest of the context.
+All persist to `localStorage` via `app/utils/storage.ts`.
 
 ### Updated `timeupdate` algorithm
 
-Replaces the base plan's "End of current chapter's audio file reached → stop" row. Page-follow (visible-set/`router.push`) logic from the base plan is unchanged and runs independently on every tick.
+Replaces the base plan's "End of chapter → stop" row. Page-follow logic is unchanged and runs independently on every tick.
 
 | Condition | Action |
 |---|---|
@@ -120,30 +120,20 @@ Click ayah 2:5 in `MarkModal` on a page spanning 2:1–2:8, with `stopPoint=page
 2. `rangeRepeat=2` not exhausted → seek back to 2:5, repeat the whole 2:5→2:8 sequence (×3 each) again
 3. After range pass 2 → range-repeats exhausted → stop
 
-### Additional Files to Change
+### Files to Change (Addendum 1)
 
-- `app/components/MarkModal.tsx` — add a "Play from here" button (outside the existing Bookmarks/Notes tabs, since it applies regardless of tab). Resolves the target verse from `markFor` (word case: `markFor.verse_key`; verse case: `markFor.verse_key` directly), opens `RecitationSettingsSheet` pre-filled with persisted defaults and this verse as `startVerseKey`, then starts playback and closes the modal.
-- `app/components/RecitationSettingsSheet.tsx` — new. Replaces the standalone `RecitationReciterPicker` from the base plan (folded in as one field of this sheet) — a single settings surface (shadcn `Sheet`) for reciter, stop point, per-ayah repeat, range repeat, speed, pause-between-repeats. Opened from `MarkModal`'s new button and from a gear icon on `RecitationPlayerBar`.
-- `app/components/RecitationPlayerBar.tsx` — add a settings (gear) icon that opens `RecitationSettingsSheet` for mid-playback edits.
-- `app/components/RecitationPlayButton.tsx` (header quick-play) — unaffected in behavior (still starts at current page's first verse, `stopPoint`/repeat defaults apply), but now goes through the same generalized range/repeat engine instead of a special-cased "play to chapter end" path.
+- `app/components/MarkModal.tsx` — "Play from here" button (outside Bookmarks/Notes tabs). Resolves verse from `markFor.verse_key`, opens `RecitationSettingsSheet` pre-filled with persisted defaults + this verse as `startVerseKey`, starts playback, closes modal.
+- `app/components/RecitationSettingsSheet.tsx` — new. Replaces the base plan's standalone `RecitationReciterPicker` (folded in as one field). Single shadcn `Sheet` for reciter, stop point, repeat counts, speed, pause. Opened from `MarkModal` and `RecitationPlayerBar`'s gear icon.
+- `app/components/RecitationPlayerBar.tsx` — add gear icon opening `RecitationSettingsSheet`.
+- `app/components/RecitationPlayButton.tsx` — behavior unchanged, now goes through the generalized range/repeat engine.
 
-### Additional Constraints
-
-- `RecitationReciterPicker` from the base plan's Files to Change is superseded — do not build it as a separate component; reciter selection is one field inside `RecitationSettingsSheet`.
-- Per-ayah/range repeat counts support an explicit `Infinity` ("∞") option — the UI must let the user stop playback manually at any time regardless of remaining repeat count (the existing play/pause control on the bottom bar already covers this, no new stop affordance needed).
-- `stopPoint` defaults must not break the base plan's existing behavior when playback starts from the header quick-play button (i.e. default `stopPoint` should still result in the previously-verified page/chapter-boundary walk-throughs unless the user has explicitly changed settings).
-
-### What NOT to Do (Addendum 1)
-
-- Do not build a separate arbitrary end-ayah picker — stop point is limited to "end of page" or "end of surah," not a custom verse-range picker (explicitly ruled out in favor of the simpler two-option scope).
-- Do not implement auto-continue past the stop point once repeats are exhausted — explicitly ruled out; terminal state is always "stop."
-- Do not lock settings once playback starts — they must remain editable mid-playback via the bottom player bar's gear icon.
+**Constraints:** Stop point limited to "end of page" or "end of surah" — no custom range picker. Settings remain editable mid-playback. Do not auto-continue past stop once repeats exhausted.
 
 ## Addendum 2: Adapter pattern for the QDC integration
 
 **Date:** 2026-07-10
 
-Refactors the two routes that call QDC directly (`app/api/quran/recitations/reciters/route.ts` and `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts`) to go through a `RecitationProvider` adapter instead of inlining QDC's response shape and `fetch()` calls in the route handlers. Goal is both testability/isolation (routes and any future caller don't need to know QDC's JSON shape) and a real seam for a second audio provider later, without building a registry/factory for a single-provider case today.
+Refactors the two QDC-calling routes to go through a `RecitationProvider` adapter instead of inlining QDC's response shape and `fetch()` calls in the route handlers. Goal: testability and a real seam for a second provider, without building a registry/factory for the single-provider case today.
 
 ### Interface
 
@@ -159,63 +149,214 @@ export class RecitationProviderError extends Error {}
 
 `Reciter` and `ChapterAudio` are the existing domain types already in `app/types/recitation.ts` — unchanged.
 
-### Decision Tree / Algorithm
-
-| Condition | Adapter (`qdc-provider.ts`) | Route |
+| Condition | Adapter | Route |
 |---|---|---|
-| `reciterId`/`chapterId` not integers | n/a — validated before the adapter is called | `422` (unchanged — param validation stays in the route) |
-| QDC fetch fails (network error or non-2xx) | throws `RecitationProviderError` | `catch` → `502` |
-| QDC `audio_files` fetch succeeds but the array is empty | `getChapterAudio` returns `null` | `null` → `404` |
-| QDC `reciters` fetch succeeds (even an empty array) | returns `Reciter[]` (possibly `[]`) | `200` with that data — an empty list is valid, not a 404 |
+| Invalid ids | n/a — validated in route before adapter is called | `422` |
+| QDC fetch fails | throws `RecitationProviderError` | `502` |
+| `audio_files` empty | `getChapterAudio` returns `null` | `404` |
+| `reciters` succeeds (even `[]`) | returns `Reciter[]` | `200` |
 
-### Verified Test Cases
+**Files to Change:**
+- `app/lib/recitation/provider.ts` — new. `RecitationProvider` interface + `RecitationProviderError`.
+- `app/lib/recitation/qdc-provider.ts` — new. `qdcRecitationProvider`: actual QDC `fetch()`, `QdcReciter`/`QdcAudioFile` DTOs and their mapping, `QDC_BASE_URL`, `{ next: { revalidate: 86400 } }` (moved from `app/constants/recitation.ts`).
+- `app/api/quran/recitations/reciters/route.ts` — simplified to `qdcRecitationProvider.getReciters()` in `try/catch`.
+- `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts` — same, keeps id validation.
+- `app/constants/recitation.ts` — remove `QDC_BASE_URL`; keep UI constants.
 
-- **`reciters/route.ts`:** becomes `try { const data = await qdcRecitationProvider.getReciters(); return jsonResponse({ data }); } catch { return jsonResponse({ code: 502, message: "Failed to fetch reciters" }); }`. The inline `QdcReciter` type and the QDC `fetch()`/mapping move entirely into `qdc-provider.ts`.
-- **`[reciterId]/chapters/[chapterId]/route.ts`:** keeps its existing `422` id validation (adapter is never called with invalid ids), then wraps `qdcRecitationProvider.getChapterAudio(reciterId, chapterId)` in `try/catch` — `null` result → `404 "No audio found for this reciter/chapter"`, thrown `RecitationProviderError` → `502 "Failed to fetch chapter audio"`.
-- **`verse-pages/route.ts`:** untouched — it queries `quranPrisma` directly, never calls QDC, so it's outside this adapter's scope.
-
-### Files to Change
-
-- `app/lib/recitation/provider.ts` — new. `RecitationProvider` interface + `RecitationProviderError` class.
-- `app/lib/recitation/qdc-provider.ts` — new. `qdcRecitationProvider: RecitationProvider` — the actual QDC `fetch()` calls (moved from the two routes), the inline `QdcReciter`/`QdcAudioFile` DTO types and their mapping to `Reciter`/`ChapterAudio` (moved from the two routes), `QDC_BASE_URL`, and the `{ next: { revalidate: 86400 } }` cache config (both moved from `app/constants/recitation.ts`, since they're QDC-specific implementation details, not general recitation constants).
-- `app/api/quran/recitations/reciters/route.ts` — simplified to call `qdcRecitationProvider.getReciters()` inside a `try/catch`; no more QDC-shape knowledge.
-- `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts` — simplified to call `qdcRecitationProvider.getChapterAudio()` inside a `try/catch`; keeps its existing id validation.
-- `app/constants/recitation.ts` — remove `QDC_BASE_URL` (moved into `qdc-provider.ts`); UI-facing constants (`DEFAULT_RECITATION_SETTINGS`, repeat/speed bounds, `RECITATION_HIGHLIGHT_CLASS`) stay.
-
-### Constraints
-
-- `RecitationContext.tsx` and `app/utils/recitation-api.ts` (the client-side fetch wrapper hitting our own `/api/quran/recitations/...` routes) are unaffected — this refactor is server-side only, behind the existing route boundary. No client-visible behavior change.
-- Keep the `try/catch` + typed-error convention (matches `docs/standards/api-conventions.md`'s existing pattern of catching specific error types, e.g. `Prisma.NotFoundError` → `404`) — do not introduce a Result-type/discriminated-union return convention, which isn't used elsewhere in the codebase.
-- No registry, factory, or provider-selection config — `qdcRecitationProvider` is the only implementation and is imported directly by both routes. Do not build multi-provider plumbing until a second provider actually exists.
-
-### What NOT to Do (Addendum 2)
-
-- Do not touch `verse-pages/route.ts` — it's a DB query, not a QDC integration, and is out of scope for this adapter.
-- Do not build a provider registry/factory for provider selection — explicitly out of scope until a second provider is real.
-- Do not change the client-side `RecitationContext`/`recitation-api.ts` — this refactor is confined to the two server route handlers and the new `app/lib/recitation/` files.
+**Constraints:** Server-side only — `RecitationContext`/`recitation-api.ts` unaffected. No registry/factory until a second provider exists. Do not touch `verse-pages/route.ts`.
 
 ## Addendum 3: Localize reciter names
 
 **Date:** 2026-07-10
 
-Bug: `qdcRecitationProvider.getReciters()` calls QDC's `/audio/reciters` with no `language` param, so `translated_name` always comes back in QDC's default (English) regardless of the viewer's locale — Arabic-locale users saw English reciter names.
+`getReciters()` called QDC with no `language` param — Arabic-locale users saw English reciter names.
 
-### Fix
+**Fix:** Pass `?language=` through the whole call chain. `RecitationContext.tsx` → `useLocale()` → `fetchReciters(locale)` → `recitation-api.ts` appends `?language=` → route reads `language` from `searchParams` (default `"en"`) → `qdcRecitationProvider.getReciters(language)` appends to QDC URL.
 
-- `RecitationContext.tsx` reads the current locale via `useLocale()` (same pattern as `QuranFontScaleControls.tsx`/`SurahListItem.tsx`/`SettingsSidebar.tsx`) and passes it into `fetchReciters(locale)`.
-- `app/utils/recitation-api.ts` — `fetchReciters(language: string)` appends `?language=${language}` to the request.
-- `app/api/quran/recitations/reciters/route.ts` — reads `language` from `request.nextUrl.searchParams` (default `"en"` if missing), passes it to `qdcRecitationProvider.getReciters(language)`.
-- `app/lib/recitation/provider.ts` — `getReciters(language: string): Promise<Reciter[]>`.
-- `app/lib/recitation/qdc-provider.ts` — `getReciters(language)` appends `?language=${language}` to the QDC `fetch()` call.
+Files: `provider.ts` (`language` param), `qdc-provider.ts` (appends to QDC URL), `reciters/route.ts` (reads param), `recitation-api.ts` (appends param), `RecitationContext.tsx` (`useLocale()`). Do not hardcode `"ar"` — must follow actual app locale.
+
+## Addendum 4: Move play button into navbar on mobile
+
+**Date:** 2026-07-14  
+**Status:** implemented
+
+### Problem
+
+`ReaderPage.tsx` renders a toolbar row (`<div className="flex items-center gap-2">`) above the Quran spread containing `QuranSafhaViewToggle` and `RecitationPlayButton`. `QuranSafhaViewToggle` is already `hidden lg:flex`, but `RecitationPlayButton` has no responsive hiding — visible at all breakpoints. On mobile, the safha sizing (ADR 0011) is calibrated to fill exactly `100dvh - 56px`. The toolbar row adds vertical space above the spread, pushing the safha below the fold and making the page scrollable.
+
+### Solution
+
+Two-breakpoint split:
+- **Mobile (< md):** play button in `Nav`, gated by `isOnPagesRoute` (same gate as the sidebar trigger). Toolbar row becomes `hidden md:flex`.
+- **Desktop (md+):** play button stays in the toolbar row alongside `QuranSafhaViewToggle`, unchanged.
+
+### `firstVerseKey` threading
+
+`RecitationPlayButton` currently receives `firstVerseKey` as a prop from `ReaderPage` (a Server Component). The Nav lives above the pages layout and cannot receive it via props. Fix: expose `pageFirstVerseKey`/`setPageFirstVerseKey` on `RecitationContext`. A thin `"use client"` component (`RecitationPageSync`) rendered inside `ReaderPage`'s output calls `setPageFirstVerseKey(firstVerseKey)` in a `useEffect` whenever the page changes. `RecitationPlayButton` falls back to reading `pageFirstVerseKey` from context when no `firstVerseKey` prop is supplied.
+
+### Decision tree
+
+| Breakpoint | Where the play button renders | How `firstVerseKey` is resolved |
+|---|---|---|
+| < md (mobile) | `Nav`, gated by `isOnPagesRoute`, no prop | reads `pageFirstVerseKey` from `RecitationContext` |
+| md+ (desktop) | `ReaderPage` toolbar row | receives `firstVerseKey` as prop (unchanged) |
+
+### Files to Change (Addendum 4)
+
+- `app/contexts/RecitationContext.tsx` — add `pageFirstVerseKey: string | null` state + `setPageFirstVerseKey(key: string | null): void` to context value and provider.
+- `app/components/reader/RecitationPageSync.tsx` — new thin `"use client"` component. Props: `firstVerseKey: string | null`. `useEffect` calls `setPageFirstVerseKey(firstVerseKey)` whenever `firstVerseKey` changes. Returns `null`.
+- `app/components/reader/ReaderPage.tsx` — render `<RecitationPageSync firstVerseKey={firstVerseKey} />` alongside `FontFaceInjector`. Change toolbar div to `hidden md:flex`.
+- `app/components/RecitationPlayButton.tsx` — make `firstVerseKey` prop optional; when absent, read `pageFirstVerseKey` from `useRecitation()` context.
+- `app/components/nav/Nav.tsx` — add `<RecitationPlayButton />` (no prop) inside the leading `div`, after the sidebar trigger, gated by `isOnPagesRoute` and `md:hidden`.
+
+### Constraints
+
+- The toolbar row must be `hidden md:flex` — even an empty div can produce a small layout contribution in some browsers.
+- Do not remove `firstVerseKey` as a prop from `RecitationPlayButton` — the desktop path still passes it directly.
+- `RecitationPageSync` must be a separate `"use client"` leaf, not a hook in `ReaderPage` — `ReaderPage` is `async` and cannot call hooks.
+
+### What NOT to Do (Addendum 4)
+
+- Do not put the play button inside the `QuranSafha` card — any addition to the card's flex children eats from the 15-slot height budget.
+- Do not use a floating/fixed button overlaid on the safha — it would obscure Quran text.
+- Do not move the button to the toolbar on mobile in the same row — the toolbar div still takes space until it is `hidden md:flex`.
+
+## Addendum 5: Hizb/rub/juz stop points + "no stop" (cross-chapter chaining)
+
+**Date:** 2026-07-16  
+**Status:** implemented
+
+**Problem (Trello #96):** `stopPoint` only supports `"page"` and `"surah"`. Both `computeStopVerseKey` (`app/utils/recitation.ts`) and the whole playback session are bounded to a single chapter's `verseTimings` (one `fetchChapterAudio(reciterId, chapterId)` call per `play()`). This card asks for `"hizb"`, `"rub"`, and `"juz"` stop points, plus a `"none"` ("no stop" — continuous playback until 114:6 or a manual stop).
+
+**Why this isn't a settings tweak:** a hizb/rub/juz boundary routinely falls in a **later chapter** than where playback started (Juz 1: starts chapter 1, ends `2:141` in chapter 2; Juz 30 spans chapters 78–114). `"none"` obviously needs the same thing. This requires the context to **auto-continue into the next chapter's audio** when the loaded chapter ends — which ADR 0021 explicitly ruled out ("Chapter-end stops playback, no auto-continue into the next surah"). See ADR 0021 Addendum (2026-07-16), which formally supersedes that consequence.
+
+**Bonus fix, same mechanism:** `stopPoint: "page"` has the identical latent bug today — if the page spans two chapters (real example: page 106, `4:176` is chapter 4's last verse, `5:1`–`5:2` start chapter 5), the current code silently stops at the end of the loaded chapter, not the page's true last verse. Fixed as part of this addendum, not separately.
+
+**Also uncovered:** there is currently no `ended`/duration-based end-of-chapter detection at all — only a `timeupdate` listener. Since `findActiveVerseTiming` clamps to the last entry once `currentTimeMs` passes its `timestampTo`, the verse-change detection that normally triggers `stop()`/repeat never fires for the literal last verse of a chapter — meaning `stopPoint: "surah"` reaching the chapter's actual last verse today relies on the browser silently pausing, not on our code calling `stop()`. The new end-of-chapter detection this addendum adds fixes this as a byproduct.
+
+### Decision Tree — stop-verse resolution
+
+| `stopPoint` | Target verse | Requires DB lookup? |
+|---|---|---|
+| `"surah"` | Last verse of the start verse's own chapter (`verseTimings[verseTimings.length - 1]`) | No — unchanged, synchronous, from already-loaded `verseTimings` |
+| `"page"` | Last verse where `page_number` = start verse's `page_number` | Yes |
+| `"rub"` | Last verse where `rub_el_hizb_number` = start verse's `rub_el_hizb_number` | Yes |
+| `"hizb"` | Last verse where `hizb_number` = start verse's `hizb_number` | Yes |
+| `"juz"` | Last verse where `juz_number` = start verse's `juz_number` | Yes |
+| `"none"` | Hardcoded `"114:6"` (Quran's last verse — immutable, no query) | No |
+
+All four DB-backed scopes share one new endpoint: `GET /api/quran/verses/[verseKey]/stop-point?scope=page|rub|hizb|juz` → `jsonResponse({ data: { verseKey, chapterId } })`. Server-side: `quranPrisma.verse.findFirst({ where: { verse_key } })` to get the start verse's own `page_number`/`rub_el_hizb_number`/`hizb_number`/`juz_number` depending on `scope`, then `quranPrisma.verse.findFirst({ where: { [scopeField]: value }, orderBy: { id: "desc" } })` for the target. **`Verse.verse_key` is not `@unique` in the schema — always `findFirst`, never `findUnique`** (confirmed by a runtime `PrismaClientValidationError` during investigation).
+
+### Decision Tree — cross-chapter chaining
+
+| Trigger | Condition | Action |
+|---|---|---|
+| Currently-loaded chapter's audio ends (new `ended`-equivalent detection — see Files to Change) | Current chapter **is** the resolved stop verse's chapter | Run the existing per-ayah/range-repeat-or-stop logic against the stop verse (same logic that already exists, just now reliably triggered) |
+| Chapter ends | Current chapter is **before** the stop verse's chapter, next chapter exists (`chapterId + 1 <= 114`) | Fetch chapter `chapterId + 1`'s audio + verse-pages (`fetchChapterAudio`, `fetchChapterVersePages`), replace `verseTimingsRef`/`versePagesRef`/`currentChapterIdRef`, set `audio.src` to the new chapter's URL, `audio.currentTime = 0`, keep playing. `followPage` needs no change — it's verse-key-driven, not chapter-scoped. |
+| Chapter ends | No next chapter (`chapterId === 114`) | `stop()` — natural end of Quran |
+| Range-repeat exhausts at the stop verse, `startVerseKey`'s chapter ≠ currently-loaded chapter (chained forward since) | — | Fetch `startVerseKey`'s chapter's audio (same pattern as the existing reciter-mid-session-change effect), set `audio.src`, seek to `startVerseKey`'s `timestampFrom`, resume — then continues forward through subsequent chapters exactly as the first pass did |
+
+### Verified Test Cases
+
+1. **Juz 1, start `1:1`:** stop-point endpoint (`scope=juz`) resolves to `{ verseKey: "2:141", chapterId: 2 }`. Chapter 1 (7 verses) plays to its end → not yet chapter 2 → chain to chapter 2 → continues until `2:141` → matches target chapter → stop/repeat logic applies normally.
+2. **`"none"` starting mid-book at `2:5`:** target hardcoded `114:6`/chapter 114. Chains through chapters 3, 4, 5, … 114 sequentially as each ends. At `114:6`, no next chapter → `stop()`.
+3. **`"page"` crossing a surah boundary, page 106:** start `4:176` (page 106's own first verse — verified live against the running endpoint: `GET /api/quran/verses/4:176/stop-point?scope=page` → `{ verseKey: "5:2", chapterId: 5 }`; page 106 = `4:176` chapter 4, then `5:1`–`5:2` chapter 5). Chapter 4 plays to its end → chains into chapter 5 → stops at `5:2`. Today's code would incorrectly stop at `4:176`.
+4. **Juz 1 range-repeat, `rangeRepeat=2`:** start `1:1`, stop `2:141` (chapter 2). Pass 1: chapter 1 → chain to chapter 2 → reach `2:141` → range-repeat not exhausted → seek back to `1:1` → chapter 1 ≠ currently-loaded chapter 2 → reload chapter 1's audio, seek to `1:1`'s `timestampFrom` → replay forward through chapter 2 again → range-repeat exhausted → `stop()`.
+5. **Rub, start `2:1`:** `scope=rub` resolves to `{ verseKey: "2:25", chapterId: 2 }` (verified against real DB) — same chapter as start, so this exercises the "no chaining needed, straightforward same-chapter stop" path, same as `"surah"` behaves today.
 
 ### Files to Change
 
-- `app/lib/recitation/provider.ts` — add `language: string` param to `getReciters`.
-- `app/lib/recitation/qdc-provider.ts` — add `language` param, pass through to QDC's `?language=` query param.
-- `app/api/quran/recitations/reciters/route.ts` — read `language` query param (default `"en"`), pass to the adapter.
-- `app/utils/recitation-api.ts` — `fetchReciters(language: string)`, appends `?language=` to the internal request.
-- `app/contexts/RecitationContext.tsx` — `useLocale()` + pass to `fetchReciters(locale)`.
+- `app/api/quran/verses/[verseKey]/stop-point/route.ts` — new. `GET` with `?scope=page|rub|hizb|juz`. Client must `encodeURIComponent` the verse key (contains `:`) when building the URL.
+- `app/utils/recitation-api.ts` (or wherever `fetchChapterAudio`/`fetchChapterVersePages` live) — new `fetchStopPoint(verseKey, scope)` client function.
+- `app/types/recitation.ts` — `StopPoint` widens from `"page" | "surah"` to `"page" | "surah" | "rub" | "hizb" | "juz" | "none"`.
+- `app/utils/recitation.ts` — `computeStopVerseKey` replaced/supplemented by an async resolution path for the four DB-backed scopes (the `"surah"` sync path is unchanged); add a pure helper for the chaining decision (given current chapter id + stop chapter id, decide: apply-stop-logic / chain-to-next / natural-end).
+- `app/contexts/RecitationContext.tsx` — biggest change: add `stopChapterIdRef`; resolve `stopVerseKeyRef` + `stopChapterIdRef` asynchronously in `play()` (and in the stop-point-changed-mid-session effect) via the new endpoint/hardcoded constant per the scope table above; add real end-of-chapter detection (`audio` `"ended"` listener, or a `timeupdate`-based check against `audio.duration`) that runs the chaining decision table; update the range-repeat seek-back path to reload the start verse's chapter's audio when it differs from the currently-loaded chapter.
+- `app/components/RecitationSettingsSheet.tsx` — add "End of Rub", "End of Hizb", "End of Juz'", "No stop" to the stop-point `RadioGroup`. Hide/disable "Repeat whole range" when `stopPoint === "none"` (confirmed with user); keep it visible+functional for `"juz"`/`"hizb"`/`"rub"` (confirmed with user).
+- i18n keys: `recitation.stopPointRub`, `recitation.stopPointHizb`, `recitation.stopPointJuz`, `recitation.stopPointNone` (new); existing `recitation.stopPointPage`/`recitation.stopPointSurah` unchanged.
 
-### What NOT to Do (Addendum 3)
+### Constraints
 
-- Do not hardcode `"ar"` — the fix must follow the app's actual locale (ar/en) so English-locale users keep English names, not just fix the Arabic case.
+- `Verse.verse_key` is not `@unique` — always `findFirst`, never `findUnique`, in the new endpoint and anywhere else a verse is looked up by `verse_key`.
+- The new endpoint is DB-only (no QDC call) — unlike the existing recitation routes, it doesn't need the `RecitationProvider` adapter (Addendum 2) at all; it's a plain Prisma query route like `verse-pages/route.ts`.
+- `followPage`/page-auto-navigation logic is unchanged — it already keys off `verseKey`, not chapter, so chaining across chapters doesn't require touching it.
+- Do not change the `"surah"`/`"page"`(-within-one-chapter case) behavior's user-visible outcome — only fix the cross-chapter latent gap for `"page"`; `"surah"` behavior is unchanged except that `stop()` now reliably fires via code instead of implicitly via the browser pausing.
+- Hide "Repeat whole range" in the settings sheet when `stopPoint === "none"` — confirmed with user 2026-07-16.
+- Keep "Repeat whole range" available for `"juz"`/`"hizb"`/`"rub"`, including the chapter-reload-on-repeat-seek-back behavior — confirmed with user 2026-07-16.
+
+### What NOT to Do
+
+- Do not scope this to same-chapter-only lookups — that's the exact bug being fixed; every one of the four new scopes must support resolving into a later chapter.
+- Do not add a registry/factory for stop-point scopes — a single endpoint with a `scope` query param is sufficient (mirrors the existing single-provider-no-registry decision in Addendum 2).
+- Do not silently keep the old "no cross-chapter auto-continue" restriction anywhere in the new code path — it is explicitly superseded (ADR 0021 Addendum 2026-07-16), not layered on top of.
+- Do not use `findUnique` for `verse_key` lookups anywhere in this feature.
+
+### Decisions Made
+
+- `"no stop"` = continuous playback through the rest of the Quran until `114:6`, or until manually stopped — confirmed with user 2026-07-16.
+- Hide "Repeat whole range" for `stopPoint === "none"` — confirmed with user 2026-07-16.
+- Keep "Repeat whole range" for `"juz"` (and by the same reasoning, `"hizb"`/`"rub"`), including cross-chapter reload-on-repeat — confirmed with user 2026-07-16.
+- Also fix `"page"` stop point to correctly chain across a surah boundary, using the same new mechanism — confirmed with user 2026-07-16 (surfaced during investigation, not in the original card).
+- Add `"hizb"` and `"rub"` stop points alongside `"juz"` — confirmed with user 2026-07-16 (`Verse.hizb_number`/`rub_el_hizb_number` already exist, same mechanism as `"juz"`, no additional architecture).
+- See ADR 0021 Addendum (2026-07-16) for the formal supersession of "no cross-chapter auto-continue."
+
+### Implementation Notes (2026-07-16)
+
+- `resolveStopTarget` (the sync-"surah"/hardcoded-"none"/async-fetch-otherwise resolver) lives as a module-level function directly in `app/contexts/RecitationContext.tsx`, not `app/utils/recitation.ts` — it needs `fetchStopPoint` from `app/utils/recitation-api.ts`, and `recitation.ts`'s existing helpers are all pure/sync with no client-fetch dependencies.
+- `QURAN_LAST_VERSE_KEY`/`QURAN_LAST_CHAPTER_ID` constants added to `app/constants/recitation.ts` (not in the original Files to Change list, but the natural home for other Quran-structure constants in this feature).
+- The stop-point-changed-mid-session effect recomputes relative to `currentVerseKeyRef.current` (falling back to `startVerseKeyRef.current`), not the original session start verse — if playback has already chained past the start verse's chapter/juz/etc., "end of X" should mean the one containing where playback currently is, not one already behind it. Not explicitly discussed with the user beforehand; verified live in the browser during implementation (switched `"page"` → `"juz"` mid-session while chapter 1 was playing near its end — correctly resolved against the current verse `1:7`, not the original `1:1`, and both resolve to the same juz here so the distinction didn't change behavior in that specific run, but the fallback logic is in place for cases where it would).
+- Verified live end-to-end in the browser (not just via curl): started playback at `1:1` with `stopPoint: "page"`, switched to `"juz"` mid-session, chapter 1's audio reached its natural end, and the app automatically fetched and started playing chapter 2's audio (`002.mp3`) — confirms `handleChapterEnded` → `chainToNextChapter` fires correctly on a real `HTMLAudioElement` `"ended"` event, not just in the decision-tree design. `followPage` correctly left the page unnavigated since double-page view already showed pages 1–2 together.
+
+### Addendum 5b: Settings sheet UI/UX polish (2026-07-16)
+
+**Status:** implemented
+
+Requested by user after Addendum 5 shipped, in the same task/branch (not a new addendum per the "don't add an addendum while the branch is open" rule — folded into this one).
+
+- **Stop-point selector**: replaced the plain `flex flex-wrap` radio row (6 options, looked cramped) with a `grid grid-cols-2` of pill buttons — each a `label` wrapping a visually-hidden (`sr-only`) `RadioGroupItem` for real radio semantics/keyboard nav, styled via a JS-computed `isSelected` boolean (not CSS `data-state` sibling selectors) since selection state is already known from `settings.stopPoint` in the parent. One icon per option (`FileText`/page, `CircleDot`/rub, `CircleDashed`/hizb, `BookOpen`/juz, `BookMarked`/surah, `Infinity`/none) — lucide-react only, per `docs/design/design-principles.md`.
+- **Reciter list → searchable combobox**: replaced the `max-h-48` scrolling `RadioGroup` (14 reciters eating fixed vertical space) with a `Popover` + `Command` (shadcn) combobox — click to open, type to filter, `Check` icon marks the selected reciter. Added `components/ui/command.tsx` and `components/ui/popover.tsx` via `npx shadcn add` (added `cmdk` and `@radix-ui/react-popover` to `package.json`).
+- **Section headers**: added a small `text-primary` lucide icon before each section label (`Users`/reciter, `CircleDashed`/stop-at, `Repeat2`/repeats, `Gauge`/speed, `Timer`/pause) via a shared `SectionHeader` helper — consistent with design-principles.md's "accent sparingly but consistently" rule.
+- **Grouped surfaces**: `bg-muted p-3 rounded-lg` → `rounded-xl border border-border bg-card p-3`, matching the "secondary surface" treatment in design-principles.md.
+- **Bug found and fixed during this work**: nesting a Radix `Popover` inside a Radix `Sheet`/`Dialog` broke keyboard input and scroll inside the Popover (search input couldn't be typed into, list couldn't be scrolled). Root cause: `Popover.Content` portals to `document.body` by default, which is a DOM sibling — not descendant — of the Sheet's own portaled content; Radix's `FocusScope` traps focus by DOM containment, so it kept yanking focus back into the Sheet on every keystroke. Fixed by adding an optional `container` prop to `components/ui/popover.tsx`'s `PopoverContent` (forwarded to `PopoverPrimitive.Portal`), and having `RecitationSettingsSheet` capture its own `SheetContent` DOM node (via a callback ref → `useState`) and pass it as the Popover's portal container — this keeps the Popover a true descendant of the Sheet for focus-trap purposes. **This is a reusable fix on a shared primitive** — any future `Popover` (or likely `DropdownMenu`/`Select`) nested inside a `Dialog`/`Sheet` should do the same. See DECISIONS.md.
+- Verified live in the browser with real keyboard input (Playwright `pressSequentially`, not synthetic DOM events) and real scroll (`scrollTop` manipulation) — both confirmed working after the fix.
+
+### Addendum 5c: Opus review fixes (2026-07-16)
+
+**Status:** implemented
+
+An Opus `/review-fq-work` pass before shipping found one critical bug and several quality issues, all fixed in this same branch:
+
+- **Critical**: `scheduleSeek`'s `pauseMs === 0` branch only set `audio.currentTime`, never called `.play()` — harmless when called from `handleTimeUpdate` (audio already playing) but silently stalled playback when called from the new `handleChapterEnded` (audio is paused when the native `"ended"` event fires). Fixed: that branch now always calls `audio.play()` (a no-op if already playing).
+- **`"none"` (no-stop) could still range-repeat**: the settings sheet hides the whole-range stepper for `stopPoint: "none"`, but didn't reset a previously-set `rangeRepeatCount`, so a stale value from an earlier session under a different stop point would loop the rest of the Quran forever instead of stopping at `114:6`. Fixed by extracting the chaining decision into a pure `decideChapterEnd` helper (`app/utils/recitation.ts` — this is also the pure helper the original plan asked for and Addendum 5's implementation notes had skipped) that explicitly excludes `"none"` from ever repeating a range.
+- **`stop-point/route.ts` scope validation used `in`**, which walks the prototype chain (`?scope=toString` would pass validation and produce a malformed Prisma query). Fixed with `Object.prototype.hasOwnProperty.call`.
+- **Duplication risk**: the "fetch chapter audio+pages → update refs → set audio.src/currentTime → play()" sequence was copy-pasted in `chainToNextChapter` and `seekToRangeStart`'s reload path — exactly the kind of divergence that produced the critical bug above. Extracted into a shared `loadChapter(reciterId, chapterId, seekVerseKey?)` helper used by both. (The reciter-mid-session-change effect was deliberately left as its own copy — it has a cancellation-guard + conditional-autoplay shape that doesn't map cleanly onto `loadChapter` without added risk of introducing a race for a rarely-hit path.)
+- **Minor**: removed a redundant `currentChapterIdRef.current === stopChapterIdRef.current` check in `handleTimeUpdate`'s `isStopVerse` guard — verse keys are globally unique, so matching `verseKey` alone is sufficient.
+- **Minor**: `resolveStopTarget`'s DB-backed scopes (page/rub/hizb/juz) only need `verseKey`, not the chapter-audio fetch — restructured to accept `chapterAudioPromise` so `play()` can run it concurrently with `fetchChapterAudio`/`getVersePages` in the same `Promise.all` instead of sequentially after.
+- Addenda 5 and 5b were missing `**Status:** implemented` markers despite being done, inconsistent with Addendum 4's convention — added to both, and to this one.
+
+## Addendum 6: Don't force the settings sheet open on "Play from here" (Trello #94)
+
+**Date:** 2026-07-17
+**Status:** implemented
+
+**Problem:** `RecitationPlayButton` (the header quick-play button) already plays immediately using stored/default settings, with no forced settings sheet — see the comment above the reciter-default effect in `RecitationContext.tsx` ("lets the header quick-play button start instantly without forcing the settings sheet open first"). But `MarkModal.playFromHere` (`app/components/MarkModal.tsx`) unconditionally calls `openSettings(markFor.verse_key)` instead of `play(markFor.verse_key)`, forcing the settings sheet open on every "Play from here" click even though settings are already persisted in `localStorage` (`recitationSettings`) and `play()` already has the same "no reciter chosen yet" fallback (`settings.reciterId ?? reciters[0]?.id`) the header button relies on.
+
+**Fix:** `MarkModal.playFromHere` calls `play(markFor.verse_key)` directly (then closes the modal), matching `RecitationPlayButton`'s existing behavior. The gear icon in `RecitationPlayerBar` remains the only way to open the settings sheet from the reader; `openSettings`/`settingsStartVerseKey` are otherwise unchanged (still used by that gear-icon path with no start verse).
+
+**Files to Change:**
+- `app/components/MarkModal.tsx` — `playFromHere` calls `play(markFor.verse_key)` instead of `openSettings(markFor.verse_key)`.
+
+**Constraints:**
+- Do not change `RecitationPlayButton` — it already has the correct behavior; this addendum brings `MarkModal` in line with it.
+
+**What NOT to Do:**
+- None known.
+
+**Decisions Made:**
+- "Play from here" auto-plays with currently stored/default settings, same as the header quick-play button — confirmed with user 2026-07-17.
+
+### Implementation Notes (2026-07-17)
+
+- Changing `MarkModal.playFromHere` from `openSettings(markFor.verse_key)` to `play(markFor.verse_key)` meant `settingsStartVerseKey` was never set by any caller anymore — `MarkModal` was the only place that ever passed a start verse to `openSettings`. This made `RecitationSettingsSheet`'s `isStartMode`/`handlePlay`/conditional "Play" CTA (added in Addendum 1, for the exact flow this addendum removes) permanently unreachable. Confirmed with user 2026-07-17 to remove it in the same change rather than leave dead code: `openSettings` narrowed from `(startVerseKey?: string) => void` to `() => void`, `settingsStartVerseKey` state/context field removed entirely, and the CTA block (plus its now-unused `Play` icon import) deleted from `RecitationSettingsSheet.tsx`. `RecitationPlayerBar`'s gear icon (`openSettings()`, no arg) is unaffected.
+- `messages/{en,ar}.json`'s `recitation.play` key had no remaining consumer after the CTA was removed — pruned manually from both files (an Opus `/review-fq-work` pass flagged it; `npm run extract-translations` only adds new keys, it doesn't prune orphaned ones).
+- Verified live in the browser (Playwright): clicked a word → MarkModal → "Play from here" → playback started directly (player bar showed loading → "Pause"/playing, reciter name, advancing verse key) with no settings sheet ever appearing. Separately confirmed the gear icon on `RecitationPlayerBar` still opens `RecitationSettingsSheet` normally, with no orphaned "Play" button at the bottom.
+- Pre-existing, unrelated environment gap found during verification: `cmdk` and `@radix-ui/react-popover` (added to `package.json`/`package-lock.json` by Addendum 5b) were never actually installed into `node_modules`, breaking the dev server (`Module not found`) for anyone whose `node_modules` predates that addendum. Fixed by running `npm install` in the main repo (no manifest changes — packages were already locked, just not installed).

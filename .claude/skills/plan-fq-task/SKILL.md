@@ -176,3 +176,5 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 - Do not put the ADR check after the plan — it must come before.
 - Do not write plan files into the main repo working tree — they must go into the worktree created in step 6 (`../furqan-<slug>/docs/...`). Writing to the main repo leaves them absent from the feature branch.
 - Do not create the worktree before the Trello card exists — the branch name is derived from the card.
+- Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
+- Do not write documentation (plans, COMPONENTS.md, DECISIONS.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

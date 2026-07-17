@@ -20,3 +20,9 @@ export const PAUSE_BETWEEN_REPEATS_STEP_MS = 500;
 // Applied via direct DOM classList toggling (see RecitationContext), not
 // React className — matches the plain CSS rule in globals.css.
 export const RECITATION_HIGHLIGHT_CLASS = "fq-recitation-active-word";
+
+// Quran structure is immutable — the "none" (no stop) stopPoint's target is
+// hardcoded rather than queried. See docs/plans/recitation-playback.md
+// Addendum 5.
+export const QURAN_LAST_VERSE_KEY = "114:6";
+export const QURAN_LAST_CHAPTER_ID = 114;

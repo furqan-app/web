@@ -1,31 +1,13 @@
 import { NextResponse } from "next/server";
-import { groupBy } from "../../../../utils/groupBy";
-import { quranPrisma } from "@/app/utils/db";
+import { getPageWords } from "@/app/hooks/get-page-words";
 
+// Reuses getPageWords (rather than re-querying independently, as this route
+// previously did) so the word layouts map can never drift from the
+// build-time reader's — see ADR 0023 Addendum 6.
 export async function GET(
   request: Request,
   context: { params: { pageId: string } }
 ) {
-  const { pageId } = context.params;
-  const pageNumber = Number(pageId);
-
-  const [words, pageMetadata] = await Promise.all([
-    quranPrisma.word.findMany({
-      include: {
-        verse: {
-          include: { chapter: true },
-        },
-      },
-      where: {
-        page_number: pageNumber,
-      },
-      orderBy: [{ verse_id: "asc" }, { position: "asc" }],
-    }),
-    quranPrisma.pageMetadata.findUniqueOrThrow({
-      where: { page_number: pageNumber },
-      include: { chapter: true },
-    }),
-  ]);
-
-  return NextResponse.json({ lines: groupBy(words, "line_number"), pageMetadata });
+  const pageNumber = Number(context.params.pageId);
+  return NextResponse.json(await getPageWords(pageNumber));
 }

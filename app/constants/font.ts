@@ -3,7 +3,7 @@ export const FONT_V1 = {
     getWordFontSizeByScale: (scale: number) => parseFloat((FONT_V1.baseScaleViewHeight + (scale * .2)).toFixed(1)),
     // Per-line gap as a fraction of the word font size, so vertical rhythm scales
     // with the reading font instead of using a fixed px value. See ADR 0004.
-    lineGapRatio: 0.417,
+    lineGapRatio: 0.38,
     getLineGapVh: (scale: number) =>
         parseFloat((FONT_V1.getWordFontSizeByScale(scale) * FONT_V1.lineGapRatio).toFixed(2)),
     // A surah heading + Bismillah block occupies exactly 2 line-slots.

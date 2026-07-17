@@ -27,11 +27,12 @@ Per-page structural info. Key fields:
 - `hizb_position` — `null` (no new rub) or `"hizb"` | `"hizb-quarter"` | `"hizb-half"` | `"hizb-three-quarters"`
 
 ### Mark
-User marks at verse or word granularity:
+One mark per spot per mushaf at verse or word granularity (ADR 0025):
 - `marked_type`: `"verse"` | `"word"`
-- `mark_type`: `"note"` | `"highlight"`
-- `mark_value`: text (for notes) or color (for highlights)
-- `from_user` / `to_user`: both set to the authenticated user's ID (self-marks only for now)
+- `category`: memorization category key (see `MARK_CATEGORIES` — `forgetting`, `similar`, …); required
+- `comment`: optional free-text note attached to the mark (`String? @db.Text`, `null` when none)
+- unique key: `[marked_type, marked_id, to_user]`
+- `from_user` / `to_user`: `to_user` owns the mushaf; `from_user` is the author (they differ on a shared mushaf — ADR 0012)
 
 ## Query Patterns
 
@@ -46,14 +47,14 @@ const [words, pageMetadata] = await Promise.all([
 ### Upsert pattern (marks)
 ```ts
 await appPrisma.mark.upsert({
-  where: { marked_type_marked_id_mark_type_to_user: { ... } },
-  update: { mark_value },
+  where: { marked_type_marked_id_to_user: { ... } },
+  update: { category, comment },
   create: { ... },
 });
 ```
 
 ### Include relations
-Use `include` for eager-loading relations. Avoid N+1 — fetch in one query.
+Use `include` for eager-loading. Avoid N+1 — fetch in one query.
 
 ## Connection Limits
 
@@ -68,6 +69,6 @@ Both DATABASE_URLs must include `?connection_limit=1` (set in the environment va
 - On an existing DB with no migration history (baselining): see `docs/plans/adopt-prisma-migrations.md`.
 - Never use `npm run app-db-push` on the App DB — it was removed to prevent post-baseline schema drift.
 
-**`furqan_quran`** stays on `prisma db push --force-reset` via the seeder — it is always fully recreated from scratch, so migration history is unnecessary and incompatible with the seeder model.
+**`furqan_quran`** stays on `prisma db push --force-reset` via the seeder — it is always recreated from scratch, so migration history is unnecessary and incompatible with the seeder model.
 
 **Seeding `furqan_quran`:** `npm run seed:quran -- --force` regenerates the whole Quran DB reproducibly ([ADR 0009](../architecture/adr/0009-reproducible-quran-seeder.md)) — it runs `prisma db push --force-reset` (Prisma owns the schema), fetches `chapters` + `verses`/`words` from the QDC API, and derives `page_metadata`/`rubs`/`rub_verse_mappings`. It is destructive and refuses without `--force`. Code lives in `scripts/quran-seed/`.

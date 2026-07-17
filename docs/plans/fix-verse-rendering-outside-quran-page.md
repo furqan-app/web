@@ -4,23 +4,17 @@
 **Date:** 2026-07-01  
 **Status:** implemented
 
-## Summary
-
-Quran verse text displayed outside the Quran page route (search results, MarkModal) rendered incorrectly in two ways: the wrong font was used (`uthmanic.ttf` which lacks full glyph coverage), and `verse.text_uthmani` was used directly, which contains rub el hizb markers (۞ U+06DE) the font cannot render — producing a visible circle character. Both contexts were fixed.
-
 ## Root Cause
 
-`verse.text_uthmani` is a verbatim DB column that includes Quranic section markers (rub el hizb ۞, sajdah, etc.) not covered by `uthmanic.ttf`. Additionally, `uthmanic.ttf` is a standard Unicode Arabic font not optimised for Quranic rendering — replaced with `UthmanicHafs1Ver18` (the same font used by quran.com).
+`verse.text_uthmani` contains Quranic section markers (rub el hizb ۞, sajdah, etc.) that `uthmanic.ttf` cannot render, producing a visible circle character. `uthmanic.ttf` also lacks proper Quranic glyph coverage. Fixed by swapping to `UthmanicHafs1Ver18` globally and replacing `text_uthmani` with word-level `qpc_uthmani_hafs` joins everywhere it's rendered.
 
-## Fixes Applied
+## Fixes
 
 ### 1. Global font swap (`app/layout.tsx`)
 
-Replaced `uthmanic.ttf` with `UthmanicHafs1Ver18.woff2/.ttf` under the same `--uthmanic` CSS variable and `font-uthmanic` Tailwind class. The old font file was deleted.
+Replace `uthmanic.ttf` with `UthmanicHafs1Ver18.woff2/.ttf` under the same `--uthmanic` CSS variable and `font-uthmanic` Tailwind class. Delete old font file.
 
 ### 2. Search results — `app/components/search/SearchQueryResults.tsx`
-
-Replaced `{verse.text_uthmani}` with words joined from `verse.Word`:
 
 ```tsx
 {verse.Word
@@ -29,15 +23,11 @@ Replaced `{verse.text_uthmani}` with words joined from `verse.Word`:
   .join(' ')}
 ```
 
-Also added `dir="rtl"` to the verse text container.
+Add `dir="rtl"` to the verse text container. Add `Word: { select: { qpc_uthmani_hafs, char_type_name }, orderBy: { position } }` to the Prisma query in `app/api/search/verses/route.ts` and extend `VerseResult` in `app/types/index.ts`.
 
-Supporting changes:
-- **`app/api/search/verses/route.ts`** — added `Word: { select: { qpc_uthmani_hafs, char_type_name }, orderBy: { position } }` to the Prisma query
-- **`app/types/index.ts`** — added `Word: { qpc_uthmani_hafs, char_type_name }[]` to `VerseResult`
+### 3. MarkModal verse title — `app/components/MarkModal.tsx` + `QuranSafha.tsx`
 
-### 3. MarkModal verse title — `app/components/MarkModal.tsx` + `app/components/QuranSafha.tsx`
-
-When a user taps an end-of-verse marker, `QuranSafha` reconstructs the verse display text from the `lines` data already in memory (no additional fetch):
+When user taps an end-of-verse marker, `QuranSafha` reconstructs display text from `lines` (already in memory — no extra fetch):
 
 ```ts
 const allWords = Object.values(lines).flat();
@@ -47,13 +37,9 @@ const displayText = allWords
   .join(' ');
 ```
 
-This is passed as `verseDisplayText?: string` to `MarkModal`, which uses it in `getTitle` with fallback to `verse.text_uthmani`.
+Passed as `verseDisplayText?: string` to `MarkModal` (fallback to `text_uthmani` if absent). Also fixed `MarkModal` word title: `markFor.text_uthmani` → `markFor.qpc_uthmani_hafs` for `Word` entries.
 
-Also fixed `MarkModal` word title: changed from `markFor.text_uthmani` to `markFor.qpc_uthmani_hafs` for `Word` entries.
-
-### 4. Rub list start verse — `app/components/RubList.tsx`
-
-Replace `rub.startVerse.text_uthmani` (line 41) with word-join reconstruction:
+### 4. RubList start verse — `app/components/RubList.tsx`
 
 ```tsx
 {rub.startVerse.Word
@@ -62,28 +48,18 @@ Replace `rub.startVerse.text_uthmani` (line 41) with word-join reconstruction:
   .join(' ')}
 ```
 
-Supporting changes:
-- **`app/types/prisma.ts`** — add `Word: { select: { qpc_uthmani_hafs, char_type_name } }` to `startVerse` in `RubWithVerses`
-- **`app/hooks/get-rubs.ts`** — add the same `Word` select to `startVerse` in the Prisma query
-- Only extend `startVerse` — `endVerse` is not rendered in the UI, leave it unchanged
-
-### 5. Cleanup — unused `text_uthmani` in `RubWithVerses` / `get-rubs.ts`
-
-Removed the leftover `text_uthmani` field from both `startVerse` and `endVerse` selects (`app/types/prisma.ts`, `app/hooks/get-rubs.ts`). It was never rendered — `RubList.tsx` only reads `startVerse.page_number` and `startVerse.Word`, and `endVerse` is unused entirely. Flagged in the 2026-07-01 retrospective, addressed 2026-07-01.
+Extend `startVerse` in `app/types/prisma.ts` and `app/hooks/get-rubs.ts` with `Word: { select: { qpc_uthmani_hafs, char_type_name } }`. Remove now-unused `text_uthmani` from both `startVerse` and `endVerse` selects.
 
 ## Constraints
 
 - Never use `verse.text_uthmani` directly in rendered output — always join `word.qpc_uthmani_hafs`.
-- For full verse display (search results): do **not** filter by `char_type_name` — include all word types; `UthmanicHafs1Ver18` renders markers (۞, end markers) correctly.
-- For truncated/title contexts (MarkModal): filter to `char_type_name === 'word'` to keep the short string clean.
+- Search results (full verse): do NOT filter by `char_type_name` — include all types; `UthmanicHafs1Ver18` renders markers correctly.
+- Truncated/title contexts (MarkModal, RubList): filter to `char_type_name === 'word'` to keep strings clean.
+- `Verse` has no `qpc_uthmani_hafs` column — always reconstruct from words.
 - Never pair `UthmanicHafs1Ver18` with `code_v1` — that column is for per-page glyph fonts only.
-- `Verse` has no `qpc_uthmani_hafs` column — verse text must always be reconstructed from its words.
-- Reconstruction from `lines` (already in memory) is preferred over DB fetch or extending `WordWithVerse` to include sibling words.
-- Always filter `char_type_name === 'word'` — exclude `"end"`, `"rub-el-hizb"`, and other marker types.
-- The `verseDisplayText` prop is optional so `MarkModal` remains usable without it (graceful fallback to `text_uthmani`).
+- `verseDisplayText` prop is optional — `MarkModal` falls back gracefully.
 
 ## Decisions Made
 
-- `UthmanicHafs1Ver18` replaces `uthmanic.ttf` as the global font for all non-page Quranic text. Documented in ADR 0002 and DECISIONS.md.
-- Word-level `qpc_uthmani_hafs` is the correct column for `UthmanicHafs1Ver18`. `text_uthmani` is fallback-only for verse-level contexts where words are unavailable.
-- `verseDisplayText` prop on `MarkModal` keeps reconstruction logic in `QuranSafha` where `lines` is available, keeping `MarkModal` a pure display component.
+- `UthmanicHafs1Ver18` replaces `uthmanic.ttf` as the global font for all non-page Quranic text (ADR 0002, DECISIONS.md).
+- Reconstruction from `lines` preferred over extra DB fetch or extending `WordWithVerse` with siblings.

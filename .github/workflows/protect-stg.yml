@@ -1,0 +1,17 @@
+name: Enforce stg source
+
+on:
+  pull_request:
+    branches: [stg]
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only allow merges from a release branch
+        run: |
+          if [[ "${{ github.head_ref }}" != release/* ]]; then
+            echo "PRs to stg must come from a release/* branch. Got: ${{ github.head_ref }}"
+            exit 1
+          fi
+          echo "Source branch is ${{ github.head_ref }} — OK"

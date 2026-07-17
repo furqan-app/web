@@ -1,126 +1,235 @@
 # Release-Branch Deployment Workflow
 
-**Type:** feature
-**Date:** 2026-07-06
+**Type:** feature  
+**Date:** 2026-07-06  
 **Status:** implemented
 
 ## Summary
 
-Introduce a versioned release-branch workflow between `main` and `prod`, replacing today's direct `main → prod` deploy path. Three new Claude Code skills do the mechanical work: `/cut-release` (branch + version + Trello), `/promote-release` (release → prod PR), and `/sync-main-from-prod` (prod → main PR). A fourth skill, `/release`, drives all three in one continuous run and pauses only at the points that genuinely need a human (confirm local testing passed, confirm the prod PR is merged, confirm the Hostinger redeploy was clicked). See [ADR 0015](../architecture/adr/0015-release-branch-workflow.md) for the branch-topology decision and rationale, and `docs/plans/protect-prod-branch.md` Addendum 1 for the required `protect-prod.yml` change.
+Versioned release-branch workflow between `main` and `prod`. Three skills do the mechanical work: `/cut-release` (branch + version + Trello), `/promote-release` (release → prod PR), `/sync-main-from-prod` (prod → main PR). `/release` orchestrates all three and pauses only at genuine human gates. Hostinger auto-deploys on any push to `prod` — no manual redeploy click needed.
 
-Trello card: [#55 — Create deployment workflow](https://trello.com/c/mkBlfwiW/55-create-deployment-workflow) (board: Furqan, currently in "In Progress").
+See [ADR 0015](../architecture/adr/0015-release-branch-workflow.md). Trello: [#55](https://trello.com/c/mkBlfwiW/55-create-deployment-workflow).
 
-## Approach
+## Branch Flow
 
 ```
-main (feature branches merge here, unchanged)
+main
   └─ /cut-release <major|minor|patch>
-       → release/x.y.z branched from main, package.json version bumped + committed, tagged vX.Y.Z, pushed
-       → Trello: cards in "To Be Released" labeled vX.Y.Z, moved to Done
+       → release/x.y.z branched, version bumped, tagged, pushed
+       → Trello: "To Be Released" cards labeled vX.Y.Z, moved to Done
             └─ manual local testing: npm run build && npm start
                  └─ /promote-release <version>
-                      → opens PR release/x.y.z -> prod
-                      → (you merge on GitHub, then manually click Redeploy in hPanel)
+                      → PR: release/x.y.z → prod
+                      → (merge on GitHub → Hostinger auto-deploys)
                            └─ /sync-main-from-prod
-                                → opens PR prod -> main
+                                → PR: prod → main
 ```
+
+## Skill Specs
 
 ### `/cut-release <major|minor|patch>`
 
-1. `git fetch origin`; require a clean working tree.
+1. `git fetch origin`; require clean working tree.
 2. `git checkout main && git pull` (fast-forward only).
-3. Read `version` from `package.json`; compute the new version per the given bump type (semver).
+3. Read `version` from `package.json`; compute new version per bump type.
 4. `git checkout -b release/<new-version>`.
-5. Edit `package.json`'s `"version"` field to `<new-version>`, commit (`chore(release): bump version to <new-version>`, no AI signature — same rule as `/ship-fq-task`).
+5. Edit `package.json` `"version"`, commit (`chore(release): bump version to <new-version>`, no AI signature).
 6. `git tag v<new-version>`.
 7. `git push -u origin release/<new-version>` and `git push origin v<new-version>`.
-8. Trello: `mcp__trello__get_cards_by_list_id` on the **"To Be Released"** list; for each card, apply a new label named `v<new-version>` (create it if it doesn't exist yet — one label per version, not a reused color slot, so old releases stay distinguishable) and `mcp__trello__move_card` to **Done**.
-9. Create a GitHub Release (`gh release create v<new-version>`) whose notes are a "What's included" list built from those same Trello cards (title + card URL) — not `--generate-notes`/commit history, so the release body matches the curated Trello scope rather than raw commit noise.
-10. Report the release branch name, tag, GitHub Release URL, and which cards were labeled/moved.
+8. Trello: get "To Be Released" cards; apply new label `v<new-version>` (create if absent — one label per version, never reuse); move cards to Done.
+9. `gh release create v<new-version>` with body listing those Trello cards (title + URL) — not `--generate-notes`.
+10. Report branch name, tag, GitHub Release URL, cards labeled/moved.
 
 ### `/promote-release <version>`
 
-1. Verify `release/<version>` exists on `origin` (`git fetch origin` then check).
-2. `gh pr create --base prod --head release/<version>` with a title like `Release v<version>` and a body linking the Trello cards labeled with that version (best-effort — list cards carrying the `v<version>` label).
-3. Report the PR URL and remind the user: merge it once testing has passed (the `check-source` gate requires the head branch to start with `release/`), then manually trigger a redeploy in hPanel per `docs/deployment/hostinger.md` Phase 4 — this is not automatic.
-4. Does not touch Trello — labeling/moving already happened at cut time.
+1. Verify `release/<version>` exists on `origin`.
+2. `gh pr create --base prod --head release/<version>` titled `Release v<version>`, body linking Trello cards carrying that version label.
+3. Report PR URL. Remind user: merging triggers Hostinger auto-deploy (no manual step needed).
 
 ### `/sync-main-from-prod`
 
 1. `git fetch origin`.
-2. `gh pr create --base main --head prod` with a title like `Sync main with prod (v<version>)`, where `<version>` is read from the latest tag reachable from `origin/prod` (`git describe --tags origin/prod`).
-3. Report the PR URL. Merging and resolving any conflicts is a manual step — this skill only opens the PR.
+2. `gh pr create --base main --head prod` titled `Sync main with prod (v<version>)`, where version comes from `git describe --tags origin/prod`.
+3. Report PR URL. Merging and resolving conflicts is manual.
 
 ### `/release <major|minor|patch>` — orchestrator
 
-Runs the other three skills back-to-back as one continuous flow. Never asks "should I continue?" between mechanical steps — only stops at a checkpoint when it genuinely cannot proceed without the user doing something outside the chat (local testing, a GitHub merge, a hPanel click). At each checkpoint it states plainly what it's waiting for.
+Runs the three skills in sequence. Never asks "should I continue?" between mechanical steps — only pauses at genuine human gates.
 
-1. **Run `/cut-release <bump>`** in full (branch, bump, tag, push, Trello labels/move). No pause before this — preconditions (clean tree, on main) are checked as part of it, same as today.
-2. **Checkpoint 1 — testing.** Report the release branch/tag, then ask the user to run local testing (`npm run build && npm start` against `release/x.y.z`) and confirm when it's passed. This cannot be verified automatically — it's a genuine human gate. Do not proceed until the user explicitly confirms.
-3. **Run `/promote-release <version>`** — opens the `release/x.y.z → prod` PR. No pause before this; it follows immediately once testing is confirmed.
-4. **Checkpoint 2 — prod merge.** Tell the user the PR is open and ask them to merge it on GitHub. Rather than trusting a bare "done," re-check via `gh pr view <number> --json state -q .state` before proceeding — only continue once it actually reports `MERGED`. If the user says they merged it but the check disagrees, say so and keep waiting.
-5. **Checkpoint 3 — Hostinger redeploy.** Once the prod PR is confirmed merged, remind the user to manually trigger the redeploy in hPanel (`docs/deployment/hostinger.md` Phase 4 — no API exists to verify or trigger this) and wait for their confirmation that it's done. This one has to be taken on trust; there's no programmatic check available.
-6. **Run `/sync-main-from-prod`** — opens the `prod → main` PR. No pause before this; it follows immediately once the redeploy is confirmed.
-7. **Checkpoint 4 — final merge.** Tell the user the sync PR is open and ask them to merge it (resolving any conflicts if needed). Poll `gh pr view` the same way as checkpoint 2. Once merged, report the release complete — this is the last step, nothing further to automate.
+1. **Run `/cut-release <bump>`** in full.
+2. **Checkpoint 1 — testing.** Ask user to run `npm run build && npm start` against the release branch and confirm pass.
+3. **Run `/promote-release <version>`** — opens `release/x.y.z → prod` PR.
+4. **Checkpoint 2 — prod merge.** Tell user the PR is open; re-check via `gh pr view <number> --json state -q .state` and only proceed once it reports `MERGED`.
+5. **Run `/sync-main-from-prod`** — opens `prod → main` PR.
+6. **Checkpoint 3 — final merge.** Poll `gh pr view` the same way. Once merged, report release complete.
 
-If any `gh`/`git` step fails partway (e.g. the prod PR can't be created because the branch is stale), stop immediately and report the failure rather than guessing how to recover — do not silently retry with a different approach.
+If any step fails, stop and report — do not silently retry.
 
-## Files to Change
+## Files Changed
 
-- `.claude/skills/cut-release/SKILL.md` — new skill, steps above.
-- `.claude/skills/promote-release/SKILL.md` — new skill, steps above.
-- `.claude/skills/sync-main-from-prod/SKILL.md` — new skill, steps above.
-- `.claude/skills/release/SKILL.md` — new orchestrator skill, invokes the three above in sequence with the checkpoints described above.
-- `.github/workflows/protect-prod.yml` — updated per `docs/plans/protect-prod-branch.md` Addendum 1 (gate `release/*`, not `main`).
-- Trello board "Furqan": add a new list **"To Be Released"**, positioned after "Done" (or wherever the user places it) — created once, manually, not by a skill.
-- `docs/architecture/DECISIONS.md` / `docs/architecture/adr/0015-release-branch-workflow.md` — already written as part of this planning pass.
+- `.claude/skills/cut-release/SKILL.md`, `promote-release/SKILL.md`, `sync-main-from-prod/SKILL.md`, `release/SKILL.md`
+- `.github/workflows/protect-prod.yml` — gate `release/*`, not `main` (drops `main` exception entirely per ADR 0015)
+- Trello board: add "To Be Released" list manually (once)
+- `docs/architecture/DECISIONS.md` / `adr/0015-release-branch-workflow.md`
+- `docs/deployment/hostinger.md` — Phase 4 updated: Hostinger auto-deploys on push to `prod`, no manual redeploy click
 
 ## Constraints
 
-- No staging environment — testing is local only (`npm run build && npm start` against the release branch). Hostinger hosts prod only; a staging site was explicitly deferred (ADR 0015, Option C).
-- No direct `main → prod` path anymore, including for hotfixes — every prod update must go through a `release/*` branch (ADR 0015, protect-prod-branch.md Addendum 1).
-- `/cut-release` requires the version bump type as an explicit argument (major/minor/patch) — never inferred from commit messages.
-- Version source of truth is `package.json`'s `"version"` field plus the matching `vX.Y.Z` git tag on the release branch — don't introduce a second version file.
-- Trello label per release is a **new** label per version (not a recolored/renamed reuse of an old label) so historical releases stay independently searchable.
-- The GitHub Release created at cut time sources its "what's included" body from the Trello cards labeled with that version, not `gh release create --generate-notes` — the curated Trello scope is the meaningful summary, not raw PR/commit history.
-- These three skills follow `/ship-fq-task`'s "no AI signature" rule for every commit/PR they create.
-- These skills only ever create branches/tags/PRs — none of them merge a PR or trigger the Hostinger redeploy; those stay explicit human actions (same boundary `/ship-fq-task` draws around merging).
+- No staging environment — testing is local only.
+- Every prod update must go through a `release/*` branch — no direct `main → prod` path, including hotfixes (ADR 0015).
+- `/cut-release` requires explicit bump type argument — never inferred from commits.
+- Version source of truth: `package.json` `"version"` + matching `vX.Y.Z` git tag. No second version file.
+- Trello label per release is a new label per version — never recolor/rename an old one.
+- GitHub Release body sources from Trello cards, not `--generate-notes`.
+- No AI signatures in any commit/PR from these skills.
+- These skills only create branches/tags/PRs — never merge a PR.
 
-## Edge Cases / Decisions Made
+## Decisions Made
 
-- **Release scope = whatever's in "To Be Released" at cut time**, not a curated pre-check against Trello card branches — simpler, and everything in `main` is already reviewed/merged by the time it's there.
-- **Version bump is manual per cut** (major/minor/patch argument), not auto-inferred — keeps semver meaning (breaking/feature/fix) intentional.
-- **Trello mechanics:** moving a card into "To Be Released" is a manual drag by the user when its PR merges to main (not automated into `/ship-fq-task`); `/cut-release` is solely what stamps the label and advances cards to Done.
-- **Promote/sync split into two skills**, not one skill re-run at each stage — more explicit, no "detect PR state" magic. `/release` is the layer that stitches them together for the common case; the individual skills remain usable standalone (e.g. re-running `/promote-release` by hand if `/release` was interrupted mid-flow).
-- **`protect-prod.yml` drops the `main` exception entirely** rather than allowing both `main` and `release/*` — consistency over a hotfix escape hatch (ADR 0015).
-- **`/release` verifies PR merges via `gh pr view` rather than trusting the user's word** — merging happens outside the chat, so an independent check is possible and cheap; only local testing and the Hostinger redeploy have no such check and must be taken on trust.
+- Release scope = whatever's in "To Be Released" at cut time (not curated against card branches).
+- Version bump is manual per cut — keeps semver meaning intentional.
+- Trello card drag to "To Be Released" is manual (on PR merge to main); `/cut-release` only stamps the label and advances to Done.
+- `/release` verifies prod PR merge via `gh pr view` — merging happens outside chat, independent check is cheap.
+- Hostinger auto-deploys on push to `prod` — no checkpoint needed.
 
-## What NOT to Do
+## Addendum 1 — Staging environment (2026-07-17)
 
-- Do not add a Hostinger staging site as part of this change — explicitly out of scope (deferred per ADR 0015).
-- Do not have any of the three skills (or `/release`) auto-merge a PR or trigger the Hostinger redeploy — those are manual, explicit human actions, even inside the orchestrator.
-- Do not infer the version bump automatically from commit messages/conventional commits — the user specifies it.
-- Do not reuse/recolor an existing Trello label across releases — create a new one per version.
-- Do not have `/release` ask "continue?" between purely mechanical steps (e.g. after cutting, before opening the prod PR) — only pause at the four checkpoints that require human action.
+**Type:** feature
+**Trello:** [#117](https://trello.com/c/Sfgsjg1V/117-integrate-staging-environment-into-release-flow)
 
----
+### Summary
 
-## Addendum 1 — Hostinger auto-deploys on push to prod (2026-07-07)
+Adds a staging deploy stage between `release/x.y.z` and `prod`, superseding ADR 0015's "no staging environment" call (see [ADR 0026](../architecture/adr/0026-staging-environment.md)). A second Hostinger site (already provisioned by the user, with its own fresh Quran/App databases) tracks a `stg` branch. A new `/promote-to-staging` skill opens the `release/x.y.z → stg` PR; `/release`'s Checkpoint 1 changes from local `npm run build && npm start` testing to merging that PR and confirming staging looks right.
 
-**Type:** correction  
-**Status:** implemented
+### Updated Branch Flow
 
-### What changed
+```
+main
+  └─ /cut-release <major|minor|patch>
+       → release/x.y.z branched, version bumped, tagged, pushed
+       → Trello: "To Be Released" cards labeled vX.Y.Z, moved to Done
+            └─ /promote-to-staging <version>
+                 → PR: release/x.y.z → stg
+                 → (merge on GitHub → Hostinger stg site auto-deploys)
+                      → manual staging verification
+                           └─ /promote-release <version>
+                                → PR: release/x.y.z → prod
+                                → (merge on GitHub → Hostinger prod auto-deploys)
+                                     └─ /sync-main-from-prod
+                                          → PR: prod → main
+```
 
-Hostinger is connected to the `prod` branch and auto-deploys on any push to it. The original plan (and ADR 0015) incorrectly stated that a manual "redeploy" click in hPanel was required after merging a release PR into `prod`. This was never true — merging the `release/x.y.z → prod` PR is sufficient to trigger the deploy.
+### New Skill Spec: `/promote-to-staging <version>`
 
-### Files to change
+Mirrors `/promote-release`'s structure exactly, targeting `stg` instead of `prod`:
 
-- `docs/deployment/hostinger.md` — Phase 4: replace "trigger a redeploy" instruction with a note that Hostinger auto-deploys on any push to `prod`; remove the instruction to click Redeploy manually.
-- `docs/architecture/adr/0015-release-branch-workflow.md` — remove the consequence bullet stating deploy is a manual click; update branch flow diagram to drop the "manual Hostinger redeploy" step.
-- `.claude/skills/promote-release/SKILL.md` — remove the reminder to manually trigger redeploy in hPanel after merging.
-- `.claude/skills/release/SKILL.md` — remove Checkpoint 3 (Hostinger redeploy); collapse the flow from 4 checkpoints to 3.
+1. Verify `release/<version>` exists on `origin`.
+2. `gh pr create --base stg --head release/<version>` titled `Staging v<version>`, body linking Trello cards carrying that version label.
+3. Report PR URL. Remind user: merging triggers Hostinger's staging site auto-deploy (no manual step needed).
+
+### `/release` orchestrator — updated steps
+
+1. **Run `/cut-release <bump>`** in full.
+2. **Run `/promote-to-staging <version>`** — opens `release/x.y.z → stg` PR. No pause before this — mechanical.
+3. **Checkpoint 1 — staging.** Tell user the PR is open. Ask them to merge it on GitHub and confirm the deployed staging site looks right. Verify the merge via `gh pr view <number> --json state -q .state`, the same pattern as the other checkpoints — do not trust a bare "done" for the merge state, but the "looks right" judgment itself is the user's call.
+4. **Run `/promote-release <version>`** — opens `release/x.y.z → prod` PR. Proceed immediately once Checkpoint 1 clears.
+5. **Checkpoint 2 — prod merge.** Same as before (unchanged).
+6. **Run `/sync-main-from-prod`** — unchanged.
+7. **Checkpoint 3 — final merge.** Unchanged.
+
+### Decision Tree — why these choices
+
+| Question | Decision | Why |
+|---|---|---|
+| Staging host | Second Hostinger site (not Vercel) | Vercel is a different runtime/platform and can't directly reach Hostinger's MySQL — it wouldn't catch the Hostinger-specific issues (env vars, real DB, managed Node runtime) that are the actual reason for staging. |
+| Staging DB | Fresh, independent DBs (not a prod snapshot) | Goal is catching platform/env issues, not QA against realistic data volume. Copying real user data (auth tokens, marks/bookmarks) into a lower-security environment is an unnecessary privacy risk. |
+| `release → stg` merge mechanism | Reviewed PR (like `release → prod`), not a direct push | Keeps all three promotion steps structurally identical (no special-cased skill), and leaves an audit trail of when staging was refreshed, even though there's typically no new code to review at that point. |
+| Skill structure | New `/promote-to-staging` skill (not folded into `/cut-release`) | Keeps `/cut-release` focused on its current job (branch + version + Trello); matches the existing pattern of one skill per promotion step. |
+| Branch protection | New `protect-stg.yml`, mirroring `protect-prod.yml` | Restricts PRs into `stg` to `release/*` sources only, preventing accidental pushes from feature branches. |
+| `/release` merge count | 3 manual merges per release (stg, prod, main-sync), up from 2 | Chose consistency (all three promotion PRs behave identically, verified via `gh pr view`) over shaving one click by auto-merging the stg PR. |
+
+### Files to Change
+
+- New skill: `.claude/skills/promote-to-staging/SKILL.md`
+- `.claude/skills/release/SKILL.md` — insert the staging step + Checkpoint 1 replacement above
+- New workflow: `.github/workflows/protect-stg.yml` — copy of `protect-prod.yml` targeting `stg`
+- `docs/architecture/DECISIONS.md` — Release & Deployment Workflow section updated (done in this addendum's commit)
+- `docs/architecture/adr/0015-release-branch-workflow.md` — status updated to partially superseded
+- New ADR: `docs/architecture/adr/0026-staging-environment.md`
+
+### Constraints (supersedes the old "No staging environment" constraint)
+
+- `stg` has its own fresh `furqan_quran`/`furqan_app` databases — never a snapshot of prod.
+- `protect-stg.yml` restricts PRs into `stg` to `release/*` branches, same as `protect-prod.yml` does for `prod`.
+- The `release → stg` merge is a reviewed PR, not a direct/fast-forward push.
+- `/promote-to-staging` only creates the PR — never merges it, consistent with the existing "these skills only create branches/tags/PRs" constraint.
+- The Hostinger site, staging databases, and subdomain for `stg` are already provisioned (user-managed, outside this plan's scope) — no new deployment runbook needed.
 
 ### What NOT to Do
 
-- Do not add a manual confirmation step for the deploy — Hostinger handles it automatically on push to `prod`; no programmatic verification exists and none is needed.
+- Do not auto-merge the `release → stg` PR inside `/promote-to-staging` — considered and rejected in favor of consistency with the other two promotion checkpoints.
+- Do not use a prod data snapshot for staging's databases — rejected for privacy/security reasons.
+- Do not route staging through Vercel or any non-Hostinger platform — rejected because it wouldn't validate the Hostinger-specific behavior staging exists to catch.
+- Do not fold the `release → stg` PR into `/cut-release` — keep it a separate skill.
+- Do not write a new Hostinger staging runbook doc — the user has already provisioned the site/DBs manually.
+
+## Addendum 2 — DB change flags in release notes (2026-07-17)
+
+**Type:** feature
+**Trello:** [#118](https://trello.com/c/tvAO937e/118-flag-quran-app-db-manual-actions-in-release-notes)
+
+### Summary
+
+`/cut-release` now detects Quran DB and App DB changes since the previous release tag and surfaces them **non-blockingly**: a `## Manual Action Required` section is appended to the GitHub Release notes it already creates, and the same content is called out in its chat report. This is a reminder mechanism only — it never pauses the flow or requires acknowledgment, unlike the `/release` orchestrator's PR-merge checkpoints.
+
+This exists because the Quran DB has **no automatic migration path** — per `docs/plans/split-quran-app-databases.md`'s constraint, `prisma/migrations` is explicitly not used for the Quran schema; it's fully re-synced via the destructive `npm run seed:quran -- --force` (`prisma db push --force-reset`). A schema or seed-logic change merged to `main` does **not** take effect in prod until someone remembers to re-run that manually. The App DB, by contrast, already auto-applies migrations safely via `prisma migrate deploy` on every deploy (`docs/deployment/hostinger.md`) — no action is required there, but a heads-up is still useful.
+
+### Decision Tree — detection rules
+
+Diff range: previous `vX.Y.Z` tag → the new `release/x.y.z` branch (catches everything merged since the last release, not just the latest commit). If no previous release tag exists (first-ever release), skip the check entirely.
+
+| Path touched in the diff | Flag | Notes wording |
+|---|---|---|
+| `prisma/quran/schema.prisma` | Quran DB | "Quran DB schema changed — re-seed prod manually (`npm run seed:quran -- --force`) if this release should reflect it." |
+| `scripts/quran-seed/**` (any file) | Quran DB | "Quran seed logic/data changed — re-seed prod manually if you want this release's data live." |
+| `prisma/app/migrations/**` (new or changed files) | App DB | "New Prisma migration(s) — will auto-apply via `prisma migrate deploy` on deploy. No action needed; consider backing up the App DB first." |
+| Anything else | — | No flag |
+
+Both Quran-DB triggers (schema and seed-logic) share the same category and urgency — deliberately not split further, since either one requires the same manual decision (re-seed or don't) and splitting them added complexity without changing what the release-cutter actually needs to do.
+
+### Verified Test Cases
+
+- **A** — only `prisma/quran/schema.prisma` changed → Quran DB flag.
+- **B** — only `scripts/quran-seed/derive.js` changed, no schema touched → Quran DB flag (same category/wording as A).
+- **C** — only a new `prisma/app/migrations/*/migration.sql` file → App DB flag (FYI wording).
+- **D** — only `app/components/*` changed → no flag, no `## Manual Action Required` section, nothing extra in the chat report.
+- **E** — both A and C in the same release → both sections appear in the release notes and both are called out in the chat report.
+
+### `/cut-release` — updated steps
+
+New step inserted after Trello labeling (existing step 8) and before `gh release create` (existing step 9):
+
+1. Find the previous release tag: the most recent `v*` tag reachable from `main` before the new one. If none exists, skip this step entirely (no error).
+2. `git diff --name-only <previous-tag>..release/<new-version>` — check the returned paths against the table above.
+3. If any flags fire, build a `## Manual Action Required` section (one bullet per flag, using the wording above, listing the specific files that triggered it).
+4. Pass that section into the `gh release create` body (existing step 9), appended after the Trello cards list.
+5. In the final report (existing step 10), explicitly restate any flags that fired — this is the "notify me so I don't forget" part; if no flags fired, say nothing extra.
+
+### Files to Change
+
+- `.claude/skills/cut-release/SKILL.md` — insert the new detection step (between Trello labeling and GitHub Release creation) and update the final report step to restate flags
+- `docs/architecture/DECISIONS.md` — Release & Deployment Workflow section gets a line documenting this behavior
+
+### Constraints
+
+- Non-blocking, always — no checkpoint, no pause, no required acknowledgment, regardless of what's flagged.
+- Detection is file-path-based only — no attempt to detect generic "breaking changes" in application code; that's explicitly out of scope (see What NOT to Do).
+- Diff range is always "since the previous release tag," not "since the last commit" — a release can bundle several merges to `main`.
+- If no previous release tag exists, skip silently rather than erroring — must not block a first-ever release.
+
+### What NOT to Do
+
+- Do not block or pause the release flow for any flag — this was explicitly decided against after initially considering it; the mechanism is reminder-only.
+- Do not attempt to detect generic/non-DB breaking changes (API contract changes, removed routes, etc.) via heuristics or a manual prompt — considered and explicitly ruled out; left to PR review and the release-cutter's own judgment.
+- Do not split Quran DB schema-changes and seed-logic-changes into different categories or wording — they share the same "you may need to re-seed" action, so treat them identically.
+- Do not add this detection to `/release` or any other skill — it lives entirely inside `/cut-release`, since that's what already builds the GitHub Release body and has the version/tag context.
