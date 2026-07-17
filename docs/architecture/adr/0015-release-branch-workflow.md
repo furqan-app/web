@@ -1,7 +1,7 @@
 # ADR 0015: Release-branch deployment workflow (main → release/x.y.z → prod → main)
 
 **Date:** 2026-07-06
-**Status:** Accepted
+**Status:** Partially superseded by [ADR 0026](./0026-staging-environment.md) — the "no staging environment" consequence below no longer holds; a `stg` deploy stage was added between `release/x.y.z` and `prod`.
 
 ## Context
 
