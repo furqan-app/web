@@ -58,19 +58,24 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
         lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 || true
         ```
         Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and stay alive. `xargs -r` skips the kill when nothing matched.
-     2. Remove the worktree, then force-delete the folder — `git worktree remove` **leaves gitignored dirs behind** (`.next`, `node_modules` symlink, etc.), so the folder always survives unless you also `rm -rf` it. Run both unconditionally:
+     2. Stop any running Docker containers for this project:
+        ```bash
+        docker ps --filter name=furqan --format '{{.Names}}' | xargs -r docker stop
+        ```
+        This stops `furqan_quran_db`, `furqan_app_db`, `furqan_phpmyadmin` (and any other `furqan_*` containers) if running. Safe to run even if no containers are up — `xargs -r` skips the stop when nothing matched.
+     3. Remove the worktree, then force-delete the folder — `git worktree remove` **leaves gitignored dirs behind** (`.next`, `node_modules` symlink, etc.), so the folder always survives unless you also `rm -rf` it. Run both unconditionally:
         ```bash
         git worktree remove <abs> --force || true
         rm -rf <abs>
         git worktree prune
         ```
         Do **not** rely on `git worktree remove` alone — it never fully cleans the directory.
-     3. Verify the folder is actually gone with a real filesystem check:
+     4. Verify the folder is actually gone with a real filesystem check:
         ```bash
         ls <abs> 2>/dev/null && echo "WARNING: folder still exists at <abs>" || echo "Worktree removed successfully"
         ```
         `[ ! -e <abs> ]` can silently pass on some shells even when the directory exists — use `ls` instead so a leftover folder is always reported.
-     4. Remove the entry from `~/.claude/furqan-worktrees.json` and write the updated file back (preserve all other entries)
+     5. Remove the entry from `~/.claude/furqan-worktrees.json` and write the updated file back (preserve all other entries)
 
 ## No AI signatures — anywhere
 
