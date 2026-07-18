@@ -19,6 +19,13 @@ import { MarkModal } from "./MarkModal";
 import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
 
+// worst-case line-width/font-size ratio (p2, 2% margin); locks card minWidth
+// to font scale so it's stable from first render, independent of font metrics
+const QURAN_LINE_WIDTH_RATIO = 14.7;
+// approximate lines per full Quran page; pages 1-2 (fq-safha-center) are shorter
+const SKELETON_LINE_COUNT = 15;
+const SKELETON_LINE_COUNT_SHORT = 7;
+
 const SurahBannerLine = ({ surahId }: { surahId: number }) => (
   <div
     className="leading-none text-center text-black dark:text-white"
@@ -107,11 +114,11 @@ export const QuranSafha = ({
   // font is ready. `font-display: block` keeps text invisible during download, so
   // the skeleton overlays the hidden text elements — nothing garbled underneath.
   // See docs/plans/fix-quran-page-font-loading.md.
+  const pageFontFamily = getPageFontFamily(page, tajweedMode);
   const [fontReady, setFontReady] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    const fontFamily = getPageFontFamily(page, tajweedMode);
-    const fontSpec = `1px "${fontFamily}"`;
+    const fontSpec = `1px "${pageFontFamily}"`;
     if (document.fonts.check(fontSpec)) {
       setFontReady(true);
       return;
@@ -121,7 +128,7 @@ export const QuranSafha = ({
       if (!cancelled) setFontReady(true);
     });
     return () => { cancelled = true; };
-  }, [page, tajweedMode]);
+  }, [page, tajweedMode, pageFontFamily]);
 
   const wordClicked = (
     e: React.MouseEvent<HTMLDivElement>,
@@ -294,7 +301,7 @@ export const QuranSafha = ({
               is stable from first render — not driven by font metrics. */}
           <div
             className="relative rounded-none md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-full md:h-full"
-            style={{ minWidth: `min(100vw, calc(${FONT_V1.getWordFontSizeCss(quranFontScale)} * 14.7 + 3.5rem))` }}
+            style={{ minWidth: `min(100vw, calc(${FONT_V1.getWordFontSizeCss(quranFontScale)} * ${QURAN_LINE_WIDTH_RATIO} + 3.5rem))` }}
           >
             {/* Content. The three `--fq-*-base` vars mirror the single-view vh
                 sizing so the double-view width cap (the `[data-safha-view="double"]
@@ -342,7 +349,7 @@ export const QuranSafha = ({
               <div
                 className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${tajweedMode ? "fq-tajweed" : ""} ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
                 style={{
-                  fontFamily: getPageFontFamily(page, tajweedMode),
+                  fontFamily: pageFontFamily,
                   ...(fontReady ? {} : { visibility: "hidden" as const }),
                 }}
               >
@@ -351,7 +358,7 @@ export const QuranSafha = ({
                     className="absolute inset-0 flex flex-col justify-between py-[0.5em]"
                     style={{ visibility: "visible" }}
                   >
-                    {Array.from({ length: 15 }, (_, i) => (
+                    {Array.from({ length: page <= 2 ? SKELETON_LINE_COUNT_SHORT : SKELETON_LINE_COUNT }, (_, i) => (
                       <div key={i} className="h-[1em] w-full rounded-sm bg-muted/60 animate-pulse" />
                     ))}
                   </div>
