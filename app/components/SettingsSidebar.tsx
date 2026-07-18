@@ -10,6 +10,7 @@ import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
 import { useQuranTajweed } from "@contexts/QuranTajweedContext";
+import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -70,12 +71,20 @@ export const SettingsSidebar = () => {
               <LanguageToggle />
             </div>
           </div>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
               {t("quranFontSize", "Quran Font Size")}
             </h3>
             <div className="p-4 rounded-lg bg-muted">
               <QuranFontScaleControls />
+            </div>
+          </div>
+          <div className="hidden lg:block">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              {t("pageView", "Page View")}
+            </h3>
+            <div className="p-4 rounded-lg bg-muted">
+              <QuranSafhaViewToggle />
             </div>
           </div>
           <div>

@@ -124,6 +124,11 @@ body,
 }
 
 @layer base {
+  .fq-content {
+    --fq-line-gap: var(--fq-line-gap-base);
+    --fq-heading-h: var(--fq-heading-base);
+  }
+
   @media (max-width: 767px) {
     .fq-content {
       /* Font from width: every mushaf line justifies to the same width — worst-case

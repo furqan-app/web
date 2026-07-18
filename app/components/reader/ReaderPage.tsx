@@ -4,8 +4,6 @@ import { getPagePair } from "@/app/utils/quran-pages";
 import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { Locale } from "@/app/types/config";
 import { QuranSwipeNav } from "@/app/components/QuranSwipeNav";
-import { QuranSafhaViewToggle } from "@/app/components/QuranSafhaViewToggle";
-import { RecitationPlayButton } from "@/app/components/RecitationPlayButton";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
@@ -115,11 +113,7 @@ export const ReaderPage = async ({
         prevHref={`${basePath}/${prevPageNum}`}
         nextHref={`${basePath}/${nextPageNum}`}
       >
-        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
-          <div className="hidden md:flex items-center gap-2">
-            <QuranSafhaViewToggle />
-            <RecitationPlayButton firstVerseKey={firstVerseKey} />
-          </div>
+        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0">
           <div className="w-full flex justify-center items-start md:items-center px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
             <QuranSpread
               currentPageId={pageNumber}
