@@ -276,8 +276,6 @@ export const QuranSafha = ({
             <div
               className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full"
               style={{
-                "--fq-line-gap": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
-                "--fq-heading-h": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
                 "--fq-word-base": FONT_V1.getWordFontSizeCss(quranFontScale),
                 "--fq-line-gap-base": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
                 "--fq-heading-base": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,

@@ -14,7 +14,7 @@ export const QuranSafhaViewToggle = () => {
     }`;
 
   return (
-    <div className="hidden lg:flex gap-0.5 p-1 rounded-xl border border-border bg-card">
+    <div className="flex gap-0.5 p-1 rounded-xl border border-border bg-card">
       <button
         type="button"
         aria-label={t("reader.singlePageView", "Single page view")}
