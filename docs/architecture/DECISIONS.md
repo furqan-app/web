@@ -42,6 +42,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 - When displaying a word outside the page (search, modal), use `word.qpc_uthmani_hafs`.
 - `Verse` has no `qpc_uthmani_hafs` column — when displaying verse text, prefer reconstructing from `word.qpc_uthmani_hafs` filtered to `char_type_name === 'word'` if words are in scope; fall back to `verse.text_uthmani` only when words are unavailable.
 - Never use `verse.text_uthmani` for verse display in search — always join `word.qpc_uthmani_hafs` across all words. Do **not** filter by `char_type_name` for full verse display: `UthmanicHafs1Ver18` renders markers (۞ rub el hizb, etc.) correctly and they should be visible. Filter to `char_type_name === 'word'` only in truncated/title contexts (e.g. MarkModal) where markers in a short string are unwanted.
+- `QuranSafha` shows a skeleton loading state (shimmer lines) while the current page's font is downloading, using `document.fonts.load()` to detect readiness. Do not change `font-display: block` to `swap` or `optional` — `block` keeps text invisible during download, which pairs correctly with the skeleton (the skeleton overlays the hidden text elements, so nothing garbled is visible underneath). `swap` would immediately expose the garbled system-font fallback. See `docs/plans/fix-quran-page-font-loading.md`.
 
 ---
 
