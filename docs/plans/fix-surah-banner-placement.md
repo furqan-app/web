@@ -2,7 +2,8 @@
 
 **Type:** bug  
 **Date:** 2026-07-07  
-**Status:** implemented — equal-height spread (Addendum 1/2), inter-line gap (Addendum 3), gap-based banner placement (Addendum 4) all shipped.  
+**Status:** implemented — equal-height spread (Addendum 1/2), inter-line gap (Addendum 3), gap-based banner placement (Addendum 4), decorative surah frame (Addendum 5) all shipped.  
+**Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf  
 **Trello:** https://trello.com/c/sRC6NhMS/72-surah-name-banners-render-at-end-of-page-madani-layout
 
 ## Summary
@@ -142,3 +143,58 @@ const shouldRenderSurahHeader =
 ```
 
 **Files:** `QuranSafha.tsx` (gap algorithm, `RenderItem[]` rendering, helpers), `QuranLine.tsx` (`suppressInlineHeaderForSurahId` prop). No changes to schema, DB, seeder, `globals.css`, `QuranSpread.tsx`, `ReaderPage.tsx`.
+
+---
+
+## Addendum 5 — Decorative surah name frame (Trello #93)
+
+**Date:** 2026-07-19  
+**Branch:** `feature/93-surah-banner-frame`
+
+### What
+
+Wrap `SurahBannerLine`'s surah name glyph inside a full-width decorative frame matching the printed Madani mushaf style — an ornate pill-shaped border with arabesque medallions on each side and an inner pointed-arch crown decoration.
+
+### Source asset
+
+`/home/tahamohamed/Pictures/surah_banner1.svg` — a mobile-scale SVG (`viewBox="0 0 373 39"`) that includes both left and right ornaments and the full inner arch decoration. Contains exactly 3 fill colors:
+
+| Original hex | Role | Theme mapping |
+|---|---|---|
+| `#404c6e` | Frame body fill (dark blue) | `hsl(var(--card))` — matches card bg per theme |
+| `#fff` | Border lines + inner arch decoration | `var(--surah-frame-line)` — dark on light/gold, light on dark |
+| `#cdad80` | Gold arabesque detail | `var(--surah-frame-gold)` — warm gold, varies slightly per theme |
+
+The rectangle also has `stroke="#fff"` → replace with `stroke: var(--surah-frame-line)`.
+
+### Algorithm
+
+No changes to the gap detection or render-item algorithm from Addendum 4. Only `SurahBannerLine` changes visually.
+
+### Decision tree
+
+| Theme | `--surah-frame-line` | `--surah-frame-gold` |
+|---|---|---|
+| `.theme-light` | `hsl(39 35% 25%)` (warm dark brown) | `#cdad80` |
+| `.theme-gold` | `hsl(39 45% 20%)` (rich deep brown) | `#b8924a` |
+| `.theme-dark` | `hsl(209 51% 88%)` (matches `--card-foreground`) | `#cdad80` |
+
+### Files to change
+
+- `app/surah-frame.svg` — **new file**: the source SVG with fixed `width`/`height` removed, `width="100%"` added, and all fills replaced with CSS class selectors (`.fb`, `.fl`, `.fg`) + an inline `<style>` block referencing `--surah-frame-*` vars. The `stroke` on the rect also uses `var(--surah-frame-line)`.
+- `app/globals.css` — add `--surah-frame-line` and `--surah-frame-gold` to each of `.theme-light`, `.theme-gold`, `.theme-dark` (`.theme-dark.dark` too). Do NOT add `--surah-frame-body` — use `hsl(var(--card))` directly in the SVG.
+- `app/components/QuranSafha.tsx` — update `SurahBannerLine`:
+  - Import `SurahFrameSVG from "@/app/surah-frame.svg"`
+  - Render `SurahFrameSVG` at `width: 100%`, height auto (preserves aspect ratio)
+  - Overlay the surah name glyph with `position: absolute; inset: 0; display: flex; align-items: center; justify-content: center`
+  - Outer div: `position: relative; leading-none` (keep existing `marginBottom: var(--fq-line-gap)`)
+  - Glyph font-size: `0.85em` (slightly smaller than frame height so it sits comfortably inside)
+  - Glyph color: keep `text-black dark:text-white` (existing pattern)
+
+### What NOT to do
+
+- Do not use `preserveAspectRatio="none"` — distorts the medallion ornaments.
+- Do not add a decorative frame to `BismillahLine` — only `SurahBannerLine` gets the frame.
+- Do not set a fixed `height` on the SVG — let it scale proportionally from `width: 100%`. The natural height (≈ viewBox ratio 39/373 × container width) will be slightly taller than `1em` at full page width; this is correct and matches the printed mushaf proportions.
+- Do not hardcode colors in `surah-frame.svg` — all three color roles must go through CSS vars for theme support.
+- Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
