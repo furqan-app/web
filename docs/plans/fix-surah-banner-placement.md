@@ -2,8 +2,9 @@
 
 **Type:** bug  
 **Date:** 2026-07-07  
-**Status:** implemented — equal-height spread (Addendum 1/2), inter-line gap (Addendum 3), gap-based banner placement (Addendum 4), decorative surah frame (Addendum 5) all shipped.  
+**Status:** implemented  
 **Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf  
+**Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread  
 **Trello:** https://trello.com/c/sRC6NhMS/72-surah-name-banners-render-at-end-of-page-madani-layout
 
 ## Summary
@@ -198,3 +199,93 @@ No changes to the gap detection or render-item algorithm from Addendum 4. Only `
 - Do not set a fixed `height` on the SVG — let it scale proportionally from `width: 100%`. The natural height (≈ viewBox ratio 39/373 × container width) will be slightly taller than `1em` at full page width; this is correct and matches the printed mushaf proportions.
 - Do not hardcode colors in `surah-frame.svg` — all three color roles must go through CSS vars for theme support.
 - Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
+
+---
+
+## Addendum 6 — Fix frame height causing unequal page heights (Trello #123)
+
+**Date:** 2026-07-20  
+**Branch:** `fix/123-surah-banner-frame-height`
+
+### Root cause
+
+`SurahBannerLine` renders the SVG with `width: 100%` + `aspectRatio: "373/39"` (ratio 9.56:1), so its layout height = `container_width × (39/373)`. At typical desktop mushaf card widths (~450px) this produces ~47px — about 50–80% taller than `1em`. The page with the banner becomes taller than its 15-line neighbor, causing visible white space at the bottom of the shorter page in the double-page spread.
+
+### Fix: reshape the SVG to match the line-width aspect ratio
+
+Rather than clipping or shrinking the frame, the SVG itself was modified so its natural aspect ratio matches `QURAN_LINE_WIDTH_RATIO` (14.41:1). With `height: 1em; width: 100%` the frame then renders at exactly `1em` tall and spans the Quran text content width without distortion, clipping, or overflow.
+
+**`app/surah-frame.svg` changes:**
+
+| What | Before | After |
+|---|---|---|
+| `viewBox` | `0 0 373 39` | `0 0 562 39` |
+| Rect width | `304` (x=35→339) | `491` (x=35→526) |
+| Right medallion | inline paths at x=337–373 | `<g transform="translate(187.15,0)">` → x=524–560 |
+| Central arch | `<g transform="translate(94.5,0)">` | unchanged (spans frame interior) |
+| Inner left ornament cluster | part of central group, rendered at x≈186 | `<g transform="translate(8.24,0)">` → left frame edge x≈38–115 |
+| Inner right ornament cluster | part of central group, rendered at x≈369 | `<g transform="translate(177.89,0)">` → right frame edge x≈446–523 |
+
+The inner ornament clusters (the knot/diamond shapes) were split out of the central arch group and given independent translates so they sit flush at the left and right ends of the frame rect, mirroring the printed Madani mushaf design.
+
+**`app/components/QuranSafha.tsx` — `SurahBannerLine`:**
+
+```tsx
+const SurahBannerLine = ({ surahId }: { surahId: number }) => (
+  <div
+    className="leading-none relative w-full"
+    style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
+  >
+    <SurahFrameSVG style={{ display: "block", width: "100%", height: "1em" }} />
+    <span
+      className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
+      translate="no"
+      style={{ fontFamily: "var(--surah-names)", fontSize: "0.85em", lineHeight: 1 }}
+    >
+      {`${surahId}`.padStart(3, "0")}
+    </span>
+  </div>
+);
+```
+
+SVG is in-flow at `height: 1em` — no absolute positioning, no overflow, no clipping. The glyph overlays via `position: absolute; inset: 0`.
+
+**Verified:** both safha elements measure identical height (`692.328125px`) on page 50.
+
+### What NOT to do
+
+- Do not use `preserveAspectRatio="none"` — distorts the medallion ornaments.
+- Do not use `height: 1em; width: auto` on the SVG — frame no longer spans full width.
+- Do not use `overflow: hidden` on the outer div — the correct height comes from the SVG viewBox ratio, not clipping.
+- Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
+
+---
+
+## Addendum 7 — Fix bismillah SVG appearing smaller than Quran text
+
+**Date:** 2026-07-20  
+**Branch:** `fix/123-surah-banner-frame-height`
+
+### Root cause
+
+`bismillah.svg` has `viewBox="0 0 176 36"` but the glyph content doesn't fill the full viewBox height — there's internal top padding of ~4 units (~11%). At `height: 1em`, the rendered glyph is effectively ~0.89em tall, making it visibly smaller than the surrounding Quran text lines.
+
+### Fix
+
+Same pattern as the surah frame: keep the outer div at `height: 1em` (layout slot unchanged), render the SVG absolutely centered at `height: 1.2em`. The SVG overflows visually but contributes zero to layout height.
+
+```tsx
+const BismillahLine = () => (
+  <div
+    className="leading-none relative flex justify-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)", height: "1em" }}
+  >
+    <BismillahSVG style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "1.2em", width: "auto" }} />
+  </div>
+);
+```
+
+### What NOT to do
+
+- Do not increase `height` without `position: absolute` — that would make the line slot taller than `1em` and break equal-height spread pages.
+- Do not modify the SVG file to crop its viewBox — the internal padding is part of the original asset.
