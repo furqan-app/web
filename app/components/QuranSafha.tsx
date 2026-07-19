@@ -13,6 +13,7 @@ import { getPageFontFamily } from "@utils/quran-font-map";
 import { getMarkMeta } from "@utils/marks";
 import { groupBy } from "@utils/groupBy";
 import BismillahSVG from "@/app/bismillah.svg";
+import SurahFrameSVG from "@/app/surah-frame.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
@@ -28,12 +29,14 @@ const SKELETON_LINE_COUNT_SHORT = 7;
 
 const SurahBannerLine = ({ surahId }: { surahId: number }) => (
   <div
-    className="leading-none text-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)" }}
+    className="leading-none relative w-full"
+    style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
   >
+    <SurahFrameSVG style={{ display: "block", width: "100%", aspectRatio: "373 / 39" }} />
     <span
+      className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
       translate="no"
-      style={{ fontFamily: "var(--surah-names)", fontSize: "1em", lineHeight: 1 }}
+      style={{ fontFamily: "var(--surah-names)", fontSize: "0.85em", lineHeight: 1 }}
     >
       {`${surahId}`.padStart(3, "0")}
     </span>
