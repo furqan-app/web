@@ -355,7 +355,7 @@ export const QuranSafha = ({
               >
                 {!fontReady && (
                   <div
-                    className="absolute inset-0 flex flex-col justify-between py-[0.5em]"
+                    className={`absolute inset-0 flex flex-col ${page <= 2 ? "justify-center gap-[0.55em]" : "justify-between"} ${tajweedMode ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
                     style={{ visibility: "visible" }}
                   >
                     {Array.from({ length: page <= 2 ? SKELETON_LINE_COUNT_SHORT : SKELETON_LINE_COUNT }, (_, i) => (
