@@ -55,9 +55,11 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
      1. Kill the dev server. The recorded port can be **stale** — Next.js auto-increments (3000→3001→…) when the port is busy — so kill by *both* the recorded port and any process rooted in the worktree:
         ```bash
         lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
-        lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 || true
+        lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+        sleep 1
+        ss -tlnp | grep :<port> && echo "WARNING: port <port> still in use" || true
         ```
-        Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and stay alive. `xargs -r` skips the kill when nothing matched.
+        Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and stay alive. `xargs -r` skips the kill when nothing matched. The `sleep 1` lets the OS release the socket before the next step reads from it.
      2. Remove the worktree, then force-delete the folder — `git worktree remove` **leaves gitignored dirs behind** (`.next`, `node_modules` symlink, etc.), so the folder always survives unless you also `rm -rf` it. Run both unconditionally:
         ```bash
         git worktree remove <abs> --force || true

@@ -41,7 +41,9 @@ Loads the right context (decisions + standards + plan), then implements the task
    3. Symlink shared dependencies into the worktree:
       ```bash
       ln -s $(pwd)/node_modules ../furqan-<slug>/node_modules
+      ln -s $(pwd)/app/generated ../furqan-<slug>/app/generated
       ```
+      The `app/generated` symlink is required — it holds the Prisma client, which the dev server needs at startup. Missing it causes Prisma import errors before the first page loads.
    4. **Determine whether a dev server is needed** — scan the plan's "Files to Change" section:
       - If **every** listed path is under `docs/` or `.claude/` → this is a docs/tooling task; skip steps 5–8 (no port, no state file entry, no dev server)
       - If **any** path is under `app/`, `components/`, `lib/`, `prisma/`, or other app directories → proceed with steps 5–8
@@ -62,11 +64,18 @@ Loads the right context (decisions + standards + plan), then implements the task
       { "<slug>": { "worktreePath": "../furqan-<slug>", "port": <port>, "branch": "<branch-name>" } }
       ```
       Merge with any existing entries — do not overwrite the whole file. If `/plan-fq-task` already wrote an entry for this slug without a `port`, update it in place by adding the port field.
-   8. Start the dev server in the background:
+   8. Before starting the dev server, ensure the port is actually free — Next.js silently increments the port if something is already listening, causing the recorded port to be wrong for the entire session:
       ```bash
-      cd ../furqan-<slug> && PORT=<port> npm run dev &
+      lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
+      sleep 1
+      ss -tlnp | grep :<port> && echo "WARNING: port <port> still in use" || true
       ```
-   9. Print clearly: `Task dev server: http://localhost:<port>`
+   9. Start the dev server in the background:
+      ```bash
+      cd ../furqan-<slug> && PORT=<port> npm run dev > /tmp/furqan-<slug>-dev.log 2>&1 &
+      ```
+      Log to `/tmp/furqan-<slug>-dev.log` so errors are inspectable without attaching to the process.
+   10. Print clearly: `Task dev server: http://localhost:<port>`
 
 2. **Load context — mandatory gate, before writing any code**
    - Read `../furqan-<slug>/docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
