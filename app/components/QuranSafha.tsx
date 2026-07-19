@@ -32,7 +32,7 @@ const SurahBannerLine = ({ surahId }: { surahId: number }) => (
     className="leading-none relative w-full"
     style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
   >
-    <SurahFrameSVG style={{ display: "block", width: "100%", aspectRatio: "373 / 39" }} />
+    <SurahFrameSVG style={{ display: "block", width: "100%", height: "1em" }} />
     <span
       className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
       translate="no"
@@ -45,10 +45,10 @@ const SurahBannerLine = ({ surahId }: { surahId: number }) => (
 
 const BismillahLine = () => (
   <div
-    className="leading-none flex justify-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)" }}
+    className="leading-none relative flex justify-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)", height: "1em" }}
   >
-    <BismillahSVG style={{ height: "1em", width: "auto" }} />
+    <BismillahSVG style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "1.2em", width: "auto" }} />
   </div>
 );
 
