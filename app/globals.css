@@ -156,9 +156,10 @@ body,
          space-between distributes the 15 lines inside this padded box. */
       padding-block: 0.5em;
     }
-    /* Tajweed font-size stays at the same value as regular — do not scale it.
-       Line-height tightening (line-height:1 on .fq-safha-row) prevents COLRv1's
-       larger declared metrics from inflating line boxes. See globals.css @layer base. */
+    .fq-quran-safha.fq-tajweed {
+      font-size: calc(var(--fq-mobile-font) * 0.88);
+      padding-block-start: 1em;
+    }
     .fq-quran-safha > * {
       margin-bottom: 0 !important; /* height distributed by flex, not margin */
     }
@@ -191,14 +192,11 @@ body,
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
      Mirrors the `@media (max-width: 767px)` mobile block above. */
   @media (min-width: 768px) {
-    /* Tajweed font-size correction — desktop single-page and standalone QuranSafha.
-       COLRv1 glyphs render ~1.15× taller visually than the base font at the same
-       font-size (measured: regular 1.92×, COLRv1 2.56× the CSS font-size), so
-       0.87 ≈ 1.92/2.56 matches glyph density to the regular mushaf.
-       Not scoped to .fq-spread so it also covers the standalone QuranSafha
-       in VerticalQuranPages. Double-view overrides this below. */
     .fq-quran-safha.fq-tajweed {
-      font-size: calc(var(--fq-word-base) * 0.87);
+      font-size: calc(var(--fq-word-base) * 0.85);
+    }
+    .fq-content:has(.fq-tajweed) {
+      --fq-line-gap: calc(var(--fq-word-base) * 0.5607);
     }
     .fq-spread .fq-quran-safha {
       flex: 1 1 0%;
@@ -287,9 +285,11 @@ body,
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
       font-size: min(var(--fq-word-base), var(--fq-dv-word));
     }
-    /* Tajweed double-view: preserve the dv-word cap while applying the 0.87 scale. */
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
-      font-size: calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.87);
+      font-size: calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.85);
+    }
+    :root[data-safha-view="double"] .fq-spread .fq-content:has(.fq-tajweed) {
+      --fq-line-gap: min(calc(var(--fq-word-base) * 0.5607), calc(var(--fq-dv-word) * 0.5777)) !important;
     }
     :root[data-safha-view="double"] .fq-spread .fq-content {
       --fq-line-gap: min(var(--fq-line-gap-base), calc(var(--fq-dv-word) * 0.417)) !important;
@@ -329,12 +329,10 @@ body,
     font-palette: --Gold;
   }
 
-  /* Tajweed font size — no correction needed (ADR 0023 Addendum 1 revised).
-     The COLRv1 font's CSS line boxes resolve to exactly 1.0× font-size (same
-     as the base font), so the same font-size fills the page identically to
-     the regular mushaf. Visual glyphs extend outside the line box (diacritics
-     overlap adjacent rows), but this is inherent to the font design and
-     matches how print tajweed mushafs look. Any font-size override here
-     shrinks the card width (card is md:w-auto, sized to line content width;
-     COLRv1 has no kashida justification so lines don't stretch full-width). */
+  /* Tajweed page dimensions — scaled font-size (0.85×) to match visual glyph
+     size, compensated line gap (0.5607× regular fs) to preserve total page
+     height. Math: 15×0.85fs + 14×0.5607fs = 12.75fs + 7.85fs = 20.6fs,
+     matching regular's 15fs + 14×0.40fs = 20.6fs. No explicit width — card
+     sizes naturally to the widest COLRv1 line.
+     See fix-tajweed-font-size.md Addendum 4. */
 }
