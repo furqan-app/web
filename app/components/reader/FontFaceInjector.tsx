@@ -43,7 +43,7 @@ export function FontFaceInjector({ pageIds }: Props) {
 @font-palette-values --Dark {
   font-family: 'quran-p${id}-tajweed';
   base-palette: 1;
-  /* TODO (Trello #113): add override-colors for dark-theme contrast before shipping dark-mode tajweed */
+  override-colors: 3 #F556B0, 4 #E1AB5B, 5 #D9C78C, 6 #20DF76, 7 #26ACD9, 8 #3FD3E4, 9 #F556B0, 10 #192533, 11 #192533, 12 #192533;
 }
 @font-palette-values --Gold {
   font-family: 'quran-p${id}-tajweed';
