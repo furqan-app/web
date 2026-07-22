@@ -495,3 +495,106 @@ Confirm: warm paper + depth read as a printed page; gutter looks like a curved f
 no gap; ayah medallions/diamonds/frame are muted gold; dark text is off-white not pure
 white; and — critically — a surah-start page still fits with no clipping and identical
 line layout/spacing to before. Capture light + dark screenshots at the reference size.
+
+## Addendum — Overlay timer, ayah-end styling, opening-page centering
+
+**Date:** 2026-07-22 · **Status:** implemented · Trello: extends card #124.
+
+### Changes
+
+#### 1 — Remove nav auto-hide timer
+The 3-second auto-hide timer is removed. The nav overlay stays visible until the user
+taps again — explicit toggle only, no timeout. Simplifies the context and removes an
+unwanted footgun (nav disappearing mid-interaction).
+
+**`app/contexts/NavOverlayContext.tsx`:** delete `AUTO_HIDE_MS`, the `timerRef`, and
+all `setTimeout`/`clearTimeout` calls. `hideOverlay` can be removed entirely (nothing
+calls it now). The `toggleOverlay` callback flips `overlayVisible` on/off with no side
+effects.
+
+#### 2 — Ayah-end markers: text color + 0.85em (tablet spread only)
+Currently the tablet spread styles `fq-ayah-end` as `--mushaf-ornament` (gold/gray).
+Change to `--mushaf-text` (warm ink/off-white) so the marker reads as part of the text
+flow, not a decorative ornament. Also add `font-size: 0.85em` for a subtle size
+distinction from the surrounding words.
+
+**`app/globals.css`** — inside the tablet `@media (min-width:1024px) and (max-width:1366px)` block:
+- `.fq-spread .fq-ayah-end, .fq-spread .fq-ayah-end span`: change color from
+  `var(--mushaf-ornament)` → `var(--mushaf-text)`; add `font-size: 0.85em`.
+- Fix the stale comment in the dark-theme block that says `(.fq-ayah-end, left untouched)` —
+  it is now governed by the general tablet rule above.
+
+#### 3 — Pages 1–2 centered on tablet spread
+`fq-safha-center` (set by `QuranSafha` when `page <= 2`) works on mobile and the
+desktop spread, but the tablet double-view rule `:root[data-safha-view="double"]
+.fq-spread .fq-quran-safha { justify-content: space-between }` has higher specificity
+and overrides it, spreading Al-Fatiha's 7 lines across the full 100dvh card.
+
+**Fix** — inside the tablet block, after the existing `space-between` rule:
+```css
+:root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-safha-center {
+  justify-content: center;
+  gap: 0.55em;
+}
+```
+The card still fills 100dvh; the 7 lines center within it. Mirrors what the desktop
+spread block already does at `@media (min-width:768px)` lines 303–306.
+
+### Files to change
+- `app/contexts/NavOverlayContext.tsx` — remove auto-hide timer
+- `app/globals.css` — ayah-end color/size; fq-safha-center tablet override
+
+### What NOT to Do
+- Do not change the nav's initial hidden state — it still starts hidden; only the
+  timer removal changes things.
+- Do not extend the ayah-end styling outside the tablet `fq-spread` scope.
+- Do not change the card height for pages 1–2 — the ivory card stays 100dvh, only
+  the text-block alignment changes.
+
+## Bug fixes — modal-click nav toggle + Quran word I-beam cursor
+
+**Date:** 2026-07-22 · **Status:** implemented
+
+### Bug 1 — Mark modal click toggles the nav overlay
+
+`QuranSwipeNav`'s outer div has `onClick={toggleOverlay}`. React's fiber-tree event
+bubbling delivers clicks from inside Radix `Dialog` portals (which live outside the
+QuranSwipeNav DOM subtree) to this handler, so opening the mark modal and clicking
+anywhere inside it toggled the nav.
+
+**Fix — `app/components/QuranSwipeNav.tsx`:** Replace the bare `onClick={toggleOverlay}`
+with an inline guard that bails when the click originated outside the current DOM subtree:
+```tsx
+onClick={(e) => {
+  if (!e.currentTarget.contains(e.target as Node)) return;
+  toggleOverlay();
+}}
+```
+`e.currentTarget.contains(e.target)` returns `false` for portal nodes (body-mounted
+dialog), so portal clicks are silently ignored; non-portal clicks (the reader background)
+still toggle as before.
+
+### Bug 2 — I-beam (text) cursor appears over Quran words
+
+`QuranWord`'s div has `cursor-pointer`, but browsers show the I-beam cursor over
+selectable text even when a parent declares `cursor: pointer`. Applies to all screens.
+
+**Fix — `app/components/QuranWord.tsx`:** Add `select-none` to the word div's className.
+`user-select: none` inherits to child spans and stops the browser from treating the text
+as selectable, removing the I-beam in all themes and breakpoints.
+
+### Bug 3 — Dialog close button always appears focused
+
+When the mark modal opens, Radix Dialog auto-focuses the first interactive element —
+the X close button. The shadcn `DialogContent`'s close button uses `focus:ring-2`,
+which shows the focus ring for ALL focus (including programmatic). After a mouse/tap
+interaction this looks like the button is permanently focused.
+
+**Fix — `components/ui/dialog.tsx`:** Two changes:
+1. Change `focus:ring-2` → `focus-visible:ring-2` on the `DialogPrimitive.Close` className so the ring only shows during keyboard navigation.
+2. Add `onOpenAutoFocus={(e) => e.preventDefault()}` on `DialogPrimitive.Content` to prevent Radix from auto-focusing the close button on open. Firefox always fires `focus-visible` for programmatic focus, so this is required in addition to the class change. The dialog remains accessible — focus is trapped inside and Tab reaches all elements.
+
+### Files changed
+- `app/components/QuranSwipeNav.tsx` — portal-safe onClick guard
+- `app/components/QuranWord.tsx` — `select-none` on word div
+- `components/ui/dialog.tsx` — `focus:ring-2` → `focus-visible:ring-2` on close button
