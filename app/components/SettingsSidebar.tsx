@@ -10,6 +10,7 @@ import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
 import { useQuranTajweed } from "@contexts/QuranTajweedContext";
+import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -28,6 +29,9 @@ export const SettingsSidebar = () => {
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { isStandalone, cached, total } = usePwaPrecache();
   const { tajweedMode, setTajweedMode } = useQuranTajweed();
+  // On tablet the safha auto-fits the font to the page, so the manual font-size
+  // control does nothing — hide it there (still shown on desktop lg+).
+  const isTablet = useIsTablet();
 
   return (
     <Sheet>
@@ -71,14 +75,16 @@ export const SettingsSidebar = () => {
               <LanguageToggle />
             </div>
           </div>
-          <div className="hidden lg:block">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("quranFontSize", "Quran Font Size")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted">
-              <QuranFontScaleControls />
+          {!isTablet && (
+            <div className="hidden lg:block">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                {t("quranFontSize", "Quran Font Size")}
+              </h3>
+              <div className="p-4 rounded-lg bg-muted">
+                <QuranFontScaleControls />
+              </div>
             </div>
-          </div>
+          )}
           <div className="hidden lg:block">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
               {t("pageView", "Page View")}

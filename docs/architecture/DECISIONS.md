@@ -345,6 +345,7 @@ main → /cut-release → release/x.y.z → /promote-to-staging → stg → /pro
 - Do not add a positional/transform entry animation on mount — a transform-based entry reads as a second swipe (Addendum 4/5 incident).
 - Do not add `startTransition` — Next.js App Router already wraps its router dispatch in `startTransition` internally; double-wrapping is a no-op (confirmed in Addendum 8/9).
 - Do not use `sessionStorage` or `document.documentElement` attributes as fade-signal carriers — these mechanisms are superseded.
+- **Exception (tablet double-view only):** the tablet spread uses a real 3-panel carousel that *does* render adjacent spreads — see [ADR 0027](adr/0027-tablet-swipe-carousel.md). This is a scoped divergence justified by static generation (adjacent fetch cost is build-time) and the reveal being a wanted feature, not a flicker fix. It does **not** relax the above constraints for mobile/single-view, which stay single-slot. The "no entry animation on mount" rule still holds even for the carousel — the incoming route renders statically centered.
 
 ---
 

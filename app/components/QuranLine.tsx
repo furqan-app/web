@@ -35,7 +35,7 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
       {shouldRenderSurahHeader && !isBannerHandled ? (
         <div className="text-center">
           <h1
-            className="text-black dark:text-white"
+            className="fq-inline-surah text-black dark:text-white"
             translate="no"
             style={{
               fontFamily: "var(--surah-names)",
@@ -45,7 +45,7 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
           >
             {`${surahId}`.padStart(3, "0")}
           </h1>
-          <div className="flex justify-center text-black dark:text-white">
+          <div className="fq-bismillah flex justify-center text-black dark:text-white">
             {!CHAPTERS_WITHOUT_BISMILLAH.includes(`${surahId}`) ? (
               <div style={{ marginBottom: "var(--fq-line-gap)" }}>
                 <BismillahSVG

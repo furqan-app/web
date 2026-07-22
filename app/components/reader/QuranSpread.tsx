@@ -43,7 +43,7 @@ const NavigationArrow = ({
     <Link
       href={href}
       aria-label={isNext ? "Next page" : "Previous page"}
-      className="hidden md:flex relative z-20 items-center justify-center shrink-0 text-primary/60 hover:text-primary transition-colors"
+      className="fq-nav-arrow hidden md:flex relative z-20 items-center justify-center shrink-0 text-primary/60 hover:text-primary transition-colors"
     >
       <Icon className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.6} />
     </Link>

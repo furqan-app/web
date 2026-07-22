@@ -10,6 +10,7 @@ import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
 import { QuranTajweedProvider } from "@/app/contexts/QuranTajweedContext";
 import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
+import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import "../globals.css";
@@ -49,10 +50,12 @@ export default async function LocaleLayout({
                 <RecitationProvider>
                   <QueryProvider>
                     <SidebarProvider>
-                      <Nav />
-                      {children}
-                      <RecitationPlayerBar />
-                      <RecitationSettingsSheet />
+                      <NavOverlayProvider>
+                        <Nav />
+                        {children}
+                        <RecitationPlayerBar />
+                        <RecitationSettingsSheet />
+                      </NavOverlayProvider>
                     </SidebarProvider>
                   </QueryProvider>
                 </RecitationProvider>

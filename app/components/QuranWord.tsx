@@ -45,6 +45,7 @@ export const QuranWord = ({ word, category, onWordClicked }: QuranWordProps) => 
       ref={wordRefCallback}
       onClick={(e) => onWordClicked(e, word)}
       className={` group relative leading-none text-black dark:text-white cursor-pointer
+      ${word.char_type_name === "end" ? "fq-ayah-end" : "fq-qword"}
       hover:scale-[1.06] hover:[filter:drop-shadow(1px_1px_0px_hsl(var(--foreground)/0.4))] transition-[filter,transform] duration-150
       ${highlightClassForWord}
     `}
