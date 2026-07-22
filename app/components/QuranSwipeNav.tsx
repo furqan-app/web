@@ -6,6 +6,7 @@ import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
+import { useIsMobile } from "@/app/hooks/use-is-mobile";
 
 // Strong ease-out curve (ui-motion skill recommendation for entering/exiting elements).
 const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)";
@@ -49,25 +50,26 @@ export function QuranSwipeNav({
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
   const isTablet = useIsTablet();
+  const isMobile = useIsMobile();
 
   // Pair-step hrefs whenever a double-page spread is showing (tablet AND desktop) —
   // otherwise a single-page step lands on the same spread. Mirrors QuranSpread.
   const { prevHref, nextHref } =
     view === "double" && isLgUp ? pairStep : singleStep;
 
-  // The 3-panel carousel geometry runs ONLY on the tablet double-view spread — the
-  // exact scope where CSS reveals the neighbor panels and rests the strip at -100%
-  // (see globals.css). Desktop double (lg+ but wider than tablet) and mobile keep the
-  // single-panel fly-off: their neighbors are display:none, so the strip holds only
-  // the current panel at translateX(0). Matching the CSS scope (useIsTablet, 1024–1366)
-  // is essential — using isLgUp here would desync the JS base offset from the CSS base
-  // on desktop and slide the page off-screen. See ADR 0027.
-  const carousel = view === "double" && isTablet;
+  // Carousel geometry: tablet double-view AND mobile both use the 3-panel strip
+  // (neighbor panels visible, strip rests at -100% so the current middle panel is
+  // shown). Desktop keeps the single-panel fly-off. CSS scope mirrors this split:
+  // the tablet rule is gated on data-safha-view="double" inside the tablet media
+  // query; the mobile rule shows neighbors unconditionally (always single-page).
+  // Tablet carousel uses 1.5× drag amplification and a slow 380ms page-turn;
+  // mobile uses 1:1 tracking and the snappy 220ms fly-off — feel matches the
+  // narrower screen. See ADR 0027.
+  const isTabletCarousel = view === "double" && isTablet;
+  const carousel = isTabletCarousel || isMobile;
   const baseTx = carousel ? "-100%" : "0px";
-  // Drag amplification and commit duration are carousel-only tuning; the single-
-  // panel path keeps its original 1:1 tracking and 220ms fly-off (ADR 0027).
-  const dragGain = carousel ? CAROUSEL_DRAG_GAIN : 1;
-  const exitMs = carousel ? CAROUSEL_EXIT_MS : SINGLE_EXIT_MS;
+  const dragGain = isTabletCarousel ? CAROUSEL_DRAG_GAIN : 1;
+  const exitMs = isTabletCarousel ? CAROUSEL_EXIT_MS : SINGLE_EXIT_MS;
 
   const stripRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);

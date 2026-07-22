@@ -291,8 +291,20 @@ body,
       box-shadow: 1px 0 2px -1px var(--mushaf-paper-shadow);
     }
 
-    /* Feature 3 — Mushaf paper surface on mobile reader card. */
+    /* Mobile carousel: neighbor panels visible during swipe peek. */
+    .fq-carousel-side {
+      display: block;
+    }
+    /* Strip rests at -100% so the current (middle) panel is centered. */
+    .fq-carousel-strip {
+      transform: translateX(-100%);
+    }
+
+    /* Feature 3 — Mushaf paper surface on mobile reader card.
+       min-width:0 overrides the inline minWidth:min(100vw,…) on the card so
+       the 10px-per-side container clearance governs and stack layers can peek. */
     .fq-spread .fq-safha-card {
+      min-width: 0 !important;
       background-color: var(--mushaf-paper) !important;
       background-image: linear-gradient(
         to bottom,
