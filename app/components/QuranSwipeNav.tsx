@@ -165,12 +165,17 @@ export function QuranSwipeNav({
     // Outer div: touch event boundary, clips the strip during drag.
     // onClick fires for taps that didn't land on Quran words (those call
     // stopPropagation in QuranSafha.wordClicked) — used to toggle the nav overlay on tablet.
+    // Portal clicks (e.g. the mark modal) bubble through the React fiber tree but originate
+    // outside this DOM subtree; contains() returns false for them so they're ignored.
     <div
       className="w-full overflow-hidden"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      onClick={toggleOverlay}
+      onClick={(e) => {
+        if (!e.currentTarget.contains(e.target as Node)) return;
+        toggleOverlay();
+      }}
     >
       {/* 3-panel strip. Off the tablet double-view scope the two `fq-carousel-side`
           panels are display:none, so only the current panel lays out (at translateX 0)

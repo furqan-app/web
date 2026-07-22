@@ -533,7 +533,8 @@ body,
     }
 
     /* Ink. Quran words + Bismillah take the warm paper-ink / off-white text token;
-       ayah-end medallions and every decorative ornament take muted print gold;
+       ayah-end markers match the Quran text and are slightly smaller (0.85em) so
+       they read as part of the flow, not as decorative ornaments;
        juz / hizb / page-number metadata stays quieter than the Quran text. All
        !important because they override Tailwind utilities (utility layer > base). */
     .fq-spread .fq-qword {
@@ -541,7 +542,8 @@ body,
     }
     .fq-spread .fq-ayah-end,
     .fq-spread .fq-ayah-end span {
-      color: var(--mushaf-ornament) !important;
+      color: var(--mushaf-text) !important;
+      font-size: 0.85em;
     }
     .fq-spread .fq-quran-safha .fq-bismillah {
       color: var(--mushaf-text) !important;
@@ -573,9 +575,8 @@ body,
 
     /* Dark theme — page CHROME (header/footer metadata, the surah-name glyph, the
        inline surah name, and the ◆ separators) takes the off-white text colour so
-       the info reads quietly, not gold. Gold is reserved for the two content
-       ornaments below: the ayah medallions (.fq-ayah-end, left untouched) and the
-       surah banner frame. */
+       the info reads quietly, not gold. Gold is reserved for the surah banner frame;
+       ayah-end markers now follow the general tablet rule (--mushaf-text). */
     :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-meta,
     :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-footer,
     :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-surah-glyph,
@@ -651,6 +652,14 @@ body,
       flex: 1 1 auto;
       min-height: 0;
       justify-content: space-between;
+    }
+    /* Pages 1–2 (fq-safha-center): center the few lines within the full-height card
+       instead of stretching them with space-between. Higher specificity beats the
+       general .fq-quran-safha rule above. Mirrors the desktop spread rule in the
+       @media (min-width:768px) block. */
+    :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-safha-center {
+      justify-content: center;
+      gap: 0.55em;
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
       font-size: calc(var(--fq-t-word) * 0.85);
