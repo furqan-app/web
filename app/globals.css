@@ -270,27 +270,6 @@ body,
       height: 100dvh !important;
     }
 
-    /* Feature 4 — Book-stack clearance: 10px each side so the 8px-deepest stack
-       layer isn't clipped by QuranSwipeNav's overflow:hidden. */
-    .fq-reader-spread-container {
-      padding-inline-start: 10px !important;
-      padding-inline-end: 10px !important;
-    }
-    /* Recalibrate font formula: card is now 100vw - 20px (10px clearance per side).
-       24px base → 44px (original 24px card chrome + 20px new clearance). */
-    .fq-content {
-      --fq-mobile-font: min(calc((100vw - 44px) / 14.7), 28px);
-    }
-
-    /* Feature 4 — Book stack: reveal base layers, recolour to mushaf paper. */
-    .fq-spread .fq-stack-layer {
-      display: block;
-      background-color: var(--mushaf-paper) !important;
-      background-image: none !important;
-      border-color: var(--mushaf-edge) !important;
-      box-shadow: 1px 0 2px -1px var(--mushaf-paper-shadow);
-    }
-
     /* Mobile carousel: neighbor panels visible during swipe peek. */
     .fq-carousel-side {
       display: block;
@@ -300,11 +279,8 @@ body,
       transform: translateX(-100%);
     }
 
-    /* Feature 3 — Mushaf paper surface on mobile reader card.
-       min-width:0 overrides the inline minWidth:min(100vw,…) on the card so
-       the 10px-per-side container clearance governs and stack layers can peek. */
+    /* Feature 3 — Mushaf paper surface on mobile reader card (full width). */
     .fq-spread .fq-safha-card {
-      min-width: 0 !important;
       background-color: var(--mushaf-paper) !important;
       background-image: linear-gradient(
         to bottom,
@@ -314,6 +290,42 @@ body,
         var(--mushaf-paper-shadow) 100%
       );
       box-shadow:
+        inset 0 0 0 1px var(--mushaf-edge),
+        inset 0 1px 0 0 var(--mushaf-paper-highlight),
+        inset 0 0 22px 0 var(--mushaf-paper-shadow),
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        0 8px 20px -10px var(--mushaf-paper-shadow);
+    }
+
+    /* Book stack: simulated as inset shadows within the full-width card.
+       The font formula leaves ~12px of clearance from each edge, so the 9px
+       inset stack lines don't overlap text. Two layers mirror the two base
+       .fq-stack-layer divs (translate-x 4px/8px, translate-y 2px/4px).
+       Layer ordering (topmost first): paper covers the fill, edge line shows. */
+    .fq-spread .fq-compensate-r .fq-safha-card {
+      box-shadow:
+        /* Layer 2 (closer, 4px offset): paper fill then edge line at right */
+        inset calc(100% - 4px) 2px 0 0 var(--mushaf-paper),
+        inset calc(100% - 5px) 2px 0 0 var(--mushaf-edge),
+        /* Layer 1 (farther, 8px offset): paper fill then edge line at right */
+        inset calc(100% - 8px) 4px 0 0 var(--mushaf-paper),
+        inset calc(100% - 9px) 4px 0 0 var(--mushaf-edge),
+        /* existing paper shadows */
+        inset 0 0 0 1px var(--mushaf-edge),
+        inset 0 1px 0 0 var(--mushaf-paper-highlight),
+        inset 0 0 22px 0 var(--mushaf-paper-shadow),
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        0 8px 20px -10px var(--mushaf-paper-shadow);
+    }
+    .fq-spread .fq-compensate-l .fq-safha-card {
+      box-shadow:
+        /* Layer 2 (closer, 4px offset): paper fill then edge line at left */
+        inset calc(-(100% - 4px)) 2px 0 0 var(--mushaf-paper),
+        inset calc(-(100% - 5px)) 2px 0 0 var(--mushaf-edge),
+        /* Layer 1 (farther, 8px offset): paper fill then edge line at left */
+        inset calc(-(100% - 8px)) 4px 0 0 var(--mushaf-paper),
+        inset calc(-(100% - 9px)) 4px 0 0 var(--mushaf-edge),
+        /* existing paper shadows */
         inset 0 0 0 1px var(--mushaf-edge),
         inset 0 1px 0 0 var(--mushaf-paper-highlight),
         inset 0 0 22px 0 var(--mushaf-paper-shadow),
