@@ -1,6 +1,6 @@
 "use client";
 
-import { MouseEvent, useCallback, useRef } from "react";
+import { memo, MouseEvent, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { highlight, HighlightType } from "../utils/highlight";
 import { WordWithLayouts } from "../types/prisma";
@@ -23,7 +23,13 @@ export type QuranWordProps = {
   onWordLongPressed?: (word: WordWithLayouts) => void;
 };
 
-export const QuranWord = ({ word, category, onWordClicked, isOverlayMode, onWordLongPressed }: QuranWordProps) => {
+export const QuranWord = memo(function QuranWord({
+  word,
+  category,
+  onWordClicked,
+  isOverlayMode,
+  onWordLongPressed,
+}: QuranWordProps) {
   const searchParams = useSearchParams();
   const { registerWordRef } = useRecitation();
   const { tajweedMode } = useQuranTajweed();
@@ -88,5 +94,4 @@ export const QuranWord = ({ word, category, onWordClicked, isOverlayMode, onWord
       <span>{tajweedMode ? word.code_v2 : word.code_v1}</span>
     </div>
   );
-};
-
+});

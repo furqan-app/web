@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { Verse } from "@/app/generated/quran-client";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
@@ -21,6 +21,11 @@ import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+
+// Populated by QuranSafha when a page font finishes loading. Module-level so it
+// survives navigation remounts — the new QuranSafha instance for the same page
+// (or its carousel neighbor) can read the cached value synchronously during render.
+const loadedFonts = new Set<string>();
 
 // worst-case line-width/font-size ratio (p2, 2% margin); locks card minWidth
 // to font scale so it's stable from first render, independent of font metrics
@@ -122,47 +127,57 @@ export const QuranSafha = ({
   // the skeleton overlays the hidden text elements — nothing garbled underneath.
   // See docs/plans/fix-quran-page-font-loading.md.
   const pageFontFamily = getPageFontFamily(page, tajweedMode);
-  const [fontReady, setFontReady] = useState(false);
+  const fontSpec = `1px "${pageFontFamily}"`;
+  // Lazy initializer reads loadedFonts (module-level) synchronously during render.
+  // Hydration-safe: loadedFonts is always empty on the first page load because
+  // useEffect (which populates it) has not run yet — both server and client start
+  // false, no Suspense boundary mismatch. On swipe navigation (client-only remount),
+  // the carousel neighbor's useEffect has already added its fontSpec to loadedFonts,
+  // so the new QuranSafha instance starts fontReady=true immediately — no skeleton flash.
+  const [fontReady, setFontReady] = useState(() => loadedFonts.has(fontSpec));
   useEffect(() => {
-    let cancelled = false;
-    const fontSpec = `1px "${pageFontFamily}"`;
-    if (document.fonts.check(fontSpec)) {
+    if (loadedFonts.has(fontSpec)) {
       setFontReady(true);
       return;
     }
     setFontReady(false);
     document.fonts.load(fontSpec).then(() => {
-      if (!cancelled) setFontReady(true);
+      loadedFonts.add(fontSpec);
+      setFontReady(true);
     });
-    return () => { cancelled = true; };
-  }, [page, tajweedMode, pageFontFamily]);
+  }, [fontSpec]);
 
-  const wordClicked = (
-    e: React.MouseEvent<HTMLDivElement>,
-    word: WordWithLayouts,
-  ) => {
-    // Prevent the click from bubbling to QuranSwipeNav's overlay-toggle handler.
-    e.stopPropagation();
-    if (word.char_type_name === "word") {
-      setSelectedForMark(word);
-      setVerseDisplayText(undefined);
-    } else if (word.char_type_name === "end") {
-      const allWords = Object.values(lines).flat();
-      const displayWords = allWords
-        .filter(
-          (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
-        )
-        .map((w) => w.qpc_uthmani_hafs);
+  // Stable across marks re-renders (lines only changes on page navigation, not marks load),
+  // so React.memo(QuranWord) can bail out for words whose category hasn't changed.
+  const wordClicked = useCallback(
+    (
+      e: React.MouseEvent<HTMLDivElement>,
+      word: WordWithLayouts,
+    ) => {
+      // Prevent the click from bubbling to QuranSwipeNav's overlay-toggle handler.
+      e.stopPropagation();
+      if (word.char_type_name === "word") {
+        setSelectedForMark(word);
+        setVerseDisplayText(undefined);
+      } else if (word.char_type_name === "end") {
+        const allWords = Object.values(lines).flat();
+        const displayWords = allWords
+          .filter(
+            (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
+          )
+          .map((w) => w.qpc_uthmani_hafs);
 
-      const displayText =
-        displayWords.length > VERSE_SNIPPET_WORD_LIMIT
-          ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
-          : displayWords.join(" ");
+        const displayText =
+          displayWords.length > VERSE_SNIPPET_WORD_LIMIT
+            ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
+            : displayWords.join(" ");
 
-      setSelectedForMark(word.verse);
-      setVerseDisplayText(displayText);
-    }
-  };
+        setSelectedForMark(word.verse);
+        setVerseDisplayText(displayText);
+      }
+    },
+    [lines],
+  );
 
   // Long-press handler for overlay mode (mobile + tablet): same logic as
   // wordClicked but no stopPropagation — that's handled in QuranWord via
