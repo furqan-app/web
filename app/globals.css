@@ -308,41 +308,15 @@ body,
         0 8px 20px -10px var(--mushaf-paper-shadow);
     }
 
-    /* Book stack: simulated as inset shadows within the full-width card.
-       The font formula leaves ~12px of clearance from each edge, so the 9px
-       inset stack lines don't overlap text. Two layers mirror the two base
-       .fq-stack-layer divs (translate-x 4px/8px, translate-y 2px/4px).
-       Layer ordering (topmost first): paper covers the fill, edge line shows. */
-    .fq-spread .fq-compensate-r .fq-safha-card {
-      box-shadow:
-        /* Layer 2 (closer, 4px offset): paper fill then edge line at right */
-        inset calc(100% - 4px) 2px 0 0 var(--mushaf-paper),
-        inset calc(100% - 5px) 2px 0 0 var(--mushaf-edge),
-        /* Layer 1 (farther, 8px offset): paper fill then edge line at right */
-        inset calc(100% - 8px) 4px 0 0 var(--mushaf-paper),
-        inset calc(100% - 9px) 4px 0 0 var(--mushaf-edge),
-        /* existing paper shadows */
-        inset 0 0 0 1px var(--mushaf-edge),
-        inset 0 1px 0 0 var(--mushaf-paper-highlight),
-        inset 0 0 22px 0 var(--mushaf-paper-shadow),
-        0 1px 2px rgba(0, 0, 0, 0.05),
-        0 8px 20px -10px var(--mushaf-paper-shadow);
-    }
-    .fq-spread .fq-compensate-l .fq-safha-card {
-      box-shadow:
-        /* Layer 2 (closer, 4px offset): paper fill then edge line at left */
-        inset calc(-(100% - 4px)) 2px 0 0 var(--mushaf-paper),
-        inset calc(-(100% - 5px)) 2px 0 0 var(--mushaf-edge),
-        /* Layer 1 (farther, 8px offset): paper fill then edge line at left */
-        inset calc(-(100% - 8px)) 4px 0 0 var(--mushaf-paper),
-        inset calc(-(100% - 9px)) 4px 0 0 var(--mushaf-edge),
-        /* existing paper shadows */
-        inset 0 0 0 1px var(--mushaf-edge),
-        inset 0 1px 0 0 var(--mushaf-paper-highlight),
-        inset 0 0 22px 0 var(--mushaf-paper-shadow),
-        0 1px 2px rgba(0, 0, 0, 0.05),
-        0 8px 20px -10px var(--mushaf-paper-shadow);
-    }
+    /* Book stack: shift the wrapper so the real .fq-stack-layer divs
+       (bg-card + border-muted-foreground/30) land within overflow:hidden.
+       Without a shift the stack layers translate 8px beyond the card edge
+       and are clipped. Shifting the wrapper 8px inward moves the card 8px
+       off-centre, but the visible text clearance remains ~28px on the wider
+       side — well clear of the content. The inset-shadow approach was
+       invisible because --mushaf-edge is 11 % opacity (too low-contrast). */
+    .fq-spread .fq-compensate-r { transform: translateX(-8px); }
+    .fq-spread .fq-compensate-l { transform: translateX(8px); }
 
     /* Feature 3 — Ink & ornament colours (mirrors tablet). */
     .fq-spread .fq-qword { color: var(--mushaf-text) !important; }
