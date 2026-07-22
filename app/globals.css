@@ -26,6 +26,21 @@
     --radius: 0.5rem;
     --surah-frame-line: hsl(39 35% 25%);
     --surah-frame-gold: #cdad80;
+    /* Light theme — a MODERN, neutral reading interface (Apple Books / Kindle
+       feel), deliberately NOT the traditional gold Mushaf. Almost-white paper,
+       cool soft shadows, and warm-GRAY ornaments — no gold/bronze/beige anywhere.
+       Consumed only inside the tablet reader scope (1024–1366 block). */
+    --mushaf-paper: #fcfbfa;
+    --mushaf-paper-highlight: rgba(255, 255, 255, 0.9);
+    --mushaf-paper-shadow: rgba(45, 50, 58, 0.06);
+    --mushaf-edge: rgba(45, 50, 58, 0.11);
+    --mushaf-gutter-dark: rgba(28, 31, 36, 0.22);
+    --mushaf-gutter-soft: rgba(28, 31, 36, 0.08);
+    --mushaf-gutter-highlight: rgba(255, 255, 255, 0.4);
+    --mushaf-text: #171717;
+    --mushaf-ornament: #7c7c78;
+    --mushaf-metadata: #8a8a86;
+    --viewer-background: #f2f4f6;
   }
 
   .theme-gold {
@@ -51,6 +66,20 @@
     --radius: 0.5rem;
     --surah-frame-line: hsl(39 45% 20%);
     --surah-frame-gold: #b8924a;
+    /* Gold theme — richer warm ivory paper (the deeper, more golden variant that
+       distinguishes it from the light theme). Safha info (juz/hizb/page number) is
+       BLACK here, not gold, for contrast against the warm UI. */
+    --mushaf-paper: #f6f1e6;
+    --mushaf-paper-highlight: rgba(255, 253, 247, 0.8);
+    --mushaf-paper-shadow: rgba(70, 52, 24, 0.1);
+    --mushaf-edge: rgba(70, 52, 24, 0.16);
+    --mushaf-gutter-dark: rgba(45, 32, 14, 0.26);
+    --mushaf-gutter-soft: rgba(45, 32, 14, 0.1);
+    --mushaf-gutter-highlight: rgba(255, 251, 244, 0.38);
+    --mushaf-text: #2a2420;
+    --mushaf-ornament: #a8844a;
+    --mushaf-metadata: #26221f;
+    --viewer-background: #ece6d6;
   }
 
   .theme-dark {
@@ -76,6 +105,19 @@
     --radius: 0.5rem;
     --surah-frame-line: hsl(209 51% 88%);
     --surah-frame-gold: #cdad80;
+    /* Printed-mushaf reader palette — deep warm blue-black paper, antique gold,
+       off-white text. Consumed only inside the tablet reader scope. */
+    --mushaf-paper: #1f2731;
+    --mushaf-paper-highlight: rgba(255, 255, 255, 0.05);
+    --mushaf-paper-shadow: rgba(0, 0, 0, 0.4);
+    --mushaf-edge: rgba(0, 0, 0, 0.55);
+    --mushaf-gutter-dark: rgba(0, 0, 0, 0.62);
+    --mushaf-gutter-soft: rgba(0, 0, 0, 0.28);
+    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.05);
+    --mushaf-text: #f2efe7;
+    --mushaf-ornament: #9a8256;
+    --mushaf-metadata: #8a784e;
+    --viewer-background: #151b23;
   }
 
   .theme-dark.dark {
@@ -101,10 +143,33 @@
     --radius: 0.5rem;
     --surah-frame-line: hsl(209 51% 88%);
     --surah-frame-gold: #cdad80;
+    --mushaf-paper: #1f2731;
+    --mushaf-paper-highlight: rgba(255, 255, 255, 0.05);
+    --mushaf-paper-shadow: rgba(0, 0, 0, 0.4);
+    --mushaf-edge: rgba(0, 0, 0, 0.55);
+    --mushaf-gutter-dark: rgba(0, 0, 0, 0.62);
+    --mushaf-gutter-soft: rgba(0, 0, 0, 0.28);
+    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.05);
+    --mushaf-text: #f2efe7;
+    --mushaf-ornament: #9a8256;
+    --mushaf-metadata: #8a784e;
+    --viewer-background: #151b23;
   }
 }
 
 @layer base {
+  /* Deeper paper-stack layers that only appear in the tablet reader spread.
+     Hidden everywhere by default; the tablet media block reveals them. */
+  .fq-stack-tablet {
+    display: none;
+  }
+  /* Swipe carousel neighbor panels (prev/next spreads). Hidden everywhere by
+     default so mobile/desktop lay out only the current panel (strip rests at
+     translateX(0), single-panel fly-off swipe) and never download neighbor
+     page-fonts. The tablet double-view scope reveals them. See ADR 0027. */
+  .fq-carousel-side {
+    display: none;
+  }
   * {
     @apply border-border;
   }
@@ -221,7 +286,7 @@ body,
       justify-content: flex-start;
       gap: var(--fq-line-gap);
       align-items: center;
-      padding-block: 0.5em;
+      padding-block: 0.2em;
     }
     .fq-spread .fq-quran-safha > * {
       margin-bottom: 0 !important; /* height distributed by flex, not margin */
@@ -238,6 +303,17 @@ body,
     .fq-spread .fq-quran-safha.fq-safha-center {
       justify-content: center;
       gap: 0.55em;
+    }
+    /* Loading skeleton overlay: mirror the real spread line layout (flex-start +
+       uniform --fq-line-gap + 0.2em padding-block above) so the placeholder lines
+       sit exactly where the real lines will — no jump when the page font loads. Off
+       .fq-spread (mobile single view) the overlay keeps its own space-between
+       Tailwind layout, which matches the mobile .fq-quran-safha rule. !important
+       beats the overlay's justify-between / pt/pb utilities (utility layer > base). */
+    .fq-spread .fq-skeleton-lines {
+      justify-content: flex-start !important;
+      gap: var(--fq-line-gap);
+      padding-block: 0.2em !important;
     }
   }
 
@@ -309,6 +385,279 @@ body,
     :root[data-safha-view="double"] .fq-spread .fq-compensate-l {
       margin-left: 0;
       margin-right: 0;
+    }
+  }
+
+  /* Tablet landscape full-screen (1024px–1366px): nav is a fixed overlay so the
+     reader claims 100dvh; safha cards fill edge-to-edge with a small binding gap.
+     Placed after the lg block so these rules win on any overlap. */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    /* Swipe carousel (tablet double-view only). Reveal the neighbor spreads and
+       rest the 3-panel strip at translateX(-100%) so the CURRENT (middle) panel is
+       centered; the two neighbors sit just off-screen on either side, ready to slide
+       in with the drag. QuranSwipeNav only writes an inline transform during an active
+       drag/commit, then clears it to fall back to this base. Gating this in CSS (not
+       JS) means there is no pre-hydration flash and it stays perfectly matched to the
+       carousel condition in JS (view === "double" && useIsTablet). See ADR 0027. */
+    :root[data-safha-view="double"] .fq-carousel-side {
+      display: block;
+    }
+    :root[data-safha-view="double"] .fq-carousel-strip {
+      transform: translateX(-100%);
+    }
+
+    /* Outer reader background: claim full viewport (nav out of flow). !important
+       beats the JSX `min-h-[…]` / `pb-4` Tailwind utilities (utility layer wins
+       over @layer base by source order), so the reader is exactly 100dvh with no
+       trailing padding — otherwise pb-4 adds 16px and the page scrolls.
+       The warm viewer background makes the paper read as resting on a surface
+       rather than floating on the app's cool background. */
+    .fq-reader-outer {
+      min-height: 100dvh !important;
+      padding-bottom: 0 !important;
+      background-color: var(--viewer-background) !important;
+    }
+
+    /* Spread container: no nav arrows, no outer gap — but keep an inline clearance
+       so each page's outer paper-stack layers (translate-x up to 14px on the
+       deepest tablet layer) aren't clipped at the viewport edge. 16px > 14px peek. */
+    .fq-reader-spread-container {
+      padding-inline-start: 16px !important;
+      padding-inline-end: 16px !important;
+      gap: 0 !important;
+    }
+
+    /* Nav arrows are hidden on tablet — swipe handles navigation. */
+    .fq-nav-arrow {
+      display: none !important;
+    }
+
+    /* .fq-spread fills the QuranSpread wrapper. gap:0 → the two pages meet at the
+       spine (a real open book has no gap); the ::after gutter carries the fold.
+       position: relative anchors that gutter (below). */
+    .fq-spread {
+      position: relative;
+      width: 100%;
+      gap: 0;
+    }
+
+    /* Each safha wrapper (direct child of .fq-spread) takes equal share. */
+    .fq-spread > div {
+      flex: 1;
+    }
+
+    /* Card height: full viewport (nav overlay). */
+    .fq-full-safha > div {
+      height: 100dvh;
+      width: 100%;
+    }
+
+    /* ---- Printed-mushaf paper, ink & binding (tablet reader only) ---------- */
+
+    /* Warm ivory (or blue-black) paper surface for each page, replacing the flat
+       `bg-card` fill on tablet. A near-invisible tonal gradient + layered shadows
+       give physical depth: a fine edge outline (inset ring), a top inner highlight
+       (paper thickness), and a soft outer lift separating paper from the viewer bg.
+       The card is overflow-hidden, so the inset shadows read as inner-edge shading. */
+    .fq-spread .fq-safha-card {
+      background-color: var(--mushaf-paper) !important;
+      background-image: linear-gradient(
+        to bottom,
+        var(--mushaf-paper-highlight) 0%,
+        transparent 14%,
+        transparent 82%,
+        var(--mushaf-paper-shadow) 100%
+      );
+      box-shadow:
+        inset 0 0 0 1px var(--mushaf-edge),
+        inset 0 1px 0 0 var(--mushaf-paper-highlight),
+        inset 0 0 22px 0 var(--mushaf-paper-shadow),
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        0 8px 20px -10px var(--mushaf-paper-shadow);
+    }
+
+    /* Paper-stack: 3–5 thin, soft, low-contrast page edges peeking toward each
+       page's OUTER (spine-away) edge (stackPeekSide). Recolour the base layers to
+       paper + a faint edge line, and reveal the deeper tablet-only layers. Reads
+       as a real printed block resting open — restrained, no thick exposed block. */
+    .fq-spread .fq-stack-tablet {
+      display: block;
+    }
+    .fq-spread .fq-stack-layer {
+      background-color: var(--mushaf-paper) !important;
+      background-image: none !important;
+      border-color: var(--mushaf-edge) !important;
+      box-shadow: 1px 0 2px -1px var(--mushaf-paper-shadow);
+    }
+
+    /* Binding — the paper CURVE of an open Mushaf, not a drawn gutter. There is no
+       dark core and no crease line; instead two wide, extremely-feathered layers
+       shape a shallow valley so the eye reads bending paper, not a seam:
+         1. a broad, very soft depression (--mushaf-gutter-soft only — never the
+            stronger -dark token) that is only faintly darker at the exact centre
+            than the flat pages, fading to nothing ~65px out;
+         2. two wide, gentle highlights on the inner edge of each page (~28px off
+            centre) — the paper rising back up toward the fold, catching light.
+       The luminance goes highlight → faint dip → highlight in a smooth S, which
+       reads as curvature. The centre must NOT be the first thing noticed. Only the
+       --mushaf-gutter-* intensities differ per theme; geometry is identical.
+       pointer-events:none; adds no layout width (text area unchanged); combined
+       with the inner-edge inset shadow already on .fq-safha-card. */
+    :root[data-safha-view="double"] .fq-spread::after {
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      z-index: 5;
+      pointer-events: none;
+      background:
+        /* soft highlights — inner page edges rising toward the fold, catching light */
+        linear-gradient(
+          to right,
+          transparent calc(50% - 60px),
+          var(--mushaf-gutter-highlight) calc(50% - 28px),
+          transparent calc(50% - 11px),
+          transparent calc(50% + 11px),
+          var(--mushaf-gutter-highlight) calc(50% + 28px),
+          transparent calc(50% + 60px)
+        ),
+        /* wide, shallow paper valley — faint at centre, feathered fully to the pages */
+        linear-gradient(
+          to right,
+          transparent 0%,
+          var(--mushaf-gutter-soft) 50%,
+          transparent 100%
+        );
+    }
+
+    /* Ink. Quran words + Bismillah take the warm paper-ink / off-white text token;
+       ayah-end medallions and every decorative ornament take muted print gold;
+       juz / hizb / page-number metadata stays quieter than the Quran text. All
+       !important because they override Tailwind utilities (utility layer > base). */
+    .fq-spread .fq-qword {
+      color: var(--mushaf-text) !important;
+    }
+    .fq-spread .fq-ayah-end,
+    .fq-spread .fq-ayah-end span {
+      color: var(--mushaf-ornament) !important;
+    }
+    .fq-spread .fq-quran-safha .fq-bismillah {
+      color: var(--mushaf-text) !important;
+    }
+    .fq-spread .fq-quran-safha .fq-inline-surah {
+      color: var(--mushaf-ornament) !important;
+    }
+    .fq-spread .fq-ornament {
+      color: var(--mushaf-ornament) !important;
+    }
+    .fq-spread .fq-safha-surah-glyph {
+      color: var(--mushaf-ornament) !important;
+    }
+    .fq-spread .fq-safha-meta,
+    .fq-spread .fq-safha-footer {
+      color: var(--mushaf-metadata) !important;
+    }
+    /* Mute the surah-banner frame gold to the per-theme ornament colour (gold in
+       gold/dark, neutral gray in light). The frame SVG reads --surah-frame-gold. */
+    :root[data-safha-view="double"] .fq-spread {
+      --surah-frame-gold: var(--mushaf-ornament);
+    }
+    /* Light theme's frame line is a warm brown by default — neutralise it in the
+       reader so the modern light theme stays entirely gray (no warm tint). Gold
+       and dark keep their traditional frame line. */
+    :root.theme-light[data-safha-view="double"] .fq-spread {
+      --surah-frame-line: #4a4b4e;
+    }
+
+    /* Dark theme — page CHROME (header/footer metadata, the surah-name glyph, the
+       inline surah name, and the ◆ separators) takes the off-white text colour so
+       the info reads quietly, not gold. Gold is reserved for the two content
+       ornaments below: the ayah medallions (.fq-ayah-end, left untouched) and the
+       surah banner frame. */
+    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-meta,
+    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-footer,
+    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-surah-glyph,
+    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-quran-safha .fq-inline-surah,
+    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-ornament {
+      color: var(--mushaf-text) !important;
+    }
+    /* Dark theme — make the WHOLE surah frame gold (its line detail defaults to a
+       near-white, leaving the frame two-tone; force it to the ornament gold too). */
+    :root.theme-dark[data-safha-view="double"] .fq-spread {
+      --surah-frame-line: var(--mushaf-ornament);
+    }
+
+    /* Gold theme — the surah name is NOT gold; render it in the ink text colour
+       (matching the black safha info). Ornaments and the frame stay gold. */
+    :root.theme-gold[data-safha-view="double"] .fq-spread .fq-safha-surah-glyph,
+    :root.theme-gold[data-safha-view="double"] .fq-spread .fq-quran-safha .fq-inline-surah {
+      color: var(--mushaf-text) !important;
+    }
+
+    /* Compact page chrome on tablet: shrink the header (surah glyph) and footer
+       (page number) so more of the 100dvh card goes to the mushaf text. !important
+       beats the JSX utilities (pb-2/pt-2/text-sm) and the inline glyph font-size,
+       which the base layer would otherwise lose to. */
+    .fq-spread .fq-safha-header .fq-safha-surah-glyph {
+      font-size: 0.95rem !important;
+    }
+    .fq-spread .fq-safha-footer {
+      font-size: 0.65rem !important;
+    }
+
+    /* Double-page: size the font to the SMALLER of two caps so a full mushaf page
+       fills the 100dvh card edge-to-edge in both axes without wrapping or clipping.
+         • width cap: (50vw − 16px) / 14.7 — the QPC v1 font is drawn so each line's
+           glyphs span the full page width; 14.7 is the worst-case line-width/font
+           ratio, so this is the largest font before the widest line wraps. 16px =
+           the 16px outer paper-stack clearance on the container (the inter-page gap
+           is now 0 — pages meet at the spine — and the content carries no px-3 on
+           tablet, so there is no half-gap or inner-padding term).
+         • height cap: (100dvh − 50px) / 23 — the largest font before the tallest
+           page overflows 100dvh. Two calibration terms:
+             − 23 divisor = per-font content factor. The binding case is a
+               surah-START page: ~13 word rows + a 2.417f surah banner (glyph +
+               Bismillah, see QuranLine.tsx / --fq-heading-h) + 14 line-gaps (0.417f
+               each) + the 0.2em padding-block. The tight-fit factor is ~21.9f (a
+               plain 15-line page needs only ~21.2f — the difference is banner
+               headroom). We deliberately size ABOVE that (23) so the font runs ~5%
+               smaller than the tight cap: the surplus is distributed by the
+               .fq-quran-safha space-between as airier inter-line spacing (a printed-
+               mushaf look), and it clears the ~7px surah-start clip that the tight
+               21.9 left. Do NOT lower this toward 21.2 (surah-start pages would clip;
+               card is overflow-hidden). Raising it further = smaller font / more air.
+             − 50px fixed chrome = content py-1 (8px) + header pb-2 (8px) + surah
+               glyph 0.95rem (~15px) + footer 0.65rem row (~12px) ≈ 43px, +7px
+               cushion. Content-independent, so trimming it (from the old 66px, back
+               when content was py-3 with header/footer borders) is safe for every
+               page including banners.
+       A mushaf page's aspect ratio ≈ the half-screen card's, so the two caps land
+       close: on real tablets the height cap binds, content fills 100dvh nearly
+       edge-to-edge, and the footer pins to the bottom. On wide-short viewports the
+       height cap keeps the font from overflowing. space-between distributes any
+       residual between the lines (matches the reference app). */
+    :root[data-safha-view="double"] .fq-spread {
+      --fq-t-word: min(calc((50vw - 16px) / 14.7), calc((100dvh - 50px) / 23));
+    }
+    :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
+      font-size: var(--fq-t-word);
+      /* Grow to fill the card, then distribute the 15 lines evenly across that
+         height (space-between) so they span the full page like a printed mushaf
+         instead of top-packing with the flat 9.6px line-gap floor (which leaves a
+         large gap above the footer). The height cap on --fq-t-word guarantees the
+         glyphs always fit, so space-between only ever adds positive spacing. */
+      flex: 1 1 auto;
+      min-height: 0;
+      justify-content: space-between;
+    }
+    :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
+      font-size: calc(var(--fq-t-word) * 0.85);
+    }
+    :root[data-safha-view="double"] .fq-spread .fq-content {
+      --fq-line-gap: min(var(--fq-line-gap-base), calc(var(--fq-t-word) * 0.417)) !important;
+      --fq-heading-h: min(var(--fq-heading-base), calc(var(--fq-t-word) * 2.417)) !important;
     }
   }
 

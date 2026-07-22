@@ -11,6 +11,7 @@ import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/app/contexts/SidebarContext";
+import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { RecitationPlayButton } from "@/app/components/RecitationPlayButton";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
@@ -20,11 +21,19 @@ export const Nav = () => {
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { setOpen } = useSidebar();
+  const { isOverlayMode, overlayVisible } = useNavOverlay();
 
   const isOnPagesRoute = pathname?.includes("/pages/");
 
   return (
-    <nav className="bg-background text-foreground px-4 shadow h-14 flex items-center">
+    <nav
+      className={cn(
+        "bg-background text-foreground px-4 shadow h-14 flex items-center",
+        isOverlayMode && "fixed top-0 inset-x-0 z-50 transition-transform duration-300",
+        isOverlayMode && !overlayVisible && "-translate-y-full",
+      )}
+      style={isOverlayMode ? { transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" } : undefined}
+    >
       {/* Start: sidebar trigger (mobile, pages route only) + logo */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <FurqanLogo />
