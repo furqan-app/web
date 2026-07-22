@@ -257,6 +257,89 @@ body,
     }
   }
 
+  /* ---- Mobile reader: nav overlay + mushaf paper + book stack ------------ */
+  @media (max-width: 767px) {
+    /* Feature 1 — Nav overlay: reader fills full viewport (nav is fixed, out of flow).
+       !important beats the JSX min-h-[…]/pb-4 Tailwind utilities. */
+    .fq-reader-outer {
+      min-height: 100dvh !important;
+      padding-bottom: 0 !important;
+      background-color: var(--viewer-background) !important;
+    }
+    .fq-full-safha > div {
+      height: 100dvh !important;
+    }
+
+    /* Feature 4 — Book-stack clearance: 10px each side so the 8px-deepest stack
+       layer isn't clipped by QuranSwipeNav's overflow:hidden. */
+    .fq-reader-spread-container {
+      padding-inline-start: 10px !important;
+      padding-inline-end: 10px !important;
+    }
+    /* Recalibrate font formula: card is now 100vw - 20px (10px clearance per side).
+       24px base → 44px (original 24px card chrome + 20px new clearance). */
+    .fq-content {
+      --fq-mobile-font: min(calc((100vw - 44px) / 14.7), 28px);
+    }
+
+    /* Feature 4 — Book stack: reveal base layers, recolour to mushaf paper. */
+    .fq-spread .fq-stack-layer {
+      display: block;
+      background-color: var(--mushaf-paper) !important;
+      background-image: none !important;
+      border-color: var(--mushaf-edge) !important;
+      box-shadow: 1px 0 2px -1px var(--mushaf-paper-shadow);
+    }
+
+    /* Feature 3 — Mushaf paper surface on mobile reader card. */
+    .fq-spread .fq-safha-card {
+      background-color: var(--mushaf-paper) !important;
+      background-image: linear-gradient(
+        to bottom,
+        var(--mushaf-paper-highlight) 0%,
+        transparent 14%,
+        transparent 82%,
+        var(--mushaf-paper-shadow) 100%
+      );
+      box-shadow:
+        inset 0 0 0 1px var(--mushaf-edge),
+        inset 0 1px 0 0 var(--mushaf-paper-highlight),
+        inset 0 0 22px 0 var(--mushaf-paper-shadow),
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        0 8px 20px -10px var(--mushaf-paper-shadow);
+    }
+
+    /* Feature 3 — Ink & ornament colours (mirrors tablet). */
+    .fq-spread .fq-qword { color: var(--mushaf-text) !important; }
+    .fq-spread .fq-ayah-end,
+    .fq-spread .fq-ayah-end span {
+      color: var(--mushaf-text) !important;
+      font-size: 0.85em;
+    }
+    .fq-spread .fq-quran-safha .fq-bismillah { color: var(--mushaf-text) !important; }
+    .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-ornament) !important; }
+    .fq-spread .fq-ornament { color: var(--mushaf-ornament) !important; }
+    .fq-spread .fq-safha-surah-glyph { color: var(--mushaf-ornament) !important; }
+    .fq-spread .fq-safha-meta,
+    .fq-spread .fq-safha-footer { color: var(--mushaf-metadata) !important; }
+    .fq-spread { --surah-frame-gold: var(--mushaf-ornament); }
+
+    /* Dark theme — metadata, footer, ornaments → mushaf-text (off-white, not gold). */
+    :root.theme-dark .fq-spread .fq-safha-meta,
+    :root.theme-dark .fq-spread .fq-safha-footer,
+    :root.theme-dark .fq-spread .fq-safha-surah-glyph,
+    :root.theme-dark .fq-spread .fq-quran-safha .fq-inline-surah,
+    :root.theme-dark .fq-spread .fq-ornament { color: var(--mushaf-text) !important; }
+    :root.theme-dark .fq-spread { --surah-frame-line: var(--mushaf-ornament); }
+
+    /* Light theme — neutralize warm frame line. */
+    :root.theme-light .fq-spread { --surah-frame-line: #4a4b4e; }
+
+    /* Gold theme — surah name follows ink, not gold. */
+    :root.theme-gold .fq-spread .fq-safha-surah-glyph,
+    :root.theme-gold .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-text) !important; }
+  }
+
   /* Desktop spread (md+): both facing pages fill the same fixed parent height
      (the ReaderPage background is a fixed 100dvh-3.5rem, propagated down through
      h-full to fq-content), and the text block distributes its lines with the same

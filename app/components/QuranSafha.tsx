@@ -310,10 +310,10 @@ export const QuranSafha = ({
             style={{ opacity: 0.6 }}
           />
           <div
-            className={`fq-stack-layer absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
+            className={`fq-stack-layer absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none block ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
           />
           <div
-            className={`fq-stack-layer absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
+            className={`fq-stack-layer absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none block ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
           />
           {/* min(100vw,...) caps the formula on narrow viewports so the card never
               overflows on mobile; on desktop it locks the width to the font-scale

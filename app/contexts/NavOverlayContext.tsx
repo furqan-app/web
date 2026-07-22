@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
+import { useIsMobile } from "@/app/hooks/use-is-mobile";
 
 type NavOverlayContextValue = {
   isOverlayMode: boolean;
@@ -19,8 +20,9 @@ const NavOverlayContext = createContext<NavOverlayContextValue>({
 export function NavOverlayProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isTablet = useIsTablet();
+  const isMobile = useIsMobile();
   const isOnPagesRoute = Boolean(pathname?.includes("/pages/"));
-  const isOverlayMode = isTablet && isOnPagesRoute;
+  const isOverlayMode = (isMobile || isTablet) && isOnPagesRoute;
 
   const [overlayVisible, setOverlayVisible] = useState(false);
 
