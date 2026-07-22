@@ -182,23 +182,29 @@ export const QuranSafha = ({
   // Long-press handler for overlay mode (mobile + tablet): same logic as
   // wordClicked but no stopPropagation — that's handled in QuranWord via
   // e.preventDefault() on the touchend, which suppresses the synthetic click.
-  const wordLongPressed = (word: WordWithLayouts) => {
-    if (word.char_type_name === "word") {
-      setSelectedForMark(word);
-      setVerseDisplayText(undefined);
-    } else if (word.char_type_name === "end") {
-      const allWords = Object.values(lines).flat();
-      const displayWords = allWords
-        .filter((w) => w.verse_key === word.verse_key && w.char_type_name === "word")
-        .map((w) => w.qpc_uthmani_hafs);
-      const displayText =
-        displayWords.length > VERSE_SNIPPET_WORD_LIMIT
-          ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
-          : displayWords.join(" ");
-      setSelectedForMark(word.verse);
-      setVerseDisplayText(displayText);
-    }
-  };
+  const wordLongPressed = useCallback(
+    (word: WordWithLayouts) => {
+      if (word.char_type_name === "word") {
+        setSelectedForMark(word);
+        setVerseDisplayText(undefined);
+      } else if (word.char_type_name === "end") {
+        const allWords = Object.values(lines).flat();
+        const displayWords = allWords
+          .filter(
+            (w) =>
+              w.verse_key === word.verse_key && w.char_type_name === "word",
+          )
+          .map((w) => w.qpc_uthmani_hafs);
+        const displayText =
+          displayWords.length > VERSE_SNIPPET_WORD_LIMIT
+            ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
+            : displayWords.join(" ");
+        setSelectedForMark(word.verse);
+        setVerseDisplayText(displayText);
+      }
+    },
+    [lines],
+  );
 
   const closeMarkModal = () => {
     setSelectedForMark(null);
@@ -463,4 +469,3 @@ export const QuranSafha = ({
     </>
   );
 };
-
