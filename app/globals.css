@@ -163,11 +163,18 @@
   .fq-stack-tablet {
     display: none;
   }
-  /* Swipe carousel neighbor panels (prev/next spreads). Hidden everywhere by
-     default so mobile/desktop lay out only the current panel (strip rests at
-     translateX(0), single-panel fly-off swipe) and never download neighbor
-     page-fonts. The tablet double-view scope reveals them. See ADR 0027. */
+  /* Swipe carousel neighbor panels (prev/next spreads). Both classes hidden
+     by default so mobile/desktop lay out only the current panel (strip rests
+     at translateX(0), single-panel fly-off swipe) and never download neighbor
+     page-fonts. fq-carousel-side = tablet pair-step neighbors (revealed by the
+     tablet double-view scope); fq-mobile-carousel-side = mobile single-step
+     neighbors (revealed by the mobile scope). display:none removes flex children
+     from layout so the effective 3-panel strip and translateX(-100%) rest offset
+     stay correct in whichever scope is active. See ADR 0027. */
   .fq-carousel-side {
+    display: none;
+  }
+  .fq-mobile-carousel-side {
     display: none;
   }
   * {
@@ -270,11 +277,15 @@ body,
       height: 100dvh !important;
     }
 
-    /* Mobile carousel: neighbor panels visible during swipe peek. */
-    .fq-carousel-side {
+    /* Mobile carousel: single-step neighbor panels visible during swipe peek.
+       fq-carousel-side (pair-step tablet neighbors) stay hidden — they have the
+       wrong page content for single-step mobile navigation. */
+    .fq-mobile-carousel-side {
       display: block;
     }
-    /* Strip rests at -100% so the current (middle) panel is centered. */
+    /* Strip rests at -100% so the current (middle) panel is centered.
+       Works for both 3-panel sets: display:none removes hidden panels from
+       flex layout, so the effective strip is always 3 panels at rest. */
     .fq-carousel-strip {
       transform: translateX(-100%);
     }

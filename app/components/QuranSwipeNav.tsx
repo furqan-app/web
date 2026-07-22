@@ -31,11 +31,17 @@ type Props = {
   // Both are page-order (physical swipe direction), NOT locale-flipped.
   singleStep: NavHrefs; // step one page — single view (mobile, or forced-single)
   pairStep: NavHrefs; // step a whole pair — double-page spread (lg+ double view)
-  // The three carousel panels (physical order in the strip is [next][current][prev]).
-  // prev/next carry `fq-carousel-side` (CSS-hidden off tablet double-view).
+  // Five-panel carousel strip (physical order: [nextMobile][next][current][prev][prevMobile]).
+  // `fq-carousel-side` panels are pair-step neighbors shown on tablet double-view only.
+  // `fq-mobile-carousel-side` panels are single-step neighbors shown on mobile only.
+  // display:none removes hidden panels from flex layout, so the effective strip is
+  // always 3 panels in carousel mode — translateX(-100%) rest and 0%/-200% commits
+  // stay correct for both scopes. See ADR 0027.
   prevPanel: React.ReactNode;
   currentPanel: React.ReactNode;
   nextPanel: React.ReactNode;
+  prevMobilePanel: React.ReactNode;
+  nextMobilePanel: React.ReactNode;
 };
 
 export function QuranSwipeNav({
@@ -44,6 +50,8 @@ export function QuranSwipeNav({
   prevPanel,
   currentPanel,
   nextPanel,
+  prevMobilePanel,
+  nextMobilePanel,
 }: Props) {
   const router = useRouter();
   const { toggleOverlay } = useNavOverlay();
@@ -189,9 +197,11 @@ export function QuranSwipeNav({
           [next][current][prev] and the transform geometry identical in both locales; each
           panel restores its own dir (see ReaderPage) so the Arabic content stays rtl. */}
       <div ref={stripRef} dir="ltr" className="fq-carousel-strip relative flex w-full">
+        {nextMobilePanel}
         {nextPanel}
         {currentPanel}
         {prevPanel}
+        {prevMobilePanel}
       </div>
     </div>
   );
