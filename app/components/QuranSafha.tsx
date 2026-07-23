@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { Verse } from "@/app/generated/quran-client";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
@@ -13,20 +13,37 @@ import { getPageFontFamily } from "@utils/quran-font-map";
 import { getMarkMeta } from "@utils/marks";
 import { groupBy } from "@utils/groupBy";
 import BismillahSVG from "@/app/bismillah.svg";
+import SurahFrameSVG from "@/app/surah-frame.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
 import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
+import { useIsTablet } from "@/app/hooks/use-is-tablet";
+import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+
+// Populated by QuranSafha when a page font finishes loading. Module-level so it
+// survives navigation remounts — the new QuranSafha instance for the same page
+// (or its carousel neighbor) can read the cached value synchronously during render.
+const loadedFonts = new Set<string>();
+
+// worst-case line-width/font-size ratio (p2, 2% margin); locks card minWidth
+// to font scale so it's stable from first render, independent of font metrics
+const QURAN_LINE_WIDTH_RATIO = 14.7;
+// approximate lines per full Quran page; pages 1-2 (fq-safha-center) are shorter
+const SKELETON_LINE_COUNT = 15;
+const SKELETON_LINE_COUNT_SHORT = 7;
 
 const SurahBannerLine = ({ surahId }: { surahId: number }) => (
   <div
-    className="leading-none text-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)" }}
+    className="leading-none relative w-full"
+    style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
   >
+    <SurahFrameSVG style={{ display: "block", width: "100%", height: "1em" }} />
     <span
+      className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
       translate="no"
-      style={{ fontFamily: "var(--surah-names)", fontSize: "1em", lineHeight: 1 }}
+      style={{ fontFamily: "var(--surah-names)", fontSize: "0.85em", lineHeight: 1 }}
     >
       {`${surahId}`.padStart(3, "0")}
     </span>
@@ -35,10 +52,10 @@ const SurahBannerLine = ({ surahId }: { surahId: number }) => (
 
 const BismillahLine = () => (
   <div
-    className="leading-none flex justify-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)" }}
+    className="fq-bismillah leading-none relative flex justify-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)", height: "1em" }}
   >
-    <BismillahSVG style={{ height: "1em", width: "auto" }} />
+    <BismillahSVG style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "1.2em", width: "auto" }} />
   </div>
 );
 
@@ -95,6 +112,8 @@ export const QuranSafha = ({
   const { data: marks } = useMarks(page, grantId);
   const { quranFontScale } = useQuranFontScale();
   const { tajweedMode } = useQuranTajweed();
+  const isTablet = useIsTablet();
+  const { isOverlayMode } = useNavOverlay();
 
   const [selectedForMark, setSelectedForMark] = useState<
     WordWithLayouts | Verse | null
@@ -103,30 +122,73 @@ export const QuranSafha = ({
     undefined,
   );
 
-  const wordClicked = (
-    e: React.MouseEvent<HTMLDivElement>,
-    word: WordWithLayouts,
-  ) => {
-    if (word.char_type_name === "word") {
-      setSelectedForMark(word);
-      setVerseDisplayText(undefined);
-    } else if (word.char_type_name === "end") {
-      const allWords = Object.values(lines).flat();
-      const displayWords = allWords
-        .filter(
-          (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
-        )
-        .map((w) => w.qpc_uthmani_hafs);
-
-      const displayText =
-        displayWords.length > VERSE_SNIPPET_WORD_LIMIT
-          ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
-          : displayWords.join(" ");
-
-      setSelectedForMark(word.verse);
-      setVerseDisplayText(displayText);
+  // Prevent garbled system-font fallback: show skeleton until the page-specific
+  // font is ready. `font-display: block` keeps text invisible during download, so
+  // the skeleton overlays the hidden text elements — nothing garbled underneath.
+  // See docs/plans/fix-quran-page-font-loading.md.
+  const pageFontFamily = getPageFontFamily(page, tajweedMode);
+  const fontSpec = `1px "${pageFontFamily}"`;
+  // Lazy initializer reads loadedFonts (module-level) synchronously during render.
+  // Hydration-safe: loadedFonts is always empty on the first page load because
+  // useEffect (which populates it) has not run yet — both server and client start
+  // false, no Suspense boundary mismatch. On swipe navigation (client-only remount),
+  // the carousel neighbor's useEffect has already added its fontSpec to loadedFonts,
+  // so the new QuranSafha instance starts fontReady=true immediately — no skeleton flash.
+  const [fontReady, setFontReady] = useState(() => loadedFonts.has(fontSpec));
+  useEffect(() => {
+    if (loadedFonts.has(fontSpec)) {
+      setFontReady(true);
+      return;
     }
-  };
+    setFontReady(false);
+    let cancelled = false;
+    document.fonts.load(fontSpec).then(() => {
+      loadedFonts.add(fontSpec);
+      if (!cancelled) setFontReady(true);
+    });
+    return () => { cancelled = true; };
+  }, [fontSpec]);
+
+  // Shared selection logic for both click (non-overlay) and long-press (overlay).
+  // Stable across marks re-renders (lines only changes on page navigation).
+  const selectWord = useCallback(
+    (word: WordWithLayouts) => {
+      if (word.char_type_name === "word") {
+        setSelectedForMark(word);
+        setVerseDisplayText(undefined);
+      } else if (word.char_type_name === "end") {
+        const allWords = Object.values(lines).flat();
+        const displayWords = allWords
+          .filter(
+            (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
+          )
+          .map((w) => w.qpc_uthmani_hafs);
+        const displayText =
+          displayWords.length > VERSE_SNIPPET_WORD_LIMIT
+            ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
+            : displayWords.join(" ");
+        setSelectedForMark(word.verse);
+        setVerseDisplayText(displayText);
+      }
+    },
+    [lines],
+  );
+
+  // Prevent click from bubbling to QuranSwipeNav's overlay-toggle handler.
+  const wordClicked = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>, word: WordWithLayouts) => {
+      e.stopPropagation();
+      selectWord(word);
+    },
+    [selectWord],
+  );
+
+  // Long-press handler for overlay mode (mobile + tablet): no stopPropagation —
+  // e.preventDefault() on touchend in QuranWord suppresses the synthetic click.
+  const wordLongPressed = useCallback(
+    (word: WordWithLayouts) => selectWord(word),
+    [selectWord],
+  );
 
   const closeMarkModal = () => {
     setSelectedForMark(null);
@@ -256,28 +318,37 @@ export const QuranSafha = ({
         <div
           className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
-          {/* Stacked "pages underneath" layers — peek toward the outer (spine-away)
-              edge; also doubles as a left-page/right-page indicator in single view.
-              border-muted-foreground/30 for real contrast in every theme
-              (border-border was too close in lightness to bg-card in light/gold).
-              bg-card dark:bg-muted: white fill in light/gold, existing muted fill
-              kept in dark (already approved). */}
+          {/* Stacked paper layers are hidden on mobile and paint behind the active
+              card only at md+. They peek toward stackPeekSide (the outer edge). */}
           <div
-            className={`hidden md:block absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
+            className={`fq-stack-layer fq-stack-tablet absolute inset-0 translate-y-[7px] rounded-none bg-card dark:bg-muted border border-muted-foreground/30 pointer-events-none ${stackPeekSide === "right" ? "translate-x-[14px]" : "-translate-x-[14px]"}`}
+            style={{ opacity: 0.4 }}
           />
           <div
-            className={`hidden md:block absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
+            className={`fq-stack-layer fq-stack-tablet absolute inset-0 translate-y-[5px] rounded-none bg-card dark:bg-muted border border-muted-foreground/30 pointer-events-none ${stackPeekSide === "right" ? "translate-x-[11px]" : "-translate-x-[11px]"}`}
+            style={{ opacity: 0.6 }}
           />
-          <div className="relative rounded-none md:bg-card overflow-hidden md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] w-full md:w-auto h-full md:h-full">
+          <div
+            className={`fq-stack-layer absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
+          />
+          <div
+            className={`fq-stack-layer absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
+          />
+          {/* min(100vw,...) caps the formula on narrow viewports so the card never
+              overflows on mobile; on desktop it locks the width to the font-scale
+              formula (font-size * worst-case-ratio + md:px-7 padding) so the card
+              is stable from first render — not driven by font metrics. */}
+          <div
+            className={`fq-safha-card relative rounded-none overflow-hidden w-full h-full ${isTablet ? "bg-card" : "md:bg-card md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] md:w-auto md:h-full"}`}
+            style={isTablet ? undefined : { minWidth: `min(100vw, calc(${FONT_V1.getWordFontSizeCss(quranFontScale)} * ${QURAN_LINE_WIDTH_RATIO} + 3.5rem))` }}
+          >
             {/* Content. The three `--fq-*-base` vars mirror the single-view vh
                 sizing so the double-view width cap (the `[data-safha-view="double"]
                 .fq-spread` rule in globals.css, ADR 0013 Addenda 3 & 4) can `min()`
                 against them without a var self-reference. Single view ignores them. */}
             <div
-              className="fq-content relative z-0 px-3 py-3 md:px-7 md:py-5 flex flex-col h-full"
+              className={`fq-content relative z-0 py-1 flex flex-col h-full ${isTablet ? "" : "md:px-7 md:py-5"}`}
               style={{
-                "--fq-line-gap": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
-                "--fq-heading-h": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
                 "--fq-word-base": FONT_V1.getWordFontSizeCss(quranFontScale),
                 "--fq-line-gap-base": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
                 "--fq-heading-base": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
@@ -286,36 +357,51 @@ export const QuranSafha = ({
               {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
               <div
                 dir="rtl"
-                className="shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center pb-2 border-b border-border"
-                style={{ marginBottom: "var(--fq-line-gap)" }}
+                className="fq-safha-header shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center py-3 px-6"
               >
                 <span className="flex min-w-0 items-center gap-1.5">
                   {grantId ? (
                     <ViewingChip ownerName={viewingOwnerName} />
                   ) : null}
-                  <span className="min-w-0 truncate text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground">
+                  <span className="fq-safha-meta min-w-0 truncate text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground">
                     {juz}
                   </span>
                 </span>
                 <div className="flex items-center justify-center gap-1.5">
-                  <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+                  <span className="fq-ornament inline-block rotate-45 text-[6px] text-primary">◆</span>
                   <span
+                    className="fq-safha-surah-glyph"
                     translate="no"
-                    style={{ fontFamily: "var(--surah-names)", fontSize: "1.1rem", lineHeight: 1 }}
+                    style={{ fontFamily: "var(--surah-names)", lineHeight: 1 }}
                   >
                     {surahGlyph}
                   </span>
-                  <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+                  <span className="fq-ornament inline-block rotate-45 text-[6px] text-primary">◆</span>
                 </div>
-                <span className="whitespace-nowrap text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
+                <span className="fq-safha-meta whitespace-nowrap text-[10px] font-bold tracking-normal md:tracking-widest text-muted-foreground text-end">{hizb ?? ""}</span>
               </div>
               {/* Quran text */}
+              {/* visibility:hidden keeps the text in the DOM (preserving intrinsic
+                  width for the md:w-auto card) while the skeleton overlay covers it.
+                  The overlay uses visibility:visible to escape the parent's hidden
+                  state — CSS visibility is overridable on children. */}
               <div
-                className={`fq-quran-safha ${tajweedMode ? "fq-tajweed" : ""} ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
+                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${tajweedMode ? "fq-tajweed" : ""} ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
                 style={{
-                  fontFamily: getPageFontFamily(page, tajweedMode),
+                  fontFamily: pageFontFamily,
+                  ...(fontReady ? {} : { visibility: "hidden" as const }),
                 }}
               >
+                {!fontReady && (
+                  <div
+                    className={`absolute inset-0 flex flex-col ${page <= 2 ? "justify-center gap-[0.55em]" : "fq-skeleton-lines justify-between"} ${tajweedMode ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
+                    style={{ visibility: "visible" }}
+                  >
+                    {Array.from({ length: page <= 2 ? SKELETON_LINE_COUNT_SHORT : SKELETON_LINE_COUNT }, (_, i) => (
+                      <div key={i} className="h-[1em] w-full rounded-sm bg-muted/60 animate-pulse" />
+                    ))}
+                  </div>
+                )}
                 <Suspense fallback={null}>
                   {renderItems.map((item) => {
                     if (item.type === "surahBanner") {
@@ -333,6 +419,8 @@ export const QuranSafha = ({
                       <QuranLine
                         key={item.lineKey}
                         onWordClicked={wordClicked}
+                        onWordLongPressed={wordLongPressed}
+                        isOverlayMode={isOverlayMode}
                         words={activeLines[item.lineKey]}
                         marks={marks ?? {}}
                         suppressInlineHeaderForSurahId={item.suppressSurahId}
@@ -343,12 +431,11 @@ export const QuranSafha = ({
               </div>
               {/* Footer */}
               <div
-                className="shrink-0 flex items-center justify-center gap-2 pt-2 border-t border-border text-muted-foreground text-sm"
-                style={{ marginTop: "var(--fq-line-gap)" }}
+                className="fq-safha-footer shrink-0 flex items-center justify-center gap-2 text-muted-foreground text-sm"
               >
-                <span className="text-primary opacity-70 text-[10px]">◆</span>
+                <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
                 <span>{toLocaleNumeral(page, locale)}</span>
-                <span className="text-primary opacity-70 text-[10px]">◆</span>
+                <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
               </div>
             </div>
           </div>
@@ -357,4 +444,3 @@ export const QuranSafha = ({
     </>
   );
 };
-

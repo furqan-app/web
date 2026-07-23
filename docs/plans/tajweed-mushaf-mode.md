@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-07-11
-**Status:** implemented (Addendum 10's production wiring of `mushaf=19` line-layout data is implemented and seeded.)
+**Status:** implemented (Addendum 11: dark-mode tajweed color overrides; Addendum 12: unified word hover effect)
 
 ## Summary
 
@@ -205,3 +205,79 @@ A sticky bar rendered immediately below the navbar, visible only when `tajweedMo
 - Do not override indices 0–2, 13–15 (base text and outline colors).
 - Do not show `TajweedLegend` when `tajweedMode` is false.
 - Do not hardcode Dark theme colors as white — they will be invisible against a dark background.
+
+---
+
+## Addendum 11 — Dark-mode tajweed color overrides (Trello #120, 2026-07-19)
+
+### Problem
+
+The `--Dark` `@font-palette-values` block in `FontFaceInjector.tsx` has no `override-colors`, only `base-palette: 1`. This means dark mode uses the COLRv1 font's baked-in dark palette, which has not been customized to match the new rule colors established for light mode in Addendum 13. The TODO comment at that line confirms this was deferred.
+
+### Approach
+
+Derive dark-mode slot colors from the light-mode ones by keeping the same hue and saturation but increasing lightness to ~60–65% so they read clearly on the dark card background (`hsl(212 34% 15%)` ≈ `#192533`). Frame slots 10–12 use the dark card bg color instead of white.
+
+### Decision table
+
+| Slot | Light hex | Light HSL | Dark HSL | Dark hex |
+|------|-----------|-----------|----------|----------|
+| 3, 9 | `#E70D8A` | 326° 89% 48% | 326° 89% 65% | `#F556B0` |
+| 4    | `#BC7F22` | 36° 69% 43%  | 36° 69% 62%  | `#E1AB5B` |
+| 5    | `#C4A94D` | 46° 50% 54%  | 46° 50% 70%  | `#D9C78C` |
+| 6    | `#029E48` | 147° 97% 31% | 147° 75% 50% | `#20DF76` |
+| 7    | `#067497` | 195° 92% 31% | 195° 70% 50% | `#26ACD9` |
+| 8    | `#0FAEC1` | 186° 86% 41% | 186° 75% 57% | `#3FD3E4` |
+| 10–12 | `#ffffff` | white        | dark card bg | `#192533` |
+
+Slots 6 and 7 have saturation pulled down (97→75%, 92→70%) to avoid neon-garish appearance on dark backgrounds.
+
+### File to change
+
+- `app/components/reader/FontFaceInjector.tsx` — add `override-colors` to the `--Dark` block, using the values in the table above. The `RULE_OVERRIDES` constant covers only slots 3–9 (shared light/gold values) and cannot be reused for dark since the L values differ; inline the dark overrides directly in the `--Dark` block.
+
+### What NOT to do
+
+- Do not reuse `RULE_OVERRIDES` for the dark palette — those values are the light-mode lightness levels and will be too dark on a dark background.
+- Do not set frame slots 10–12 to `#ffffff` in dark mode — they must match the dark card background.
+
+---
+
+## Addendum 12 — Unified word hover effect (Trello #120, 2026-07-19)
+
+### Problem
+
+The hover effect on Quran words is split by mode: `hover:text-yellow-500` for regular (broken in tajweed — COLRv1 ignores `color`) and `hover:bg-primary/25` for tajweed (conflicts with the existing background-color layer used by search highlights, mark highlights, and recitation active-word). Neither approach works for both modes, and `bg-primary` collides with existing effects.
+
+### Approach
+
+Unify with scale + offset shadow: `hover:scale-[1.06] hover:[filter:drop-shadow(1px_1px_0px_hsl(var(--foreground)/0.4))] transition-[filter,transform] duration-150`. Works for both regular and tajweed (filter/transform are not overridden by COLRv1), distinct from every existing background-color effect. The 1px offset shadow gives a "lifted" feel without bleeding into adjacent words.
+
+### File to change
+
+- `app/components/QuranWord.tsx:48` — replace the `tajweedMode ? "hover:bg-primary/25" : "hover:text-yellow-500 dark:hover:text-yellow-400"` ternary with the unified classes above.
+
+### What NOT to do
+
+- Do not use `hover:bg-*` — conflicts with search, mark, and recitation highlights.
+- Do not use `hover:text-*` — ignored by COLRv1 tajweed glyphs.
+
+---
+
+## Addendum 13 — Fix Switch thumb overflow in RTL (Trello #120, 2026-07-19)
+
+### Problem
+
+`data-[state=checked]:translate-x-5` physically moves the thumb right regardless of text direction. In RTL the checked position should be left, so the thumb overflows out of the track on the right side.
+
+### Fix
+
+Add `rtl:data-[state=checked]:-translate-x-5` to the Thumb in `components/ui/switch.tsx`. The unchecked state (`translate-x-0`) needs no change.
+
+### File to change
+
+- `components/ui/switch.tsx:22` — add `rtl:data-[state=checked]:-translate-x-5` to the Thumb className.
+
+### What NOT to do
+
+- Do not change the track or root classes — only the Thumb translation is affected.

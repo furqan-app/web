@@ -84,6 +84,9 @@ async function precacheAllPages(locale: string) {
 
     cached++;
     await reportProgress(cached);
+    // Throttle: yield 200ms between iterations so active navigation font
+    // downloads are not starved by the bulk precache. See plan.
+    await new Promise((r) => setTimeout(r, 200));
   }
 }
 

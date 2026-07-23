@@ -2,31 +2,103 @@
 
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
+import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
+import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
+import { useIsTablet } from "@/app/hooks/use-is-tablet";
+import { useIsMobile } from "@/app/hooks/use-is-mobile";
 
 // Strong ease-out curve (ui-motion skill recommendation for entering/exiting elements).
 const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)";
 const COMMIT_THRESHOLD = 80; // px
-const EXIT_MS = 220;
 const SNAP_BACK_MS = 200;
+// Commit-slide duration. The tablet carousel uses a slower, book-like page turn;
+// the mobile/desktop single-panel fly-off keeps its original 220ms. Both paths
+// stay exactly as before outside the tablet carousel scope — see ADR 0027.
+const CAROUSEL_EXIT_MS = 380;
+const SINGLE_EXIT_MS = 220;
+// Finger-to-strip travel ratio during a live drag, TABLET CAROUSEL ONLY. Native/
+// standard carousels (e.g. Swiper's touchRatio) default to 1:1; we amplify to 1.5
+// so the wide tablet spread reveals a meaningful chunk of the neighbor without a
+// full-width drag. The mobile/desktop single-panel swipe stays 1:1 (ADR 0027).
+// Applied to the visual transform ONLY — COMMIT_THRESHOLD stays on raw deltaX, so
+// the commit still fires at the same finger travel.
+const CAROUSEL_DRAG_GAIN = 1.5;
+
+type NavHrefs = { prevHref: string; nextHref: string };
 
 type Props = {
-  prevHref: string;
-  nextHref: string;
-  children: React.ReactNode;
+  // Both are page-order (physical swipe direction), NOT locale-flipped.
+  singleStep: NavHrefs; // step one page — single view (mobile, or forced-single)
+  pairStep: NavHrefs; // step a whole pair — double-page spread (lg+ double view)
+  // Five-panel carousel strip (physical order: [nextMobile][next][current][prev][prevMobile]).
+  // `fq-carousel-side` panels are pair-step neighbors shown on tablet double-view only.
+  // `fq-mobile-carousel-side` panels are single-step neighbors shown on mobile only.
+  // display:none removes hidden panels from flex layout, so the effective strip is
+  // always 3 panels in carousel mode — translateX(-100%) rest and 0%/-200% commits
+  // stay correct for both scopes. See ADR 0027.
+  prevPanel: React.ReactNode;
+  currentPanel: React.ReactNode;
+  nextPanel: React.ReactNode;
+  prevMobilePanel: React.ReactNode;
+  nextMobilePanel: React.ReactNode;
 };
 
-export function QuranSwipeNav({ prevHref, nextHref, children }: Props) {
+export function QuranSwipeNav({
+  singleStep,
+  pairStep,
+  prevPanel,
+  currentPanel,
+  nextPanel,
+  prevMobilePanel,
+  nextMobilePanel,
+}: Props) {
   const router = useRouter();
+  const { toggleOverlay } = useNavOverlay();
+  const { view } = useQuranSafhaView();
+  const isLgUp = useIsLgUp();
+  const isTablet = useIsTablet();
+  const isMobile = useIsMobile();
+
+  // Pair-step hrefs whenever a double-page spread is showing (tablet AND desktop) —
+  // otherwise a single-page step lands on the same spread. Mirrors QuranSpread.
+  const { prevHref, nextHref } =
+    view === "double" && isLgUp ? pairStep : singleStep;
+
+  // Carousel geometry: tablet double-view AND mobile both use the 3-panel strip
+  // (neighbor panels visible, strip rests at -100% so the current middle panel is
+  // shown). Desktop keeps the single-panel fly-off. CSS scope mirrors this split:
+  // the tablet rule is gated on data-safha-view="double" inside the tablet media
+  // query; the mobile rule shows neighbors unconditionally (always single-page).
+  // Tablet carousel uses 1.5× drag amplification and a slow 380ms page-turn;
+  // mobile uses 1:1 tracking and the snappy 220ms fly-off — feel matches the
+  // narrower screen. See ADR 0027.
+  const isTabletCarousel = view === "double" && isTablet;
+  const carousel = isTabletCarousel || isMobile;
+  const baseTx = carousel ? "-100%" : "0px";
+  const dragGain = isTabletCarousel ? CAROUSEL_DRAG_GAIN : 1;
+  const exitMs = isTabletCarousel ? CAROUSEL_EXIT_MS : SINGLE_EXIT_MS;
+
   const stripRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isDragging = useRef(false);
+  const snapClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set once a commit is in flight (strip animating → router.push pending). Blocks
+  // a fast second swipe from starting and firing a stale navigation before the
+  // first one's route change lands and remounts this component.
+  const isCommitting = useRef(false);
 
   const onTouchStart = (e: React.TouchEvent) => {
+    if (isCommitting.current) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isDragging.current = false;
-    // Clear any lingering snap-back transition so the next drag starts clean.
+    // Clear any lingering snap-back cleanup so the next drag starts clean.
+    if (snapClearTimer.current) {
+      clearTimeout(snapClearTimer.current);
+      snapClearTimer.current = null;
+    }
     if (stripRef.current) {
       stripRef.current.style.transition = "none";
     }
@@ -43,7 +115,10 @@ export function QuranSwipeNav({ prevHref, nextHref, children }: Props) {
 
     if (!stripRef.current) return;
     stripRef.current.style.transition = "none";
-    stripRef.current.style.transform = `translateX(${deltaX}px)`;
+    // Drag is anchored to the mode's rest offset (0 single / -100% carousel) so a
+    // partial drag reveals the neighbor panel already sitting beside the current one.
+    // deltaX is amplified by dragGain (carousel only) so a short drag reveals more.
+    stripRef.current.style.transform = `translateX(calc(${baseTx} + ${deltaX * dragGain}px))`;
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -59,8 +134,14 @@ export function QuranSwipeNav({ prevHref, nextHref, children }: Props) {
     if (!strip) return;
 
     if (Math.abs(deltaX) < COMMIT_THRESHOLD) {
+      // Snap back to the rest offset, then drop the inline transform so the CSS base
+      // governs again (keeps the rest state correct if view/breakpoint later changes).
       strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
-      strip.style.transform = "translateX(0)";
+      strip.style.transform = `translateX(${baseTx})`;
+      snapClearTimer.current = setTimeout(() => {
+        strip.style.transition = "";
+        strip.style.transform = "";
+      }, SNAP_BACK_MS);
       return;
     }
 
@@ -68,28 +149,59 @@ export function QuranSwipeNav({ prevHref, nextHref, children }: Props) {
     // mapping is constant: swipe right = next page, swipe left = previous.
     const goNext = deltaX > 0;
     const href = goNext ? nextHref : prevHref;
-    const commitX = goNext ? "100%" : "-100%";
+    // Carousel: slide the real neighbor panel to center (0% next / -200% prev), THEN
+    // navigate — the landed page renders that same spread centered, so no pop.
+    // Single-panel: fly the current page fully off-screen (±100%) as before.
+    const commitX = carousel
+      ? goNext
+        ? "0%"
+        : "-200%"
+      : goNext
+        ? "100%"
+        : "-100%";
 
+    isCommitting.current = true;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       router.push(href);
       return;
     }
 
-    strip.style.transition = `transform ${EXIT_MS}ms ${EASE_OUT}`;
+    strip.style.transition = `transform ${exitMs}ms ${EASE_OUT}`;
     strip.style.transform = `translateX(${commitX})`;
-    setTimeout(() => router.push(href), EXIT_MS);
+    setTimeout(() => router.push(href), exitMs);
   };
 
   return (
     // Outer div: touch event boundary, clips the strip during drag.
+    // onClick fires for taps that didn't land on Quran words (those call
+    // stopPropagation in QuranSafha.wordClicked) — used to toggle the nav overlay on tablet.
+    // Portal clicks (e.g. the mark modal) bubble through the React fiber tree but originate
+    // outside this DOM subtree; contains() returns false for them so they're ignored.
     <div
       className="w-full overflow-hidden"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onClick={(e) => {
+        if (!e.currentTarget.contains(e.target as Node)) return;
+        toggleOverlay();
+      }}
     >
-      <div ref={stripRef} className="relative w-full">
-        {children}
+      {/* 3-panel strip. Off the tablet double-view scope the two `fq-carousel-side`
+          panels are display:none, so only the current panel lays out (at translateX 0)
+          and the single-panel swipe behaves exactly as before. In the tablet scope CSS
+          reveals the neighbors and rests the strip at translateX(-100%).
+          dir="ltr" is REQUIRED: flex row order follows `direction`, so under the ar
+          locale (rtl) the panels would lay out right-to-left and translateX(-100%) would
+          push the current panel off-screen (blank). Forcing ltr keeps the physical order
+          [next][current][prev] and the transform geometry identical in both locales; each
+          panel restores its own dir (see ReaderPage) so the Arabic content stays rtl. */}
+      <div ref={stripRef} dir="ltr" className="fq-carousel-strip relative flex w-full">
+        {nextMobilePanel}
+        {nextPanel}
+        {currentPanel}
+        {prevPanel}
+        {prevMobilePanel}
       </div>
     </div>
   );

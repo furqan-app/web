@@ -55,21 +55,26 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
      1. Kill the dev server. The recorded port can be **stale** — Next.js auto-increments (3000→3001→…) when the port is busy — so kill by *both* the recorded port and any process rooted in the worktree:
         ```bash
         lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
-        lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 || true
+        lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+        sleep 1
+        ss -tlnp | grep :<port> && echo "WARNING: port <port> still in use" || true
         ```
-        Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and stay alive. `xargs -r` skips the kill when nothing matched.
-     2. Remove the worktree, then force-delete the folder — `git worktree remove` **leaves gitignored dirs behind** (`.next`, `node_modules` symlink, etc.), so the folder always survives unless you also `rm -rf` it. Run both unconditionally:
+        Use `-9` (SIGKILL), not `-TERM` — Next.js dev servers ignore SIGTERM and stay alive. `xargs -r` skips the kill when nothing matched. The `sleep 1` lets the OS release the socket before the next step reads from it.
+     2. Remove the worktree — run `git worktree remove` and `git worktree prune` in one Bash call:
         ```bash
         git worktree remove <abs> --force || true
-        rm -rf <abs>
         git worktree prune
         ```
-        Do **not** rely on `git worktree remove` alone — it never fully cleans the directory.
-     3. Verify the folder is actually gone with a real filesystem check:
+        Do **not** rely on `git worktree remove` alone — it leaves gitignored dirs behind (`.next`, `node_modules` symlink, etc.).
+     3. Delete the folder in a **separate** Bash call — never combine with the `git worktree remove` call above. The shell's cwd can be reset between tool invocations; combining the commands in one call has caused `ls` to falsely report the folder gone while it still existed on disk:
+        ```bash
+        rm -rf <abs>
+        ```
+     4. Verify the folder is actually gone in a **separate** Bash call (never combine with the `rm -rf` call):
         ```bash
         ls <abs> 2>/dev/null && echo "WARNING: folder still exists at <abs>" || echo "Worktree removed successfully"
         ```
-        `[ ! -e <abs> ]` can silently pass on some shells even when the directory exists — use `ls` instead so a leftover folder is always reported.
+        `[ ! -e <abs> ]` can silently pass on some shells even when the directory exists — use `ls` instead so a leftover folder is always reported. If the WARNING fires, run `rm -rf <abs>` again and re-verify.
      4. Remove the entry from `~/.claude/furqan-worktrees.json` and write the updated file back (preserve all other entries)
 
 ## No AI signatures — anywhere

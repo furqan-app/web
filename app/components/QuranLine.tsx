@@ -12,6 +12,8 @@ import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
 type LineProps = {
   words: Array<WordWithLayouts>;
   onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithLayouts) => void;
+  onWordLongPressed?: (word: WordWithLayouts) => void;
+  isOverlayMode?: boolean;
   // One mark per spot (ADR 0025), keyed by word `location` or verse `verse_key`.
   marks: Record<string, { category: string } | undefined>;
   // When set, QuranSafha has already rendered standalone banner/bismillah slots
@@ -20,7 +22,7 @@ type LineProps = {
   suppressInlineHeaderForSurahId?: number;
 };
 
-export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderForSurahId }: LineProps) => {
+export const QuranLine = ({ words, onWordClicked, onWordLongPressed, isOverlayMode, marks, suppressInlineHeaderForSurahId }: LineProps) => {
   const [surahId, verseNumber, wordNumber] = words[0].location
     .split(":")
     .map(Number);
@@ -35,7 +37,7 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
       {shouldRenderSurahHeader && !isBannerHandled ? (
         <div className="text-center">
           <h1
-            className="text-black dark:text-white"
+            className="fq-inline-surah text-black dark:text-white"
             translate="no"
             style={{
               fontFamily: "var(--surah-names)",
@@ -45,7 +47,7 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
           >
             {`${surahId}`.padStart(3, "0")}
           </h1>
-          <div className="flex justify-center text-black dark:text-white">
+          <div className="fq-bismillah flex justify-center text-black dark:text-white">
             {!CHAPTERS_WITHOUT_BISMILLAH.includes(`${surahId}`) ? (
               <div style={{ marginBottom: "var(--fq-line-gap)" }}>
                 <BismillahSVG
@@ -75,6 +77,8 @@ export const QuranLine = ({ words, onWordClicked, marks, suppressInlineHeaderFor
           <QuranWord
             key={word.location}
             onWordClicked={onWordClicked}
+            onWordLongPressed={onWordLongPressed}
+            isOverlayMode={isOverlayMode}
             word={word}
             // A word-level mark takes precedence over a verse-level one.
             category={(marks[word.location] ?? marks[word.verse_key])?.category}

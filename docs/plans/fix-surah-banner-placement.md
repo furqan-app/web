@@ -2,7 +2,9 @@
 
 **Type:** bug  
 **Date:** 2026-07-07  
-**Status:** implemented — equal-height spread (Addendum 1/2), inter-line gap (Addendum 3), gap-based banner placement (Addendum 4) all shipped.  
+**Status:** implemented  
+**Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf  
+**Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread  
 **Trello:** https://trello.com/c/sRC6NhMS/72-surah-name-banners-render-at-end-of-page-madani-layout
 
 ## Summary
@@ -142,3 +144,148 @@ const shouldRenderSurahHeader =
 ```
 
 **Files:** `QuranSafha.tsx` (gap algorithm, `RenderItem[]` rendering, helpers), `QuranLine.tsx` (`suppressInlineHeaderForSurahId` prop). No changes to schema, DB, seeder, `globals.css`, `QuranSpread.tsx`, `ReaderPage.tsx`.
+
+---
+
+## Addendum 5 — Decorative surah name frame (Trello #93)
+
+**Date:** 2026-07-19  
+**Branch:** `feature/93-surah-banner-frame`
+
+### What
+
+Wrap `SurahBannerLine`'s surah name glyph inside a full-width decorative frame matching the printed Madani mushaf style — an ornate pill-shaped border with arabesque medallions on each side and an inner pointed-arch crown decoration.
+
+### Source asset
+
+`/home/tahamohamed/Pictures/surah_banner1.svg` — a mobile-scale SVG (`viewBox="0 0 373 39"`) that includes both left and right ornaments and the full inner arch decoration. Contains exactly 3 fill colors:
+
+| Original hex | Role | Theme mapping |
+|---|---|---|
+| `#404c6e` | Frame body fill (dark blue) | `hsl(var(--card))` — matches card bg per theme |
+| `#fff` | Border lines + inner arch decoration | `var(--surah-frame-line)` — dark on light/gold, light on dark |
+| `#cdad80` | Gold arabesque detail | `var(--surah-frame-gold)` — warm gold, varies slightly per theme |
+
+The rectangle also has `stroke="#fff"` → replace with `stroke: var(--surah-frame-line)`.
+
+### Algorithm
+
+No changes to the gap detection or render-item algorithm from Addendum 4. Only `SurahBannerLine` changes visually.
+
+### Decision tree
+
+| Theme | `--surah-frame-line` | `--surah-frame-gold` |
+|---|---|---|
+| `.theme-light` | `hsl(39 35% 25%)` (warm dark brown) | `#cdad80` |
+| `.theme-gold` | `hsl(39 45% 20%)` (rich deep brown) | `#b8924a` |
+| `.theme-dark` | `hsl(209 51% 88%)` (matches `--card-foreground`) | `#cdad80` |
+
+### Files to change
+
+- `app/surah-frame.svg` — **new file**: the source SVG with fixed `width`/`height` removed, `width="100%"` added, and all fills replaced with CSS class selectors (`.fb`, `.fl`, `.fg`) + an inline `<style>` block referencing `--surah-frame-*` vars. The `stroke` on the rect also uses `var(--surah-frame-line)`.
+- `app/globals.css` — add `--surah-frame-line` and `--surah-frame-gold` to each of `.theme-light`, `.theme-gold`, `.theme-dark` (`.theme-dark.dark` too). Do NOT add `--surah-frame-body` — use `hsl(var(--card))` directly in the SVG.
+- `app/components/QuranSafha.tsx` — update `SurahBannerLine`:
+  - Import `SurahFrameSVG from "@/app/surah-frame.svg"`
+  - Render `SurahFrameSVG` at `width: 100%`, height auto (preserves aspect ratio)
+  - Overlay the surah name glyph with `position: absolute; inset: 0; display: flex; align-items: center; justify-content: center`
+  - Outer div: `position: relative; leading-none` (keep existing `marginBottom: var(--fq-line-gap)`)
+  - Glyph font-size: `0.85em` (slightly smaller than frame height so it sits comfortably inside)
+  - Glyph color: keep `text-black dark:text-white` (existing pattern)
+
+### What NOT to do
+
+- Do not use `preserveAspectRatio="none"` — distorts the medallion ornaments.
+- Do not add a decorative frame to `BismillahLine` — only `SurahBannerLine` gets the frame.
+- Do not set a fixed `height` on the SVG — let it scale proportionally from `width: 100%`. The natural height (≈ viewBox ratio 39/373 × container width) will be slightly taller than `1em` at full page width; this is correct and matches the printed mushaf proportions.
+- Do not hardcode colors in `surah-frame.svg` — all three color roles must go through CSS vars for theme support.
+- Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
+
+---
+
+## Addendum 6 — Fix frame height causing unequal page heights (Trello #123)
+
+**Date:** 2026-07-20  
+**Branch:** `fix/123-surah-banner-frame-height`
+
+### Root cause
+
+`SurahBannerLine` renders the SVG with `width: 100%` + `aspectRatio: "373/39"` (ratio 9.56:1), so its layout height = `container_width × (39/373)`. At typical desktop mushaf card widths (~450px) this produces ~47px — about 50–80% taller than `1em`. The page with the banner becomes taller than its 15-line neighbor, causing visible white space at the bottom of the shorter page in the double-page spread.
+
+### Fix: reshape the SVG to match the line-width aspect ratio
+
+Rather than clipping or shrinking the frame, the SVG itself was modified so its natural aspect ratio matches `QURAN_LINE_WIDTH_RATIO` (14.41:1). With `height: 1em; width: 100%` the frame then renders at exactly `1em` tall and spans the Quran text content width without distortion, clipping, or overflow.
+
+**`app/surah-frame.svg` changes:**
+
+| What | Before | After |
+|---|---|---|
+| `viewBox` | `0 0 373 39` | `0 0 562 39` |
+| Rect width | `304` (x=35→339) | `491` (x=35→526) |
+| Right medallion | inline paths at x=337–373 | `<g transform="translate(187.15,0)">` → x=524–560 |
+| Central arch | `<g transform="translate(94.5,0)">` | unchanged (spans frame interior) |
+| Inner left ornament cluster | part of central group, rendered at x≈186 | `<g transform="translate(8.24,0)">` → left frame edge x≈38–115 |
+| Inner right ornament cluster | part of central group, rendered at x≈369 | `<g transform="translate(177.89,0)">` → right frame edge x≈446–523 |
+
+The inner ornament clusters (the knot/diamond shapes) were split out of the central arch group and given independent translates so they sit flush at the left and right ends of the frame rect, mirroring the printed Madani mushaf design.
+
+**`app/components/QuranSafha.tsx` — `SurahBannerLine`:**
+
+```tsx
+const SurahBannerLine = ({ surahId }: { surahId: number }) => (
+  <div
+    className="leading-none relative w-full"
+    style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
+  >
+    <SurahFrameSVG style={{ display: "block", width: "100%", height: "1em" }} />
+    <span
+      className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
+      translate="no"
+      style={{ fontFamily: "var(--surah-names)", fontSize: "0.85em", lineHeight: 1 }}
+    >
+      {`${surahId}`.padStart(3, "0")}
+    </span>
+  </div>
+);
+```
+
+SVG is in-flow at `height: 1em` — no absolute positioning, no overflow, no clipping. The glyph overlays via `position: absolute; inset: 0`.
+
+**Verified:** both safha elements measure identical height (`692.328125px`) on page 50.
+
+### What NOT to do
+
+- Do not use `preserveAspectRatio="none"` — distorts the medallion ornaments.
+- Do not use `height: 1em; width: auto` on the SVG — frame no longer spans full width.
+- Do not use `overflow: hidden` on the outer div — the correct height comes from the SVG viewBox ratio, not clipping.
+- Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
+
+---
+
+## Addendum 7 — Fix bismillah SVG appearing smaller than Quran text
+
+**Date:** 2026-07-20  
+**Branch:** `fix/123-surah-banner-frame-height`
+
+### Root cause
+
+`bismillah.svg` has `viewBox="0 0 176 36"` but the glyph content doesn't fill the full viewBox height — there's internal top padding of ~4 units (~11%). At `height: 1em`, the rendered glyph is effectively ~0.89em tall, making it visibly smaller than the surrounding Quran text lines.
+
+### Fix
+
+Same pattern as the surah frame: keep the outer div at `height: 1em` (layout slot unchanged), render the SVG absolutely centered at `height: 1.2em`. The SVG overflows visually but contributes zero to layout height.
+
+```tsx
+const BismillahLine = () => (
+  <div
+    className="leading-none relative flex justify-center text-black dark:text-white"
+    style={{ marginBottom: "var(--fq-line-gap)", height: "1em" }}
+  >
+    <BismillahSVG style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "1.2em", width: "auto" }} />
+  </div>
+);
+```
+
+### What NOT to do
+
+- Do not increase `height` without `position: absolute` — that would make the line slot taller than `1em` and break equal-height spread pages.
+- Do not modify the SVG file to crop its viewBox — the internal padding is part of the original asset.
