@@ -598,3 +598,188 @@ interaction this looks like the button is permanently focused.
 - `app/components/QuranSwipeNav.tsx` — portal-safe onClick guard
 - `app/components/QuranWord.tsx` — `select-none` on word div
 - `components/ui/dialog.tsx` — `focus:ring-2` → `focus-visible:ring-2` on close button
+
+## Addendum — Mobile reader UX
+
+**Date:** 2026-07-22 · **Status:** implemented · Trello: extends card #124 · Branch: `feature/124-mobile-reader-ux`
+
+### Scope
+
+Apply the same four changes to mobile (below `md`, ≤767px) that were shipped for tablet:
+1. **Nav overlay** — nav is hidden by default on the reader; tapping the background toggles it.
+2. **Mark modal trigger** — a 500ms long press on a Quran word opens the modal;
+   a short tap continues to the reader's nav-overlay toggle.
+3. **Mushaf colors** — apply the `--mushaf-*` palette tokens (paper, ink, ornament, metadata) to the mobile reader card, same as tablet.
+4. **Directional page-side cue** — keep the physical stack layers hidden on mobile
+   and simulate their edge with one lightweight 8px `::after` strip on the active
+   card, positioned right for odd/right-hand pages and left for even/left-hand pages.
+
+Desktop behavior is unchanged. Tablet behavior is unchanged.
+
+---
+
+### Feature 1 — Nav overlay on mobile
+
+**Mechanism:** identical to tablet. `NavOverlayContext` already drives `isOverlayMode`; we expand the condition to include mobile.
+
+**Decision table:**
+
+| Breakpoint | Route | Nav behavior |
+|---|---|---|
+| Desktop (≥1024px or not tablet) | any | Unchanged — always visible, static |
+| Tablet (1024px–1366px) | pages | Already implemented — fixed overlay, tap background to toggle |
+| **Mobile (≤767px)** | **pages** | **Fixed overlay, tap background to toggle (new)** |
+| Mobile (≤767px) | non-pages | Static, always visible — unchanged |
+
+**Interaction semantics (confirmed with user):**
+- Short tap on Quran word → toggles the nav overlay
+- Long press on Quran word → opens the mark modal without toggling the nav
+- Tap on background (non-word area) → toggles nav overlay — same as tablet's onClick handler
+- Long press is only a mark-modal gesture; nav toggling remains click-driven
+
+**Reader height:** when the nav is fixed overlay on mobile, the reader must fill `100dvh` (nav is out of flow). This mirrors the tablet CSS approach.
+
+**Files to change:**
+
+`app/hooks/use-is-mobile.ts` — NEW, mirror of `use-is-tablet.ts`:
+```ts
+const MOBILE_QUERY = "(max-width: 767px)";
+```
+
+`app/contexts/NavOverlayContext.tsx` — expand `isOverlayMode`:
+```ts
+const isMobile = useIsMobile();
+const isOverlayMode = (isMobile || isTablet) && isOnPagesRoute;
+```
+
+`app/globals.css` — inside `@media (max-width: 767px)` block, append:
+```css
+/* Reader fills full viewport (nav is fixed overlay, out of flow) */
+.fq-reader-outer {
+  min-height: 100dvh !important;
+  padding-bottom: 0 !important;
+  background-color: var(--viewer-background) !important;
+}
+.fq-full-safha > div {
+  height: 100dvh !important;
+}
+```
+
+---
+
+### Feature 2 — Mark modal trigger
+
+`QuranWord` tracks a 500ms touch hold with 10px movement tolerance. A qualifying
+hold calls `preventDefault()` on touch end, suppressing the synthetic click so the
+nav does not also toggle, then delegates the selected word to `QuranSafha` through
+`QuranLine`. Short taps do not open the modal in overlay mode and bubble to
+`QuranSwipeNav` for the normal nav toggle.
+
+---
+
+### Feature 3 — Mushaf colors on mobile
+
+Apply the `--mushaf-*` tokens to the single-page mobile reader, scoped to `.fq-spread` (always present in the reader — `QuranSpread` renders it even in single-page view). No gutter/binding element (no double spread on mobile). Use the same token values defined per theme in the existing theme blocks in `globals.css` (no new token values needed).
+
+**Decision table — mobile element → token (mirrors tablet):**
+
+| Element | Mobile target |
+|---|---|
+| Reader outer bg | `--viewer-background` (already in Feature 1 above) |
+| Page surface | `var(--mushaf-paper)` + gradient + inset shadows |
+| Quran words / Bismillah | `var(--mushaf-text)` |
+| Ayah-end medallions | `var(--mushaf-text)`, `font-size: 0.85em` |
+| ◆ diamonds | `var(--mushaf-ornament)` |
+| Surah-name glyph | `var(--mushaf-ornament)` |
+| Inline surah name | `var(--mushaf-ornament)` |
+| Juz / hizb / page no. | `var(--mushaf-metadata)` |
+| Surah banner frame gold | `var(--mushaf-ornament)` via `--surah-frame-gold` override |
+
+**Theme-specific overrides:**
+- **Dark theme** — metadata, footer, surah glyph, inline surah name, ornaments → `var(--mushaf-text)` (off-white, not gold; same rule as tablet).
+- **Light theme** — `--surah-frame-line: #4a4b4e` (neutralize warm frame line; same as tablet).
+- **Gold theme** — surah glyph and inline surah name → `var(--mushaf-text)` (matching text, not gold; same as tablet).
+
+**Files to change:** `app/globals.css` applies the theme-scoped Mushaf tokens inside
+the mobile reader. The card uses broad radial/linear paper-lighting gradients plus
+restrained inset edge treatment; Quran ink, metadata, ornaments, Bismillah, ayah
+markers, and surah-frame colors follow the decision table above. Light uses near-white
+paper with cool-neutral gray ornament/shadow tokens, Gold keeps warm ivory and muted
+gold, and Dark keeps blue-black paper with off-white ink.
+
+---
+
+### Feature 4 — Book stack on mobile
+
+All real stack layer divs stay hidden on mobile (`fq-stack-tablet` via the base
+CSS `.fq-stack-tablet { display: none }`; the two inner layers via `hidden md:block`
+in JSX). The page-side cue is simulated by a `::after` pseudo-element on the card:
+an 8px strip at the outer edge, using a repeating paper/stripe gradient. The stripe
+opacity is theme-tuned (light: 0.62, default: 0.32, dark: 0.5). The existing
+`fq-compensate-r`/`fq-compensate-l` class on the wrapper (from `compensateStackGap`)
+is used to position the strip: `.fq-compensate-r > .fq-safha-card::after` places it
+at `right:0`, `.fq-compensate-l > .fq-safha-card::after` at `left:0`. No translateX,
+no new DOM nodes, no layout change.
+
+**Files changed:**
+
+- `app/globals.css` — inside `@media (max-width: 767px)`, inside `.fq-spread`:
+  - `.fq-safha-card::after` — 8px strip, `position:absolute`, theme-aware repeating-linear-gradient
+  - `.fq-compensate-r > .fq-safha-card::after { right: 0 }` / `.fq-compensate-l > .fq-safha-card::after { left: 0 }`
+
+**Decision table:**
+
+| Current page | Mushaf position | Visible stack |
+|---|---|---|
+| 13 (odd) | Right-hand page | 8px ::after strip on outer right; left clean |
+| 14 (even) | Left-hand page | 8px ::after strip on outer left; right clean |
+
+---
+
+### Verified test cases
+
+| Scenario | Expected |
+|---|---|
+| Load `/pages/N` on mobile | Nav hidden, reader fills 100dvh, paper background |
+| Tap on background area | Nav slides down |
+| Tap background again | Nav slides up |
+| Short tap a Quran word | Nav toggles; mark modal stays closed |
+| Long press a Quran word | Mark modal opens; nav state unchanged |
+| Long press an ayah-end marker | Verse mark modal opens; nav unchanged |
+| Navigate to non-reader route on mobile | Nav always visible, static |
+| On desktop or tablet | Behavior unchanged |
+| Light theme | Paper = near-white, ornaments = gray, frame line = dark gray |
+| Gold theme | Paper = warm ivory, ornaments = gold, surah glyph = mushaf-text |
+| Dark theme | Paper = blue-black, ornaments and frame = muted gold |
+| Right-hand page | 8px ::after strip painted at outer right; left edge clean |
+| Left-hand page | 8px ::after strip painted at outer left; right edge clean |
+
+---
+
+### Files to Change (summary)
+
+- `app/hooks/use-is-mobile.ts` — NEW: `(max-width: 767px)` media query hook
+- `app/contexts/NavOverlayContext.tsx` — extend `isOverlayMode` to include mobile
+- `app/components/QuranWord.tsx` / `QuranLine.tsx` / `QuranSafha.tsx` — pass and
+  handle the 500ms long-press gesture with 10px movement tolerance
+- `app/components/QuranSafha.tsx` — stack layers remain hidden below `md`; `selectWord` helper extracted
+- `app/globals.css` — inside `@media (max-width: 767px)`: reader height, paper/ink/
+  ornament styling, and the 8px `::after` directional edge strip; no translateX or stack visibility changes
+
+### Constraints
+
+- Keep the long-press threshold at 500ms and movement tolerance at 10px.
+- A qualifying long press must suppress the synthetic click so it cannot toggle nav.
+- Do not touch tablet or desktop CSS — scope all new rules to `@media (max-width: 767px)`.
+- The `28px` cap on `--fq-mobile-font` is unchanged.
+- Do not add the gutter/binding `::after` — mobile is always single-page.
+- Compact header/footer (tablet-only glyph/footer size reduction) does NOT apply to mobile.
+- All `.fq-stack-layer` elements stay hidden on mobile; the `::after` strip is the sole visual cue.
+- The `compensateStackGap` class is still applied to the wrapper on mobile (drives `::after` positioning) but carries no margin rule — no text clearance adjustment needed.
+
+### What NOT to Do
+
+- Do not use long press for nav toggling; it is reserved for the mark modal.
+- Do not reveal real stack layers on mobile — use the `::after` strip only.
+- Do not change the tablet media query block.
+- Do not add a gutter/binding element between pages on mobile.

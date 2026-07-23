@@ -20,6 +20,7 @@ import { MarkModal } from "./MarkModal";
 import { ViewingChip } from "./reader/ViewingChip";
 import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
+import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 
 // Populated by QuranSafha when a page font finishes loading. Module-level so it
 // survives navigation remounts — the new QuranSafha instance for the same page
@@ -112,6 +113,7 @@ export const QuranSafha = ({
   const { quranFontScale } = useQuranFontScale();
   const { tajweedMode } = useQuranTajweed();
   const isTablet = useIsTablet();
+  const { isOverlayMode } = useNavOverlay();
 
   const [selectedForMark, setSelectedForMark] = useState<
     WordWithLayouts | Verse | null
@@ -139,21 +141,18 @@ export const QuranSafha = ({
       return;
     }
     setFontReady(false);
+    let cancelled = false;
     document.fonts.load(fontSpec).then(() => {
       loadedFonts.add(fontSpec);
-      setFontReady(true);
+      if (!cancelled) setFontReady(true);
     });
+    return () => { cancelled = true; };
   }, [fontSpec]);
 
-  // Stable across marks re-renders (lines only changes on page navigation, not marks load),
-  // so React.memo(QuranWord) can bail out for words whose category hasn't changed.
-  const wordClicked = useCallback(
-    (
-      e: React.MouseEvent<HTMLDivElement>,
-      word: WordWithLayouts,
-    ) => {
-      // Prevent the click from bubbling to QuranSwipeNav's overlay-toggle handler.
-      e.stopPropagation();
+  // Shared selection logic for both click (non-overlay) and long-press (overlay).
+  // Stable across marks re-renders (lines only changes on page navigation).
+  const selectWord = useCallback(
+    (word: WordWithLayouts) => {
       if (word.char_type_name === "word") {
         setSelectedForMark(word);
         setVerseDisplayText(undefined);
@@ -164,17 +163,31 @@ export const QuranSafha = ({
             (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
           )
           .map((w) => w.qpc_uthmani_hafs);
-
         const displayText =
           displayWords.length > VERSE_SNIPPET_WORD_LIMIT
             ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
             : displayWords.join(" ");
-
         setSelectedForMark(word.verse);
         setVerseDisplayText(displayText);
       }
     },
     [lines],
+  );
+
+  // Prevent click from bubbling to QuranSwipeNav's overlay-toggle handler.
+  const wordClicked = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>, word: WordWithLayouts) => {
+      e.stopPropagation();
+      selectWord(word);
+    },
+    [selectWord],
+  );
+
+  // Long-press handler for overlay mode (mobile + tablet): no stopPropagation —
+  // e.preventDefault() on touchend in QuranWord suppresses the synthetic click.
+  const wordLongPressed = useCallback(
+    (word: WordWithLayouts) => selectWord(word),
+    [selectWord],
   );
 
   const closeMarkModal = () => {
@@ -305,17 +318,8 @@ export const QuranSafha = ({
         <div
           className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
-          {/* Stacked "pages underneath" layers — peek toward the outer (spine-away)
-              edge; also doubles as a left-page/right-page indicator in single view.
-              border-muted-foreground/30 for real contrast in every theme
-              (border-border was too close in lightness to bg-card in light/gold).
-              bg-card dark:bg-muted: white fill in light/gold, existing muted fill
-              kept in dark (already approved). */}
-          {/* Deeper paper-stack layers — tablet reader only (`fq-stack-tablet` is
-              display:none everywhere else). Rendered before the base two so they
-              paint underneath; progressively more offset + fainter for a soft fan.
-              On tablet globals.css recolours all four to thin low-contrast paper
-              edges. Desktop is unchanged (only the two base `md:block` layers). */}
+          {/* Stacked paper layers are hidden on mobile and paint behind the active
+              card only at md+. They peek toward stackPeekSide (the outer edge). */}
           <div
             className={`fq-stack-layer fq-stack-tablet absolute inset-0 translate-y-[7px] rounded-none bg-card dark:bg-muted border border-muted-foreground/30 pointer-events-none ${stackPeekSide === "right" ? "translate-x-[14px]" : "-translate-x-[14px]"}`}
             style={{ opacity: 0.4 }}
@@ -415,6 +419,8 @@ export const QuranSafha = ({
                       <QuranLine
                         key={item.lineKey}
                         onWordClicked={wordClicked}
+                        onWordLongPressed={wordLongPressed}
+                        isOverlayMode={isOverlayMode}
                         words={activeLines[item.lineKey]}
                         marks={marks ?? {}}
                         suppressInlineHeaderForSurahId={item.suppressSurahId}
@@ -438,4 +444,3 @@ export const QuranSafha = ({
     </>
   );
 };
-

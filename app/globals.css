@@ -26,21 +26,22 @@
     --radius: 0.5rem;
     --surah-frame-line: hsl(39 35% 25%);
     --surah-frame-gold: #cdad80;
-    /* Light theme — a MODERN, neutral reading interface (Apple Books / Kindle
-       feel), deliberately NOT the traditional gold Mushaf. Almost-white paper,
-       cool soft shadows, and warm-GRAY ornaments — no gold/bronze/beige anywhere.
-       Consumed only inside the tablet reader scope (1024–1366 block). */
-    --mushaf-paper: #fcfbfa;
-    --mushaf-paper-highlight: rgba(255, 255, 255, 0.9);
-    --mushaf-paper-shadow: rgba(45, 50, 58, 0.06);
-    --mushaf-edge: rgba(45, 50, 58, 0.11);
-    --mushaf-gutter-dark: rgba(28, 31, 36, 0.22);
-    --mushaf-gutter-soft: rgba(28, 31, 36, 0.08);
+    /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
+       the traditional gold Mushaf. Near-white paper and neutral gray ornaments;
+       no gold, bronze, beige, or warm-gray tint. */
+    --mushaf-paper: #fdfdfc;
+    --mushaf-paper-highlight: rgba(255, 255, 255, 0.72);
+    --mushaf-paper-shadow: rgba(36, 48, 60, 0.05);
+    --mushaf-paper-lift: rgba(255, 255, 255, 0.34);
+    --mushaf-paper-dip: rgba(38, 50, 62, 0.018);
+    --mushaf-edge: rgba(42, 54, 66, 0.1);
+    --mushaf-gutter-dark: rgba(28, 38, 48, 0.2);
+    --mushaf-gutter-soft: rgba(28, 38, 48, 0.065);
     --mushaf-gutter-highlight: rgba(255, 255, 255, 0.4);
-    --mushaf-text: #171717;
-    --mushaf-ornament: #7c7c78;
-    --mushaf-metadata: #8a8a86;
-    --viewer-background: #f2f4f6;
+    --mushaf-text: #17191c;
+    --mushaf-ornament: #737b83;
+    --mushaf-metadata: #818992;
+    --viewer-background: #f1f3f6;
   }
 
   .theme-gold {
@@ -72,6 +73,8 @@
     --mushaf-paper: #f6f1e6;
     --mushaf-paper-highlight: rgba(255, 253, 247, 0.8);
     --mushaf-paper-shadow: rgba(70, 52, 24, 0.1);
+    --mushaf-paper-lift: rgba(255, 253, 247, 0.24);
+    --mushaf-paper-dip: rgba(70, 52, 24, 0.025);
     --mushaf-edge: rgba(70, 52, 24, 0.16);
     --mushaf-gutter-dark: rgba(45, 32, 14, 0.26);
     --mushaf-gutter-soft: rgba(45, 32, 14, 0.1);
@@ -110,6 +113,8 @@
     --mushaf-paper: #1f2731;
     --mushaf-paper-highlight: rgba(255, 255, 255, 0.05);
     --mushaf-paper-shadow: rgba(0, 0, 0, 0.4);
+    --mushaf-paper-lift: rgba(255, 255, 255, 0.025);
+    --mushaf-paper-dip: rgba(0, 0, 0, 0.08);
     --mushaf-edge: rgba(0, 0, 0, 0.55);
     --mushaf-gutter-dark: rgba(0, 0, 0, 0.62);
     --mushaf-gutter-soft: rgba(0, 0, 0, 0.28);
@@ -146,6 +151,8 @@
     --mushaf-paper: #1f2731;
     --mushaf-paper-highlight: rgba(255, 255, 255, 0.05);
     --mushaf-paper-shadow: rgba(0, 0, 0, 0.4);
+    --mushaf-paper-lift: rgba(255, 255, 255, 0.025);
+    --mushaf-paper-dip: rgba(0, 0, 0, 0.08);
     --mushaf-edge: rgba(0, 0, 0, 0.55);
     --mushaf-gutter-dark: rgba(0, 0, 0, 0.62);
     --mushaf-gutter-soft: rgba(0, 0, 0, 0.28);
@@ -158,16 +165,22 @@
 }
 
 @layer base {
-  /* Deeper paper-stack layers that only appear in the tablet reader spread.
-     Hidden everywhere by default; the tablet media block reveals them. */
+  /* Deeper paper-stack layers are hidden by default; tablet reveals them. */
   .fq-stack-tablet {
     display: none;
   }
-  /* Swipe carousel neighbor panels (prev/next spreads). Hidden everywhere by
-     default so mobile/desktop lay out only the current panel (strip rests at
-     translateX(0), single-panel fly-off swipe) and never download neighbor
-     page-fonts. The tablet double-view scope reveals them. See ADR 0027. */
+  /* Swipe carousel neighbor panels (prev/next spreads). Both classes hidden
+     by default so mobile/desktop lay out only the current panel (strip rests
+     at translateX(0), single-panel fly-off swipe) and never download neighbor
+     page-fonts. fq-carousel-side = tablet pair-step neighbors (revealed by the
+     tablet double-view scope); fq-mobile-carousel-side = mobile single-step
+     neighbors (revealed by the mobile scope). display:none removes flex children
+     from layout so the effective 3-panel strip and translateX(-100%) rest offset
+     stay correct in whichever scope is active. See ADR 0027. */
   .fq-carousel-side {
+    display: none;
+  }
+  .fq-mobile-carousel-side {
     display: none;
   }
   * {
@@ -255,6 +268,130 @@ body,
       justify-content: center;
       gap: 0.55em;
     }
+  }
+
+  /* ---- Mobile reader: nav overlay + mushaf paper + book stack ------------ */
+  @media (max-width: 767px) {
+    /* Feature 1 — Nav overlay: reader fills full viewport (nav is fixed, out of flow).
+       !important beats the JSX min-h-[…]/pb-4 Tailwind utilities. */
+    .fq-reader-outer {
+      min-height: 100dvh !important;
+      padding-bottom: 0 !important;
+      background-color: var(--viewer-background) !important;
+    }
+    .fq-full-safha > div {
+      height: 100dvh !important;
+    }
+
+    /* Mobile carousel: single-step neighbor panels visible during swipe peek.
+       fq-carousel-side (pair-step tablet neighbors) stay hidden — they have the
+       wrong page content for single-step mobile navigation. */
+    .fq-mobile-carousel-side {
+      display: block;
+    }
+    /* Strip rests at -100% so the current (middle) panel is centered.
+       Works for both 3-panel sets: display:none removes hidden panels from
+       flex layout, so the effective strip is always 3 panels at rest. */
+    .fq-carousel-strip {
+      transform: translateX(-100%);
+    }
+
+    /* Clean printed paper: several nearly imperceptible tonal passes soften the
+       otherwise flat fill. No texture/noise — only broad light and shade. */
+    .fq-spread .fq-safha-card {
+      background-color: var(--mushaf-paper) !important;
+      background-image:
+        radial-gradient(
+          ellipse 85% 42% at 26% 0%,
+          var(--mushaf-paper-lift) 0%,
+          transparent 72%
+        ),
+        radial-gradient(
+          ellipse 70% 48% at 86% 100%,
+          var(--mushaf-paper-dip) 0%,
+          transparent 76%
+        ),
+        linear-gradient(
+          112deg,
+          transparent 0%,
+          var(--mushaf-paper-lift) 48%,
+          var(--mushaf-paper-dip) 100%
+        );
+      box-shadow:
+        inset 0 0 0 1px var(--mushaf-edge),
+        inset 0 1px 0 var(--mushaf-paper-highlight),
+        inset 0 0 28px var(--mushaf-paper-dip),
+        0 1px 2px var(--mushaf-paper-shadow);
+    }
+
+    /* Lightweight page-side cue: one narrow paint strip, not stacked full-page
+       elements. The existing physical side class comes from the Mushaf pair
+       (odd/right, even/left). It changes no width, position, or text geometry. */
+    .fq-spread .fq-safha-card::after {
+      --fq-stack-stripe: hsl(var(--muted-foreground) / 0.32);
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      width: 8px;
+      z-index: 1;
+      pointer-events: none;
+    }
+    :root.theme-light .fq-spread .fq-safha-card::after {
+      --fq-stack-stripe: hsl(var(--muted-foreground) / 0.62);
+    }
+    :root.theme-dark .fq-spread .fq-safha-card::after {
+      --fq-stack-stripe: hsl(var(--foreground) / 0.5);
+    }
+    .fq-spread .fq-compensate-r > .fq-safha-card::after {
+      right: 0;
+      border-left: 1px solid var(--mushaf-paper-highlight);
+      background-color: var(--mushaf-paper);
+      background-image: repeating-linear-gradient(
+        to left,
+        var(--mushaf-paper) 0 1px,
+        var(--fq-stack-stripe) 1px 2px
+      );
+    }
+    .fq-spread .fq-compensate-l > .fq-safha-card::after {
+      left: 0;
+      border-right: 1px solid var(--mushaf-paper-highlight);
+      background-color: var(--mushaf-paper);
+      background-image: repeating-linear-gradient(
+        to right,
+        var(--mushaf-paper) 0 1px,
+        var(--fq-stack-stripe) 1px 2px
+      );
+    }
+
+    /* Feature 3 — Ink & ornament colours (mirrors tablet). */
+    .fq-spread .fq-qword { color: var(--mushaf-text) !important; }
+    .fq-spread .fq-ayah-end,
+    .fq-spread .fq-ayah-end span {
+      color: var(--mushaf-text) !important;
+      font-size: 0.85em;
+    }
+    .fq-spread .fq-quran-safha .fq-bismillah { color: var(--mushaf-text) !important; }
+    .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-ornament) !important; }
+    .fq-spread .fq-ornament { color: var(--mushaf-ornament) !important; }
+    .fq-spread .fq-safha-surah-glyph { color: var(--mushaf-ornament) !important; }
+    .fq-spread .fq-safha-meta,
+    .fq-spread .fq-safha-footer { color: var(--mushaf-metadata) !important; }
+    .fq-spread { --surah-frame-gold: var(--mushaf-ornament); }
+
+    /* Dark theme — metadata, footer, ornaments → mushaf-text (off-white, not gold). */
+    :root.theme-dark .fq-spread .fq-safha-meta,
+    :root.theme-dark .fq-spread .fq-safha-footer,
+    :root.theme-dark .fq-spread .fq-safha-surah-glyph,
+    :root.theme-dark .fq-spread .fq-quran-safha .fq-inline-surah,
+    :root.theme-dark .fq-spread .fq-ornament { color: var(--mushaf-text) !important; }
+    :root.theme-dark .fq-spread { --surah-frame-line: var(--mushaf-ornament); }
+
+    /* Light theme — neutralize warm frame line. */
+    :root.theme-light .fq-spread { --surah-frame-line: #4a4b4e; }
+
+    /* Gold theme — surah name follows ink, not gold. */
+    :root.theme-gold .fq-spread .fq-safha-surah-glyph,
+    :root.theme-gold .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-text) !important; }
   }
 
   /* Desktop spread (md+): both facing pages fill the same fixed parent height

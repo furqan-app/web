@@ -158,10 +158,12 @@ export const ReaderPage = async ({
   const nextPairPageNum = leftPageId === TOTAL_PAGES ? 1 : leftPageId + 1;
   const prevPairPageNum = rightPageId === 1 ? TOTAL_PAGES - 1 : rightPageId - 2;
 
-  // Three panels for the tablet double-view carousel. SEQUENTIAL (not Promise.all)
-  // so peak concurrent DB connections per static-build worker stay bounded (ADR 0013).
-  // Neighbors are CSS-hidden off tablet, so mobile/desktop pay only the (build-time)
-  // fetch + serialized HTML, never client rendering or font downloads.
+  // Five panels for the carousel strip. SEQUENTIAL (not Promise.all) so peak
+  // concurrent DB connections per static-build worker stay bounded (ADR 0013).
+  // fq-carousel-side = pair-step tablet neighbors (CSS-hidden off tablet double-view).
+  // fq-mobile-carousel-side = single-step mobile neighbors (CSS-hidden off mobile).
+  // display:none removes hidden panels from flex layout, so the effective strip is
+  // always 3 panels in carousel mode regardless of which set is active. See ADR 0027.
   const currentPanel = await buildPanel({
     anchorPage: pageNumber,
     locale,
@@ -188,6 +190,26 @@ export const ReaderPage = async ({
     viewingOwnerName,
     sideClass: "fq-carousel-side",
   });
+  // Mobile-specific single-step neighbors so the swipe animation reveals the
+  // correct adjacent page (not the pair-step neighbor two pages away).
+  const nextMobilePanel = await buildPanel({
+    anchorPage: nextPageNum,
+    locale,
+    basePath,
+    isRTL,
+    grantId,
+    viewingOwnerName,
+    sideClass: "fq-mobile-carousel-side",
+  });
+  const prevMobilePanel = await buildPanel({
+    anchorPage: prevPageNum,
+    locale,
+    basePath,
+    isRTL,
+    grantId,
+    viewingOwnerName,
+    sideClass: "fq-mobile-carousel-side",
+  });
 
   // The currently-displayed page's first verse — where the header "listen" button
   // starts from. pageNumber is whichever current-pair member was requested.
@@ -202,7 +224,13 @@ export const ReaderPage = async ({
   // display:block loads only when a glyph is rendered). Only the current page is
   // <link rel=preload>-ed — neighbors load lazily when the tablet scope reveals them.
   const allPageIds = Array.from(
-    new Set<number>([...currentPanel.pageIds, ...nextPanel.pageIds, ...prevPanel.pageIds]),
+    new Set<number>([
+      ...currentPanel.pageIds,
+      ...nextPanel.pageIds,
+      ...prevPanel.pageIds,
+      ...nextMobilePanel.pageIds,
+      ...prevMobilePanel.pageIds,
+    ]),
   );
 
   return (
@@ -231,6 +259,8 @@ export const ReaderPage = async ({
         prevPanel={prevPanel.node}
         currentPanel={currentPanel.node}
         nextPanel={nextPanel.node}
+        prevMobilePanel={prevMobilePanel.node}
+        nextMobilePanel={nextMobilePanel.node}
       />
     </>
   );
