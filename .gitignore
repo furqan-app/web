@@ -66,3 +66,7 @@ next-env.d.ts
 
 # claude local settings
 settings.local.json
+
+# mujaz-mode local stats (machine-local, not shared)
+.claude/.mujaz-stats.json
+.claude/.mujaz-off
