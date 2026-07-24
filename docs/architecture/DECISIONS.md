@@ -20,7 +20,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 ## Font System
 
-**Decision:** Each Quran page inlines `@font-face` rules for both pages in the current pair (`quran-p{rightPageId}` and `quran-p{leftPageId}`), pointing to `/fonts/v1/ttf/p{id}.ttf`. Only the current page's font gets a `<link rel="preload">` — the pair partner's font is not preloaded. The `@font-face` rules are injected via `FontFaceInjector` (`"use client"`) rather than inline in `ReaderPage` — see [ADR 0020](adr/0020-client-component-for-inline-style-injection.md). Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
+**Decision:** Each Quran page inlines `@font-face` rules for both pages in the current pair (`quran-p{rightPageId}` and `quran-p{leftPageId}`), pointing to `/fonts/v1/woff2/p{id}.woff2`. Only the current page's font gets a `<link rel="preload">` — the pair partner's font is not preloaded. The `@font-face` rules are injected via `FontFaceInjector` (`"use client"`) rather than inline in `ReaderPage` — see [ADR 0020](adr/0020-client-component-for-inline-style-injection.md). Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
 
 **Rationale:** Loading all 604 page fonts globally would be prohibitively large. Inlining per-page means only the current page's font is loaded.
 
@@ -541,7 +541,7 @@ amends ADR 0024).
 
 ## Tajweed Mushaf Mode
 
-**Decision:** An opt-in reading mode color-codes Quran text by Tajweed rule using per-page COLRv1 (color-glyph) fonts — one font file per Mushaf page (`public/fonts/v4/colrv1/ttf/p{n}.ttf`, ~161MB total, committed to git same as the existing non-colored per-page font). No new schema/seed work: the font pairs with the **already-seeded, previously-unused** `Word.code_v2` column. See [ADR 0023](adr/0023-tajweed-mushaf-mode.md) for why `code_v2` — not a new column — is correct.
+**Decision:** An opt-in reading mode color-codes Quran text by Tajweed rule using per-page COLRv1 (color-glyph) fonts — one font file per Mushaf page (`public/fonts/v4/colrv1/woff2/p{n}.woff2`, ~51MB total, committed to git same as the existing non-colored per-page font). No new schema/seed work: the font pairs with the **already-seeded, previously-unused** `Word.code_v2` column. See [ADR 0023](adr/0023-tajweed-mushaf-mode.md) for why `code_v2` — not a new column — is correct.
 
 **Constraints:**
 - Font/glyph pairing is mode-gated, not a free choice: `tajweedMode=false` → render `word.code_v1` with font `quran-p{page}`; `tajweedMode=true` → render `word.code_v2` with font `quran-p{page}-tajweed`. Never mix `code_v1` with the tajweed font or `code_v2` with the base font.
