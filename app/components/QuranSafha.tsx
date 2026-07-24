@@ -21,11 +21,6 @@ import { PageMetadataWithChapter, VerseForMark, WordWithLayouts } from "../types
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 
-// Populated by QuranSafha when a page font finishes loading. Module-level so it
-// survives navigation remounts — the new QuranSafha instance for the same page
-// (or its carousel neighbor) can read the cached value synchronously during render.
-const loadedFonts = new Set<string>();
-
 // worst-case line-width/font-size ratio (p2, 2% margin); locks card minWidth
 // to font scale so it's stable from first render, independent of font metrics
 const QURAN_LINE_WIDTH_RATIO = 14.7;
@@ -127,25 +122,34 @@ export const QuranSafha = ({
   // See docs/plans/fix-quran-page-font-loading.md.
   const pageFontFamily = getPageFontFamily(page, tajweedMode);
   const fontSpec = `1px "${pageFontFamily}"`;
-  // Lazy initializer reads loadedFonts (module-level) synchronously during render.
-  // Hydration-safe: loadedFonts is always empty on the first page load because
-  // useEffect (which populates it) has not run yet — both server and client start
-  // false, no Suspense boundary mismatch. On swipe navigation (client-only remount),
-  // the carousel neighbor's useEffect has already added its fontSpec to loadedFonts,
-  // so the new QuranSafha instance starts fontReady=true immediately — no skeleton flash.
-  const [fontReady, setFontReady] = useState(() => loadedFonts.has(fontSpec));
+  // `fontReady` is authoritative via document.fonts.check(): true ONLY when this
+  // page's font is currently loaded and paint-ready. This is load-bearing for the
+  // persistent pager (ADR 0028): FontFaceInjector keeps @font-face rules only for
+  // the current window, so a page's font rule is removed when it leaves the window
+  // and re-injected (re-downloaded) when it returns. A module-level "already loaded"
+  // Set goes stale here — it reports ready while the re-injected font is still
+  // downloading, so font-display:block renders the text invisible with NO skeleton:
+  // a blank page. check() reports the true state, so the skeleton shows until the
+  // glyphs can actually paint.
+  //
+  // Starts false so SSR and hydration match (no Suspense mismatch); the effect syncs
+  // it on mount and on every `loadingdone`. The persistent pager doesn't remount
+  // panels on swipe (it moves them), so a ready page never flashes back to skeleton.
+  const [fontReady, setFontReady] = useState(false);
   useEffect(() => {
-    if (loadedFonts.has(fontSpec)) {
-      setFontReady(true);
-      return;
-    }
-    setFontReady(false);
     let cancelled = false;
-    document.fonts.load(fontSpec).then(() => {
-      loadedFonts.add(fontSpec);
-      if (!cancelled) setFontReady(true);
-    });
-    return () => { cancelled = true; };
+    const sync = () => {
+      if (!cancelled) setFontReady(document.fonts.check(fontSpec));
+    };
+    sync();
+    if (!document.fonts.check(fontSpec)) {
+      document.fonts.load(fontSpec).then(sync).catch(() => {});
+    }
+    document.fonts.addEventListener("loadingdone", sync);
+    return () => {
+      cancelled = true;
+      document.fonts.removeEventListener("loadingdone", sync);
+    };
   }, [fontSpec]);
 
   // Shared selection logic for both click (non-overlay) and long-press (overlay).

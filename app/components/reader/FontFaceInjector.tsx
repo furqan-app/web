@@ -1,15 +1,35 @@
 "use client";
 
+import { useRef } from "react";
 import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
 
 type Props = {
   pageIds: number[];
 };
 
+// How many recently-used page fonts to keep @font-face rules for. The persistent
+// pager (ADR 0028) shifts a small window across pages; if the injector dropped a
+// page's rule the moment it left the window, swiping back would re-download the
+// font — a brief not-ready state (skeleton flash) on every revisit. Keeping a
+// rolling LRU set means back-and-forth swiping never re-downloads. ~24 base fonts
+// (~4 MB) is a safe ceiling vs. loading all 604 (which DECISIONS.md forbids).
+const MAX_KEPT = 24;
+
 export function FontFaceInjector({ pageIds }: Props) {
   const { tajweedMode } = useQuranTajweed();
 
-  const baseRules = pageIds
+  // LRU of page ids we've injected — current window first, capped at MAX_KEPT.
+  const keptRef = useRef<number[]>([]);
+  let kept = keptRef.current;
+  for (const id of pageIds) {
+    kept = kept.filter((x) => x !== id);
+    kept.unshift(id);
+  }
+  if (kept.length > MAX_KEPT) kept = kept.slice(0, MAX_KEPT);
+  keptRef.current = kept;
+  const injectedIds = [...kept].sort((a, b) => a - b);
+
+  const baseRules = injectedIds
     .map(
       (id) => `
 @font-face {
@@ -27,7 +47,7 @@ export function FontFaceInjector({ pageIds }: Props) {
   // Only injected (and therefore only fetched) when Tajweed mode is on — the
   // COLRv1 fonts are ~9-10x heavier than the base font. See ADR 0023.
   const tajweedRules = tajweedMode
-    ? pageIds
+    ? injectedIds
         .map(
           (id) => `
 @font-face {
