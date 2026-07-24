@@ -380,7 +380,19 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       const startChapterId = parseChapterIdFromVerseKey(startVerseKey);
       if (startChapterId === currentChapterIdRef.current) {
         const startTiming = verseTimingsRef.current.find((vt) => vt.verseKey === startVerseKey);
-        if (startTiming) scheduleSeek(startTiming.timestampFrom, pauseMs);
+        if (startTiming) {
+          // Must update currentVerseKeyRef (and mirror it into state/page-follow)
+          // here, not just seek the audio — handleTimeUpdate reads this ref as
+          // previousVerseKey on the next tick. Left stale at the stop verse,
+          // isStopVerse would evaluate true again immediately, re-triggering
+          // range-repeat/stop instead of resuming forward playback. Mirrors
+          // loadChapter's cross-chapter reload path (which sets this correctly
+          // already). See docs/plans/recitation-playback.md Addendum 7.
+          currentVerseKeyRef.current = startVerseKey;
+          setCurrentVerseKey(startVerseKey);
+          followPage(startVerseKey);
+          scheduleSeek(startTiming.timestampFrom, pauseMs);
+        }
         return;
       }
 
@@ -402,7 +414,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         reload();
       }
     },
-    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop],
+    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, followPage],
   );
 
   const handleTimeUpdate = useCallback(() => {
