@@ -34,7 +34,7 @@ export function FontFaceInjector({ pageIds }: Props) {
       (id) => `
 @font-face {
   font-family: 'quran-p${id}';
-  src: url('/fonts/v1/ttf/p${id}.ttf') format('truetype');
+  src: url('/fonts/v1/woff2/p${id}.woff2') format('woff2');
   font-display: block;
 }`
     )
@@ -52,7 +52,7 @@ export function FontFaceInjector({ pageIds }: Props) {
           (id) => `
 @font-face {
   font-family: 'quran-p${id}-tajweed';
-  src: url('/fonts/v4/colrv1/ttf/p${id}.ttf') format('truetype');
+  src: url('/fonts/v4/colrv1/woff2/p${id}.woff2') format('woff2');
   font-display: block;
 }
 @font-palette-values --Light {

@@ -22,7 +22,7 @@ const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
 
 const isPageFont = (url: URL) =>
-  /^\/fonts\/v1\/ttf\/p[0-9]+\.ttf$/.test(url.pathname);
+  /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -52,7 +52,7 @@ serwist.addEventListeners();
 type PrecacheMessage = { type: "START_PRECACHE"; locale: "ar" | "en" };
 
 const pageUrl = (locale: string, id: number) => `/${locale}/pages/${id}`;
-const fontUrl = (id: number) => `/fonts/v1/ttf/p${id}.ttf`;
+const fontUrl = (id: number) => `/fonts/v1/woff2/p${id}.woff2`;
 
 async function reportProgress(cached: number) {
   const clients = await self.clients.matchAll({ type: "window" });

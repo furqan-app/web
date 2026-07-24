@@ -344,9 +344,9 @@ export function ReaderPager({
       <RecitationPageSync firstVerseKey={firstVerseKey} />
       <link
         rel="preload"
-        href={`/fonts/v1/ttf/p${pageNumber}.ttf`}
+        href={`/fonts/v1/woff2/p${pageNumber}.woff2`}
         as="font"
-        type="font/ttf"
+        type="font/woff2"
         crossOrigin="anonymous"
       />
       <div
