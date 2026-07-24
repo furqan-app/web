@@ -532,10 +532,10 @@ body,
     /* Swipe carousel (tablet double-view only). Reveal the neighbor spreads and
        rest the 3-panel strip at translateX(-100%) so the CURRENT (middle) panel is
        centered; the two neighbors sit just off-screen on either side, ready to slide
-       in with the drag. QuranSwipeNav only writes an inline transform during an active
-       drag/commit, then clears it to fall back to this base. Gating this in CSS (not
-       JS) means there is no pre-hydration flash and it stays perfectly matched to the
-       carousel condition in JS (view === "double" && useIsTablet). See ADR 0027. */
+       in with the drag. NOTE: these .fq-carousel-* rules are now DEAD — the swipe
+       carousel (QuranSwipeNav) was superseded by ReaderPager (ADR 0028), which uses
+       its own .fq-reader-pager-strip. Kept only to avoid unverified CSS surgery;
+       safe to delete in a dedicated cleanup. Superseded ADR 0027. */
     :root[data-safha-view="double"] .fq-carousel-side {
       display: block;
     }

@@ -18,7 +18,7 @@ export type QuranWordProps = {
   category?: string;
   onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithLayouts) => void;
   // Overlay mode (mobile + tablet reader): long press opens the mark modal;
-  // a short tap bubbles to QuranSwipeNav for the nav toggle.
+  // a short tap bubbles to the ReaderPager strip for the nav toggle.
   isOverlayMode?: boolean;
   onWordLongPressed?: (word: WordWithLayouts) => void;
 };
@@ -62,7 +62,7 @@ export const QuranWord = memo(function QuranWord({
     <div
       ref={wordRefCallback}
       onClick={(e) => {
-        // In overlay mode, a short tap should reach QuranSwipeNav (nav toggle).
+        // In overlay mode, a short tap should reach the ReaderPager strip (nav toggle).
         // Long presses are handled in onTouchEnd with e.preventDefault(), which
         // suppresses this click event — so this handler only fires on short taps.
         if (isOverlayMode) return;

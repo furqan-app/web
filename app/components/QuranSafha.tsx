@@ -177,7 +177,7 @@ export const QuranSafha = ({
     [lines],
   );
 
-  // Prevent click from bubbling to QuranSwipeNav's overlay-toggle handler.
+  // Prevent click from bubbling to the ReaderPager strip's overlay-toggle handler.
   const wordClicked = useCallback(
     (e: React.MouseEvent<HTMLDivElement>, word: WordWithLayouts) => {
       e.stopPropagation();
