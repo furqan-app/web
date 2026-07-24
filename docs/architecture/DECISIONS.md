@@ -337,7 +337,44 @@ main → /cut-release → release/x.y.z → /promote-to-staging → stg → /pro
 
 ---
 
+## Reader Navigation — Persistent Client Pager
+
+**Decision:** The reader navigates between pages with a **persistent client-side pager**, not a
+route change per swipe. `/[locale]/pages/[id]` stays statically generated as the SSR *entry* (deep
+links, SEO, first paint, PWA); once hydrated, swipe/next/prev/recitation-advance call a
+programmatic `goToPage(n)` that moves a small mounted **window** (visible page ±1 on mobile/desktop,
+spread ±1 on tablet double-view) and syncs the URL via `history` — no `router.push`, no remount.
+Page content is served as **immutable slim static JSON** (`public/quran/pages/{n}.json`, ~10×
+smaller than the old RSC), fetched on demand and cached; marks stay the only dynamic layer, applied
+as an overlay. Render model is **windowing first** (reuse existing word components, mount only the
+window), with **event-delegated static markup** documented as an escalation if a real-device
+re-profile misses the target. See [ADR 0028](adr/0028-reader-persistent-pager.md) and
+`docs/plans/reader-persistent-pager.md`.
+
+**Rationale:** Profiling showed each `router.push` swipe deserialized a 2.27 MB RSC payload and
+mounted ~1,478 word components across 10 pages, blocking the main thread ~183 ms on a fast desktop
+(~0.6–1.1 s on mobile) — the reported freeze. The pager removes the remount; slim JSON removes the
+payload; windowing removes the mass mount.
+
+**Constraints:**
+- Keep `/pages/[id]` statically generated — only *subsequent* swipes are client-only; never make the
+  reader route dynamic.
+- Content JSON is a build artifact under `/public`, immutable and Prisma-free at runtime; never bake
+  marks into it.
+- `goToPage` is the single navigation entry point — swipe **and** recitation auto-advance both use
+  it; do not reintroduce `router.push` for in-reader page changes.
+- The window unit is breakpoint-dependent (page vs spread) — do not hardcode single-page.
+- Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
+  spread (ADR 0013) against the pager/window model.
+
+---
+
 ## Swipe Animation — Core Gesture Only
+
+> **SUPERSEDED by "Reader Navigation — Persistent Client Pager" above / [ADR 0028](adr/0028-reader-persistent-pager.md).**
+> The single-slot `router.push`-per-swipe model (and ADR 0027's tablet carousel) is replaced by the
+> persistent pager: navigation no longer changes the route, so the "no adjacent fetches", single-slot,
+> and accepted-post-navigation-flicker items below no longer apply. Retained for history only.
 
 **Decision:** `QuranSwipeNav` is a single-slot wrapper: one `overflow-hidden` outer div with a `stripRef` inner div that holds only the current page content. On drag it translates `stripRef` live. On commit (≥80px threshold) it animates to `translateX(±100%)` over 220ms then calls `router.push(href)`. On sub-threshold release it snaps back. `prefers-reduced-motion` skips the animation and calls `router.push()` directly. No adjacent page prefetching, no `startTransition`, no `router.prefetch()`. A post-navigation flicker (browser compositor artifact) is accepted as a platform limitation; the View Transitions API would address it but requires Safari 18+ and experimental Next.js support — out of scope. ADR 0019 (the original sessionStorage approach) and the three-page strip approach (Addenda 2–8) are both superseded. See Addendum 9.
 
