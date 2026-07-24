@@ -110,11 +110,13 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 
    **Do not** symlink `node_modules`, `.env.local`, or start a dev server here — those steps belong in `/start-fq-task`.
 
+   After creating (or finding) the worktree, resolve its **absolute path** once — `git worktree list | grep furqan-<slug> | awk '{print $1}'` — and use that absolute path (`<abs>` below) for every subsequent file write and command. Never build paths from the relative `../furqan-<slug>` form: it resolves against the shell's cwd, and the Write tool silently creates any missing directories, so a wrong resolution has produced plan files in a stray directory outside the repo.
+
 7. **Write the plan**
-   - Write all plan-phase files into the worktree, not the main repo:
-     - Plan: `../furqan-<slug>/docs/plans/<slug>.md`
-     - ADR (if created in step 4): `../furqan-<slug>/docs/architecture/adr/NNNN-<slug>.md`
-     - DECISIONS.md update (if any): `../furqan-<slug>/docs/architecture/DECISIONS.md`
+   - Write all plan-phase files into the worktree (at its resolved absolute path `<abs>`), not the main repo:
+     - Plan: `<abs>/docs/plans/<slug>.md`
+     - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
+     - DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`
    - Plan content:
      - What we're building / what the bug is
      - Root cause (bugs) or approach (features)
@@ -174,7 +176,7 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 - Do not treat silence as agreement — wait for an explicit confirmation before writing the plan.
 - Do not skip the ADR check — run it explicitly before writing the plan.
 - Do not put the ADR check after the plan — it must come before.
-- Do not write plan files into the main repo working tree — they must go into the worktree created in step 6 (`../furqan-<slug>/docs/...`). Writing to the main repo leaves them absent from the feature branch.
+- Do not write plan files into the main repo working tree — they must go into the worktree created in step 6, addressed by its resolved **absolute** path. Writing to the main repo leaves them absent from the feature branch; writing via the relative `../furqan-<slug>` form has created stray directories outside the repo.
 - Do not create the worktree before the Trello card exists — the branch name is derived from the card.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation (plans, COMPONENTS.md, DECISIONS.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

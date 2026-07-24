@@ -24,6 +24,7 @@ Loads the right context (decisions + standards + plan), then implements the task
 
    **Check for an existing worktree first:**
    - Run `git worktree list` and look for a path ending in `furqan-<slug>`
+   - Resolve the worktree's **absolute path** from that same `git worktree list` output (first column) and use it for every file read/write and command below — the `../furqan-<slug>` forms in this skill are naming conventions, not literal paths to pass to tools. The relative form resolves against the shell's cwd, and the Write tool silently creates missing directories, so a wrong resolution writes files into a stray directory outside the repo (this happened; see /plan-fq-task step 6).
    - If found: read `~/.claude/furqan-worktrees.json` and find the entry for this slug.
      - If the entry has a `port`: print `Worktree running at http://localhost:<port>` and skip to step 2.
      - If the entry has no `port` (worktree was created by `/plan-fq-task` before the dev server step): skip steps 1–3 below and continue from step 4 to assign a port and start the dev server.
