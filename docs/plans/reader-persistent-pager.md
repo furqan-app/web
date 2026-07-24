@@ -2,7 +2,7 @@
 
 **Type:** feature (performance re-architecture)
 **Date:** 2026-07-23
-**Status:** ready-to-implement
+**Status:** implemented
 **Trello:** #137 https://trello.com/c/sEA3hgtz
 **ADR:** [0028](../architecture/adr/0028-reader-persistent-pager.md)
 
@@ -81,9 +81,13 @@ that `QuranSwipeNav`/`QuranSpread` already use. Wrap at ends (page 1 ↔ 604) ex
   JSON** instead of `router.push`.
 - URL sync via `history.replaceState`/`pushState` (see "Decisions"). Deep-link entry hydrates with
   `currentPage = [id]`.
-- Expose `goToPage(n)`; replace the recitation `router.push` in `RecitationContext` with it, and
-  unify the "current reader location" state the recitation code already reads
-  (`readerLocation`/`computeVisiblePageSet`).
+- Recitation "follow the recited page" moves into the pager, which now owns navigation:
+  `RecitationContext` exposes `recitedPage` (derived from `currentVerseKey` via its
+  `versePagesRef`); the pager watches it and calls its own `commitTo(target)` when the recited
+  page leaves the visible window. The old `followPage` `router.push` + `usePathname()` path is
+  removed — `replaceState` navigation never updated `usePathname()`, so that path was dead under
+  the pager (see "Recitation follow" under Decisions Made). The `pageFirstVerseKey` /
+  `RecitationPageSync` bridge is unrelated and stays (mobile play-button start point).
 - **Verify (on a real device):** re-profile a swipe. Longest main-thread task and total blocking
   should collapse (target: no perceptible freeze, <~50 ms blocking on mid-range mobile). If it
   does **not** hit target, proceed to Stage 2b.
@@ -154,6 +158,24 @@ that `QuranSwipeNav`/`QuranSpread` already use. Wrap at ends (page 1 ↔ 604) ex
   if it makes Back feel heavy.
 - **Marks:** remain the dynamic overlay; neighbor marks prefetched.
 - **Fonts:** TTF→WOFF2 + rolling preload (Stage 3).
+- **Recitation follow (pager-owns-follow):** Because the pager navigates via `history.replaceState`,
+  Next's `usePathname()` never updates, so `RecitationContext.followPage` (which read `pathname`
+  and called `router.push`) silently stopped following once the pager landed — the recited page no
+  longer snapped back when the user swiped away. Fix: the context exposes `recitedPage` (the Mushaf
+  page of the recited verse, from its existing `versePagesRef`), and a dedicated `RecitationFollow`
+  leaf watches it and calls the pager's guarded `commitTo` to keep that page in the visible window
+  (single page or double-view pair). The subscription MUST live in that null-rendering leaf, not in
+  `ReaderPager` — the context updates on every recited word (word highlight), so subscribing the
+  pager directly re-renders the whole reader tree per word (flicker + repeated font fetch).
+  The follow navigation MUST be deferred to a microtask, not called inline from the leaf effect:
+  `commitTo` uses `flushSync`, which flushes passive effects synchronously, so the leaf's effect can
+  run *inside* a swipe/arrow commit's `flushSync` while `isCommitting` is still true — an inline
+  `commitTo` there is both guarded-out (so it never retries and never returns) and a nested flush.
+  Follow is gated on `status === "playing"` and skipped mid-drag/commit so it never fights the
+  finger; `commitTo` converges (no-ops once the page is visible). Only the dead `followPage`
+  navigation is removed — the separate `pageFirstVerseKey` / `RecitationPageSync` bridge stays, as
+  the mobile `RecitationPlayButton` reads it for its "listen from here" start point. Navigation
+  ownership stays in one place (the pager).
 
 ## Open verification (do at implementation, not now)
 

@@ -285,14 +285,14 @@ const user = extractUser(request); // { id, email, ... }
 
 ## PWA & Offline Quran Page Caching
 
-**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches all 604 Quran pages for the current locale, plus their per-page fonts, in the background — resuming on later app launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](adr/0014-pwa-offline-architecture.md).
+**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches, in the background, the **slim per-page content JSON** (`public/quran/pages/{n}.json`) + each page's **base WOFF2 font** for all 604 pages — NOT the SSR HTML (ADR 0028): the persistent pager renders any page client-side from that JSON + font once the app shell is loaded, so caching ~2.6 MB HTML ×604 (~1.5 GB) is unnecessary. The pre-cache set is locale-independent (Quran content + fonts; the localized app shell is precached via the Serwist build manifest). Resumes on later launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. Trade-off: an offline *cold* load of a page URL never visited this session lacks its SSR HTML (visited pages are still runtime-cached Cache-First); in-app swiping to any page works offline from the JSON + fonts. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](adr/0014-pwa-offline-architecture.md) and [ADR 0028](adr/0028-reader-persistent-pager.md).
 
 **Constraints:**
 - Never unconditionally pre-cache page fonts for regular web visitors — this would reintroduce the exact problem the per-page font-inlining architecture (Font System decision, above) was built to avoid. The `display-mode: standalone` gate is load-bearing.
 - Do not add offline write-queueing for marks without re-opening ADR 0014 — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers.
-- The pre-cached page/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (reader markup, font logic) — bumping it on every deploy would force ~92MB re-downloads for every installed user on every deploy.
-- Pre-cache only the current locale's 604 pages, not both `ar`/`en` — fonts are locale-independent and cached once regardless; only the thin page shell differs per locale.
-- iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; a ~92MB cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS.
+- The pre-cached JSON/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (content JSON shape, font logic) — bumping it on every deploy would force a full re-download of the page cache for every installed user on every deploy.
+- The pre-cache set is fully locale-independent (slim JSON + base fonts) — do not reintroduce per-locale HTML precaching; the localized app shell comes from the Serwist build manifest.
+- iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; the page cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS. (The JSON+font set is far smaller than the old full-HTML precache, easing this.)
 - The manual `pages-v{N}` version constant lives in `app/sw.ts` (`PAGES_CACHE_VERSION`) — bump it there when reader markup/font logic changes.
 - Serwist is disabled in development (`disable: process.env.NODE_ENV === "development"` in `next.config.mjs`) — `npm run dev` never registers a service worker. To test install/offline behavior, use `npm run build && npm start`.
 
@@ -341,9 +341,11 @@ main → /cut-release → release/x.y.z → /promote-to-staging → stg → /pro
 
 **Decision:** The reader navigates between pages with a **persistent client-side pager**, not a
 route change per swipe. `/[locale]/pages/[id]` stays statically generated as the SSR *entry* (deep
-links, SEO, first paint, PWA); once hydrated, swipe/next/prev/recitation-advance call a
-programmatic `goToPage(n)` that moves a small mounted **window** (visible page ±1 on mobile/desktop,
-spread ±1 on tablet double-view) and syncs the URL via `history` — no `router.push`, no remount.
+links, SEO, first paint, PWA); once hydrated, the client `ReaderPager` owns navigation. It holds a
+persistent `anchor` and moves a small mounted **window** (visible page ±1 on mobile/desktop, spread
+±1 on tablet double-view) via `commitTo` (a `flushSync` anchor-swap + re-center), syncing the URL
+with `history.replaceState` — no `router.push`, no remount. Swipe, the in-spread arrows, and
+recitation-follow all funnel through `commitTo`.
 Page content is served as **immutable slim static JSON** (`public/quran/pages/{n}.json`, ~10×
 smaller than the old RSC), fetched on demand and cached; marks stay the only dynamic layer, applied
 as an overlay. Render model is **windowing first** (reuse existing word components, mount only the
@@ -361,8 +363,17 @@ payload; windowing removes the mass mount.
   reader route dynamic.
 - Content JSON is a build artifact under `/public`, immutable and Prisma-free at runtime; never bake
   marks into it.
-- `goToPage` is the single navigation entry point — swipe **and** recitation auto-advance both use
-  it; do not reintroduce `router.push` for in-reader page changes.
+- `commitTo` is the single in-reader navigation primitive — swipe, arrows, **and** recitation-follow
+  all use it; do not reintroduce `router.push` for in-reader page changes, and do not read
+  `usePathname()` for the current page (`replaceState` never updates it — that is exactly what broke
+  recitation-follow before it was moved into the pager).
+- Recitation-follow: `RecitationContext` exposes `recitedPage`; a dedicated null-rendering
+  `RecitationFollow` leaf watches it and calls the pager's `followTo`. Two invariants: (a) the
+  recitation subscription MUST stay in that leaf, never in `ReaderPager` — the context ticks on every
+  recited word, so subscribing the pager re-renders the whole reader tree per word (flicker + repeated
+  font fetch); (b) `followTo` MUST defer its `commitTo` to a microtask — `commitTo`'s `flushSync`
+  flushes passive effects synchronously, so an inline follow runs mid-commit (guarded out, never
+  retries → never returns) and nests a flush. See ADR 0028 and the plan.
 - The window unit is breakpoint-dependent (page vs spread) — do not hardcode single-page.
 - Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
   spread (ADR 0013) against the pager/window model.
@@ -523,7 +534,7 @@ amends ADR 0024).
 
 ## Recitation Playback
 
-**Decision:** Full-Quran recitation audio, reciter selection, and word-level ("karaoke") highlighting are powered by QDC's audio API, proxied live through new internal routes (`app/api/quran/recitations/...`) rather than seeded into the DB or called directly from the client. QDC serves one audio file **per chapter** (not per page), so a `RecitationContext` mounted once in `app/[locale]/layout.tsx` owns the `<audio>` element and drives page auto-navigation via `router.push` whenever the recited verse's `page_number` falls outside the currently-visible page set (single page, or the pair in double-page view). See [ADR 0021](adr/0021-recitation-playback.md).
+**Decision:** Full-Quran recitation audio, reciter selection, and word-level ("karaoke") highlighting are powered by QDC's audio API, proxied live through new internal routes (`app/api/quran/recitations/...`) rather than seeded into the DB or called directly from the client. QDC serves one audio file **per chapter** (not per page), so a `RecitationContext` mounted once in `app/[locale]/layout.tsx` owns the `<audio>` element. It no longer navigates directly: it publishes `recitedPage` (the recited verse's `page_number`) and the reader's `RecitationFollow` leaf keeps that page in the visible window via the pager (ADR 0028) — the old `router.push`-from-context path was removed because it read `usePathname()`, which the pager's `replaceState` never updates. See [ADR 0021](adr/0021-recitation-playback.md) and [ADR 0028](adr/0028-reader-persistent-pager.md).
 
 **Rationale:** Keeps the Quran DB/seeder untouched (no new schema, no re-seed) while still delivering continuous, page-following playback — reusing `/pages/[id]`'s existing pair-derivation instead of new routing logic. Mounting the context above the reader's route tree is what lets playback survive both page navigation (auto-advance) and leaving the reader entirely (background mini-player).
 
@@ -531,7 +542,7 @@ amends ADR 0024).
 - QDC is now a **runtime** dependency, not just a seed-time one (previously only `scripts/quran-seed/` called it at build time) — if QDC is down, playback breaks, not just re-seeding.
 - Word-level highlight updates use a direct DOM ref registry, not React state/re-renders down the `QuranSafha`/`QuranWord` tree — `timeupdate` fires ~4×/second and re-rendering the full word list at that rate is a real perf risk. Do not copy this pattern for lower-frequency UI; the existing URL-param-driven `highlight.ts` approach remains the norm elsewhere.
 - Auto-advance always navigates by exact target page number (`router.push(`${basePath}/${versePageNumber}`)`) — never by the locale-flipped `next`/`prev` href logic (`ReaderPage.tsx`'s `getNavigationHref`), which encodes *visual* swipe direction, not reading-order page sequence.
-- Manual navigation (arrows/swipe/sidebar) during playback does **not** pause or sync with audio — audio keeps running on its own timeline and may auto-navigate again once the recited verse leaves the manually-viewed page. Do not add logic that pauses playback on manual nav; this was explicitly decided against.
+- Manual navigation (arrows/swipe/sidebar) during playback does **not** pause audio — playback keeps running on its own timeline. Under the pager (ADR 0028), swiping away while playing snaps back to the recited page (the `RecitationFollow` leaf pulls the visible window back), so you effectively cannot browse away mid-playback. Do not add logic that pauses playback on manual nav; this was explicitly decided against. (If free browsing during playback is wanted later, change the follow to trigger only when `recitedPage` *advances*, not on every anchor change — a known, deliberately-deferred trade-off.)
 - ~~Chapter-end stops playback (no auto-continue into the next surah) — do not add cross-chapter auto-continue without revisiting this decision.~~ **Superseded 2026-07-16** — cross-chapter chaining was added to support `stopPoint: "hizb" | "juz" | "none"` (and to correctly fix `"page"` when a page spans two chapters). See ADR 0021 Addendum (2026-07-16) and `docs/plans/recitation-playback.md` Addendum 5.
 - Recitation is available on both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — any new recitation UI/context must not assume it's only reachable from the self-reader route tree.
 - The QDC integration itself sits behind a `RecitationProvider` adapter (`app/lib/recitation/provider.ts` interface, `qdc-provider.ts` implementation) rather than being inlined in the route handlers — `app/lib/recitation/` is the established location for server-only third-party integrations (distinct from `app/providers/`, which is React context providers, and `app/server/actions/`, which is Next.js server actions). The adapter throws `RecitationProviderError` on fetch failure and returns `null` for "valid response, nothing found" (e.g. no audio for a reciter/chapter) — routes map throw → `502`, `null` → `404`. No provider registry/factory exists; add one only when a second provider is real.
