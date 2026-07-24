@@ -24,6 +24,10 @@ const isSelfReaderPage = (url: URL) =>
 const isPageFont = (url: URL) =>
   /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
+// Static per-page content JSON the pager fetches (ADR 0028) — immutable.
+const isPageJson = (url: URL) =>
+  /^\/quran\/pages\/[0-9]+\.json$/.test(url.pathname);
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
@@ -40,6 +44,10 @@ const serwist = new Serwist({
       matcher: ({ url }) => isPageFont(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
+    {
+      matcher: ({ url }) => isPageJson(url),
+      handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
+    },
     ...defaultCache,
   ],
 });
@@ -53,6 +61,7 @@ type PrecacheMessage = { type: "START_PRECACHE"; locale: "ar" | "en" };
 
 const pageUrl = (locale: string, id: number) => `/${locale}/pages/${id}`;
 const fontUrl = (id: number) => `/fonts/v1/woff2/p${id}.woff2`;
+const jsonUrl = (id: number) => `/quran/pages/${id}.json`;
 
 async function reportProgress(cached: number) {
   const clients = await self.clients.matchAll({ type: "window" });
@@ -72,6 +81,7 @@ async function precacheAllPages(locale: string) {
   for (let id = 1; id <= TOTAL_PAGES; id++) {
     const pageReq = new Request(pageUrl(locale, id));
     const fontReq = new Request(fontUrl(id));
+    const jsonReq = new Request(jsonUrl(id));
 
     if (!(await cache.match(pageReq))) {
       const response = await fetch(pageReq);
@@ -80,6 +90,11 @@ async function precacheAllPages(locale: string) {
     if (!(await cache.match(fontReq))) {
       const response = await fetch(fontReq);
       if (response.ok) await cache.put(fontReq, response);
+    }
+    // The pager fetches this JSON to render neighbors while swiping offline.
+    if (!(await cache.match(jsonReq))) {
+      const response = await fetch(jsonReq);
+      if (response.ok) await cache.put(jsonReq, response);
     }
 
     cached++;
