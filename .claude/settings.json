@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "type": "command", "command": "node .claude/hooks/mujaz-mode.js" }
+    ],
+    "UserPromptSubmit": [
+      { "type": "command", "command": "node .claude/hooks/mujaz-mode.js" }
+    ],
+    "Stop": [
+      { "type": "command", "command": "node .claude/hooks/mujaz-stats.js" }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/hooks/mujaz-statusline.sh"
+  }
+}
