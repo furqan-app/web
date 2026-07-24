@@ -2,7 +2,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, Serwist } from "serwist";
+import { CacheFirst, NetworkFirst, Serwist } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -30,12 +30,16 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
-    // Quran content is immutable (Static Generation Strategy decision) —
-    // once cached, never re-validated against the network.
+    // Reader-page HTML also carries the app shell (nav, layout, feature
+    // code), which is NOT immutable — NetworkFirst so online visits always
+    // get the current deploy; the cache here only backstops offline reads
+    // (see ADR 0014 Addendum 1).
     {
       matcher: ({ url }) => isSelfReaderPage(url),
-      handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
+      handler: new NetworkFirst({ cacheName: PAGES_CACHE_NAME }),
     },
+    // Page fonts are genuinely immutable (Static Generation Strategy
+    // decision) — once cached, never re-validated against the network.
     {
       matcher: ({ url }) => isPageFont(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
