@@ -35,7 +35,18 @@ function groupBy(arr, key) {
 async function getPageWords(prisma, page) {
   const [words, pageMetadata] = await Promise.all([
     prisma.word.findMany({
-      include: {
+      // Slim word projection — MUST match the `select` in app/hooks/get-page-words.ts.
+      // Unused word text/index fields are dropped from the static JSON (ADR 0028).
+      select: {
+        audio_url: true,
+        verse_key: true,
+        location: true,
+        code_v1: true,
+        code_v2: true,
+        qpc_uthmani_hafs: true,
+        char_type_name: true,
+        page_number: true,
+        line_number: true,
         verse: {
           select: {
             verse_key: true,
@@ -43,7 +54,10 @@ async function getPageWords(prisma, page) {
             chapter: { select: { verses_count: true } },
           },
         },
-        mushafLayouts: { where: { mushaf_id: { in: LAYOUT_MUSHAF_IDS } } },
+        mushafLayouts: {
+          where: { mushaf_id: { in: LAYOUT_MUSHAF_IDS } },
+          select: { mushaf_id: true, line_number: true },
+        },
       },
       where: { page_number: page },
       orderBy: [{ verse_id: "asc" }, { position: "asc" }],

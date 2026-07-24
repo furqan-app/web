@@ -15,11 +15,22 @@ export type PageWords = {
 export const getPageWords = async (page: number): Promise<PageWords> => {
   const [words, pageMetadata] = await Promise.all([
     quranPrisma.word.findMany({
-      include: {
-        // Slim nested verse: only the fields the reader + MarkModal read. The full
-        // verse+chapter was dropped here — it was ~1,478× duplicated per page yet
-        // unused, dominating the RSC payload (ADR 0028). Keep in sync with
-        // WordWithVerse in app/types/prisma.ts.
+      // Slim word projection: only the fields the reader + MarkModal render. The
+      // heavy unused fields (`text_uthmani`, `text`) and query-only fields (`id`,
+      // `position`, `verse_id`) are dropped from the payload — they were dead weight
+      // in the static per-page JSON (ADR 0028). Keep in sync with WordWithVerse in
+      // app/types/prisma.ts and scripts/quran-json/generate.js. `orderBy` may still
+      // reference `verse_id`/`position` even though they are not selected.
+      select: {
+        audio_url: true,
+        verse_key: true,
+        location: true,
+        code_v1: true,
+        code_v2: true,
+        qpc_uthmani_hafs: true,
+        char_type_name: true,
+        page_number: true,
+        line_number: true,
         verse: {
           select: {
             verse_key: true,
@@ -29,6 +40,7 @@ export const getPageWords = async (page: number): Promise<PageWords> => {
         },
         mushafLayouts: {
           where: { mushaf_id: { in: LAYOUT_MUSHAF_IDS } },
+          select: { mushaf_id: true, line_number: true },
         },
       },
       where: {
