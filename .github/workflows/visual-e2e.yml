@@ -5,6 +5,15 @@ name: Visual e2e tests
 
 on:
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - ".claude/**"
+      - "**/*.md"
+      - ".mcp.json"
+      - ".mcp.json.example"
+      - "furqan-workflow.excalidraw"
+      - ".eslintrc.json"
+      - "tsconfig.json"
 
 permissions:
   contents: write
