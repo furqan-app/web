@@ -13,6 +13,7 @@ import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
+import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
@@ -259,6 +260,28 @@ export function ReaderPager({
     [nextAnchor, prevAnchor, commitTo],
   );
 
+  // Follow target for <RecitationFollow>. The recitation subscription lives in that
+  // leaf so this pager never re-renders on a recited-word tick; the leaf calls this
+  // stable callback when the recited page leaves the visible window.
+  //
+  // Deferred to a microtask, NOT run inline: the leaf's follow effect can fire
+  // synchronously INSIDE commitTo's `flushSync` (which flushes passive effects), at
+  // which point `isCommitting` is still true (it clears on the next line) and a
+  // direct commitTo would nest one flushSync inside another. A microtask runs after
+  // the outer flush unwinds, so the guards read final state and the commit is a
+  // clean top-level flush. Skipped mid drag/commit so it never yanks the page from
+  // under the finger; the next recitedPage/anchor change re-checks. commitTo
+  // converges — once the recited page is visible the leaf stops calling this.
+  const followTo = useCallback(
+    (target: number) => {
+      queueMicrotask(() => {
+        if (isDragging.current || isCommitting.current) return;
+        commitTo(target);
+      });
+    },
+    [commitTo],
+  );
+
   // Kept identity-stable so memo'd Panels don't re-render (and therefore aren't
   // torn down) when the keyed window shifts — the load-bearing piece of the
   // no-flicker recenter. A ref holds the latest impl (fresh nextAnchor/prevAnchor).
@@ -342,6 +365,7 @@ export function ReaderPager({
     <>
       <FontFaceInjector pageIds={allPageIds} />
       <RecitationPageSync firstVerseKey={firstVerseKey} />
+      <RecitationFollow anchor={pageNumber} isDouble={isDouble} onFollow={followTo} />
       <link
         rel="preload"
         href={`/fonts/v1/woff2/p${pageNumber}.woff2`}
