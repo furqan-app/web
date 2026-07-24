@@ -360,3 +360,37 @@ An Opus `/review-fq-work` pass before shipping found one critical bug and severa
 - `messages/{en,ar}.json`'s `recitation.play` key had no remaining consumer after the CTA was removed — pruned manually from both files (an Opus `/review-fq-work` pass flagged it; `npm run extract-translations` only adds new keys, it doesn't prune orphaned ones).
 - Verified live in the browser (Playwright): clicked a word → MarkModal → "Play from here" → playback started directly (player bar showed loading → "Pause"/playing, reciter name, advancing verse key) with no settings sheet ever appearing. Separately confirmed the gear icon on `RecitationPlayerBar` still opens `RecitationSettingsSheet` normally, with no orphaned "Play" button at the bottom.
 - Pre-existing, unrelated environment gap found during verification: `cmdk` and `@radix-ui/react-popover` (added to `package.json`/`package-lock.json` by Addendum 5b) were never actually installed into `node_modules`, breaking the dev server (`Module not found`) for anyone whose `node_modules` predates that addendum. Fixed by running `npm install` in the main repo (no manifest changes — packages were already locked, just not installed).
+
+## Addendum 7: Fix whole-range repeat never actually looping (Trello #121)
+
+**Date:** 2026-07-24
+**Status:** implemented
+
+**Problem:** "Repeat whole range" doesn't repeat — playback reaches the end of the range and stops, even with `rangeRepeatCount > 1` and `perAyahRepeatCount` behaving correctly (confirmed with user; per-ayah repeat is not affected).
+
+**Root cause:** `seekToRangeStart`'s same-chapter branch (`app/contexts/RecitationContext.tsx`, the early-return path guarded by `startChapterId === currentChapterIdRef.current`) seeks `audio.currentTime` back to `startVerseKey` via `scheduleSeek`, but never updates `currentVerseKeyRef.current`. That ref is read as `previousVerseKey` on the next `handleTimeUpdate` tick. Left stale at the stop verse, `isStopVerse` (`previousVerseKey === stopVerseKeyRef.current`) evaluates true again on the very next tick — even though the audio has actually jumped back to the range start — so the code re-enters "reached the stop verse" handling instead of resuming forward playback. This burns through `rangeRepeatsDoneRef` almost immediately across a handful of ticks (timeupdate fires several times/second) and calls `stop()`, all within a fraction of a second. The user never sees a visible replay — just a stop right as the range ends.
+
+This only affects the **same-chapter** seek-back path. The cross-chapter reload path (`loadChapter`, used when the range's start verse is in an earlier chapter than the one currently loaded — e.g. mid-chain juz repeat) already sets `currentVerseKeyRef.current = targetVerseKey` (line 334) and is unaffected — which is why the one cross-chapter test case verified in Addendum 5 passed, while the far more common same-chapter case (`"surah"`, or any `"page"`/`"rub"`/`"hizb"`/`"juz"` range that doesn't cross a surah boundary) was silently broken.
+
+**Fix:** In `seekToRangeStart`'s same-chapter branch, once `startTiming` is found, set `currentVerseKeyRef.current = startVerseKey`, call `setCurrentVerseKey(startVerseKey)`, and call `followPage(startVerseKey)` — before calling `scheduleSeek` — mirroring exactly what `loadChapter` already does on the cross-chapter path.
+
+**Verified test case:** `stopPoint: "surah"`, `rangeRepeatCount: 2`, start `1:1` (Al-Fatiha, single chapter, 7 verses). Playback reaches `1:7` (the stop verse) → `isStopVerse` true → range not exhausted → `seekToRangeStart` seeks back to `1:1` and now also sets `currentVerseKeyRef.current = "1:1"`. Next tick: `activeTiming.verseKey` is `1:1` (or wherever playback actually is), `previousVerseKey` is now `"1:1"` too — `isStopVerse` (`"1:1" === "1:7"`) is false, so playback proceeds normally forward through `1:2`, `1:3`, … `1:7` again. On reaching `1:7` the second time, range-repeats exhausted → `stop()`. Matches the confirmed-good per-ayah-repeat behavior pattern (which already updates this ref correctly on every normal verse advance).
+
+**Files to Change:**
+- `app/contexts/RecitationContext.tsx` — `seekToRangeStart`'s same-chapter branch: set `currentVerseKeyRef.current`/`setCurrentVerseKey`/`followPage` for `startVerseKey` before `scheduleSeek`.
+
+**Constraints:**
+- Do not touch the cross-chapter branch (`loadChapter` call) — it already handles this correctly.
+- Do not change `scheduleSeek`, `handleTimeUpdate`, or `decideChapterEnd` — the bug is isolated to the missing ref update in `seekToRangeStart`.
+
+**What NOT to Do:**
+- None known.
+
+**Decisions Made:**
+- Root-caused and confirmed with user 2026-07-24: bug is isolated to `seekToRangeStart`'s same-chapter branch not updating `currentVerseKeyRef.current`, not a deeper issue in the repeat-count/decision-tree logic itself.
+
+### Implementation Notes (2026-07-24)
+
+- Verified live in the browser (Playwright) against the dev server, not just by reading the code: set `recitationSettings` in `localStorage` to `{ stopPoint: "surah", rangeRepeatCount: 2, perAyahRepeatCount: 1 }`, started playback at `1:1` (Al-Fatiha, page 1), and seeked near the end of the chapter's audio to reach the natural `"ended"` event quickly. Temporarily added `console.log` calls in `handleChapterEnded` to observe the decision live, confirmed the fix, then removed them before committing — no debug logging shipped.
+- Console output confirmed the exact fix behavior: first `"ended"` → `{action: "repeat-range"}` (`rangeRepeatsDone: 0 → 1`), audio audibly restarted from the beginning and played the whole range forward again; second `"ended"` → `{action: "stop"}` (`rangeRepeatsDone: 1`, target `2`, exhausted). Before the fix, the same setup stopped after the first pass.
+- This worktree needed `app/generated/{quran-client,app-client}` symlinked from the main repo (git-ignored build artifact, per the Database Split decision) since it isn't regenerated automatically when a worktree is created — the dev server otherwise 500s with `Module not found: Can't resolve '@/app/generated/quran-client'`.
