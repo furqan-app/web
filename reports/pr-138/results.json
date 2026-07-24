@@ -1,0 +1,2302 @@
+{
+  "config": {
+    "argv": [
+      "/opt/hostedtoolcache/node/20.20.2/x64/bin/node",
+      "/home/runner/work/web/web/node_modules/.bin/playwright",
+      "test"
+    ],
+    "configFile": "/home/runner/work/web/web/playwright.config.ts",
+    "rootDir": "/home/runner/work/web/web/e2e/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "ci": {
+        "commitHref": "https://github.com/furqan-app/web/commit/8d41f8da93a9339036a392e6e360a0c8466b586d",
+        "commitHash": "8d41f8da93a9339036a392e6e360a0c8466b586d",
+        "prHref": "https://github.com/furqan-app/web/pull/138",
+        "prTitle": "Avoid running the PR pipelines on config changes",
+        "prBaseHash": "6d579036c4044888af8a9b37fcfb174ab4c4bb03",
+        "buildHref": "https://github.com/furqan-app/web/actions/runs/30107399509"
+      },
+      "gitCommit": {
+        "shortHash": "8d41f8d",
+        "hash": "8d41f8da93a9339036a392e6e360a0c8466b586d",
+        "subject": "Merge 29021e48abf198c9b7707a8ef46e1cf3f5fee3d7 into 6d579036c4044888af8a9b37fcfb174ab4c4bb03",
+        "body": "Merge 29021e48abf198c9b7707a8ef46e1cf3f5fee3d7 into 6d579036c4044888af8a9b37fcfb174ab4c4bb03\n",
+        "author": {
+          "name": "Yousef Rady",
+          "email": "54912410+usef@users.noreply.github.com",
+          "time": 1784908569000
+        },
+        "committer": {
+          "name": "GitHub",
+          "email": "noreply@github.com",
+          "time": 1784908569000
+        },
+        "branch": "HEAD"
+      },
+      "gitDiff": "diff --git a/.github/workflows/visual-e2e.yml b/.github/workflows/visual-e2e.yml\nindex b673129..cfa1700 100644\n--- a/.github/workflows/visual-e2e.yml\n+++ b/.github/workflows/visual-e2e.yml\n@@ -5,6 +5,15 @@ name: Visual e2e tests\n \n on:\n   pull_request:\n+    paths-ignore:\n+      - \"docs/**\"\n+      - \".claude/**\"\n+      - \"**/*.md\"\n+      - \".mcp.json\"\n+      - \".mcp.json.example\"\n+      - \"furqan-workflow.excalidraw\"\n+      - \".eslintrc.json\"\n+      - \"tsconfig.json\"\n \n permissions:\n   contents: write\ndiff --git a/docs/architecture/DECISIONS.md b/docs/architecture/DECISIONS.md\nindex a556a57..0c53ffd 100644\n--- a/docs/architecture/DECISIONS.md\n+++ b/docs/architecture/DECISIONS.md\n@@ -526,3 +526,15 @@ amends ADR 0024).\n - **CPAL palette-slot → Tajweed rule mapping (empirically derived):** the COLRv1 font's 16 shared palette slots already encode per-rule coloring at the glyph layer (each word-glyph is built from multiple color-layered sub-glyphs) — recoloring Tajweed to match a different reference palette is therefore a CSS-only `@font-palette-values`/`override-color` change, never a font, schema, or `code_v1`/`code_v2`-alignment change (both fields encode a whole word as one glyph — there is no sub-word granularity to align against `text_uthmani_tajweed`'s per-character rule tags, and none is needed). Slot→rule correlation (e.g. slot 8=`qalaqah`/cyan, slot 5=`madda_normal`/gold, slot 9=`madda_obligatory_*`/red, slot 6=`ikhafa`/`ghunnah`/`iqlab`/green, slot 2=`slnt`/`idgham_wo_ghunnah`/grey) was verified across ~600 words on 13 pages, most at 100% confidence. See [ADR 0023's Addendum 4](adr/0023-tajweed-mushaf-mode.md) and Addendum 8 of `docs/plans/tajweed-mushaf-mode.md` for the full table.\n - **Tajweed color + always-edge-to-edge lines is not achievable with current font assets.** Root cause (found via direct `fontTools` inspection): `code_v1`'s font has Apple AAT justification tables (`just`/`morx`/`feat`/`prop`, carrying real kashida-stretch data used by the text engine to self-justify) but zero color capability (no `COLR`/`CPAL` — cannot be recolored by any means); `code_v2`'s Tajweed font has `COLR`/`CPAL` but is missing the AAT justification tables entirely, which is the direct explanation for its 7.7%-CV line-width inconsistency (vs `code_v1`'s 2.7%). No current font asset has both. The reference project (quran.com) has the same gap and uses the same centering work-around Furqan already ships (Addendum 3) — this is an ecosystem-wide asset limitation, not fixable from CSS. The only real path to both properties at once would be constructing a merged font (splicing AAT tables onto COLR/CPAL glyphs) — a real font-engineering effort, not attempted, and a legitimate future option if this becomes a priority. See [ADR 0023's Addendum 5](adr/0023-tajweed-mushaf-mode.md) and Addendum 9 of `docs/plans/tajweed-mushaf-mode.md`.\n - Furqan's mushaf lines rely on the per-page font's own glyph kerning (kashida baked into the text/glyph data at specific points, chosen by the original typesetter) to \"self-justify\" — no `text-align: justify` anywhere. This holds for `code_v1` (measured: 13.9–15.1×font-size across all 604 pages, ~2.7% coefficient of variation) but **not** for `code_v2`/the tajweed COLRv1 font (measured: 5.8–22.7×font-size, ~7.7% CV, ~3x the relative spread) — so many tajweed lines don't naturally reach the container edges. **Do not \"fix\" this with `justify-content: space-between`** — inserting gaps *between* whole words has nothing to do with where the font's kashida actually is, and visibly shifts every word off its authentic mushaf position (confirmed by direct screenshot comparison; tried and reverted, see Addendum 2→3 of `docs/plans/tajweed-mushaf-mode.md`). The correct technique — matching how quran.com itself handles this (hardcoded per-scale line-width lookup table + `text-align: center`, never `space-between`) — is to **center** each tajweed line as a rigid block when it falls short of the container width (`QuranLine.tsx`: `justify-center` for tajweed mode on every page, not just 1–2); centering only shifts the whole line, never the relative gaps between words. The raw per-line width-ratio measurement (worst case `22.73×font-size` at p.123 l.8) is retained in Addendum 3. **Resolved:** mobile tajweed font-size is now scaled to `0.88×` (effective divisor ~16.7), and desktop to `0.85×`, with line gap compensation — see `docs/plans/fix-tajweed-font-size.md` Addendums 4–5. Rare worst-case lines clip invisibly via `overflow-hidden` + `flex-wrap: nowrap`; calibrating to the true worst case (22.73) would leave typical lines filling only ~70% of the container, a worse tradeoff than the rare clip.\n+\n+---\n+\n+## CI: Visual e2e Skip on Config-Only PRs\n+\n+**Decision:** `.github/workflows/visual-e2e.yml` uses `on.pull_request.paths-ignore` (not an allowlist) to skip the suite when every changed file in a PR matches: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`. See `docs/plans/skip-e2e-config-changes.md`.\n+\n+**Rationale:** An ignore-list defaults safe — any new/unrecognized path still triggers the suite. An allowlist would default unsafe, silently skipping e2e for new UI-affecting paths until someone remembers to add them.\n+\n+**Constraints:**\n+- When adding a new top-level directory or root config file, decide explicitly whether it can affect rendered output before adding it to this ignore list — do not add out of convenience.\n+- `.github/workflows/**` is deliberately not in the ignore list, so changes to the workflow itself (including this list) still get tested.\ndiff --git a/docs/plans/skip-e2e-config-changes.md b/docs/plans/skip-e2e-config-changes.md\nnew file mode 100644\nindex 0000000..ef3cb07\n--- /dev/null\n+++ b/docs/plans/skip-e2e-config-changes.md\n@@ -0,0 +1,67 @@\n+# Skip visual e2e on config-only PRs\n+\n+**Type:** feature\n+**Date:** 2026-07-24\n+**Status:** implemented\n+**Trello:** https://trello.com/c/3T4tbYj4/139-avoid-running-the-pr-pipelines-on-config-changes\n+\n+## Summary\n+\n+`visual-e2e.yml` currently runs on every `pull_request` regardless of what changed — spinning up two MySQL containers, installing Playwright, and running the full visual regression suite even for PRs that only touch docs, `.claude/` tooling, or lint/type config. Add a `paths-ignore` filter so the workflow is skipped when every changed file in the PR falls into a known non-UI-affecting set.\n+\n+`protect-prod.yml` and `protect-stg.yml` are out of scope — they already only trigger on PRs targeting `prod`/`stg`, so they're not part of \"PR pipelines running on every config change.\"\n+\n+## Approach\n+\n+Use GitHub Actions' `on.pull_request.paths-ignore`, not an allowlist (`paths:`). Rationale: an allowlist defaults unsafe — any new top-level path added later that actually affects rendered UI would silently never trigger e2e until someone remembers to add it. An ignore-list defaults safe — unrecognized/new paths still run the suite; only a small, explicit set is carved out as \"definitely can't affect what's rendered.\"\n+\n+## Decision Tree\n+\n+| Changed path pattern | Affects rendered UI / e2e output? | Skip e2e? |\n+|---|---|---|\n+| `docs/**` | No — prose only | Yes |\n+| `.claude/**` | No — assistant tooling, not shipped | Yes |\n+| `**/*.md` (README, CLAUDE.md, any markdown) | No | Yes |\n+| `.mcp.json`, `.mcp.json.example` | No — local MCP config | Yes |\n+| `furqan-workflow.excalidraw` | No — design doc | Yes |\n+| `.eslintrc.json` | No — lint-only, never runs at runtime | Yes |\n+| `tsconfig.json` | No — compile-time types only | Yes |\n+| `app/`, `components/`, `lib/`, `prisma/` | Yes — rendered output / queried data shape | No |\n+| `messages/` | Yes — i18n content renders directly | No |\n+| `i18n/` | Yes — next-intl config affects locale routing | No |\n+| `middleware.ts` | Yes — routing/auth affects reachable pages | No |\n+| `next.config.mjs`, `tailwind.config.ts`, `postcss.config.mjs` | Yes — build/style output | No |\n+| `package.json`, `package-lock.json` | Yes — dependency bumps can change rendered output | No |\n+| `e2e/`, `playwright.config.ts`, `scripts/` | Yes — the harness itself | No |\n+| `compose.e2e.yml`, `.env.e2e` | Yes — feeds `npm run e2e:setup` | No |\n+| Anything else not listed | Unknown → default to running | No |\n+\n+If a PR's changed files are a **mix** of ignored and non-ignored paths, GitHub Actions' `paths-ignore` semantics apply: the workflow runs (skip only triggers when *every* changed file matches an ignore pattern).\n+\n+## Verified Test Cases\n+\n+- PR only touches `docs/plans/*.md` and `.claude/skills/*.md` → all match ignore patterns → e2e skipped.\n+- PR touches `.eslintrc.json` only → matches → skipped.\n+- PR touches `tailwind.config.ts` → does not match any ignore pattern → e2e runs.\n+- PR touches `docs/plans/foo.md` **and** `app/components/Foo.tsx` → not all changed files match → e2e runs (mixed PRs always run).\n+- PR touches `.github/workflows/visual-e2e.yml` itself (not in the ignore list) → e2e runs, so workflow-logic changes still get tested.\n+\n+## Files to Change\n+\n+- `.github/workflows/visual-e2e.yml` — add `paths-ignore` list under `on.pull_request`.\n+- `docs/architecture/DECISIONS.md` — short entry documenting the convention, so future additions of new top-level dirs/config remember to reconsider this list.\n+\n+## Constraints\n+\n+- Do not use `paths:` (allowlist) — see Approach above for why.\n+- `.github/workflows/**` is intentionally NOT in the ignore list — workflow-file changes (including edits to this same ignore list) should still run e2e to validate them.\n+\n+## What NOT to Do\n+\n+- None known — this is a new, isolated CI-config task with no prior plan to conflict with.\n+\n+## Decisions Made\n+\n+- Target only `visual-e2e.yml`; `protect-prod.yml`/`protect-stg.yml` already scoped correctly and are out of scope.\n+- Use `paths-ignore`, not `paths` allowlist.\n+- Final ignore list: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`.",
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/runner/work/web/web/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/furqan-app/web/commit/8d41f8da93a9339036a392e6e360a0c8466b586d",
+            "commitHash": "8d41f8da93a9339036a392e6e360a0c8466b586d",
+            "prHref": "https://github.com/furqan-app/web/pull/138",
+            "prTitle": "Avoid running the PR pipelines on config changes",
+            "prBaseHash": "6d579036c4044888af8a9b37fcfb174ab4c4bb03",
+            "buildHref": "https://github.com/furqan-app/web/actions/runs/30107399509"
+          },
+          "gitCommit": {
+            "shortHash": "8d41f8d",
+            "hash": "8d41f8da93a9339036a392e6e360a0c8466b586d",
+            "subject": "Merge 29021e48abf198c9b7707a8ef46e1cf3f5fee3d7 into 6d579036c4044888af8a9b37fcfb174ab4c4bb03",
+            "body": "Merge 29021e48abf198c9b7707a8ef46e1cf3f5fee3d7 into 6d579036c4044888af8a9b37fcfb174ab4c4bb03\n",
+            "author": {
+              "name": "Yousef Rady",
+              "email": "54912410+usef@users.noreply.github.com",
+              "time": 1784908569000
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "time": 1784908569000
+            },
+            "branch": "HEAD"
+          },
+          "gitDiff": "diff --git a/.github/workflows/visual-e2e.yml b/.github/workflows/visual-e2e.yml\nindex b673129..cfa1700 100644\n--- a/.github/workflows/visual-e2e.yml\n+++ b/.github/workflows/visual-e2e.yml\n@@ -5,6 +5,15 @@ name: Visual e2e tests\n \n on:\n   pull_request:\n+    paths-ignore:\n+      - \"docs/**\"\n+      - \".claude/**\"\n+      - \"**/*.md\"\n+      - \".mcp.json\"\n+      - \".mcp.json.example\"\n+      - \"furqan-workflow.excalidraw\"\n+      - \".eslintrc.json\"\n+      - \"tsconfig.json\"\n \n permissions:\n   contents: write\ndiff --git a/docs/architecture/DECISIONS.md b/docs/architecture/DECISIONS.md\nindex a556a57..0c53ffd 100644\n--- a/docs/architecture/DECISIONS.md\n+++ b/docs/architecture/DECISIONS.md\n@@ -526,3 +526,15 @@ amends ADR 0024).\n - **CPAL palette-slot → Tajweed rule mapping (empirically derived):** the COLRv1 font's 16 shared palette slots already encode per-rule coloring at the glyph layer (each word-glyph is built from multiple color-layered sub-glyphs) — recoloring Tajweed to match a different reference palette is therefore a CSS-only `@font-palette-values`/`override-color` change, never a font, schema, or `code_v1`/`code_v2`-alignment change (both fields encode a whole word as one glyph — there is no sub-word granularity to align against `text_uthmani_tajweed`'s per-character rule tags, and none is needed). Slot→rule correlation (e.g. slot 8=`qalaqah`/cyan, slot 5=`madda_normal`/gold, slot 9=`madda_obligatory_*`/red, slot 6=`ikhafa`/`ghunnah`/`iqlab`/green, slot 2=`slnt`/`idgham_wo_ghunnah`/grey) was verified across ~600 words on 13 pages, most at 100% confidence. See [ADR 0023's Addendum 4](adr/0023-tajweed-mushaf-mode.md) and Addendum 8 of `docs/plans/tajweed-mushaf-mode.md` for the full table.\n - **Tajweed color + always-edge-to-edge lines is not achievable with current font assets.** Root cause (found via direct `fontTools` inspection): `code_v1`'s font has Apple AAT justification tables (`just`/`morx`/`feat`/`prop`, carrying real kashida-stretch data used by the text engine to self-justify) but zero color capability (no `COLR`/`CPAL` — cannot be recolored by any means); `code_v2`'s Tajweed font has `COLR`/`CPAL` but is missing the AAT justification tables entirely, which is the direct explanation for its 7.7%-CV line-width inconsistency (vs `code_v1`'s 2.7%). No current font asset has both. The reference project (quran.com) has the same gap and uses the same centering work-around Furqan already ships (Addendum 3) — this is an ecosystem-wide asset limitation, not fixable from CSS. The only real path to both properties at once would be constructing a merged font (splicing AAT tables onto COLR/CPAL glyphs) — a real font-engineering effort, not attempted, and a legitimate future option if this becomes a priority. See [ADR 0023's Addendum 5](adr/0023-tajweed-mushaf-mode.md) and Addendum 9 of `docs/plans/tajweed-mushaf-mode.md`.\n - Furqan's mushaf lines rely on the per-page font's own glyph kerning (kashida baked into the text/glyph data at specific points, chosen by the original typesetter) to \"self-justify\" — no `text-align: justify` anywhere. This holds for `code_v1` (measured: 13.9–15.1×font-size across all 604 pages, ~2.7% coefficient of variation) but **not** for `code_v2`/the tajweed COLRv1 font (measured: 5.8–22.7×font-size, ~7.7% CV, ~3x the relative spread) — so many tajweed lines don't naturally reach the container edges. **Do not \"fix\" this with `justify-content: space-between`** — inserting gaps *between* whole words has nothing to do with where the font's kashida actually is, and visibly shifts every word off its authentic mushaf position (confirmed by direct screenshot comparison; tried and reverted, see Addendum 2→3 of `docs/plans/tajweed-mushaf-mode.md`). The correct technique — matching how quran.com itself handles this (hardcoded per-scale line-width lookup table + `text-align: center`, never `space-between`) — is to **center** each tajweed line as a rigid block when it falls short of the container width (`QuranLine.tsx`: `justify-center` for tajweed mode on every page, not just 1–2); centering only shifts the whole line, never the relative gaps between words. The raw per-line width-ratio measurement (worst case `22.73×font-size` at p.123 l.8) is retained in Addendum 3. **Resolved:** mobile tajweed font-size is now scaled to `0.88×` (effective divisor ~16.7), and desktop to `0.85×`, with line gap compensation — see `docs/plans/fix-tajweed-font-size.md` Addendums 4–5. Rare worst-case lines clip invisibly via `overflow-hidden` + `flex-wrap: nowrap`; calibrating to the true worst case (22.73) would leave typical lines filling only ~70% of the container, a worse tradeoff than the rare clip.\n+\n+---\n+\n+## CI: Visual e2e Skip on Config-Only PRs\n+\n+**Decision:** `.github/workflows/visual-e2e.yml` uses `on.pull_request.paths-ignore` (not an allowlist) to skip the suite when every changed file in a PR matches: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`. See `docs/plans/skip-e2e-config-changes.md`.\n+\n+**Rationale:** An ignore-list defaults safe — any new/unrecognized path still triggers the suite. An allowlist would default unsafe, silently skipping e2e for new UI-affecting paths until someone remembers to add them.\n+\n+**Constraints:**\n+- When adding a new top-level directory or root config file, decide explicitly whether it can affect rendered output before adding it to this ignore list — do not add out of convenience.\n+- `.github/workflows/**` is deliberately not in the ignore list, so changes to the workflow itself (including this list) still get tested.\ndiff --git a/docs/plans/skip-e2e-config-changes.md b/docs/plans/skip-e2e-config-changes.md\nnew file mode 100644\nindex 0000000..ef3cb07\n--- /dev/null\n+++ b/docs/plans/skip-e2e-config-changes.md\n@@ -0,0 +1,67 @@\n+# Skip visual e2e on config-only PRs\n+\n+**Type:** feature\n+**Date:** 2026-07-24\n+**Status:** implemented\n+**Trello:** https://trello.com/c/3T4tbYj4/139-avoid-running-the-pr-pipelines-on-config-changes\n+\n+## Summary\n+\n+`visual-e2e.yml` currently runs on every `pull_request` regardless of what changed — spinning up two MySQL containers, installing Playwright, and running the full visual regression suite even for PRs that only touch docs, `.claude/` tooling, or lint/type config. Add a `paths-ignore` filter so the workflow is skipped when every changed file in the PR falls into a known non-UI-affecting set.\n+\n+`protect-prod.yml` and `protect-stg.yml` are out of scope — they already only trigger on PRs targeting `prod`/`stg`, so they're not part of \"PR pipelines running on every config change.\"\n+\n+## Approach\n+\n+Use GitHub Actions' `on.pull_request.paths-ignore`, not an allowlist (`paths:`). Rationale: an allowlist defaults unsafe — any new top-level path added later that actually affects rendered UI would silently never trigger e2e until someone remembers to add it. An ignore-list defaults safe — unrecognized/new paths still run the suite; only a small, explicit set is carved out as \"definitely can't affect what's rendered.\"\n+\n+## Decision Tree\n+\n+| Changed path pattern | Affects rendered UI / e2e output? | Skip e2e? |\n+|---|---|---|\n+| `docs/**` | No — prose only | Yes |\n+| `.claude/**` | No — assistant tooling, not shipped | Yes |\n+| `**/*.md` (README, CLAUDE.md, any markdown) | No | Yes |\n+| `.mcp.json`, `.mcp.json.example` | No — local MCP config | Yes |\n+| `furqan-workflow.excalidraw` | No — design doc | Yes |\n+| `.eslintrc.json` | No — lint-only, never runs at runtime | Yes |\n+| `tsconfig.json` | No — compile-time types only | Yes |\n+| `app/`, `components/`, `lib/`, `prisma/` | Yes — rendered output / queried data shape | No |\n+| `messages/` | Yes — i18n content renders directly | No |\n+| `i18n/` | Yes — next-intl config affects locale routing | No |\n+| `middleware.ts` | Yes — routing/auth affects reachable pages | No |\n+| `next.config.mjs`, `tailwind.config.ts`, `postcss.config.mjs` | Yes — build/style output | No |\n+| `package.json`, `package-lock.json` | Yes — dependency bumps can change rendered output | No |\n+| `e2e/`, `playwright.config.ts`, `scripts/` | Yes — the harness itself | No |\n+| `compose.e2e.yml`, `.env.e2e` | Yes — feeds `npm run e2e:setup` | No |\n+| Anything else not listed | Unknown → default to running | No |\n+\n+If a PR's changed files are a **mix** of ignored and non-ignored paths, GitHub Actions' `paths-ignore` semantics apply: the workflow runs (skip only triggers when *every* changed file matches an ignore pattern).\n+\n+## Verified Test Cases\n+\n+- PR only touches `docs/plans/*.md` and `.claude/skills/*.md` → all match ignore patterns → e2e skipped.\n+- PR touches `.eslintrc.json` only → matches → skipped.\n+- PR touches `tailwind.config.ts` → does not match any ignore pattern → e2e runs.\n+- PR touches `docs/plans/foo.md` **and** `app/components/Foo.tsx` → not all changed files match → e2e runs (mixed PRs always run).\n+- PR touches `.github/workflows/visual-e2e.yml` itself (not in the ignore list) → e2e runs, so workflow-logic changes still get tested.\n+\n+## Files to Change\n+\n+- `.github/workflows/visual-e2e.yml` — add `paths-ignore` list under `on.pull_request`.\n+- `docs/architecture/DECISIONS.md` — short entry documenting the convention, so future additions of new top-level dirs/config remember to reconsider this list.\n+\n+## Constraints\n+\n+- Do not use `paths:` (allowlist) — see Approach above for why.\n+- `.github/workflows/**` is intentionally NOT in the ignore list — workflow-file changes (including edits to this same ignore list) should still run e2e to validate them.\n+\n+## What NOT to Do\n+\n+- None known — this is a new, isolated CI-config task with no prior plan to conflict with.\n+\n+## Decisions Made\n+\n+- Target only `visual-e2e.yml`; `protect-prod.yml`/`protect-stg.yml` already scoped correctly and are out of scope.\n+- Use `paths-ignore`, not `paths` allowlist.\n+- Final ignore list: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`.",
+          "actualWorkers": 2
+        },
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "/home/runner/work/web/web/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/runner/work/web/web/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/furqan-app/web/commit/8d41f8da93a9339036a392e6e360a0c8466b586d",
+            "commitHash": "8d41f8da93a9339036a392e6e360a0c8466b586d",
+            "prHref": "https://github.com/furqan-app/web/pull/138",
+            "prTitle": "Avoid running the PR pipelines on config changes",
+            "prBaseHash": "6d579036c4044888af8a9b37fcfb174ab4c4bb03",
+            "buildHref": "https://github.com/furqan-app/web/actions/runs/30107399509"
+          },
+          "gitCommit": {
+            "shortHash": "8d41f8d",
+            "hash": "8d41f8da93a9339036a392e6e360a0c8466b586d",
+            "subject": "Merge 29021e48abf198c9b7707a8ef46e1cf3f5fee3d7 into 6d579036c4044888af8a9b37fcfb174ab4c4bb03",
+            "body": "Merge 29021e48abf198c9b7707a8ef46e1cf3f5fee3d7 into 6d579036c4044888af8a9b37fcfb174ab4c4bb03\n",
+            "author": {
+              "name": "Yousef Rady",
+              "email": "54912410+usef@users.noreply.github.com",
+              "time": 1784908569000
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "time": 1784908569000
+            },
+            "branch": "HEAD"
+          },
+          "gitDiff": "diff --git a/.github/workflows/visual-e2e.yml b/.github/workflows/visual-e2e.yml\nindex b673129..cfa1700 100644\n--- a/.github/workflows/visual-e2e.yml\n+++ b/.github/workflows/visual-e2e.yml\n@@ -5,6 +5,15 @@ name: Visual e2e tests\n \n on:\n   pull_request:\n+    paths-ignore:\n+      - \"docs/**\"\n+      - \".claude/**\"\n+      - \"**/*.md\"\n+      - \".mcp.json\"\n+      - \".mcp.json.example\"\n+      - \"furqan-workflow.excalidraw\"\n+      - \".eslintrc.json\"\n+      - \"tsconfig.json\"\n \n permissions:\n   contents: write\ndiff --git a/docs/architecture/DECISIONS.md b/docs/architecture/DECISIONS.md\nindex a556a57..0c53ffd 100644\n--- a/docs/architecture/DECISIONS.md\n+++ b/docs/architecture/DECISIONS.md\n@@ -526,3 +526,15 @@ amends ADR 0024).\n - **CPAL palette-slot → Tajweed rule mapping (empirically derived):** the COLRv1 font's 16 shared palette slots already encode per-rule coloring at the glyph layer (each word-glyph is built from multiple color-layered sub-glyphs) — recoloring Tajweed to match a different reference palette is therefore a CSS-only `@font-palette-values`/`override-color` change, never a font, schema, or `code_v1`/`code_v2`-alignment change (both fields encode a whole word as one glyph — there is no sub-word granularity to align against `text_uthmani_tajweed`'s per-character rule tags, and none is needed). Slot→rule correlation (e.g. slot 8=`qalaqah`/cyan, slot 5=`madda_normal`/gold, slot 9=`madda_obligatory_*`/red, slot 6=`ikhafa`/`ghunnah`/`iqlab`/green, slot 2=`slnt`/`idgham_wo_ghunnah`/grey) was verified across ~600 words on 13 pages, most at 100% confidence. See [ADR 0023's Addendum 4](adr/0023-tajweed-mushaf-mode.md) and Addendum 8 of `docs/plans/tajweed-mushaf-mode.md` for the full table.\n - **Tajweed color + always-edge-to-edge lines is not achievable with current font assets.** Root cause (found via direct `fontTools` inspection): `code_v1`'s font has Apple AAT justification tables (`just`/`morx`/`feat`/`prop`, carrying real kashida-stretch data used by the text engine to self-justify) but zero color capability (no `COLR`/`CPAL` — cannot be recolored by any means); `code_v2`'s Tajweed font has `COLR`/`CPAL` but is missing the AAT justification tables entirely, which is the direct explanation for its 7.7%-CV line-width inconsistency (vs `code_v1`'s 2.7%). No current font asset has both. The reference project (quran.com) has the same gap and uses the same centering work-around Furqan already ships (Addendum 3) — this is an ecosystem-wide asset limitation, not fixable from CSS. The only real path to both properties at once would be constructing a merged font (splicing AAT tables onto COLR/CPAL glyphs) — a real font-engineering effort, not attempted, and a legitimate future option if this becomes a priority. See [ADR 0023's Addendum 5](adr/0023-tajweed-mushaf-mode.md) and Addendum 9 of `docs/plans/tajweed-mushaf-mode.md`.\n - Furqan's mushaf lines rely on the per-page font's own glyph kerning (kashida baked into the text/glyph data at specific points, chosen by the original typesetter) to \"self-justify\" — no `text-align: justify` anywhere. This holds for `code_v1` (measured: 13.9–15.1×font-size across all 604 pages, ~2.7% coefficient of variation) but **not** for `code_v2`/the tajweed COLRv1 font (measured: 5.8–22.7×font-size, ~7.7% CV, ~3x the relative spread) — so many tajweed lines don't naturally reach the container edges. **Do not \"fix\" this with `justify-content: space-between`** — inserting gaps *between* whole words has nothing to do with where the font's kashida actually is, and visibly shifts every word off its authentic mushaf position (confirmed by direct screenshot comparison; tried and reverted, see Addendum 2→3 of `docs/plans/tajweed-mushaf-mode.md`). The correct technique — matching how quran.com itself handles this (hardcoded per-scale line-width lookup table + `text-align: center`, never `space-between`) — is to **center** each tajweed line as a rigid block when it falls short of the container width (`QuranLine.tsx`: `justify-center` for tajweed mode on every page, not just 1–2); centering only shifts the whole line, never the relative gaps between words. The raw per-line width-ratio measurement (worst case `22.73×font-size` at p.123 l.8) is retained in Addendum 3. **Resolved:** mobile tajweed font-size is now scaled to `0.88×` (effective divisor ~16.7), and desktop to `0.85×`, with line gap compensation — see `docs/plans/fix-tajweed-font-size.md` Addendums 4–5. Rare worst-case lines clip invisibly via `overflow-hidden` + `flex-wrap: nowrap`; calibrating to the true worst case (22.73) would leave typical lines filling only ~70% of the container, a worse tradeoff than the rare clip.\n+\n+---\n+\n+## CI: Visual e2e Skip on Config-Only PRs\n+\n+**Decision:** `.github/workflows/visual-e2e.yml` uses `on.pull_request.paths-ignore` (not an allowlist) to skip the suite when every changed file in a PR matches: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`. See `docs/plans/skip-e2e-config-changes.md`.\n+\n+**Rationale:** An ignore-list defaults safe — any new/unrecognized path still triggers the suite. An allowlist would default unsafe, silently skipping e2e for new UI-affecting paths until someone remembers to add them.\n+\n+**Constraints:**\n+- When adding a new top-level directory or root config file, decide explicitly whether it can affect rendered output before adding it to this ignore list — do not add out of convenience.\n+- `.github/workflows/**` is deliberately not in the ignore list, so changes to the workflow itself (including this list) still get tested.\ndiff --git a/docs/plans/skip-e2e-config-changes.md b/docs/plans/skip-e2e-config-changes.md\nnew file mode 100644\nindex 0000000..ef3cb07\n--- /dev/null\n+++ b/docs/plans/skip-e2e-config-changes.md\n@@ -0,0 +1,67 @@\n+# Skip visual e2e on config-only PRs\n+\n+**Type:** feature\n+**Date:** 2026-07-24\n+**Status:** implemented\n+**Trello:** https://trello.com/c/3T4tbYj4/139-avoid-running-the-pr-pipelines-on-config-changes\n+\n+## Summary\n+\n+`visual-e2e.yml` currently runs on every `pull_request` regardless of what changed — spinning up two MySQL containers, installing Playwright, and running the full visual regression suite even for PRs that only touch docs, `.claude/` tooling, or lint/type config. Add a `paths-ignore` filter so the workflow is skipped when every changed file in the PR falls into a known non-UI-affecting set.\n+\n+`protect-prod.yml` and `protect-stg.yml` are out of scope — they already only trigger on PRs targeting `prod`/`stg`, so they're not part of \"PR pipelines running on every config change.\"\n+\n+## Approach\n+\n+Use GitHub Actions' `on.pull_request.paths-ignore`, not an allowlist (`paths:`). Rationale: an allowlist defaults unsafe — any new top-level path added later that actually affects rendered UI would silently never trigger e2e until someone remembers to add it. An ignore-list defaults safe — unrecognized/new paths still run the suite; only a small, explicit set is carved out as \"definitely can't affect what's rendered.\"\n+\n+## Decision Tree\n+\n+| Changed path pattern | Affects rendered UI / e2e output? | Skip e2e? |\n+|---|---|---|\n+| `docs/**` | No — prose only | Yes |\n+| `.claude/**` | No — assistant tooling, not shipped | Yes |\n+| `**/*.md` (README, CLAUDE.md, any markdown) | No | Yes |\n+| `.mcp.json`, `.mcp.json.example` | No — local MCP config | Yes |\n+| `furqan-workflow.excalidraw` | No — design doc | Yes |\n+| `.eslintrc.json` | No — lint-only, never runs at runtime | Yes |\n+| `tsconfig.json` | No — compile-time types only | Yes |\n+| `app/`, `components/`, `lib/`, `prisma/` | Yes — rendered output / queried data shape | No |\n+| `messages/` | Yes — i18n content renders directly | No |\n+| `i18n/` | Yes — next-intl config affects locale routing | No |\n+| `middleware.ts` | Yes — routing/auth affects reachable pages | No |\n+| `next.config.mjs`, `tailwind.config.ts`, `postcss.config.mjs` | Yes — build/style output | No |\n+| `package.json`, `package-lock.json` | Yes — dependency bumps can change rendered output | No |\n+| `e2e/`, `playwright.config.ts`, `scripts/` | Yes — the harness itself | No |\n+| `compose.e2e.yml`, `.env.e2e` | Yes — feeds `npm run e2e:setup` | No |\n+| Anything else not listed | Unknown → default to running | No |\n+\n+If a PR's changed files are a **mix** of ignored and non-ignored paths, GitHub Actions' `paths-ignore` semantics apply: the workflow runs (skip only triggers when *every* changed file matches an ignore pattern).\n+\n+## Verified Test Cases\n+\n+- PR only touches `docs/plans/*.md` and `.claude/skills/*.md` → all match ignore patterns → e2e skipped.\n+- PR touches `.eslintrc.json` only → matches → skipped.\n+- PR touches `tailwind.config.ts` → does not match any ignore pattern → e2e runs.\n+- PR touches `docs/plans/foo.md` **and** `app/components/Foo.tsx` → not all changed files match → e2e runs (mixed PRs always run).\n+- PR touches `.github/workflows/visual-e2e.yml` itself (not in the ignore list) → e2e runs, so workflow-logic changes still get tested.\n+\n+## Files to Change\n+\n+- `.github/workflows/visual-e2e.yml` — add `paths-ignore` list under `on.pull_request`.\n+- `docs/architecture/DECISIONS.md` — short entry documenting the convention, so future additions of new top-level dirs/config remember to reconsider this list.\n+\n+## Constraints\n+\n+- Do not use `paths:` (allowlist) — see Approach above for why.\n+- `.github/workflows/**` is intentionally NOT in the ignore list — workflow-file changes (including edits to this same ignore list) should still run e2e to validate them.\n+\n+## What NOT to Do\n+\n+- None known — this is a new, isolated CI-config task with no prior plan to conflict with.\n+\n+## Decisions Made\n+\n+- Target only `visual-e2e.yml`; `protect-prod.yml`/`protect-stg.yml` already scoped correctly and are out of scope.\n+- Use `paths-ignore`, not `paths` allowlist.\n+- Final ignore list: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`.",
+          "actualWorkers": 2
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "/home/runner/work/web/web/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-report/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 2,
+    "webServer": {
+      "command": "npm run e2e:build && npm run e2e:start",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": false,
+      "timeout": 1200000
+    }
+  },
+  "suites": [
+    {
+      "title": "visual.spec.ts",
+      "file": "visual.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "home (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1355,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:08.463Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-9a9eb3fc9e50f7d4da7b",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1246,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:00.817Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ee873f6f6c111f3eb465",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2063,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:08.486Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-86f84f8f2bb17a69bbb3",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 4688,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13688 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 13660 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13688 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13688 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 13660 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13688 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13688 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 13660 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13688 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:02.315Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/page-1-ar-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/page-1-ar-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6944,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13688 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7031 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7916 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13688 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13688 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7031 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7916 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13688 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13688 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7031 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7916 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13688 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-24T16:11:09.468Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/page-1-ar-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/page-1-ar-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-17e5128d70109ffa7a29",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2166,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:10.991Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-63c482371c08681abdf3",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 182,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:03.440Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-84e9714f88b655818f46",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 9040,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:11.687Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-10827dd7cd6462184a2c",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 5058,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:03.890Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-548426ff2d3576db6a8e",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2585,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:13.181Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-253b089809e5f649606f",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3653,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:08.973Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-f21e989233ad1b81dfb0",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1447,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:15.797Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-bb6ffc3d04524f80e084",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 985,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:12.655Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-1a07b3acca07ecaa628f",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2821,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:17.266Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8ac841b00620eb909446",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 6521,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14611 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7391 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9008 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14611 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14611 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7391 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9008 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14611 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14611 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7391 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9008 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14611 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:13.684Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-dark-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile/page-1-ar-dark-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile/page-1-ar-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 7504,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14611 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7391 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9008 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14611 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14611 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7391 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9008 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14611 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14611 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7391 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9008 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14611 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-24T16:11:22.939Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-dark-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile-retry1/page-1-ar-dark-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile-retry1/page-1-ar-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-mobile-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-51981b0a719d7d820778",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2246,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:20.120Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-71b1db7ba6756affb10e",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 137,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:20.405Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-71825b97452f6d8a7a69",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 11051,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:20.770Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-3a49443b7644a998f564",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5880,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:20.699Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-6949eef9d772ce811530",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11339,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:22.385Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8b27ddc00e6fd40a3a26",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4487,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:26.621Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-e197cd49d16f64062fab",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (en-light)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1344,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:31.853Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-fec7a6e1ca53421fbcdd",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 597,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:31.149Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-d34961f9f76700a05007",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (en-light)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2042,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:33.214Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-af2b7d07f230a2eeae7c",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6612,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13943 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7197 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8135 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13943 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13943 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7197 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8135 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13943 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13943 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7197 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8135 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13943 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:31.768Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-en-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-en-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-en-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile/page-1-en-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-en-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile/page-1-en-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 5623,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13943 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 13923 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13943 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13943 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 13923 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13943 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  13943 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 13923 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 13943 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-24T16:11:41.917Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-en-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-en-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-en-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile-retry1/page-1-en-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-en-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile-retry1/page-1-en-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-light-single-page-short-opening-page-mobile-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-35e69571c9476c4f9608",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (en-light)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6161,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  27771 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 21043 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 27771 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  27771 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 21043 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 27771 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 62
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 60 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/2`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 62 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`spread-2-3-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 63 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 64 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 62
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  27771 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 21043 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 27771 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  60 |         await withTheme(page, theme);\n  61 |         await page.goto(`/${locale}/pages/2`);\n> 62 |         await expect(page).toHaveScreenshot(`spread-2-3-${suffix}.png`);\n     |                            ^\n  63 |       });\n  64 |     });\n  65 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:33.770Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "spread-2-3-en-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/spread-2-3-en-light-desktop-linux.png"
+                        },
+                        {
+                          "name": "spread-2-3-en-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-09528-en-light-double-page-spread-desktop/spread-2-3-en-light-actual.png"
+                        },
+                        {
+                          "name": "spread-2-3-en-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-09528-en-light-double-page-spread-desktop/spread-2-3-en-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-09528-en-light-double-page-spread-desktop/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-09528-en-light-double-page-spread-desktop/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 62
+                      }
+                    },
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2874,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-24T16:10:42.546Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "flaky"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8457cc41e08531a67b6c",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 204,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:33.805Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-436d39f58f5fa9e8e200",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (en-light)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 9254,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:35.278Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8b33a63ee5b53adb6658",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 5060,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:34.309Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-bf1ff087c0e967019699",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (en-light)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 9911,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:44.552Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ba8b29e454f54de6aa33",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3448,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:39.396Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-1b0db3cb1e75e10a4219",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1188,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:45.750Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-4277d25df68e39ecc37d",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1131,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:42.882Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-810ab6487b9ad1888a41",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2297,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:46.963Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-7ed7f55dc179f2707aa1",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 6780,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14725 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7541 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9071 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14725 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14725 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7541 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9071 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14725 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14725 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7541 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9071 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14725 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:44.073Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-en-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-en-dark-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile/page-1-en-dark-actual.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile/page-1-en-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 7353,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14725 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7541 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9071 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14725 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14725 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7541 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9071 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14725 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  14725 pixels (ratio 0.05 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7541 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 9071 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 250ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 14725 pixels (ratio 0.05 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-24T16:11:53.832Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-en-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-en-dark-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile-retry1/page-1-en-dark-actual.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile-retry1/page-1-en-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-mobile-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ddb4e1be79aed0ceac76",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2120,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:49.281Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-0c9ba8c7e4e06caa8787",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 121,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:51.154Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8d0680ea1d544eeba9cf",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8300,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:51.424Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-78c12971736376cd6409",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5881,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:51.440Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-4f31222ac6a3eb3a864e",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7885,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:10:54.493Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-530fab5cd34689c93f1a",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4988,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-24T16:11:57.353Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-6feee3d17c241c48a9a7",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-24T15:58:33.790Z",
+    "duration": 809276.879,
+    "expected": 31,
+    "skipped": 4,
+    "unexpected": 4,
+    "flaky": 1
+  }
+}
