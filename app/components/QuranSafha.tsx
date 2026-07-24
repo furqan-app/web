@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { Verse } from "@/app/generated/quran-client";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
 import { FONT_V1 } from "@constants/font";
@@ -18,7 +17,7 @@ import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
 import { ViewingChip } from "./reader/ViewingChip";
-import { PageMetadataWithChapter, WordWithLayouts } from "../types/prisma";
+import { PageMetadataWithChapter, VerseForMark, WordWithLayouts } from "../types/prisma";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 
@@ -116,7 +115,7 @@ export const QuranSafha = ({
   const { isOverlayMode } = useNavOverlay();
 
   const [selectedForMark, setSelectedForMark] = useState<
-    WordWithLayouts | Verse | null
+    WordWithLayouts | VerseForMark | null
   >(null);
   const [verseDisplayText, setVerseDisplayText] = useState<string | undefined>(
     undefined,
@@ -194,7 +193,7 @@ export const QuranSafha = ({
     setSelectedForMark(null);
   };
 
-  const getCurrentMarkMeta = (markFor: WordWithLayouts | Verse) => {
+  const getCurrentMarkMeta = (markFor: WordWithLayouts | VerseForMark) => {
     const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
     return getMarkMeta(marks?.[markedId]);
   };
@@ -298,13 +297,13 @@ export const QuranSafha = ({
       {selectedForMark ? (
         (() => {
           const markMeta = getCurrentMarkMeta(
-            selectedForMark as WordWithLayouts | Verse,
+            selectedForMark as WordWithLayouts | VerseForMark,
           );
           return (
             <MarkModal
               isOpen={true}
               close={closeMarkModal}
-              markFor={selectedForMark as WordWithLayouts | Verse}
+              markFor={selectedForMark as WordWithLayouts | VerseForMark}
               verseDisplayText={verseDisplayText}
               currentCategory={markMeta?.category}
               currentComment={markMeta?.comment ?? undefined}

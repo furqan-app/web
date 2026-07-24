@@ -16,8 +16,16 @@ export const getPageWords = async (page: number): Promise<PageWords> => {
   const [words, pageMetadata] = await Promise.all([
     quranPrisma.word.findMany({
       include: {
+        // Slim nested verse: only the fields the reader + MarkModal read. The full
+        // verse+chapter was dropped here — it was ~1,478× duplicated per page yet
+        // unused, dominating the RSC payload (ADR 0028). Keep in sync with
+        // WordWithVerse in app/types/prisma.ts.
         verse: {
-          include: { chapter: true },
+          select: {
+            verse_key: true,
+            page_number: true,
+            chapter: { select: { verses_count: true } },
+          },
         },
         mushafLayouts: {
           where: { mushaf_id: { in: LAYOUT_MUSHAF_IDS } },
