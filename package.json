@@ -24,7 +24,8 @@
     "e2e:setup": "dotenv -e .env.e2e -- node scripts/e2e-fixture/setup.js",
     "e2e:build": "dotenv -e .env.e2e -- next build",
     "e2e:start": "dotenv -e .env.e2e -- next start",
-    "e2e:test": "dotenv -e .env.e2e -- playwright test"
+    "e2e:test": "dotenv -e .env.e2e -- playwright test",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
@@ -73,6 +74,7 @@
     "postcss": "^8",
     "sharp": "^0.35.3",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

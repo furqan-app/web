@@ -62,3 +62,41 @@ model MushafAccessGrant {
   @@unique([owner_user, viewer_user])
   @@map("mushaf_access_grants")
 }
+
+// Enrollment in a plan template (ADR 0028). template_key refers to the typed
+// TS constants in app/constants/plans.ts — templates are code, not DB rows.
+// Scalar user ref only (no relation — ADR 0008 pattern). params holds
+// per-enrollment config (per-track quantities, start page, end date).
+model UserPlan {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  template_key String
+  params       Json
+  start_date   DateTime @db.Date
+  status       String   @default("active") // active | paused | completed | abandoned
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  progress     PlanProgressEntry[]
+
+  @@index([user_id, status])
+  @@map("user_plans")
+}
+
+// Append-only completion log. Daily assignments are DERIVED from this log +
+// the template + enrollment params (never stored — ADR 0028). range_start/end
+// are strings: page numbers today, wide enough for verse keys later. One
+// check-off per (plan, track, day); re-checking updates the range in place.
+model PlanProgressEntry {
+  id           Int      @id @default(autoincrement())
+  user_plan_id Int
+  track_key    String
+  date         DateTime @db.Date
+  unit         String   @default("page")
+  range_start  String
+  range_end    String
+  completed_at DateTime @default(now())
+  userPlan     UserPlan @relation(fields: [user_plan_id], references: [id])
+
+  @@unique([user_plan_id, track_key, date])
+  @@map("plan_progress_entries")
+}

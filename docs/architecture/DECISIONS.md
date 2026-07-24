@@ -529,6 +529,24 @@ amends ADR 0024).
 
 ---
 
+## Awrad & Learning Plans Engine
+
+**Decision:** Daily awrad and structured programs (الحصون الخمسة) run on one plan engine: plan templates are typed TS constants (like `MARK_CATEGORIES`), each template composed of tracks; a track = unit + quantity + one of five typed scheduling rule kinds (`fixed_cycle`, `cursor_advance`, `trailing_window`, `completed_cycle`, `lookahead`) + a per-track `activity` (`read | listen | memorize | review`). Only enrollments (`UserPlan`) and an append-only `ProgressEntry` log are stored (in `furqan_app`); the daily assignment is derived at read time as a pure function of (template, params, progress, date) — never persisted. See [ADR 0028](adr/0028-plan-engine-derived-assignments.md) and `docs/plans/awrad-learning-plans.md`.
+
+**Constraints:**
+- Progress is **page-canonical**: juz/hizb/rub targets resolve to page ranges from seeded `PageMetadata`/`Rub` at read time; progress rows store page numbers. Verse-level granularity is a future widening, not v1.
+- All new tables live in `furqan_app` with scalar Quran refs only — no cross-domain FK (ADR 0008 invariant holds).
+- Do not materialize schedule rows ("day X → range Y" tables) — pause/skip/level-change safety depends on derivation. History views read the progress log (what was actually done), never recompute assignments with current params.
+- `activity` is per-track, orthogonal to scheduling — never encode modality into rule kinds or templates as a whole (a template may mix, e.g. a listen-mode تحضير track).
+- Missed-day policy is a per-template flag: cursor-shift (default) or calendar-bound (recompute daily quantity toward a fixed end date). Streaks derive from the log.
+- Completion is manual per-track check-off; reader/playback-aware shortcuts may *offer* check-off but must never auto-write it.
+- Multiple concurrent enrollments per user are allowed — "today" UI aggregates across active plans.
+- Plan check-offs are online-only in v1 (mirrors marks, ADR 0014); offline queueing would need that decision re-opened.
+- A rule kind with a `sourceTrack` may only reference a source-free track (`fixed_cycle`/`cursor_advance`) — the engine (`app/lib/plans/engine.ts`) resolves dependencies in two passes, not a general graph. Honor this shape when authoring templates in `app/constants/plans.ts`.
+- Unit tests: `vitest` (`npm run test`), introduced with this feature — the repo's first unit-test infra. Tests are colocated `*.test.ts` files with explicit `vitest` imports (no globals config); `vitest.config.ts` carries only the `@/` alias. Scope is pure functions (the engine); API routes/hooks are wiring and stay covered by e2e/integration, not unit mocks.
+
+---
+
 ## CI: Visual e2e Skip on Config-Only PRs
 
 **Decision:** `.github/workflows/visual-e2e.yml` uses `on.pull_request.paths-ignore` (not an allowlist) to skip the suite when every changed file in a PR matches: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`. See `docs/plans/skip-e2e-config-changes.md`.
