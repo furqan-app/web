@@ -18,11 +18,13 @@ Loads the right context (decisions + standards + plan), then implements the task
    - Derive the slug from the plan filename (e.g. `fix-search-debounce`)
    - **Read the plan in full from the worktree path: `../furqan-<slug>/docs/plans/<slug>.md`**. If that path does not exist, fall back to `docs/plans/<slug>.md` in the main repo (older tasks pre-dating the worktree-first flow). Read every addendum, especially `Constraints` and `What NOT to Do` — the newest addendum is the source of truth.
    - Find the plan's Trello card (linked in the plan) and move it to **In Progress** (`mcp__trello__move_card`) before starting implementation.
+   - Assign the card to the person starting the task: read `TRELLO_API_KEY`/`TRELLO_TOKEN` from `.mcp.json` (`mcpServers.trello.env`) and call `GET https://api.trello.com/1/members/me?key=<key>&token=<token>&fields=id,fullName,username` to resolve the authenticated member directly from the token — this identifies the actual Trello account regardless of local git config. Then `mcp__trello__assign_member_to_card` with that member's `id`. Never print or log the key/token values themselves. If the request fails (missing `.mcp.json`, network error), skip silently — don't block implementation over it.
 
 1b. **Set up worktree and start dev server**
 
    **Check for an existing worktree first:**
    - Run `git worktree list` and look for a path ending in `furqan-<slug>`
+   - Resolve the worktree's **absolute path** from that same `git worktree list` output (first column) and use it for every file read/write and command below — the `../furqan-<slug>` forms in this skill are naming conventions, not literal paths to pass to tools. The relative form resolves against the shell's cwd, and the Write tool silently creates missing directories, so a wrong resolution writes files into a stray directory outside the repo (this happened; see /plan-fq-task step 6).
    - If found: read `~/.claude/furqan-worktrees.json` and find the entry for this slug.
      - If the entry has a `port`: print `Worktree running at http://localhost:<port>` and skip to step 2.
      - If the entry has no `port` (worktree was created by `/plan-fq-task` before the dev server step): skip steps 1–3 below and continue from step 4 to assign a port and start the dev server.
