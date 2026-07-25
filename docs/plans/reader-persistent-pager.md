@@ -2,7 +2,7 @@
 
 **Type:** feature (performance re-architecture)
 **Date:** 2026-07-23
-**Status:** implemented (swipe-commit flicker + base-font over-fetch follow-up both fixed and verified)
+**Status:** implemented (swipe-commit flicker, base-font over-fetch, and `FontFaceInjector` ref-mutation-during-render all fixed and verified)
 **Trello:** #137 https://trello.com/c/sEA3hgtz
 **ADR:** [0028](../architecture/adr/0028-reader-persistent-pager.md)
 
@@ -739,3 +739,92 @@ section above was stale and is now corrected (see that section). A third finding
 deliberately left as-is: currently in sync, and fixing the duplication would require a
 bigger build-tooling change (e.g. a shared JS module both sides can import) than this
 follow-up's scope justifies.
+
+## Review Follow-up (sixth session) — FontFaceInjector ref-mutation-during-render
+
+A code review of PR #141 (the full branch diff, external to this session) flagged that
+`FontFaceInjector`'s `updateLru` helper mutates a ref (`keptRef.current` / `baseKeptRef.current`)
+directly inside the component's render body, and the return value is used immediately to compute
+that same render's JSX (`injectedIds`, `baseInjectedIds`).
+
+### Root Cause
+
+React's contract is that render must be pure — reading or writing `ref.current` during render
+(as opposed to inside an effect or event handler) is explicitly disallowed, because a render that
+starts but does not commit (a Suspense retry, an interrupted transition) still leaves the ref
+mutated. The mutation is not undone if React discards that render pass, so the tracked "kept" page
+ids can drift from what was actually committed to the DOM. `reactStrictMode: false` in
+`next.config.mjs` and the absence of `startTransition`/Suspense on this component's render path
+mean this isn't currently observable in production, but it's the wrong pattern for a component
+whose entire purpose (ADR 0029) is eliminating font-state bugs caused by state changing outside
+React's render contract — the same category of risk this component exists to prevent.
+
+### Fix — render-phase state instead of ref mutation
+
+Replace the two ref-mutating call sites with a small `useLruIds(ids)` hook that stores the "kept"
+list in `useState` instead of a ref, using React's own "adjust state during render" pattern
+(see react.dev's `useState` reference, "Storing information from previous renders"): compare the
+incoming `ids` (via a joined-string signature) against the previously-stored signature, and when it
+differs, compute the next LRU list and call `setState` synchronously in the render body — not in an
+effect. React re-renders immediately with the fresh state before committing to the DOM, so there is
+no extra render pass and no flash of the stale list (which a `useEffect`-based fix would introduce,
+since effects run after the first commit).
+
+The underlying LRU algorithm (filter existing id out, unshift to front, cap at `MAX_KEPT`) is
+unchanged — only how the "kept" list persists across renders changes, from a mutated ref to
+React-managed state.
+
+### Decisions Made
+
+- Use the render-phase `setState` pattern (React-sanctioned for derived state), not
+  `useEffect` + ref — an effect-based fix would add a second render pass and reintroduce a
+  visible flash of the pre-update font/style set, which is exactly what this component exists to
+  avoid.
+- Keep `MAX_KEPT` and the eviction algorithm unchanged — this is a mechanical relocation of where
+  the LRU state lives, not a change to eviction behavior. (The `MAX_KEPT` constant is still
+  duplicated between this file and `page-font-registry.ts`; that's a separate, lower-priority nit
+  from the same review and is out of scope here.)
+
+### Files to Change
+
+- `app/components/reader/FontFaceInjector.tsx` — replace `useRef` + `updateLru(ref, ids)` with a
+  `useLruIds(ids)` hook backed by `useState`; drop the now-unused `useRef`/`MutableRefObject`
+  imports; both `injectedIds` and `baseInjectedIds` call sites switch to the new hook. No other
+  file changes — `ensurePageFonts`, the tajweed `<style>` rendering, and the `baseInjectedIdsKey`
+  effect dependency all stay as-is.
+
+### Constraints
+
+- Must not change the LRU eviction algorithm or `MAX_KEPT` cap.
+- Must not introduce an extra render/commit pass or any visible delay before the correct font
+  `<style>` set / registry ids are used — this is the same swipe-commit-flicker-adjacent
+  component from ADR 0029, so any fix that trades ref-mutation-during-render for a
+  flash-during-effect would be a regression, not a fix.
+- Must preserve hook-call order relative to the `if (!tajweedMode) return null;` early return —
+  both `useLruIds` calls (and the `useEffect`) stay before it, as today.
+
+### What NOT to Do
+
+- Do not move the LRU update into a `useEffect` — effects run after commit, so the render that
+  triggered the id change would first paint with the stale list, then a second render (post-effect
+  `setState`) would correct it. That reintroduces a visible flash this component's whole design
+  exists to prevent.
+- Do not change `updateLru`'s eviction logic while relocating it — this fix is scoped to *where*
+  the LRU state lives, not *how* eviction decides what to keep.
+- Do not consolidate the two independent LRUs (tajweed ids vs. base-font-registry ids) into one —
+  ADR 0029's Addendum already established they must stay independent because they can legitimately
+  diverge (visible spread partner vs. not).
+
+### Implementation Notes
+
+Implemented as specified: `updateLru(ref, ids)` replaced with `nextKept(prevKept, ids)` (pure,
+unchanged algorithm) plus a `useLruIds(ids)` hook that stores `{ key, kept, sorted }` in `useState`
+and, on a signature mismatch, computes and returns the fresh sorted list while also committing it to
+state in the same render pass — no ref, no extra render/commit cycle. `injectedIds` and
+`baseInjectedIds` both switched to `useLruIds`; hook-call order relative to the
+`if (!tajweedMode) return null` early return is unchanged. Dropped the now-unused `useRef` /
+`MutableRefObject` imports. `docs/architecture/COMPONENTS.md`'s `FontFaceInjector` entry updated to
+name `useLruIds` instead of the old `updateLru` ref helper.
+
+`npm run lint` and `npx tsc --noEmit` both pass clean. Live browser verification (tajweed toggle +
+swipe, confirming no flash/regression) not yet run — pending.
