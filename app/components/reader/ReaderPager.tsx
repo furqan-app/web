@@ -370,7 +370,10 @@ export function ReaderPager({
   // forced-single below lg, or desktop/tablet with single manually toggled)
   // force-downloads an unused partner font on every swipe. See ADR 0029's
   // Addendum.
-  const baseFontIds = isDouble ? allPageIds : [pageNumber, nextAnchor, prevAnchor];
+  const baseFontIds = useMemo(
+    () => (isDouble ? allPageIds : [pageNumber, nextAnchor, prevAnchor]),
+    [isDouble, allPageIds, pageNumber, nextAnchor, prevAnchor],
+  );
 
   return (
     <>

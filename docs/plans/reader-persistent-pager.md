@@ -177,13 +177,20 @@ that `QuranSwipeNav`/`QuranSpread` already use. Wrap at ends (page 1 ↔ 604) ex
   the mobile `RecitationPlayButton` reads it for its "listen from here" start point. Navigation
   ownership stays in one place (the pager).
 
-## Open verification (do at implementation, not now)
+## Open verification
 
-- Re-profile Stage 2 on a real mid-range device to decide whether Stage 2b is needed.
-- Confirm the slim JSON field set covers surah-banner gap detection (`QuranSafha` uses
-  `line_number` gaps + `verse.chapter.verses_count` + `location`) and mark snippets
-  (`qpc_uthmani_hafs` for the verse snippet) — include `qpc_uthmani_hafs` in the slim word shape if
-  the snippet is kept, or derive snippets lazily.
+- **Stage 2b decision — not formally re-profiled.** Stage 2b (event-delegated markup) was
+  never triggered or built. No reports of the original `router.push` mass-remount freeze
+  (the ~183ms main-thread block this plan set out to fix) have recurred since Stage 2
+  shipped; the several follow-on sessions since have all been about a separate,
+  later-introduced flicker (a font-stylesheet mutation bug, ADR 0029), not the original
+  freeze. No formal real-device profiling session was separately recorded confirming the
+  freeze is gone, so this is an inferred-resolved, not a verified-resolved, status. Revisit
+  Stage 2b only if the original freeze symptom specifically (input lag on swipe commit, not
+  a visual flash) resurfaces.
+- **Resolved:** the slim JSON field set covers surah-banner gap detection and mark
+  snippets — `qpc_uthmani_hafs`, `verse.chapter.verses_count`, and `location` are all present
+  in the current `select` (`app/hooks/get-page-words.ts`, `scripts/quran-json/generate.js`).
 
 ## Residual Bug Scope (2026-07-25) — Swipe-Commit Flicker
 
@@ -719,3 +726,16 @@ Also re-ran the third-session flicker regression check (swipe on mobile with a
 `MutationObserver` on `<head>` + a `document.fonts` snapshot): zero style mutations, all
 in-window faces stayed `loaded` — this change doesn't touch the registry's core invariant,
 only which ids get passed to it.
+
+## Review Follow-up (fifth session)
+
+A comprehensive review of the full branch diff (all 12 commits vs `main`) surfaced two
+low-risk findings, both fixed: `ReaderPager`'s `baseFontIds` is now `useMemo`'d for
+consistency with the neighboring `allPageIds` (no behavior change — it was already reduced
+to a joined-string key immediately, never a correctness bug); the "Open verification"
+section above was stale and is now corrected (see that section). A third finding —
+`scripts/quran-json/generate.js` hand-mirroring `getPageWords()`'s Prisma `select` +
+`groupBy()` from the TS source, since the plain-Node build script can't import TS — was
+deliberately left as-is: currently in sync, and fixing the duplication would require a
+bigger build-tooling change (e.g. a shared JS module both sides can import) than this
+follow-up's scope justifies.
