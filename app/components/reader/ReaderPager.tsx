@@ -12,6 +12,7 @@ import { getLanguageDirection } from "@/app/utils/i18n";
 import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
+import { ensurePageFonts } from "@/app/utils/page-font-registry";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
@@ -213,6 +214,15 @@ export function ReaderPager({
   const isDragging = useRef(false);
   const snapClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCommitting = useRef(false);
+
+  // Mobile font strategy: register page fonts via the immutable FontFace
+  // registry (ADR 0029) instead of a live <style> mutation, so committing a
+  // swipe never re-parses a stylesheet and resets the visible page's face to
+  // unloaded. Desktop/tablet gets the pair-expanded set via FontFaceInjector.
+  useEffect(() => {
+    if (isLgUp) return;
+    ensurePageFonts([pageNumber, nextAnchor, prevAnchor]);
+  }, [isLgUp, pageNumber, nextAnchor, prevAnchor]);
 
   // Swap the anchor and re-center atomically. The panel revealed during the drag
   // (an outer slot) and the panel that must sit at the -100% rest slot are

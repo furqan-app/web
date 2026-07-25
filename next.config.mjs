@@ -30,6 +30,15 @@ const nextConfig = {
         has: [{ type: "query", key: "_rsc" }],
         headers: [{ key: "Cache-Control", value: "no-store" }],
       },
+      {
+        // Font paths are versioned (/v1/, /v4/) — safe to cache forever. Also
+        // means an accidental FontFace recreation (ADR 0029) costs no
+        // revalidation round-trip, not just no reset.
+        source: "/fonts/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
     ];
   },
   webpack(config) {

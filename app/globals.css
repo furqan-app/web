@@ -277,7 +277,17 @@ body,
     .fq-reader-outer {
       min-height: 100dvh !important;
       padding-bottom: 0 !important;
-      background-color: var(--viewer-background) !important;
+      background-color: var(--mushaf-paper) !important;
+    }
+    .fq-reader-spread-container,
+    .fq-spread,
+    .fq-full-safha,
+    .fq-full-safha > div,
+    .fq-spread > div,
+    .fq-spread .fq-safha-card {
+      width: 100vw !important;
+      min-width: 100vw !important;
+      max-width: 100vw !important;
     }
     .fq-full-safha > div {
       height: 100dvh !important;
@@ -322,6 +332,9 @@ body,
         inset 0 1px 0 var(--mushaf-paper-highlight),
         inset 0 0 28px var(--mushaf-paper-dip),
         0 1px 2px var(--mushaf-paper-shadow);
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
     }
 
     /* Lightweight page-side cue: one narrow paint strip, not stacked full-page
@@ -361,6 +374,24 @@ body,
         var(--mushaf-paper) 0 1px,
         var(--fq-stack-stripe) 1px 2px
       );
+    }
+
+    /* Mobile: remove side stripe/border paint around pages. */
+    .fq-spread .fq-compensate-r > .fq-safha-card::after,
+    .fq-spread .fq-compensate-l > .fq-safha-card::after,
+    .fq-spread .fq-safha-card::after {
+      content: none !important;
+      background: none !important;
+      width: 0 !important;
+      border: 0 !important;
+    }
+    .fq-spread .fq-compensate-r > .fq-safha-card::before,
+    .fq-spread .fq-compensate-l > .fq-safha-card::before,
+    .fq-spread .fq-safha-card::before {
+      content: none !important;
+      background: none !important;
+      width: 0 !important;
+      border: 0 !important;
     }
 
     /* Feature 3 — Ink & ornament colours (mirrors tablet). */
