@@ -384,7 +384,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
           // already). See docs/plans/recitation-playback.md Addendum 7.
           currentVerseKeyRef.current = startVerseKey;
           setCurrentVerseKey(startVerseKey);
-          followPage(startVerseKey);
+          updateRecitedPage(startVerseKey);
           scheduleSeek(startTiming.timestampFrom, pauseMs);
         }
         return;
@@ -408,7 +408,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         reload();
       }
     },
-    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, followPage],
+    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
   );
 
   const handleTimeUpdate = useCallback(() => {
