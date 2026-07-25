@@ -1,42 +1,58 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
 import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
 import { ensurePageFonts } from "@/app/utils/page-font-registry";
 
 type Props = {
   pageIds: number[];
+  baseFontIds: number[];
 };
 
-// How many recently-used page fonts to keep tajweed <style> elements mounted
-// for. The persistent pager (ADR 0028) shifts a small window across pages; if
-// a page's element unmounted the moment it left the window, swiping back would
-// re-download the tajweed font — a brief not-ready state on every revisit. This
-// LRU mirrors the shared registry's cap (see page-font-registry.ts / ADR 0029).
+// How many recently-used page ids to keep mounted/registered. The persistent
+// pager (ADR 0028) shifts a small window across pages; if a page's tajweed
+// element unmounted (or its registry face evicted) the moment it left the
+// window, swiping back would re-download it — a brief not-ready state on every
+// revisit. Mirrors the shared registry's own cap (page-font-registry.ts).
 const MAX_KEPT = 24;
 
-export function FontFaceInjector({ pageIds }: Props) {
-  const { tajweedMode } = useQuranTajweed();
-
-  // LRU of page ids we've kept — current window first, capped at MAX_KEPT.
-  const keptRef = useRef<number[]>([]);
-  let kept = keptRef.current;
-  for (const id of pageIds) {
+// Moves `ids` to the front of `ref`'s kept list (most-recently-used), capped at
+// MAX_KEPT, and returns the sorted result. Two independent LRUs are needed here
+// (tajweed's keyed <style> ids vs. the registry's base-font ids) because they
+// can legitimately diverge — see the baseFontIds prop doc below.
+function updateLru(ref: MutableRefObject<number[]>, ids: number[]): number[] {
+  let kept = ref.current;
+  for (const id of ids) {
     kept = kept.filter((x) => x !== id);
     kept.unshift(id);
   }
   if (kept.length > MAX_KEPT) kept = kept.slice(0, MAX_KEPT);
-  keptRef.current = kept;
-  const injectedIds = [...kept].sort((a, b) => a - b);
-  const injectedIdsKey = injectedIds.join(",");
+  ref.current = kept;
+  return [...kept].sort((a, b) => a - b);
+}
 
-  // Base page fonts go through the immutable registry (ADR 0029) — never a
-  // <style> rewrite, so a commit never resets an already-loaded face.
+export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
+  const { tajweedMode } = useQuranTajweed();
+
+  // Tajweed keyed <style> ids — pure CSS declaration, safe to over-list with
+  // the pair-expanded pageIds (browsers never fetch an unrendered @font-face).
+  const keptRef = useRef<number[]>([]);
+  const injectedIds = updateLru(keptRef, pageIds);
+
+  // Base-font registry ids (ADR 0029) — ensurePageFonts's face.load() is
+  // eager, so this must only include ids the caller has confirmed are actually
+  // visible (baseFontIds excludes an invisible spread partner on single-page
+  // views; see ADR 0029's Addendum). Tracked as its own LRU, independent of the
+  // tajweed one above, since the two lists can diverge.
+  const baseKeptRef = useRef<number[]>([]);
+  const baseInjectedIds = updateLru(baseKeptRef, baseFontIds);
+  const baseInjectedIdsKey = baseInjectedIds.join(",");
+
   useEffect(() => {
-    ensurePageFonts(injectedIds);
-    // injectedIds is a new array each render; the joined key is the real dep.
+    ensurePageFonts(baseInjectedIds);
+    // baseInjectedIds is a new array each render; the joined key is the real dep.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [injectedIdsKey]);
+  }, [baseInjectedIdsKey]);
 
   // Shared tajweed-rule color overrides (indices 3–9). Frame slots 10–12 differ
   // per theme to match each card background (Trello #113, ADR 0023 Addendum 13).

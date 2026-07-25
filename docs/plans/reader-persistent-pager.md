@@ -2,7 +2,7 @@
 
 **Type:** feature (performance re-architecture)
 **Date:** 2026-07-23
-**Status:** implemented (residual swipe-commit flicker fixed — see "Confirmed Root Cause & Fix" section)
+**Status:** implemented (swipe-commit flicker + base-font over-fetch follow-up both fixed and verified)
 **Trello:** #137 https://trello.com/c/sEA3hgtz
 **ADR:** [0028](../architecture/adr/0028-reader-persistent-pager.md)
 
@@ -623,3 +623,99 @@ style mutations, all in-window faces stay `loaded`) across mobile swipe, tablet 
 swipe, and desktop arrow-nav commits, with tajweed mode on and off, and on both `/ar` and
 `/en`. `/fonts/:path*` responses confirmed serving `Cache-Control: public,
 max-age=31536000, immutable`. `npm run lint` passes.
+
+## Follow-up: base-font over-fetch on single-page views (2026-07-25, fourth session)
+
+**Found by:** a second review agent, reading the third-session diff. Not a flicker risk (the
+registry can never reset an already-loaded face) — a bandwidth regression only, worse on
+slow 4G.
+
+### Root Cause
+
+`ReaderPager`'s `allPageIds` (fed to `FontFaceInjector`) is always pair-expanded via
+`getPagePair`, per ADR 0013's "always fetch both pair members" design — that design relies
+on `@font-face` being a *lazy* CSS declaration (browsers don't fetch a font for
+`display:none` content). `ensurePageFonts` breaks that assumption: `face.load()` is eager
+and downloads regardless of render state. Once `FontFaceInjector` started rendering
+unconditionally (the third-session fix for tajweed-on-mobile), its base-font effect also
+started eagerly downloading the invisible spread-partner page's font on every single-page
+session — up to 3 extra ~28 KB fonts per swipe. See ADR 0029's Addendum for the full
+before/after and why `isDouble` (not `isLgUp` alone) is the correct scoping condition — the
+partner is CSS-hidden whenever `view !== "double"`, which includes desktop/tablet at
+`≥1024px` with the toggle manually set to `"single"`, a case `isLgUp` alone would miss.
+
+### Decision Tree (verified)
+
+| Signal | `baseFontIds` → registry (eager) | `pageIds` → tajweed keyed `<style>` (CSS-lazy, unchanged) |
+|---|---|---|
+| `isDouble` (`view==="double" && isLgUp`) | `allPageIds` (pair-expanded — both facing pages visible) | `allPageIds` |
+| not `isDouble` (mobile, forced-single below `lg`, or desktop/tablet with single manually toggled) | `[pageNumber, nextAnchor, prevAnchor]` (single ids only) | `allPageIds` (safe to over-list — CSS declaration costs nothing unrendered) |
+
+### Verified Test Cases
+
+1. Mobile, page 100 (`isDouble` always false): `baseFontIds = [100, 101, 99]` — matches the
+   plan's original "mobile single-page warm set" policy (attempt 14). Tajweed ids stay
+   `{99,100,101,102}`, harmless.
+2. Desktop `≥1024px`, view manually toggled to `"single"`, page 100: same as mobile —
+   `baseFontIds = [100,101,99]`. Not covered by an `isLgUp`-only fix.
+3. Desktop/tablet double-view, page 100: `isDouble=true`, `baseFontIds = allPageIds` —
+   unchanged from today, both facing pages still warm correctly.
+4. Toggle single→double mid-session: `baseFontIds` recomputes to include the newly-visible
+   partner; `FontFaceInjector`'s effect re-fires and loads it on the toggle, not before —
+   matches the original lazy-until-visible intent, done explicitly since the registry can't
+   rely on implicit browser laziness.
+
+### Files to Change
+
+- `app/components/reader/ReaderPager.tsx` — compute `baseFontIds` (`allPageIds` when
+  `isDouble`, else `[pageNumber, nextAnchor, prevAnchor]`); pass it to `FontFaceInjector`
+  alongside the unchanged `pageIds`. Remove the now-redundant standalone mobile
+  `ensurePageFonts` effect (and its now-unused `ensurePageFonts` import) — `FontFaceInjector`
+  becomes the single registration path for both mobile and desktop.
+- `app/components/reader/FontFaceInjector.tsx` — accept a new `baseFontIds` prop; track its
+  own separate LRU (`baseKeptRef`, same `MAX_KEPT` cap) independent from the existing
+  `pageIds`-derived LRU that still keys the tajweed `<style>` elements; call
+  `ensurePageFonts` on the `baseFontIds` LRU instead of the `pageIds` one.
+- `docs/architecture/adr/0029-immutable-page-font-registration.md` — Addendum added (done).
+- `docs/architecture/DECISIONS.md` — Font System constraint added (done).
+
+### Constraints
+
+- Do not change tajweed's `pageIds`/keyed-`<style>` behavior — still pair-expanded, still
+  CSS-only, still safe to over-list.
+- Do not touch `commitTo`/`flushSync`/gesture code, or the immutable-registry invariant
+  itself (ADR 0029) — this is a scoping fix for *which ids* get passed in, not a change to
+  how the registry works.
+- Keep the shared registry's LRU cap (24) and per-face `document.fonts.delete` eviction
+  unchanged.
+
+### What NOT to Do
+
+- Do not scope on `isLgUp` alone — it misses the desktop/tablet single-view-toggled case.
+- Do not remove the pair-expansion for tajweed ids — that's still correct and harmless
+  under the CSS-lazy path.
+- Do not add an explicit eviction call when toggling double→single — the LRU already
+  handles aging out an unused face; no extra logic needed.
+
+### Implementation Notes
+
+Implemented as specified. `ReaderPager` now computes `baseFontIds` inline (no `useMemo` —
+matches `allPageIds`'s existing pattern) and passes it alongside `allPageIds` to
+`FontFaceInjector`; its standalone mobile `ensurePageFonts` effect and the now-unused import
+are removed. `FontFaceInjector` gained a shared `updateLru` helper so the two independent
+LRUs (`keptRef` for tajweed, `baseKeptRef` for the registry) don't duplicate the loop.
+`npm run lint` and `tsc --noEmit` both pass.
+
+Verified all 4 test cases directly against `document.fonts`:
+1. Mobile, page 100: `{99, 100, 101}` only.
+2. Desktop `≥1024px`, single manually toggled, page 100: `{99, 100, 101}` only — the case
+   an `isLgUp`-only fix would have missed.
+3. Desktop double-view (default), page 100: `{97, 98, 99, 100, 101, 102}` — unchanged.
+4. Live single→double toggle (via the actual Settings UI control, not a reload): started at
+   `{99, 100, 101}`, and immediately after the toggle click, `{97, 98, 99, 100, 101, 102}` —
+   the partner loads on toggle, not before.
+
+Also re-ran the third-session flicker regression check (swipe on mobile with a
+`MutationObserver` on `<head>` + a `document.fonts` snapshot): zero style mutations, all
+in-window faces stayed `loaded` — this change doesn't touch the registry's core invariant,
+only which ids get passed to it.

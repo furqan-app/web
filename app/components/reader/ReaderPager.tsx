@@ -12,7 +12,6 @@ import { getLanguageDirection } from "@/app/utils/i18n";
 import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
-import { ensurePageFonts } from "@/app/utils/page-font-registry";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
@@ -215,15 +214,6 @@ export function ReaderPager({
   const snapClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCommitting = useRef(false);
 
-  // Mobile font strategy: register page fonts via the immutable FontFace
-  // registry (ADR 0029) instead of a live <style> mutation, so committing a
-  // swipe never re-parses a stylesheet and resets the visible page's face to
-  // unloaded. Desktop/tablet gets the pair-expanded set via FontFaceInjector.
-  useEffect(() => {
-    if (isLgUp) return;
-    ensurePageFonts([pageNumber, nextAnchor, prevAnchor]);
-  }, [isLgUp, pageNumber, nextAnchor, prevAnchor]);
-
   // Swap the anchor and re-center atomically. The panel revealed during the drag
   // (an outer slot) and the panel that must sit at the -100% rest slot are
   // different DOM subtrees, so the content swap and the transform reset MUST land
@@ -361,6 +351,8 @@ export function ReaderPager({
     : null;
 
   // @font-face for every page in the window so a revealed neighbor never flashes.
+  // Pair-expanded — safe here because tajweed's keyed <style> elements are pure
+  // CSS declaration (browsers never fetch an unrendered face).
   const allPageIds = useMemo(() => {
     const ids = new Set<number>();
     [pageNumber, nextAnchor, prevAnchor].forEach((a) => {
@@ -371,9 +363,18 @@ export function ReaderPager({
     return Array.from(ids);
   }, [pageNumber, nextAnchor, prevAnchor]);
 
+  // Base-font registration (the immutable registry, ADR 0029) is eager —
+  // face.load() downloads regardless of render state, unlike CSS @font-face. So
+  // unlike allPageIds above, this must only include the spread partner when it's
+  // actually visible (isDouble) — otherwise every single-page session (mobile,
+  // forced-single below lg, or desktop/tablet with single manually toggled)
+  // force-downloads an unused partner font on every swipe. See ADR 0029's
+  // Addendum.
+  const baseFontIds = isDouble ? allPageIds : [pageNumber, nextAnchor, prevAnchor];
+
   return (
     <>
-      <FontFaceInjector pageIds={allPageIds} />
+      <FontFaceInjector pageIds={allPageIds} baseFontIds={baseFontIds} />
       <RecitationPageSync firstVerseKey={firstVerseKey} />
       <RecitationFollow anchor={pageNumber} isDouble={isDouble} onFollow={followTo} />
       <link

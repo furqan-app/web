@@ -61,3 +61,33 @@ recreation costs no revalidation round-trip.
 **Never mutate the text of a live stylesheet that contains `@font-face` rules the user can
 currently see.** Add capability by adding new immutable units (a `FontFace` object, a new
 `<style>` element); remove capability by removing whole units.
+
+## Addendum: the registry must only be given genuinely-visible ids
+
+**Date:** 2026-07-25 (fourth session)
+
+**Problem found.** ADR 0013's double-page-spread design relies on `@font-face` being a
+*lazy* CSS declaration: both pair members' font rules are always inlined, but browsers only
+fetch a font when a rendered (non-`display:none`) glyph needs it — so the hidden partner
+page's font costs nothing on mobile/forced-single/single-view sessions. `ensurePageFonts`
+breaks that assumption: it calls `face.load()` explicitly, which is *eager* and fetches
+regardless of whether the page is ever rendered. `ReaderPager`'s `allPageIds` (fed to
+`FontFaceInjector`) is always pair-expanded per ADR 0013, so once `FontFaceInjector` started
+rendering unconditionally (fixing tajweed-on-mobile, same session as the main fix above),
+its base-font effect also started eagerly downloading the invisible spread partner's font on
+every single-page-view session — up to 3 extra ~28 KB fonts per swipe, worse on slow 4G.
+
+**Fix.** The registry (eager path) and the tajweed keyed `<style>` elements (still CSS-lazy,
+unaffected) now take separate id lists: `ReaderPager` computes `baseFontIds` — `allPageIds`
+when `isDouble` (`view === "double" && isLgUp`, both facing pages genuinely visible), else
+just `[pageNumber, nextAnchor, prevAnchor]` (no partner) — and passes it to
+`FontFaceInjector` alongside the unchanged pair-expanded `pageIds` (which still drives the
+tajweed keyed-style LRU, safe to over-list since it's CSS-declarative). `isDouble`, not
+`isLgUp` alone, is the correct condition: the partner page is CSS-hidden whenever
+`view !== "double"`, which includes desktop/tablet at `≥1024px` with the toggle manually set
+to `"single"` — `isLgUp` alone would still eagerly over-fetch for that case.
+
+**Consequence.** Any future eager-registration mechanism (i.e. anything that calls
+`.load()` rather than relying on CSS declaration) must be scoped to ids that are actually
+rendered, not just "in the window" — the window and the visible set are not the same thing
+once double-view pairing is involved.
