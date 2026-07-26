@@ -160,5 +160,34 @@
     "reciterSearchPlaceholder": "ابحث عن قارئ…",
     "reciterEmpty": "لم يتم العثور على قارئ."
   },
-  "viewingChipGeneric": ""
+  "viewingChipGeneric": "",
+  "plans": {
+    "title": "الخطط والأوراد",
+    "todayTitle": "ورد اليوم",
+    "pagesRange": "من صفحة {start} إلى صفحة {end}",
+    "repetitions": "{count} مرات",
+    "checkOff": "تم",
+    "completed": "مكتمل",
+    "activities": {
+      "read": "قراءة",
+      "listen": "سماع",
+      "memorize": "حفظ",
+      "review": "مراجعة"
+    },
+    "statuses": {
+      "active": "نشطة",
+      "paused": "متوقفة مؤقتًا",
+      "completed": "مكتملة",
+      "abandoned": "ملغاة"
+    },
+    "templates": {
+      "daily-wird": {
+        "name": "الورد اليومي",
+        "description": "قراءة عدد ثابت من الصفحات كل يوم لختم المصحف",
+        "tracks": {
+          "reading": "القراءة"
+        }
+      }
+    }
+  }
 }

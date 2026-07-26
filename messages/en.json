@@ -159,5 +159,34 @@
     "reciterSearchPlaceholder": "Search reciters…",
     "reciterEmpty": "No reciter found."
   },
-  "viewingChipGeneric": ""
+  "viewingChipGeneric": "",
+  "plans": {
+    "title": "Plans & Awrad",
+    "todayTitle": "Today's wird",
+    "pagesRange": "Pages {start}–{end}",
+    "repetitions": "{count} times",
+    "checkOff": "Done",
+    "completed": "Completed",
+    "activities": {
+      "read": "Read",
+      "listen": "Listen",
+      "memorize": "Memorize",
+      "review": "Review"
+    },
+    "statuses": {
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "abandoned": "Abandoned"
+    },
+    "templates": {
+      "daily-wird": {
+        "name": "Daily Wird",
+        "description": "Read a fixed number of pages every day to complete the mushaf",
+        "tracks": {
+          "reading": "Reading"
+        }
+      }
+    }
+  }
 }
