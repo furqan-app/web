@@ -22,7 +22,7 @@ export type TodayPlanAssignments = {
 /**
  * GET /api/plans/today?date=YYYY-MM-DD — derived assignments for every active
  * enrollment on the given local date (client supplies its local-midnight day,
- * ADR 0028). Nothing is stored — pure derivation from the progress log.
+ * ADR 0030). Nothing is stored — pure derivation from the progress log.
  */
 export async function GET(request: NextRequest) {
   const user = extractUser(request);
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   for (const plan of plans) {
     const template = getPlanTemplate(plan.template_key);
     // An enrollment referencing a template this build no longer ships is
-    // skipped, not an error — templates are code (ADR 0028).
+    // skipped, not an error — templates are code (ADR 0030).
     if (!template) continue;
 
     const entries: ProgressLogEntry[] = plan.progress.map((entry) => ({

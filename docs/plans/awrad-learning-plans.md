@@ -7,7 +7,7 @@
 
 ## Summary
 
-One engine powers both the simple ask ("read N pages/day, track progress") and structured multi-track programs like الحصون الخمسة. A simple daily wird is a degenerate learning plan with one track. Templates are typed TS constants; a track = unit + quantity + scheduling rule kind + activity. Only enrollments and an append-only progress log are stored (`furqan_app`); daily assignments are derived at read time, never persisted. See [ADR 0028](../architecture/adr/0028-plan-engine-derived-assignments.md). This plan covers the **foundation** (model, engine, storage, API); the plans hub UI / reader widget get their own follow-up plan.
+One engine powers both the simple ask ("read N pages/day, track progress") and structured multi-track programs like الحصون الخمسة. A simple daily wird is a degenerate learning plan with one track. Templates are typed TS constants; a track = unit + quantity + scheduling rule kind + activity. Only enrollments and an append-only progress log are stored (`furqan_app`); daily assignments are derived at read time, never persisted. See [ADR 0030](../architecture/adr/0030-plan-engine-derived-assignments.md). This plan covers the **foundation** (model, engine, storage, API); the plans hub UI / reader widget get their own follow-up plan.
 
 ## Approach
 

@@ -8,7 +8,7 @@ import { getQueryClient } from "../utils/queryClient";
 
 /**
  * Derived assignments for every active enrollment on the browser's local
- * date (local-midnight day boundary, ADR 0028). The date is part of the
+ * date (local-midnight day boundary, ADR 0030). The date is part of the
  * query key so a session left open across midnight fetches the new day.
  */
 export const useTodayAssignments = () => {

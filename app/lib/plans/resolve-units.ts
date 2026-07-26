@@ -1,6 +1,6 @@
 /**
  * Server-only resolution of Quran structural units to mushaf page ranges
- * (page-canonical engine, D3/ADR 0028). Reads already-seeded Quran data —
+ * (page-canonical engine, D3/ADR 0030). Reads already-seeded Quran data —
  * no schema changes, no cross-domain FK (lookup by scalar values only).
  */
 

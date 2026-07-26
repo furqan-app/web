@@ -1,5 +1,5 @@
 /**
- * Plan assignment engine (ADR 0028).
+ * Plan assignment engine (ADR 0030).
  *
  * Pure functions — no DB, no clock. The daily assignment is derived from
  * (template, enrollment params, progress log, date) and is never stored.

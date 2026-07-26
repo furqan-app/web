@@ -582,7 +582,7 @@ amends ADR 0024).
 
 ## Awrad & Learning Plans Engine
 
-**Decision:** Daily awrad and structured programs (الحصون الخمسة) run on one plan engine: plan templates are typed TS constants (like `MARK_CATEGORIES`), each template composed of tracks; a track = unit + quantity + one of five typed scheduling rule kinds (`fixed_cycle`, `cursor_advance`, `trailing_window`, `completed_cycle`, `lookahead`) + a per-track `activity` (`read | listen | memorize | review`). Only enrollments (`UserPlan`) and an append-only `ProgressEntry` log are stored (in `furqan_app`); the daily assignment is derived at read time as a pure function of (template, params, progress, date) — never persisted. See [ADR 0028](adr/0028-plan-engine-derived-assignments.md) and `docs/plans/awrad-learning-plans.md`.
+**Decision:** Daily awrad and structured programs (الحصون الخمسة) run on one plan engine: plan templates are typed TS constants (like `MARK_CATEGORIES`), each template composed of tracks; a track = unit + quantity + one of five typed scheduling rule kinds (`fixed_cycle`, `cursor_advance`, `trailing_window`, `completed_cycle`, `lookahead`) + a per-track `activity` (`read | listen | memorize | review`). Only enrollments (`UserPlan`) and an append-only `ProgressEntry` log are stored (in `furqan_app`); the daily assignment is derived at read time as a pure function of (template, params, progress, date) — never persisted. See [ADR 0030](adr/0030-plan-engine-derived-assignments.md) and `docs/plans/awrad-learning-plans.md`.
 
 **Constraints:**
 - Progress is **page-canonical**: juz/hizb/rub targets resolve to page ranges from seeded `PageMetadata`/`Rub` at read time; progress rows store page numbers. Verse-level granularity is a future widening, not v1.

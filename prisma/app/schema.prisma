@@ -63,7 +63,7 @@ model MushafAccessGrant {
   @@map("mushaf_access_grants")
 }
 
-// Enrollment in a plan template (ADR 0028). template_key refers to the typed
+// Enrollment in a plan template (ADR 0030). template_key refers to the typed
 // TS constants in app/constants/plans.ts — templates are code, not DB rows.
 // Scalar user ref only (no relation — ADR 0008 pattern). params holds
 // per-enrollment config (per-track quantities, start page, end date).
@@ -83,7 +83,7 @@ model UserPlan {
 }
 
 // Append-only completion log. Daily assignments are DERIVED from this log +
-// the template + enrollment params (never stored — ADR 0028). range_start/end
+// the template + enrollment params (never stored — ADR 0030). range_start/end
 // are strings: page numbers today, wide enough for verse keys later. One
 // check-off per (plan, track, day); re-checking updates the range in place.
 model PlanProgressEntry {

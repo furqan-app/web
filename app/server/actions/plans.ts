@@ -68,7 +68,7 @@ export const updatePlanStatus = async ({
   }
 };
 
-/** Local-midnight day boundary (ADR 0028): the browser's own date. */
+/** Local-midnight day boundary (ADR 0030): the browser's own date. */
 export const getLocalDateString = () => {
   const now = new Date();
   const y = now.getFullYear();

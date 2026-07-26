@@ -1,5 +1,5 @@
 /**
- * Plan engine template definitions (ADR 0028).
+ * Plan engine template definitions (ADR 0030).
  *
  * Templates are typed TS constants (like MARK_CATEGORIES) — never DB rows.
  * A track = unit + quantity + one scheduling rule kind + an activity.

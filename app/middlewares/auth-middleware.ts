@@ -11,7 +11,7 @@ const protectedRoutes = [
   new RegExp("^/api/marks$"),
   // All shared-mushaf endpoints require an authenticated user (ADR 0012).
   new RegExp("^/api/mushaf/"),
-  // All plan-engine endpoints are per-user state (ADR 0028).
+  // All plan-engine endpoints are per-user state (ADR 0030).
   new RegExp("^/api/plans"),
 ];
 

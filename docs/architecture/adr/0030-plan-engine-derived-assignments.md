@@ -1,4 +1,4 @@
-# ADR 0028: Plan engine — code-defined templates, typed scheduling rules, derived daily assignments
+# ADR 0030: Plan engine — code-defined templates, typed scheduling rules, derived daily assignments
 
 **Date:** 2026-07-24
 **Status:** Accepted
