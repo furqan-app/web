@@ -783,3 +783,87 @@ no new DOM nodes, no layout change.
 - Do not reveal real stack layers on mobile — use the `::after` strip only.
 - Do not change the tablet media query block.
 - Do not add a gutter/binding element between pages on mobile.
+
+## Addendum — Sync voice panel with nav overlay; voice panel becomes the reader's persistent play control
+
+**Date:** 2026-07-26 · **Status:** implemented · Trello: [#125](https://trello.com/c/jYfTL0Oe/125-for-tablet-and-mobile-when-toggling-nav-toggle-voice-panel-as-well) · Branch: `feature/125-nav-voice-panel-toggle-sync`
+
+> **Revision note (same day, branch still open):** this addendum was implemented once already (bar synced to nav overlay, mobile nav play button removed, `RecitationPlayButton`/`RecitationPageSync`/`pageFirstVerseKey` deleted as dead code) and then corrected after review. Editing in place rather than stacking a new addendum, per this branch still being open. The corrections below **supersede** the original "always visible when `status !== idle`, no toggle" behavior and the "remove the whole dead chain" cleanup — `pageFirstVerseKey`/`RecitationPageSync` are restored, now feeding the voice panel instead of the (still-removed) nav button.
+
+### Summary
+
+Three corrections to the voice panel (`RecitationPlayerBar`, the fixed bottom bar):
+1. It must always follow the nav overlay's show/hide — which means it now needs to render on reader pages even before a session starts (previously it rendered only once `status !== "idle"`).
+2. Because it now renders while idle, its play button becomes the reader's play-current-Safha control — the same job the deleted mobile nav button did, restoring the `pageFirstVerseKey`/`RecitationPageSync` plumbing to feed it (now wired to the bar, not the nav).
+3. The "X" close button is re-skinned to a `Square` (stop) icon — same `stop()` behavior, just no longer reads visually as "close" — and hides while idle (nothing to stop yet).
+
+### Decision Tree
+
+**Render/content, by session status (bar is mounted on reader routes — self `/pages/[id]` and grant `/mushaf/[grant]/pages/[id]` — same substring check `pathname.includes("/pages/")` `Nav.tsx` already uses):**
+
+| Condition | Bar renders? | Play/Pause button | Label | Settings gear | Stop button |
+|---|---|---|---|---|---|
+| On reader route, `status="idle"` | Yes | Play icon → `play(pageFirstVerseKey)` | "Recitation" (reciter fallback), empty verse line | Visible | Hidden |
+| On reader route, `status="paused"` | Yes | Play icon → `togglePlayPause()` | reciter name + verse key | Visible | Visible, `Square` icon → `stop()` |
+| On reader route, `status="playing"` | Yes | Pause icon → `togglePlayPause()` | reciter name + verse key | Visible | Visible, `Square` icon → `stop()` |
+| On reader route, `status="loading"` | Yes | Spinner, disabled | reciter name + verse key | Visible | Visible |
+| Off reader route, `status="idle"` | No (unchanged) | — | — | — | — |
+| Off reader route, `status!=="idle"` | Yes (background playback, ADR 0021, unchanged) | as above | as above | Visible | Visible |
+
+**Nav-overlay sync (mechanism unchanged from the original implementation):** on tablet/mobile reader route, the whole bar — idle or active — slides with `overlayVisible`, same transform/easing as `Nav.tsx`. On desktop reader route, always shown, no toggle (matches nav's static behavior there). Off the reader route, no overlay sync (as before).
+
+### Verified Test Cases
+
+1. Tablet/mobile `/pages/N`, no active session → bar already renders (idle state: play + reciter label + settings, no stop button); tap background → nav and bar toggle together as before.
+2. Tap the idle play button → starts playback of the current page's first verse (`pageFirstVerseKey`), bar switches to the active layout (stop button appears).
+3. Tap play/pause while playing/paused → toggles in place, bar stays visible, no layout change beyond the icon.
+4. Tap the square stop button → `stop()` fully clears the session; bar drops back to the idle layout (still visible, still following nav) rather than disappearing.
+5. Mid-playback, navigate off `/pages/` (e.g. to Marks) → bar keeps showing (background playback, ADR 0021) with the stop button still visible; navigating back to idle + off-reader hides it again (unchanged edge case).
+6. Desktop, on reader route, idle → bar always visible (no toggle), play button starts playback same as mobile/tablet.
+7. Word-tap → MarkModal → "Play from here" still works independently of the bar's own play button (unaffected, cross-breakpoint).
+
+### Files to Change
+
+- **`app/components/RecitationPlayerBar.tsx`** — read `usePathname()` (mirrors `Nav.tsx`'s `isOnPagesRoute` check) and `pageFirstVerseKey` from `useRecitation()`, alongside the existing `useNavOverlay()` sync (unchanged from before). Replace the `if (status === "idle") return null` guard with: render if `status !== "idle"` OR (`isOnReaderRoute` AND `pageFirstVerseKey` is non-null); otherwise return null. Play/pause button: `onClick` branches on `status === "idle" ? () => play(pageFirstVerseKey!) : togglePlayPause`, icon `Play` for idle/paused, `Pause` for playing, spinner for loading. Stop button: only rendered when `status !== "idle"`; icon changes from `X` to `Square` (`lucide-react`), same `onClick={stop}`, same `aria-label` (`recitation.stop`).
+- **`app/utils/recitation.ts`** — restore `getFirstVerseKeyOfPage` (and its `WordWithVerse` import), deleted last pass.
+- **`app/contexts/RecitationContext.tsx`** — restore `pageFirstVerseKey` state + `setPageFirstVerseKey` + the type field + provider value, deleted last pass. Update the field's doc comment: it now feeds the voice panel's play button, not the (still-removed) nav button.
+- **NEW `app/components/reader/RecitationPageSync.tsx`** — restore this leaf exactly as it was (null-rendering, `useEffect` syncing `firstVerseKey` prop into context, clearing on unmount).
+- **`app/components/reader/ReaderPager.tsx`** — restore the `rightData`/`leftData`/`currentPageWords`/`firstVerseKey` computation and the `<RecitationPageSync firstVerseKey={firstVerseKey} />` mount, deleted last pass.
+- **`app/components/nav/Nav.tsx`** — no further change; the mobile play button stays removed (superseded by the always-visible voice panel play button, now available on every breakpoint, not just mobile).
+- **`docs/architecture/COMPONENTS.md`** — re-add `RecitationPageSync`'s entry (removed last pass), update `RecitationPlayerBar`'s entry for the new idle/play-current-Safha behavior and the restored `pageFirstVerseKey` dependency, update `ReaderPager`'s entry to list `RecitationPageSync` again among its rendered children.
+
+### Constraints
+
+- Do not reintroduce `RecitationPlayButton.tsx` or any nav-mounted play button — the voice panel's own play button is now the single, breakpoint-agnostic entry point for "play current Safha."
+- Do not add an auto-hide timer to the voice panel — still explicit-toggle-only, matching the nav.
+- Do not touch `MarkModal`'s "Play from here" button or `QuranWord`'s word-tap path.
+- Do not scope the nav-overlay sync any wider than `isOverlayMode` already does (tablet 1024–1366px + mobile ≤767px, `/pages/` route only).
+- Stop button's `stop()` behavior itself is unchanged (fully clears session) — only its icon and idle-time visibility change.
+
+### What NOT to Do
+
+- Do not keep the bar gated by `status !== "idle"` alone — that was the bug this revision fixes (no play-current-Safha entry point existed without an active session already).
+- Do not hide the whole bar when idle off the reader route — it must stay exactly as before there (no session ⇒ hidden; active session ⇒ background-playback bar, ADR 0021).
+- Do not show the stop/square button while idle — nothing to stop yet.
+- Do not reinterpret "close" as ending the session silently without the same `stop()` semantics (clearing `currentVerseKey`/`recitedPage`) — the icon changed, the behavior did not.
+
+### Decisions Made
+
+- Voice panel is now a permanent fixture on reader routes (self + grant), not conditional on an active session — mirroring the nav overlay it must "always follow."
+- The play button's idle behavior ("play current Safha") restores the exact `pageFirstVerseKey`/`RecitationPageSync` mechanism deleted in the prior pass, now feeding the bar instead of the removed nav button.
+- Stop button keeps `stop()`'s existing clear-session behavior; only its icon (X → Square) and idle-time visibility (hidden) change.
+
+### Bug fix — stray post-`stop()` `timeupdate` resurrects highlight + recitedPage
+
+**Found:** two symptoms after pressing the stop/close button — (1) the recitation-highlighted word stays highlighted, (2) swiping to a different page and playing from there navigates back to the old page while the new page's audio plays.
+
+**Root cause:** `stop()` calls `audio.pause()` then synchronously resets `currentVerseKeyRef`/`recitedPage`/highlight to null. Per the HTML spec, `pause()` on a playing element always queues one more `"timeupdate"` event afterward (the paused flag flips synchronously; the event fires as a deferred task). `handleTimeUpdate` (`app/contexts/RecitationContext.tsx`) has no guard against this stray tick — it recomputes the active verse from `audio.currentTime`/`verseTimingsRef` (neither cleared by `stop()`), sees `previousVerseKey` is now `null`, takes the "verse changed" branch, and re-sets `currentVerseKey`/`recitedPage`/highlight right back. The resurrected `recitedPage` then sits stale until a later `play()` on a different page flips `status` to `"playing"`, at which point `RecitationFollow` sees a stale `recitedPage` outside the new page's window and snaps the pager back to the old page.
+
+**Fix:** add `if (audio.paused) return;` at the top of `handleTimeUpdate` in `app/contexts/RecitationContext.tsx`. `audio.paused` is already `true` by the time the stray tick runs, so this discards it — and correctly no-ops during a genuine mid-session pause too (nothing should update while paused).
+
+**Files to change:**
+- `app/contexts/RecitationContext.tsx` — one-line guard in `handleTimeUpdate`.
+
+**What NOT to do:**
+- Do not touch `handleChapterEnded` or any other event handler — this fix is scoped to the confirmed `timeupdate`-after-`pause()` race, not a general defensive sweep.
+- Do not add a `status` check instead of `audio.paused` — the ref-based `status` check would need an extra ref (status is state, not a ref, so it'd be stale inside the `useCallback` without adding one); `audio.paused` is already correct and available with no new state.

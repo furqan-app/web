@@ -76,8 +76,8 @@ type RecitationContextType = {
   // navigation lives in the pager, not here.
   recitedPage: number | null;
   // First verse_key of the currently displayed page, kept current by
-  // RecitationPageSync — the mobile RecitationPlayButton reads it as its
-  // "listen from here" start point (it cannot receive props from the pager).
+  // RecitationPageSync — the voice panel's play button reads it as its
+  // "play current Safha" start point (it cannot receive props from the pager).
   pageFirstVerseKey: string | null;
   setPageFirstVerseKey: (key: string | null) => void;
   play: (startVerseKey: string) => void;
@@ -415,6 +415,14 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     const verseTimings = verseTimingsRef.current;
     if (!audio || verseTimings.length === 0) return;
+    // pause() (called by stop()/togglePlayPause) always queues one more
+    // "timeupdate" event afterward per the HTML spec, even though `paused`
+    // itself flips synchronously beforehand. Without this guard that stray
+    // tick resurrects currentVerseKey/recitedPage/highlight right after
+    // stop() clears them (previousVerseKey reads null, so the verse-changed
+    // branch below fires) — see docs/plans/tablet-nav-overlay.md's bug-fix
+    // addendum.
+    if (audio.paused) return;
 
     const currentTimeMs = audio.currentTime * 1000;
     const activeTiming = findActiveVerseTiming(verseTimings, currentTimeMs);
