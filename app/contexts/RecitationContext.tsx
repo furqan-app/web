@@ -15,6 +15,8 @@ import {
   fetchChapterAudio,
   fetchChapterVersePages,
   fetchReciters,
+  fetchRiwayaChapterAudio,
+  fetchRiwayaReciters,
   fetchStopPoint,
 } from "@/app/utils/recitation-api";
 import {
@@ -34,6 +36,7 @@ import {
   RecitationSettings,
   RecitationStatus,
   Reciter,
+  RiwayaVerseAudio,
   StopPoint,
   VerseTiming,
 } from "@/app/types/recitation";
@@ -62,6 +65,28 @@ async function resolveStopTarget(
     return { verseKey: lastVerseKey, chapterId };
   }
   return fetchStopPoint(verseKey, stopPoint);
+}
+
+// Riwaya equivalent of resolveStopTarget above — synchronous, no DB call,
+// same-chapter only (juz/hizb/rub/none aren't offered in the riwaya
+// stop-point picker; a stale value from a prior Hafs session falls back to
+// "surah"). verses[] already carries .page per entry, so "page" needs no
+// lookup beyond the array itself. See docs/plans/recitation-playback.md
+// Addendum 8.
+function resolveRiwayaStopVerseKey(
+  verses: RiwayaVerseAudio[],
+  startVerseKey: string,
+  stopPoint: StopPoint,
+): string {
+  if (stopPoint === "page") {
+    const startVerse = verses.find((v) => v.verseKey === startVerseKey);
+    if (startVerse) {
+      const pageVerses = verses.filter((v) => v.page === startVerse.page);
+      const last = pageVerses[pageVerses.length - 1];
+      if (last) return last.verseKey;
+    }
+  }
+  return verses[verses.length - 1]?.verseKey ?? startVerseKey;
 }
 
 type RecitationContextType = {
@@ -122,24 +147,53 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const rangeRepeatsDoneRef = useRef(0);
   const currentVerseKeyRef = useRef<string | null>(null);
   const currentChapterIdRef = useRef<number | null>(null);
-  const loadedReciterIdRef = useRef<number | null>(null);
+  // Shared by both engines below — only one can be "loaded" at a time since
+  // play() dispatches to exactly one, so a single ref is sufficient (unlike
+  // the verse-audio refs below, which hold genuinely different shapes).
+  const loadedReciterIdRef = useRef<string | null>(null);
   const wordRefRegistry = useRef<Map<string, HTMLElement>>(new Map());
   const activeWordLocationRef = useRef<string | null>(null);
   const pendingSeekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Riwaya (non-Hafs) engine state — see docs/plans/recitation-playback.md
+  // Addendum 8. Independent of verseTimingsRef above: the two engines never
+  // run concurrently (play() dispatches to exactly one), but keeping them
+  // separate avoids conflating QDC's shared-timeline verseTimings with
+  // QuranHub's independent per-verse file list.
+  const riwayaVersesRef = useRef<RiwayaVerseAudio[]>([]);
+  const riwayaVerseIndexRef = useRef<number>(-1);
+  const activeVerseHighlightRef = useRef<string | null>(null);
 
   useEffect(() => {
     setSettings(getInitialSettings());
   }, []);
 
+  // Reciter list — QDC's for Hafs, QuranHub's (scoped to the selected riwaya)
+  // otherwise. Both providers return the unified Reciter shape (Addendum 8),
+  // so this is the only fetch site regardless of which is active.
   useEffect(() => {
-    fetchReciters(locale)
-      .then(setReciters)
-      .catch(() => setReciters([]));
-  }, [locale]);
+    let cancelled = false;
+    const request =
+      settings.riwaya === "hafs"
+        ? fetchReciters(locale)
+        : fetchRiwayaReciters(settings.riwaya, locale);
+    request
+      .then((data) => {
+        if (!cancelled) setReciters(data);
+      })
+      .catch(() => {
+        if (!cancelled) setReciters([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [settings.riwaya, locale]);
 
   // Default to the first reciter once the live list loads, if the user has
   // never explicitly chosen one — lets the header quick-play button start
-  // instantly without forcing the settings sheet open first.
+  // instantly without forcing the settings sheet open first. Also re-fires
+  // after a riwaya switch, since the settings-sheet narration control resets
+  // reciterId to null in the same update.
   useEffect(() => {
     if (settings.reciterId == null && reciters.length > 0) {
       updateSettings({ reciterId: reciters[0].id });
@@ -155,6 +209,28 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Toggles RECITATION_HIGHLIGHT_CLASS on every word ref belonging to
+  // verseKey (keys in wordRefRegistry are `${verseKey}:${position}`) — used
+  // by the riwaya engine, which has no per-word timing to highlight a single
+  // word with. See Addendum 8.
+  const applyVerseHighlight = useCallback((verseKey: string | null) => {
+    if (verseKey === activeVerseHighlightRef.current) return;
+    const prevKey = activeVerseHighlightRef.current;
+    if (prevKey) {
+      const prefix = `${prevKey}:`;
+      wordRefRegistry.current.forEach((el, location) => {
+        if (location.startsWith(prefix)) el.classList.remove(RECITATION_HIGHLIGHT_CLASS);
+      });
+    }
+    if (verseKey) {
+      const prefix = `${verseKey}:`;
+      wordRefRegistry.current.forEach((el, location) => {
+        if (location.startsWith(prefix)) el.classList.add(RECITATION_HIGHLIGHT_CLASS);
+      });
+    }
+    activeVerseHighlightRef.current = verseKey;
+  }, []);
+
   const clearHighlight = useCallback(() => {
     const prevEl = activeWordLocationRef.current
       ? wordRefRegistry.current.get(activeWordLocationRef.current)
@@ -162,7 +238,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     prevEl?.classList.remove(RECITATION_HIGHLIGHT_CLASS);
     activeWordLocationRef.current = null;
     setCurrentWordLocation(null);
-  }, []);
+    applyVerseHighlight(null);
+  }, [applyVerseHighlight]);
 
   const applyWordHighlight = useCallback((newLocation: string | null) => {
     if (newLocation === activeWordLocationRef.current) return;
@@ -191,6 +268,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     setStatus("idle");
     currentChapterIdRef.current = null;
     currentVerseKeyRef.current = null;
+    riwayaVersesRef.current = [];
+    riwayaVerseIndexRef.current = -1;
     setCurrentVerseKey(null);
     setRecitedPage(null);
     clearHighlight();
@@ -204,7 +283,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     return versePages;
   }, []);
 
-  const play = useCallback(
+  const playHafs = useCallback(
     async (verseKey: string) => {
       const reciterId = settings.reciterId ?? reciters[0]?.id;
       if (!reciterId) return;
@@ -256,6 +335,182 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     [settings, reciters, getVersePages, clearHighlight],
   );
 
+  // Riwaya engine — plays a chapter's independent per-verse audio files back
+  // to back via the shared <audio> element's "ended" event (see
+  // handleRiwayaVerseEnded below), instead of QDC's timeupdate/timestamp
+  // approach. Supports speed, per-ayah repeat, range repeat, and
+  // "page"/"surah" stop-points — all resolvable within this one fetched
+  // chapter, no cross-chapter chaining. See Addendum 8.
+  const playRiwaya = useCallback(
+    async (verseKey: string) => {
+      const editionId = settings.reciterId ?? reciters[0]?.id;
+      if (!editionId) return;
+
+      const chapterId = parseChapterIdFromVerseKey(verseKey);
+      setStatus("loading");
+
+      try {
+        const chapterAudio = await fetchRiwayaChapterAudio(editionId, chapterId);
+        const index = chapterAudio.verses.findIndex((v) => v.verseKey === verseKey);
+        const verse = chapterAudio.verses[index];
+        const audio = audioRef.current;
+        if (index === -1 || !verse || !audio) {
+          setStatus("idle");
+          return;
+        }
+
+        riwayaVersesRef.current = chapterAudio.verses;
+        riwayaVerseIndexRef.current = index;
+        loadedReciterIdRef.current = editionId;
+        currentChapterIdRef.current = chapterId;
+        currentVerseKeyRef.current = verseKey;
+        startVerseKeyRef.current = verseKey;
+        stopVerseKeyRef.current = resolveRiwayaStopVerseKey(
+          chapterAudio.verses,
+          verseKey,
+          settings.stopPoint,
+        );
+        perAyahRepeatsDoneRef.current = 0;
+        rangeRepeatsDoneRef.current = 0;
+        setCurrentVerseKey(verseKey);
+        clearHighlight();
+        applyVerseHighlight(verseKey);
+        setRecitedPage(verse.page);
+
+        audio.src = verse.audioUrl;
+        audio.playbackRate = settings.playbackSpeed;
+        await audio.play();
+        setStatus("playing");
+      } catch {
+        setStatus("idle");
+      }
+    },
+    [settings, reciters, clearHighlight, applyVerseHighlight],
+  );
+
+  // Riwaya equivalent of scheduleSeek — since a "seek" is just replaying the
+  // same file from 0 (no timestamp), not a currentTime jump within a shared
+  // audio file.
+  const scheduleRiwayaReplay = useCallback((pauseMs: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const replay = () => {
+      audio.currentTime = 0;
+      audio.play();
+    };
+    if (pauseMs > 0) {
+      audio.pause();
+      pendingSeekTimeoutRef.current = setTimeout(() => {
+        replay();
+        pendingSeekTimeoutRef.current = null;
+      }, pauseMs);
+    } else {
+      replay();
+    }
+  }, []);
+
+  // Riwaya equivalent of seekToRangeStart — same-chapter only (riwaya never
+  // cross-chapter chains), so this is always a plain index/file swap, never
+  // a reload.
+  const seekToRiwayaRangeStart = useCallback(
+    (pauseMs: number) => {
+      const startVerseKey = startVerseKeyRef.current;
+      const verses = riwayaVersesRef.current;
+      const audio = audioRef.current;
+      if (!startVerseKey || !audio) return;
+
+      const startIndex = verses.findIndex((v) => v.verseKey === startVerseKey);
+      const startVerse = verses[startIndex];
+      if (startIndex === -1 || !startVerse) return;
+
+      const seek = () => {
+        riwayaVerseIndexRef.current = startIndex;
+        currentVerseKeyRef.current = startVerseKey;
+        setCurrentVerseKey(startVerseKey);
+        applyVerseHighlight(startVerseKey);
+        setRecitedPage(startVerse.page);
+        audio.src = startVerse.audioUrl;
+        audio.playbackRate = settings.playbackSpeed;
+        audio.play();
+      };
+
+      if (pauseMs > 0) {
+        audio.pause();
+        pendingSeekTimeoutRef.current = setTimeout(() => {
+          seek();
+          pendingSeekTimeoutRef.current = null;
+        }, pauseMs);
+      } else {
+        seek();
+      }
+    },
+    [settings.playbackSpeed, applyVerseHighlight],
+  );
+
+  // Fires from the shared "ended" listener when the riwaya engine is active
+  // (see the dispatcher below). Per-ayah replay / advance / range-repeat
+  // seek-back / stop — mirrors handleChapterEnded's decision table but
+  // file-swap-based instead of timestamp-based, and same-chapter only (no
+  // cross-chapter chaining in this pass). See Addendum 8.
+  const handleRiwayaVerseEnded = useCallback(() => {
+    const verses = riwayaVersesRef.current;
+    const audio = audioRef.current;
+    const currentVerse = verses[riwayaVerseIndexRef.current];
+    if (!audio || !currentVerse) {
+      stop();
+      return;
+    }
+
+    const perAyahTarget = resolveRepeatTarget(settings.perAyahRepeatCount);
+    if (perAyahRepeatsDoneRef.current + 1 < perAyahTarget) {
+      perAyahRepeatsDoneRef.current += 1;
+      scheduleRiwayaReplay(settings.pauseBetweenRepeatsMs);
+      return;
+    }
+
+    const isStopVerse = currentVerse.verseKey === stopVerseKeyRef.current;
+    if (isStopVerse) {
+      const rangeTarget = resolveRepeatTarget(settings.rangeRepeatCount);
+      if (rangeRepeatsDoneRef.current + 1 < rangeTarget) {
+        rangeRepeatsDoneRef.current += 1;
+        perAyahRepeatsDoneRef.current = 0;
+        seekToRiwayaRangeStart(settings.pauseBetweenRepeatsMs);
+        return;
+      }
+      stop();
+      return;
+    }
+
+    const nextIndex = riwayaVerseIndexRef.current + 1;
+    const next = verses[nextIndex];
+    if (!next) {
+      stop();
+      return;
+    }
+
+    perAyahRepeatsDoneRef.current = 0;
+    riwayaVerseIndexRef.current = nextIndex;
+    currentVerseKeyRef.current = next.verseKey;
+    setCurrentVerseKey(next.verseKey);
+    applyVerseHighlight(next.verseKey);
+    setRecitedPage(next.page);
+
+    audio.src = next.audioUrl;
+    audio.playbackRate = settings.playbackSpeed;
+    audio.play();
+  }, [settings, stop, applyVerseHighlight, scheduleRiwayaReplay, seekToRiwayaRangeStart]);
+
+  // Single entry point used by every caller (header quick-play, MarkModal's
+  // "Play from here") — dispatches to whichever engine matches the currently
+  // selected riwaya. See Addendum 8's engine-dispatch decision tree.
+  const play = useCallback(
+    (verseKey: string) => {
+      if (settings.riwaya !== "hafs") return playRiwaya(verseKey);
+      return playHafs(verseKey);
+    },
+    [settings.riwaya, playRiwaya, playHafs],
+  );
+
   const togglePlayPause = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -305,9 +560,10 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   // "swap the loaded chapter" sequence; keeping one copy avoids the two
   // silently drifting apart. Returns false (caller should stop()) if the
   // audio element is gone or seekVerseKey isn't actually in the fetched
-  // chapter (a stale/incorrect stop target).
+  // chapter (a stale/incorrect stop target). Hafs-only — the riwaya engine
+  // never cross-chapter chains in this pass (Addendum 8).
   const loadChapter = useCallback(
-    async (reciterId: number, chapterId: number, seekVerseKey?: string): Promise<boolean> => {
+    async (reciterId: string, chapterId: number, seekVerseKey?: string): Promise<boolean> => {
       const audio = audioRef.current;
       if (!audio) return false;
 
@@ -515,12 +771,19 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     }
   }, [settings, scheduleSeek, seekToRangeStart, chainToNextChapter, stop]);
 
+  // Dispatches the shared <audio> element's native "ended" event to whichever
+  // engine is active — mirrors play()'s dispatch. See Addendum 8.
+  const handleAudioEnded = useCallback(() => {
+    if (settings.riwaya !== "hafs") return handleRiwayaVerseEnded();
+    return handleChapterEnded();
+  }, [settings.riwaya, handleRiwayaVerseEnded, handleChapterEnded]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.addEventListener("ended", handleChapterEnded);
-    return () => audio.removeEventListener("ended", handleChapterEnded);
-  }, [handleChapterEnded]);
+    audio.addEventListener("ended", handleAudioEnded);
+    return () => audio.removeEventListener("ended", handleAudioEnded);
+  }, [handleAudioEnded]);
 
   // Live playback speed changes (no reload needed).
   useEffect(() => {
@@ -532,11 +795,22 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   // Recomputed relative to the verse currently playing (not the original
   // startVerseKey) — if playback has already chained past the original
   // verse's chapter, "end of surah/hizb/rub/juz/page" should mean the one
-  // containing where we are now, not one already behind us.
+  // containing where we are now, not one already behind us. Riwaya branch is
+  // synchronous (no DB call) — see resolveRiwayaStopVerseKey.
   useEffect(() => {
     if (status === "idle") return;
     const referenceVerseKey = currentVerseKeyRef.current ?? startVerseKeyRef.current;
     if (!referenceVerseKey) return;
+
+    if (settings.riwaya !== "hafs") {
+      stopVerseKeyRef.current = resolveRiwayaStopVerseKey(
+        riwayaVersesRef.current,
+        referenceVerseKey,
+        settings.stopPoint,
+      );
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       const target = await resolveStopTarget(
@@ -556,8 +830,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.stopPoint]);
 
-  // Reciter changed mid-session — reload the current chapter's audio for the
-  // new reciter and resume at the same verse position.
+  // Reciter changed mid-session (riwaya itself unchanged — see the effect
+  // below for a riwaya change) — reload the current chapter's audio for the
+  // new reciter and resume at the same verse. Branches internally on
+  // settings.riwaya since the two engines fetch/reload differently (Addendum
+  // 8), but this is one effect/one trigger field for both.
   useEffect(() => {
     const reciterId = settings.reciterId;
     const chapterId = currentChapterIdRef.current;
@@ -572,22 +849,38 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     (async () => {
-      const chapterAudio = await fetchChapterAudio(reciterId, chapterId);
-      if (cancelled) return;
-      verseTimingsRef.current = chapterAudio.verseTimings;
-      loadedReciterIdRef.current = reciterId;
-
-      const timing = chapterAudio.verseTimings.find(
-        (vt) => vt.verseKey === currentVerseKeyRef.current,
-      );
       const audio = audioRef.current;
-      if (!audio || !timing) return;
-
+      if (!audio) return;
       const wasPlaying = status === "playing";
-      audio.src = chapterAudio.audioUrl;
-      audio.playbackRate = settings.playbackSpeed;
-      audio.currentTime = timing.timestampFrom / 1000;
-      if (wasPlaying) audio.play();
+
+      if (settings.riwaya === "hafs") {
+        const chapterAudio = await fetchChapterAudio(reciterId, chapterId);
+        if (cancelled) return;
+        const timing = chapterAudio.verseTimings.find(
+          (vt) => vt.verseKey === currentVerseKeyRef.current,
+        );
+        if (!timing) return;
+        verseTimingsRef.current = chapterAudio.verseTimings;
+        loadedReciterIdRef.current = reciterId;
+        audio.src = chapterAudio.audioUrl;
+        audio.playbackRate = settings.playbackSpeed;
+        audio.currentTime = timing.timestampFrom / 1000;
+        if (wasPlaying) audio.play();
+      } else {
+        const chapterAudio = await fetchRiwayaChapterAudio(reciterId, chapterId);
+        if (cancelled) return;
+        const index = chapterAudio.verses.findIndex(
+          (v) => v.verseKey === currentVerseKeyRef.current,
+        );
+        const verse = chapterAudio.verses[index];
+        if (!verse) return;
+        riwayaVersesRef.current = chapterAudio.verses;
+        riwayaVerseIndexRef.current = index;
+        loadedReciterIdRef.current = reciterId;
+        audio.src = verse.audioUrl;
+        audio.playbackRate = settings.playbackSpeed;
+        if (wasPlaying) audio.play();
+      }
     })();
 
     return () => {
@@ -595,6 +888,17 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.reciterId]);
+
+  // Riwaya itself changed mid-session (crosses engines — highlight mode and
+  // data source both change) — stop rather than attempt an in-place reload.
+  // Confirmed with user 2026-07-27, see Addendum 8.
+  const prevRiwayaRef = useRef(settings.riwaya);
+  useEffect(() => {
+    if (prevRiwayaRef.current !== settings.riwaya && status !== "idle") {
+      stop();
+    }
+    prevRiwayaRef.current = settings.riwaya;
+  }, [settings.riwaya, status, stop]);
 
   const openSettings = useCallback(() => {
     setIsSettingsOpen(true);

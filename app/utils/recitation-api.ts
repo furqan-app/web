@@ -1,4 +1,4 @@
-import { ChapterAudio, Reciter } from "@/app/types/recitation";
+import { ChapterAudio, Reciter, Riwaya, RiwayaChapterAudio } from "@/app/types/recitation";
 
 // Local envelope shape (mirrors app/api/response.ts's ApiResponse<T>) — not
 // imported from there directly since that module is a route helper that
@@ -19,7 +19,7 @@ export const fetchReciters = async (language: string): Promise<Reciter[]> => {
 };
 
 export const fetchChapterAudio = async (
-  reciterId: number,
+  reciterId: string,
   chapterId: number,
 ): Promise<ChapterAudio> => {
   const res = await fetch(`/api/quran/recitations/${reciterId}/chapters/${chapterId}`);
@@ -41,4 +41,24 @@ export const fetchStopPoint = async (
     `/api/quran/verses/${encodeURIComponent(verseKey)}/stop-point?scope=${scope}`,
   );
   return unwrap<{ verseKey: string; chapterId: number }>(res);
+};
+
+export const fetchRiwayaReciters = async (
+  riwaya: Riwaya,
+  language: string,
+): Promise<Reciter[]> => {
+  const res = await fetch(
+    `/api/quran/recitations/riwaya/reciters?riwaya=${riwaya}&language=${language}`,
+  );
+  return unwrap<Reciter[]>(res);
+};
+
+export const fetchRiwayaChapterAudio = async (
+  editionIdentifier: string,
+  chapterId: number,
+): Promise<RiwayaChapterAudio> => {
+  const res = await fetch(
+    `/api/quran/recitations/riwaya/${encodeURIComponent(editionIdentifier)}/chapters/${chapterId}`,
+  );
+  return unwrap<RiwayaChapterAudio>(res);
 };

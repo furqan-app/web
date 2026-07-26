@@ -157,7 +157,16 @@
     "repeatSectionLabel": "Repeats",
     "reciterPlaceholder": "Choose a reciter",
     "reciterSearchPlaceholder": "Search reciters…",
-    "reciterEmpty": "No reciter found."
+    "reciterEmpty": "No reciter found.",
+    "narration": "Narration",
+    "narrationHafs": "Hafs",
+    "narrationWarsh": "Warsh",
+    "narrationQaloon": "Qaloon",
+    "narrationShoba": "Shoba",
+    "narrationQunbul": "Qunbul",
+    "narrationAlBazzi": "Al-Bazzi",
+    "narrationAlDouri": "Al-Douri",
+    "narrationAlSoosi": "Al-Soosi"
   },
   "viewingChipGeneric": "",
   "plans": {

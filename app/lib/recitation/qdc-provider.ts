@@ -35,10 +35,11 @@ async function getReciters(language: string): Promise<Reciter[]> {
   const { reciters } = (await res.json()) as { reciters: QdcReciter[] };
 
   return reciters.map((r) => ({
-    id: r.id,
+    id: String(r.id),
     name: r.name,
     translatedName: r.translated_name?.name ?? r.name,
     style: r.style?.name ?? null,
+    riwaya: "hafs" as const,
   }));
 }
 

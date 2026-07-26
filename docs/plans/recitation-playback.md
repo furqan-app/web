@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-07-10
-**Status:** implemented
+**Status:** implemented (Addenda 1–7); Addendum 8 (riwaya) paused, not shipped — see that addendum
 
 ## Summary
 
@@ -394,3 +394,155 @@ This only affects the **same-chapter** seek-back path. The cross-chapter reload 
 - Verified live in the browser (Playwright) against the dev server, not just by reading the code: set `recitationSettings` in `localStorage` to `{ stopPoint: "surah", rangeRepeatCount: 2, perAyahRepeatCount: 1 }`, started playback at `1:1` (Al-Fatiha, page 1), and seeked near the end of the chapter's audio to reach the natural `"ended"` event quickly. Temporarily added `console.log` calls in `handleChapterEnded` to observe the decision live, confirmed the fix, then removed them before committing — no debug logging shipped.
 - Console output confirmed the exact fix behavior: first `"ended"` → `{action: "repeat-range"}` (`rangeRepeatsDone: 0 → 1`), audio audibly restarted from the beginning and played the whole range forward again; second `"ended"` → `{action: "stop"}` (`rangeRepeatsDone: 1`, target `2`, exhausted). Before the fix, the same setup stopped after the first pass.
 - This worktree needed `app/generated/{quran-client,app-client}` symlinked from the main repo (git-ignored build artifact, per the Database Split decision) since it isn't regenerated automatically when a worktree is created — the dev server otherwise 500s with `Module not found: Can't resolve '@/app/generated/quran-client'`.
+
+## Addendum 8: Narration (riwaya) audio playback via QuranHub (Trello #143)
+
+**Date:** 2026-07-27
+**Status:** PAUSED — not shipped. See "Paused 2026-07-27" note at the end of this addendum before resuming; do not merge this branch as-is.
+
+**Problem:** Trello #143 asks for recitation in narrations other than Hafs (Warsh, Qaloon, Shoba, Qunbul, Al-Bazzi, Al-Douri, Al-Soosi). QDC's live `/audio/reciters` list is confirmed **Hafs-only** — all reciters returned have `qirat.name: "Hafs"` — so no amount of reciter filtering on QDC can surface these. **Scope confirmed with user:** audio/reciter only — the displayed mushaf text stays Hafs (`furqan_quran` untouched, no schema change, no re-seed).
+
+**Provider:** QuranHub (`api.quranhub.com`) has 7 non-Hafs riwayat, 1–7 reciters each, confirmed live:
+
+| Riwaya | `narratorIdentifier` | Reciter count |
+|---|---|---|
+| Warsh | `quran-warsh` | 7 |
+| Qaloon | `quran-qaloon` | 4 |
+| Shoba | `quran-shoba` | 2 |
+| Al-Douri | `quran-aldouri` | 2 |
+| Al-Bazzi | `quran-albazzi` | 1 |
+| Qunbul | `quran-qunbul` | 1 |
+| Al-Soosi | `quran-alsoosi` | 1 |
+
+Source: `GET /v1/edition/format/audio/type/surah` (all reciters, all riwayat, includes `narratorIdentifier`), grouped client-side — `quran-hafs` entries excluded (QDC already covers Hafs). Each reciter's chapter audio comes from `GET /v1/surah/{chapterId}/{editionIdentifier}` — every ayah in the response carries its own `audio` field (a per-verse mp3 URL) and `page` number; there is no per-verse timing (`includeTimings=true` returns no `timings` field at all for non-Hafs editions, confirmed live) and no word-level segments for any QuranHub reciter.
+
+**Why not the existing `RecitationProvider` interface:** `getChapterAudio` assumes one continuous audio file with a shared-millisecond `verseTimings` timeline. QuranHub has no such file with usable timing — only independent per-verse mp3s, each 0-based in its own file. Coercing this into `ChapterAudio` would require concatenating N mp3s into one stream, which is out of scope. See [ADR 0021 Addendum (2026-07-27)](../architecture/adr/0021-recitation-playback.md) for the full reasoning, including why self-alignment (quran-align/lafzize) against QuranHub's per-chapter mp3 — which *would* produce a real `ChapterAudio`-shaped result — was deliberately deferred to Trello #146 rather than folded into this task.
+
+**Solution:** A second, smaller provider (`quranhubRecitationProvider`) returning an ordered per-verse audio list, and a parallel playback path in `RecitationContext` (`playRiwaya`) driven by the `<audio>` element's `ended` event instead of `timeupdate`. Each verse's file boundary is the verse boundary, so no timestamp math is needed — this also gives whole-verse highlighting and page auto-advance "for free":
+
+- **Whole-verse highlight:** new `applyVerseHighlight(verseKey)` iterates the existing `wordRefRegistry` for keys prefixed `${verseKey}:` and toggles `RECITATION_HIGHLIGHT_CLASS` on all of them at once (reuses the exact registry/class the word-level Hafs highlight already populates — no new DOM wiring).
+- **Page auto-advance:** QuranHub returns each ayah's `page` directly, so `playRiwaya`/the verse-advance handler just calls the existing `setRecitedPage` — `RecitationFollow` (ADR 0028) already consumes `recitedPage` and pulls the pager window, so no new navigation code is needed at all.
+
+### Decision Tree — engine dispatch
+
+| `settings.riwaya` | `play(verseKey)` routes to | Highlight | Repeats / stop points / speed |
+|---|---|---|---|
+| `"hafs"` (default) | existing QDC engine, unchanged | word-level | full existing feature set (page/rub/hizb/juz/surah/none, cross-chapter) |
+| any other riwaya | new `playRiwaya(verseKey)` | whole-verse | speed, per-ayah repeat, range repeat, and stop-point limited to `"page"`/`"surah"` (same-chapter only — see below) |
+
+### Decision Tree — stop-verse resolution (riwaya, synchronous, same-chapter only)
+
+Resolved inside `playRiwaya`, once the chapter's `verses[]` is fetched — no DB call, unlike Hafs's `/api/quran/verses/[verseKey]/stop-point` endpoint.
+
+| `stopPoint` | Target verse |
+|---|---|
+| `"surah"` | Last entry in `verses[]` |
+| `"page"` | Last entry in `verses[]` where `.page` equals the start verse's `.page` (`verses[]` already carries `.page` per entry) |
+| anything else (`juz`/`hizb`/`rub`/`none` — stale from a prior Hafs session, since `settings.stopPoint` is a shared field) | Treated as `"surah"` — the riwaya stop-point picker never offers these values, this is a defensive fallback only |
+
+### Decision Tree — `playRiwaya` per-verse chaining
+
+| Trigger | Condition | Action |
+|---|---|---|
+| `play(verseKey)` called, `riwaya !== "hafs"` | — | `getRiwayaChapterAudio(editionId, chapterId)` → ordered `{verseKey, audioUrl, page}[]` for the whole chapter; resolve stop verse per the table above; store its index |
+| chapter audio loaded | `verseKey` found in the list | `audio.src` = that verse's url, `audio.playbackRate = settings.playbackSpeed`, `applyVerseHighlight(verseKey)`, `setRecitedPage`, play |
+| `<audio>` `ended` fires, `riwaya !== "hafs"` | `perAyahRepeatsDone + 1 < perAyahTarget` | Replay same verse: `audio.currentTime = 0` (after `pauseBetweenRepeatsMs` if set, via the existing `pendingSeekTimeoutRef` pattern), play; increment `perAyahRepeatsDone` |
+| `<audio>` `ended` fires | per-ayah exhausted, current verse is **not** the resolved stop verse | Advance to next verse in `verses[]`, re-highlight, `setRecitedPage`, play; reset `perAyahRepeatsDone` |
+| `<audio>` `ended` fires | per-ayah exhausted, current verse **is** the stop verse, `rangeRepeatsDone + 1 < rangeTarget` | Seek back to the start verse's index in `verses[]`, re-highlight, `setRecitedPage`, play; increment `rangeRepeatsDone`, reset `perAyahRepeatsDone` |
+| `<audio>` `ended` fires | per-ayah exhausted, at stop verse, range exhausted | `stop()` — no cross-chapter chaining (the whole surah always fits in one `getRiwayaChapterAudio` call, so `"surah"`/`"page"` never need a second chapter fetched) |
+
+### Decision Tree — mid-session settings changes (confirmed with user)
+
+| Change while `status !== "idle"` | Behavior |
+|---|---|
+| Reciter changed, `riwaya` unchanged (either engine) | Reload in place: re-fetch the current chapter's audio for the new reciter, resume at `currentVerseKeyRef.current` — mirrors the existing Hafs reciter-mid-session-change effect |
+| `riwaya` itself changed (crosses engines, e.g. Hafs↔Warsh or Warsh→Qaloon-riwaya) | `stop()` — highlight mode and data source both change; reloading in place was explicitly ruled out as unnecessary complexity for a rare action |
+
+### Verified Test Cases
+
+1. **Warsh, Al-Baqarah (chapter 2, 286 verses), start `2:1`:** `getRiwayaChapterAudio("ar.alkouchi.warsh", 2)` returns 286 verse entries. `2:1` found at index 0 → plays, whole-verse highlight on `2:1:*` word refs, `recitedPage` set to `2:1`'s page. Each `ended` advances index, re-highlights, updates `recitedPage` as pages change (`RecitationFollow` snaps the pager forward exactly as it does for Hafs). At index 285 (`2:286`, the chapter's last verse), `ended` fires with no next verse → `stop()`.
+2. **Qaloon, Al-Fatiha (chapter 1, 7 verses), start `1:1`:** all 7 verses are on page 1, so `recitedPage` never changes across the session — no pager movement, matches existing single-page behavior. After `1:7`'s `ended` → `stop()`.
+3. **Mid-session reciter swap:** playing Warsh via `ar.alkouchi.warsh` at `2:50`, user opens settings and picks `ar.husary.warsh` (same riwaya). Effect fires (riwaya unchanged, reciter changed): re-fetch chapter 2's audio for `ar.husary.warsh`, find `2:50` in the new list, reload `audio.src`, keep the same highlight/`recitedPage`, resume playing.
+4. **Mid-session riwaya swap:** same playing state, user instead switches the riwaya dropdown to Qaloon. Effect fires (riwaya changed) → `stop()`. Player bar returns to idle; user presses play again to start Qaloon playback fresh.
+5. **Warsh, `stopPoint: "page"`, `perAyahRepeat: 1`, `rangeRepeat: 1`, start `2:1`:** page-2 verses are `2:1`–`2:4` (`2:5` is page 3, confirmed live). Stop-verse resolves to `2:4`. Plays `2:1→2:2→2:3→2:4` → per-ayah target already met (1) → is stop verse → range target(1) not `< 1` → exhausted → `stop()`.
+6. **Same, `rangeRepeat: 2`:** at `2:4` (stop verse), range not exhausted (`0+1<2`) → seek back to index of `2:1`, replay `2:1..2:4` again → range exhausted → `stop()`.
+7. **`perAyahRepeat: 3`, `stopPoint: "surah"`, start `2:1`:** each verse plays 3× before advancing, through to `2:286` (chapter 2's last verse = stop verse) ×3, range target(1) exhausted → `stop()`.
+8. **Mid-session stop-point change:** playing with `stopPoint: "surah"`, user switches to `"page"` via the gear icon → resolved synchronously against the already-loaded `riwayaVersesRef.current` and the current verse's `.page` — no DB call, unlike Hafs's async `resolveStopTarget`.
+9. **Ayah-numbering mismatch, investigated and ruled out:** hypothesized that different riwayat could number verses differently within a surah (a real phenomenon in Quranic sciences — Kufi vs Basri/Shami/Makki/Madani counting conventions). Verified live against QuranHub: fetched `numberOfAyahs` for all 114 surahs across all 7 non-Hafs riwaya editions — **zero differences** from Hafs. Spot-checked `numberInSurah` sequences for surahs 1, 7, 26, 114 (chosen for historically-debated counting) — all exactly `1..N`, matching Hafs. QuranHub normalizes verse numbering across editions independently of riwaya. **No fallback/mapping logic needed** — `playRiwaya`'s `findIndex(v => v.verseKey === verseKey)` lookup (using a Hafs-derived `verse_key` from "Play from here") is safe as-is.
+
+### Files to Change
+
+- `app/types/recitation.ts` — add `Riwaya` union (`"hafs" | "warsh" | "qaloon" | "shoba" | "qunbul" | "albazzi" | "aldouri" | "alsoosi"`); `RiwayaReciter = { id: string; translatedName: string; riwaya: Riwaya }` (QuranHub edition identifier as `id`); `RiwayaVerseAudio = { verseKey: string; audioUrl: string; page: number }`; `RiwayaChapterAudio = { verses: RiwayaVerseAudio[] }`; `RecitationSettings` gains `riwaya: Riwaya` and `riwayaReciterId: string | null`. Existing `Reciter`/`reciterId: number | null` **unchanged** — Hafs stays on its own numeric-id QDC path, no widening.
+- `app/constants/recitation.ts` — `DEFAULT_RECITATION_SETTINGS` gains `riwaya: "hafs"`, `riwayaReciterId: null`. New `RIWAYA_NARRATOR_MAP: Record<Riwaya, string>` (riwaya → QuranHub `narratorIdentifier`).
+- `app/lib/recitation/quranhub-provider.ts` — new. `quranhubRecitationProvider = { getRiwayaReciters(riwaya, language), getChapterVerseAudio(editionIdentifier, chapterId) }`. Does **not** implement `RecitationProvider` — different shape, see ADR 0021 Addendum. `getRiwayaReciters` calls `GET /v1/edition/format/audio/type/surah`, filters by `narratorIdentifier`, maps `name`/`englishName` by `language`. `getChapterVerseAudio` calls `GET /v1/surah/{chapterId}/{editionIdentifier}`, maps each ayah to `{ verseKey: `${chapterId}:${numberInSurah}`, audioUrl: audio, page }`. **Every QuranHub JSON response is wrapped in `{ code, status, data }`** — confirmed live against both endpoints, and the actual bug caught during implementation (`getRiwayaReciters` initially read the raw response body as the editions array directly, threw `TypeError: editions is not iterable` server-side, silently surfaced to the user as an empty "No reciter found" list since the route's catch swallows the error into a 502 envelope). Always unwrap `.data` from a QuranHub response before using it.
+- `app/api/quran/recitations/riwaya/reciters/route.ts` — new. `GET ?riwaya=warsh&language=en` → `jsonResponse({ data: reciters })`, `422` on an unrecognized `riwaya` value.
+- `app/api/quran/recitations/riwaya/[editionIdentifier]/chapters/[chapterId]/route.ts` — new. `GET` → `jsonResponse({ data: chapterVerseAudio })`.
+- `app/utils/recitation-api.ts` — `fetchRiwayaReciters(riwaya, language)`, `fetchRiwayaChapterAudio(editionIdentifier, chapterId)`, both following the existing `unwrap<T>` envelope pattern.
+- `app/contexts/RecitationContext.tsx`:
+  - New refs: `riwayaVersesRef`, `riwayaVerseIndexRef`, `activeVerseHighlightRef`. `loadedReciterIdRef`, `perAyahRepeatsDoneRef`, `rangeRepeatsDoneRef`, `startVerseKeyRef`, `stopVerseKeyRef`, `pendingSeekTimeoutRef` (all pre-existing, previously Hafs-only) are now **shared** by both engines — only one engine is ever loaded at a time, and their meaning (which verse to loop back to, which verse ends the range, a pending debounced replay) is identical in spirit for riwaya, just resolved differently (synchronous, same-chapter, no DB).
+  - New `applyVerseHighlight(verseKey: string | null)` — as described above; `clearHighlight` extended to also clear a pending verse highlight so `stop()`/engine-switch never leaves stale highlight state from either mode.
+  - Existing `play` body renamed to internal `playHafs`; exported `play(verseKey)` dispatches to `playHafs` or new `playRiwaya` based on `settings.riwaya`.
+  - `playRiwaya(verseKey)` — after fetching `verses[]`, resolves `stopVerseKeyRef` per the stop-verse-resolution table (sync, no DB), sets `startVerseKeyRef = verseKey`, resets `perAyahRepeatsDoneRef`/`rangeRepeatsDoneRef`, applies `settings.playbackSpeed` (no longer hardcoded to `1`).
+  - `handleRiwayaVerseEnded()` rewritten per the fuller decision table above — per-ayah replay (same-file `currentTime = 0` restart, optionally debounced via `pendingSeekTimeoutRef`/`pauseBetweenRepeatsMs`, mirroring `scheduleSeek`'s pause branch but without a timestamp seek), advance, range-repeat seek-back (to the start verse's *index* in `verses[]`, not a DB re-fetch), or `stop()`.
+  - The shared `ended` listener branches on `settings.riwaya` to call `handleChapterEnded` (existing) or `handleRiwayaVerseEnded` (updated). The shared `timeupdate` listener needs no change — `verseTimingsRef` is never populated during a riwaya session, so its existing `verseTimings.length === 0` guard already no-ops correctly.
+  - `stop()` additionally resets `riwayaVersesRef`/`riwayaVerseIndexRef` and calls `applyVerseHighlight(null)` (unchanged from the original Addendum 8 implementation).
+  - One `reciters` fetch effect keyed on `[settings.riwaya, locale]`; one default-select effect (unchanged, pre-existing).
+  - One reciter-mid-session-change effect keyed on `settings.reciterId` — branches internally on `settings.riwaya` to run the QDC or QuranHub reload-in-place sequence (unchanged from the original Addendum 8 implementation).
+  - The existing Hafs-only "stop-point changed mid-session" effect gains a `riwaya !== "hafs"` branch: recomputes `stopVerseKeyRef` synchronously from `riwayaVersesRef.current` + `currentVerseKeyRef.current`'s `.page`, instead of awaiting `resolveStopTarget`'s DB call.
+  - New effect: `riwaya` itself changed while `status !== "idle"` → `stop()` (unchanged from the original Addendum 8 implementation).
+- `app/components/RecitationSettingsSheet.tsx` — the `isHafs ? (...) : null` wrapper around Stop Point / Repeats / Speed / Pause is **removed** — all four sections render unconditionally now. `STOP_POINT_OPTIONS` is filtered to `page`/`surah` only when `settings.riwaya !== "hafs"` (a plain array `.filter`, not a rendering branch). "Narration" pill-row section (unchanged from original Addendum 8) resets `reciterId: null` on change. `ReciterCombobox`/Reciter section unchanged (already branch-free, per the reciterId-unification note above).
+- `app/components/RecitationPlayerBar.tsx` — unchanged from the original Addendum 8 implementation (already branch-free).
+- i18n keys: `recitation.narration`, `recitation.narrationHafs/Warsh/Qaloon/Shoba/Qunbul/AlBazzi/AlDouri/AlSoosi` (unchanged, already added). No new keys — Stop Point/Repeats/Speed section labels are reused as-is.
+
+**Revised during implementation (2026-07-27), after user pushback on branch count:** the original design (documented above in spirit but now superseded in detail) gave riwaya its own `RiwayaReciter` type, `riwayaReciterId` settings field, and `riwayaReciters` list — which forced `isHafs` branches into the PlayerBar's reciter lookup, the SettingsSheet's whole Reciter section, and duplicated three of the context's effects (fetch/default-select/mid-session-reload, one pair each). Unified instead: `Reciter.id` widened to `string` (QDC's numeric ids stringified at `qdc-provider.ts`'s boundary), one `RecitationSettings.reciterId: string | null` field, one `reciters: Reciter[]` list/context value, one `ReciterCombobox` (no generic needed once the type is unified). The riwaya-vs-Hafs branching that remains (context dispatch in `play()`/`ended`, the mid-session-reload effect's internal fetch choice, SettingsSheet's stop-point/repeat/speed visibility) is the branching that's actually load-bearing — different engines, different feature scope — not incidental duplication.
+
+### Constraints
+
+- `furqan_quran` schema, seeder, and displayed mushaf text are untouched — this is an audio-only addition. Do not add a riwaya dimension to `Verse`/`Word`.
+- `quranhubRecitationProvider` must not be forced into the `RecitationProvider` interface — it has its own return shapes (`Reciter[]` via `getRiwayaReciters`, `RiwayaChapterAudio` via `getChapterVerseAudio`) and lives as a sibling module in `app/lib/recitation/`, not behind the same interface. (It does, however, share the unified `Reciter` *type* with QDC — only the interface/shape of the chapter-audio call differs.)
+- Riwaya stop-point is limited to `"page"`/`"surah"` — `"juz"`/`"hizb"`/`"rub"`/`"none"` are Hafs-only (the stop-point picker filters them out when `riwaya !== "hafs"`); a stale value from a prior Hafs session falls back to `"surah"` (defensive, see stop-verse-resolution table).
+- No cross-chapter chaining in `playRiwaya` — a chapter's audio is fetched whole per `play()` call, so `"surah"`/`"page"` stop-points and range-repeat are always resolvable within that one fetch; this is the actual scope boundary (not "no settings" — that framing was revised, see the note above).
+- Do not attempt to reload in place across a `riwaya` change (Hafs↔riwaya or riwaya↔riwaya) — confirmed stop-only behavior. Only same-riwaya reciter swaps reload in place.
+- `Reciter.id`/`RecitationSettings.reciterId` are `string` (not `number`) as of this addendum — this **does** touch the Hafs path (superseding the original plan's "must not be widened" constraint, revised per the note above). `qdc-provider.ts`'s `getReciters` stringifies QDC's numeric ids at the boundary; the existing `/api/quran/recitations/[reciterId]/chapters/[chapterId]` route is unaffected (it already received the id as a URL string and parsed it with `Number()` server-side, independent of the client's type).
+
+### What NOT to Do
+
+- Do not implement word-level highlighting or per-word timing for riwaya playback in this task — no segment data exists for any non-Hafs QuranHub reciter. See Trello #146 for the deferred self-alignment follow-up.
+- Do not concatenate QuranHub's per-verse mp3s into a single stream to reuse the existing `ChapterAudio`/`timeupdate` engine — real engineering for no benefit at this scope; the `ended`-driven per-verse chain is simpler and sufficient.
+- Do not run quran-align/lafzize as part of this task — deliberately deferred (unvalidated accuracy, separate storage/seeding decision). See ADR 0021 Addendum (2026-07-27).
+- Do not add `"juz"`/`"hizb"`/`"rub"`/`"none"` stop-points to the riwaya picker, or cross-chapter chaining (e.g. a "no stop"/juz-spanning-chapters equivalent) — genuinely out of scope until riwaya playback needs to span more than one already-fetched chapter's `verses[]`. Flagged as the next-in-line follow-up, not indefinitely deferred (confirmed with user 2026-07-27).
+- Do not build a Hafs-verse-to-riwaya-verse numbering mapping/fallback — verified live it isn't needed (see Verified Test Case 9).
+
+### Decisions Made
+
+- Scope: audio/reciter only, mushaf text stays Hafs — confirmed with user 2026-07-27.
+- Provider: QuranHub as a second, structurally separate provider (not forced into `RecitationProvider`) — confirmed with user 2026-07-27.
+- Highlighting: whole-verse (not word-level, not none) — confirmed with user 2026-07-27, refined mid-planning once the per-verse-file chaining design made it free.
+- Feature scope: initially minimal (play + stop only), then **expanded same-day** after re-examining feasibility — riwaya now supports speed, per-ayah repeat, range repeat, and `"page"`/`"surah"` stop-points, since none of these need cross-chapter chaining or timestamp data (each verse is already its own file). Only `"juz"`/`"hizb"`/`"rub"`/`"none"` (cross-chapter) remain Hafs-only — confirmed with user 2026-07-27.
+- ~~Ayah-numbering-mismatch fallback: investigated and dropped — QuranHub's per-edition `numberInSurah` matches Hafs exactly across all 114 surahs, all 7 riwayat (verified live) — confirmed with user 2026-07-27.~~ **RETRACTED, see "Paused 2026-07-27" note below** — this check compared only the `numberOfAyahs` metadata field (which does not reflect real per-riwaya numbering) and spot-checked `numberInSurah` sequencing on 4 surahs that happened not to hit a real split. It was insufficient; genuine riwaya-specific verse splits do exist (confirmed: surah 27, Qunbul).
+- Page auto-advance: kept, reusing the existing `recitedPage`/`RecitationFollow` mechanism — confirmed with user 2026-07-27.
+- Riwaya/reciter selection UX: riwaya dropdown first, then a reciter list scoped to that riwaya — confirmed with user 2026-07-27.
+- Self-alignment (quran-align/lafzize) deliberately deferred to a separate future task (Trello #146), not folded into this one — confirmed with user 2026-07-27 after discussing the tradeoff explicitly.
+- Mid-session reciter swap (same riwaya) reloads in place; mid-session riwaya swap stops — confirmed with user 2026-07-27.
+- `Reciter`/`reciterId` unified to one string-keyed type/field across both providers (superseding the original plan's "don't widen the Hafs numeric id" constraint) — confirmed with user 2026-07-27, after the initial split-field implementation was flagged as producing avoidable `isHafs` branching in the PlayerBar, SettingsSheet, and three pairs of context effects.
+
+### Implementation Notes (2026-07-27, scope expansion)
+
+- Verified live in the browser (Playwright) against the dev server, not just by reading the code, using temporary `console.log` instrumentation in `handleRiwayaVerseEnded` (removed before finalizing): with `perAyahRepeatCount: 2`, verse `1:1` played twice (`ended` fired at t=18984ms with `perAyahRepeatsDone: 0` → replay; again at t=23250ms with `perAyahRepeatsDone: 1` → advance) before moving to `1:2`, which repeated identically — confirms the per-ayah decision table fires correctly and in order.
+- Verified `stopPoint: "surah"` end-to-end on Al-Fatiha (7 verses, `perAyahRepeatCount: 1`, `rangeRepeatCount: 1`): played through all 7 verses sequentially, then correctly paused (`audio.paused === true`) at `1:7` with no further advance and no loop — confirmed via direct `<audio>` element inspection, not just UI state.
+- Verified the settings sheet renders Stop Point (filtered to "End of page"/"End of surah" only), Repeats, and Speed/Pause sections unconditionally for a riwaya (Qunbul) with no `isHafs` branch remaining in that component.
+- An initial quick timing check (checking `<audio>.src` at a fixed wall-clock offset after clicking play) appeared to show per-ayah repeat not firing — this was a false alarm caused by tool round-trip latency misaligning with actual verse-audio durations (~5.5s per verse for this reciter), not a real bug; the instrumented re-test above resolved it.
+
+### Paused 2026-07-27 — riwaya verse-numbering divergence from Hafs (not shipped)
+
+**What was found:** after a user report ("highlighted ayah is correct, but the played one is the next one"), investigation traced it to a genuine riwaya-specific verse split, not a code bug. Confirmed concretely for surah 27 (An-Naml), reciter `ar.muhammadabdulhakim.qunbul`: Qunbul's ayah 64 text doesn't match Hafs's ayah 64 at all — it's earlier surah content. Qunbul's ayah 67 text matches Hafs's ayah **65** exactly; Qunbul's ayah 69 matches Hafs's **67**. A consistent **+2 offset**, real and sustained, starting somewhere before Qunbul's ayah 64. This is an established qira'at counting-convention difference (Kufi vs other traditions), not upstream data corruption.
+
+**Why the earlier "no mapping needed" conclusion (in Decisions Made above, now struck through) was wrong:** it checked two things, both insufficient — (1) the `numberOfAyahs` **metadata field** matched across riwayat, but that field does not reflect the riwaya's true internal verse count (for Qunbul's surah 27, the actual `ayahs` array has 95 entries while the surah's own declared `numberOfAyahs` still says 93 — the metadata is stale/wrong, copied from a Hafs-based convention); (2) `numberInSurah` sequencing was spot-checked on only 4 surahs (1, 7, 26, 114), none of which happen to contain a real split. Neither check would have caught surah 27.
+
+**Why this blocks shipping:** our mushaf display is always Hafs text (confirmed scope decision, still correct). For any surah where a riwaya's real verse split diverges from Hafs, riwaya audio — sourced by matching a Hafs-derived `verse_key` string against the riwaya's own list — can play content that doesn't correspond to the highlighted Hafs verse, once playback (or a "Play from here" click) crosses the divergence point. The full scope of affected surah/riwaya combinations is unknown; detecting it reliably requires real text alignment per surah, not count-matching, which is out of scope for a quick fix.
+
+**Additional gap found, same investigation:** 53 of 114 chapters show an actual returned-verse count that doesn't match the chapter's declared `numberOfAyahs` for `ar.muhammadabdulhakim.qunbul` — some short (e.g. `2:286`, `7:206` entirely absent from the response for some reciters), some long (surah 5: 122 actual vs 120 declared). Not fully characterized — likely a mix of the same riwaya-numbering-divergence phenomenon and possibly separate upstream gaps.
+
+**Decision (confirmed with user 2026-07-27):** ditch the whole-verse-highlight/no-timestamp riwaya engine for now rather than attempt a partial fix (e.g. restricting which surahs allow verse-level targeting) — the correctness bar for Quranic content doesn't tolerate a "close enough" mitigation here. Revisit once Trello #146 (word-level timestamps for other recitations, via quran-align/lafzize self-alignment against QuranHub's per-chapter mp3 — see ADR 0021 Addendum 2026-07-27) lands: real per-riwaya `ChapterAudio`/`VerseTiming` data would let riwaya reciters plug directly into the existing Hafs-shaped `RecitationProvider` engine, retiring `playRiwaya`/`handleRiwayaVerseEnded` entirely rather than maintaining it as a permanent second engine. If/when per-riwaya mushaf text and layout become their own feature (separate, larger scope — a real riwaya mushaf, not just its audio), the display-vs-audio mismatch problem disappears at the root, independent of the alignment work.
+
+**Status of this branch:** `feature/143-riwaya-recitation-audio` is kept (not deleted) — the QuranHub provider (`quranhub-provider.ts`), reciter list/grouping logic, and narration-picker UI are reusable groundwork for whenever this resumes. Not merged, not shipped. Trello #143 moved back to Backlog, renamed to flag the block.

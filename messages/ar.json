@@ -158,7 +158,16 @@
     "repeatSectionLabel": "التكرار",
     "reciterPlaceholder": "اختر قارئًا",
     "reciterSearchPlaceholder": "ابحث عن قارئ…",
-    "reciterEmpty": "لم يتم العثور على قارئ."
+    "reciterEmpty": "لم يتم العثور على قارئ.",
+    "narration": "القراءة",
+    "narrationHafs": "حفص",
+    "narrationWarsh": "ورش",
+    "narrationQaloon": "قالون",
+    "narrationShoba": "شعبة",
+    "narrationQunbul": "قنبل",
+    "narrationAlBazzi": "البزي",
+    "narrationAlDouri": "الدوري",
+    "narrationAlSoosi": "السوسي"
   },
   "viewingChipGeneric": "",
   "plans": {

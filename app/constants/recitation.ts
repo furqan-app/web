@@ -1,4 +1,4 @@
-import { RecitationSettings } from "@/app/types/recitation";
+import { RecitationSettings, Riwaya } from "@/app/types/recitation";
 
 export const DEFAULT_RECITATION_SETTINGS: RecitationSettings = {
   reciterId: null,
@@ -7,6 +7,20 @@ export const DEFAULT_RECITATION_SETTINGS: RecitationSettings = {
   rangeRepeatCount: 1,
   playbackSpeed: 1,
   pauseBetweenRepeatsMs: 0,
+  riwaya: "hafs",
+};
+
+// Maps our Riwaya values to QuranHub's edition narratorIdentifier — see
+// docs/plans/recitation-playback.md Addendum 8.
+export const RIWAYA_NARRATOR_MAP: Record<Riwaya, string> = {
+  hafs: "quran-hafs",
+  warsh: "quran-warsh",
+  qaloon: "quran-qaloon",
+  shoba: "quran-shoba",
+  qunbul: "quran-qunbul",
+  albazzi: "quran-albazzi",
+  aldouri: "quran-aldouri",
+  alsoosi: "quran-alsoosi",
 };
 
 export const REPEAT_COUNT_MIN = 1;

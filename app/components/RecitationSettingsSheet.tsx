@@ -11,6 +11,7 @@ import {
   FileText,
   Gauge,
   Infinity as InfinityIcon,
+  Languages,
   Minus,
   Plus,
   Repeat2,
@@ -48,7 +49,7 @@ import {
   REPEAT_COUNT_MAX,
   REPEAT_COUNT_MIN,
 } from "@/app/constants/recitation";
-import { RepeatCount, Reciter, StopPoint } from "@/app/types/recitation";
+import { Reciter, RepeatCount, Riwaya, StopPoint } from "@/app/types/recitation";
 
 const nextRepeatCount = (value: RepeatCount, direction: 1 | -1): RepeatCount => {
   if (direction === 1) {
@@ -72,6 +73,17 @@ const SectionHeader = ({
   </h3>
 );
 
+const NARRATION_OPTIONS: { value: Riwaya; labelKey: string; fallback: string }[] = [
+  { value: "hafs", labelKey: "recitation.narrationHafs", fallback: "Hafs" },
+  { value: "warsh", labelKey: "recitation.narrationWarsh", fallback: "Warsh" },
+  { value: "qaloon", labelKey: "recitation.narrationQaloon", fallback: "Qaloon" },
+  { value: "shoba", labelKey: "recitation.narrationShoba", fallback: "Shoba" },
+  { value: "qunbul", labelKey: "recitation.narrationQunbul", fallback: "Qunbul" },
+  { value: "albazzi", labelKey: "recitation.narrationAlBazzi", fallback: "Al-Bazzi" },
+  { value: "aldouri", labelKey: "recitation.narrationAlDouri", fallback: "Al-Douri" },
+  { value: "alsoosi", labelKey: "recitation.narrationAlSoosi", fallback: "Al-Soosi" },
+];
+
 const STOP_POINT_OPTIONS: { value: StopPoint; icon: typeof Users; labelKey: string; fallback: string }[] = [
   { value: "page", icon: FileText, labelKey: "recitation.stopPointPage", fallback: "End of page" },
   { value: "rub", icon: CircleDot, labelKey: "recitation.stopPointRub", fallback: "End of rub" },
@@ -81,6 +93,9 @@ const STOP_POINT_OPTIONS: { value: StopPoint; icon: typeof Users; labelKey: stri
   { value: "none", icon: InfinityIcon, labelKey: "recitation.stopPointNone", fallback: "No stop" },
 ];
 
+// Renders both Hafs's QDC reciters and any riwaya's QuranHub reciters — both
+// share the unified Reciter type/id shape (Addendum 8), so one combobox
+// serves either list depending on which is passed in.
 const ReciterCombobox = ({
   reciters,
   value,
@@ -88,8 +103,8 @@ const ReciterCombobox = ({
   portalContainer,
 }: {
   reciters: Reciter[];
-  value: number | null;
-  onChange: (id: number) => void;
+  value: string | null;
+  onChange: (id: string) => void;
   portalContainer: HTMLElement | null;
 }) => {
   const t = useTranslations();
@@ -204,6 +219,12 @@ export const RecitationSettingsSheet = () => {
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { settings, updateSettings, reciters, isSettingsOpen, closeSettings } = useRecitation();
+  // Riwaya only supports "page"/"surah" stop-points — "juz"/"hizb"/"rub"/"none"
+  // need cross-chapter chaining, Hafs-only for now. See Addendum 8.
+  const stopPointOptions =
+    settings.riwaya === "hafs"
+      ? STOP_POINT_OPTIONS
+      : STOP_POINT_OPTIONS.filter((o) => o.value === "page" || o.value === "surah");
   // Popovers rendered inside this Sheet (e.g. ReciterCombobox) must portal
   // here instead of document.body — see components/ui/popover.tsx.
   const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
@@ -227,6 +248,35 @@ export const RecitationSettingsSheet = () => {
 
         <div className="p-4 space-y-6 mt-2 overflow-y-auto">
           <div>
+            <SectionHeader icon={Languages} label={t("recitation.narration", "Narration")} />
+            <RadioGroup
+              value={settings.riwaya}
+              onValueChange={(value) =>
+                updateSettings({ riwaya: value as Riwaya, reciterId: null })
+              }
+              className="grid grid-cols-2 gap-2"
+            >
+              {NARRATION_OPTIONS.map(({ value, labelKey, fallback }) => {
+                const isSelected = settings.riwaya === value;
+                return (
+                  <label
+                    key={value}
+                    htmlFor={`narration-${value}`}
+                    className={`flex items-center justify-center rounded-xl border px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border bg-card text-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <RadioGroupItem value={value} id={`narration-${value}`} className="sr-only" />
+                    {t(labelKey, fallback)}
+                  </label>
+                );
+              })}
+            </RadioGroup>
+          </div>
+
+          <div>
             <SectionHeader icon={Users} label={t("recitation.reciter", "Reciter")} />
             <ReciterCombobox
               reciters={reciters}
@@ -243,7 +293,7 @@ export const RecitationSettingsSheet = () => {
               onValueChange={(value) => updateSettings({ stopPoint: value as StopPoint })}
               className="grid grid-cols-2 gap-2"
             >
-              {STOP_POINT_OPTIONS.map(({ value, icon: Icon, labelKey, fallback }) => {
+              {stopPointOptions.map(({ value, icon: Icon, labelKey, fallback }) => {
                 const isSelected = settings.stopPoint === value;
                 return (
                   <label
