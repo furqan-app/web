@@ -71,7 +71,7 @@ export const findActiveWordLocation = (
 };
 
 // The verse_key of the first word on a page, used as the default start point
-// for the header's "listen from here" quick-play button.
+// for the voice panel's play-current-Safha button.
 export const getFirstVerseKeyOfPage = (
   lines: Record<string, Array<WordWithVerse>>,
 ): string | null => {
