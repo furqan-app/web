@@ -394,3 +394,34 @@ This only affects the **same-chapter** seek-back path. The cross-chapter reload 
 - Verified live in the browser (Playwright) against the dev server, not just by reading the code: set `recitationSettings` in `localStorage` to `{ stopPoint: "surah", rangeRepeatCount: 2, perAyahRepeatCount: 1 }`, started playback at `1:1` (Al-Fatiha, page 1), and seeked near the end of the chapter's audio to reach the natural `"ended"` event quickly. Temporarily added `console.log` calls in `handleChapterEnded` to observe the decision live, confirmed the fix, then removed them before committing — no debug logging shipped.
 - Console output confirmed the exact fix behavior: first `"ended"` → `{action: "repeat-range"}` (`rangeRepeatsDone: 0 → 1`), audio audibly restarted from the beginning and played the whole range forward again; second `"ended"` → `{action: "stop"}` (`rangeRepeatsDone: 1`, target `2`, exhausted). Before the fix, the same setup stopped after the first pass.
 - This worktree needed `app/generated/{quran-client,app-client}` symlinked from the main repo (git-ignored build artifact, per the Database Split decision) since it isn't regenerated automatically when a worktree is created — the dev server otherwise 500s with `Module not found: Can't resolve '@/app/generated/quran-client'`.
+
+## Addendum 8: Fix stale router.push bullet in DECISIONS.md (Trello #147)
+
+**Date:** 2026-07-26
+**Status:** implemented
+
+**Problem:** `docs/architecture/DECISIONS.md`'s "Recitation Playback" section had an internal contradiction. The main Decision paragraph correctly says `RecitationContext` "no longer navigates directly" and that "the old `router.push`-from-context path was removed" when ADR 0028's persistent pager shipped. But the Constraints bullet list right below it still said: "Auto-advance always navigates by exact target page number (`router.push(`${basePath}/${versePageNumber}`)`) — never by the locale-flipped `next`/`prev` href logic." That bullet predates ADR 0028 and was never updated when the `router.push` path was removed in favor of `RecitationFollow` + the pager's `followTo`/`commitTo`.
+
+**Root cause:** Documentation drift — ADR 0028's "Implementation notes (2026-07-24/25)" section already describes the correct current mechanism, but the DECISIONS.md summary's Constraints bullet was never revised to match.
+
+**Confirmed via code read:** `grep -n "router.push" app/contexts/RecitationContext.tsx app/components/reader/RecitationFollow.tsx` returns nothing. `RecitationContext` only tracks/publishes `recitedPage` (the recited verse's page number); `RecitationFollow` (a null-rendering leaf) watches it and, when the recited page leaves the pager's visible window, calls `onFollow(target)` — the pager's `followTo` → `commitTo` (per ADR 0028).
+
+**Fix:** Rewrote the stale Constraints bullet in `docs/architecture/DECISIONS.md`'s "Recitation Playback" section to describe the current `RecitationFollow` → `followTo`/`commitTo` mechanism, citing ADR 0021 and ADR 0028 instead of the removed `router.push` call.
+
+**Files to Change:**
+- `docs/architecture/DECISIONS.md` — rewrite the stale "Auto-advance always navigates by exact target page number (`router.push(...)`)" Constraints bullet in the Recitation Playback section.
+
+**Constraints:**
+- Docs-only change — no code touched.
+
+**What NOT to Do:**
+- None known.
+
+**Decisions Made:**
+- Confirmed with user 2026-07-26: no `router.push` remains anywhere in the recitation auto-advance path; the bullet was corrected to reference `RecitationFollow`/`followTo`/`commitTo` and ADR 0021/0028 instead.
+
+### Implementation Notes (2026-07-26)
+
+- `grep -n "router.push" app/contexts/RecitationContext.tsx app/components/reader/RecitationFollow.tsx` returns nothing, confirming the bullet's `router.push` claim was stale.
+- Checked the rest of `DECISIONS.md` for other stray `router.push` references: lines 352–395 (the "Reader Page Navigation" section, `QuranSwipeNav`) are unrelated and still accurate — that component genuinely still uses `router.push` for its own swipe-commit path, distinct from recitation auto-advance.
+- No dev server needed — docs-only change, no `app/`/`components/`/`lib/`/`prisma/` paths touched.
