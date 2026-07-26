@@ -22,7 +22,11 @@ const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
 
 const isPageFont = (url: URL) =>
-  /^\/fonts\/v1\/ttf\/p[0-9]+\.ttf$/.test(url.pathname);
+  /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
+
+// Static per-page content JSON the pager fetches (ADR 0028) — immutable.
+const isPageJson = (url: URL) =>
+  /^\/quran\/pages\/[0-9]+\.json$/.test(url.pathname);
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -44,6 +48,10 @@ const serwist = new Serwist({
       matcher: ({ url }) => isPageFont(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
+    {
+      matcher: ({ url }) => isPageJson(url),
+      handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
+    },
     ...defaultCache,
   ],
 });
@@ -53,10 +61,12 @@ serwist.addEventListeners();
 // Bulk background pre-cache for the installed PWA only (see ADR 0013). The
 // client (use-pwa-precache hook) only sends this after confirming
 // `display-mode: standalone` — this file has no way to check that itself.
-type PrecacheMessage = { type: "START_PRECACHE"; locale: "ar" | "en" };
+// The precache set (slim JSON + base fonts) is locale-independent Quran content —
+// the localized app shell is precached via the Serwist build manifest, not here.
+type PrecacheMessage = { type: "START_PRECACHE" };
 
-const pageUrl = (locale: string, id: number) => `/${locale}/pages/${id}`;
-const fontUrl = (id: number) => `/fonts/v1/ttf/p${id}.ttf`;
+const fontUrl = (id: number) => `/fonts/v1/woff2/p${id}.woff2`;
+const jsonUrl = (id: number) => `/quran/pages/${id}.json`;
 
 async function reportProgress(cached: number) {
   const clients = await self.clients.matchAll({ type: "window" });
@@ -69,21 +79,26 @@ async function reportProgress(cached: number) {
   }
 }
 
-async function precacheAllPages(locale: string) {
+async function precacheAllPages() {
   const cache = await caches.open(PAGES_CACHE_NAME);
   let cached = 0;
 
   for (let id = 1; id <= TOTAL_PAGES; id++) {
-    const pageReq = new Request(pageUrl(locale, id));
     const fontReq = new Request(fontUrl(id));
+    const jsonReq = new Request(jsonUrl(id));
 
-    if (!(await cache.match(pageReq))) {
-      const response = await fetch(pageReq);
-      if (response.ok) await cache.put(pageReq, response);
-    }
+    // Precache the slim content JSON + base font per page — NOT the ~2.6 MB SSR
+    // HTML (ADR 0028). The persistent pager renders any page client-side from this
+    // JSON + font once the app shell is loaded, so bulk-caching per-page HTML (~1.5 GB
+    // for 604 pages) is unnecessary. Visited page HTML is still runtime-cached
+    // (isSelfReaderPage, Cache-First) for offline cold-entry to those URLs.
     if (!(await cache.match(fontReq))) {
       const response = await fetch(fontReq);
       if (response.ok) await cache.put(fontReq, response);
+    }
+    if (!(await cache.match(jsonReq))) {
+      const response = await fetch(jsonReq);
+      if (response.ok) await cache.put(jsonReq, response);
     }
 
     cached++;
@@ -97,6 +112,6 @@ async function precacheAllPages(locale: string) {
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   const data = event.data as PrecacheMessage;
   if (data?.type === "START_PRECACHE") {
-    event.waitUntil(precacheAllPages(data.locale));
+    event.waitUntil(precacheAllPages());
   }
 });

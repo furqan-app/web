@@ -20,7 +20,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 
 ## Font System
 
-**Decision:** Each Quran page inlines `@font-face` rules for both pages in the current pair (`quran-p{rightPageId}` and `quran-p{leftPageId}`), pointing to `/fonts/v1/ttf/p{id}.ttf`. Only the current page's font gets a `<link rel="preload">` — the pair partner's font is not preloaded. The `@font-face` rules are injected via `FontFaceInjector` (`"use client"`) rather than inline in `ReaderPage` — see [ADR 0020](adr/0020-client-component-for-inline-style-injection.md). Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
+**Decision:** Each Quran page's font (`quran-p{id}`, `/fonts/v1/woff2/p{id}.woff2`) is registered client-side via the **immutable FontFace-API registry** (`app/utils/page-font-registry.ts`) — `new FontFace` → `document.fonts.add` → `load`, LRU-capped, evicted per-face via `document.fonts.delete` — never via mutable CSS `@font-face` injection; see [ADR 0029](adr/0029-immutable-page-font-registration.md). Only the current page's font gets a `<link rel="preload">`. Tajweed fonts are the one CSS exception (`@font-palette-values` has no FontFace-API equivalent): `FontFaceInjector` (`"use client"`, per [ADR 0020](adr/0020-client-component-for-inline-style-injection.md)) renders them as one keyed `<style>` per page id whose content never changes after mount. Three global fonts are loaded in `app/layout.tsx`: `--uthmanic` and `--surah-names` via `next/font/local`, and `--tajawal` (Tajawal, Arabic/Latin UI font) via `next/font/google`.
 
 **Rationale:** Loading all 604 page fonts globally would be prohibitively large. Inlining per-page means only the current page's font is loaded.
 
@@ -34,6 +34,9 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 | `sura_names.ttf` | `font-surahnames` | Zero-padded surah number e.g. `"001"` | Surah name display — font maps `001`–`114` to calligraphic glyphs, NOT Arabic text |
 
 **Constraints:**
+- **Never mutate the text of a live stylesheet containing `@font-face` rules** (rewriting a `<style>`'s content or appending text nodes to it). Any mutation re-parses the whole sheet and resets every face in it to `unloaded`; with `font-display: block` that blanks currently-visible text — the root cause of the reader swipe-commit flicker (ADR 0029). Add fonts by adding immutable units (a registry `FontFace`, a new keyed `<style>`); remove by removing whole units.
+- `FontFaceInjector` must render unconditionally (not gated by breakpoint/`isLgUp`) — it's the only mount point for tajweed's per-page-id `<style>` elements, and tajweed mode is available on mobile too. A viewport gate here silently renders tajweed glyphs garbled on mobile with no error (regressed once during the ADR 0029 diagnostic session, caught and fixed 2026-07-25).
+- `ensurePageFonts` calls must be scoped to genuinely-visible ids, never "everything in the window." Unlike CSS `@font-face` (lazy — browsers don't fetch for `display:none` content, which is what ADR 0013's always-inline-both-pair-members design relies on), the registry's `face.load()` is eager and downloads regardless of render state. `ReaderPager` passes `FontFaceInjector` a separate `baseFontIds` (pair-expanded only when `isDouble`, else single ids) distinct from the pair-expanded `pageIds` still used for the CSS-only tajweed keyed `<style>` elements, which stay safe to over-list. See ADR 0029's Addendum.
 - Do not add Quran page fonts to the global CSS.
 - `<style dangerouslySetInnerHTML>` for per-page `@font-face` rules **must** live in a `"use client"` component (`FontFaceInjector`), never in a Server Component. Next.js App Router treats `<style>` in RSC output as a resource and hoists it to a different DOM position on the client, causing React hydration mismatches. `<link rel="preload">` is NOT affected and may remain in the Server Component. See [ADR 0020](adr/0020-client-component-for-inline-style-injection.md).
 - Font scaling (1–10) is persisted in `localStorage` via `QuranFontScaleContext`.
@@ -285,16 +288,16 @@ const user = extractUser(request); // { id, email, ... }
 
 ## PWA & Offline Quran Page Caching
 
-**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches all 604 Quran pages for the current locale, plus their per-page fonts, in the background — resuming on later app launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](adr/0014-pwa-offline-architecture.md) and Addendum 1 (below the ADR) for a correction to the reader-page caching strategy.
+**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches, in the background, the **slim per-page content JSON** (`public/quran/pages/{n}.json`) + each page's **base WOFF2 font** for all 604 pages — NOT the SSR HTML (ADR 0028): the persistent pager renders any page client-side from that JSON + font once the app shell is loaded, so caching ~2.6 MB HTML ×604 (~1.5 GB) is unnecessary. The pre-cache set is locale-independent (Quran content + fonts; the localized app shell is precached via the Serwist build manifest). Resumes on later launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. The reader-page HTML route itself (visited pages, any visitor) is cached `NetworkFirst`, not `CacheFirst` (Trello #122, ADR 0014 Addendum 1) — see Constraints below. Trade-off: an offline *cold* load of a page URL never visited this session lacks its SSR HTML; in-app swiping to any page works offline from the JSON + fonts regardless. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](adr/0014-pwa-offline-architecture.md) and [ADR 0028](adr/0028-reader-persistent-pager.md).
 
 **Constraints:**
 - Serwist registers the service worker for **every** production visitor (`register: true` is `@serwist/next`'s default) — not just installed-PWA users. The `display-mode: standalone` gate only controls the *bulk 604-page pre-cache* (`use-pwa-precache.ts`); it does not scope which visitors the service worker's runtime-caching rules apply to. Any runtime `CacheFirst` rule in `app/sw.ts` therefore affects regular browser tabs too.
 - The reader-page HTML response (`/{locale}/pages/{id}`) is **not** immutable content — only the Quran words/verse text and fonts are. That HTML also carries the app shell (nav, layout, any feature UI), which changes on ordinary deploys. It is cached with `NetworkFirst`, not `CacheFirst`, specifically so it revalidates against the network whenever the visitor is online; the cached copy is used only as an offline fallback. Do not change this back to `CacheFirst` as a "consistency" cleanup — that reintroduces indefinitely-stale app shells for both regular and installed visitors (Trello #122). Page **fonts** (`isPageFont`) remain `CacheFirst` — those genuinely never change.
 - Never unconditionally pre-cache page fonts for regular web visitors — this would reintroduce the exact problem the per-page font-inlining architecture (Font System decision, above) was built to avoid. The `display-mode: standalone` gate is load-bearing.
 - Do not add offline write-queueing for marks without re-opening ADR 0014 — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers.
-- The pre-cached page/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (reader markup, font logic) — bumping it on every deploy would force ~92MB re-downloads for every installed user on every deploy.
-- Pre-cache only the current locale's 604 pages, not both `ar`/`en` — fonts are locale-independent and cached once regardless; only the thin page shell differs per locale.
-- iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; a ~92MB cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS.
+- The pre-cached JSON/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (content JSON shape, font logic) — bumping it on every deploy would force a full re-download of the page cache for every installed user on every deploy.
+- The pre-cache set is fully locale-independent (slim JSON + base fonts) — do not reintroduce per-locale HTML precaching; the localized app shell comes from the Serwist build manifest.
+- iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; the page cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS. (The JSON+font set is far smaller than the old full-HTML precache, easing this.)
 - The manual `pages-v{N}` version constant lives in `app/sw.ts` (`PAGES_CACHE_VERSION`) — bump it there when reader markup/font logic changes.
 - Serwist is disabled in development (`disable: process.env.NODE_ENV === "development"` in `next.config.mjs`) — `npm run dev` never registers a service worker. To test install/offline behavior, use `npm run build && npm start`.
 
@@ -339,7 +342,55 @@ main → /cut-release → release/x.y.z → /promote-to-staging → stg → /pro
 
 ---
 
+## Reader Navigation — Persistent Client Pager
+
+**Decision:** The reader navigates between pages with a **persistent client-side pager**, not a
+route change per swipe. `/[locale]/pages/[id]` stays statically generated as the SSR *entry* (deep
+links, SEO, first paint, PWA); once hydrated, the client `ReaderPager` owns navigation. It holds a
+persistent `anchor` and moves a small mounted **window** (visible page ±1 on mobile/desktop, spread
+±1 on tablet double-view) via `commitTo` (a `flushSync` anchor-swap + re-center), syncing the URL
+with `history.replaceState` — no `router.push`, no remount. Swipe, the in-spread arrows, and
+recitation-follow all funnel through `commitTo`.
+Page content is served as **immutable slim static JSON** (`public/quran/pages/{n}.json`, ~10×
+smaller than the old RSC), fetched on demand and cached; marks stay the only dynamic layer, applied
+as an overlay. Render model is **windowing first** (reuse existing word components, mount only the
+window), with **event-delegated static markup** documented as an escalation if a real-device
+re-profile misses the target. See [ADR 0028](adr/0028-reader-persistent-pager.md) and
+`docs/plans/reader-persistent-pager.md`.
+
+**Rationale:** Profiling showed each `router.push` swipe deserialized a 2.27 MB RSC payload and
+mounted ~1,478 word components across 10 pages, blocking the main thread ~183 ms on a fast desktop
+(~0.6–1.1 s on mobile) — the reported freeze. The pager removes the remount; slim JSON removes the
+payload; windowing removes the mass mount.
+
+**Constraints:**
+- Keep `/pages/[id]` statically generated — only *subsequent* swipes are client-only; never make the
+  reader route dynamic.
+- Content JSON is a build artifact under `/public`, immutable and Prisma-free at runtime; never bake
+  marks into it.
+- `commitTo` is the single in-reader navigation primitive — swipe, arrows, **and** recitation-follow
+  all use it; do not reintroduce `router.push` for in-reader page changes, and do not read
+  `usePathname()` for the current page (`replaceState` never updates it — that is exactly what broke
+  recitation-follow before it was moved into the pager).
+- Recitation-follow: `RecitationContext` exposes `recitedPage`; a dedicated null-rendering
+  `RecitationFollow` leaf watches it and calls the pager's `followTo`. Two invariants: (a) the
+  recitation subscription MUST stay in that leaf, never in `ReaderPager` — the context ticks on every
+  recited word, so subscribing the pager re-renders the whole reader tree per word (flicker + repeated
+  font fetch); (b) `followTo` MUST defer its `commitTo` to a microtask — `commitTo`'s `flushSync`
+  flushes passive effects synchronously, so an inline follow runs mid-commit (guarded out, never
+  retries → never returns) and nests a flush. See ADR 0028 and the plan.
+- The window unit is breakpoint-dependent (page vs spread) — do not hardcode single-page.
+- Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
+  spread (ADR 0013) against the pager/window model.
+
+---
+
 ## Swipe Animation — Core Gesture Only
+
+> **SUPERSEDED by "Reader Navigation — Persistent Client Pager" above / [ADR 0028](adr/0028-reader-persistent-pager.md).**
+> The single-slot `router.push`-per-swipe model (and ADR 0027's tablet carousel) is replaced by the
+> persistent pager: navigation no longer changes the route, so the "no adjacent fetches", single-slot,
+> and accepted-post-navigation-flicker items below no longer apply. Retained for history only.
 
 **Decision:** `QuranSwipeNav` is a single-slot wrapper: one `overflow-hidden` outer div with a `stripRef` inner div that holds only the current page content. On drag it translates `stripRef` live. On commit (≥80px threshold) it animates to `translateX(±100%)` over 220ms then calls `router.push(href)`. On sub-threshold release it snaps back. `prefers-reduced-motion` skips the animation and calls `router.push()` directly. No adjacent page prefetching, no `startTransition`, no `router.prefetch()`. A post-navigation flicker (browser compositor artifact) is accepted as a platform limitation; the View Transitions API would address it but requires Safari 18+ and experimental Next.js support — out of scope. ADR 0019 (the original sessionStorage approach) and the three-page strip approach (Addenda 2–8) are both superseded. See Addendum 9.
 
@@ -488,7 +539,7 @@ amends ADR 0024).
 
 ## Recitation Playback
 
-**Decision:** Full-Quran recitation audio, reciter selection, and word-level ("karaoke") highlighting are powered by QDC's audio API, proxied live through new internal routes (`app/api/quran/recitations/...`) rather than seeded into the DB or called directly from the client. QDC serves one audio file **per chapter** (not per page), so a `RecitationContext` mounted once in `app/[locale]/layout.tsx` owns the `<audio>` element and drives page auto-navigation via `router.push` whenever the recited verse's `page_number` falls outside the currently-visible page set (single page, or the pair in double-page view). See [ADR 0021](adr/0021-recitation-playback.md).
+**Decision:** Full-Quran recitation audio, reciter selection, and word-level ("karaoke") highlighting are powered by QDC's audio API, proxied live through new internal routes (`app/api/quran/recitations/...`) rather than seeded into the DB or called directly from the client. QDC serves one audio file **per chapter** (not per page), so a `RecitationContext` mounted once in `app/[locale]/layout.tsx` owns the `<audio>` element. It no longer navigates directly: it publishes `recitedPage` (the recited verse's `page_number`) and the reader's `RecitationFollow` leaf keeps that page in the visible window via the pager (ADR 0028) — the old `router.push`-from-context path was removed because it read `usePathname()`, which the pager's `replaceState` never updates. See [ADR 0021](adr/0021-recitation-playback.md) and [ADR 0028](adr/0028-reader-persistent-pager.md).
 
 **Rationale:** Keeps the Quran DB/seeder untouched (no new schema, no re-seed) while still delivering continuous, page-following playback — reusing `/pages/[id]`'s existing pair-derivation instead of new routing logic. Mounting the context above the reader's route tree is what lets playback survive both page navigation (auto-advance) and leaving the reader entirely (background mini-player).
 
@@ -496,7 +547,7 @@ amends ADR 0024).
 - QDC is now a **runtime** dependency, not just a seed-time one (previously only `scripts/quran-seed/` called it at build time) — if QDC is down, playback breaks, not just re-seeding.
 - Word-level highlight updates use a direct DOM ref registry, not React state/re-renders down the `QuranSafha`/`QuranWord` tree — `timeupdate` fires ~4×/second and re-rendering the full word list at that rate is a real perf risk. Do not copy this pattern for lower-frequency UI; the existing URL-param-driven `highlight.ts` approach remains the norm elsewhere.
 - Auto-advance always navigates by exact target page number (`router.push(`${basePath}/${versePageNumber}`)`) — never by the locale-flipped `next`/`prev` href logic (`ReaderPage.tsx`'s `getNavigationHref`), which encodes *visual* swipe direction, not reading-order page sequence.
-- Manual navigation (arrows/swipe/sidebar) during playback does **not** pause or sync with audio — audio keeps running on its own timeline and may auto-navigate again once the recited verse leaves the manually-viewed page. Do not add logic that pauses playback on manual nav; this was explicitly decided against.
+- Manual navigation (arrows/swipe/sidebar) during playback does **not** pause audio — playback keeps running on its own timeline. Under the pager (ADR 0028), swiping away while playing snaps back to the recited page (the `RecitationFollow` leaf pulls the visible window back), so you effectively cannot browse away mid-playback. Do not add logic that pauses playback on manual nav; this was explicitly decided against. (If free browsing during playback is wanted later, change the follow to trigger only when `recitedPage` *advances*, not on every anchor change — a known, deliberately-deferred trade-off.)
 - ~~Chapter-end stops playback (no auto-continue into the next surah) — do not add cross-chapter auto-continue without revisiting this decision.~~ **Superseded 2026-07-16** — cross-chapter chaining was added to support `stopPoint: "hizb" | "juz" | "none"` (and to correctly fix `"page"` when a page spans two chapters). See ADR 0021 Addendum (2026-07-16) and `docs/plans/recitation-playback.md` Addendum 5.
 - Recitation is available on both the self reader (`/pages/[id]`) and the shared-access grant reader (`/mushaf/[grant]/pages/[id]`) — any new recitation UI/context must not assume it's only reachable from the self-reader route tree.
 - The QDC integration itself sits behind a `RecitationProvider` adapter (`app/lib/recitation/provider.ts` interface, `qdc-provider.ts` implementation) rather than being inlined in the route handlers — `app/lib/recitation/` is the established location for server-only third-party integrations (distinct from `app/providers/`, which is React context providers, and `app/server/actions/`, which is Next.js server actions). The adapter throws `RecitationProviderError` on fetch failure and returns `null` for "valid response, nothing found" (e.g. no audio for a reciter/chapter) — routes map throw → `502`, `null` → `404`. No provider registry/factory exists; add one only when a second provider is real.
@@ -506,7 +557,7 @@ amends ADR 0024).
 
 ## Tajweed Mushaf Mode
 
-**Decision:** An opt-in reading mode color-codes Quran text by Tajweed rule using per-page COLRv1 (color-glyph) fonts — one font file per Mushaf page (`public/fonts/v4/colrv1/ttf/p{n}.ttf`, ~161MB total, committed to git same as the existing non-colored per-page font). No new schema/seed work: the font pairs with the **already-seeded, previously-unused** `Word.code_v2` column. See [ADR 0023](adr/0023-tajweed-mushaf-mode.md) for why `code_v2` — not a new column — is correct.
+**Decision:** An opt-in reading mode color-codes Quran text by Tajweed rule using per-page COLRv1 (color-glyph) fonts — one font file per Mushaf page (`public/fonts/v4/colrv1/woff2/p{n}.woff2`, ~51MB total, committed to git same as the existing non-colored per-page font). No new schema/seed work: the font pairs with the **already-seeded, previously-unused** `Word.code_v2` column. See [ADR 0023](adr/0023-tajweed-mushaf-mode.md) for why `code_v2` — not a new column — is correct.
 
 **Constraints:**
 - Font/glyph pairing is mode-gated, not a free choice: `tajweedMode=false` → render `word.code_v1` with font `quran-p{page}`; `tajweedMode=true` → render `word.code_v2` with font `quran-p{page}-tajweed`. Never mix `code_v1` with the tajweed font or `code_v2` with the base font.
