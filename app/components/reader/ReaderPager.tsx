@@ -296,6 +296,33 @@ export function ReaderPager({
   };
   const onArrowNavigate = useCallback((targetPage: number) => navRef.current(targetPage), []);
 
+  // Physical ArrowLeft/ArrowRight keys drive the same animateCommit as the click
+  // arrows and swipe. Direction is locale-independent: tracing computeSpreadNav +
+  // NavigationArrow's showLeft logic shows the physical-left click arrow always
+  // resolves to animateCommit(true) and physical-right to animateCommit(false), in
+  // both ar and en — the Quran's page order is fixed regardless of UI language, so
+  // no isRTL branch is needed here (see docs/plans/arrow-controls-desktop.md).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (isCommitting.current) return;
+      animateCommit(e.key === "ArrowLeft");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [animateCommit]);
+
   const onTouchStart = (e: React.TouchEvent) => {
     if (isCommitting.current) return;
     touchStartX.current = e.touches[0].clientX;
