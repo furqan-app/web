@@ -22,16 +22,22 @@ type QuranSpreadProps = {
   viewingOwnerName?: string | null;
   singleStepNav: NavHrefs;
   pairStepNav: NavHrefs;
+  // When provided (persistent pager), an arrow click swaps the page client-side
+  // via this callback instead of navigating the <Link> (which would remount the
+  // reader). The href is kept for SSR/no-JS + middle-click. See ADR 0028.
+  onNavigate?: (targetPage: number) => void;
 };
 
 const NavigationArrow = ({
   href,
   isRTL,
   isNext,
+  onNavigate,
 }: {
   href: string;
   isRTL: boolean;
   isNext: boolean;
+  onNavigate?: (targetPage: number) => void;
 }) => {
   // Flex row order flips visually under RTL, so the browser always places
   // the first DOM child (isNext=false) at the row's main-start (right, in RTL).
@@ -42,6 +48,17 @@ const NavigationArrow = ({
   return (
     <Link
       href={href}
+      onClick={
+        onNavigate
+          ? (e) => {
+              // Plain left-click → client-side swap; let modified clicks
+              // (cmd/ctrl/middle → open in new tab) fall through to the <Link>.
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              onNavigate(Number(href.split("/").pop()));
+            }
+          : undefined
+      }
       aria-label={isNext ? "Next page" : "Previous page"}
       className="fq-nav-arrow hidden md:flex relative z-20 items-center justify-center shrink-0 text-primary/60 hover:text-primary transition-colors"
     >
@@ -60,6 +77,7 @@ export const QuranSpread = ({
   viewingOwnerName,
   singleStepNav,
   pairStepNav,
+  onNavigate,
 }: QuranSpreadProps) => {
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
@@ -79,7 +97,7 @@ export const QuranSpread = ({
 
   return (
     <div className="flex-1 min-w-0 flex justify-center items-center md:h-full md:items-stretch">
-      <NavigationArrow href={nav.prevHref} isRTL={isRTL} isNext={false} />
+      <NavigationArrow href={nav.prevHref} isRTL={isRTL} isNext={false} onNavigate={onNavigate} />
       {/* `.fq-spread` (static) scopes every CSS display/cap/margin gate to cards
           inside a spread, so the standalone QuranSafha in QuranPage is unaffected.
           gap-0: the two cards' spine-adjacent edges touch directly, matching a
@@ -112,7 +130,7 @@ export const QuranSpread = ({
           />
         </div>
       </div>
-      <NavigationArrow href={nav.nextHref} isRTL={isRTL} isNext={true} />
+      <NavigationArrow href={nav.nextHref} isRTL={isRTL} isNext={true} onNavigate={onNavigate} />
     </div>
   );
 };

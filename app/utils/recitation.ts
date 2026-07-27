@@ -1,4 +1,3 @@
-import { getPagePair } from "@/app/utils/quran-pages";
 import { QURAN_LAST_CHAPTER_ID } from "@/app/constants/recitation";
 import { RepeatCount, StopPoint, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
@@ -71,31 +70,8 @@ export const findActiveWordLocation = (
   return segment ? `${verseTiming.verseKey}:${segment[0]}` : null;
 };
 
-// Page ids currently visible in the reader: just the current page in single
-// view / forced-single below `lg`, or the whole pair in active double view.
-// Mirrors QuranSpread's own `view === "double" && isLgUp` display gate.
-export const computeVisiblePageSet = (
-  displayedPageId: number,
-  isDoubleViewActive: boolean,
-): Set<number> => {
-  if (!isDoubleViewActive) return new Set([displayedPageId]);
-  const { rightPage, leftPage } = getPagePair(displayedPageId);
-  return new Set([rightPage, leftPage]);
-};
-
-// Extracts the reader base path + currently displayed page id from a
-// (locale-stripped) pathname, e.g. "/pages/12" or "/mushaf/abc123/pages/12".
-// Returns null when not on a paged reader route (no page-follow target).
-export const parseReaderPathname = (
-  pathname: string,
-): { basePath: string; pageId: number } | null => {
-  const match = pathname.match(/^((?:\/mushaf\/[^/]+)?\/pages)\/(\d+)$/);
-  if (!match) return null;
-  return { basePath: match[1], pageId: Number(match[2]) };
-};
-
 // The verse_key of the first word on a page, used as the default start point
-// for the header's "listen from here" quick-play button.
+// for the voice panel's play-current-Safha button.
 export const getFirstVerseKeyOfPage = (
   lines: Record<string, Array<WordWithVerse>>,
 ): string | null => {

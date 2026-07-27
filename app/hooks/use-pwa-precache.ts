@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useLocale } from "next-intl";
 
 const TOTAL_PAGES = 604;
 
@@ -18,7 +17,6 @@ const isStandaloneDisplayMode = () =>
 // ADR 0013) only when running as the installed PWA, resuming on every
 // launch until complete. Never fires for a regular browser tab.
 export const usePwaPrecache = () => {
-  const locale = useLocale();
   const [isStandalone, setIsStandalone] = useState(false);
   const [cached, setCached] = useState(0);
 
@@ -38,14 +36,13 @@ export const usePwaPrecache = () => {
     navigator.serviceWorker.ready.then((registration) => {
       registration.active?.postMessage({
         type: "START_PRECACHE",
-        locale,
       });
     });
 
     return () => {
       navigator.serviceWorker.removeEventListener("message", onMessage);
     };
-  }, [locale]);
+  }, []);
 
   return { isStandalone, cached, total: TOTAL_PAGES };
 };

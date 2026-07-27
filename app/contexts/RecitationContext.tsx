@@ -10,10 +10,7 @@ import {
   useState,
 } from "react";
 import { useLocale } from "next-intl";
-import { usePathname, useRouter } from "@/i18n/routing";
 import { storage } from "@/app/utils/storage";
-import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
-import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import {
   fetchChapterAudio,
   fetchChapterVersePages,
@@ -21,12 +18,10 @@ import {
   fetchStopPoint,
 } from "@/app/utils/recitation-api";
 import {
-  computeVisiblePageSet,
   decideChapterEnd,
   findActiveVerseTiming,
   findActiveWordLocation,
   parseChapterIdFromVerseKey,
-  parseReaderPathname,
   resolveRepeatTarget,
 } from "@/app/utils/recitation";
 import {
@@ -76,6 +71,13 @@ type RecitationContextType = {
   status: RecitationStatus;
   currentVerseKey: string | null;
   currentWordLocation: string | null;
+  // Mushaf page of the currently recited verse, or null when not playing. The
+  // persistent pager (ADR 0028) watches this to keep the recited page on screen —
+  // navigation lives in the pager, not here.
+  recitedPage: number | null;
+  // First verse_key of the currently displayed page, kept current by
+  // RecitationPageSync — the voice panel's play button reads it as its
+  // "play current Safha" start point (it cannot receive props from the pager).
   pageFirstVerseKey: string | null;
   setPageFirstVerseKey: (key: string | null) => void;
   play: (startVerseKey: string) => void;
@@ -98,17 +100,14 @@ function getInitialSettings(): RecitationSettings {
 }
 
 export function RecitationProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();
   const locale = useLocale();
-  const { view: safhaView } = useQuranSafhaView();
-  const isLgUp = useIsLgUp();
 
   const [settings, setSettings] = useState<RecitationSettings>(DEFAULT_RECITATION_SETTINGS);
   const [reciters, setReciters] = useState<Reciter[]>([]);
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
   const [currentWordLocation, setCurrentWordLocation] = useState<string | null>(null);
+  const [recitedPage, setRecitedPage] = useState<number | null>(null);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -193,6 +192,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     currentChapterIdRef.current = null;
     currentVerseKeyRef.current = null;
     setCurrentVerseKey(null);
+    setRecitedPage(null);
     clearHighlight();
   }, [clearHighlight]);
 
@@ -289,20 +289,14 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const followPage = useCallback(
-    (verseKey: string) => {
-      const pageNumber = versePagesRef.current[verseKey];
-      if (pageNumber == null) return;
-      const readerLocation = parseReaderPathname(pathname);
-      if (!readerLocation) return; // background playback — no page to follow
-      const isDoubleViewActive = safhaView === "double" && isLgUp;
-      const visibleSet = computeVisiblePageSet(readerLocation.pageId, isDoubleViewActive);
-      if (!visibleSet.has(pageNumber)) {
-        router.push(`${readerLocation.basePath}/${pageNumber}`);
-      }
-    },
-    [pathname, safhaView, isLgUp, router],
-  );
+  // Publish the Mushaf page of the recited verse. The persistent pager (ADR 0028)
+  // owns navigation, so it — not this context — keeps that page on screen; here we
+  // only report the page. versePagesRef is populated for the loaded chapter by
+  // loadChapter, so the lookup resolves for every verse of the playing chapter.
+  const updateRecitedPage = useCallback((verseKey: string) => {
+    const pageNumber = versePagesRef.current[verseKey];
+    if (pageNumber != null) setRecitedPage(pageNumber);
+  }, []);
 
   // Fetches chapterId's audio + verse-pages, loads it into the shared refs
   // and the <audio> element, seeks to seekVerseKey's timestampFrom (or the
@@ -333,7 +327,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       perAyahRepeatsDoneRef.current = 0;
       currentVerseKeyRef.current = targetVerseKey;
       setCurrentVerseKey(targetVerseKey);
-      if (targetVerseKey) followPage(targetVerseKey);
+      if (targetVerseKey) updateRecitedPage(targetVerseKey);
 
       audio.src = chapterAudio.audioUrl;
       audio.playbackRate = settings.playbackSpeed;
@@ -341,7 +335,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       await audio.play();
       return true;
     },
-    [settings.playbackSpeed, getVersePages, followPage],
+    [settings.playbackSpeed, getVersePages, updateRecitedPage],
   );
 
   // Loads chapterId + 1's audio and keeps playing from its start — the
@@ -380,7 +374,19 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       const startChapterId = parseChapterIdFromVerseKey(startVerseKey);
       if (startChapterId === currentChapterIdRef.current) {
         const startTiming = verseTimingsRef.current.find((vt) => vt.verseKey === startVerseKey);
-        if (startTiming) scheduleSeek(startTiming.timestampFrom, pauseMs);
+        if (startTiming) {
+          // Must update currentVerseKeyRef (and mirror it into state/page-follow)
+          // here, not just seek the audio — handleTimeUpdate reads this ref as
+          // previousVerseKey on the next tick. Left stale at the stop verse,
+          // isStopVerse would evaluate true again immediately, re-triggering
+          // range-repeat/stop instead of resuming forward playback. Mirrors
+          // loadChapter's cross-chapter reload path (which sets this correctly
+          // already). See docs/plans/recitation-playback.md Addendum 7.
+          currentVerseKeyRef.current = startVerseKey;
+          setCurrentVerseKey(startVerseKey);
+          updateRecitedPage(startVerseKey);
+          scheduleSeek(startTiming.timestampFrom, pauseMs);
+        }
         return;
       }
 
@@ -402,13 +408,21 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         reload();
       }
     },
-    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop],
+    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
   );
 
   const handleTimeUpdate = useCallback(() => {
     const audio = audioRef.current;
     const verseTimings = verseTimingsRef.current;
     if (!audio || verseTimings.length === 0) return;
+    // pause() (called by stop()/togglePlayPause) always queues one more
+    // "timeupdate" event afterward per the HTML spec, even though `paused`
+    // itself flips synchronously beforehand. Without this guard that stray
+    // tick resurrects currentVerseKey/recitedPage/highlight right after
+    // stop() clears them (previousVerseKey reads null, so the verse-changed
+    // branch below fires) — see docs/plans/tablet-nav-overlay.md's bug-fix
+    // addendum.
+    if (audio.paused) return;
 
     const currentTimeMs = audio.currentTime * 1000;
     const activeTiming = findActiveVerseTiming(verseTimings, currentTimeMs);
@@ -444,11 +458,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       perAyahRepeatsDoneRef.current = 0;
       currentVerseKeyRef.current = activeTiming.verseKey;
       setCurrentVerseKey(activeTiming.verseKey);
-      followPage(activeTiming.verseKey);
+      updateRecitedPage(activeTiming.verseKey);
     }
 
     applyWordHighlight(findActiveWordLocation(activeTiming, currentTimeMs));
-  }, [settings, scheduleSeek, seekToRangeStart, stop, followPage, applyWordHighlight]);
+  }, [settings, scheduleSeek, seekToRangeStart, stop, updateRecitedPage, applyWordHighlight]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -599,6 +613,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         status,
         currentVerseKey,
         currentWordLocation,
+        recitedPage,
         pageFirstVerseKey,
         setPageFirstVerseKey,
         play,

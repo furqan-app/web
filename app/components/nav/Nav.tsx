@@ -7,12 +7,12 @@ import { SearchBar } from "@components/search/SearchBar";
 import { UserMenu } from "./UserMenu";
 import { SharedMushafLink } from "./SharedMushafLink";
 import { MarksLink } from "./MarksLink";
+import { PlansLink } from "./PlansLink";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/app/contexts/SidebarContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
-import { RecitationPlayButton } from "@/app/components/RecitationPlayButton";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
 
@@ -51,8 +51,6 @@ export const Nav = () => {
             />
           </Button>
         )}
-
-        {isOnPagesRoute && <RecitationPlayButton className="md:hidden" />}
       </div>
 
       {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}
@@ -60,10 +58,11 @@ export const Nav = () => {
         <SearchBar />
       </div>
 
-      {/* End: shared-mushaf + marks links (always visible) + user menu (desktop only) + settings */}
+      {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}
       <div className="flex items-center gap-1 flex-shrink-0">
         <SharedMushafLink />
         <MarksLink />
+        <PlansLink />
         <div className="hidden md:flex items-center">
           <UserMenu />
         </div>

@@ -34,3 +34,14 @@ Cache versioning for the pre-cached pages is independent of Serwist's per-deploy
 - **-** Marks remain unusable offline — accepted gap, revisit if offline mark-taking becomes a real ask.
 - **-** iOS Safari (WebKit) enforces stricter, less predictable Cache Storage quotas/eviction for installed web apps than Chrome/Android; a ~92MB cache is at real risk of partial eviction on iOS. This is a known platform limitation, not a bug in this design — no mitigation planned beyond the "resume on next launch" retry behavior already decided.
 - **-** The manual cache-version bump is a discipline requirement (a developer must remember to bump it) — no automated detection of "this change affects cached page output."
+
+## Addendum 1 (2026-07-24): Reader-page HTML must not be CacheFirst
+
+**Incident (Trello #122):** Users reported seeing the old version of the app after a deploy — both on regular browser visits (fixed by a hard refresh) and on the installed PWA (fixed only by clearing the site's cache). Root cause: two assumptions in this ADR didn't hold.
+
+1. "Regular (non-installed) web visitors see zero behavior change" (Consequences, above) assumed the `display-mode: standalone` gate scoped the service worker itself to installed users. It doesn't — `@serwist/next` registers the service worker for every production visitor by default (`register: true`), regardless of display mode. The gate only controls whether the *bulk 604-page pre-cache* fires; it does nothing to scope the runtime-caching rules in `app/sw.ts`, which apply to any client the service worker controls — including a plain browser tab.
+2. The reader-page runtime cache rule (`isSelfReaderPage`, matching `/{locale}/pages/{id}`) used `CacheFirst`, on the premise that "Quran content is immutable." That premise is true for the verse text and per-page fonts, but the route's HTML response also renders the app shell (nav, layout, any feature/UI code) — which is *not* immutable and changes on ordinary feature/bugfix deploys. Once a browser (regular or installed) cached that response, it never revalidated, so the shell stayed frozen at whatever it was when first cached, until the manual `PAGES_CACHE_VERSION` bump (itself scoped only to "reader markup/font logic changes" — too narrow to cover this).
+
+**Fix:** `isSelfReaderPage` now uses `NetworkFirst` (same `pages-v{N}` cache name) instead of `CacheFirst`. `isPageFont` is unchanged (`CacheFirst`) — fonts genuinely never change. Effect: any online visit (browser or installed PWA) always gets the current deploy's HTML; the cache is used only as a fallback when the network request fails (i.e., the installed-PWA offline case this feature exists for). See `docs/plans/fix-sw-stale-cache.md`.
+
+**This does not reopen the original Option B decision** (full pre-cache, installed-PWA-gated, no offline mark writes) — it corrects which caching strategy the pre-cached data is served with, not what gets pre-cached or when.
