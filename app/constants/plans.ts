@@ -102,8 +102,7 @@ export type UserPlanStatus = (typeof USER_PLAN_STATUSES)[number];
 
 /**
  * The launch template: the original ask — read N pages/day through the whole
- * mushaf. الحصون الخمسة ships later as a 5-track template composing all five
- * rule kinds, once its per-level quantities are sourced (see the plan doc).
+ * mushaf.
  */
 export const PLAN_TEMPLATES: Record<string, PlanTemplate> = {
   "daily-wird": {
@@ -119,6 +118,87 @@ export const PLAN_TEMPLATES: Record<string, PlanTemplate> = {
           rangeStart: MUSHAF_FIRST_PAGE,
           rangeEnd: MUSHAF_LAST_PAGE,
           defaultUnitsPerDay: 5,
+        },
+      },
+    ],
+  },
+  /** Same shape as daily-wird, for a listening khatma instead of reading. */
+  "listening-wird": {
+    key: "listening-wird",
+    missedDayPolicy: "cursor",
+    tracks: [
+      {
+        key: "listening",
+        activity: "listen",
+        unit: "page",
+        rule: {
+          kind: "fixed_cycle",
+          rangeStart: MUSHAF_FIRST_PAGE,
+          rangeEnd: MUSHAF_LAST_PAGE,
+          defaultUnitsPerDay: 5,
+        },
+      },
+    ],
+  },
+  /**
+   * الحصون الخمسة (Dr. Saeed Hamza) — the forcing case for all five rule
+   * kinds (see docs/plans/daily-awrad-ui.md and ADR 0030). Quantities are a
+   * documented best-effort default, not a verbatim source — all overridable
+   * per-enrollment via params.quantities.
+   */
+  husun: {
+    key: "husun",
+    missedDayPolicy: "cursor",
+    tracks: [
+      {
+        key: "tilawa",
+        activity: "read",
+        unit: "page",
+        rule: {
+          kind: "fixed_cycle",
+          rangeStart: MUSHAF_FIRST_PAGE,
+          rangeEnd: MUSHAF_LAST_PAGE,
+          defaultUnitsPerDay: 20,
+        },
+      },
+      {
+        key: "hifz",
+        activity: "memorize",
+        unit: "page",
+        rule: {
+          kind: "cursor_advance",
+          defaultUnitsPerDay: 1,
+        },
+      },
+      {
+        key: "tahdeer",
+        activity: "listen",
+        unit: "page",
+        rule: {
+          kind: "lookahead",
+          sourceTrack: "hifz",
+          repetitions: 10,
+        },
+      },
+      {
+        key: "qareeb",
+        activity: "review",
+        unit: "page",
+        rule: {
+          kind: "trailing_window",
+          sourceTrack: "hifz",
+          windowSize: 20,
+        },
+      },
+      {
+        key: "baeed",
+        activity: "review",
+        unit: "page",
+        rule: {
+          kind: "completed_cycle",
+          sourceTrack: "hifz",
+          defaultUnitsPerDay: 1,
+          excludeTrailingWindow: 20,
         },
       },
     ],

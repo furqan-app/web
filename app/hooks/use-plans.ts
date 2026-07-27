@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   enrollInPlan,
   getMyPlans,
+  updatePlanParams,
   updatePlanStatus,
 } from "../server/actions/plans";
 import { getQueryClient } from "../utils/queryClient";
@@ -39,5 +40,10 @@ export const usePlans = () => {
     onSuccess: reload,
   });
 
-  return { ...query, reload, enroll, setStatus };
+  const updateParams = useMutation({
+    mutationFn: updatePlanParams,
+    onSuccess: reload,
+  });
+
+  return { ...query, reload, enroll, setStatus, updateParams };
 };

@@ -9,6 +9,7 @@ import {
 } from "@/app/constants/plans";
 import {
   deriveAssignments,
+  withNextPreview,
   type ProgressLogEntry,
   type TrackAssignment,
 } from "@/app/lib/plans/engine";
@@ -54,15 +55,13 @@ export async function GET(request: NextRequest) {
       range_end: entry.range_end,
     }));
 
+    const params = (plan.params ?? {}) as UserPlanParams;
+    const assignments = deriveAssignments(template, params, entries, date);
+
     data.push({
       planId: plan.id,
       templateKey: plan.template_key,
-      assignments: deriveAssignments(
-        template,
-        (plan.params ?? {}) as UserPlanParams,
-        entries,
-        date
-      ),
+      assignments: withNextPreview(template, params, entries, date, assignments),
     });
   }
 
