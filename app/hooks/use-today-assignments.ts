@@ -3,6 +3,7 @@ import {
   checkOffTrack,
   getLocalDateString,
   getTodayAssignments,
+  uncheckTrack,
 } from "../server/actions/plans";
 import { getQueryClient } from "../utils/queryClient";
 
@@ -43,5 +44,11 @@ export const useTodayAssignments = ({ enabled = true }: { enabled?: boolean } = 
     onSuccess: reload,
   });
 
-  return { ...query, date, reload, checkOff };
+  const uncheckOff = useMutation({
+    mutationFn: (input: { planId: number; trackKey: string }) =>
+      uncheckTrack({ ...input, date }),
+    onSuccess: reload,
+  });
+
+  return { ...query, date, reload, checkOff, uncheckOff };
 };

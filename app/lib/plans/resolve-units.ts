@@ -18,6 +18,19 @@ export const getJuzPageRange = async (juzNumber: number): Promise<PageRange | nu
   return { startPage: agg._min.page_number, endPage: agg._max.page_number };
 };
 
+/**
+ * Reverse of getJuzPageRange — a page's juz number, for prefilling the
+ * juz-range edit UI from a stored page-canonical target (D3: juz numbers are
+ * never stored, only derived on demand for display).
+ */
+export const getPageJuzNumber = async (page: number): Promise<number | null> => {
+  const meta = await quranPrisma.pageMetadata.findUnique({
+    where: { page_number: page },
+    select: { juz_number: true },
+  });
+  return meta?.juz_number ?? null;
+};
+
 export const getHizbPageRange = async (hizbNumber: number): Promise<PageRange | null> => {
   const agg = await quranPrisma.verse.aggregate({
     where: { hizb_number: hizbNumber },

@@ -5,9 +5,10 @@
 import type { UserPlanListItem } from "@/app/api/plans/route";
 import type { TodayPlanAssignments } from "@/app/api/plans/today/route";
 import type { PlanProgressHistoryEntry } from "@/app/api/plans/[planId]/progress/route";
+import type { StreakResult } from "@/app/lib/plans/streak";
 import type { UserPlanParams, UserPlanStatus } from "@/app/constants/plans";
 
-export type { UserPlanListItem, TodayPlanAssignments, PlanProgressHistoryEntry };
+export type { UserPlanListItem, TodayPlanAssignments, PlanProgressHistoryEntry, StreakResult };
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -76,6 +77,39 @@ export const updatePlanStatus = async ({
   }
 };
 
+/**
+ * Edit an active plan's params (quantities / husun's target juz range) — a
+ * full replace, not a merge (the caller always sends the complete shape).
+ * Never retro-applies to past PlanProgressEntry rows.
+ */
+export const updatePlanParams = async ({
+  planId,
+  params,
+  targetJuzStart,
+  targetJuzEnd,
+}: {
+  planId: number;
+  params: UserPlanParams;
+  targetJuzStart?: number;
+  targetJuzEnd?: number;
+}): Promise<boolean> => {
+  try {
+    const { success } = await fetch(`/api/plans/${planId}`, {
+      method: "PATCH",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({
+        params,
+        target_juz_start: targetJuzStart,
+        target_juz_end: targetJuzEnd,
+      }),
+    }).then((r) => r.json());
+    return Boolean(success);
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+};
+
 /** Local-midnight day boundary (ADR 0030): the browser's own date. */
 export const getLocalDateString = () => {
   const now = new Date();
@@ -114,6 +148,19 @@ export const getPlanHistory = async (
   }
 };
 
+export const getPlanStreak = async (date: string): Promise<StreakResult> => {
+  try {
+    const { data, success } = await fetch(
+      `/api/plans/streak?date=${encodeURIComponent(date)}`,
+      { headers: JSON_HEADERS }
+    ).then((r) => r.json());
+    return success && data ? data : { streakLength: 0, week: [] };
+  } catch (e) {
+    console.error(e);
+    return { streakLength: 0, week: [] };
+  }
+};
+
 export const checkOffTrack = async ({
   planId,
   trackKey,
@@ -137,6 +184,29 @@ export const checkOffTrack = async ({
         range_start: rangeStart,
         range_end: rangeEnd,
       }),
+    }).then((r) => r.json());
+    return Boolean(success);
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+};
+
+/** Undo a check-off — removes the one PlanProgressEntry for { track_key, date }. */
+export const uncheckTrack = async ({
+  planId,
+  trackKey,
+  date,
+}: {
+  planId: number;
+  trackKey: string;
+  date: string;
+}): Promise<boolean> => {
+  try {
+    const { success } = await fetch(`/api/plans/${planId}/progress`, {
+      method: "DELETE",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ track_key: trackKey, date }),
     }).then((r) => r.json());
     return Boolean(success);
   } catch (e) {

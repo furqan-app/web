@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveAssignments,
+  withNextPreview,
   type ProgressLogEntry,
   type TrackAssignment,
 } from "@/app/lib/plans/engine";
@@ -135,6 +136,14 @@ describe("fixed_cycle", () => {
     expect(a.completed).toBe(true);
   });
 
+  it("echoes today's own logged range instead of advancing the cursor", () => {
+    // Without the fix this would show 6-10 (the next cursor position) while
+    // still marked completed=true from the 1-5 entry.
+    const log = [entry("reading", TODAY, 1, 5)];
+    const [a] = deriveAssignments(wird, {}, log, TODAY);
+    expect(a).toMatchObject({ rangeStart: 1, rangeEnd: 5, completed: true });
+  });
+
   it("ignores malformed (non-numeric) log entries", () => {
     const log: ProgressLogEntry[] = [
       { track_key: "reading", date: "2026-07-20", range_start: "x", range_end: "y" },
@@ -223,6 +232,29 @@ describe("cursor_advance", () => {
     const assignments = deriveAssignments(husun, { targetEnd: 604 }, log, TODAY);
     expect(byTrack(assignments, "hifz")).toBeUndefined();
   });
+
+  it("echoes today's own logged range instead of advancing the cursor", () => {
+    const log = [entry("hifz", TODAY, 31, 31)];
+    const assignments = deriveAssignments(husun, {}, log, TODAY);
+    expect(byTrack(assignments, "hifz")).toMatchObject({
+      rangeStart: 31,
+      rangeEnd: 31,
+      completed: true,
+    });
+  });
+
+  it("still shows completed=true for the final entry even once the target is exhausted", () => {
+    // Logging the final page today must not make the row vanish (would
+    // happen if the "fully memorized -> null" branch ran before the
+    // today-entry short-circuit).
+    const log = [entry("hifz", TODAY, 604, 604)];
+    const assignments = deriveAssignments(husun, { targetEnd: 604 }, log, TODAY);
+    expect(byTrack(assignments, "hifz")).toMatchObject({
+      rangeStart: 604,
+      rangeEnd: 604,
+      completed: true,
+    });
+  });
 });
 
 describe("trailing_window", () => {
@@ -246,6 +278,22 @@ describe("trailing_window", () => {
     expect(byTrack(assignments, "qareeb")).toMatchObject({
       rangeStart: 1,
       rangeEnd: 8,
+    });
+  });
+
+  it("echoes today's own logged range instead of recomputing the window", () => {
+    // hifz keeps advancing after qareeb's own check-off; qareeb's row must
+    // stay put at what was actually logged, not shift with hifz.
+    const log = [
+      entry("hifz", "2026-07-01", 1, 30),
+      entry("qareeb", TODAY, 11, 30),
+      entry("hifz", TODAY, 31, 31),
+    ];
+    const assignments = deriveAssignments(husun, {}, log, TODAY);
+    expect(byTrack(assignments, "qareeb")).toMatchObject({
+      rangeStart: 11,
+      rangeEnd: 30,
+      completed: true,
     });
   });
 });
@@ -304,6 +352,19 @@ describe("completed_cycle", () => {
       rangeEnd: 10,
     });
   });
+
+  it("echoes today's own logged range instead of advancing its own cursor", () => {
+    const log = [
+      entry("hifz", "2026-07-01", 1, 30), // region = 1–10
+      entry("baeed", TODAY, 1, 5),
+    ];
+    const assignments = deriveAssignments(husun, {}, log, TODAY);
+    expect(byTrack(assignments, "baeed")).toMatchObject({
+      rangeStart: 1,
+      rangeEnd: 5,
+      completed: true,
+    });
+  });
 });
 
 describe("lookahead", () => {
@@ -333,6 +394,23 @@ describe("lookahead", () => {
     const assignments = deriveAssignments(husun, { targetEnd: 604 }, log, TODAY);
     expect(byTrack(assignments, "tahdeer")).toBeUndefined();
   });
+
+  it("echoes tahdeer's own logged range instead of recomputing from hifz", () => {
+    // tahdeer was already checked off today (prepared 32); hifz then also
+    // advances today. tahdeer's row must stay at what it actually logged,
+    // not shift because its source moved.
+    const log = [
+      entry("hifz", "2026-07-23", 30, 30),
+      entry("tahdeer", TODAY, 32, 32),
+      entry("hifz", TODAY, 31, 31),
+    ];
+    const assignments = deriveAssignments(husun, {}, log, TODAY);
+    expect(byTrack(assignments, "tahdeer")).toMatchObject({
+      rangeStart: 32,
+      rangeEnd: 32,
+      completed: true,
+    });
+  });
 });
 
 describe("full الحصون الخمسة derivation", () => {
@@ -360,6 +438,71 @@ describe("full الحصون الخمسة derivation", () => {
       "tahdeer",
       "tilawa",
     ]);
+  });
+});
+
+describe("withNextPreview", () => {
+  it("attaches next=6-10 for a completed fixed_cycle row", () => {
+    const log = [entry("reading", TODAY, 1, 5)];
+    const assignments = deriveAssignments(wird, {}, log, TODAY);
+    const withNext = withNextPreview(wird, {}, log, TODAY, assignments);
+    expect(withNext[0]).toMatchObject({
+      rangeStart: 1,
+      rangeEnd: 5,
+      completed: true,
+      next: { rangeStart: 6, rangeEnd: 10 },
+    });
+  });
+
+  it("omits next when cursor_advance is exhausted", () => {
+    const log = [entry("hifz", TODAY, 604, 604)];
+    const params = { targetEnd: 604 };
+    const assignments = deriveAssignments(husun, params, log, TODAY);
+    const withNext = withNextPreview(husun, params, log, TODAY, assignments);
+    expect(byTrack(withNext, "hifz")).toMatchObject({ completed: true });
+    expect(byTrack(withNext, "hifz")?.next).toBeUndefined();
+  });
+
+  it("previews qareeb's next window shifted by hifz's own next-day advance", () => {
+    const log = [
+      entry("hifz", "2026-07-01", 1, 30), // region so far: 1-30
+      entry("qareeb", TODAY, 11, 30),
+      entry("hifz", TODAY, 31, 31),
+    ];
+    const assignments = deriveAssignments(husun, {}, log, TODAY);
+    const withNext = withNextPreview(husun, {}, log, TODAY, assignments);
+    // trailing_window reads the source's actually-LOGGED lastEnd/minStart
+    // (not a hypothetical D+1 cursor), so the preview reflects hifz's real
+    // position today (31) that qareeb hasn't "reviewed" yet: window = 12-31.
+    expect(byTrack(withNext, "qareeb")).toMatchObject({
+      rangeStart: 11,
+      rangeEnd: 30,
+      completed: true,
+      next: { rangeStart: 12, rangeEnd: 31 },
+    });
+  });
+
+  it("previews tahdeer's next portion two steps ahead of today's hifz", () => {
+    const log = [
+      entry("hifz", "2026-07-23", 30, 30),
+      entry("tahdeer", TODAY, 32, 32),
+      entry("hifz", TODAY, 31, 31),
+    ];
+    const assignments = deriveAssignments(husun, {}, log, TODAY);
+    const withNext = withNextPreview(husun, {}, log, TODAY, assignments);
+    expect(byTrack(withNext, "tahdeer")).toMatchObject({
+      rangeStart: 32,
+      rangeEnd: 32,
+      completed: true,
+      next: { rangeStart: 33, rangeEnd: 33, repetitions: 10 },
+    });
+  });
+
+  it("leaves incomplete rows untouched", () => {
+    const assignments = deriveAssignments(wird, {}, [], TODAY);
+    const withNext = withNextPreview(wird, {}, [], TODAY, assignments);
+    expect(withNext[0].completed).toBe(false);
+    expect(withNext[0].next).toBeUndefined();
   });
 });
 

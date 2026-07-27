@@ -3,14 +3,13 @@ import { jsonResponse } from "@/app/api/response";
 import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
 import {
-  MUSHAF_FIRST_PAGE,
-  MUSHAF_LAST_PAGE,
   PLAN_DATE_RE,
   getPlanTemplate,
   type UserPlanParams,
   type UserPlanStatus,
 } from "@/app/constants/plans";
-import { getJuzPageRange } from "@/app/lib/plans/resolve-units";
+import { resolvePlanParams } from "@/app/lib/plans/validate-params";
+import { getPageJuzNumber } from "@/app/lib/plans/resolve-units";
 
 export type UserPlanListItem = {
   id: number;
@@ -18,6 +17,13 @@ export type UserPlanListItem = {
   params: UserPlanParams;
   start_date: string;
   status: UserPlanStatus;
+  /**
+   * Derived-on-read juz numbers for params.targetStart/targetEnd, for
+   * prefilling the params-edit UI — juz is never stored (D3), only computed
+   * on demand from the page-canonical value.
+   */
+  target_juz_start?: number;
+  target_juz_end?: number;
 };
 
 const toDateString = (d: Date) => d.toISOString().slice(0, 10);
@@ -36,6 +42,17 @@ const serializePlan = (plan: {
   status: plan.status as UserPlanStatus,
 });
 
+const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> => {
+  const { targetStart, targetEnd } = item.params;
+  if (targetStart === undefined || targetEnd === undefined) return item;
+  const [juzStart, juzEnd] = await Promise.all([
+    getPageJuzNumber(targetStart),
+    getPageJuzNumber(targetEnd),
+  ]);
+  if (juzStart === null || juzEnd === null) return item;
+  return { ...item, target_juz_start: juzStart, target_juz_end: juzEnd };
+};
+
 /** GET /api/plans — the caller's enrollments (all statuses). Protected. */
 export async function GET(request: NextRequest) {
   const user = extractUser(request);
@@ -46,7 +63,8 @@ export async function GET(request: NextRequest) {
     orderBy: { created_at: "desc" },
   });
 
-  return jsonResponse({ data: plans.map(serializePlan) });
+  const data = await Promise.all(plans.map(serializePlan).map(withTargetJuz));
+  return jsonResponse({ data });
 }
 
 /**
@@ -71,73 +89,22 @@ export async function POST(request: NextRequest) {
     return jsonResponse({ code: 422, message: "Invalid start_date" });
   }
 
-  const params: UserPlanParams = body.params ?? {};
-  if (params.endDate && !PLAN_DATE_RE.test(params.endDate)) {
+  const bodyParams: UserPlanParams = body.params ?? {};
+  if (bodyParams.endDate && !PLAN_DATE_RE.test(bodyParams.endDate)) {
     return jsonResponse({ code: 422, message: "Invalid params.endDate" });
   }
-  if (template.missedDayPolicy === "calendar" && !params.endDate) {
+  if (template.missedDayPolicy === "calendar" && !bodyParams.endDate) {
     return jsonResponse({
       code: 422,
       message: "This template requires params.endDate",
     });
   }
 
-  // Juz-range target (husun's hifz track): resolved to page numbers here so
-  // UserPlanParams stays page-canonical (D3) — juz numbers are never stored.
-  const { target_juz_start: juzStart, target_juz_end: juzEnd } = body;
-  if (juzStart !== undefined || juzEnd !== undefined) {
-    const isJuzNumber = (n: unknown): n is number =>
-      typeof n === "number" && Number.isInteger(n) && n >= 1 && n <= 30;
-    if (!isJuzNumber(juzStart) || !isJuzNumber(juzEnd) || juzStart > juzEnd) {
-      return jsonResponse({ code: 422, message: "Invalid target juz range" });
-    }
-    const [startRange, endRange] = await Promise.all([
-      getJuzPageRange(juzStart),
-      getJuzPageRange(juzEnd),
-    ]);
-    if (!startRange || !endRange) {
-      return jsonResponse({ code: 422, message: "Unknown juz" });
-    }
-    // Overwrites any client-sent targetStart/targetEnd.
-    params.targetStart = startRange.startPage;
-    params.targetEnd = endRange.endPage;
+  const resolved = await resolvePlanParams(body);
+  if ("error" in resolved) {
+    return jsonResponse({ code: 422, message: resolved.error });
   }
-
-  // Harden the rest of the client-supplied params — the enroll form is the
-  // first real caller of these fields.
-  const isPageNumber = (n: unknown): n is number =>
-    typeof n === "number" &&
-    Number.isInteger(n) &&
-    n >= MUSHAF_FIRST_PAGE &&
-    n <= MUSHAF_LAST_PAGE;
-
-  for (const [key, value] of [
-    ["startPage", params.startPage],
-    ["targetStart", params.targetStart],
-    ["targetEnd", params.targetEnd],
-  ] as const) {
-    if (value !== undefined && !isPageNumber(value)) {
-      return jsonResponse({ code: 422, message: `Invalid params.${key}` });
-    }
-  }
-  if (
-    params.targetStart !== undefined &&
-    params.targetEnd !== undefined &&
-    params.targetStart > params.targetEnd
-  ) {
-    return jsonResponse({
-      code: 422,
-      message: "params.targetStart must be <= params.targetEnd",
-    });
-  }
-  if (params.quantities) {
-    const invalid = Object.values(params.quantities).some(
-      (v) => !Number.isInteger(v) || v < 1
-    );
-    if (invalid) {
-      return jsonResponse({ code: 422, message: "Invalid params.quantities" });
-    }
-  }
+  const params = resolved.params;
 
   const startDate = body.start_date ?? toDateString(new Date());
 

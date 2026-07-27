@@ -141,12 +141,35 @@
     "empty": "No plans yet — enroll in one below.",
     "nothingToday": "Nothing due today.",
     "checkOff": "Check off",
+    "undoCheckOff": "Undo check-off",
+    "nextAssignment": "Next",
     "pagesPerDay": "pages/day",
     "targetRange": "Target range (juz)",
     "to": "to",
     "enroll": "Start plan",
+    "saveChanges": "Save changes",
     "enrollError": "Something went wrong. Try again.",
     "offlineNotice": "Connect to the internet to check off progress",
+    "myPlans": "My plans",
+    "hero": {
+      "title": "Today's wird",
+      "of": "of",
+      "today": "today",
+      "streakDays": "day streak",
+      "last7Days": "Last 7 days",
+      "allDone": "Well done, you've completed today's wird",
+      "keepGoing": "Keep going — you're now on"
+    },
+    "browse": {
+      "title": "New wird or plan",
+      "description": "Enroll in a template, or edit an active one.",
+      "addNew": "New wird",
+      "addNewDescription": "Explore available awrad and learning plans",
+      "back": "Back",
+      "next": "Next",
+      "previous": "Previous",
+      "husunOverview": "Five interlinked tracks: you memorize a new page daily, prepare it, and review it both soon and later — automatically, based on what you've memorized. You only choose the memorization rate and range."
+    },
     "templates": {
       "dailyWird": {
         "label": "Daily Wird",
@@ -184,6 +207,7 @@
     },
     "actions": {
       "label": "Plan actions",
+      "edit": "Edit",
       "pause": "Pause",
       "resume": "Resume",
       "markCompleted": "Mark completed",

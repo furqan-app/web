@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/options";
 import { MyPlansList } from "@/app/components/plans/MyPlansList";
-import { TemplateCatalog } from "@/app/components/plans/TemplateCatalog";
 import { PlansSignedOutPrompt } from "@/app/components/plans/PlansSignedOutPrompt";
 import { Locale } from "@/app/types/config";
 
@@ -36,10 +35,7 @@ export default async function PlansPage({
       </header>
 
       {session?.user ? (
-        <div className="flex flex-col gap-8">
-          <MyPlansList />
-          <TemplateCatalog />
-        </div>
+        <MyPlansList />
       ) : (
         <PlansSignedOutPrompt />
       )}

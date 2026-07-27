@@ -16,6 +16,7 @@ import {
   type PlanTrack,
   type UserPlanParams,
 } from "@/app/constants/plans";
+import { addDays } from "@/app/lib/plans/dates";
 
 export type ProgressLogEntry = {
   track_key: string;
@@ -35,6 +36,13 @@ export type TrackAssignment = {
   repetitions?: number;
   /** True when a progress entry exists for this track on the given date. */
   completed: boolean;
+  /**
+   * Preview of this track's assignment the day after `date`, only computed
+   * for completed rows (Companion Redesign's "next assignment" preview) —
+   * absent when the track has nothing left (e.g. an exhausted cursor_advance)
+   * or hasn't started yet. Presentation-only, never writable.
+   */
+  next?: { rangeStart: number; rangeEnd: number; repetitions?: number };
 };
 
 const dayCountInclusive = (from: string, to: string) => {
@@ -127,6 +135,26 @@ const cursorAdvanceTarget = (params: UserPlanParams) => ({
   targetEnd: params.targetEnd ?? MUSHAF_LAST_PAGE,
 });
 
+/**
+ * If this track already has an entry logged for the queried date, the
+ * assignment must echo that entry's own range verbatim — never recompute a
+ * cursor/window position, which would silently advance past what was
+ * actually logged while `completed` (date-based) stays true. Applies to
+ * every rule kind alike. Guards non-numeric range fields the same way
+ * trackState does for lastEnd/minStart.
+ */
+const todayEntryAssignment = (
+  track: PlanTrack,
+  state: TrackState
+): TrackAssignment | null => {
+  if (!state.todayEntry) return null;
+  const start = Number(state.todayEntry.range_start);
+  const end = Number(state.todayEntry.range_end);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+  const repetitions = track.rule.kind === "lookahead" ? track.rule.repetitions : undefined;
+  return assignRange(track, start, end, state, repetitions);
+};
+
 /** Assignment for one self-advancing (source-free) track, or null when done. */
 const deriveSourceFreeTrack = (
   template: PlanTemplate,
@@ -135,6 +163,9 @@ const deriveSourceFreeTrack = (
   state: TrackState,
   date: string
 ): TrackAssignment | null => {
+  const already = todayEntryAssignment(track, state);
+  if (already) return already;
+
   const rule = track.rule;
 
   if (rule.kind === "fixed_cycle") {
@@ -223,6 +254,12 @@ export const deriveAssignments = (
       continue;
     }
 
+    const already = todayEntryAssignment(track, state);
+    if (already) {
+      assignments.push(already);
+      continue;
+    }
+
     const source = states.get(rule.sourceTrack);
     if (!source) continue;
 
@@ -291,4 +328,40 @@ export const deriveAssignments = (
   }
 
   return assignments;
+};
+
+/**
+ * Attaches a `next` preview (the day-after-`date` assignment) to every
+ * completed row in `assignments`, by calling deriveAssignments once more for
+ * `date + 1` against the same (unchanged) entries — no new entries, no
+ * persistence, same derive-at-read-time model as everything else here.
+ * Rows that aren't completed, or whose track has nothing for `date + 1`
+ * (exhausted cursor_advance, or a review track still without history),
+ * are left untouched.
+ */
+export const withNextPreview = (
+  template: PlanTemplate,
+  params: UserPlanParams,
+  entries: ProgressLogEntry[],
+  date: string,
+  assignments: TrackAssignment[]
+): TrackAssignment[] => {
+  if (!assignments.some((a) => a.completed)) return assignments;
+
+  const tomorrow = deriveAssignments(template, params, entries, addDays(date, 1));
+  const tomorrowByTrack = new Map(tomorrow.map((a) => [a.trackKey, a]));
+
+  return assignments.map((a) => {
+    if (!a.completed) return a;
+    const next = tomorrowByTrack.get(a.trackKey);
+    if (!next) return a;
+    return {
+      ...a,
+      next: {
+        rangeStart: next.rangeStart,
+        rangeEnd: next.rangeEnd,
+        ...(next.repetitions !== undefined ? { repetitions: next.repetitions } : {}),
+      },
+    };
+  });
 };

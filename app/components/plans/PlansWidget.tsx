@@ -2,8 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Target } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
+import { toLocaleNumeral } from "@utils/i18n";
+import { useLocale } from "next-intl";
 import { useTodayAssignments } from "@hooks/use-today-assignments";
 import { useOnlineStatus } from "@hooks/use-online-status";
 import { useReaderPage } from "@/app/contexts/ReaderPageContext";
@@ -42,12 +43,13 @@ const inRange = (
 // Mirrors RecitationPlayerBar's nav-overlay show/hide.
 export const PlansWidget = () => {
   const t = useTranslations();
+  const locale = useLocale();
   const pathname = usePathname();
   const { status: sessionStatus } = useSession();
   const isOnReaderRoute = Boolean(pathname?.includes("/pages/"));
   const isSignedIn = sessionStatus === "authenticated";
 
-  const { data: todayData, checkOff } = useTodayAssignments({
+  const { data: todayData, checkOff, uncheckOff } = useTodayAssignments({
     enabled: isOnReaderRoute && isSignedIn,
   });
   const isOnline = useOnlineStatus();
@@ -62,29 +64,62 @@ export const PlansWidget = () => {
   const rows = todayData.flatMap((plan) =>
     plan.assignments.map((assignment) => ({ plan, assignment })),
   );
+  const totalCount = rows.length;
   const pendingCount = rows.filter((r) => !r.assignment.completed).length;
+  const doneFraction = totalCount > 0 ? (totalCount - pendingCount) / totalCount : 0;
   const isHighlighted = rows.some(({ assignment }) =>
     inRange(assignment, visiblePages, recitedPage, recitationStatus !== "idle"),
   );
+
+  const RING_RADIUS = 22;
+  const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
   return (
     <Sheet>
       <SheetTrigger
         aria-label={t("plans.widget.open", "Today's plans")}
         className={cn(
-          "fixed z-40 bottom-20 end-4 flex items-center gap-2 rounded-full border px-3 py-2 shadow-lg backdrop-blur",
-          isHighlighted
-            ? "bg-primary text-primary-foreground border-primary"
-            : "bg-card/95 text-foreground border-border supports-[backdrop-filter]:bg-card/80",
+          "fixed z-40 bottom-20 end-4 size-[50px]",
           isOverlayMode && "transition-transform duration-300",
           isOverlayMode && !overlayVisible && "translate-y-24 opacity-0 pointer-events-none",
         )}
         style={isOverlayMode ? { transitionTimingFunction: EASE_OUT } : undefined}
       >
-        <Target className="size-4" strokeWidth={1.8} />
-        {pendingCount > 0 ? (
-          <span className="text-xs font-semibold">{pendingCount}</span>
-        ) : null}
+        <span className="relative block size-full">
+          <svg width="50" height="50" viewBox="0 0 50 50" className="absolute inset-0">
+            <circle
+              cx="25"
+              cy="25"
+              r={RING_RADIUS}
+              fill="none"
+              stroke="hsl(var(--border))"
+              strokeWidth="3"
+            />
+            <circle
+              cx="25"
+              cy="25"
+              r={RING_RADIUS}
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={CIRCUMFERENCE * (1 - doneFraction)}
+              transform="rotate(-90 25 25)"
+              className="transition-[stroke-dashoffset] duration-300 ease-out"
+            />
+          </svg>
+          <span
+            className={cn(
+              "absolute inset-[6px] grid place-items-center rounded-full bg-primary shadow-[0_6px_14px_-6px_rgba(0,0,0,0.4)] transition-shadow duration-200",
+              isHighlighted && "shadow-[0_0_0_4px_hsl(var(--primary)/0.25)]",
+            )}
+          >
+            <span className="text-[11px] font-extrabold text-primary-foreground">
+              {toLocaleNumeral(pendingCount, locale)}
+            </span>
+          </span>
+        </span>
       </SheetTrigger>
 
       <SheetContent side="bottom" className="max-h-[70dvh] overflow-y-auto">
@@ -112,15 +147,17 @@ export const PlansWidget = () => {
                     <PlanAssignmentRow
                       key={assignment.trackKey}
                       assignment={assignment}
-                      onCheckOff={() =>
-                        checkOff.mutate({
-                          planId: plan.planId,
-                          trackKey: assignment.trackKey,
-                          rangeStart: assignment.rangeStart,
-                          rangeEnd: assignment.rangeEnd,
-                        })
+                      onToggle={() =>
+                        assignment.completed
+                          ? uncheckOff.mutate({ planId: plan.planId, trackKey: assignment.trackKey })
+                          : checkOff.mutate({
+                              planId: plan.planId,
+                              trackKey: assignment.trackKey,
+                              rangeStart: assignment.rangeStart,
+                              rangeEnd: assignment.rangeEnd,
+                            })
                       }
-                      isPending={checkOff.isPending}
+                      isPending={checkOff.isPending || uncheckOff.isPending}
                       disabled={!isOnline}
                     />
                   ))
