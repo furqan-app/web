@@ -135,6 +135,72 @@
       "cancel": "إلغاء"
     }
   },
+  "plans": {
+    "navLink": "خططي",
+    "pageTitle": "الأوراد وخطط التعلم",
+    "signedOut": "سجّل الدخول لرؤية أورادك اليومية وخطط التعلم.",
+    "empty": "لا توجد خطط بعد — اشترك في إحداها بالأسفل.",
+    "nothingToday": "لا يوجد شيء مستحق اليوم.",
+    "checkOff": "وضع علامة إتمام",
+    "pagesPerDay": "صفحة/يوم",
+    "targetRange": "النطاق المستهدف (بالأجزاء)",
+    "to": "إلى",
+    "enroll": "ابدأ الخطة",
+    "enrollError": "حدث خطأ ما. حاول مرة أخرى.",
+    "offlineNotice": "اتصل بالإنترنت لتسجيل التقدم",
+    "templates": {
+      "dailyWird": {
+        "label": "الورد اليومي",
+        "description": "اقرأ عددًا من الصفحات يوميًا، وتدور القراءة على كامل المصحف."
+      },
+      "listeningWird": {
+        "label": "ورد الاستماع",
+        "description": "استمع إلى عدد من الصفحات يوميًا، وتدور الاستماع على كامل المصحف."
+      },
+      "husun": {
+        "label": "الحصون الخمسة",
+        "description": "برنامج حفظ متكامل من خمسة مسارات."
+      }
+    },
+    "tracks": {
+      "reading": "القراءة",
+      "listening": "الاستماع",
+      "tilawa": "القراءة المستمرة",
+      "hifz": "الحفظ الجديد",
+      "tahdeer": "التحضير",
+      "qareeb": "مراجعة القريب",
+      "baeed": "مراجعة البعيد"
+    },
+    "activities": {
+      "read": "قراءة",
+      "listen": "استماع",
+      "memorize": "حفظ",
+      "review": "مراجعة"
+    },
+    "status": {
+      "active": "نشطة",
+      "paused": "متوقفة مؤقتًا",
+      "completed": "مكتملة",
+      "abandoned": "متروكة"
+    },
+    "actions": {
+      "label": "إجراءات الخطة",
+      "pause": "إيقاف مؤقت",
+      "resume": "استئناف",
+      "markCompleted": "وضع علامة اكتمال",
+      "abandon": "ترك الخطة"
+    },
+    "history": {
+      "toggle": "السجل",
+      "loading": "جارٍ التحميل…",
+      "empty": "لا يوجد سجل بعد."
+    },
+    "widget": {
+      "open": "خطط اليوم",
+      "title": "خطط اليوم",
+      "description": "المهام المطلوبة اليوم من خططك النشطة."
+    }
+  },
   "recitation": {
     "settingsTitle": "إعدادات التلاوة",
     "settingsDescription": "اختر قارئًا واضبط إعدادات التشغيل.",
@@ -159,35 +225,5 @@
     "reciterPlaceholder": "اختر قارئًا",
     "reciterSearchPlaceholder": "ابحث عن قارئ…",
     "reciterEmpty": "لم يتم العثور على قارئ."
-  },
-  "viewingChipGeneric": "",
-  "plans": {
-    "title": "الخطط والأوراد",
-    "todayTitle": "ورد اليوم",
-    "pagesRange": "من صفحة {start} إلى صفحة {end}",
-    "repetitions": "{count} مرات",
-    "checkOff": "تم",
-    "completed": "مكتمل",
-    "activities": {
-      "read": "قراءة",
-      "listen": "سماع",
-      "memorize": "حفظ",
-      "review": "مراجعة"
-    },
-    "statuses": {
-      "active": "نشطة",
-      "paused": "متوقفة مؤقتًا",
-      "completed": "مكتملة",
-      "abandoned": "ملغاة"
-    },
-    "templates": {
-      "daily-wird": {
-        "name": "الورد اليومي",
-        "description": "قراءة عدد ثابت من الصفحات كل يوم لختم المصحف",
-        "tracks": {
-          "reading": "القراءة"
-        }
-      }
-    }
   }
 }

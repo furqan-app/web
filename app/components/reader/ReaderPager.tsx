@@ -14,6 +14,7 @@ import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
+import { ReaderPageSync } from "@/app/components/reader/ReaderPageSync";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
@@ -380,6 +381,7 @@ export function ReaderPager({
       <FontFaceInjector pageIds={allPageIds} baseFontIds={baseFontIds} />
       <RecitationPageSync firstVerseKey={firstVerseKey} />
       <RecitationFollow anchor={pageNumber} isDouble={isDouble} onFollow={followTo} />
+      <ReaderPageSync anchor={pageNumber} isDouble={isDouble} />
       <link
         rel="preload"
         href={`/fonts/v1/woff2/p${pageNumber}.woff2`}

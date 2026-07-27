@@ -4,9 +4,10 @@
 
 import type { UserPlanListItem } from "@/app/api/plans/route";
 import type { TodayPlanAssignments } from "@/app/api/plans/today/route";
+import type { PlanProgressHistoryEntry } from "@/app/api/plans/[planId]/progress/route";
 import type { UserPlanParams, UserPlanStatus } from "@/app/constants/plans";
 
-export type { UserPlanListItem, TodayPlanAssignments };
+export type { UserPlanListItem, TodayPlanAssignments, PlanProgressHistoryEntry };
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -26,10 +27,15 @@ export const enrollInPlan = async ({
   templateKey,
   params,
   startDate,
+  targetJuzStart,
+  targetJuzEnd,
 }: {
   templateKey: string;
   params?: UserPlanParams;
   startDate?: string;
+  /** Husun's hifz target range — resolved to pages server-side (D3). */
+  targetJuzStart?: number;
+  targetJuzEnd?: number;
 }): Promise<UserPlanListItem | null> => {
   try {
     const { data, success } = await fetch("/api/plans", {
@@ -39,6 +45,8 @@ export const enrollInPlan = async ({
         template_key: templateKey,
         params,
         start_date: startDate,
+        target_juz_start: targetJuzStart,
+        target_juz_end: targetJuzEnd,
       }),
     }).then((r) => r.json());
     return success ? data : null;
@@ -85,6 +93,20 @@ export const getTodayAssignments = async (
       `/api/plans/today?date=${encodeURIComponent(date)}`,
       { headers: JSON_HEADERS }
     ).then((r) => r.json());
+    return success && data ? data : [];
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+};
+
+export const getPlanHistory = async (
+  planId: number
+): Promise<PlanProgressHistoryEntry[]> => {
+  try {
+    const { data, success } = await fetch(`/api/plans/${planId}/progress`, {
+      headers: JSON_HEADERS,
+    }).then((r) => r.json());
     return success && data ? data : [];
   } catch (e) {
     console.error(e);

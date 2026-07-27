@@ -11,8 +11,10 @@ import { QuranTajweedProvider } from "@/app/contexts/QuranTajweedContext";
 import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
 import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
+import { ReaderPageProvider } from "@/app/contexts/ReaderPageContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
+import { PlansWidget } from "@components/plans/PlansWidget";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -51,10 +53,13 @@ export default async function LocaleLayout({
                   <QueryProvider>
                     <SidebarProvider>
                       <NavOverlayProvider>
-                        <Nav />
-                        {children}
-                        <RecitationPlayerBar />
-                        <RecitationSettingsSheet />
+                        <ReaderPageProvider>
+                          <Nav />
+                          {children}
+                          <RecitationPlayerBar />
+                          <RecitationSettingsSheet />
+                          <PlansWidget />
+                        </ReaderPageProvider>
                       </NavOverlayProvider>
                     </SidebarProvider>
                   </QueryProvider>

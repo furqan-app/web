@@ -362,3 +362,35 @@ describe("full الحصون الخمسة derivation", () => {
     ]);
   });
 });
+
+describe("PLAN_TEMPLATES shape", () => {
+  it("every sourceTrack resolves to a fixed_cycle/cursor_advance track in the same template", () => {
+    for (const template of Object.values(PLAN_TEMPLATES)) {
+      const byKey = new Map(template.tracks.map((t) => [t.key, t]));
+      for (const track of template.tracks) {
+        const rule = track.rule;
+        if (!("sourceTrack" in rule)) continue;
+        const source = byKey.get(rule.sourceTrack);
+        expect(
+          source,
+          `${template.key}.${track.key} sourceTrack "${rule.sourceTrack}" not found`
+        ).toBeDefined();
+        expect(
+          source!.rule.kind === "fixed_cycle" || source!.rule.kind === "cursor_advance",
+          `${template.key}.${track.key} sourceTrack "${rule.sourceTrack}" must be fixed_cycle/cursor_advance, got "${source!.rule.kind}"`
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("every fixed_cycle range stays within the mushaf", () => {
+    for (const template of Object.values(PLAN_TEMPLATES)) {
+      for (const track of template.tracks) {
+        if (track.rule.kind !== "fixed_cycle") continue;
+        expect(track.rule.rangeStart).toBeGreaterThanOrEqual(1);
+        expect(track.rule.rangeEnd).toBeLessThanOrEqual(MUSHAF_LAST_PAGE);
+        expect(track.rule.rangeStart).toBeLessThanOrEqual(track.rule.rangeEnd);
+      }
+    }
+  });
+});

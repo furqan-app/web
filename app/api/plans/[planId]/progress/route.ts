@@ -9,6 +9,56 @@ import {
   getPlanTemplate,
 } from "@/app/constants/plans";
 
+export type PlanProgressHistoryEntry = {
+  id: number;
+  track_key: string;
+  /** "YYYY-MM-DD" */
+  date: string;
+  range_start: string;
+  range_end: string;
+};
+
+const PLAN_HISTORY_LIMIT = 50;
+
+/**
+ * GET /api/plans/:planId/progress — the plan's progress log, most recent
+ * first, capped at 50 entries. Read-only view of what was actually done —
+ * never recomputed with current template params (ADR 0030).
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { planId: string } }
+) {
+  const user = extractUser(request);
+  if (!user) return jsonResponse({ code: 401, message: "Unauthorized" });
+
+  const planId = Number(params.planId);
+  if (!Number.isInteger(planId)) {
+    return jsonResponse({ code: 422, message: "Invalid plan id" });
+  }
+
+  const plan = await appPrisma.userPlan.findUnique({ where: { id: planId } });
+  if (!plan || plan.user_id !== user.id) {
+    return jsonResponse({ code: 404, message: "Plan not found" });
+  }
+
+  const entries = await appPrisma.planProgressEntry.findMany({
+    where: { user_plan_id: planId },
+    orderBy: { date: "desc" },
+    take: PLAN_HISTORY_LIMIT,
+  });
+
+  const data: PlanProgressHistoryEntry[] = entries.map((entry) => ({
+    id: entry.id,
+    track_key: entry.track_key,
+    date: entry.date.toISOString().slice(0, 10),
+    range_start: entry.range_start,
+    range_end: entry.range_end,
+  }));
+
+  return jsonResponse({ data });
+}
+
 /**
  * POST /api/plans/:planId/progress — manual check-off (D5) for one track on
  * one local date. Body: { track_key, date, range_start, range_end } with an

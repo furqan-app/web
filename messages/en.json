@@ -134,6 +134,72 @@
       "cancel": "Cancel"
     }
   },
+  "plans": {
+    "navLink": "My Plans",
+    "pageTitle": "Daily Awrad & Learning Plans",
+    "signedOut": "Sign in to see your daily awrad and learning plans.",
+    "empty": "No plans yet — enroll in one below.",
+    "nothingToday": "Nothing due today.",
+    "checkOff": "Check off",
+    "pagesPerDay": "pages/day",
+    "targetRange": "Target range (juz)",
+    "to": "to",
+    "enroll": "Start plan",
+    "enrollError": "Something went wrong. Try again.",
+    "offlineNotice": "Connect to the internet to check off progress",
+    "templates": {
+      "dailyWird": {
+        "label": "Daily Wird",
+        "description": "Read N pages a day, cycling the whole mushaf."
+      },
+      "listeningWird": {
+        "label": "Listening Wird",
+        "description": "Listen to N pages a day, cycling the whole mushaf."
+      },
+      "husun": {
+        "label": "الحصون الخمسة",
+        "description": "A structured 5-track memorization program."
+      }
+    },
+    "tracks": {
+      "reading": "Reading",
+      "listening": "Listening",
+      "tilawa": "Continuous reading",
+      "hifz": "New memorization",
+      "tahdeer": "Preparation",
+      "qareeb": "Near review",
+      "baeed": "Distant review"
+    },
+    "activities": {
+      "read": "Read",
+      "listen": "Listen",
+      "memorize": "Memorize",
+      "review": "Review"
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "abandoned": "Abandoned"
+    },
+    "actions": {
+      "label": "Plan actions",
+      "pause": "Pause",
+      "resume": "Resume",
+      "markCompleted": "Mark completed",
+      "abandon": "Abandon"
+    },
+    "history": {
+      "toggle": "History",
+      "loading": "Loading…",
+      "empty": "No history yet."
+    },
+    "widget": {
+      "open": "Today's plans",
+      "title": "Today's plans",
+      "description": "Your active plans' assignments for today."
+    }
+  },
   "recitation": {
     "settingsTitle": "Recitation settings",
     "settingsDescription": "Choose a reciter and configure playback.",
@@ -158,35 +224,5 @@
     "reciterPlaceholder": "Choose a reciter",
     "reciterSearchPlaceholder": "Search reciters…",
     "reciterEmpty": "No reciter found."
-  },
-  "viewingChipGeneric": "",
-  "plans": {
-    "title": "Plans & Awrad",
-    "todayTitle": "Today's wird",
-    "pagesRange": "Pages {start}–{end}",
-    "repetitions": "{count} times",
-    "checkOff": "Done",
-    "completed": "Completed",
-    "activities": {
-      "read": "Read",
-      "listen": "Listen",
-      "memorize": "Memorize",
-      "review": "Review"
-    },
-    "statuses": {
-      "active": "Active",
-      "paused": "Paused",
-      "completed": "Completed",
-      "abandoned": "Abandoned"
-    },
-    "templates": {
-      "daily-wird": {
-        "name": "Daily Wird",
-        "description": "Read a fixed number of pages every day to complete the mushaf",
-        "tracks": {
-          "reading": "Reading"
-        }
-      }
-    }
   }
 }
