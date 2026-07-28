@@ -240,6 +240,41 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Dark Surface Depth
+
+**Decision:** On dark-theme surfaces at or below ~10% lightness (`--background`, `--mushaf-paper`), depth is carried by graded **light**, not by shadow — a monotonic brightness ladder where the lit face sits above its surround, the surround above the far background, and creases below both. Drop shadows on these surfaces are omitted rather than tuned. See [ADR 0032](adr/0032-dark-surface-depth-from-light.md).
+
+**Constraints:**
+- Do not add drop shadows or inset "dip" shadows to dark-theme reader surfaces expecting them to read — `--background` is RGB `(7,15,23)`, leaving ~7 points of headroom before black, which is below the visible threshold. Reach for a lighter face or a lifted surround instead.
+- Any depth or ambient-light change to these surfaces must be verified by **sampling rendered pixels** on a running dev server, not by reading the declaration. A shadow can be mathematically present and produce no visible pixels — this has happened repeatedly.
+- A radial ambient pool behind an opaque element must be sized so its lit zone extends **past** that element. Matching the pool's radius to the element's half-width hides the whole effect and leaves only its dead tail visible.
+- Light and gold themes still use conventional shadows; dark-theme depth does not share their recipe and must be tuned separately.
+- The depth tokens (`--mushaf-lit-*`, `--mushaf-rim-*`, `--mushaf-sheet-*`, `--mushaf-crease*`, `--reader-chrome-*`) are defined in the two dark blocks **only** — a deliberate exception to the convention that every theme defines the whole `--mushaf-*` family, since only dark-scoped rules consume them. Do not "fix" this by aliasing them into light/gold; those themes carry depth with shadows and have no use for a light-based ramp.
+- The ordering of the ladder is the invariant; its step **values** belong to a specific design and live in that design's plan. The desktop reader has no ambient desk pool — surround equals the far background by choice — so a fixed "surround must exceed background" rule would fail a signed-off design. See ADR 0032's addendum.
+- Sample verification pixels from the **measured card rectangles of the pager's middle panel**, never from viewport fractions guessed by eye: the pager mounts three panels side by side, so a fraction like 0.955 lands on the desk rather than the paper. A whole round of numbers was recorded wrong this way.
+- Floating dark chrome (recitation bar, nav arrows) follows the same rule as the paper — an opaque raised face plus a warm rim, never a shadow, and never the translucent `bg-background/75` glass that light and gold use, which produces no lift over `(7,15,23)`.
+- **Ramp amplitude is per-band, because contrast is relative to what surrounds the surface.** Desktop's page reads against a desk at 15; the tablet reader is full-bleed, so the eye can only compare within the page. Copying desktop's values to tablet gave a 7-point internal range and looked unchanged; tablet uses its own wider ramp (17 points) via a band-scoped `--mushaf-lit-*` override inside the tablet media query. Copying a signed-off value into a different context is not the same as copying its effect.
+- Tablet keeps **no drop shadows** (an explicit user request recorded in the tablet block) and stays **full-bleed** — `100dvh`, edge-to-edge cards, nav as overlay. The desktop surround cannot be ported without insetting the book, which costs reading area and shrinks double-view text (ADR 0013). Do not add margins there to chase the desktop look.
+- The MCP browser clamps its viewport at 1600px, putting the entire tablet band out of reach. Verify tablet-band pixels with a headless script driving system Chrome through the local `playwright` package (a throwaway script using the local `playwright` package with `executablePath: "/usr/bin/google-chrome-stable"`; Playwright's own browsers are not installed), not the MCP browser.
+
+---
+
+## Desktop Reading Group (≥1367px)
+
+**Decision:** At `≥1367px` wide **and** `≥800px` tall, the reader is laid out as one vertically-centred group — spread on top, floating recitation bar below — with circular navigation buttons beside the paper. The bar's width and centre are **measured at runtime**: `QuranSpread` observes its own `.fq-spread` element and publishes `--fq-spread-width` / `--fq-spread-center` on `<html>`, which the bar consumes. Below either threshold, desktop keeps the full-width bottom-edge bar.
+
+**Rationale:** The card is content-sized and its width tracks the user's font-scale control, so no CSS value can match it. And the reading font is keyed to the viewport (`max(24px, 2.9vh)`, ADR 0004), so the card cannot shrink to make room for the bar — the space has to come from the column's spare height, which runs out below ~794px tall (634px card + 104px reservation + 56px nav).
+
+**Constraints:**
+- The measurement writes directly to `documentElement.style` — never React state. The pager mounts three panels; re-rendering the reader tree on a resize tick is the same trap ADR 0028 documents for the recitation subscription.
+- Publish the centre only when it falls inside the viewport. The pager parks its neighbour panels a full viewport to either side, and an off-screen panel writing last puts the bar off-axis.
+- Listen for `window resize` as well as `ResizeObserver`: a window resize re-centres the spread **without changing its size**, so the observer never fires and the centre goes stale (measured 9px off).
+- Never widen the height gate by reducing `baseScaleViewHeight` or any font math — that is the reading size (ADR 0004), and changing it also requires regenerating the `tailwindFontUtility` safelist (ADR 0005).
+- Nav arrows need `align-self: center` (the parent is `items-stretch` at `md+`) and ≥24px inline margin: the sheet stack peeks 16px past the card's outer edge, and at 0 margin the arrow sat on top of it.
+- Layout declarations on the bar need `!important` to beat the JSX `inset-x-0` / `bottom-0` utilities. Colour declarations that a utility already sets (its background, its border colour) will silently lose on source order — do not leave them in as dead code; either raise specificity deliberately or drop them.
+
+---
+
 ## Quran Safha Viewport Fit
 
 **Decision:** All vertical rhythm in `QuranSafha`/`QuranLine` below the site nav (wrapper padding, card padding, header/footer band gaps, per-line gap, surah-heading block) is derived from the same `vh`-based `FONT_V1` scale that drives word font-size, exposed as CSS custom properties on the `QuranSafha` root. Reading font size itself is never shrunk to make pages fit. See [ADR 0004](adr/0004-quran-safha-viewport-fit.md).
@@ -608,3 +643,14 @@ amends ADR 0024).
 **Constraints:**
 - When adding a new top-level directory or root config file, decide explicitly whether it can affect rendered output before adding it to this ignore list — do not add out of convenience.
 - `.github/workflows/**` is deliberately not in the ignore list, so changes to the workflow itself (including this list) still get tested.
+
+---
+
+## Dark Theme Color Semantics: Gold vs Emerald
+
+**Decision:** In `.theme-dark`, gold (`--gold`/`--gold-muted`, plus the existing `--mushaf-ornament`/`--surah-frame-gold`) is confined to the reader page itself — ornaments, surah frames, verse markers, page decorations — with **no exceptions in chrome**. Emerald (`--primary`/`--accent`/`--ring`) covers every interactive element and every chrome surface, including ones referencing Mushaf content (the surah-list number badge is emerald). Never both on the same element. Revised from an earlier version of this decision that made the badge a gold exception — reviewing it rendered showed the two accents competing outside the page, which is the opposite of the goal. See [ADR 0031](adr/0031-dark-theme-gold-emerald-semantics.md) and `docs/plans/dark-theme-mushaf-unification.md`.
+
+**Constraints:**
+- Before adding gold anywhere, the test is literal: is this element on the reader page itself? If not, it's emerald — no judgment call about how "Mushaf-identity-bearing" something feels.
+- `--mushaf-paper` (the reader page background) is deliberately **not** the lightest step of the new 4-step background ramp — it sits one step above `--background` (app shell), not at the top. `--card`/`--popover` (drawers, dialogs, player) and a 4th "elevated" step for raised in-drawer chips sit above it. Do not "fix" the page to be the brightest surface — that was verified against the design reference and inverted on purpose (a real page under dim light is only slightly lighter than its surroundings, not glowing).
+- Light and gold themes are unaffected by this pass — this decision and its token values apply to `.theme-dark`/`.theme-dark.dark` only.

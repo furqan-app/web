@@ -66,7 +66,23 @@ Every theme class must define all of these CSS custom properties:
 --accent, --accent-foreground
 --destructive, --destructive-foreground
 --border, --input, --ring, --radius
+--gold, --gold-muted, --overlay
 ```
+
+`--gold`/`--gold-muted` mark Mushaf-identity elements only (never interactive ones —
+`--primary`/`--accent` cover interaction); themes without a distinct gold identity should
+alias them to their own `--accent-foreground`/`--accent` rather than inventing a new hue. See
+[ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md). `--overlay` is the
+modal/drawer scrim color, consumed as `bg-overlay/80` — an HSL triplet (no baked-in alpha) so
+the Tailwind opacity-slash syntax works, same as every other token here.
+
+**One documented exception to "every theme defines every token":** the reader's dark-surface depth
+family (`--mushaf-lit-*`, `--mushaf-rim-*`, `--mushaf-sheet-*`, `--mushaf-crease*`,
+`--reader-chrome-*`) is defined in the two dark blocks only. On a `(7,15,23)` background depth has
+to come from graded light rather than shadow; light and gold carry it with ordinary shadows and
+have no use for a light ramp. Do not "fix" this by aliasing them into the other themes — see
+[ADR 0032](../architecture/adr/0032-dark-surface-depth-from-light.md) and the Dark Surface Depth
+entry in DECISIONS.md.
 
 ### Adding a new theme
 

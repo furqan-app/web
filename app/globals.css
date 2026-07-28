@@ -24,6 +24,12 @@
     --input: 210 31% 90%;
     --ring: 163 86% 35%;
     --radius: 0.5rem;
+    /* Aliased to this theme's own accent — light theme is deliberately NOT gold
+       (see the paper comment below), so the badge that consumes --gold must not
+       gain one here. */
+    --gold: 163 86% 35%;
+    --gold-muted: 165 53% 93%;
+    --overlay: 0 0% 0%;
     --surah-frame-line: hsl(39 35% 25%);
     --surah-frame-gold: #cdad80;
     /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
@@ -65,6 +71,11 @@
     --input: 43 37% 83%;
     --ring: 41 57% 43%;
     --radius: 0.5rem;
+    /* Aliased to this theme's own accent — already warm/gold-toned, so a second,
+       distinct gold would be redundant here. */
+    --gold: 41 57% 43%;
+    --gold-muted: 46 55% 86%;
+    --overlay: 0 0% 0%;
     --surah-frame-line: hsl(39 45% 20%);
     --surah-frame-gold: #b8924a;
     /* Gold theme — richer warm ivory paper (the deeper, more golden variant that
@@ -86,89 +97,181 @@
   }
 
   .theme-dark {
-    --background: 210 42% 9%;
-    --foreground: 209 51% 91%;
-    --card: 212 34% 15%;
-    --card-foreground: 209 51% 91%;
-    --popover: 212 34% 15%;
-    --popover-foreground: 209 51% 91%;
+    /* Printed-Mushaf-inspired unified palette (docs/plans/dark-theme-mushaf-unification.md).
+       Backgrounds share one navy hue family (~210-212°), darkening in 4 steps:
+       --background (app shell) < --mushaf-paper (reader page) < --card (drawers/
+       dialogs/player) < --secondary/--muted (raised nested chips). The Mushaf page
+       is deliberately NOT the brightest surface — see ADR 0031. */
+    --background: 212 52% 6%;
+    --foreground: 45 18% 91%;
+    --card: 210 41% 13%;
+    --card-foreground: 45 18% 91%;
+    --popover: 210 41% 13%;
+    --popover-foreground: 45 18% 91%;
+    /* Emerald reverted to its exact pre-unification-pass value (Correction Round 1) —
+       the muted 166/170-hue version read "dirty and lifeless" against a reference
+       review. This vibrant teal-emerald is the app's original interactive identity. */
     --primary: 162 88% 41%;
     --primary-foreground: 210 42% 9%;
-    --secondary: 211 34% 18%;
-    --secondary-foreground: 209 51% 91%;
-    --muted: 211 40% 12%;
-    --muted-foreground: 206 29% 59%;
+    --secondary: 211 38% 16%;
+    --secondary-foreground: 45 18% 91%;
+    --muted: 211 38% 16%;
+    --muted-foreground: 206 9% 50%;
     --accent: 161 58% 15%;
     --accent-foreground: 162 88% 41%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 36% 17%;
-    --input: 210 36% 17%;
+    --border: 210 26% 19%;
+    --input: 210 26% 19%;
     --ring: 162 88% 41%;
     --radius: 0.5rem;
+    /* Mushaf-identity gold — reserved strictly for the reader page (ornaments below);
+       no chrome exceptions, not even the surah-list badge (ADR 0031, revised). */
+    --gold: 38 32% 46%;
+    --gold-muted: 38 27% 34%;
+    --overlay: 212 52% 6%;
     --surah-frame-line: hsl(209 51% 88%);
     --surah-frame-gold: #cdad80;
     /* Printed-mushaf reader palette — deep warm blue-black paper, antique gold,
-       off-white text. Consumed only inside the tablet reader scope. */
-    --mushaf-paper: #1f2731;
-    --mushaf-paper-highlight: rgba(255, 255, 255, 0.05);
-    --mushaf-paper-shadow: rgba(0, 0, 0, 0.4);
-    --mushaf-paper-lift: rgba(255, 255, 255, 0.025);
-    --mushaf-paper-dip: rgba(0, 0, 0, 0.08);
-    --mushaf-edge: rgba(0, 0, 0, 0.55);
-    --mushaf-gutter-dark: rgba(0, 0, 0, 0.62);
-    --mushaf-gutter-soft: rgba(0, 0, 0, 0.28);
-    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.05);
+       off-white text. Consumed inside the tablet reader scope AND (as of the
+       dark-theme unification pass) the desktop/portrait-tablet scope below
+       768px-and-up — see the widened .fq-safha-card paper rule further down. */
+    --mushaf-paper: #0C131A;
+    /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
+       change): repurposed from a light top-catch highlight to fully opaque BLACK —
+       used as a dark accent leg in the gutter shadow below, not as a light source.
+       Still also backs the base card's top-edge inset and background-gradient top
+       stop, so those go darker too, consistent with "no gray/light tones, only
+       dark" applied everywhere on the page. */
+    --mushaf-paper-highlight: rgb(0, 0, 0);
+    --mushaf-paper-shadow: rgba(0, 0, 0, 0.35);
+    --mushaf-paper-lift: rgba(255, 255, 255, 0.035);
+    --mushaf-paper-dip: rgba(0, 0, 0, 0.06);
+    --mushaf-edge: rgba(0, 0, 0, 0.45);
+    /* Correction Round 6 (user-supplied): near-solid near-black rather than a
+       semi-transparent overlay — used as one leg of a diagonal (not centered)
+       inset-shadow pair on the gutter, see .fq-compensate-r/-l below. */
+    --mushaf-gutter-dark: #04070a;
+    --mushaf-gutter-soft: rgba(0, 0, 0, 0.09);
+    /* Unused by the dark-theme gutter as of Round 5 — a highlight hairline read as
+       an unwanted gray seam between the pages, so the gutter is shadow-only now.
+       Value kept only so the token contract stays defined (styling.md requires
+       every theme to define it) and for light/gold, which still use it. */
+    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.12);
     --mushaf-text: #f2efe7;
     --mushaf-ornament: #9a8256;
     --mushaf-metadata: #8a784e;
-    --viewer-background: #151b23;
+    --viewer-background: #081019;
+    /* Desktop reading-desk depth (>=1367px, dark only) — ADR 0032. These carry the
+       page's lit face, its edge rim, the sheet stack and the binding crease. Defined
+       in the dark blocks only, unlike the rest of the --mushaf-* family: on a
+       (7,15,23) background depth has to come from light rather than shadow, and
+       light/gold keep conventional shadows, so they have no use for these. The four
+       -lit- stops form the page gradient from centre to edge; --mushaf-paper
+       (#0C131A) sits mid-ramp between -fade and -edge, so it stays the reference
+       tone rather than a flat fill. Rim alphas are graded (top > side > foot) — a
+       uniform stroke on all four sides reads as a drawn frame (Correction Round 1).
+       Pass 2 lowered the four -lit- stops (page centre 29,42,56 → 22,32,42) and
+       dropped the ambient desk pool entirely, on review. */
+    --mushaf-lit-core: #18222d;
+    --mushaf-lit-mid: #121b24;
+    --mushaf-lit-fade: #0d151d;
+    --mushaf-lit-edge: #0a1119;
+    --mushaf-rim-top: rgba(205, 173, 128, 0.28);
+    --mushaf-rim-side: rgba(205, 173, 128, 0.13);
+    --mushaf-rim-foot: rgba(205, 173, 128, 0.05);
+    --mushaf-sheet-edge: rgba(205, 173, 128, 0.38);
+    --mushaf-sheet-face: #0c131b;
+    --mushaf-crease: rgba(2, 5, 8, 0.95);
+    --mushaf-crease-soft: rgba(0, 0, 0, 0.4);
+    /* Floating reader chrome (recitation bar, nav arrows) at >=1367px. Same
+       ADR 0032 rule as the page: a raised face plus a warm rim, never a shadow. */
+    --reader-chrome-face: #141d27;
+    --reader-chrome-rim: rgba(205, 173, 128, 0.16);
   }
 
   .theme-dark.dark {
-    --background: 210 42% 9%;
-    --foreground: 209 51% 91%;
-    --card: 212 34% 15%;
-    --card-foreground: 209 51% 91%;
-    --popover: 212 34% 15%;
-    --popover-foreground: 209 51% 91%;
+    --background: 212 52% 6%;
+    --foreground: 45 18% 91%;
+    --card: 210 41% 13%;
+    --card-foreground: 45 18% 91%;
+    --popover: 210 41% 13%;
+    --popover-foreground: 45 18% 91%;
     --primary: 162 88% 41%;
     --primary-foreground: 210 42% 9%;
-    --secondary: 211 34% 18%;
-    --secondary-foreground: 209 51% 91%;
-    --muted: 211 40% 12%;
-    --muted-foreground: 206 29% 59%;
+    --secondary: 211 38% 16%;
+    --secondary-foreground: 45 18% 91%;
+    --muted: 211 38% 16%;
+    --muted-foreground: 206 9% 50%;
     --accent: 161 58% 15%;
     --accent-foreground: 162 88% 41%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 36% 17%;
-    --input: 210 36% 17%;
+    --border: 210 26% 19%;
+    --input: 210 26% 19%;
     --ring: 162 88% 41%;
     --radius: 0.5rem;
+    --gold: 38 32% 46%;
+    --gold-muted: 38 27% 34%;
+    --overlay: 212 52% 6%;
     --surah-frame-line: hsl(209 51% 88%);
     --surah-frame-gold: #cdad80;
-    --mushaf-paper: #1f2731;
-    --mushaf-paper-highlight: rgba(255, 255, 255, 0.05);
-    --mushaf-paper-shadow: rgba(0, 0, 0, 0.4);
-    --mushaf-paper-lift: rgba(255, 255, 255, 0.025);
-    --mushaf-paper-dip: rgba(0, 0, 0, 0.08);
-    --mushaf-edge: rgba(0, 0, 0, 0.55);
-    --mushaf-gutter-dark: rgba(0, 0, 0, 0.62);
-    --mushaf-gutter-soft: rgba(0, 0, 0, 0.28);
-    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.05);
+    --mushaf-paper: #0C131A;
+    /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
+       change): repurposed from a light top-catch highlight to fully opaque BLACK —
+       used as a dark accent leg in the gutter shadow below, not as a light source.
+       Still also backs the base card's top-edge inset and background-gradient top
+       stop, so those go darker too, consistent with "no gray/light tones, only
+       dark" applied everywhere on the page. */
+    --mushaf-paper-highlight: rgb(0, 0, 0);
+    --mushaf-paper-shadow: rgba(0, 0, 0, 0.35);
+    --mushaf-paper-lift: rgba(255, 255, 255, 0.035);
+    --mushaf-paper-dip: rgba(0, 0, 0, 0.06);
+    --mushaf-edge: rgba(0, 0, 0, 0.45);
+    /* Correction Round 6 (user-supplied): near-solid near-black rather than a
+       semi-transparent overlay — used as one leg of a diagonal (not centered)
+       inset-shadow pair on the gutter, see .fq-compensate-r/-l below. */
+    --mushaf-gutter-dark: #04070a;
+    --mushaf-gutter-soft: rgba(0, 0, 0, 0.09);
+    /* Unused by the dark-theme gutter as of Round 5 — a highlight hairline read as
+       an unwanted gray seam between the pages, so the gutter is shadow-only now.
+       Value kept only so the token contract stays defined (styling.md requires
+       every theme to define it) and for light/gold, which still use it. */
+    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.12);
     --mushaf-text: #f2efe7;
     --mushaf-ornament: #9a8256;
     --mushaf-metadata: #8a784e;
-    --viewer-background: #151b23;
+    --viewer-background: #081019;
+    /* Desktop reading-desk depth (>=1367px, dark only) — ADR 0032. These carry the
+       page's lit face, its edge rim, the sheet stack and the binding crease. Defined
+       in the dark blocks only, unlike the rest of the --mushaf-* family: on a
+       (7,15,23) background depth has to come from light rather than shadow, and
+       light/gold keep conventional shadows, so they have no use for these. The four
+       -lit- stops form the page gradient from centre to edge; --mushaf-paper
+       (#0C131A) sits mid-ramp between -fade and -edge, so it stays the reference
+       tone rather than a flat fill. Rim alphas are graded (top > side > foot) — a
+       uniform stroke on all four sides reads as a drawn frame (Correction Round 1).
+       Pass 2 lowered the four -lit- stops (page centre 29,42,56 → 22,32,42) and
+       dropped the ambient desk pool entirely, on review. */
+    --mushaf-lit-core: #18222d;
+    --mushaf-lit-mid: #121b24;
+    --mushaf-lit-fade: #0d151d;
+    --mushaf-lit-edge: #0a1119;
+    --mushaf-rim-top: rgba(205, 173, 128, 0.28);
+    --mushaf-rim-side: rgba(205, 173, 128, 0.13);
+    --mushaf-rim-foot: rgba(205, 173, 128, 0.05);
+    --mushaf-sheet-edge: rgba(205, 173, 128, 0.38);
+    --mushaf-sheet-face: #0c131b;
+    --mushaf-crease: rgba(2, 5, 8, 0.95);
+    --mushaf-crease-soft: rgba(0, 0, 0, 0.4);
+    /* Floating reader chrome (recitation bar, nav arrows) at >=1367px. Same
+       ADR 0032 rule as the page: a raised face plus a warm rim, never a shadow. */
+    --reader-chrome-face: #141d27;
+    --reader-chrome-rim: rgba(205, 173, 128, 0.16);
   }
 }
 
 @layer base {
-  /* Deeper paper-stack layers are hidden by default; tablet reveals them. */
-  .fq-stack-tablet {
-    display: none;
-  }
   /* Swipe carousel neighbor panels (prev/next spreads). Both classes hidden
      by default so mobile/desktop lay out only the current panel (strip rests
      at translateX(0), single-panel fly-off swipe) and never download neighbor
@@ -188,6 +291,42 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Nav + player glass bars — dark-theme-only white text (Correction Round; all
+     text/icons, not just primary — explicitly confirmed, including the .text-
+     muted-foreground labels/icons on SharedMushafLink/MarksLink/UserMenu and the
+     player's verse-key subtitle + control icons). Scoped to :root.theme-dark, not
+     applied unconditionally: both bars sit on a translucent bg-background/75 +
+     blur, and only in dark theme is literal white pushed for legibility over the
+     Mushaf showing through; light/gold's own tokens already read correctly
+     against their (light) translucent background, so they're untouched. Two
+     selector groups per bar: the root itself (covers unclassed/inherited text
+     and icons using currentColor) AND any descendant explicitly carrying
+     .text-foreground/.text-muted-foreground (a child's own color class always
+     wins over an inherited one, so the root rule alone doesn't reach it).
+     !important beats the Tailwind utility (utility layer wins over base by
+     source order). */
+  :root.theme-dark nav,
+  :root.theme-dark .fq-recitation-bar,
+  :root.theme-dark nav .text-foreground,
+  :root.theme-dark nav .text-muted-foreground,
+  :root.theme-dark .fq-recitation-bar .text-foreground,
+  :root.theme-dark .fq-recitation-bar .text-muted-foreground {
+    color: white !important;
+  }
+
+  /* …but the search dropdown renders INSIDE <nav> (SearchBar is a nav child, and
+     SearchQueryResults is an absolutely-positioned bg-popover panel below it), so
+     the rule above was flattening its titles and its secondary lines to the same
+     white and destroying the two-tier hierarchy. The panel is an opaque popover,
+     not translucent glass, so it has no reason to opt into the white override —
+     hand it back the normal semantic tokens. Higher specificity + later in source,
+     so it wins over the block above. */
+  :root.theme-dark nav .bg-popover .text-foreground {
+    color: hsl(var(--foreground)) !important;
+  }
+  :root.theme-dark nav .bg-popover .text-muted-foreground {
+    color: hsl(var(--muted-foreground)) !important;
   }
 }
 
@@ -327,11 +466,12 @@ body,
           var(--mushaf-paper-lift) 48%,
           var(--mushaf-paper-dip) 100%
         );
+      /* Correction Round 1: dropped the full-perimeter inset ring (--mushaf-edge) —
+         it read as a dark frame around the page, the opposite of "paper fading into
+         light." Only a faint top highlight + soft inner dip remain. */
       box-shadow:
-        inset 0 0 0 1px var(--mushaf-edge),
         inset 0 1px 0 var(--mushaf-paper-highlight),
-        inset 0 0 28px var(--mushaf-paper-dip),
-        0 1px 2px var(--mushaf-paper-shadow);
+        inset 0 0 28px var(--mushaf-paper-dip);
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
@@ -556,6 +696,210 @@ body,
     }
   }
 
+  /* Dark-theme paper depth outside the tablet band (docs/plans/dark-theme-mushaf-
+     unification.md, Phase 2). The tablet block below already gives the reader card
+     real paper depth at 1024-1366px; standard desktop (>1366px) and portrait-
+     tablet/small-laptop (768-1023px) were still a flat `bg-card` fill with zero
+     texture. Extend the same treatment to those widths — but dark-theme-only
+     (`:root.theme-dark`, unlike the tablet block below, which is theme-agnostic):
+     widening it unscoped would also change light/gold themes' appearance outside
+     the tablet band, which is out of scope for this pass. Placed BEFORE the tablet
+     block so that block's identical selectors win within its own narrower range
+     via normal cascade order (last rule wins on equal specificity) — zero behavior
+     change at 1024-1366px.
+
+     Unify-desktop pass (user request): the card FACE now uses --mushaf-paper too
+     (previously left as the lighter `md:bg-card` from the TSX, which — once the
+     stack layers were switched to the darker paper — made a lighter page float
+     over darker near-black stack peeks). Now the card, the stack sheets, and their
+     edges all read as the same #0C131A paper, matching mobile + tablet. The stack
+     is defined by a soft catch-light EDGE (not the near-black --mushaf-edge, which
+     is invisible on dark paper) with no shadow — identical to the tablet block. */
+  @media (min-width: 768px) {
+    :root.theme-dark .fq-spread .fq-safha-card {
+      background-color: var(--mushaf-paper) !important;
+    }
+    :root.theme-dark .fq-spread .fq-stack-layer {
+      background-color: var(--mushaf-paper) !important;
+      background-image: none !important;
+      border-color: hsl(var(--foreground) / 0.34) !important;
+      box-shadow: none !important;
+    }
+  }
+
+  /* Desktop reading stage (user request — premium reading-desk atmosphere).
+     >1366px only: here the reader spread floats with space around it, unlike the
+     edge-to-edge tablet band and full-bleed mobile.
+
+     Pass 1 put a soft radial pool of light on .fq-reader-outer behind the book.
+     Pass 2 REMOVED it on review: the flat (7,15,23) surround reads better, and the
+     desk light was competing with the page's own gradient. Do not reintroduce it —
+     if depth beside the book is ever wanted again, the page face is the lever, not
+     the desk. */
+  @media (min-width: 1367px) {
+    /* Lit page face. --fq-lit-x places the highlight toward each page's OUTER edge
+       so the paper darkens into the gutter, the way an open book curves. Set per
+       page off the existing .fq-compensate-r/-l markers (they already encode which
+       side is outer). No drop shadow anywhere in this block: black has ~7 points of
+       headroom on this background and measures 1 point beside the book — it is dead
+       weight, and reaching for it is what cost Correction Rounds 3, 7 and 8. */
+    :root.theme-dark .fq-spread .fq-safha-card {
+      background-image: radial-gradient(
+        ellipse 128% 92% at var(--fq-lit-x, 50%) 40%,
+        var(--mushaf-lit-core) 0%,
+        var(--mushaf-lit-mid) 40%,
+        var(--mushaf-lit-fade) 72%,
+        var(--mushaf-lit-edge) 100%
+      ) !important;
+      box-shadow:
+        inset 0 1px 0 var(--mushaf-rim-top),
+        inset 1px 0 0 var(--mushaf-rim-side),
+        inset -1px 0 0 var(--mushaf-rim-side),
+        inset 0 -1px 0 var(--mushaf-rim-foot) !important;
+    }
+
+    /* Outer corners round, spine-side corners stay square — facing pages meet flat
+       at the binding, so rounding all four reads wrong at the seam. */
+    :root.theme-dark .fq-spread .fq-compensate-r .fq-safha-card {
+      --fq-lit-x: 62%;
+      border-radius: 0 5px 5px 0;
+    }
+    :root.theme-dark .fq-spread .fq-compensate-l .fq-safha-card {
+      --fq-lit-x: 38%;
+      border-radius: 5px 0 0 5px;
+    }
+
+    /* Sheet stack: 4 sheets at desktop (2 elsewhere — the 2-layer decision still
+       stands below this breakpoint). The deep pair is hidden by a `hidden` utility
+       in the TSX and revealed only here, so tablet and mobile are untouched. Faces
+       stay at or below the paper; the stack is defined by its warm lit edge. */
+    :root.theme-dark .fq-spread .fq-stack-layer {
+      border-color: var(--mushaf-sheet-edge) !important;
+      background-color: var(--mushaf-sheet-face) !important;
+      box-shadow: none !important;
+    }
+    :root.theme-dark .fq-spread .fq-stack-deep {
+      display: block;
+    }
+
+    /* Binding crease. Falls into the ~12px gap the two cards already leave at the
+       seam, so it needs no layout change — only a containing block, hence
+       position: relative (the element is otherwise static at this width). */
+    :root.theme-dark[data-safha-view="double"] .fq-spread {
+      position: relative;
+    }
+    :root.theme-dark[data-safha-view="double"] .fq-spread::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 40px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 5;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        var(--mushaf-crease-soft) 32%,
+        var(--mushaf-crease) 50%,
+        var(--mushaf-crease-soft) 68%,
+        transparent 100%
+      );
+    }
+
+    /* Circular navigation buttons (all themes) — the shape and sizing come from
+       docs/design/design-principles.md "Navigation buttons". Applied here rather
+       than as Tailwind utilities because this band has no breakpoint token, and
+       because the arrows must stay a full-height edge strip at tablet, which is
+       signed off. `align-self: center` is required: the parent is `items-stretch`
+       at md+, which would otherwise stretch the button to the full 634px column.
+       `margin-inline: 24px` clears the sheet stack, which peeks 16px past the
+       card's outer edge — measured; at 0 the arrow sat on top of the sheets. */
+    .fq-nav-arrow {
+      align-self: center;
+      width: 52px;
+      height: 52px;
+      margin-inline: 24px;
+      border-radius: 9999px;
+      border: 1px solid hsl(var(--border));
+      background-color: hsl(var(--card));
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    .fq-nav-arrow:hover {
+      background-color: hsl(var(--accent));
+    }
+    .fq-nav-arrow svg {
+      width: 18px;
+      height: 18px;
+    }
+    /* Dark: a shadow here measures ~1 point on (7,15,23) — carry the lift with a
+       raised face and a warm rim instead. ADR 0032. */
+    :root.theme-dark .fq-nav-arrow {
+      background-color: var(--reader-chrome-face);
+      border-color: var(--reader-chrome-rim);
+      box-shadow: none;
+    }
+    :root.theme-dark .fq-nav-arrow:hover {
+      background-color: hsl(var(--accent));
+      border-color: var(--mushaf-rim-top);
+    }
+  }
+
+  /* Reading group: spread above, floating recitation bar below, centred together.
+     Height-gated as well as width-gated. The card is content-sized and the reading
+     font is keyed to the VIEWPORT (max(24px, 2.9vh), ADR 0004), so the card cannot
+     shrink to make room — reserving space for the bar has to come out of the
+     column's spare height, and below ~794px tall there isn't enough (measured:
+     634px card + 104px reservation + 56px nav). Under the gate, desktop keeps the
+     full-width bottom-edge bar it has always had. Never close this gap by touching
+     baseScaleViewHeight — that is the reading size (ADR 0004/0005). */
+  @media (min-width: 1367px) and (min-height: 800px) {
+    .fq-reader-outer {
+      /* 60px bar + 24px bottom offset + 20px breathing gap. !important beats the
+         JSX `pb-4` utility, same reason as the tablet block below. */
+      padding-bottom: 104px !important;
+    }
+
+    /* Floating bar, matched to the spread. Width and centre are published by
+       QuranSpread's ResizeObserver because the card is content-sized and moves
+       with the font-scale control — no CSS value tracks it. The fallback keeps a
+       sane bar on reader routes that don't mount the pager. The spread's centre is
+       ~8px off the viewport centre (`md:ps-14 md:pe-10`), which is why this is a
+       measured centre and not `left: 50%`. The !important terms beat the JSX
+       `inset-x-0` / `bottom-0` utilities — the utility layer wins over @layer base
+       by source order, same as the tablet block below. */
+    .fq-recitation-bar-reader {
+      right: auto !important;
+      left: var(--fq-spread-center, 50%) !important;
+      transform: translateX(-50%);
+      width: var(--fq-spread-width, min(860px, 100vw - 96px));
+      min-height: 60px;
+      bottom: 24px !important;
+      /* Width/style only — the colour stays the JSX `border-border/50` utility,
+         which wins on source order anyway. Same for the background: light and gold
+         keep the translucent glass that matches Nav (a prior correction round);
+         only dark overrides it below, because translucency over (7,15,23) produces
+         no lift at all. */
+      border-width: 1px;
+      border-style: solid;
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        0 16px 48px -16px rgba(0, 0, 0, 0.14);
+    }
+    :root.theme-dark .fq-recitation-bar-reader {
+      background-color: var(--reader-chrome-face);
+      border-color: var(--reader-chrome-rim);
+      box-shadow: none;
+    }
+    /* The bar's inner row is capped at max-w-3xl for the full-width form; inside
+       the floating bar the bar itself is the cap, so let the row fill it. */
+    .fq-recitation-bar-reader > div {
+      max-width: none;
+    }
+  }
+
   /* Tablet landscape full-screen (1024px–1366px): nav is a fixed overlay so the
      reader claims 100dvh; safha cards fill edge-to-edge with a small binding gap.
      Placed after the lg block so these rules win on any overlap. */
@@ -622,13 +966,23 @@ body,
 
     /* ---- Printed-mushaf paper, ink & binding (tablet reader only) ---------- */
 
-    /* Warm ivory (or blue-black) paper surface for each page, replacing the flat
-       `bg-card` fill on tablet. A near-invisible tonal gradient + layered shadows
-       give physical depth: a fine edge outline (inset ring), a top inner highlight
-       (paper thickness), and a soft outer lift separating paper from the viewer bg.
-       The card is overflow-hidden, so the inset shadows read as inner-edge shading. */
+    /* Paper surface for each page, replacing the flat `bg-card` fill on tablet. */
     .fq-spread .fq-safha-card {
       background-color: var(--mushaf-paper) !important;
+    }
+
+    /* Light/gold keep the tonal gradient + layered shadows they have always had:
+       a fine edge outline (inset ring), a top inner highlight (paper thickness),
+       and a soft outer lift separating paper from the viewer bg. The card is
+       overflow-hidden, so the inset shadows read as inner-edge shading.
+
+       These declarations are HEAD's, restored verbatim and re-scoped. They used to
+       sit on the theme-agnostic rule above, and were deleted outright when the user
+       asked for "no shadows on tablet" — a request about the DARK reader, which
+       silently flattened light and gold too. Dark is excluded here because on
+       (7,15,23) these shadows produce no visible pixels anyway (ADR 0032); it gets
+       its depth from the light ramp further down. */
+    :root:not(.theme-dark) .fq-spread .fq-safha-card {
       background-image: linear-gradient(
         to bottom,
         var(--mushaf-paper-highlight) 0%,
@@ -644,34 +998,182 @@ body,
         0 8px 20px -10px var(--mushaf-paper-shadow);
     }
 
-    /* Paper-stack: 3–5 thin, soft, low-contrast page edges peeking toward each
-       page's OUTER (spine-away) edge (stackPeekSide). Recolour the base layers to
-       paper + a faint edge line, and reveal the deeper tablet-only layers. Reads
-       as a real printed block resting open — restrained, no thick exposed block. */
-    .fq-spread .fq-stack-tablet {
-      display: block;
-    }
+    /* Paper-stack: 2 thin, soft, low-contrast page edges peeking toward each
+       page's OUTER (spine-away) edge (stackPeekSide). Recolour to paper + a faint
+       edge line. Reads as a real printed block resting open — restrained, no
+       thick exposed block.
+
+       THEME NOTE (light/gold pass, later): this theme-agnostic base is what
+       light/gold use as-is — their --mushaf-edge is a DARK border that reads
+       correctly on their LIGHT paper. Dark theme overrides the edge to a light
+       catch-light just below (dark paper needs a light edge, not a dark one). If
+       you later give light/gold the same shadow-free, edge-defined stack, tune
+       HERE or add a :root.theme-light / :root.theme-gold-scoped override mirroring
+       the dark one below. */
     .fq-spread .fq-stack-layer {
       background-color: var(--mushaf-paper) !important;
       background-image: none !important;
       border-color: var(--mushaf-edge) !important;
+      box-shadow: none;
+    }
+    /* Same story as the card above: the sheets' 1px edge shadow was HEAD's and is
+       restored for light/gold only. Dark drops it (invisible there) and defines the
+       stack by its warm edge instead. */
+    :root:not(.theme-dark) .fq-spread .fq-stack-layer {
       box-shadow: 1px 0 2px -1px var(--mushaf-paper-shadow);
     }
 
-    /* Binding — the paper CURVE of an open Mushaf, not a drawn gutter. There is no
-       dark core and no crease line; instead two wide, extremely-feathered layers
-       shape a shallow valley so the eye reads bending paper, not a seam:
-         1. a broad, very soft depression (--mushaf-gutter-soft only — never the
-            stronger -dark token) that is only faintly darker at the exact centre
-            than the flat pages, fading to nothing ~65px out;
-         2. two wide, gentle highlights on the inner edge of each page (~28px off
-            centre) — the paper rising back up toward the fold, catching light.
-       The luminance goes highlight → faint dip → highlight in a smooth S, which
-       reads as curvature. The centre must NOT be the first thing noticed. Only the
-       --mushaf-gutter-* intensities differ per theme; geometry is identical.
-       pointer-events:none; adds no layout width (text area unchanged); combined
-       with the inner-edge inset shadow already on .fq-safha-card. */
-    :root[data-safha-view="double"] .fq-spread::after {
+    /* Pass 3: the same warm sheet edge and face desktop uses, so the stack reads
+       as paper catching light rather than a neutral gray line. No shadow — on this
+       background it would produce no pixels (ADR 0032). The `!important` terms beat
+       the min-width:768 rule's own `!important` border-color/background. Layer
+       COUNT is unchanged: tablet renders 2 sheets, the deep pair stays
+       desktop-only. */
+    :root.theme-dark .fq-spread .fq-stack-layer {
+      box-shadow: none;
+      border-color: var(--mushaf-sheet-edge) !important;
+      background-color: var(--mushaf-sheet-face) !important;
+    }
+
+    /* Binding — historical record (Correction Rounds 3–8). NOTE: there is no rule
+       attached to this comment any more. The gutter shadow these rounds tuned was
+       removed on tablet per the user's "remove all shadows" request, and Pass 3
+       then deleted the `box-shadow: none` rule that had replaced it (its selector
+       was more specific than the new rim rule and cancelled it). Kept only because
+       the reasoning below is why dark-theme depth is built the way it is; the
+       conclusion now lives in ADR 0032.
+       Round 2 kept the sound per-page asymmetric-
+       inset-shadow architecture but its numbers produced nothing visible on the
+       near-black paper (#0d1721), for two compounding reasons:
+         a) The curvature "dip" was BLACK (rgba(0,0,0,α)). Darkening an already
+            near-black surface is imperceptible — paper*(1-α) barely moves. On a
+            DARK page the fold has to be carried by a HIGHLIGHT (paper catching
+            light as it curves up out of the gutter), not by a shadow.
+         b) The dip's box-shadow math cancelled itself: `inset 10px 0 12px -9px`
+            has a solid core of only offset+spread = 10-9 = 1px, then a 12px blur
+            spreads that 1px of mass so thin the painted alpha is a fraction of the
+            token's — effectively invisible even before (a).
+       Round 3 rebuilt each page's spine edge as three layers (thin crease + wide
+       highlight + wide dip) but made the HIGHLIGHT the widest/strongest layer —
+       explicit correction: a dark-mode book gutter must read as a shadow, not a
+       light band, regardless of the paper*(1-α) argument above (a wide-enough,
+       dark-enough region still reads as visibly darker than near-black paper —
+       (a)'s reasoning wasn't wrong about a *thin* dark line, but doesn't apply once
+       the dark layer is given real width). Round 4 kept a thin highlight hairline
+       as a catch-light accent; Round 5 dropped it entirely — any lighter tone
+       between the pages read as an unwanted gray seam, breaking the two-pages-
+       overlapping illusion the darkening alone is meant to create. Round 6 used a
+       DIAGONAL pair of shadows (per-page, mirrored x-offsets). Round 7
+       (user-supplied, recalibrated after another --mushaf-paper change) drops the
+       directional offsets entirely — every x-offset is 0, so the recipe is
+       identical for both pages; the two rules collapse into one shared rule
+       (targeting .fq-safha-card directly, no more .fq-compensate-r/-l split):
+         1. --mushaf-gutter-dark — a soft, uniform vignette on all four edges
+            (spread 8px + blur 14px), not spine-specific anymore. The earlier
+            4px/4px numbers reached the token colour only in a ~1px sliver right
+            at the extreme edge, then faded across ~8px — imperceptible on
+            near-black paper. Widening to 8px spread / 14px blur gives a solid
+            ~8px core that fades softly across ~20px, so it reads as a vignette
+            without becoming a hard boxed frame;
+         2. --mushaf-paper-highlight (now fully opaque black, see its token
+            comment above) — an extra dark accent band along the bottom edge
+            (y −9px, blur 6px, spread 2px), softened from the old 2px-blur hard
+            line so it blends with the vignette instead of reading as a bar.
+       Scoped to :root.theme-dark — this whole task is dark-theme-only; light/gold
+       must render byte-identically to before this pass, so they keep their
+       original overlay-based gutter, restored just below this rule. */
+    /* Pass 3 — desktop reading treatment ported to tablet (user request). Drop
+       shadows stay removed; what follows is edge LIGHT, not shadow (ADR 0032), so
+       it does not reopen the earlier "remove all shadows on tablet" request.
+
+       The ramp is tablet-specific on purpose. Desktop's values copied verbatim gave
+       an internal page range of 7 points and looked near-identical to before,
+       because desktop's page reads against a desk at 15 and tablet has no desk —
+       the reader is full-bleed, so the eye can only compare within the page.
+       Widened here to a 17-point range (lit centre 39, outer 31, into the spine 22).
+       Scoped to this band, so the desktop values in the theme blocks are untouched.
+
+       This rule replaces the former `[data-safha-view="double"] … { box-shadow:
+       none }`: that selector was more specific and would have cancelled the rim. */
+    :root.theme-dark {
+      --mushaf-lit-core: #1f2b3a;
+      --mushaf-lit-mid: #141e29;
+      --mushaf-lit-fade: #0c141c;
+      --mushaf-lit-edge: #070d14;
+    }
+    :root.theme-dark .fq-spread .fq-safha-card {
+      background-image: radial-gradient(
+        ellipse 100% 88% at var(--fq-lit-x, 50%) 42%,
+        var(--mushaf-lit-core) 0%,
+        var(--mushaf-lit-mid) 42%,
+        var(--mushaf-lit-fade) 74%,
+        var(--mushaf-lit-edge) 100%
+      ) !important;
+      box-shadow:
+        inset 0 1px 0 var(--mushaf-rim-top),
+        inset 1px 0 0 var(--mushaf-rim-side),
+        inset -1px 0 0 var(--mushaf-rim-side),
+        inset 0 -1px 0 var(--mushaf-rim-foot) !important;
+    }
+    /* Highlight toward each page's OUTER edge, so the paper darkens into the
+       gutter — same markers desktop uses, which already encode which side is
+       outer. No border-radius here: the card meets the viewport edge. */
+    :root.theme-dark .fq-spread .fq-compensate-r .fq-safha-card {
+      --fq-lit-x: 62%;
+    }
+    :root.theme-dark .fq-spread .fq-compensate-l .fq-safha-card {
+      --fq-lit-x: 38%;
+    }
+
+    /* Dark-theme center binding separator (user request — modelled on real
+       open-book macro photography). A centered overlay at the seam reads as the
+       crease where the two pages meet. Pass 3 replaced the original 36px
+       `--mushaf-gutter-*` version with desktop's 40px `--mushaf-crease*` one (see
+       the rule body); the values below describe the superseded version and are
+       kept only for the reasoning.
+       Deliberately NO catch-light highlight — the --mushaf-gutter-highlight token
+       is a cool blue-gray that read as an off-tone seam against the warm-dark
+       paper; the fold is carried by the dark valley alone (neutral, paper-
+       consistent). Kept narrow (~36px, dark core ~14px) so it never intrudes on
+       the page text. Scoped to :root.theme-dark so light/gold keep their ::after. */
+    :root.theme-dark[data-safha-view="double"] .fq-spread::after {
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      /* Pass 3: desktop's separator, ported verbatim at the user's request — 40px
+         on the --mushaf-crease tokens with wider shoulders (32%/68%). The previous
+         36px `--mushaf-gutter-*` version (core #04070a, shoulders rgba(0,0,0,0.09)
+         at 40%/60%) read as a thin line; measured after the port, the fold grades
+         8 → 12 → 19 → 24 across ±20px. */
+      width: 40px;
+      z-index: 5;
+      pointer-events: none;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        var(--mushaf-crease-soft) 32%,
+        var(--mushaf-crease) 50%,
+        var(--mushaf-crease-soft) 68%,
+        transparent 100%
+      );
+    }
+
+    /* Light/gold binding — unchanged, original overlay approach (this whole task is
+       dark-theme-only; scoping the Round 3 per-page rule above to :root.theme-dark
+       means light/gold need their pre-existing effect restored here verbatim,
+       exactly as it rendered before this task began).
+
+       THEME NOTE (light/gold pass, later): this is the LIGHT/GOLD center separator.
+       Dark theme now has its own narrower, highlight-free crease just above
+       (:root.theme-dark[data-safha-view="double"] .fq-spread::after). When refining
+       light/gold to match that realism, tune THIS rule — e.g. narrow the 150px
+       width. The --mushaf-gutter-highlight pair here is a COOL light that suits
+       light paper but read as gray on dark (why the dark separator dropped it).
+       Keep light/gold edits scoped to :root:not(.theme-dark) so the dark
+       separator stays intact. */
+    :root:not(.theme-dark)[data-safha-view="double"] .fq-spread::after {
       content: "";
       position: absolute;
       inset-block: 0;
@@ -681,7 +1183,6 @@ body,
       z-index: 5;
       pointer-events: none;
       background:
-        /* soft highlights — inner page edges rising toward the fold, catching light */
         linear-gradient(
           to right,
           transparent calc(50% - 60px),
@@ -691,7 +1192,6 @@ body,
           var(--mushaf-gutter-highlight) calc(50% + 28px),
           transparent calc(50% + 60px)
         ),
-        /* wide, shallow paper valley — faint at centre, feathered fully to the pages */
         linear-gradient(
           to right,
           transparent 0%,
