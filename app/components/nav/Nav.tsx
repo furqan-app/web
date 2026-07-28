@@ -28,7 +28,11 @@ export const Nav = () => {
   return (
     <nav
       className={cn(
-        "bg-background text-foreground px-4 shadow h-14 flex items-center",
+        // Translucent glass everywhere (Correction Round — desktop included, not
+        // just the toggle-hide overlay; matches RecitationPlayerBar exactly so the
+        // two bars read as one consistent floating-chrome style, both letting the
+        // Mushaf show through underneath).
+        "text-foreground px-4 shadow h-14 flex items-center bg-background/75 backdrop-blur-md border-b border-border/50",
         isOverlayMode && "fixed top-0 inset-x-0 z-50 transition-transform duration-300",
         isOverlayMode && !overlayVisible && "-translate-y-full",
       )}

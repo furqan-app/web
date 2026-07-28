@@ -32,7 +32,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 top-14 h-[calc(100%-3.5rem)] p-0 flex flex-col overflow-hidden">
+      <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 p-0 flex flex-col overflow-hidden">
         <SheetTitle className="sr-only">
           {t("sidebar.title", "Quran navigation")}
         </SheetTitle>

@@ -322,14 +322,16 @@ export const QuranSafha = ({
           className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
           {/* Stacked paper layers are hidden on mobile and paint behind the active
-              card only at md+. They peek toward stackPeekSide (the outer edge). */}
+              card only at md+. They peek toward stackPeekSide (the outer edge).
+              2 layers everywhere, plus a deeper pair revealed only on dark desktop
+              (>=1367px) by .fq-stack-deep in globals.css — the 2-layer decision
+              still holds at every narrower width. Earlier siblings paint furthest
+              back, so the deep pair comes first and carries the largest offsets. */}
           <div
-            className={`fq-stack-layer fq-stack-tablet absolute inset-0 translate-y-[7px] rounded-none bg-card dark:bg-muted border border-muted-foreground/30 pointer-events-none ${stackPeekSide === "right" ? "translate-x-[14px]" : "-translate-x-[14px]"}`}
-            style={{ opacity: 0.4 }}
+            className={`fq-stack-layer fq-stack-deep absolute inset-0 translate-y-2 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden ${stackPeekSide === "right" ? "translate-x-4" : "-translate-x-4"}`}
           />
           <div
-            className={`fq-stack-layer fq-stack-tablet absolute inset-0 translate-y-[5px] rounded-none bg-card dark:bg-muted border border-muted-foreground/30 pointer-events-none ${stackPeekSide === "right" ? "translate-x-[11px]" : "-translate-x-[11px]"}`}
-            style={{ opacity: 0.6 }}
+            className={`fq-stack-layer fq-stack-deep absolute inset-0 translate-y-1.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden ${stackPeekSide === "right" ? "translate-x-3" : "-translate-x-3"}`}
           />
           <div
             className={`fq-stack-layer absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
