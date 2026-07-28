@@ -5,6 +5,11 @@ description: Open the PR that promotes a cut release branch into prod. Trigger v
 
 # /promote-release <version>
 
+Read and follow the **Promote Release** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Opens the `release/<version>` → `prod` PR once staging verification has passed. See `docs/plans/release-branch-workflow.md` (Addendum 1), [ADR 0015](../../../docs/architecture/adr/0015-release-branch-workflow.md), and [ADR 0026](../../../docs/architecture/adr/0026-staging-environment.md).
 
 ## Precondition

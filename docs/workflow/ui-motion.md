@@ -1,16 +1,6 @@
----
-name: ui-motion
-description: Animation and interaction-polish guidance for Furqan UI work — when to animate, easing/duration rules, component press/entry states, and a Before/After review checklist. Adapted from Emil Kowalski's design-eng philosophy for our Tailwind + Radix stack (no Framer Motion, no drag/gesture surfaces yet).
----
+# UI Motion
 
-# /ui-motion
-
-Read and follow [`docs/workflow/ui-motion.md`](../../docs/workflow/ui-motion.md).
-
----
-<!-- original content preserved below this line for reference only -->
-
-Motion and interaction-polish reference for UI tasks. Load this alongside `docs/design/design-principles.md` (static aesthetic direction) — this skill covers *how things move and respond*, not colors/spacing/layout.
+Motion and interaction-polish reference for UI tasks. Load this alongside `docs/design/design-principles.md` (static aesthetic direction) — this doc covers *how things move and respond*, not colors/spacing/layout.
 
 Stack assumptions: Tailwind CSS, shadcn/ui, Radix primitives (`react-dialog`, `react-dropdown-menu`, `react-tabs`). No JS animation library is installed — default to CSS transitions, not Framer Motion or springs. If a task genuinely needs JS-driven physics (drag-to-dismiss, momentum), stop and confirm with the user before adding a dependency.
 
@@ -74,7 +64,7 @@ Gate hover-only affordances behind `@media (hover: hover) and (pointer: fine)` �
 - **`translateY(100%)`** is relative to the element's own size — use it to hide a sheet/toast off-screen regardless of its actual height, instead of hardcoding pixels.
 - **Blur-masking a crossfade**: if two states swapping via opacity still look like two objects overlapping, add `filter: blur(2px)` during the transition (keep under ~20px, expensive in Safari).
 
-## Review checklist (use for `/review-fq-work` UI findings and self-review)
+## Review checklist (use for code review UI findings and self-review)
 
 When reviewing animation/interaction code, report issues as a Before/After/Why markdown table:
 
@@ -83,14 +73,3 @@ When reviewing animation/interaction code, report issues as a Before/After/Why m
 | `transition: all 300ms` | `transition: transform 200ms ease-out` | Specify exact properties, avoid `all` |
 | `scale(0)` entry | `scale-95` + `opacity-0` | Nothing appears from nothing |
 | `ease-in` on a dropdown | `ease-out` or custom curve | `ease-in` feels sluggish |
-| No `:active` state on a button | `active:scale-[0.97]` | Pressable elements must feel responsive |
-| `transform-origin: center` on a popover | Radix transform-origin CSS var | Popovers should scale from their trigger (modals excepted) |
-| Hover animation with no media guard | `@media (hover: hover) and (pointer: fine)` | Prevents stuck hover state on touch |
-| Animation on a keyboard-triggered action | Remove it | Repeated actions should feel instant |
-| Duration > 300ms on a non-modal element | Reduce to 150-250ms | Faster reads as more responsive |
-
-## When to use this vs. design-principles.md
-
-- Layout, color, spacing, ornamental motifs, typography → `docs/design/design-principles.md`
-- Anything that moves, transitions, or responds to press/hover/focus → this skill
-- Both apply → load both

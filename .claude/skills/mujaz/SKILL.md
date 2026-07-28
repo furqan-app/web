@@ -5,13 +5,14 @@ description: Toggle mujaz (terse-response) mode on or off for this repo. Use whe
 
 # mujaz
 
-Toggles the repo's mujaz-mode hooks (see `.claude/hooks/mujaz-mode.js`).
-"Mujaz" (موجز) is Arabic for concise/succinct.
+Read and follow [`docs/workflow/terse-mode.md`](../../docs/workflow/terse-mode.md) for the concept.
 
-## Instructions
+## Claude implementation
 
-1. Run `node .claude/hooks/mujaz-toggle.js` with no argument to flip the
-   current state, or pass `on` / `off` explicitly if the user said which
-   one they want.
-2. Report the one-line result the script prints (`mujaz mode: ON` or
-   `mujaz mode: OFF`). Nothing else.
+Toggle by running:
+```bash
+node .claude/hooks/mujaz-toggle.js        # flip current state
+node .claude/hooks/mujaz-toggle.js on     # force on
+node .claude/hooks/mujaz-toggle.js off    # force off
+```
+Report the one-line result the script prints (`mujaz mode: ON` or `mujaz mode: OFF`). Nothing else.

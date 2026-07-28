@@ -5,6 +5,11 @@ description: Open the PR that promotes a cut release branch into stg for staging
 
 # /promote-to-staging <version>
 
+Read and follow the **Promote to Staging** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Opens the `release/<version>` → `stg` PR, so the release can be verified on Hostinger's staging site before going to prod. See `docs/plans/release-branch-workflow.md` (Addendum 1) and [ADR 0026](../../../docs/architecture/adr/0026-staging-environment.md).
 
 ## Precondition

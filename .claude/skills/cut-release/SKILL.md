@@ -5,7 +5,25 @@ description: Cut a new release branch from main — bump the version, tag it, an
 
 # /cut-release <major|minor|patch>
 
-Branches a new `release/x.y.z` off `main`, bumps and tags the version, stamps the Trello release queue, and flags any Quran/App DB changes that may need manual action. See `docs/plans/release-branch-workflow.md` (Addendum 2) and [ADR 0015](../../../docs/architecture/adr/0015-release-branch-workflow.md).
+Read and follow the **Cut Release** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+
+## Claude-specific: Trello integration (step 8)
+
+Where the workflow doc says "update your release tracking system", do this with Trello:
+
+1. `mcp__trello__get_cards_by_list_id` on the **"To Be Released"** list (board "Furqan"). Keep the fetched card list — it's reused in step 10 for the GitHub Release body.
+2. For each card there:
+   - Create a new label named `v<new-version>` if one doesn't already exist with that exact name (one label per version — never reuse or rename an existing release label).
+   - Apply the label to the card.
+   - `mcp__trello__move_card` the card to **Done**.
+3. If the list is empty, say so and continue anyway — an empty release is still valid.
+
+Never reuse or recolor an existing Trello label for a new version — always create a new one.
+
+---
+<!-- original content preserved below this line for reference only -->
+
+Branches a new `release/x.y.z` off `main`, bumps and tags the version, stamps the Trello release queue, and flags any Quran/App DB changes that may need manual action.
 
 ## Precondition
 

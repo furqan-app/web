@@ -5,6 +5,11 @@ description: Drive the full release process from cut to prod to main-sync in one
 
 # /release <major|minor|patch>
 
+Read and follow the **Full Release Orchestration** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Orchestrates `/cut-release` → `/promote-to-staging` → `/promote-release` → `/sync-main-from-prod` as one continuous flow. See `docs/plans/release-branch-workflow.md` (Addendum 1), [ADR 0015](../../../docs/architecture/adr/0015-release-branch-workflow.md), and [ADR 0026](../../../docs/architecture/adr/0026-staging-environment.md).
 
 **Never pause between purely mechanical steps.** Only stop at the three checkpoints below, where the flow genuinely cannot proceed without the user doing something outside this chat. At each checkpoint, state plainly what you're waiting for.

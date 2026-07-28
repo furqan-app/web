@@ -1,14 +1,4 @@
----
-name: retrospect
-description: End-of-session retrospective. Reads conversation history, scans DECISIONS.md for stale entries, proposes workflow improvements (decisions, skill edits, memories) review-before-write, then saves a dated file to docs/retrospectives/.
----
-
-# /retrospect
-
-Read and follow [`docs/workflow/retrospect.md`](../../docs/workflow/retrospect.md).
-
----
-<!-- original content preserved below this line for reference only -->
+# Retrospect
 
 Closes the feedback loop after a meaningful session — review-before-write, nothing is written without approval.
 
@@ -19,7 +9,7 @@ Closes the feedback loop after a meaningful session — review-before-write, not
 Read the current conversation history and extract:
 - Architectural or process decisions made
 - Problems hit and how they were resolved
-- Skills that felt incomplete, missing, or misused
+- Workflow docs that felt incomplete, missing, or were misused
 - Workflow friction points
 - New considerations worth tracking
 
@@ -39,17 +29,17 @@ Present each proposed change to the user individually and wait for approval befo
 
 1. **Stale DECISIONS.md flags** — show which entries may be outdated and why; ask if they should be removed or updated
 2. **New DECISIONS.md additions** — show the proposed decision text; ask for approval
-3. **Skill edits or flags** — name the skill, describe what's wrong or missing, propose the fix or ask if a new skill is needed
+3. **Workflow doc edits or flags** — name the doc in `docs/workflow/`, describe what's wrong or missing, propose the fix or ask if a new doc is needed
 4. **Memory saves** — show each proposed memory (type + content); ask for approval
 
 Only write after each individual approval. Skip any category with nothing to propose.
 
 ### 4 — Confirm before saving
 
-After Step 3's approvals are resolved (whether or not anything was actually proposed), ask the user explicitly: "Save a retrospective file for this session?"
+After step 3's approvals are resolved (whether or not anything was actually proposed), ask the user explicitly: "Save a retrospective file for this session?"
 
-- If they decline, stop here. Do not write the retrospective file. Anything already approved and written in Step 3 (DECISIONS.md changes, skill edits, memory saves) stays as-is — only the snapshot file itself is skipped.
-- If they agree, proceed to Step 5.
+- If they decline, stop here. Anything already approved and written in step 3 (DECISIONS.md changes, doc edits, memory saves) stays as-is — only the snapshot file itself is skipped.
+- If they agree, proceed to step 5.
 
 ### 5 — Save the retrospective file
 
@@ -66,12 +56,12 @@ Use the format below. Only include sections that have content.
 
 ## Changes Made
 - [x] Added decision to DECISIONS.md: …
-- [x] Updated skill /foo: …
+- [x] Updated workflow doc /foo: …
 - [x] Saved memory: …
 
 ## Flagged for Later
-- Skill /bar needs attention: …
-- Consider adding skill /baz for …
+- Workflow doc /bar needs attention: …
+- Consider adding doc /baz for …
 
 ## Open Considerations
 - …
@@ -82,5 +72,4 @@ Use the format below. Only include sections that have content.
 - Do not write anything without explicit user approval.
 - Do not propose changes in bulk — one at a time.
 - Do not create the retro file if the session had no meaningful learnings.
-- Do not edit skill files directly; propose the change, let the user decide.
-- Do not write the retrospective file without an explicit save confirmation, even if all individual changes were approved.
+- Do not edit workflow docs directly; propose the change, let the user decide.

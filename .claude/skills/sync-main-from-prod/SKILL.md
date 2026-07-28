@@ -5,6 +5,11 @@ description: Open the PR that merges prod back into main after a release, so rel
 
 # /sync-main-from-prod
 
+Read and follow the **Sync Main from Prod** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Opens the `prod` → `main` PR after a release has been promoted, so any fixes made directly on the release branch during stabilization make it back into `main`. See `docs/plans/release-branch-workflow.md` and [ADR 0015](../../../docs/architecture/adr/0015-release-branch-workflow.md).
 
 ## Steps

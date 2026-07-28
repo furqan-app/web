@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "trello": {
+      "type": "local",
+      "command": ["npx", "-y", "@delorenj/mcp-server-trello"],
+      "environment": {
+        "TRELLO_API_KEY": "<your-trello-api-key>",
+        "TRELLO_TOKEN": "<your-trello-token>"
+      }
+    }
+  }
+}
