@@ -8,6 +8,8 @@ import {
   type UserPlanParams,
   type UserPlanStatus,
 } from "@/app/constants/plans";
+import { resolvePlanParams } from "@/app/lib/plans/validate-params";
+import { getPageJuzNumber } from "@/app/lib/plans/resolve-units";
 
 export type UserPlanListItem = {
   id: number;
@@ -15,9 +17,16 @@ export type UserPlanListItem = {
   params: UserPlanParams;
   start_date: string;
   status: UserPlanStatus;
+  /**
+   * Derived-on-read juz numbers for params.targetStart/targetEnd, for
+   * prefilling the params-edit UI — juz is never stored (D3), only computed
+   * on demand from the page-canonical value.
+   */
+  target_juz_start?: number;
+  target_juz_end?: number;
 };
 
-export const toDateString = (d: Date) => d.toISOString().slice(0, 10);
+const toDateString = (d: Date) => d.toISOString().slice(0, 10);
 
 const serializePlan = (plan: {
   id: number;
@@ -33,6 +42,17 @@ const serializePlan = (plan: {
   status: plan.status as UserPlanStatus,
 });
 
+const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> => {
+  const { targetStart, targetEnd } = item.params;
+  if (targetStart === undefined || targetEnd === undefined) return item;
+  const [juzStart, juzEnd] = await Promise.all([
+    getPageJuzNumber(targetStart),
+    getPageJuzNumber(targetEnd),
+  ]);
+  if (juzStart === null || juzEnd === null) return item;
+  return { ...item, target_juz_start: juzStart, target_juz_end: juzEnd };
+};
+
 /** GET /api/plans — the caller's enrollments (all statuses). Protected. */
 export async function GET(request: NextRequest) {
   const user = extractUser(request);
@@ -43,7 +63,8 @@ export async function GET(request: NextRequest) {
     orderBy: { created_at: "desc" },
   });
 
-  return jsonResponse({ data: plans.map(serializePlan) });
+  const data = await Promise.all(plans.map(serializePlan).map(withTargetJuz));
+  return jsonResponse({ data });
 }
 
 /**
@@ -68,16 +89,22 @@ export async function POST(request: NextRequest) {
     return jsonResponse({ code: 422, message: "Invalid start_date" });
   }
 
-  const params: UserPlanParams = body.params ?? {};
-  if (params.endDate && !PLAN_DATE_RE.test(params.endDate)) {
+  const bodyParams: UserPlanParams = body.params ?? {};
+  if (bodyParams.endDate && !PLAN_DATE_RE.test(bodyParams.endDate)) {
     return jsonResponse({ code: 422, message: "Invalid params.endDate" });
   }
-  if (template.missedDayPolicy === "calendar" && !params.endDate) {
+  if (template.missedDayPolicy === "calendar" && !bodyParams.endDate) {
     return jsonResponse({
       code: 422,
       message: "This template requires params.endDate",
     });
   }
+
+  const resolved = await resolvePlanParams(body);
+  if ("error" in resolved) {
+    return jsonResponse({ code: 422, message: resolved.error });
+  }
+  const params = resolved.params;
 
   const startDate = body.start_date ?? toDateString(new Date());
 
