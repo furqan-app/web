@@ -69,12 +69,25 @@ function deriveRubVerseMappings(verses) {
  * `page_metadata` rows — per-page surah/juz/hizb summary. Ports the existing
  * populate-page-metadata logic; `hizb_position` is null on pages that don't
  * start a new rub.
+ *
+ * `pageOf` resolves a verse to its page number, defaulting to the verse's own
+ * (default-edition) `page_number`. Pass an edition's verse→page resolver to
+ * derive that edition's summary instead: juz, hizb and rub numbers are divisions
+ * of the text and identical across editions, so only page assignment varies —
+ * which is why this one function serves every edition unchanged. See ADR 0033.
  */
-function derivePageMetadata(verses) {
+function derivePageMetadata(verses, pageOf = (v) => v.page_number) {
   const pages = new Map(); // page_number -> verse[]
   for (const v of byId(verses)) {
-    if (!pages.has(v.page_number)) pages.set(v.page_number, []);
-    pages.get(v.page_number).push(v);
+    const page = pageOf(v);
+    if (page == null) {
+      throw new Error(
+        `derivePageMetadata: no page for verse ${v.verse_key ?? v.id} — ` +
+          `the edition's verse→page map is incomplete`
+      );
+    }
+    if (!pages.has(page)) pages.set(page, []);
+    pages.get(page).push(v);
   }
 
   const rows = [];

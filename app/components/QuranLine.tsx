@@ -6,13 +6,12 @@ import { useLocale } from "next-intl";
 import { getLanguageDirection } from "../utils/i18n";
 import { MouseEvent } from "react";
 import { QuranWord } from "./QuranWord";
-import { WordWithLayouts } from "../types/prisma";
-import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
+import { WordWithVerse } from "../types/prisma";
 
 type LineProps = {
-  words: Array<WordWithLayouts>;
-  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithLayouts) => void;
-  onWordLongPressed?: (word: WordWithLayouts) => void;
+  words: Array<WordWithVerse>;
+  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
+  onWordLongPressed?: (word: WordWithVerse) => void;
   isOverlayMode?: boolean;
   // One mark per spot (ADR 0025), keyed by word `location` or verse `verse_key`.
   marks: Record<string, { category: string } | undefined>;
@@ -30,7 +29,6 @@ export const QuranLine = ({ words, onWordClicked, onWordLongPressed, isOverlayMo
   const isBannerHandled = suppressInlineHeaderForSurahId === surahId;
 
   const locale = useLocale();
-  const { tajweedMode } = useQuranTajweed();
 
   return (
     <>
@@ -66,11 +64,7 @@ export const QuranLine = ({ words, onWordClicked, onWordLongPressed, isOverlayMo
           getLanguageDirection(locale) === "rtl"
             ? "flex-row"
             : "flex-row-reverse"
-        } ${
-          [1, 2].includes(words[0].page_number) || tajweedMode
-            ? "justify-center"
-            : ""
-        } `}
+        } justify-center`}
         style={{ marginBottom: "var(--fq-line-gap)" }}
       >
         {words.map((word) => (

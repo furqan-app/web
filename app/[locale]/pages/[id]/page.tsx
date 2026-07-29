@@ -2,10 +2,20 @@ import { setRequestLocale } from "next-intl/server";
 
 import { ReaderPage } from "@/app/components/reader/ReaderPage";
 import { Locale } from "@/app/types/config";
+import {
+  MUSHAF_EDITIONS,
+  MUSHAF_EDITION_IDS,
+} from "@/app/utils/mushaf-editions";
 
-// statically generate all pages in build time
+// statically generate all pages in build time. The route shell is
+// edition-agnostic (content is fetched client-side per edition), so the range
+// must cover the LONGEST edition — a shorter hardcoded value would silently
+// leave a future edition's tail pages unroutable. See ADR 0033.
 export async function generateStaticParams() {
-  return Array.from({ length: 604 }, (_, i) => ({
+  const maxPages = Math.max(
+    ...MUSHAF_EDITION_IDS.map((id) => MUSHAF_EDITIONS[id].pagesCount),
+  );
+  return Array.from({ length: maxPages }, (_, i) => ({
     id: String(i + 1),
   }));
 }

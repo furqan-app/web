@@ -1,3 +1,5 @@
+import type { MushafEdition } from "@/app/utils/mushaf-editions";
+
 // Immutable FontFace registry for Quran page fonts (ADR 0029). A live
 // stylesheet's text can never be rewritten once it contains @font-face rules the
 // user can see — any mutation re-parses the whole sheet and resets every face in
@@ -7,35 +9,44 @@
 // is never touched again; eviction removes the whole face via `delete`, never a
 // text rewrite. Shared by the mobile path (ReaderPager) and the desktop/tablet
 // path (FontFaceInjector) so both draw from one LRU-capped set.
+//
+// Keyed by edition AND page: a page number alone is not unique across mushaf
+// editions, since each edition ships its own font file per page (ADR 0033).
+// Colour-glyph editions do not come through here at all — they need CSS
+// `@font-palette-values`, which has no FontFace-API equivalent, so
+// FontFaceInjector renders them as keyed `<style>` elements instead.
 const MAX_KEPT = 24;
 
-const registry = new Map<number, FontFace>();
+const registry = new Map<string, FontFace>();
 
-export function ensurePageFonts(ids: number[]): void {
+const keyOf = (mushafId: number, page: number) => `${mushafId}:${page}`;
+
+export function ensurePageFonts(ids: number[], edition: MushafEdition): void {
   for (const id of ids) {
-    const existing = registry.get(id);
+    const key = keyOf(edition.id, id);
+    const existing = registry.get(key);
     if (existing) {
       // Re-insert to mark most-recently-used — Map iteration order is insertion
       // order, so this keeps the current window at the end (safe from eviction).
-      registry.delete(id);
-      registry.set(id, existing);
+      registry.delete(key);
+      registry.set(key, existing);
       continue;
     }
     const face = new FontFace(
-      `quran-p${id}`,
-      `url(/fonts/v1/woff2/p${id}.woff2)`,
+      edition.fontFamily(id),
+      `url(${edition.fontUrl(id)})`,
       { display: "block" },
     );
-    registry.set(id, face);
+    registry.set(key, face);
     document.fonts.add(face);
     face.load().catch(() => {});
   }
 
   while (registry.size > MAX_KEPT) {
-    const oldestId = registry.keys().next().value;
-    if (oldestId === undefined) break;
-    const oldestFace = registry.get(oldestId);
-    registry.delete(oldestId);
+    const oldestKey = registry.keys().next().value;
+    if (oldestKey === undefined) break;
+    const oldestFace = registry.get(oldestKey);
+    registry.delete(oldestKey);
     if (oldestFace) document.fonts.delete(oldestFace);
   }
 }
