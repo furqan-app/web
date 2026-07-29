@@ -8,7 +8,7 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 
 - Ask the user which plan to implement if not specified
 - Derive the slug from the plan filename (e.g. `fix-search-debounce`)
-- **Read the plan in full: `docs/plans/<slug>.md`.** Read every addendum, especially `Constraints` and `What NOT to Do` — the newest addendum is the source of truth. Approaches a later addendum revised or reverted are dead — never re-implement them.
+- **Read the plan in full: `docs/plans/<slug>.md`.** Read every addendum, especially `Constraints` and `What NOT to Do` — the newest addendum is the source of truth. Approaches that a later addendum revised or reverted are dead — never re-implement them.
 - Move the task to **In Progress** in your project management system before starting implementation.
 
 ### 2. Load context — mandatory gate, before writing any code

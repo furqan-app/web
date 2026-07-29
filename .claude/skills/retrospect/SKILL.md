@@ -5,7 +5,7 @@ description: End-of-session retrospective. Reads conversation history, scans DEC
 
 # /retrospect
 
-Read and follow [`docs/workflow/retrospect.md`](../../docs/workflow/retrospect.md).
+Read and follow [`docs/workflow/retrospect.md`](../../../docs/workflow/retrospect.md).
 
 ---
 <!-- original content preserved below this line for reference only -->

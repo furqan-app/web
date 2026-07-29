@@ -5,7 +5,7 @@ description: Quality gate for the current branch. Spawns a review subagent (mode
 
 # /review-fq-work
 
-Read and follow [`docs/workflow/review-work.md`](../../docs/workflow/review-work.md).
+Read and follow [`docs/workflow/review-work.md`](../../../docs/workflow/review-work.md).
 
 ## Claude-specific: spawning the reviewer
 

@@ -5,7 +5,7 @@ description: Animation and interaction-polish guidance for Furqan UI work — wh
 
 # /ui-motion
 
-Read and follow [`docs/workflow/ui-motion.md`](../../docs/workflow/ui-motion.md).
+Read and follow [`docs/workflow/ui-motion.md`](../../../docs/workflow/ui-motion.md).
 
 ---
 <!-- original content preserved below this line for reference only -->

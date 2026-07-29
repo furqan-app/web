@@ -5,7 +5,7 @@ description: Open the PR that merges prod back into main after a release, so rel
 
 # /sync-main-from-prod
 
-Read and follow the **Sync Main from Prod** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+Read and follow the **Sync Main from Prod** section in [`docs/workflow/release.md`](../../../docs/workflow/release.md).
 
 ---
 <!-- original content preserved below this line for reference only -->

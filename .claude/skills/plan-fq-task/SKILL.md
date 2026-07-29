@@ -5,7 +5,7 @@ description: Socratic planning and investigation for Furqan features and bugs. P
 
 # /plan-fq-task
 
-Read and follow [`docs/workflow/plan-task.md`](../../docs/workflow/plan-task.md).
+Read and follow [`docs/workflow/plan-task.md`](../../../docs/workflow/plan-task.md).
 
 After completing the ADR check (step 4 in the workflow doc), do these Claude-specific steps before writing the plan:
 

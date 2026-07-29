@@ -14,7 +14,7 @@
       "id": "trelloApiKey",
       "type": "promptString",
       "description": "Trello API Key — get from https://trello.com/power-ups/admin",
-      "password": false
+      "password": true
     },
     {
       "id": "trelloToken",

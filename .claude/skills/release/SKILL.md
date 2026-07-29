@@ -5,7 +5,7 @@ description: Drive the full release process from cut to prod to main-sync in one
 
 # /release <major|minor|patch>
 
-Read and follow the **Full Release Orchestration** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+Read and follow the **Full Release Orchestration** section in [`docs/workflow/release.md`](../../../docs/workflow/release.md).
 
 ---
 <!-- original content preserved below this line for reference only -->

@@ -5,7 +5,7 @@ description: The only sanctioned way to commit and push in this project. Syncs w
 
 # /ship-fq-task
 
-Read and follow [`docs/workflow/ship-task.md`](../../docs/workflow/ship-task.md).
+Read and follow [`docs/workflow/ship-task.md`](../../../docs/workflow/ship-task.md).
 
 ## Claude-specific additions
 

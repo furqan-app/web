@@ -5,7 +5,7 @@ description: Context-aware implementation of a planned Furqan task. Loads DECISI
 
 # /start-fq-task
 
-Read and follow [`docs/workflow/start-task.md`](../../docs/workflow/start-task.md).
+Read and follow [`docs/workflow/start-task.md`](../../../docs/workflow/start-task.md).
 
 ## Claude-specific additions
 

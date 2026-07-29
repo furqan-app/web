@@ -5,7 +5,7 @@ description: Gate for destructive or hard-to-reverse git commands in this projec
 
 # /confirm-dangerous-git
 
-Read and follow [`docs/workflow/confirm-dangerous-git.md`](../../docs/workflow/confirm-dangerous-git.md).
+Read and follow [`docs/workflow/confirm-dangerous-git.md`](../../../docs/workflow/confirm-dangerous-git.md).
 
 ---
 <!-- original content preserved below this line for reference only -->

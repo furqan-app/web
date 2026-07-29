@@ -5,7 +5,7 @@ description: Cut a new release branch from main — bump the version, tag it, an
 
 # /cut-release <major|minor|patch>
 
-Read and follow the **Cut Release** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+Read and follow the **Cut Release** section in [`docs/workflow/release.md`](../../../docs/workflow/release.md).
 
 ## Claude-specific: Trello integration (step 8)
 

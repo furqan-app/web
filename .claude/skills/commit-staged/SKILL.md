@@ -5,4 +5,4 @@ description: Generate a structured commit message from staged changes. Run befor
 
 # commit-staged
 
-Read and follow [`docs/workflow/commit-message.md`](../../docs/workflow/commit-message.md).
+Read and follow [`docs/workflow/commit-message.md`](../../../docs/workflow/commit-message.md).

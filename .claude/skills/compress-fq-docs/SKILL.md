@@ -12,7 +12,7 @@ description: >
 
 # compress-fq-docs
 
-Read and follow [`docs/workflow/compress-docs.md`](../../docs/workflow/compress-docs.md).
+Read and follow [`docs/workflow/compress-docs.md`](../../../docs/workflow/compress-docs.md).
 
 ---
 <!-- original content preserved below this line for reference only -->

@@ -5,7 +5,7 @@ description: Open the PR that promotes a cut release branch into prod. Trigger v
 
 # /promote-release <version>
 
-Read and follow the **Promote Release** section in [`docs/workflow/release.md`](../../docs/workflow/release.md).
+Read and follow the **Promote Release** section in [`docs/workflow/release.md`](../../../docs/workflow/release.md).
 
 ---
 <!-- original content preserved below this line for reference only -->
