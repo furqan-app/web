@@ -2,7 +2,7 @@
 
 **Written:** 2026-07-28, at the end of the dark-theme session
 **Predecessor:** `docs/plans/dark-theme-mushaf-unification.md` (implemented, committed as `71e1540`)
-**Status:** brief only — the next session runs `/plan-fq-task` and writes its own plan
+**Status:** CONSUMED — implemented by Trello #154, see `docs/plans/theme-depth-unification.md`
 
 ## Goal
 
@@ -119,8 +119,9 @@ gold to need their own amplitudes — their paper is near-white, so the *directi
 node scripts/dev/reader-shot.mjs <width> <height> <theme> <out.png> [extra.css] [url]
 ```
 
-Committed in `71e1540`. Drives system Chrome headless at any viewport and prints the measured card,
-stack, arrow and bar rectangles as JSON.
+Committed in `d0f0759` (not `71e1540` as an earlier draft of this file stated — that commit is the
+dark theme work; the script and this brief landed in the follow-up commit). Drives system Chrome
+headless at any viewport and prints the measured card, stack, arrow and bar rectangles as JSON.
 
 - **The MCP/headed browser clamps at ~1600px**, so the entire tablet band (1024–1366) is
   unreachable in it. That is why this script exists. Playwright's own browsers are not installed

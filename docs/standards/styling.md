@@ -76,13 +76,23 @@ alias them to their own `--accent-foreground`/`--accent` rather than inventing a
 modal/drawer scrim color, consumed as `bg-overlay/80` — an HSL triplet (no baked-in alpha) so
 the Tailwind opacity-slash syntax works, same as every other token here.
 
-**One documented exception to "every theme defines every token":** the reader's dark-surface depth
-family (`--mushaf-lit-*`, `--mushaf-rim-*`, `--mushaf-sheet-*`, `--mushaf-crease*`,
-`--reader-chrome-*`) is defined in the two dark blocks only. On a `(7,15,23)` background depth has
-to come from graded light rather than shadow; light and gold carry it with ordinary shadows and
-have no use for a light ramp. Do not "fix" this by aliasing them into the other themes — see
-[ADR 0032](../architecture/adr/0032-dark-surface-depth-from-light.md) and the Dark Surface Depth
-entry in DECISIONS.md.
+The reader's depth family (`--mushaf-rim-*`, `--mushaf-sheet-*`, `--mushaf-crease*`,
+`--mushaf-page-cast`, `--reader-chrome-*`) follows the same "every theme defines every token" rule as
+the rest, and the reader's depth **rules** are declared once, theme-agnostically — a theme supplies
+only values. A missing token there does not fall back to something sensible; it flattens that
+theme's page. Do not reintroduce a theme-scoped copy of a depth rule to serve one theme; add or
+retune that theme's tokens instead.
+
+**The page face carries no added light in any theme.** It is a flat `--mushaf-paper` fill; depth
+comes from the page's edges only — rim, sheet stack, binding crease, and a cast shadow where there
+is a desk to catch it. Shading (a darkening pass) is allowed; lighting the face is not.
+
+Values still differ where the medium differs. `--reader-chrome-shadow` and `--mushaf-page-cast` are
+`none`/transparent in dark, because on a `(7,15,23)` background a shadow produces no visible pixels,
+and real shadows in light/gold. Dark instead gets its page-to-desk separation from a **uniformly**
+lighter `--mushaf-paper` — a flat colour step, not a gradient. These are value differences, not
+structural ones. See [ADR 0032](../architecture/adr/0032-dark-surface-depth-from-light.md) (and its
+2026-07-29 supersede) and the Reader Surface Depth entry in DECISIONS.md.
 
 ### Adding a new theme
 
