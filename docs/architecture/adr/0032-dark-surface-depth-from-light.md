@@ -1,7 +1,7 @@
 # ADR 0032: Depth on near-black surfaces comes from light, not shadow
 
 **Date:** 2026-07-27
-**Status:** Accepted
+**Status:** Accepted — mechanism superseded 2026-07-29 (twice); see "Supersede" below
 
 ## Context
 
@@ -66,3 +66,41 @@ removed outright, making surround equal to the far background by intent; a ladde
 they differ would have failed a design the user had chosen. The invariant is the **ordering**
 (lit face > surround ≥ far background, creases below both) plus verification by sampled pixels.
 Specific step values belong to a specific design and live in that design's plan, not here.
+
+## Supersede (2026-07-29) — the mechanism is shared by all themes; then dropped entirely
+
+Two changes landed here in sequence. Both are recorded because the second only makes sense given the
+first.
+
+**First**, this ADR's original consequence bullet — *"Dark-theme depth no longer shares a recipe with
+light/gold, which still use ordinary shadows; the two must be tuned separately"* — was **superseded**.
+Light and gold were given the same graded-light ramp as dark, driven from one shared token contract,
+with the reader's depth rules declared once and themes supplying only values. Keeping the recipes
+separate was what had produced six copies of one idea and two regressions that only review caught.
+
+**Second**, the graded ramp was removed from *every* theme and every width band, by user decision:
+the lit page face read as an artificial glow rather than as paper. The page is now a flat
+`--mushaf-paper` fill in all three themes. The `--mushaf-lit-*` tokens and `--fq-lit-x` are deleted.
+
+### What the reader does now
+
+Depth is carried entirely by the page's **edges** — rim, sheet stack, binding crease, and a cast
+shadow where there is a desk to catch it — plus the flat page's own separation from its desk.
+Shading (a darkening pass, e.g. mobile's corner dip and inner vignette) is retained; lighting the
+page face is not.
+
+### What still stands from the original decision
+
+- **The `(7,15,23)` measurement.** Drop shadows remain unusable on dark surfaces at or below roughly
+  10% lightness; they produce no visible pixels. `--mushaf-page-cast` and `--reader-chrome-shadow`
+  are therefore transparent/`none` in dark and real in light/gold.
+- **Dark still cannot reach for shadow to separate its page.** With the ramp gone, dark's page fell
+  to 4 points above its desk at desktop and 2.7 at tablet, and the book dissolved into the surround.
+  The fix was a **uniform** lift of `--mushaf-paper` (`#0C131A` → `#141d27`), restoring 13–14 points.
+  A flat colour step, not a gradient — which is why it does not reopen the removed lighting.
+- **The ordering invariant**: page face > surround ≥ far background, creases below both.
+- **Verification by sampled pixels**, never by reading the cascade — now applying to every theme.
+  Contrast ratio is not sufficient on its own: a page can pass AAA and still be fatiguing if its
+  chroma is too high. Measure chroma alongside contrast when changing a reading surface.
+
+Implementation and the full before/after pixel tables: `docs/plans/theme-depth-unification.md`.
