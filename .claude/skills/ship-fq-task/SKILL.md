@@ -5,11 +5,52 @@ description: The only sanctioned way to commit and push in this project. Syncs w
 
 # /ship-fq-task
 
+Read and follow [`docs/workflow/ship-task.md`](../../../docs/workflow/ship-task.md).
+
+## Claude-specific additions
+
+### Step 6 — Trello integration
+
+When the workflow doc says "update the task ticket":
+- `mcp__trello__update_card_details`: append the PR URL and a short summary to the card description
+- `mcp__trello__move_card`: move the card to **In Review**
+
+### Step 7 — Clean up the worktree (mandatory — always run, even if step 6 was skipped)
+
+- Read the current branch name (`git branch --show-current`)
+- Read `~/.claude/furqan-worktrees.json` — if the file doesn't exist or has no entry whose `branch` matches the current branch, skip this step entirely
+- Derive the **absolute** worktree path (`<abs>`) by resolving `<worktreePath>` from the registry against the main repo root (`git worktree list | head -1 | awk '{print $1}'`), not the relative `../furqan-<slug>` form.
+- If an entry is found:
+  1. Kill the dev server. The recorded port can be stale — kill by both the recorded port and any process rooted in the worktree:
+     ```bash
+     lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
+     lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+     sleep 1
+     ss -tlnp | grep :<port> && echo "WARNING: port <port> still in use" || true
+     ```
+     Use `-9` (SIGKILL), not `-TERM`. `xargs -r` skips the kill when nothing matched.
+  2. Remove the worktree:
+     ```bash
+     git worktree remove <abs> --force || true
+     git worktree prune
+     ```
+  3. Delete the folder in a **separate** Bash call:
+     ```bash
+     rm -rf <abs>
+     ```
+  4. Verify the folder is gone in a **separate** Bash call (never combine with the `rm -rf` call):
+     ```bash
+     ls <abs> 2>/dev/null && echo "WARNING: folder still exists at <abs>" || echo "Worktree removed successfully"
+     ```
+     If the WARNING fires, run `rm -rf <abs>` again and re-verify.
+  5. Remove the entry from `~/.claude/furqan-worktrees.json` and write the updated file back (preserve all other entries).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Closes out a finished task: sync, branch, commit, PR, ticket update.
 
-**This is the only path through which `git commit` and `git push` may run in this project.** If the user asks for a commit or push outside of this flow, do not run it directly — explain that commits/pushes go through `/ship-fq-task` and offer to run it.
-
-## Preconditions
+**This is the only path through which `git commit` and `git push` may run in this project.**
 
 - There must be a Trello ticket for this work (created during `/plan-fq-task`, step 5). If none exists, stop and create one first — do not proceed without a ticket.
 - There must be actual changes to ship (`git status` shows modifications).

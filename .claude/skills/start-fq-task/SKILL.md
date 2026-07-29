@@ -5,9 +5,83 @@ description: Context-aware implementation of a planned Furqan task. Loads DECISI
 
 # /start-fq-task
 
-Context-aware implementation of a planned task.
+Read and follow [`docs/workflow/start-task.md`](../../../docs/workflow/start-task.md).
 
-## What this skill does
+## Claude-specific additions
+
+### Step 1 — Trello integration
+
+When the workflow doc says "move the task to In Progress in your project management system":
+- `mcp__trello__move_card` the card to **In Progress**
+- Assign the card to yourself: read `TRELLO_API_KEY`/`TRELLO_TOKEN` from `.mcp.json` (`mcpServers.trello.env`) and call `GET https://api.trello.com/1/members/me?key=<key>&token=<token>&fields=id,fullName,username` to resolve the authenticated member. Then `mcp__trello__assign_member_to_card` with that member's `id`. Never print or log the key/token values themselves. If the request fails (missing `.mcp.json`, network error), skip silently.
+
+### Step 1b — Worktree setup (runs before step 2 in the workflow doc)
+
+**Check for an existing worktree first:**
+- Run `git worktree list` and look for a path ending in `furqan-<slug>`
+- Resolve the worktree's **absolute path** from that same `git worktree list` output (first column) and use it for every file read/write and command — the `../furqan-<slug>` forms are naming conventions, not literal paths.
+- If found: read `~/.claude/furqan-worktrees.json` and find the entry for this slug.
+  - If the entry has a `port`: print `Worktree running at http://localhost:<port>` and skip to step 2 in the workflow doc.
+  - If the entry has no `port`: skip to "Assign a port" below.
+
+**If no existing worktree:**
+1. Derive the branch name from the Trello card: `<type>/<card-short-id>-<short-description>`
+2. Create the worktree:
+   ```bash
+   # If branch does NOT exist yet:
+   git worktree add ../furqan-<slug> -b <branch-name>
+
+   # If branch already exists:
+   git worktree add ../furqan-<slug> <branch-name>
+   ```
+3. Symlink shared dependencies:
+   ```bash
+   ln -s $(pwd)/node_modules ../furqan-<slug>/node_modules
+   ln -s $(pwd)/app/generated ../furqan-<slug>/app/generated
+   ```
+
+**Determine whether a dev server is needed** — scan the plan's "Files to Change" section:
+- If **every** listed path is under `docs/` or `.claude/` → docs/tooling task; skip dev server steps.
+- If **any** path is under `app/`, `components/`, `lib/`, `prisma/`, or other app directories → proceed.
+
+**Symlink `.env.local` and `.mcp.json` if they exist:**
+```bash
+ln -s $(pwd)/.env.local ../furqan-<slug>/.env.local   # warn if missing
+ln -s $(pwd)/.mcp.json ../furqan-<slug>/.mcp.json     # needed for MCP tools in the worktree
+```
+
+**Assign a port:** read `~/.claude/furqan-worktrees.json`, collect all `.port` values, find the lowest integer ≥ 3001 not already in use.
+
+**Record the entry in `~/.claude/furqan-worktrees.json`:**
+```json
+{ "<slug>": { "worktreePath": "../furqan-<slug>", "port": <port>, "branch": "<branch-name>" } }
+```
+Merge with existing entries. If `/plan-fq-task` already wrote an entry without a `port`, update it in place.
+
+**Ensure the port is free before starting:**
+```bash
+lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
+sleep 1
+ss -tlnp | grep :<port> && echo "WARNING: port <port> still in use" || true
+```
+
+**Start the dev server:**
+```bash
+cd ../furqan-<slug> && PORT=<port> npm run dev > /tmp/furqan-<slug>-dev.log 2>&1 &
+```
+
+Print: `Task dev server: http://localhost:<port>`
+
+### Context paths (step 2 in the workflow doc)
+
+When loading context, use the worktree path (`<abs>/docs/...`) rather than the main repo's `docs/`:
+- `<abs>/docs/architecture/DECISIONS.md`
+- `<abs>/docs/architecture/COMPONENTS.md`
+
+---
+<!-- original content preserved below this line for reference only -->
+
+## What this skill does (legacy)
 
 Loads the right context (decisions + standards + plan), then implements the task. Ends by checking for new decisions and recording them.
 
