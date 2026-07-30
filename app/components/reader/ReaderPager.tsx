@@ -433,7 +433,7 @@ export function ReaderPager({
   return (
     <>
       <FontFaceInjector pageIds={allPageIds} baseFontIds={baseFontIds} />
-      <RecitationPageSync firstVerseKey={firstVerseKey} />
+      <RecitationPageSync firstVerseKey={firstVerseKey} pageNumber={pageNumber} />
       <RecitationFollow anchor={pageNumber} isDouble={isDouble} onFollow={followTo} />
       <ReaderPageSync anchor={pageNumber} isDouble={isDouble} />
       <MushafSwitchSync

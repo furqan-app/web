@@ -244,9 +244,16 @@
     "stopPointHizb": "End of hizb",
     "stopPointJuz": "End of Juz'",
     "stopPointNone": "No stop",
+    "stopPointCustom": "Custom point",
     "repeatSectionLabel": "Repeats",
     "reciterPlaceholder": "Choose a reciter",
     "reciterSearchPlaceholder": "Search reciters…",
-    "reciterEmpty": "No reciter found."
+    "reciterEmpty": "No reciter found.",
+    "rangeTo": "Stop at point",
+    "rangeTypePage": "Page",
+    "rangeTypeVerse": "Verse",
+    "surahPlaceholder": "Choose a surah",
+    "surahSearchPlaceholder": "Search surahs…",
+    "surahEmpty": "No surah found."
   }
 }
