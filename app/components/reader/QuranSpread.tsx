@@ -11,7 +11,14 @@ import { PageWords } from "@/app/hooks/get-page-words";
 
 type NavHrefs = { prevHref: string; nextHref: string };
 
-type PagePayload = PageWords & { pageId: number };
+// `pageId` is always known (the pager derives both pair members from its anchor
+// without fetching anything); the content is null until that page's JSON lands,
+// which is enough for QuranSafha to render its loading state. See ADR 0034.
+type PagePayload = {
+  pageId: number;
+  lines: PageWords["lines"] | null;
+  pageMetadata: PageWords["pageMetadata"] | null;
+};
 
 type QuranSpreadProps = {
   currentPageId: number;
