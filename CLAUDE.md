@@ -1,46 +1,27 @@
 # CLAUDE.md
 
-## MANDATORY WORKFLOW — NO EXCEPTIONS
+> All project rules, mandatory workflow, and documentation references are in [`AGENTS.md`](AGENTS.md). Read that first.
+> This file contains Claude Code-specific additions only.
 
-**NEVER edit or create any file without going through both skills in order:**
+## Claude Skills
 
-1. `/plan-fq-task` — investigate and produce a plan in `docs/plans/`
-2. `/start-fq-task` — implement from that plan
+The workflows in `docs/workflow/` are exposed as Claude Code skills. Trigger them by name:
 
-This applies to every change, no matter how small: one-liner fixes, font swaps, copy changes — everything. If you find yourself about to call Edit, Write, or a Bash command that modifies a file, stop and run `/plan-fq-task` first.
-
-**This is not limited to file edits.** It applies equally to operational, data, and infrastructure actions: running scripts (seeders, scrapers, one-off Node scripts), seeding or mutating any database, `prisma db push` / migrations, importing SQL dumps, Docker/`compose` changes, and anything that touches the environment, containers, or running services. Do not treat these as "just execution" — ask me and plan with me first, every time.
-
-When in doubt, ask. Never act unilaterally. Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
-
-**Scope note — `.claude/` tooling is exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/`, translation files, config that affects the running app, etc. Changes to Claude Code's own tooling — `.claude/skills/`, `.claude/hooks/`, `.claude/settings*.json`, `~/.claude/settings.json` — are meta/infra for the assistant, not app changes, and do not require `/plan-fq-task` → `/start-fq-task`. Still confirm with the user before making tooling changes; just don't route them through the app workflow.
-
-## Project
-
-Furqan — word-focused Qur'an reading app. Next.js 14 App Router, MySQL/Prisma, NextAuth (Google OAuth), next-intl (ar/en), Tailwind/shadcn.
-
-## Commands
-
-```bash
-npm run dev              # dev server (port 3000)
-npm run build            # production build
-npm run lint             # ESLint
-npm run prisma-studio    # DB GUI (requires .env.local)
-npm run prisma-generate  # regenerate Prisma client
-npm run extract-translations  # sync i18n keys
-```
-
-## Documentation
-
-- **Active decisions** (load before any task): `docs/architecture/DECISIONS.md`
-- **Standards** (load relevant files per task): `docs/standards/`
-  - `api-conventions.md` — route structure, response shape, auth
-  - `component-patterns.md` — server vs client, data fetching, props
-  - `database.md` — Prisma patterns, schema gotchas
-  - `i18n.md` — translation keys, direction, next-intl usage
-  - `styling.md` — Tailwind tokens, dark mode, RTL/LTR
-- **Task plans**: `docs/plans/`
-- **Skills**: `/plan-fq-task` (plan a task), `/start-fq-task` (implement a plan), `/retrospect` (end-of-session workflow retrospective), `/review-fq-work` (Opus code review of current branch)
+| Skill | Triggers |
+|---|---|
+| `/plan-fq-task` | "plan this", "investigate", starting any new task |
+| `/start-fq-task` | "implement", "build", "start the task" |
+| `/ship-fq-task` | "ship it", "I'm done", "commit and push" |
+| `/review-fq-work` | "review my work", "check the branch" |
+| `/retrospect` | end of session |
+| `/release <bump>` | full release orchestration |
+| `/cut-release <bump>` | cut a release branch |
+| `/promote-to-staging <version>` | open release → stg PR |
+| `/promote-release <version>` | open release → prod PR |
+| `/sync-main-from-prod` | sync prod back to main |
+| `/mujaz` | toggle terse-response mode on/off |
+| `/compress-fq-docs` | compress verbose docs |
+| `/confirm-dangerous-git` | gate before destructive git commands |
 
 ## MCP Server Setup (Trello)
 
@@ -49,3 +30,9 @@ Get key: https://trello.com/power-ups/admin
 Get token: `https://trello.com/1/authorize?expiration=never&name=furqan&scope=read,write&response_type=token&key=YOUR_API_KEY`
 
 If `npx` isn't found, use the absolute path from `which npx`. nvm users: set `"command"` to the full node path and pass npx as the first arg.
+
+## Hooks
+
+The mujaz (موجز, "concise") system injects terse-response rules each turn when active.
+See `docs/workflow/terse-mode.md` for the concept and Furqan vocabulary.
+Claude-specific implementation: `.claude/hooks/`.

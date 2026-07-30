@@ -1,25 +1,6 @@
----
-name: compress-fq-docs
-description: >
-  Compresses Furqan project documentation in docs/standards/ and docs/plans/ to be shorter and
-  more direct — cutting blocks, rewriting verbose sentences, and replacing long phrases with
-  simpler words. Use whenever the user says the docs are long, bloated, or verbose, or asks to
-  clean up, compress, trim, or simplify standards or plan files. Also use when a plan has
-  accumulated addenda that should be folded back into the body. Invoke proactively when adding to
-  a doc would push it past ~80 lines, or when a doc contains code blocks that merely illustrate a
-  prose rule.
----
+# Compress Docs
 
-# compress-fq-docs
-
-Read and follow [`docs/workflow/compress-docs.md`](../../../docs/workflow/compress-docs.md).
-
----
-<!-- original content preserved below this line for reference only -->
-
-Furqan docs drift toward verbosity — code blocks that illustrate rules already in prose, hedging
-language, long phrases where short ones work. Compress them to tight, direct rules without losing
-any constraint.
+Furqan docs drift toward verbosity — code blocks that illustrate rules already in prose, hedging language, long phrases where short ones work. Compress them to tight, direct rules without losing any constraint.
 
 ## The core heuristic
 
@@ -45,22 +26,14 @@ Things to always keep:
 
 Default: `docs/standards/` and `docs/plans/` — all `.md` files.
 
-For plan files, also **collapse addenda back into the plan body**: merge each addendum's
-corrections into the relevant section, then remove the addendum heading. The result should read
-as a single coherent document, not a changelog.
+For plan files, also **collapse addenda back into the plan body**: merge each addendum's corrections into the relevant section, then remove the addendum heading. The result should read as a single coherent document, not a changelog.
 
 ## Steps
 
 1. **Identify target files** — list what you'll compress and confirm if scope is ambiguous.
-
 2. **Read each file** — apply both passes section by section.
-
-3. **Rewrite in place** — edit the file. Do not leave a summary of what you cut; just cut it.
-   Preserve headings where they carry real weight. Merge a section into its parent when it has
-   1–3 bullets or sentences that naturally belong there.
-
-4. **Report** — for each file: original line count → new line count, one-line note on what was
-   trimmed most. Nothing more.
+3. **Rewrite in place** — edit the file. Do not leave a summary of what you cut; just cut it. Preserve headings where they carry real weight. Merge a section into its parent when it has 1–3 bullets or sentences that naturally belong there.
+4. **Report** — for each file: original line count → new line count, one-line note on what was trimmed most. Nothing more.
 
 ## Anti-patterns to avoid
 

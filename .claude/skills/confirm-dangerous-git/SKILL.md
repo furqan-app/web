@@ -5,6 +5,11 @@ description: Gate for destructive or hard-to-reverse git commands in this projec
 
 # /confirm-dangerous-git
 
+Read and follow [`docs/workflow/confirm-dangerous-git.md`](../../../docs/workflow/confirm-dangerous-git.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 This project used to rely on a global hook (`~/.claude/hooks/block-dangerous-git.sh`) that hard-blocked these commands everywhere on the machine. That hook has been disabled. In its place, this project-scoped skill makes Claude pause and ask before running any of the commands below, in this repo.
 
 **`git push` and `git commit` are not gated here anymore.** They may only run via `/ship-fq-task` — see that skill. If a request would otherwise land here as a plain push/commit, redirect to `/ship-fq-task` instead of asking-and-running.
