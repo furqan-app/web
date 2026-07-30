@@ -148,7 +148,12 @@ export const QuranSafha = ({
   const { quranFontScale } = useQuranFontScale();
   const { edition } = useQuranMushaf();
   const isTablet = useIsTablet();
-  const { isOverlayMode } = useNavOverlay();
+  // Touch-only flag: word click/long-press disambiguation only applies on
+  // mobile/tablet (no long-press equivalent on desktop) — using the broader
+  // isOverlayMode here would silently block desktop word-clicks once desktop
+  // focus mode is on, since desktop never fires the touch events that would
+  // otherwise open the mark modal.
+  const { isTouchOverlayMode } = useNavOverlay();
 
   const [selectedForMark, setSelectedForMark] = useState<
     WordWithVerse | VerseForMark | null
@@ -515,7 +520,7 @@ export const QuranSafha = ({
                         key={item.lineKey}
                         onWordClicked={wordClicked}
                         onWordLongPressed={wordLongPressed}
-                        isOverlayMode={isOverlayMode}
+                        isOverlayMode={isTouchOverlayMode}
                         words={lines[item.lineKey]}
                         marks={marks ?? {}}
                         suppressInlineHeaderForSurahId={item.suppressSurahId}

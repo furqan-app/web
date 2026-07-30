@@ -1,7 +1,7 @@
 import { QuranFontScale, QuranSafhaView } from "@types";
 import { RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode';
+export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'desktopFocusMode';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -12,6 +12,9 @@ type StorageValueType = {
   // boolean, still read once to migrate an existing reader's choice.
   quranMushafId: number;
   quranTajweedMode: boolean;
+  // Desktop (>=1367px) focus-mode preference (ADR 0034) — persists across
+  // navigation/sessions like quranSafhaView.
+  desktopFocusMode: boolean;
 };
 
 export const storage = {
