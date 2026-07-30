@@ -33,6 +33,12 @@ const isPageFont = (url: URL) =>
 const isPageJson = (url: URL) =>
   /^\/quran\/pages\/[0-9]+\/[0-9]+\.json$/.test(url.pathname);
 
+// Per-edition verse_key → page map (ADR 0033) — immutable, same caching as page
+// JSON. Without this, rub navigation and edition switching fall back to the
+// default edition's page numbers when offline.
+const isVersePagesJson = (url: URL) =>
+  /^\/quran\/verse-pages\/[0-9]+\.json$/.test(url.pathname);
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
@@ -54,7 +60,7 @@ const serwist = new Serwist({
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     {
-      matcher: ({ url }) => isPageJson(url),
+      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     ...defaultCache,
