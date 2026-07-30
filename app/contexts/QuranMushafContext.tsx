@@ -18,6 +18,16 @@ type QuranMushafContextType = {
   mushafId: number;
   setMushafId: (mushafId: number) => void;
   edition: MushafEdition;
+  /**
+   * False until the persisted edition has been read from localStorage.
+   *
+   * `mushafId` starts at the default so SSR and hydration agree, then flips to
+   * the stored edition on mount. Anything reacting to an edition *change* must
+   * ignore that first flip: it is hydration, not the reader picking a different
+   * mushaf. Treating it as a choice makes a deep link to page N navigate itself
+   * somewhere else (ADR 0033).
+   */
+  hydrated: boolean;
 };
 
 const QuranMushafContext = createContext<QuranMushafContextType | undefined>(
@@ -48,9 +58,11 @@ export function QuranMushafProvider({ children }: { children: ReactNode }) {
   // Starts at the default so SSR and hydration agree; the effect syncs the
   // persisted choice on mount.
   const [mushafId, setMushafIdState] = useState<number>(DEFAULT_MUSHAF_ID);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setMushafIdState(getInitialMushafId());
+    setHydrated(true);
   }, []);
 
   const handleMushafIdChange = (newMushafId: number) => {
@@ -65,6 +77,7 @@ export function QuranMushafProvider({ children }: { children: ReactNode }) {
         mushafId,
         setMushafId: handleMushafIdChange,
         edition: getMushafEdition(mushafId),
+        hydrated,
       }}
     >
       {children}

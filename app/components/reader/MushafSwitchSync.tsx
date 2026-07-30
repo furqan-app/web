@@ -27,11 +27,13 @@ type Props = {
  * Null-rendering effect leaf, mirroring RecitationPageSync/ReaderPageSync.
  */
 export function MushafSwitchSync({ anchor, firstVerseKey, onReanchor }: Props) {
-  const { mushafId } = useQuranMushaf();
+  const { mushafId, hydrated } = useQuranMushaf();
   const queryClient = useQueryClient();
 
   // The edition these refs describe. Only updated by the switch effect below.
   const trackedMushafRef = useRef(mushafId);
+  // Set once the persisted edition has been adopted without navigating.
+  const adoptedRef = useRef(false);
   // Latest first-verse seen while the edition was stable.
   const stableVerseRef = useRef<string | null>(firstVerseKey);
 
@@ -41,12 +43,26 @@ export function MushafSwitchSync({ anchor, firstVerseKey, onReanchor }: Props) {
   // to preserve. Without that ordering the new edition's page data can land
   // first, overwrite the ref, and the switch silently becomes a no-op.
   useEffect(() => {
+    if (!hydrated) return;
     if (mushafId === trackedMushafRef.current && firstVerseKey) {
       stableVerseRef.current = firstVerseKey;
     }
-  }, [firstVerseKey, mushafId]);
+  }, [firstVerseKey, mushafId, hydrated]);
 
   useEffect(() => {
+    // `mushafId` starts at the default for SSR agreement and flips to the stored
+    // edition on mount. That flip is hydration, not the reader switching mushaf,
+    // so adopt it silently — re-anchoring here would make a deep link to page N
+    // navigate itself elsewhere (entering /pages/570 in the tajweed edition
+    // resolved page 570's DEFAULT-edition first verse and jumped to 569). A URL
+    // page number is always a page of the ACTIVE edition.
+    if (!hydrated) return;
+    if (!adoptedRef.current) {
+      adoptedRef.current = true;
+      trackedMushafRef.current = mushafId;
+      return;
+    }
+
     if (mushafId === trackedMushafRef.current) return;
     trackedMushafRef.current = mushafId;
 
@@ -75,10 +91,10 @@ export function MushafSwitchSync({ anchor, firstVerseKey, onReanchor }: Props) {
     return () => {
       cancelled = true;
     };
-    // `anchor`/`onReanchor` are read at fire time; only the edition should
-    // trigger this.
+    // `anchor`/`onReanchor` are read at fire time; only the edition (and the
+    // one-time hydration adoption) should trigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mushafId, queryClient]);
+  }, [mushafId, hydrated, queryClient]);
 
   return null;
 }
