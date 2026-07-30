@@ -268,14 +268,24 @@ export function ReaderPager({
     [basePath],
   );
 
-  // Animate the strip to the neighbor slot, then swap the anchor. Shared by swipe
-  // commit and the in-spread arrows.
+  // Resolve the physical next/prev neighbor and commit to it. Shared by swipe, the
+  // in-spread arrows, and the keyboard — target resolution lives here only.
+  //
+  // `animate` gates the slide on INPUT SOURCE, not breakpoint: the slide exists to
+  // continue a drag's live transform from wherever the finger released, so only a
+  // swipe passes true. A click or keypress has no transform in flight, so replaying
+  // the gesture's release animation reads as a phantom swipe — and per ui-motion,
+  // frequent and keyboard-initiated actions should feel instant. Those callers pass
+  // false and fall into the same commitTo branch prefers-reduced-motion takes.
+  // Deliberately not gated on isLgUp: the arrows render from md, so a breakpoint
+  // gate would leave tablet arrow-taps sliding and would kill the swipe animation
+  // on a touch laptop (see docs/plans/arrow-controls-desktop.md, Addendum 1).
   const animateCommit = useCallback(
-    (goNext: boolean) => {
+    (goNext: boolean, animate = true) => {
       const strip = stripRef.current;
       const target = goNext ? nextAnchor : prevAnchor;
       isCommitting.current = true;
-      if (!strip || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (!animate || !strip || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         commitTo(target);
         return;
       }
@@ -317,22 +327,28 @@ export function ReaderPager({
   navRef.current = (targetPage: number) => {
     if (isCommitting.current) return;
     // Arrow hrefs are locale-visual; map the destination to the physical next/prev
-    // slot so the slide direction matches. Any other target just swaps instantly.
-    if (targetPage === nextAnchor) animateCommit(true);
-    else if (targetPage === prevAnchor) animateCommit(false);
+    // slot. A click never animates (animate=false) — no drag to continue.
+    if (targetPage === nextAnchor) animateCommit(true, false);
+    else if (targetPage === prevAnchor) animateCommit(false, false);
     else commitTo(targetPage);
   };
   const onArrowNavigate = useCallback((targetPage: number) => navRef.current(targetPage), []);
 
-  // Physical ArrowLeft/ArrowRight keys drive the same animateCommit as the click
-  // arrows and swipe. Direction is locale-independent: tracing computeSpreadNav +
-  // NavigationArrow's showLeft logic shows the physical-left click arrow always
-  // resolves to animateCommit(true) and physical-right to animateCommit(false), in
-  // both ar and en — the Quran's page order is fixed regardless of UI language, so
-  // no isRTL branch is needed here (see docs/plans/arrow-controls-desktop.md).
+  // Physical ArrowLeft/ArrowRight keys commit the same page step as the click
+  // arrows, instantly (animate=false). Direction is locale-independent: tracing
+  // computeSpreadNav + NavigationArrow's showLeft logic shows the physical-left
+  // click arrow always resolves to the forward step and physical-right to the
+  // backward step, in both ar and en — the Quran's page order is fixed regardless
+  // of UI language, so no isRTL branch is needed here (see
+  // docs/plans/arrow-controls-desktop.md).
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      // OS key-repeat: a held key must flip exactly one page. The 300ms slide used
+      // to rate-limit repeats via isCommitting; an instant commit clears that flag
+      // synchronously, so without this guard a held key would flip at the repeat
+      // rate (~30/s), each one a flushSync + replaceState + two prefetches.
+      if (e.repeat) return;
       if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
@@ -345,7 +361,7 @@ export function ReaderPager({
         return;
       }
       if (isCommitting.current) return;
-      animateCommit(e.key === "ArrowLeft");
+      animateCommit(e.key === "ArrowLeft", false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
