@@ -1,4 +1,5 @@
 import { ChapterAudio, Reciter } from "@/app/types/recitation";
+import { SurahResult } from "@/app/types";
 
 // Local envelope shape (mirrors app/api/response.ts's ApiResponse<T>) — not
 // imported from there directly since that module is a route helper that
@@ -38,4 +39,23 @@ export const fetchStopPoint = async (
     `/api/quran/verses/${encodeURIComponent(verseKey)}/stop-point?scope=${scope}&mushaf=${mushafId}`,
   );
   return unwrap<{ verseKey: string; chapterId: number }>(res);
+};
+
+// A page is only meaningful relative to a mushaf edition (ADR 0033) — pageId
+// is resolved against mushafId's own pagination, not the default edition's.
+export const fetchPageBounds = async (
+  pageId: number,
+  mushafId: number,
+): Promise<{ lastVerseKey: string; lastChapterId: number }> => {
+  const res = await fetch(`/api/quran/pages/${pageId}/bounds?mushaf=${mushafId}`);
+  return unwrap<{ lastVerseKey: string; lastChapterId: number }>(res);
+};
+
+// Static committed file (Static Generation Strategy decision), not an API
+// route — fetched directly, no jsonResponse envelope to unwrap. Used by the
+// "custom" stopPoint's verse-type "to" picker for surah names + verses_count
+// caps.
+export const fetchChapters = async (): Promise<SurahResult[]> => {
+  const res = await fetch("/quran/chapters.json");
+  return res.json();
 };
