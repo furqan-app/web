@@ -7,7 +7,7 @@ import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "@/app/providers/QueryProvider";
 import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
 import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
-import { QuranTajweedProvider } from "@/app/contexts/QuranTajweedContext";
+import { QuranMushafProvider } from "@/app/contexts/QuranMushafContext";
 import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
 import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
@@ -47,7 +47,7 @@ export default async function LocaleLayout({
       <NextIntlClientProvider messages={messages}>
         <SessionProvider>
           <QuranFontScaleProvider>
-            <QuranTajweedProvider>
+            <QuranMushafProvider>
               <QuranSafhaViewProvider>
                 <RecitationProvider>
                   <QueryProvider>
@@ -65,7 +65,7 @@ export default async function LocaleLayout({
                   </QueryProvider>
                 </RecitationProvider>
               </QuranSafhaViewProvider>
-            </QuranTajweedProvider>
+            </QuranMushafProvider>
           </QuranFontScaleProvider>
         </SessionProvider>
       </NextIntlClientProvider>
