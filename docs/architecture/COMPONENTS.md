@@ -5,14 +5,14 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-07-27
+Last updated: 2026-07-30
 
 ---
 
 ## Zone: nav
 
 ```
-Nav                          — top bar, always visible; responsive (mobile/desktop layouts)
+Nav                          — top bar; responsive (mobile/desktop layouts); on /pages/ routes participates in NavOverlayContext's overlay (mobile/tablet tap-to-toggle, desktop ≥1367px explicit focus-mode toggle button + hover-reveal hotzone)
   FurqanLogo                 — brand mark (SVG, links to home)
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
@@ -132,7 +132,7 @@ QuranFontScaleContext        — font scale (1–10), persisted to localStorage
 QuranSafhaViewContext        — single/double page view mode, persisted to localStorage (default "double"); see ADR 0013
 QuranMushafContext           — active mushaf edition id (default 2 = QCF V1; 19 = QCF V4 Tajweed), persisted to localStorage as `quranMushafId`; migrates the superseded `quranTajweedMode` boolean on first load. Exposes `edition` from the app/utils/mushaf-editions.ts registry, which pairs an edition's fonts, page JSON and word placement as one unit — never selectable individually. See ADR 0033
 SidebarContext               — sidebar open/setOpen state; bridges Nav (locale layout) → Sidebar (pages layout)
-NavOverlayContext            — tablet-only (md–lg-1) nav overlay state on /pages/ routes: overlayVisible, toggleOverlay (tap-to-toggle + 3s auto-hide), isOverlayMode; consumed by Nav (fixed+slide) and ReaderPager (strip onClick trigger)
+NavOverlayContext            — nav/recitation-bar overlay state on /pages/ routes across three bands: mobile + tablet (tap-to-toggle, no auto-hide) and desktop ≥1367px (explicit `desktopFocusEnabled` toggle, persisted to localStorage as `desktopFocusMode`, + hover-reveal). Exposes overlayVisible, isOverlayMode (broad — true for any of the three bands; drives Nav/bar CSS), isTouchOverlayMode (narrow — mobile/tablet only, the pre-desktop meaning; use for touch-gesture disambiguation like QuranWord's click-vs-long-press, never isOverlayMode there — ADR 0034), isDesktopUp, desktopFocusEnabled, toggleOverlay (tap; internally guarded to `isMobile || isTablet` regardless of isOverlayMode), toggleDesktopFocus (button), showOverlay/hideOverlay (hover, desktop-only, also route-gated). Consumed by Nav (fixed+slide, toggle button, hover hotzone + mouseleave), ReaderPager (strip onClick trigger), RecitationPlayerBar + PlansWidget (synced show/hide), QuranSafha (isTouchOverlayMode, threaded to QuranWord/QuranLine)
 ReaderPageContext            — the reader's currently-visible mushaf page(s) (visiblePages: number[] | null), published by ReaderPageSync (mounted in ReaderPager) and consumed by PlansWidget for its "in range" highlight; deliberately separate from RecitationContext (generic reader state, not recitation state)
 RecitationContext            — recitation playback (ADR 0021, cross-chapter chaining added in Addendum 2026-07-16): owns the single <audio> element (mounted once, above the reader route tree so it survives page auto-advance and background playback), settings (reciter/stopPoint/repeat counts/speed/pause, persisted to localStorage), the timeupdate handler that drives both word-level highlighting (direct DOM ref registry, not React state — timeupdate fires ~4x/sec) and page auto-advance (router.push when the recited verse's page falls outside the currently-visible page set), and an `ended` handler that auto-loads the next chapter's audio when the resolved stopPoint (page/rub/hizb/juz/none, all of which may span a later chapter) hasn't been reached yet, or stops at 114:6/manual stop otherwise. Proxies QDC via app/utils/recitation-api.ts (app/api/quran/recitations/reciters, app/api/quran/recitations/[reciterId]/chapters/[chapterId], app/api/quran/chapters/[chapterId]/verse-pages) and hits the DB-only app/api/quran/verses/[verseKey]/stop-point (no QDC) to resolve page/rub/hizb/juz stop targets — see docs/architecture/adr/0021-recitation-playback.md
 QueryProvider                — React Query client provider (wraps everything)
