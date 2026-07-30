@@ -430,6 +430,17 @@ payload; windowing removes the mass mount.
   flushes passive effects synchronously, so an inline follow runs mid-commit (guarded out, never
   retries → never returns) and nests a flush. See ADR 0028 and the plan.
 - The window unit is breakpoint-dependent (page vs spread) — do not hardcode single-page.
+- The commit **slide** belongs to the swipe gesture alone. It exists to continue a drag's live
+  transform from where the finger released, so `animateCommit` animates only when its `animate` arg
+  is true (swipe); the in-spread arrows and the keyboard pass false and commit instantly via
+  `commitTo`. Do not re-unify the three inputs onto the animated path — a click or keypress has no
+  transform in flight, so the slide reads as a phantom swipe, and the `ui-motion` skill rules out
+  animating keyboard-initiated and high-frequency actions outright. Gate this on **input source,
+  never on a breakpoint**: the arrows render from `md`, so an `isLgUp` gate leaves tablet arrow-taps
+  sliding and kills swipe motion on a touch laptop. Because an instant commit clears `isCommitting`
+  synchronously, the keyboard path also needs its own `e.repeat` guard — the slide's duration used to
+  be the only thing rate-limiting a held arrow key. See `docs/plans/arrow-controls-desktop.md`
+  Addendum 1.
 - Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
   spread (ADR 0013) against the pager/window model.
 
