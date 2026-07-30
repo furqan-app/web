@@ -9,7 +9,8 @@ import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
-import { useQuranTajweed } from "@contexts/QuranTajweedContext";
+import { useQuranMushaf } from "@contexts/QuranMushafContext";
+import { DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID } from "@utils/mushaf-editions";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export const SettingsSidebar = () => {
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { isStandalone, cached, total } = usePwaPrecache();
-  const { tajweedMode, setTajweedMode } = useQuranTajweed();
+  const { mushafId, setMushafId } = useQuranMushaf();
   // On tablet the safha auto-fits the font to the page, so the manual font-size
   // control does nothing — hide it there (still shown on desktop lg+).
   const isTablet = useIsTablet();
@@ -119,8 +120,10 @@ export const SettingsSidebar = () => {
               </label>
               <Switch
                 id="tajweed-mode-switch"
-                checked={tajweedMode}
-                onCheckedChange={setTajweedMode}
+                checked={mushafId === TAJWEED_MUSHAF_ID}
+                onCheckedChange={(on) =>
+                  setMushafId(on ? TAJWEED_MUSHAF_ID : DEFAULT_MUSHAF_ID)
+                }
               />
             </div>
           </div>

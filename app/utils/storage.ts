@@ -1,13 +1,16 @@
 import { QuranFontScale, QuranSafhaView } from "@types";
 import { RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView' | 'recitationSettings' | 'quranTajweedMode';
+export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
   quranFontScale: QuranFontScale;
   quranSafhaView: QuranSafhaView;
   recitationSettings: RecitationSettings;
+  // Active mushaf edition (ADR 0033). `quranTajweedMode` is the superseded
+  // boolean, still read once to migrate an existing reader's choice.
+  quranMushafId: number;
   quranTajweedMode: boolean;
 };
 

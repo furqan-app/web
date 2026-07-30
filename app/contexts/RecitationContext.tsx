@@ -13,12 +13,13 @@ import { useLocale } from "next-intl";
 import { storage } from "@/app/utils/storage";
 import {
   fetchChapterAudio,
-  fetchChapterVersePages,
   fetchChapters,
   fetchPageBounds,
   fetchReciters,
   fetchStopPoint,
 } from "@/app/utils/recitation-api";
+import { fetchVersePages } from "@/app/hooks/use-verse-pages";
+import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { SurahResult } from "@/app/types";
 import {
   decideChapterEnd,
@@ -61,6 +62,7 @@ async function resolveStopTarget(
   stopPoint: StopPoint,
   chapterAudioPromise: Promise<{ verseTimings: VerseTiming[] }>,
   chapterId: number,
+  mushafId: number,
   rangeTo: RangePoint | null,
 ): Promise<{ verseKey: string; chapterId: number }> {
   if (stopPoint === "none") {
@@ -82,7 +84,7 @@ async function resolveStopTarget(
     const target =
       rangeTo.type === "verse"
         ? { verseKey: `${rangeTo.surah}:${rangeTo.ayah}`, chapterId: rangeTo.surah }
-        : await fetchPageBounds(rangeTo.page).then((bounds) => ({
+        : await fetchPageBounds(rangeTo.page, mushafId).then((bounds) => ({
             verseKey: bounds.lastVerseKey,
             chapterId: bounds.lastChapterId,
           }));
@@ -99,7 +101,7 @@ async function resolveStopTarget(
 
     return target;
   }
-  return fetchStopPoint(verseKey, stopPoint);
+  return fetchStopPoint(verseKey, stopPoint, mushafId);
 }
 
 type RecitationContextType = {
@@ -149,6 +151,8 @@ function getInitialSettings(): RecitationSettings {
 export function RecitationProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
 
+  const { mushafId } = useQuranMushaf();
+
   const [settings, setSettings] = useState<RecitationSettings>(DEFAULT_RECITATION_SETTINGS);
   const [reciters, setReciters] = useState<Reciter[]>([]);
   const [chapters, setChapters] = useState<SurahResult[]>([]);
@@ -163,6 +167,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const verseTimingsRef = useRef<VerseTiming[]>([]);
   const versePagesRef = useRef<Record<string, number>>({});
+  // Keyed by mushaf edition, not chapter: the map is whole-mushaf and a page
+  // number only means something relative to an edition (ADR 0033).
   const versePagesCacheRef = useRef<Map<number, Record<string, number>>>(new Map());
   const startVerseKeyRef = useRef<string | null>(null);
   const stopVerseKeyRef = useRef<string | null>(null);
@@ -251,13 +257,18 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     clearHighlight();
   }, [clearHighlight]);
 
-  const getVersePages = useCallback(async (chapterId: number) => {
-    const cached = versePagesCacheRef.current.get(chapterId);
+  // verse_key → page for the ACTIVE edition. Recitation follow navigates to the
+  // page it reports, so resolving against the default edition sent the reader to
+  // another edition's page mid-playback — e.g. reciting tajweed page 586 and
+  // reaching Abasa's last verses jumped back to 585, where the default edition
+  // puts them. 56 verses differ between the shipped editions (ADR 0033).
+  const getVersePages = useCallback(async () => {
+    const cached = versePagesCacheRef.current.get(mushafId);
     if (cached) return cached;
-    const versePages = await fetchChapterVersePages(chapterId);
-    versePagesCacheRef.current.set(chapterId, versePages);
+    const versePages = await fetchVersePages(mushafId);
+    versePagesCacheRef.current.set(mushafId, versePages);
     return versePages;
-  }, []);
+  }, [mushafId]);
 
   const play = useCallback(
     async (verseKey: string) => {
@@ -275,12 +286,13 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         const chapterAudioPromise = fetchChapterAudio(reciterId, chapterId);
         const [chapterAudio, versePages, stopTarget] = await Promise.all([
           chapterAudioPromise,
-          getVersePages(chapterId),
+          getVersePages(),
           resolveStopTarget(
             verseKey,
             settings.stopPoint,
             chapterAudioPromise,
             chapterId,
+            mushafId,
             settings.rangeTo,
           ),
         ]);
@@ -314,7 +326,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         setStatus("idle");
       }
     },
-    [settings, reciters, getVersePages, clearHighlight],
+    [settings, reciters, getVersePages, clearHighlight, mushafId],
   );
 
   const togglePlayPause = useCallback(() => {
@@ -354,6 +366,26 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   // owns navigation, so it — not this context — keeps that page on screen; here we
   // only report the page. versePagesRef is populated for the loaded chapter by
   // loadChapter, so the lookup resolves for every verse of the playing chapter.
+  // Re-resolve the recited page when the edition changes mid-playback: the map
+  // loaded at chapter start belongs to the previous edition, and the follow
+  // behaviour would otherwise keep steering to that edition's pages.
+  useEffect(() => {
+    const verseKey = currentVerseKeyRef.current;
+    if (!verseKey) return;
+    let cancelled = false;
+    getVersePages()
+      .then((versePages) => {
+        if (cancelled) return;
+        versePagesRef.current = versePages;
+        const page = versePages[verseKey];
+        if (page != null) setRecitedPage(page);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [mushafId, getVersePages]);
+
   const updateRecitedPage = useCallback((verseKey: string) => {
     const pageNumber = versePagesRef.current[verseKey];
     if (pageNumber != null) setRecitedPage(pageNumber);
@@ -374,7 +406,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       const [chapterAudio, versePages] = await Promise.all([
         fetchChapterAudio(reciterId, chapterId),
-        getVersePages(chapterId),
+        getVersePages(),
       ]);
       const targetVerseKey = seekVerseKey ?? chapterAudio.verseTimings[0]?.verseKey ?? null;
       const targetTiming = targetVerseKey
@@ -605,6 +637,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         settings.stopPoint,
         Promise.resolve({ verseTimings: verseTimingsRef.current }),
         currentChapterIdRef.current ?? parseChapterIdFromVerseKey(referenceVerseKey),
+        mushafId,
         settings.rangeTo,
       );
       if (!cancelled) {
@@ -615,8 +648,10 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+    // Also re-runs on mushafId: an "end of page" stop belongs to one edition, so
+    // switching mushaf mid-playback must recompute where the range ends.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.stopPoint, settings.rangeTo]);
+  }, [settings.stopPoint, mushafId, settings.rangeTo]);
 
   // Reciter changed mid-session — reload the current chapter's audio for the
   // new reciter and resume at the same verse position.

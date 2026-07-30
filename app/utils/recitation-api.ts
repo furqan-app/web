@@ -27,27 +27,27 @@ export const fetchChapterAudio = async (
   return unwrap<ChapterAudio>(res);
 };
 
-export const fetchChapterVersePages = async (
-  chapterId: number,
-): Promise<Record<string, number>> => {
-  const res = await fetch(`/api/quran/chapters/${chapterId}/verse-pages`);
-  return unwrap<Record<string, number>>(res);
-};
-
 export const fetchStopPoint = async (
   verseKey: string,
   scope: "page" | "rub" | "hizb" | "juz",
+  // Only meaningful for scope="page" — a page belongs to one mushaf edition,
+  // while rub/hizb/juz are divisions of the text and identical in all of them
+  // (ADR 0033). Harmless to send for the others.
+  mushafId: number,
 ): Promise<{ verseKey: string; chapterId: number }> => {
   const res = await fetch(
-    `/api/quran/verses/${encodeURIComponent(verseKey)}/stop-point?scope=${scope}`,
+    `/api/quran/verses/${encodeURIComponent(verseKey)}/stop-point?scope=${scope}&mushaf=${mushafId}`,
   );
   return unwrap<{ verseKey: string; chapterId: number }>(res);
 };
 
+// A page is only meaningful relative to a mushaf edition (ADR 0033) — pageId
+// is resolved against mushafId's own pagination, not the default edition's.
 export const fetchPageBounds = async (
   pageId: number,
+  mushafId: number,
 ): Promise<{ lastVerseKey: string; lastChapterId: number }> => {
-  const res = await fetch(`/api/quran/pages/${pageId}/bounds`);
+  const res = await fetch(`/api/quran/pages/${pageId}/bounds?mushaf=${mushafId}`);
   return unwrap<{ lastVerseKey: string; lastChapterId: number }>(res);
 };
 

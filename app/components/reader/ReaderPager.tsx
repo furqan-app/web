@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Locale } from "@/app/types/config";
 import { PageWords } from "@/app/hooks/get-page-words";
-import { usePage, fetchPageAPI } from "@/app/hooks/use-quran-page";
+import { usePage, fetchPageAPI, pageQueryKey } from "@/app/hooks/use-quran-page";
 import { getPagePair } from "@/app/utils/quran-pages";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
@@ -15,9 +15,12 @@ import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { ReaderPageSync } from "@/app/components/reader/ReaderPageSync";
+import { MushafSwitchSync } from "@/app/components/reader/MushafSwitchSync";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
+import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
 
 const TOTAL_PAGES = 604;
 const TOTAL_PAIRS = TOTAL_PAGES / 2;
@@ -121,7 +124,14 @@ const Panel = memo(function Panel({
               onNavigate={onNavigate}
             />
           ) : (
-            <div className="min-h-[calc(100dvh-5.5rem)] w-full" />
+            // No min-height: the panel's full height already comes from
+            // .fq-reader-outer's min-h-[calc(100dvh-3.5rem)] above. A taller
+            // placeholder pushed the document past the viewport, which toggled the
+            // vertical scrollbar on and off around every uncached commit — 19px of
+            // layout width appearing and vanishing, reflowing the whole document
+            // and shifting the strip's percentage-based translateX with it
+            // (Trello #157, docs/plans/fix-panel-placeholder-reflow.md).
+            <div className="w-full" />
           )}
         </div>
       </div>
@@ -163,13 +173,17 @@ export function ReaderPager({
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
   const { toggleOverlay } = useNavOverlay();
+  const { mushafId, edition } = useQuranMushaf();
 
   // Seed the SSR pair once, before children (usePage) render, so the initial page
   // paints synchronously from cache with no fetch/skeleton.
+  // The server renders the default edition, so this seed is only valid for it —
+  // seeding it under another edition's key would show that edition's font over
+  // the default edition's word placement (ADR 0033).
   const seededRef = useRef(false);
-  if (!seededRef.current) {
-    queryClient.setQueryData(["page", rightPageId], initialRightData);
-    queryClient.setQueryData(["page", leftPageId], initialLeftData);
+  if (!seededRef.current && mushafId === DEFAULT_MUSHAF_ID) {
+    queryClient.setQueryData(pageQueryKey(rightPageId, mushafId), initialRightData);
+    queryClient.setQueryData(pageQueryKey(leftPageId, mushafId), initialLeftData);
     seededRef.current = true;
   }
 
@@ -196,8 +210,8 @@ export function ReaderPager({
       const { rightPage, leftPage } = getPagePair(p);
       [rightPage, leftPage].forEach((page) =>
         queryClient.prefetchQuery({
-          queryKey: ["page", page],
-          queryFn: () => fetchPageAPI(page),
+          queryKey: pageQueryKey(page, mushafId),
+          queryFn: () => fetchPageAPI(page, mushafId),
           staleTime: Infinity,
         }),
       );
@@ -206,7 +220,7 @@ export function ReaderPager({
     warm(prevAnchor);
     // anchor + view drive nextAnchor/prevAnchor above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, nextAnchor, prevAnchor, queryClient]);
+  }, [anchor, nextAnchor, prevAnchor, queryClient, mushafId]);
 
   const stripRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
@@ -237,6 +251,19 @@ export function ReaderPager({
       flushSync(() => setAnchor(target));
       strip.style.transform = "translateX(-100%)";
       isCommitting.current = false;
+    },
+    [basePath],
+  );
+
+  // Jump straight to a page with no strip animation — used when the mushaf
+  // edition changes and the same verse now lives on a different page.
+  const jumpTo = useCallback(
+    (target: number) => {
+      window.history.replaceState(null, "", `${basePath}/${target}`);
+      const strip = stripRef.current;
+      if (strip) strip.style.transition = "none";
+      setAnchor(target);
+      if (strip) strip.style.transform = "translateX(-100%)";
     },
     [basePath],
   );
@@ -409,9 +436,14 @@ export function ReaderPager({
       <RecitationPageSync firstVerseKey={firstVerseKey} pageNumber={pageNumber} />
       <RecitationFollow anchor={pageNumber} isDouble={isDouble} onFollow={followTo} />
       <ReaderPageSync anchor={pageNumber} isDouble={isDouble} />
+      <MushafSwitchSync
+        anchor={pageNumber}
+        firstVerseKey={firstVerseKey}
+        onReanchor={jumpTo}
+      />
       <link
         rel="preload"
-        href={`/fonts/v1/woff2/p${pageNumber}.woff2`}
+        href={edition.fontUrl(pageNumber)}
         as="font"
         type="font/woff2"
         crossOrigin="anonymous"

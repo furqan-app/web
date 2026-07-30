@@ -3,24 +3,23 @@
 import { memo, MouseEvent, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { highlight, HighlightType } from "../utils/highlight";
-import { WordWithLayouts } from "../types/prisma";
+import { WordWithVerse } from "../types/prisma";
 import { MARK_CATEGORIES } from "../constants/marks";
 import { useRecitation } from "@/app/contexts/RecitationContext";
-import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
 
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_SLOP = 10; // px — max movement before a press is treated as a swipe
 
 export type QuranWordProps = {
-  word: WordWithLayouts;
+  word: WordWithVerse;
   // The memorization category key of this spot's mark, if any (ADR 0025). The
   // comment is not shown on the page — highlight only.
   category?: string;
-  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithLayouts) => void;
+  onWordClicked: (e: MouseEvent<HTMLDivElement>, word: WordWithVerse) => void;
   // Overlay mode (mobile + tablet reader): long press opens the mark modal;
   // a short tap bubbles to the ReaderPager strip for the nav toggle.
   isOverlayMode?: boolean;
-  onWordLongPressed?: (word: WordWithLayouts) => void;
+  onWordLongPressed?: (word: WordWithVerse) => void;
 };
 
 export const QuranWord = memo(function QuranWord({
@@ -32,7 +31,6 @@ export const QuranWord = memo(function QuranWord({
 }: QuranWordProps) {
   const searchParams = useSearchParams();
   const { registerWordRef } = useRecitation();
-  const { tajweedMode } = useQuranTajweed();
   // Stable per word.location so re-renders (e.g. searchParams changes) don't
   // needlessly unregister/re-register this word's DOM ref every time.
   const wordRefCallback = useCallback(
@@ -94,7 +92,7 @@ export const QuranWord = memo(function QuranWord({
       ${highlightClassForWord}
     `}
     >
-      <span>{tajweedMode ? word.code_v2 : word.code_v1}</span>
+      <span>{word.glyph}</span>
     </div>
   );
 });

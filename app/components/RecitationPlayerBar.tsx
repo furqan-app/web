@@ -52,7 +52,17 @@ export const RecitationPlayerBar = () => {
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80",
+        // Translucent glass everywhere (Correction Round — desktop included), and
+        // matching Nav exactly (same base token, same opacity, same blur, same
+        // border) so the two bars read as one consistent floating-chrome style.
+        // fq-recitation-bar: marker class so globals.css can target this bar's
+        // primary text specifically (dark-theme-only white override).
+        "fq-recitation-bar fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-background/75 backdrop-blur-md",
+        // Reader-only marker: at >=1367px and >=800px tall, globals.css turns the
+        // bar into a floating card matched to the spread's measured width. Off the
+        // reader route there is no spread to match, so the bar keeps its
+        // full-width form.
+        isOnReaderRoute && "fq-recitation-bar-reader",
         isOverlayMode && "transition-transform duration-300",
         isOverlayMode && !overlayVisible && "translate-y-full",
       )}

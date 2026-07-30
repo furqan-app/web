@@ -1,23 +1,21 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
 import { FONT_V1 } from "@constants/font";
 import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
-import { useQuranTajweed } from "@contexts/QuranTajweedContext";
+import { useQuranMushaf } from "@contexts/QuranMushafContext";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
-import { getPageFontFamily } from "@utils/quran-font-map";
 import { getMarkMeta } from "@utils/marks";
-import { groupBy } from "@utils/groupBy";
 import BismillahSVG from "@/app/bismillah.svg";
 import SurahFrameSVG from "@/app/surah-frame.svg";
 import { CHAPTERS_WITHOUT_BISMILLAH } from "@constants/surah";
 import { VERSE_SNIPPET_WORD_LIMIT } from "@constants/marks";
 import { MarkModal } from "./MarkModal";
 import { ViewingChip } from "./reader/ViewingChip";
-import { PageMetadataWithChapter, VerseForMark, WordWithLayouts } from "../types/prisma";
+import { PageMetadataWithChapter, VerseForMark, WordWithVerse } from "../types/prisma";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 
@@ -55,7 +53,7 @@ const BismillahLine = () => (
 
 type QuranSafhaProps = {
   page: number;
-  lines: Record<string, Array<WordWithLayouts>>;
+  lines: Record<string, Array<WordWithVerse>>;
   pageMetadata: PageMetadataWithChapter;
   locale: string;
   // When set, this safha shows/edits another user's mushaf via an access grant
@@ -103,14 +101,21 @@ export const QuranSafha = ({
   compensateStackGap = false,
 }: QuranSafhaProps) => {
   const t = useTranslations();
-  const { data: marks } = useMarks(page, grantId);
+  // Marks are stored against the DEFAULT edition's page. This edition's page may
+  // span two of them (36 pages disagree between editions), so collect the pages
+  // actually represented on screen rather than assuming `page` (ADR 0033).
+  const markPages = useMemo(
+    () => Array.from(new Set(Object.values(lines).flat().map((w) => w.page_number))),
+    [lines],
+  );
+  const { data: marks } = useMarks(markPages, grantId);
   const { quranFontScale } = useQuranFontScale();
-  const { tajweedMode } = useQuranTajweed();
+  const { edition } = useQuranMushaf();
   const isTablet = useIsTablet();
   const { isOverlayMode } = useNavOverlay();
 
   const [selectedForMark, setSelectedForMark] = useState<
-    WordWithLayouts | VerseForMark | null
+    WordWithVerse | VerseForMark | null
   >(null);
   const [verseDisplayText, setVerseDisplayText] = useState<string | undefined>(
     undefined,
@@ -120,7 +125,7 @@ export const QuranSafha = ({
   // font is ready. `font-display: block` keeps text invisible during download, so
   // the skeleton overlays the hidden text elements — nothing garbled underneath.
   // See docs/plans/fix-quran-page-font-loading.md.
-  const pageFontFamily = getPageFontFamily(page, tajweedMode);
+  const pageFontFamily = edition.fontFamily(page);
   const fontSpec = `1px "${pageFontFamily}"`;
   // `fontReady` is authoritative via document.fonts.check(): true ONLY when this
   // page's font is currently loaded and paint-ready. This is load-bearing for the
@@ -155,7 +160,7 @@ export const QuranSafha = ({
   // Shared selection logic for both click (non-overlay) and long-press (overlay).
   // Stable across marks re-renders (lines only changes on page navigation).
   const selectWord = useCallback(
-    (word: WordWithLayouts) => {
+    (word: WordWithVerse) => {
       if (word.char_type_name === "word") {
         setSelectedForMark(word);
         setVerseDisplayText(undefined);
@@ -179,7 +184,7 @@ export const QuranSafha = ({
 
   // Prevent click from bubbling to the ReaderPager strip's overlay-toggle handler.
   const wordClicked = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>, word: WordWithLayouts) => {
+    (e: React.MouseEvent<HTMLDivElement>, word: WordWithVerse) => {
       e.stopPropagation();
       selectWord(word);
     },
@@ -189,7 +194,7 @@ export const QuranSafha = ({
   // Long-press handler for overlay mode (mobile + tablet): no stopPropagation —
   // e.preventDefault() on touchend in QuranWord suppresses the synthetic click.
   const wordLongPressed = useCallback(
-    (word: WordWithLayouts) => selectWord(word),
+    (word: WordWithVerse) => selectWord(word),
     [selectWord],
   );
 
@@ -197,7 +202,7 @@ export const QuranSafha = ({
     setSelectedForMark(null);
   };
 
-  const getCurrentMarkMeta = (markFor: WordWithLayouts | VerseForMark) => {
+  const getCurrentMarkMeta = (markFor: WordWithVerse | VerseForMark) => {
     const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
     return getMarkMeta(marks?.[markedId]);
   };
@@ -214,17 +219,14 @@ export const QuranSafha = ({
     ? `${t(pageMetadata.hizb_position, hizbDefaults[pageMetadata.hizb_position])} ${toLocaleNumeral(pageMetadata.hizb_number, locale)}`
     : null;
 
-  // In Tajweed mode, re-group by mushaf=19's line_number instead of the
-  // default (mushaf=2) grouping already computed server-side in `lines` —
-  // the two mushafs break lines differently (ADR 0023 Addendum 6). Every
-  // line-keyed computation below (banner/bismillah gap-detection, line
-  // rendering) reads from whichever grouping is active.
-  const activeLines = tajweedMode
-    ? groupBy(Object.values(lines).flat(), (w) => w.layouts[19] ?? w.line_number)
-    : lines;
-
+  // `lines` already arrives grouped by the ACTIVE edition's own line numbers —
+  // composed from that edition's page assignment too (ADR 0033). There is no
+  // client-side re-grouping: mixing one edition's page composition with another's
+  // line numbers is exactly the defect this replaced, and it fails silently
+  // because each page's font has its own local glyph codepoint space.
+  //
   // lineKeys must be sorted numerically; Object.keys() order is not guaranteed.
-  const lineKeys = Object.keys(activeLines).sort((a, b) => Number(a) - Number(b));
+  const lineKeys = Object.keys(lines).sort((a, b) => Number(a) - Number(b));
 
   type RenderItem =
     | { type: "words"; slot: number; lineKey: string; suppressSurahId?: number }
@@ -261,7 +263,7 @@ export const QuranSafha = ({
       .find((k) => Number(k) < gap.start);
 
     if (lineAfterKey) {
-      const firstWord = activeLines[lineAfterKey][0];
+      const firstWord = lines[lineAfterKey][0];
       const [surahIdStr, verseNumStr, wordNumStr] = firstWord.location.split(":");
       if (verseNumStr === "1" && wordNumStr === "1") {
         const surahId = Number(surahIdStr);
@@ -283,7 +285,7 @@ export const QuranSafha = ({
         }
       }
     } else if (lineBeforeKey) {
-      const wordsOnLine = activeLines[lineBeforeKey];
+      const wordsOnLine = lines[lineBeforeKey];
       const lastWord = wordsOnLine[wordsOnLine.length - 1];
       const [surahIdStr, verseNumStr] = lastWord.verse_key.split(":");
       const surahId = Number(surahIdStr);
@@ -301,13 +303,13 @@ export const QuranSafha = ({
       {selectedForMark ? (
         (() => {
           const markMeta = getCurrentMarkMeta(
-            selectedForMark as WordWithLayouts | VerseForMark,
+            selectedForMark as WordWithVerse | VerseForMark,
           );
           return (
             <MarkModal
               isOpen={true}
               close={closeMarkModal}
-              markFor={selectedForMark as WordWithLayouts | VerseForMark}
+              markFor={selectedForMark as WordWithVerse | VerseForMark}
               verseDisplayText={verseDisplayText}
               currentCategory={markMeta?.category}
               currentComment={markMeta?.comment ?? undefined}
@@ -322,14 +324,16 @@ export const QuranSafha = ({
           className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
           {/* Stacked paper layers are hidden on mobile and paint behind the active
-              card only at md+. They peek toward stackPeekSide (the outer edge). */}
+              card only at md+. They peek toward stackPeekSide (the outer edge).
+              2 layers everywhere, plus a deeper pair revealed only on dark desktop
+              (>=1367px) by .fq-stack-deep in globals.css — the 2-layer decision
+              still holds at every narrower width. Earlier siblings paint furthest
+              back, so the deep pair comes first and carries the largest offsets. */}
           <div
-            className={`fq-stack-layer fq-stack-tablet absolute inset-0 translate-y-[7px] rounded-none bg-card dark:bg-muted border border-muted-foreground/30 pointer-events-none ${stackPeekSide === "right" ? "translate-x-[14px]" : "-translate-x-[14px]"}`}
-            style={{ opacity: 0.4 }}
+            className={`fq-stack-layer fq-stack-deep absolute inset-0 translate-y-2 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden ${stackPeekSide === "right" ? "translate-x-4" : "-translate-x-4"}`}
           />
           <div
-            className={`fq-stack-layer fq-stack-tablet absolute inset-0 translate-y-[5px] rounded-none bg-card dark:bg-muted border border-muted-foreground/30 pointer-events-none ${stackPeekSide === "right" ? "translate-x-[11px]" : "-translate-x-[11px]"}`}
-            style={{ opacity: 0.6 }}
+            className={`fq-stack-layer fq-stack-deep absolute inset-0 translate-y-1.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden ${stackPeekSide === "right" ? "translate-x-3" : "-translate-x-3"}`}
           />
           <div
             className={`fq-stack-layer absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
@@ -389,7 +393,7 @@ export const QuranSafha = ({
                   The overlay uses visibility:visible to escape the parent's hidden
                   state — CSS visibility is overridable on children. */}
               <div
-                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${tajweedMode ? "fq-tajweed" : ""} ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
+                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${edition.usesColorGlyphs ? "fq-tajweed" : ""} ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
                 style={{
                   fontFamily: pageFontFamily,
                   ...(fontReady ? {} : { visibility: "hidden" as const }),
@@ -397,7 +401,7 @@ export const QuranSafha = ({
               >
                 {!fontReady && (
                   <div
-                    className={`absolute inset-0 flex flex-col ${page <= 2 ? "justify-center gap-[0.55em]" : "fq-skeleton-lines justify-between"} ${tajweedMode ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
+                    className={`absolute inset-0 flex flex-col ${page <= 2 ? "justify-center gap-[0.55em]" : "fq-skeleton-lines justify-between"} ${edition.usesColorGlyphs ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
                     style={{ visibility: "visible" }}
                   >
                     {Array.from({ length: page <= 2 ? SKELETON_LINE_COUNT_SHORT : SKELETON_LINE_COUNT }, (_, i) => (
@@ -424,7 +428,7 @@ export const QuranSafha = ({
                         onWordClicked={wordClicked}
                         onWordLongPressed={wordLongPressed}
                         isOverlayMode={isOverlayMode}
-                        words={activeLines[item.lineKey]}
+                        words={lines[item.lineKey]}
                         marks={marks ?? {}}
                         suppressInlineHeaderForSurahId={item.suppressSurahId}
                       />

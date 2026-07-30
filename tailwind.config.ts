@@ -43,6 +43,11 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          muted: "hsl(var(--gold-muted))",
+        },
+        overlay: "hsl(var(--overlay) / <alpha-value>)",
       },
       borderRadius: {
         lg: "var(--radius)",
