@@ -24,7 +24,13 @@ export type ChapterAudio = {
   verseTimings: VerseTiming[];
 };
 
-export type StopPoint = "page" | "surah" | "rub" | "hizb" | "juz" | "none";
+export type StopPoint = "page" | "surah" | "rub" | "hizb" | "juz" | "none" | "custom";
+
+// An explicit end point for stopPoint "custom" — either a mushaf page number
+// or a surah:ayah verse reference. See docs/plans/recitation-playback.md
+// Addendum 9. There is no equivalent "from" type: the start verse is always
+// whatever launched playback (unchanged from every other stop point).
+export type RangePoint = { type: "page"; page: number } | { type: "verse"; surah: number; ayah: number };
 
 // A finite count (1-10) or "infinite" — JSON/localStorage-safe stand-in for
 // Infinity, which JSON.stringify would otherwise silently turn into null.
@@ -33,6 +39,7 @@ export type RepeatCount = number | "infinite";
 export type RecitationSettings = {
   reciterId: number | null;
   stopPoint: StopPoint;
+  rangeTo: RangePoint | null;
   perAyahRepeatCount: RepeatCount;
   rangeRepeatCount: RepeatCount;
   playbackSpeed: number;
