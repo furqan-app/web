@@ -599,8 +599,16 @@ Consumers:
 - Do not re-implement the superseded hypothesis list (transitionend-driven commit, commit
   readiness gates, font warm-up expansion) — attempts 1–24 prove gating cannot work while
   the injectors mutate; and with immutable registration they are unnecessary.
+  **Re-examined and upheld for Trello #159** ([ADR
+  0034](../architecture/adr/0034-page-turn-readiness-on-slow-networks.md),
+  `docs/plans/fix-page-turn-blank-slow-network.md`). #159 is a genuinely different problem —
+  genuinely-not-yet-downloaded JSON and font on 3G, not a font-face reset — but it was fixed by
+  shortening the wait (lookahead prefetch) and rendering an honest loading state through it, not
+  by gating the commit. This bullet was not superseded.
 - Do not change `font-display` to `swap`/`optional`, remove the skeleton, or alter
-  `QuranSafha`'s readiness logic.
+  `QuranSafha`'s readiness logic. **Narrowed by #159:** the overlay's *trigger* widens from
+  `!fontReady` to `!fontReady || !hasData`, and `pageMetadata` becomes nullable — but how
+  `fontReady` itself is computed is still untouched.
 - Do not reintroduce `router.push`, timeout-masking, or any commit-path redesign.
 - Do not preload all 604 fonts or lift the LRU cap — DECISIONS.md forbids global font load.
 

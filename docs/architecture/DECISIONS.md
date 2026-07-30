@@ -36,7 +36,10 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 **Constraints:**
 - **Never mutate the text of a live stylesheet containing `@font-face` rules** (rewriting a `<style>`'s content or appending text nodes to it). Any mutation re-parses the whole sheet and resets every face in it to `unloaded`; with `font-display: block` that blanks currently-visible text — the root cause of the reader swipe-commit flicker (ADR 0029). Add fonts by adding immutable units (a registry `FontFace`, a new keyed `<style>`); remove by removing whole units.
 - `FontFaceInjector` must render unconditionally (not gated by breakpoint/`isLgUp`) — it's the only mount point for tajweed's per-page-id `<style>` elements, and tajweed mode is available on mobile too. A viewport gate here silently renders tajweed glyphs garbled on mobile with no error (regressed once during the ADR 0029 diagnostic session, caught and fixed 2026-07-25).
-- `ensurePageFonts` calls must be scoped to genuinely-visible ids, never "everything in the window." Unlike CSS `@font-face` (lazy — browsers don't fetch for `display:none` content, which is what ADR 0013's always-inline-both-pair-members design relies on), the registry's `face.load()` is eager and downloads regardless of render state. `ReaderPager` passes `FontFaceInjector` a separate `baseFontIds` (pair-expanded only when `isDouble`, else single ids) distinct from the pair-expanded `pageIds` still used for the CSS-only tajweed keyed `<style>` elements, which stay safe to over-list. See ADR 0029's Addendum.
+- `ensurePageFonts` calls must be scoped to genuinely-visible ids, never "everything in the window." Unlike CSS `@font-face` (lazy — browsers don't fetch for `display:none` content, which is what ADR 0013's always-inline-both-pair-members design relies on), the registry's `face.load()` is eager and downloads regardless of render state. `ReaderPager` passes `FontFaceInjector` a separate `baseFontIds` (pair-expanded only when `isDouble`, else single ids) distinct from the pair-expanded `pageIds` still used for the CSS-only tajweed keyed `<style>` elements, which stay safe to over-list. See ADR 0029's Addendum. The one deliberate exception is the pager's
+  Stage B lookahead prefetch ([ADR 0034](adr/0034-page-turn-readiness-on-slow-networks.md)), which
+  warms the *next* page's font before it is visible on purpose — it is still bound by the same
+  pair-expand-only-when-`isDouble` rule, so it never downloads a font for a page the layout is hiding.
 - Do not add Quran page fonts to the global CSS.
 - `<style dangerouslySetInnerHTML>` for per-page `@font-face` rules **must** live in a `"use client"` component (`FontFaceInjector`), never in a Server Component. Next.js App Router treats `<style>` in RSC output as a resource and hoists it to a different DOM position on the client, causing React hydration mismatches. `<link rel="preload">` is NOT affected and may remain in the Server Component. See [ADR 0020](adr/0020-client-component-for-inline-style-injection.md).
 - Font scaling (1–10) is persisted in `localStorage` via `QuranFontScaleContext`.
@@ -443,6 +446,43 @@ payload; windowing removes the mass mount.
   Addendum 1.
 - Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
   spread (ADR 0013) against the pager/window model.
+- **A page turn commits immediately and is never gated on the target's readiness** ([ADR
+  0034](adr/0034-page-turn-readiness-on-slow-networks.md)). The two assets a turn needs — the page's
+  content JSON and its WOFF2 font — cost real network time (a double-view turn moves ~167 KB of font,
+  ~855 ms on Fast 3G), so gating the commit converts a visible blank into dead input of the same
+  length. That wait is absorbed two ways instead: **lead time** (prefetch runs in two stages — Stage A
+  warms the ±1 window on anchor settle, Stage B warms the second page in the last-committed direction
+  and starts only once Stage A settles, so lookahead never competes with the window the user is about
+  to see); and **an honest loading state** for whatever wait remains. Stage B is prefetch only — the
+  mounted panel window stays at three.
+- The loading state is a state of `QuranSafha` itself (nullable `pageMetadata`; the skeleton shows
+  when content *or* font is missing), never a separate skeleton component — duplicated card chrome
+  drifts from the real layout, which has already shipped as a bug once (see
+  `docs/plans/fix-quran-page-font-loading.md` Issue 3).
+- **A card rendering without content must reserve what the content would have sized.** On the
+  desktop spread the card is content-sized (ADR 0013 Addendum 2), so an `absolute inset-0` skeleton
+  contributes no height and the card collapses to header + footer (measured 608px → 110px, bars
+  shrinking to 0). The bars therefore render **in flow as direct children of `.fq-quran-safha`**
+  whenever there is no content, inheriting its real flex distribution, `--fq-line-gap` and padding;
+  they stay an overlay only in the font-only wait, where the real text is mounted and supplying the
+  height. This makes `SKELETON_LINE_COUNT` (15) and `SKELETON_LINE_COUNT_SHORT` (8, pages 1–2 —
+  their surah banner and bismillah occupy slots too) load-bearing layout values: an undercount grows
+  the card when the page lands. Those bars must also carry an **em width** (`QURAN_LINE_WIDTH_RATIO`
+  em, the real line's width by construction), never `w-full`: the card is shrink-to-fit, and a
+  percentage width contributes nothing to intrinsic sizing, so `w-full` bars let the card resolve
+  against available space and then correct a frame later — measured 785px against a real 523px, and
+  that over-wide value reached `--fq-spread-width`, which is what made the floating recitation bar
+  jump. (The em width is necessary but, as of 2026-07-31, **not sufficient** — a width-settling
+  artefact on the loading spread is still observed and is an open follow-up; see
+  `docs/plans/fix-page-turn-blank-slow-network.md`.) Separately, the header reserves its cells with a
+  non-breaking space
+  when metadata is absent — cell heights are `font-size × line-height`, independent of glyph or digit
+  count, so the reservation is exact. Card *width* needs no reservation; it is floored by the
+  worst-case line-width formula and measures identical loaded and unloaded.
+- Do **not** let the `Panel` loading state and the real spread differ in height. Rendering the real
+  chrome makes them identical by construction, which is what keeps ADR 0028's geometry and the #157
+  scrollbar-reflow fix (`docs/plans/fix-panel-placeholder-reflow.md`) intact — a placeholder taller
+  than its content toggles a scrollbar and reflows the whole document on every turn.
 
 ---
 

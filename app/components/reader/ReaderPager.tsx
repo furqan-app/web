@@ -21,6 +21,7 @@ import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
+import { ensurePageFonts, pageFontsReady } from "@/app/utils/page-font-registry";
 
 const TOTAL_PAGES = 604;
 const TOTAL_PAIRS = TOTAL_PAGES / 2;
@@ -31,6 +32,20 @@ const SNAP_BACK_MS = 200;
 const EXIT_MS = 300; // book-like reveal slide
 
 type NavHrefs = { prevHref: string; nextHref: string };
+
+// The physical next/prev anchor from `from`, in whatever unit the pager currently
+// steps in — one page in single view, one facing pair in double view. Wraps at the
+// ends exactly as the reader always has (page 1 <-> 604). Used both for the live
+// window and for the Stage B lookahead, which needs to step twice.
+const stepAnchor = (from: number, goNext: boolean, isDouble: boolean): number => {
+  if (!isDouble) {
+    if (goNext) return from === TOTAL_PAGES ? 1 : from + 1;
+    return from === 1 ? TOTAL_PAGES : from - 1;
+  }
+  const { rightPage, leftPage } = getPagePair(from);
+  if (goNext) return leftPage === TOTAL_PAGES ? 1 : leftPage + 1;
+  return rightPage === 1 ? TOTAL_PAGES - 1 : rightPage - 2;
+};
 
 // Locale-aware in-spread arrow hrefs for any anchor page (kept for SSR/no-JS +
 // middle-click; the pager intercepts plain clicks — see QuranSpread.onNavigate).
@@ -80,8 +95,9 @@ const computeSpreadNav = (
 
 // One carousel panel: a full-width reader spread for `anchor`, client-fetched
 // via usePage. Memoized so panels whose anchor is unchanged when the window
-// shifts don't re-render. Shows a blank placeholder until its (prefetched) data
-// arrives — the reveal during a drag then paints the real neighbor.
+// shifts don't re-render. Renders the spread whether or not its data has arrived
+// — until it does, the spread shows the card's loading state rather than an empty
+// area, so a commit onto an uncached page is never a blank reader (ADR 0034).
 type PanelProps = {
   anchor: number;
   isRTL: boolean;
@@ -110,29 +126,37 @@ const Panel = memo(function Panel({
     <div dir={isRTL ? "rtl" : "ltr"} className="w-full shrink-0">
       <div className="fq-reader-outer bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0">
         <div className="fq-reader-spread-container w-full flex justify-center items-start md:items-center px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
-          {rightData && leftData ? (
-            <QuranSpread
-              currentPageId={anchor}
-              rightPage={{ pageId: rightPage, ...rightData }}
-              leftPage={{ pageId: leftPage, ...leftData }}
-              isRTL={isRTL}
-              locale={locale}
-              grantId={grantId}
-              viewingOwnerName={viewingOwnerName}
-              singleStepNav={singleStepNav}
-              pairStepNav={pairStepNav}
-              onNavigate={onNavigate}
-            />
-          ) : (
-            // No min-height: the panel's full height already comes from
-            // .fq-reader-outer's min-h-[calc(100dvh-3.5rem)] above. A taller
-            // placeholder pushed the document past the viewport, which toggled the
-            // vertical scrollbar on and off around every uncached commit — 19px of
-            // layout width appearing and vanishing, reflowing the whole document
-            // and shifting the strip's percentage-based translateX with it
-            // (Trello #157, docs/plans/fix-panel-placeholder-reflow.md).
-            <div className="w-full" />
-          )}
+          {/* Rendered whether or not the data has landed: the spread shows its
+              own loading state from the page ids alone (ADR 0034). This panel used
+              to render an empty <div> while its JSON was in flight, so on a slow
+              connection a commit landed on a blank reader for as long as the fetch
+              took — 350-425ms on 3G, chaining straight into the font wait behind
+              it. Because the loading state is the real card and not a stand-in, the
+              panel is exactly as tall loaded as unloaded, which is what keeps
+              Trello #157 fixed: a placeholder taller than its content toggles the
+              vertical scrollbar, and those 19px of layout width reflow the whole
+              document and drag the strip's percentage-based translateX with them
+              (docs/plans/fix-panel-placeholder-reflow.md). */}
+          <QuranSpread
+            currentPageId={anchor}
+            rightPage={{
+              pageId: rightPage,
+              lines: rightData?.lines ?? null,
+              pageMetadata: rightData?.pageMetadata ?? null,
+            }}
+            leftPage={{
+              pageId: leftPage,
+              lines: leftData?.lines ?? null,
+              pageMetadata: leftData?.pageMetadata ?? null,
+            }}
+            isRTL={isRTL}
+            locale={locale}
+            grantId={grantId}
+            viewingOwnerName={viewingOwnerName}
+            singleStepNav={singleStepNav}
+            pairStepNav={pairStepNav}
+            onNavigate={onNavigate}
+          />
         </div>
       </div>
     </div>
@@ -191,36 +215,14 @@ export function ReaderPager({
 
   const pageNumber = anchor;
   const { rightPage: curRightId, leftPage: curLeftId } = getPagePair(pageNumber);
-  const nextPageNum = pageNumber === TOTAL_PAGES ? 1 : pageNumber + 1;
-  const prevPageNum = pageNumber === 1 ? TOTAL_PAGES : pageNumber - 1;
-  const nextPairPageNum = curLeftId === TOTAL_PAGES ? 1 : curLeftId + 1;
-  const prevPairPageNum = curRightId === 1 ? TOTAL_PAGES - 1 : curRightId - 2;
 
   const isDouble = view === "double" && isLgUp;
-  const nextAnchor = isDouble ? nextPairPageNum : nextPageNum;
-  const prevAnchor = isDouble ? prevPairPageNum : prevPageNum;
+  const nextAnchor = stepAnchor(pageNumber, true, isDouble);
+  const prevAnchor = stepAnchor(pageNumber, false, isDouble);
 
   // Seed cache reads for the current pair so firstVerseKey is available.
   const rightData = usePage(curRightId).data;
   const leftData = usePage(curLeftId).data;
-
-  // Warm the neighbor panels so a swipe reveals real content, not a placeholder.
-  useEffect(() => {
-    const warm = (p: number) => {
-      const { rightPage, leftPage } = getPagePair(p);
-      [rightPage, leftPage].forEach((page) =>
-        queryClient.prefetchQuery({
-          queryKey: pageQueryKey(page, mushafId),
-          queryFn: () => fetchPageAPI(page, mushafId),
-          staleTime: Infinity,
-        }),
-      );
-    };
-    warm(nextAnchor);
-    warm(prevAnchor);
-    // anchor + view drive nextAnchor/prevAnchor above.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, nextAnchor, prevAnchor, queryClient, mushafId]);
 
   const stripRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
@@ -228,6 +230,12 @@ export function ReaderPager({
   const isDragging = useRef(false);
   const snapClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCommitting = useRef(false);
+  // Which way the reader is moving, so the Stage B lookahead warms the page they
+  // are heading toward rather than the one behind them. Forward by default —
+  // that is the reading direction, and it is what a fresh deep-link entry should
+  // bet on. Only a neighbor-step commit updates it; a jump to an arbitrary page
+  // (recitation follow, edition switch) leaves the last known direction alone.
+  const lastDirection = useRef<"next" | "prev">("next");
 
   // Swap the anchor and re-center atomically. The panel revealed during the drag
   // (an outer slot) and the panel that must sit at the -100% rest slot are
@@ -285,6 +293,7 @@ export function ReaderPager({
       const strip = stripRef.current;
       const target = goNext ? nextAnchor : prevAnchor;
       isCommitting.current = true;
+      lastDirection.current = goNext ? "next" : "prev";
       if (!animate || !strip || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         commitTo(target);
         return;
@@ -445,6 +454,70 @@ export function ReaderPager({
     () => (isDouble ? allPageIds : [pageNumber, nextAnchor, prevAnchor]),
     [isDouble, allPageIds, pageNumber, nextAnchor, prevAnchor],
   );
+  const baseFontIdsKey = baseFontIds.join(",");
+
+  // Two prefetch stages, the second gated on the first (ADR 0034).
+  //
+  // Stage A warms the +/-1 window a drag can reveal — one turn of lead. That is
+  // less than one turn costs: a double-view page turn moves ~167KB of font, about
+  // 855ms on Fast 3G, so a reader turning pages every ~800ms outruns the link and
+  // every commit lands on assets still in flight. Stage B buys the second turn of
+  // lead by warming the page AFTER the window, in the direction of travel.
+  //
+  // It must not start until Stage A has actually landed. Both stages draw on the
+  // same ~195KB/s; issued together, the page the reader is about to see finishes
+  // later, not sooner. Waiting is what makes the lookahead free.
+  useEffect(() => {
+    let cancelled = false;
+
+    const warmJson = (target: number) => {
+      const { rightPage, leftPage } = getPagePair(target);
+      return Promise.all(
+        [rightPage, leftPage].map((page) =>
+          queryClient.prefetchQuery({
+            queryKey: pageQueryKey(page, mushafId),
+            queryFn: () => fetchPageAPI(page, mushafId),
+            staleTime: Infinity,
+          }),
+        ),
+      );
+    };
+
+    const stageA = Promise.all([
+      warmJson(nextAnchor),
+      warmJson(prevAnchor),
+      // The window's fonts are registered by FontFaceInjector, not here — this
+      // only waits on the faces it created. Registration stays a single call site
+      // (ADR 0029); child effects run before parent effects, so they exist by now.
+      pageFontsReady(baseFontIds, edition),
+    ]);
+
+    stageA.then(() => {
+      if (cancelled) return;
+      // Mid-gesture the reader is watching a specific page arrive; leave the link
+      // to it. The next commit re-runs this effect and picks the lookahead back up.
+      if (isDragging.current || isCommitting.current) return;
+
+      const goNext = lastDirection.current === "next";
+      const target = stepAnchor(goNext ? nextAnchor : prevAnchor, goNext, isDouble);
+      warmJson(target);
+
+      // Same visibility scoping as baseFontIds: pair-expand only in double view,
+      // or a single-page session eagerly downloads a partner font it will never
+      // paint (ADR 0029's Addendum). Colour-glyph editions are skipped entirely —
+      // their fonts load through FontFaceInjector's keyed <style> elements, which
+      // only cover the live window, so there is no lookahead path for them.
+      if (edition.usesColorGlyphs) return;
+      const { rightPage, leftPage } = getPagePair(target);
+      ensurePageFonts(isDouble ? [rightPage, leftPage] : [target], edition);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // baseFontIds is a new array each render; the joined key is the real dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchor, nextAnchor, prevAnchor, isDouble, baseFontIdsKey, queryClient, mushafId, edition]);
 
   return (
     <>
