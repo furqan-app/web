@@ -124,7 +124,14 @@ const Panel = memo(function Panel({
               onNavigate={onNavigate}
             />
           ) : (
-            <div className="min-h-[calc(100dvh-5.5rem)] w-full" />
+            // No min-height: the panel's full height already comes from
+            // .fq-reader-outer's min-h-[calc(100dvh-3.5rem)] above. A taller
+            // placeholder pushed the document past the viewport, which toggled the
+            // vertical scrollbar on and off around every uncached commit — 19px of
+            // layout width appearing and vanishing, reflowing the whole document
+            // and shifting the strip's percentage-based translateX with it
+            // (Trello #157, docs/plans/fix-panel-placeholder-reflow.md).
+            <div className="w-full" />
           )}
         </div>
       </div>
