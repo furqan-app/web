@@ -1,0 +1,410 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: visual.spec.ts >> quran page 1 (en-light) >> single page, short opening page
+- Location: e2e/tests/visual.spec.ts:47:11
+
+# Error details
+
+```
+Error: expect(page).toHaveScreenshot(expected) failed
+
+  8997 pixels (ratio 0.03 of all image pixels) are different.
+
+  Snapshot: page-1-en-light.png
+
+Call log:
+  - Expect "toHaveScreenshot(page-1-en-light.png)" with timeout 5000ms
+    - verifying given screenshot expectation
+  - taking page screenshot
+    - disabled all CSS animations
+  - waiting for fonts to load...
+  - fonts loaded
+  - 9273 pixels (ratio 0.03 of all image pixels) are different.
+  - waiting 100ms before taking screenshot
+  - taking page screenshot
+    - disabled all CSS animations
+  - waiting for fonts to load...
+  - fonts loaded
+  - captured a stable screenshot
+  - 8997 pixels (ratio 0.03 of all image pixels) are different.
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "Home" [ref=e6] [cursor=pointer]:
+            - /url: /
+            - img [ref=e7]
+          - button "Open navigation" [ref=e9] [cursor=pointer]:
+            - img
+        - button "Search surah by name or number" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+        - generic [ref=e15]:
+          - link [ref=e16] [cursor=pointer]:
+            - /url: /en/pages/1
+            - img [ref=e17]
+          - link [ref=e19] [cursor=pointer]:
+            - /url: /en/mushaf
+            - img [ref=e20]
+          - link [ref=e25] [cursor=pointer]:
+            - /url: /en/marks
+            - img [ref=e26]
+          - link [ref=e28] [cursor=pointer]:
+            - /url: /en/plans
+            - img [ref=e29]
+          - button "Settings" [ref=e33] [cursor=pointer]:
+            - img
+    - generic [ref=e35]:
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e48]: Juz 1
+          - generic [ref=e49]:
+            - generic [ref=e50]: ◆
+            - generic [ref=e51]: "002"
+            - generic [ref=e52]: ◆
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - img [ref=e55]
+            - generic [ref=e174]: "002"
+          - img [ref=e175]
+          - generic [ref=e179]:
+            - generic [ref=e180] [cursor=pointer]: ﭑ
+            - generic [ref=e181] [cursor=pointer]: ﭒ
+            - generic [ref=e182] [cursor=pointer]: ﭓ
+            - generic [ref=e183] [cursor=pointer]: ﭔ
+            - generic [ref=e184] [cursor=pointer]: ﭕ
+            - generic [ref=e185] [cursor=pointer]: ﭖﭗ
+            - generic [ref=e186] [cursor=pointer]: ﭘﭙ
+            - generic [ref=e187] [cursor=pointer]: ﭚ
+          - generic [ref=e188]:
+            - generic [ref=e189] [cursor=pointer]: ﭛ
+            - generic [ref=e190] [cursor=pointer]: ﭜ
+            - generic [ref=e191] [cursor=pointer]: ﭝ
+            - generic [ref=e192] [cursor=pointer]: ﭞ
+            - generic [ref=e193] [cursor=pointer]: ﭟ
+            - generic [ref=e194] [cursor=pointer]: ﭠ
+            - generic [ref=e195] [cursor=pointer]: ﭡ
+          - generic [ref=e196]:
+            - generic [ref=e197] [cursor=pointer]: ﭢ
+            - generic [ref=e198] [cursor=pointer]: ﭣ
+            - generic [ref=e199] [cursor=pointer]: ﭤ
+            - generic [ref=e200] [cursor=pointer]: ﭥ
+            - generic [ref=e201] [cursor=pointer]: ﭦ
+            - generic [ref=e202] [cursor=pointer]: ﭧ
+            - generic [ref=e203] [cursor=pointer]: ﭨ
+            - generic [ref=e204] [cursor=pointer]: ﭩ
+          - generic [ref=e205]:
+            - generic [ref=e206] [cursor=pointer]: ﭪ
+            - generic [ref=e207] [cursor=pointer]: ﭫ
+            - generic [ref=e208] [cursor=pointer]: ﭬ
+            - generic [ref=e209] [cursor=pointer]: ﭭ
+            - generic [ref=e210] [cursor=pointer]: ﭮ
+            - generic [ref=e211] [cursor=pointer]: ﭯ
+            - generic [ref=e212] [cursor=pointer]: ﭰ
+            - generic [ref=e213] [cursor=pointer]: ﭱ
+            - generic [ref=e214] [cursor=pointer]: ﭲ
+          - generic [ref=e215]:
+            - generic [ref=e216] [cursor=pointer]: ﭳ
+            - generic [ref=e217] [cursor=pointer]: ﭴ
+            - generic [ref=e218] [cursor=pointer]: ﭵ
+            - generic [ref=e219] [cursor=pointer]: ﭶ
+            - generic [ref=e220] [cursor=pointer]: ﭷﭸ
+            - generic [ref=e221] [cursor=pointer]: ﭹ
+          - generic [ref=e222]:
+            - generic [ref=e223] [cursor=pointer]: ﭺ
+            - generic [ref=e224] [cursor=pointer]: ﭻ
+            - generic [ref=e225] [cursor=pointer]: ﭼ
+        - generic [ref=e226]:
+          - generic [ref=e227]: ◆
+          - generic [ref=e228]: "2"
+          - generic [ref=e229]: ◆
+      - generic [ref=e239]:
+        - generic [ref=e240]:
+          - generic [ref=e242]: Juz 1
+          - generic [ref=e243]:
+            - generic [ref=e244]: ◆
+            - generic [ref=e245]: "001"
+            - generic [ref=e246]: ◆
+          - generic [ref=e247]: Hizb 1
+        - generic [ref=e248]:
+          - generic [ref=e249]:
+            - img [ref=e250]
+            - generic [ref=e369]: "001"
+          - generic [ref=e370]:
+            - generic [ref=e371] [cursor=pointer]: ﭑ
+            - generic [ref=e372] [cursor=pointer]: ﭒ
+            - generic [ref=e373] [cursor=pointer]: ﭓ
+            - generic [ref=e374] [cursor=pointer]: ﭔ
+            - generic [ref=e375] [cursor=pointer]: ﭕ
+          - generic [ref=e376]:
+            - generic [ref=e377] [cursor=pointer]: ﭖ
+            - generic [ref=e378] [cursor=pointer]: ﭗ
+            - generic [ref=e379] [cursor=pointer]: ﭘ
+            - generic [ref=e380] [cursor=pointer]: ﭙ
+            - generic [ref=e381] [cursor=pointer]: ﭚ
+          - generic [ref=e382]:
+            - generic [ref=e383] [cursor=pointer]: ﭛ
+            - generic [ref=e384] [cursor=pointer]: ﭜ
+            - generic [ref=e385] [cursor=pointer]: ﭝ
+            - generic [ref=e386] [cursor=pointer]: ﭞ
+            - generic [ref=e387] [cursor=pointer]: ﭟ
+            - generic [ref=e388] [cursor=pointer]: ﭠ
+            - generic [ref=e389] [cursor=pointer]: ﭡ
+          - generic [ref=e390]:
+            - generic [ref=e391] [cursor=pointer]: ﭢ
+            - generic [ref=e392] [cursor=pointer]: ﭣ
+            - generic [ref=e393] [cursor=pointer]: ﭤ
+            - generic [ref=e394] [cursor=pointer]: ﭥ
+            - generic [ref=e395] [cursor=pointer]: ﭦ
+            - generic [ref=e396] [cursor=pointer]: ﭧ
+          - generic [ref=e397]:
+            - generic [ref=e398] [cursor=pointer]: ﭨ
+            - generic [ref=e399] [cursor=pointer]: ﭩ
+            - generic [ref=e400] [cursor=pointer]: ﭪ
+            - generic [ref=e401] [cursor=pointer]: ﭫ
+            - generic [ref=e402] [cursor=pointer]: ﭬ
+            - generic [ref=e403] [cursor=pointer]: ﭭ
+          - generic [ref=e404]:
+            - generic [ref=e405] [cursor=pointer]: ﭮ
+            - generic [ref=e406] [cursor=pointer]: ﭯ
+            - generic [ref=e407] [cursor=pointer]: ﭰ
+            - generic [ref=e408] [cursor=pointer]: ﭱ
+          - generic [ref=e409]:
+            - generic [ref=e410] [cursor=pointer]: ﭲ
+            - generic [ref=e411] [cursor=pointer]: ﭳ
+            - generic [ref=e412] [cursor=pointer]: ﭴ
+        - generic [ref=e413]:
+          - generic [ref=e414]: ◆
+          - generic [ref=e415]: "1"
+          - generic [ref=e416]: ◆
+      - generic [ref=e426]:
+        - generic [ref=e427]:
+          - generic [ref=e429]: Juz 30
+          - generic [ref=e430]:
+            - generic [ref=e431]: ◆
+            - generic [ref=e432]: "112"
+            - generic [ref=e433]: ◆
+        - generic [ref=e434]:
+          - generic [ref=e435]:
+            - img [ref=e436]
+            - generic [ref=e555]: "112"
+          - img [ref=e556]
+          - generic [ref=e560]:
+            - generic [ref=e561] [cursor=pointer]: ﭑ
+            - generic [ref=e562] [cursor=pointer]: ﭒ
+            - generic [ref=e563] [cursor=pointer]: ﭓ
+            - generic [ref=e564] [cursor=pointer]: ﭔ
+            - generic [ref=e565] [cursor=pointer]: ﭕ
+            - generic [ref=e566] [cursor=pointer]: ﭖ
+            - generic [ref=e567] [cursor=pointer]: ﭗ
+            - generic [ref=e568] [cursor=pointer]: ﭘ
+            - generic [ref=e569] [cursor=pointer]: ﭙ
+            - generic [ref=e570] [cursor=pointer]: ﭚ
+          - generic [ref=e571]:
+            - generic [ref=e572] [cursor=pointer]: ﭛ
+            - generic [ref=e573] [cursor=pointer]: ﭜ
+            - generic [ref=e574] [cursor=pointer]: ﭝ
+            - generic [ref=e575] [cursor=pointer]: ﭞ
+            - generic [ref=e576] [cursor=pointer]: ﭟ
+            - generic [ref=e577] [cursor=pointer]: ﭠ
+            - generic [ref=e578] [cursor=pointer]: ﭡ
+            - generic [ref=e579] [cursor=pointer]: ﭢ
+            - generic [ref=e580] [cursor=pointer]: ﭣ
+          - generic [ref=e581]:
+            - img [ref=e582]
+            - generic [ref=e701]: "113"
+          - img [ref=e702]
+          - generic [ref=e706]:
+            - generic [ref=e707] [cursor=pointer]: ﭤ
+            - generic [ref=e708] [cursor=pointer]: ﭥ
+            - generic [ref=e709] [cursor=pointer]: ﭦ
+            - generic [ref=e710] [cursor=pointer]: ﭧ
+            - generic [ref=e711] [cursor=pointer]: ﭨ
+            - generic [ref=e712] [cursor=pointer]: ﭩ
+            - generic [ref=e713] [cursor=pointer]: ﭪ
+            - generic [ref=e714] [cursor=pointer]: ﭫ
+            - generic [ref=e715] [cursor=pointer]: ﭬ
+            - generic [ref=e716] [cursor=pointer]: ﭭ
+            - generic [ref=e717] [cursor=pointer]: ﭮ
+          - generic [ref=e718]:
+            - generic [ref=e719] [cursor=pointer]: ﭯ
+            - generic [ref=e720] [cursor=pointer]: ﭰ
+            - generic [ref=e721] [cursor=pointer]: ﭱ
+            - generic [ref=e722] [cursor=pointer]: ﭲ
+            - generic [ref=e723] [cursor=pointer]: ﭳ
+            - generic [ref=e724] [cursor=pointer]: ﭴ
+            - generic [ref=e725] [cursor=pointer]: ﭵ
+            - generic [ref=e726] [cursor=pointer]: ﭶ
+            - generic [ref=e727] [cursor=pointer]: ﭷ
+          - generic [ref=e728]:
+            - generic [ref=e729] [cursor=pointer]: ﭸ
+            - generic [ref=e730] [cursor=pointer]: ﭹ
+            - generic [ref=e731] [cursor=pointer]: ﭺ
+            - generic [ref=e732] [cursor=pointer]: ﭻ
+            - generic [ref=e733] [cursor=pointer]: ﭼ
+            - generic [ref=e734] [cursor=pointer]: ﭽ
+            - generic [ref=e735] [cursor=pointer]: ﭾ
+            - generic [ref=e736] [cursor=pointer]: ﭿ
+          - generic [ref=e737]:
+            - img [ref=e738]
+            - generic [ref=e857]: "114"
+          - img [ref=e858]
+          - generic [ref=e862]:
+            - generic [ref=e863] [cursor=pointer]: ﮀ
+            - generic [ref=e864] [cursor=pointer]: ﮁ
+            - generic [ref=e865] [cursor=pointer]: ﮂ
+            - generic [ref=e866] [cursor=pointer]: ﮃ
+            - generic [ref=e867] [cursor=pointer]: ﮄ
+            - generic [ref=e868] [cursor=pointer]: ﮅ
+            - generic [ref=e869] [cursor=pointer]: ﮆ
+            - generic [ref=e870] [cursor=pointer]: ﮇ
+            - generic [ref=e871] [cursor=pointer]: ﮈ
+          - generic [ref=e872]:
+            - generic [ref=e873] [cursor=pointer]: ﮉ
+            - generic [ref=e874] [cursor=pointer]: ﮊ
+            - generic [ref=e875] [cursor=pointer]: ﮋ
+            - generic [ref=e876] [cursor=pointer]: ﮌ
+            - generic [ref=e877] [cursor=pointer]: ﮍ
+            - generic [ref=e878] [cursor=pointer]: ﮎ
+            - generic [ref=e879] [cursor=pointer]: ﮏ
+            - generic [ref=e880] [cursor=pointer]: ﮐ
+          - generic [ref=e881]:
+            - generic [ref=e882] [cursor=pointer]: ﮑ
+            - generic [ref=e883] [cursor=pointer]: ﮒ
+            - generic [ref=e884] [cursor=pointer]: ﮓ
+            - generic [ref=e885] [cursor=pointer]: ﮔ
+            - generic [ref=e886] [cursor=pointer]: ﮕ
+          - generic [ref=e887]:
+            - generic [ref=e888] [cursor=pointer]: ﮖ
+            - generic [ref=e889] [cursor=pointer]: ﮗ
+            - generic [ref=e890] [cursor=pointer]: ﮘ
+            - generic [ref=e891] [cursor=pointer]: ﮙ
+        - generic [ref=e892]:
+          - generic [ref=e893]: ◆
+          - generic [ref=e894]: "604"
+          - generic [ref=e895]: ◆
+    - generic [ref=e897]:
+      - button "Listen" [ref=e898] [cursor=pointer]:
+        - img [ref=e899]
+      - generic [ref=e901]:
+        - paragraph [ref=e902]: Yasser Ad Dussary
+        - paragraph
+      - button "Recitation settings" [ref=e903] [cursor=pointer]:
+        - img [ref=e904]
+  - alert [ref=e907]
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect, type Page } from "@playwright/test";
+  2  | 
+  3  | // Visual regression smoke suite — see docs/plans/visual-e2e-testing.md and
+  4  | // ADR 0018. Covers 5 fixed screens x {ar, en} x {light, dark}, run against
+  5  | // both the "desktop" and "mobile" Playwright projects (except the double-page
+  6  | // spread, which only exists at lg+ and is skipped on "mobile").
+  7  | 
+  8  | type Locale = "ar" | "en";
+  9  | type Theme = "light" | "dark";
+  10 | 
+  11 | const LOCALES: Locale[] = ["ar", "en"];
+  12 | const THEMES: Theme[] = ["light", "dark"];
+  13 | 
+  14 | const SEARCH_PLACEHOLDER: Record<Locale, string> = {
+  15 |   ar: "ابحث عن السورة بالاسم أو الرقم",
+  16 |   en: "Search surah by name or number",
+  17 | };
+  18 | const SEARCH_QUERY: Record<Locale, string> = {
+  19 |   ar: "فاتحة",
+  20 |   en: "Fatihah",
+  21 | };
+  22 | const SETTINGS_LABEL: Record<Locale, string> = {
+  23 |   ar: "الإعدادات",
+  24 |   en: "Settings",
+  25 | };
+  26 | 
+  27 | /** Sets the theme in localStorage before first paint, mirroring app/utils/storage.ts's JSON.stringify shape. */
+  28 | async function withTheme(page: Page, theme: Theme) {
+  29 |   await page.addInitScript((t) => {
+  30 |     window.localStorage.setItem("theme", JSON.stringify(t));
+  31 |   }, theme);
+  32 | }
+  33 | 
+  34 | for (const locale of LOCALES) {
+  35 |   for (const theme of THEMES) {
+  36 |     const suffix = `${locale}-${theme}`;
+  37 | 
+  38 |     test.describe(`home (${suffix})`, () => {
+  39 |       test("surah list", async ({ page }) => {
+  40 |         await withTheme(page, theme);
+  41 |         await page.goto(`/${locale}`);
+  42 |         await expect(page).toHaveScreenshot(`home-${suffix}.png`);
+  43 |       });
+  44 |     });
+  45 | 
+  46 |     test.describe(`quran page 1 (${suffix})`, () => {
+  47 |       test("single page, short opening page", async ({ page }) => {
+  48 |         await withTheme(page, theme);
+  49 |         await page.goto(`/${locale}/pages/1`);
+> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);
+     |                            ^ Error: expect(page).toHaveScreenshot(expected) failed
+  51 |       });
+  52 |     });
+  53 | 
+  54 |     test.describe(`quran pages 2-3 double-spread (${suffix})`, () => {
+  55 |       test("double-page spread", async ({ page }, testInfo) => {
+  56 |         test.skip(
+  57 |           testInfo.project.name === "mobile",
+  58 |           "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile"
+  59 |         );
+  60 |         await withTheme(page, theme);
+  61 |         await page.goto(`/${locale}/pages/2`);
+  62 |         await expect(page).toHaveScreenshot(`spread-2-3-${suffix}.png`);
+  63 |       });
+  64 |     });
+  65 | 
+  66 |     test.describe(`search results (${suffix})`, () => {
+  67 |       test("search for a chapter", async ({ page }, testInfo) => {
+  68 |         await withTheme(page, theme);
+  69 |         await page.goto(`/${locale}`);
+  70 | 
+  71 |         if (testInfo.project.name === "mobile") {
+  72 |           await page.getByRole("button", { name: SEARCH_PLACEHOLDER[locale] }).click();
+  73 |           const dialog = page.getByRole("dialog");
+  74 |           await dialog.getByPlaceholder(SEARCH_PLACEHOLDER[locale]).fill(SEARCH_QUERY[locale]);
+  75 |         } else {
+  76 |           await page.getByPlaceholder(SEARCH_PLACEHOLDER[locale]).fill(SEARCH_QUERY[locale]);
+  77 |         }
+  78 | 
+  79 |         // Debounced search (500ms) + results render.
+  80 |         await page.waitForTimeout(800);
+  81 |         await expect(page).toHaveScreenshot(`search-${suffix}.png`);
+  82 |       });
+  83 |     });
+  84 | 
+  85 |     test.describe(`settings sheet (${suffix})`, () => {
+  86 |       test("open settings sheet", async ({ page }) => {
+  87 |         await withTheme(page, theme);
+  88 |         await page.goto(`/${locale}`);
+  89 |         await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
+  90 |         // Sheet slide-in animation.
+  91 |         await page.waitForTimeout(600);
+  92 |         await expect(page).toHaveScreenshot(`settings-${suffix}.png`);
+  93 |       });
+  94 |     });
+  95 |   }
+  96 | }
+  97 | 
+```
