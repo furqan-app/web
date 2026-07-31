@@ -1,0 +1,2013 @@
+{
+  "config": {
+    "argv": [
+      "/opt/hostedtoolcache/node/20.20.2/x64/bin/node",
+      "/home/runner/work/web/web/node_modules/.bin/playwright",
+      "test"
+    ],
+    "configFile": "/home/runner/work/web/web/playwright.config.ts",
+    "rootDir": "/home/runner/work/web/web/e2e/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "ci": {
+        "commitHref": "https://github.com/furqan-app/web/commit/2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+        "commitHash": "2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+        "prHref": "https://github.com/furqan-app/web/pull/168",
+        "prTitle": "chore: fix stale package-lock.json breaking npm ci",
+        "prBaseHash": "e16bb6ce2c09c0d62641197eda75e5239df26ac3",
+        "buildHref": "https://github.com/furqan-app/web/actions/runs/30647474882"
+      },
+      "gitCommit": {
+        "shortHash": "2de6d79",
+        "hash": "2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+        "subject": "Merge ff2d4853e3638c7a2ea91a42059c1e5c604dafde into e16bb6ce2c09c0d62641197eda75e5239df26ac3",
+        "body": "Merge ff2d4853e3638c7a2ea91a42059c1e5c604dafde into e16bb6ce2c09c0d62641197eda75e5239df26ac3\n",
+        "author": {
+          "name": "Yousef Rady",
+          "email": "54912410+usef@users.noreply.github.com",
+          "time": 1785515488000
+        },
+        "committer": {
+          "name": "GitHub",
+          "email": "noreply@github.com",
+          "time": 1785515488000
+        },
+        "branch": "HEAD"
+      },
+      "gitDiff": "diff --git a/package-lock.json b/package-lock.json\nindex a5ee475..00d604e 100644\n--- a/package-lock.json\n+++ b/package-lock.json\n@@ -162,7 +162,6 @@\n       \"version\": \"7.25.8\",\n       \"resolved\": \"https://registry.npmjs.org/@babel/core/-/core-7.25.8.tgz\",\n       \"integrity\": \"sha512-Oixnb+DzmRT30qu9d3tJSQkxuygWm32DFykT4bRoORPa9hZ/L4KhVB/XiRm6KG+roIEM7DBQlmg27kw2HZkdZg==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@ampproject/remapping\": \"^2.2.0\",\n         \"@babel/code-frame\": \"^7.25.7\",\n@@ -1795,13 +1794,38 @@\n         \"node\": \">=6.9.0\"\n       }\n     },\n+    \"node_modules/@emnapi/core\": {\n+      \"version\": \"1.11.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/core/-/core-1.11.3.tgz\",\n+      \"integrity\": \"sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"peer\": true,\n+      \"dependencies\": {\n+        \"@emnapi/wasi-threads\": \"1.2.3\",\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n+    \"node_modules/@emnapi/runtime\": {\n+      \"version\": \"1.11.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.3.tgz\",\n+      \"integrity\": \"sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@emnapi/wasi-threads\": {\n-      \"version\": \"1.2.2\",\n-      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz\",\n-      \"integrity\": \"sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==\",\n+      \"version\": \"1.2.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.3.tgz\",\n+      \"integrity\": \"sha512-ELEBe8PsLvvJ6QMr0zLt8ffvOHW/dc1m3CEzNMg7aJUv3bMaoDtw2TXyDAwkYBuroxxuHEwhRTLJSe5sya547g==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n       \"optional\": true,\n+      \"peer\": true,\n       \"dependencies\": {\n         \"tslib\": \"^2.4.0\"\n       }\n@@ -2581,6 +2605,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@jridgewell/source-map/-/source-map-0.3.11.tgz\",\n       \"integrity\": \"sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/gen-mapping\": \"^0.3.5\",\n         \"@jridgewell/trace-mapping\": \"^0.3.25\"\n@@ -2818,7 +2843,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/api/-/api-1.9.1.tgz\",\n       \"integrity\": \"sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=8.0.0\"\n       }\n@@ -2840,7 +2864,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/core/-/core-2.9.0.tgz\",\n       \"integrity\": \"sha512-m2nckMT80NnmjTYSPjJQObBJ+8dgkoajEOUbznL8AHZ3T3yHRk2P7gI1PhEBc1+lOnrYE9UWrWHqJDsmqjmNbw==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/semantic-conventions\": \"^1.29.0\"\n       },\n@@ -2856,7 +2879,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/instrumentation/-/instrumentation-0.220.0.tgz\",\n       \"integrity\": \"sha512-xQx3E2WxP1mDvKzxLxX+CTCtNLa560YJZ3087qYHerl2YmiKpv7AH+dAy7vmx+eVrZ5BwhfWUAVoKOoxCNHcpw==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/api-logs\": \"0.220.0\",\n         \"import-in-the-middle\": \"^3.0.0\",\n@@ -2907,7 +2929,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/sdk-trace-base/-/sdk-trace-base-2.9.0.tgz\",\n       \"integrity\": \"sha512-cp9zmTl62R8PJrpvFcmc8N2JQU/xfa0S+61q511Nji+QxCfZ8Ifvg7H27G8cANe4crg4RTrWsVvanHiXjSp6ag==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/core\": \"2.9.0\",\n         \"@opentelemetry/resources\": \"2.9.0\",\n@@ -2970,7 +2991,6 @@\n       \"integrity\": \"sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==\",\n       \"devOptional\": true,\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"playwright\": \"1.61.1\"\n       },\n@@ -5044,6 +5064,18 @@\n         \"node\": \"^20.19.0 || >=22.12.0\"\n       }\n     },\n+    \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/core\": {\n+      \"version\": \"1.11.1\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/core/-/core-1.11.1.tgz\",\n+      \"integrity\": \"sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"@emnapi/wasi-threads\": \"1.2.2\",\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/runtime\": {\n       \"version\": \"1.11.1\",\n       \"resolved\": \"https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.1.tgz\",\n@@ -5055,6 +5087,17 @@\n         \"tslib\": \"^2.4.0\"\n       }\n     },\n+    \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/wasi-threads\": {\n+      \"version\": \"1.2.2\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz\",\n+      \"integrity\": \"sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@rolldown/binding-win32-arm64-msvc\": {\n       \"version\": \"1.1.5\",\n       \"resolved\": \"https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.1.5.tgz\",\n@@ -5144,7 +5187,6 @@\n       \"resolved\": \"https://registry.npmjs.org/picomatch/-/picomatch-4.0.5.tgz\",\n       \"integrity\": \"sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=12\"\n       },\n@@ -6520,7 +6562,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@svgr/core/-/core-8.1.0.tgz\",\n       \"integrity\": \"sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@babel/core\": \"^7.21.3\",\n         \"@svgr/babel-preset\": \"8.1.0\",\n@@ -6705,7 +6746,8 @@\n       \"version\": \"7.0.15\",\n       \"resolved\": \"https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz\",\n       \"integrity\": \"sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@types/json5\": {\n       \"version\": \"0.0.29\",\n@@ -6732,7 +6774,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@types/react/-/react-18.3.11.tgz\",\n       \"integrity\": \"sha512-r6QZ069rFTjrEYgFdOck1gK7FLVsgJE7tTz0pQBczlBNUhBNk0MQH4UbnFSwjpQLMkLzgqvBBa+qGpLje16eTQ==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/prop-types\": \"*\",\n         \"csstype\": \"^3.0.2\"\n@@ -6743,7 +6784,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@types/react-dom/-/react-dom-18.3.1.tgz\",\n       \"integrity\": \"sha512-qW1Mfv8taImTthu4KoXgDfLuk4bydU6Q/TkADnDWWHwi4NX4BR+LWfTp2sVmTqRrsHvyDDTelgelxJ+SsejKKQ==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/react\": \"*\"\n       }\n@@ -6801,7 +6841,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@typescript-eslint/parser/-/parser-8.10.0.tgz\",\n       \"integrity\": \"sha512-E24l90SxuJhytWJ0pTQydFT46Nk0Z+bsLKo/L8rtQSL93rQ6byd1V/QbDpHUTdLPOMsBCcYXZweADNCfOCmOAg==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@typescript-eslint/scope-manager\": \"8.10.0\",\n         \"@typescript-eslint/types\": \"8.10.0\",\n@@ -7067,6 +7106,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/ast/-/ast-1.14.1.tgz\",\n       \"integrity\": \"sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/helper-numbers\": \"1.13.2\",\n         \"@webassemblyjs/helper-wasm-bytecode\": \"1.13.2\"\n@@ -7076,25 +7116,29 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/floating-point-hex-parser/-/floating-point-hex-parser-1.13.2.tgz\",\n       \"integrity\": \"sha512-6oXyTOzbKxGH4steLbLNOu71Oj+C8Lg34n6CqRvqfS2O71BxY6ByfMDRhBytzknj9yGUPVJ1qIKhRlAwO1AovA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-api-error\": {\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-api-error/-/helper-api-error-1.13.2.tgz\",\n       \"integrity\": \"sha512-U56GMYxy4ZQCbDZd6JuvvNV/WFildOjsaWD3Tzzvmw/mas3cXzRJPMjP83JqEsgSbyrmaGjBfDtV7KDXV9UzFQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-buffer\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-buffer/-/helper-buffer-1.14.1.tgz\",\n       \"integrity\": \"sha512-jyH7wtcHiKssDtFPRB+iQdxlDf96m0E39yb0k5uJVhFGleZFoNw1c4aeIcVUPPbXUVJ94wwnMOAqUHyzoEPVMA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-numbers\": {\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-numbers/-/helper-numbers-1.13.2.tgz\",\n       \"integrity\": \"sha512-FE8aCmS5Q6eQYcV3gI35O4J789wlQA+7JrqTTpJqn5emA4U2hvwJmvFRC0HODS+3Ye6WioDklgd6scJ3+PLnEA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/floating-point-hex-parser\": \"1.13.2\",\n         \"@webassemblyjs/helper-api-error\": \"1.13.2\",\n@@ -7105,13 +7149,15 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-wasm-bytecode/-/helper-wasm-bytecode-1.13.2.tgz\",\n       \"integrity\": \"sha512-3QbLKy93F0EAIXLh0ogEVR6rOubA9AoZ+WRYhNbFyuB70j3dRdwH9g+qXhLAO0kiYGlg3TxDV+I4rQTr/YNXkA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-wasm-section\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-wasm-section/-/helper-wasm-section-1.14.1.tgz\",\n       \"integrity\": \"sha512-ds5mXEqTJ6oxRoqjhWDU83OgzAYjwsCV8Lo/N+oRsNDmx/ZDpqalmrtgOMkHwxsG0iI//3BwWAErYRHtgn0dZw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7124,6 +7170,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/ieee754/-/ieee754-1.13.2.tgz\",\n       \"integrity\": \"sha512-4LtOzh58S/5lX4ITKxnAK2USuNEvpdVV9AlgGQb8rJDHaLeHciwG4zlGr0j/SNWlr7x3vO1lDEsuePvtcDNCkw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@xtuc/ieee754\": \"^1.2.0\"\n       }\n@@ -7133,6 +7180,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/leb128/-/leb128-1.13.2.tgz\",\n       \"integrity\": \"sha512-Lde1oNoIdzVzdkNEAWZ1dZ5orIbff80YPdHx20mrHwHrVNNTjNr8E3xz9BdpcGqRQbAEa+fkrCb+fRFTl/6sQw==\",\n       \"license\": \"Apache-2.0\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@xtuc/long\": \"4.2.2\"\n       }\n@@ -7141,13 +7189,15 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/utf8/-/utf8-1.13.2.tgz\",\n       \"integrity\": \"sha512-3NQWGjKTASY1xV5m7Hr0iPeXD9+RDobLll3T9d2AO+g3my8xy5peVyjSag4I50mR1bBSN/Ct12lo+R9tJk0NZQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/wasm-edit\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-edit/-/wasm-edit-1.14.1.tgz\",\n       \"integrity\": \"sha512-RNJUIQH/J8iA/1NzlE4N7KtyZNHi3w7at7hDjvRNm5rcUXa00z1vRz3glZoULfJ5mpvYhLybmVcwcjGrC1pRrQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7164,6 +7214,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-gen/-/wasm-gen-1.14.1.tgz\",\n       \"integrity\": \"sha512-AmomSIjP8ZbfGQhumkNvgC33AY7qtMCXnN6bL2u2Js4gVCg8fp735aEiMSBbDR7UQIj90n4wKAFUSEd0QN2Ukg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-wasm-bytecode\": \"1.13.2\",\n@@ -7177,6 +7228,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-opt/-/wasm-opt-1.14.1.tgz\",\n       \"integrity\": \"sha512-PTcKLUNvBqnY2U6E5bdOQcSM+oVP/PmrDY9NzowJjislEjwP/C4an2303MCVS2Mg9d3AJpIGdUFIQQWbPds0Sw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7189,6 +7241,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-parser/-/wasm-parser-1.14.1.tgz\",\n       \"integrity\": \"sha512-JLBl+KZ0R5qB7mCnud/yyX08jWFw5MsoalJ1pQ4EdFlgj9VdXKGuENGsiCIjegI1W7p91rUlcB/LB5yRJKNTcQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-api-error\": \"1.13.2\",\n@@ -7203,6 +7256,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wast-printer/-/wast-printer-1.14.1.tgz\",\n       \"integrity\": \"sha512-kPSSXE6De1XOR820C90RIo2ogvZG+c3KiHzqUoO/F34Y2shGzesfqv7o57xrxovZJH/MetF5UjroJ/R/3isoiw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@xtuc/long\": \"4.2.2\"\n@@ -7212,20 +7266,21 @@\n       \"version\": \"1.2.0\",\n       \"resolved\": \"https://registry.npmjs.org/@xtuc/ieee754/-/ieee754-1.2.0.tgz\",\n       \"integrity\": \"sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==\",\n-      \"license\": \"BSD-3-Clause\"\n+      \"license\": \"BSD-3-Clause\",\n+      \"peer\": true\n     },\n     \"node_modules/@xtuc/long\": {\n       \"version\": \"4.2.2\",\n       \"resolved\": \"https://registry.npmjs.org/@xtuc/long/-/long-4.2.2.tgz\",\n       \"integrity\": \"sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==\",\n-      \"license\": \"Apache-2.0\"\n+      \"license\": \"Apache-2.0\",\n+      \"peer\": true\n     },\n     \"node_modules/acorn\": {\n       \"version\": \"8.17.0\",\n       \"resolved\": \"https://registry.npmjs.org/acorn/-/acorn-8.17.0.tgz\",\n       \"integrity\": \"sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"bin\": {\n         \"acorn\": \"bin/acorn\"\n       },\n@@ -7238,6 +7293,7 @@\n       \"resolved\": \"https://registry.npmjs.org/acorn-import-phases/-/acorn-import-phases-1.0.4.tgz\",\n       \"integrity\": \"sha512-wKmbr/DDiIXzEOiWrTTUcDm24kQ2vGfZQvM2fwg2vXqR5uW6aapr7ObPtj1th32b9u90/Pf4AItvdTh42fBmVQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=10.13.0\"\n       },\n@@ -7287,6 +7343,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv-formats/-/ajv-formats-2.1.1.tgz\",\n       \"integrity\": \"sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"ajv\": \"^8.0.0\"\n       },\n@@ -7304,6 +7361,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz\",\n       \"integrity\": \"sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"fast-deep-equal\": \"^3.1.3\",\n         \"fast-uri\": \"^3.0.1\",\n@@ -7319,7 +7377,8 @@\n       \"version\": \"1.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz\",\n       \"integrity\": \"sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/ansi-regex\": {\n       \"version\": \"5.0.1\",\n@@ -7764,7 +7823,6 @@\n         }\n       ],\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"baseline-browser-mapping\": \"^2.10.12\",\n         \"caniuse-lite\": \"^1.0.30001782\",\n@@ -7783,7 +7841,8 @@\n       \"version\": \"1.1.2\",\n       \"resolved\": \"https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz\",\n       \"integrity\": \"sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/busboy\": {\n       \"version\": \"1.6.0\",\n@@ -7945,6 +8004,7 @@\n       \"resolved\": \"https://registry.npmjs.org/chrome-trace-event/-/chrome-trace-event-1.0.4.tgz\",\n       \"integrity\": \"sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=6.0\"\n       }\n@@ -8860,7 +8920,6 @@\n       \"integrity\": \"sha512-ypowyDxpVSYpkXr9WPv2PAZCtNip1Mv5KTW0SCurXv/9iOpcrH9PaqUElksqEB6pChqHGDRCFTyrZlGhnLNGiA==\",\n       \"deprecated\": \"This version is no longer supported. Please see https://eslint.org/version-support for other options.\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@eslint-community/eslint-utils\": \"^4.2.0\",\n         \"@eslint-community/regexpp\": \"^4.6.1\",\n@@ -9024,7 +9083,6 @@\n       \"resolved\": \"https://registry.npmjs.org/eslint-plugin-import/-/eslint-plugin-import-2.31.0.tgz\",\n       \"integrity\": \"sha512-ixmkI62Rbc2/w8Vfxyh1jQRTdRTF52VxwRVHl/ykPAmqG+Nb7/kNn+byLP0LxPgI7zWA16Jt82SybJInmMia3A==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@rtsao/scc\": \"^1.1.0\",\n         \"array-includes\": \"^3.1.8\",\n@@ -9291,6 +9349,7 @@\n       \"resolved\": \"https://registry.npmjs.org/events/-/events-3.3.0.tgz\",\n       \"integrity\": \"sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.8.x\"\n       }\n@@ -9378,7 +9437,8 @@\n           \"url\": \"https://opencollective.com/fastify\"\n         }\n       ],\n-      \"license\": \"BSD-3-Clause\"\n+      \"license\": \"BSD-3-Clause\",\n+      \"peer\": true\n     },\n     \"node_modules/fastq\": {\n       \"version\": \"1.17.1\",\n@@ -10450,6 +10510,7 @@\n       \"resolved\": \"https://registry.npmjs.org/jest-worker/-/jest-worker-27.5.1.tgz\",\n       \"integrity\": \"sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@types/node\": \"*\",\n         \"merge-stream\": \"^2.0.0\",\n@@ -10464,6 +10525,7 @@\n       \"resolved\": \"https://registry.npmjs.org/supports-color/-/supports-color-8.1.1.tgz\",\n       \"integrity\": \"sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"has-flag\": \"^4.0.0\"\n       },\n@@ -10919,6 +10981,7 @@\n       \"resolved\": \"https://registry.npmjs.org/loader-runner/-/loader-runner-4.3.2.tgz\",\n       \"integrity\": \"sha512-DFEqQ3ihfS9blba08cLfYf1NRAIEm+dDjic073DRDc3/JspI/8wYmtDsHwd3+4hwvdxSK7PGaElfTmm0awWJ4w==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=6.11.5\"\n       },\n@@ -11041,7 +11104,8 @@\n       \"version\": \"2.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/merge-stream/-/merge-stream-2.0.0.tgz\",\n       \"integrity\": \"sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/merge2\": {\n       \"version\": \"1.4.1\",\n@@ -11121,6 +11185,7 @@\n       \"resolved\": \"https://registry.npmjs.org/minimizer-webpack-plugin/-/minimizer-webpack-plugin-5.6.1.tgz\",\n       \"integrity\": \"sha512-DoeAZz8Q1C1znwsUzej1fdoi4jCf7/+Em27ouLqfK/+3m8G+D7yDhUwrc3CNhjSzGUN1kn7Iv4sWmjflQHenpw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/trace-mapping\": \"^0.3.25\",\n         \"jest-worker\": \"^27.4.5\",\n@@ -11281,13 +11346,13 @@\n       \"version\": \"2.6.2\",\n       \"resolved\": \"https://registry.npmjs.org/neo-async/-/neo-async-2.6.2.tgz\",\n       \"integrity\": \"sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/next\": {\n       \"version\": \"14.2.15\",\n       \"resolved\": \"https://registry.npmjs.org/next/-/next-14.2.15.tgz\",\n       \"integrity\": \"sha512-h9ctmOokpoDphRvMGnwOJAedT6zKhwqyZML9mDtspgf4Rh3Pn7UTYKqePNoDvhsWBAO5GoPNYshnAUGIazVGmw==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@next/env\": \"14.2.15\",\n         \"@swc/helpers\": \"0.5.5\",\n@@ -11997,7 +12062,6 @@\n       \"version\": \"2.3.2\",\n       \"resolved\": \"https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz\",\n       \"integrity\": \"sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==\",\n-      \"dev\": true,\n       \"hasInstallScript\": true,\n       \"license\": \"MIT\",\n       \"optional\": true,\n@@ -12037,7 +12101,6 @@\n         }\n       ],\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"nanoid\": \"^3.3.16\",\n         \"picocolors\": \"^1.1.1\",\n@@ -12178,7 +12241,6 @@\n       \"version\": \"10.24.3\",\n       \"resolved\": \"https://registry.npmjs.org/preact/-/preact-10.24.3.tgz\",\n       \"integrity\": \"sha512-Z2dPnBnMUfyQfSQ+GBdsGa16hz35YmLmtTLhM169uW944hYL6xzTYkJjC07j+Wosz733pMWx0fgON3JNw1jJQA==\",\n-      \"peer\": true,\n       \"funding\": {\n         \"type\": \"opencollective\",\n         \"url\": \"https://opencollective.com/preact\"\n@@ -12226,7 +12288,6 @@\n       \"resolved\": \"https://registry.npmjs.org/prisma/-/prisma-5.21.1.tgz\",\n       \"integrity\": \"sha512-PB+Iqzld/uQBPaaw2UVIk84kb0ITsLajzsxzsadxxl54eaU5Gyl2/L02ysivHxK89t7YrfQJm+Ggk37uvM70oQ==\",\n       \"hasInstallScript\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@prisma/engines\": \"5.21.1\"\n       },\n@@ -12334,7 +12395,6 @@\n       \"version\": \"18.3.1\",\n       \"resolved\": \"https://registry.npmjs.org/react/-/react-18.3.1.tgz\",\n       \"integrity\": \"sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"loose-envify\": \"^1.1.0\"\n       },\n@@ -12346,7 +12406,6 @@\n       \"version\": \"18.3.1\",\n       \"resolved\": \"https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz\",\n       \"integrity\": \"sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"loose-envify\": \"^1.1.0\",\n         \"scheduler\": \"^0.23.2\"\n@@ -12583,6 +12642,7 @@\n       \"resolved\": \"https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz\",\n       \"integrity\": \"sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.10.0\"\n       }\n@@ -12721,7 +12781,6 @@\n       \"resolved\": \"https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz\",\n       \"integrity\": \"sha512-RFnrW4lhXA3s3eqHDZvN654g8OTjzRfqpIRJYczCGB6HzphckVAi/Qh4tbPUbRuDi7s1Llv8g/NspLkttY3gTA==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/estree\": \"1.0.9\"\n       },\n@@ -12846,6 +12905,7 @@\n       \"resolved\": \"https://registry.npmjs.org/schema-utils/-/schema-utils-4.3.3.tgz\",\n       \"integrity\": \"sha512-eflK8wEtyOE6+hsaRVPxvUKYCpRgzLqDTb8krvAsRIwOGlHoSgYLgBXoubGgLd2fT41/OUYdb48v4k4WWHQurA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@types/json-schema\": \"^7.0.9\",\n         \"ajv\": \"^8.9.0\",\n@@ -12882,6 +12942,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv-keywords/-/ajv-keywords-5.1.0.tgz\",\n       \"integrity\": \"sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"fast-deep-equal\": \"^3.1.3\"\n       },\n@@ -12893,7 +12954,8 @@\n       \"version\": \"1.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz\",\n       \"integrity\": \"sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/secure-json-parse\": {\n       \"version\": \"4.1.0\",\n@@ -13139,6 +13201,7 @@\n       \"resolved\": \"https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz\",\n       \"integrity\": \"sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"buffer-from\": \"^1.0.0\",\n         \"source-map\": \"^0.6.0\"\n@@ -13149,6 +13212,7 @@\n       \"resolved\": \"https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz\",\n       \"integrity\": \"sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==\",\n       \"license\": \"BSD-3-Clause\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.10.0\"\n       }\n@@ -13619,6 +13683,7 @@\n       \"resolved\": \"https://registry.npmjs.org/terser/-/terser-5.48.0.tgz\",\n       \"integrity\": \"sha512-J/9An6vs9Us6wKRriSFXBWdRZapREHqFzdNUKk0pmu804EMR6dr6winwo7e5JDxN4xahxQsuysyYFwlwj4XN/Q==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/source-map\": \"^0.3.3\",\n         \"acorn\": \"^8.15.0\",\n@@ -13636,7 +13701,8 @@\n       \"version\": \"2.20.3\",\n       \"resolved\": \"https://registry.npmjs.org/commander/-/commander-2.20.3.tgz\",\n       \"integrity\": \"sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/text-table\": {\n       \"version\": \"0.2.0\",\n@@ -13741,7 +13807,6 @@\n       \"integrity\": \"sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=12\"\n       },\n@@ -13917,7 +13982,6 @@\n       \"resolved\": \"https://registry.npmjs.org/typescript/-/typescript-5.6.3.tgz\",\n       \"integrity\": \"sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"bin\": {\n         \"tsc\": \"bin/tsc\",\n         \"tsserver\": \"bin/tsserver\"\n@@ -14249,7 +14313,6 @@\n       \"integrity\": \"sha512-7ULLwsCdYx/nRyrpiEwvqb5TFHrMVZyBt+rg/OAXT7rgj/z+DtTDyKFeLAdDkubDVDKD8jOsndmy7m55XcfUsw==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"lightningcss\": \"^1.32.0\",\n         \"picomatch\": \"^4.0.5\",\n@@ -14327,6 +14390,7 @@\n       \"resolved\": \"https://registry.npmjs.org/watchpack/-/watchpack-2.5.2.tgz\",\n       \"integrity\": \"sha512-6i/00NBjP4yGPs+caKSyRfpTF/8Torsu0MOW3mMzIbhgISFder8i7xbqgHlLMwJrdiN8ndBV3UA1/AfzPSr+jg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"graceful-fs\": \"^4.1.2\"\n       },\n@@ -14391,6 +14455,7 @@\n       \"resolved\": \"https://registry.npmjs.org/webpack-sources/-/webpack-sources-3.5.1.tgz\",\n       \"integrity\": \"sha512-jyuiGJdtvY434z5bUZrjz67v76/ePNvFZTp9Mdz29IlH4+GPsgyGjiv0fKI+M7BdkU6ADjulUcKAd3tUK3WlEw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=10.13.0\"\n       }\n@@ -14400,6 +14465,7 @@\n       \"resolved\": \"https://registry.npmjs.org/eslint-scope/-/eslint-scope-5.1.1.tgz\",\n       \"integrity\": \"sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"esrecurse\": \"^4.3.0\",\n         \"estraverse\": \"^4.1.1\"\n@@ -14413,6 +14479,7 @@\n       \"resolved\": \"https://registry.npmjs.org/estraverse/-/estraverse-4.3.0.tgz\",\n       \"integrity\": \"sha512-39nnKffWz8xN1BU/2c79n9nB9HDzo0niYUqx6xyqUnyoAnQyyWpOTdZEeiCch8BBu515t4wp9ZmgVfVhn9EBpw==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=4.0\"\n       }\n@@ -14422,6 +14489,7 @@\n       \"resolved\": \"https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz\",\n       \"integrity\": \"sha512-aU5EJuIN2WDemCcAp2vFBfp/m4EAhWJnUNSSw0ixs7/kXbd6Pg64EmwJkNdFhB8aWt1sH2CTXrLxo/iAGV3oPQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">= 0.6\"\n       }",
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/runner/work/web/web/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/furqan-app/web/commit/2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+            "commitHash": "2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+            "prHref": "https://github.com/furqan-app/web/pull/168",
+            "prTitle": "chore: fix stale package-lock.json breaking npm ci",
+            "prBaseHash": "e16bb6ce2c09c0d62641197eda75e5239df26ac3",
+            "buildHref": "https://github.com/furqan-app/web/actions/runs/30647474882"
+          },
+          "gitCommit": {
+            "shortHash": "2de6d79",
+            "hash": "2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+            "subject": "Merge ff2d4853e3638c7a2ea91a42059c1e5c604dafde into e16bb6ce2c09c0d62641197eda75e5239df26ac3",
+            "body": "Merge ff2d4853e3638c7a2ea91a42059c1e5c604dafde into e16bb6ce2c09c0d62641197eda75e5239df26ac3\n",
+            "author": {
+              "name": "Yousef Rady",
+              "email": "54912410+usef@users.noreply.github.com",
+              "time": 1785515488000
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "time": 1785515488000
+            },
+            "branch": "HEAD"
+          },
+          "gitDiff": "diff --git a/package-lock.json b/package-lock.json\nindex a5ee475..00d604e 100644\n--- a/package-lock.json\n+++ b/package-lock.json\n@@ -162,7 +162,6 @@\n       \"version\": \"7.25.8\",\n       \"resolved\": \"https://registry.npmjs.org/@babel/core/-/core-7.25.8.tgz\",\n       \"integrity\": \"sha512-Oixnb+DzmRT30qu9d3tJSQkxuygWm32DFykT4bRoORPa9hZ/L4KhVB/XiRm6KG+roIEM7DBQlmg27kw2HZkdZg==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@ampproject/remapping\": \"^2.2.0\",\n         \"@babel/code-frame\": \"^7.25.7\",\n@@ -1795,13 +1794,38 @@\n         \"node\": \">=6.9.0\"\n       }\n     },\n+    \"node_modules/@emnapi/core\": {\n+      \"version\": \"1.11.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/core/-/core-1.11.3.tgz\",\n+      \"integrity\": \"sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"peer\": true,\n+      \"dependencies\": {\n+        \"@emnapi/wasi-threads\": \"1.2.3\",\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n+    \"node_modules/@emnapi/runtime\": {\n+      \"version\": \"1.11.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.3.tgz\",\n+      \"integrity\": \"sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@emnapi/wasi-threads\": {\n-      \"version\": \"1.2.2\",\n-      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz\",\n-      \"integrity\": \"sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==\",\n+      \"version\": \"1.2.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.3.tgz\",\n+      \"integrity\": \"sha512-ELEBe8PsLvvJ6QMr0zLt8ffvOHW/dc1m3CEzNMg7aJUv3bMaoDtw2TXyDAwkYBuroxxuHEwhRTLJSe5sya547g==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n       \"optional\": true,\n+      \"peer\": true,\n       \"dependencies\": {\n         \"tslib\": \"^2.4.0\"\n       }\n@@ -2581,6 +2605,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@jridgewell/source-map/-/source-map-0.3.11.tgz\",\n       \"integrity\": \"sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/gen-mapping\": \"^0.3.5\",\n         \"@jridgewell/trace-mapping\": \"^0.3.25\"\n@@ -2818,7 +2843,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/api/-/api-1.9.1.tgz\",\n       \"integrity\": \"sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=8.0.0\"\n       }\n@@ -2840,7 +2864,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/core/-/core-2.9.0.tgz\",\n       \"integrity\": \"sha512-m2nckMT80NnmjTYSPjJQObBJ+8dgkoajEOUbznL8AHZ3T3yHRk2P7gI1PhEBc1+lOnrYE9UWrWHqJDsmqjmNbw==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/semantic-conventions\": \"^1.29.0\"\n       },\n@@ -2856,7 +2879,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/instrumentation/-/instrumentation-0.220.0.tgz\",\n       \"integrity\": \"sha512-xQx3E2WxP1mDvKzxLxX+CTCtNLa560YJZ3087qYHerl2YmiKpv7AH+dAy7vmx+eVrZ5BwhfWUAVoKOoxCNHcpw==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/api-logs\": \"0.220.0\",\n         \"import-in-the-middle\": \"^3.0.0\",\n@@ -2907,7 +2929,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/sdk-trace-base/-/sdk-trace-base-2.9.0.tgz\",\n       \"integrity\": \"sha512-cp9zmTl62R8PJrpvFcmc8N2JQU/xfa0S+61q511Nji+QxCfZ8Ifvg7H27G8cANe4crg4RTrWsVvanHiXjSp6ag==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/core\": \"2.9.0\",\n         \"@opentelemetry/resources\": \"2.9.0\",\n@@ -2970,7 +2991,6 @@\n       \"integrity\": \"sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==\",\n       \"devOptional\": true,\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"playwright\": \"1.61.1\"\n       },\n@@ -5044,6 +5064,18 @@\n         \"node\": \"^20.19.0 || >=22.12.0\"\n       }\n     },\n+    \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/core\": {\n+      \"version\": \"1.11.1\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/core/-/core-1.11.1.tgz\",\n+      \"integrity\": \"sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"@emnapi/wasi-threads\": \"1.2.2\",\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/runtime\": {\n       \"version\": \"1.11.1\",\n       \"resolved\": \"https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.1.tgz\",\n@@ -5055,6 +5087,17 @@\n         \"tslib\": \"^2.4.0\"\n       }\n     },\n+    \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/wasi-threads\": {\n+      \"version\": \"1.2.2\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz\",\n+      \"integrity\": \"sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@rolldown/binding-win32-arm64-msvc\": {\n       \"version\": \"1.1.5\",\n       \"resolved\": \"https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.1.5.tgz\",\n@@ -5144,7 +5187,6 @@\n       \"resolved\": \"https://registry.npmjs.org/picomatch/-/picomatch-4.0.5.tgz\",\n       \"integrity\": \"sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=12\"\n       },\n@@ -6520,7 +6562,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@svgr/core/-/core-8.1.0.tgz\",\n       \"integrity\": \"sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@babel/core\": \"^7.21.3\",\n         \"@svgr/babel-preset\": \"8.1.0\",\n@@ -6705,7 +6746,8 @@\n       \"version\": \"7.0.15\",\n       \"resolved\": \"https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz\",\n       \"integrity\": \"sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@types/json5\": {\n       \"version\": \"0.0.29\",\n@@ -6732,7 +6774,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@types/react/-/react-18.3.11.tgz\",\n       \"integrity\": \"sha512-r6QZ069rFTjrEYgFdOck1gK7FLVsgJE7tTz0pQBczlBNUhBNk0MQH4UbnFSwjpQLMkLzgqvBBa+qGpLje16eTQ==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/prop-types\": \"*\",\n         \"csstype\": \"^3.0.2\"\n@@ -6743,7 +6784,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@types/react-dom/-/react-dom-18.3.1.tgz\",\n       \"integrity\": \"sha512-qW1Mfv8taImTthu4KoXgDfLuk4bydU6Q/TkADnDWWHwi4NX4BR+LWfTp2sVmTqRrsHvyDDTelgelxJ+SsejKKQ==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/react\": \"*\"\n       }\n@@ -6801,7 +6841,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@typescript-eslint/parser/-/parser-8.10.0.tgz\",\n       \"integrity\": \"sha512-E24l90SxuJhytWJ0pTQydFT46Nk0Z+bsLKo/L8rtQSL93rQ6byd1V/QbDpHUTdLPOMsBCcYXZweADNCfOCmOAg==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@typescript-eslint/scope-manager\": \"8.10.0\",\n         \"@typescript-eslint/types\": \"8.10.0\",\n@@ -7067,6 +7106,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/ast/-/ast-1.14.1.tgz\",\n       \"integrity\": \"sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/helper-numbers\": \"1.13.2\",\n         \"@webassemblyjs/helper-wasm-bytecode\": \"1.13.2\"\n@@ -7076,25 +7116,29 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/floating-point-hex-parser/-/floating-point-hex-parser-1.13.2.tgz\",\n       \"integrity\": \"sha512-6oXyTOzbKxGH4steLbLNOu71Oj+C8Lg34n6CqRvqfS2O71BxY6ByfMDRhBytzknj9yGUPVJ1qIKhRlAwO1AovA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-api-error\": {\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-api-error/-/helper-api-error-1.13.2.tgz\",\n       \"integrity\": \"sha512-U56GMYxy4ZQCbDZd6JuvvNV/WFildOjsaWD3Tzzvmw/mas3cXzRJPMjP83JqEsgSbyrmaGjBfDtV7KDXV9UzFQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-buffer\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-buffer/-/helper-buffer-1.14.1.tgz\",\n       \"integrity\": \"sha512-jyH7wtcHiKssDtFPRB+iQdxlDf96m0E39yb0k5uJVhFGleZFoNw1c4aeIcVUPPbXUVJ94wwnMOAqUHyzoEPVMA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-numbers\": {\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-numbers/-/helper-numbers-1.13.2.tgz\",\n       \"integrity\": \"sha512-FE8aCmS5Q6eQYcV3gI35O4J789wlQA+7JrqTTpJqn5emA4U2hvwJmvFRC0HODS+3Ye6WioDklgd6scJ3+PLnEA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/floating-point-hex-parser\": \"1.13.2\",\n         \"@webassemblyjs/helper-api-error\": \"1.13.2\",\n@@ -7105,13 +7149,15 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-wasm-bytecode/-/helper-wasm-bytecode-1.13.2.tgz\",\n       \"integrity\": \"sha512-3QbLKy93F0EAIXLh0ogEVR6rOubA9AoZ+WRYhNbFyuB70j3dRdwH9g+qXhLAO0kiYGlg3TxDV+I4rQTr/YNXkA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-wasm-section\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-wasm-section/-/helper-wasm-section-1.14.1.tgz\",\n       \"integrity\": \"sha512-ds5mXEqTJ6oxRoqjhWDU83OgzAYjwsCV8Lo/N+oRsNDmx/ZDpqalmrtgOMkHwxsG0iI//3BwWAErYRHtgn0dZw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7124,6 +7170,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/ieee754/-/ieee754-1.13.2.tgz\",\n       \"integrity\": \"sha512-4LtOzh58S/5lX4ITKxnAK2USuNEvpdVV9AlgGQb8rJDHaLeHciwG4zlGr0j/SNWlr7x3vO1lDEsuePvtcDNCkw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@xtuc/ieee754\": \"^1.2.0\"\n       }\n@@ -7133,6 +7180,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/leb128/-/leb128-1.13.2.tgz\",\n       \"integrity\": \"sha512-Lde1oNoIdzVzdkNEAWZ1dZ5orIbff80YPdHx20mrHwHrVNNTjNr8E3xz9BdpcGqRQbAEa+fkrCb+fRFTl/6sQw==\",\n       \"license\": \"Apache-2.0\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@xtuc/long\": \"4.2.2\"\n       }\n@@ -7141,13 +7189,15 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/utf8/-/utf8-1.13.2.tgz\",\n       \"integrity\": \"sha512-3NQWGjKTASY1xV5m7Hr0iPeXD9+RDobLll3T9d2AO+g3my8xy5peVyjSag4I50mR1bBSN/Ct12lo+R9tJk0NZQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/wasm-edit\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-edit/-/wasm-edit-1.14.1.tgz\",\n       \"integrity\": \"sha512-RNJUIQH/J8iA/1NzlE4N7KtyZNHi3w7at7hDjvRNm5rcUXa00z1vRz3glZoULfJ5mpvYhLybmVcwcjGrC1pRrQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7164,6 +7214,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-gen/-/wasm-gen-1.14.1.tgz\",\n       \"integrity\": \"sha512-AmomSIjP8ZbfGQhumkNvgC33AY7qtMCXnN6bL2u2Js4gVCg8fp735aEiMSBbDR7UQIj90n4wKAFUSEd0QN2Ukg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-wasm-bytecode\": \"1.13.2\",\n@@ -7177,6 +7228,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-opt/-/wasm-opt-1.14.1.tgz\",\n       \"integrity\": \"sha512-PTcKLUNvBqnY2U6E5bdOQcSM+oVP/PmrDY9NzowJjislEjwP/C4an2303MCVS2Mg9d3AJpIGdUFIQQWbPds0Sw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7189,6 +7241,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-parser/-/wasm-parser-1.14.1.tgz\",\n       \"integrity\": \"sha512-JLBl+KZ0R5qB7mCnud/yyX08jWFw5MsoalJ1pQ4EdFlgj9VdXKGuENGsiCIjegI1W7p91rUlcB/LB5yRJKNTcQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-api-error\": \"1.13.2\",\n@@ -7203,6 +7256,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wast-printer/-/wast-printer-1.14.1.tgz\",\n       \"integrity\": \"sha512-kPSSXE6De1XOR820C90RIo2ogvZG+c3KiHzqUoO/F34Y2shGzesfqv7o57xrxovZJH/MetF5UjroJ/R/3isoiw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@xtuc/long\": \"4.2.2\"\n@@ -7212,20 +7266,21 @@\n       \"version\": \"1.2.0\",\n       \"resolved\": \"https://registry.npmjs.org/@xtuc/ieee754/-/ieee754-1.2.0.tgz\",\n       \"integrity\": \"sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==\",\n-      \"license\": \"BSD-3-Clause\"\n+      \"license\": \"BSD-3-Clause\",\n+      \"peer\": true\n     },\n     \"node_modules/@xtuc/long\": {\n       \"version\": \"4.2.2\",\n       \"resolved\": \"https://registry.npmjs.org/@xtuc/long/-/long-4.2.2.tgz\",\n       \"integrity\": \"sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==\",\n-      \"license\": \"Apache-2.0\"\n+      \"license\": \"Apache-2.0\",\n+      \"peer\": true\n     },\n     \"node_modules/acorn\": {\n       \"version\": \"8.17.0\",\n       \"resolved\": \"https://registry.npmjs.org/acorn/-/acorn-8.17.0.tgz\",\n       \"integrity\": \"sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"bin\": {\n         \"acorn\": \"bin/acorn\"\n       },\n@@ -7238,6 +7293,7 @@\n       \"resolved\": \"https://registry.npmjs.org/acorn-import-phases/-/acorn-import-phases-1.0.4.tgz\",\n       \"integrity\": \"sha512-wKmbr/DDiIXzEOiWrTTUcDm24kQ2vGfZQvM2fwg2vXqR5uW6aapr7ObPtj1th32b9u90/Pf4AItvdTh42fBmVQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=10.13.0\"\n       },\n@@ -7287,6 +7343,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv-formats/-/ajv-formats-2.1.1.tgz\",\n       \"integrity\": \"sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"ajv\": \"^8.0.0\"\n       },\n@@ -7304,6 +7361,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz\",\n       \"integrity\": \"sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"fast-deep-equal\": \"^3.1.3\",\n         \"fast-uri\": \"^3.0.1\",\n@@ -7319,7 +7377,8 @@\n       \"version\": \"1.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz\",\n       \"integrity\": \"sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/ansi-regex\": {\n       \"version\": \"5.0.1\",\n@@ -7764,7 +7823,6 @@\n         }\n       ],\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"baseline-browser-mapping\": \"^2.10.12\",\n         \"caniuse-lite\": \"^1.0.30001782\",\n@@ -7783,7 +7841,8 @@\n       \"version\": \"1.1.2\",\n       \"resolved\": \"https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz\",\n       \"integrity\": \"sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/busboy\": {\n       \"version\": \"1.6.0\",\n@@ -7945,6 +8004,7 @@\n       \"resolved\": \"https://registry.npmjs.org/chrome-trace-event/-/chrome-trace-event-1.0.4.tgz\",\n       \"integrity\": \"sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=6.0\"\n       }\n@@ -8860,7 +8920,6 @@\n       \"integrity\": \"sha512-ypowyDxpVSYpkXr9WPv2PAZCtNip1Mv5KTW0SCurXv/9iOpcrH9PaqUElksqEB6pChqHGDRCFTyrZlGhnLNGiA==\",\n       \"deprecated\": \"This version is no longer supported. Please see https://eslint.org/version-support for other options.\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@eslint-community/eslint-utils\": \"^4.2.0\",\n         \"@eslint-community/regexpp\": \"^4.6.1\",\n@@ -9024,7 +9083,6 @@\n       \"resolved\": \"https://registry.npmjs.org/eslint-plugin-import/-/eslint-plugin-import-2.31.0.tgz\",\n       \"integrity\": \"sha512-ixmkI62Rbc2/w8Vfxyh1jQRTdRTF52VxwRVHl/ykPAmqG+Nb7/kNn+byLP0LxPgI7zWA16Jt82SybJInmMia3A==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@rtsao/scc\": \"^1.1.0\",\n         \"array-includes\": \"^3.1.8\",\n@@ -9291,6 +9349,7 @@\n       \"resolved\": \"https://registry.npmjs.org/events/-/events-3.3.0.tgz\",\n       \"integrity\": \"sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.8.x\"\n       }\n@@ -9378,7 +9437,8 @@\n           \"url\": \"https://opencollective.com/fastify\"\n         }\n       ],\n-      \"license\": \"BSD-3-Clause\"\n+      \"license\": \"BSD-3-Clause\",\n+      \"peer\": true\n     },\n     \"node_modules/fastq\": {\n       \"version\": \"1.17.1\",\n@@ -10450,6 +10510,7 @@\n       \"resolved\": \"https://registry.npmjs.org/jest-worker/-/jest-worker-27.5.1.tgz\",\n       \"integrity\": \"sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@types/node\": \"*\",\n         \"merge-stream\": \"^2.0.0\",\n@@ -10464,6 +10525,7 @@\n       \"resolved\": \"https://registry.npmjs.org/supports-color/-/supports-color-8.1.1.tgz\",\n       \"integrity\": \"sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"has-flag\": \"^4.0.0\"\n       },\n@@ -10919,6 +10981,7 @@\n       \"resolved\": \"https://registry.npmjs.org/loader-runner/-/loader-runner-4.3.2.tgz\",\n       \"integrity\": \"sha512-DFEqQ3ihfS9blba08cLfYf1NRAIEm+dDjic073DRDc3/JspI/8wYmtDsHwd3+4hwvdxSK7PGaElfTmm0awWJ4w==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=6.11.5\"\n       },\n@@ -11041,7 +11104,8 @@\n       \"version\": \"2.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/merge-stream/-/merge-stream-2.0.0.tgz\",\n       \"integrity\": \"sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/merge2\": {\n       \"version\": \"1.4.1\",\n@@ -11121,6 +11185,7 @@\n       \"resolved\": \"https://registry.npmjs.org/minimizer-webpack-plugin/-/minimizer-webpack-plugin-5.6.1.tgz\",\n       \"integrity\": \"sha512-DoeAZz8Q1C1znwsUzej1fdoi4jCf7/+Em27ouLqfK/+3m8G+D7yDhUwrc3CNhjSzGUN1kn7Iv4sWmjflQHenpw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/trace-mapping\": \"^0.3.25\",\n         \"jest-worker\": \"^27.4.5\",\n@@ -11281,13 +11346,13 @@\n       \"version\": \"2.6.2\",\n       \"resolved\": \"https://registry.npmjs.org/neo-async/-/neo-async-2.6.2.tgz\",\n       \"integrity\": \"sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/next\": {\n       \"version\": \"14.2.15\",\n       \"resolved\": \"https://registry.npmjs.org/next/-/next-14.2.15.tgz\",\n       \"integrity\": \"sha512-h9ctmOokpoDphRvMGnwOJAedT6zKhwqyZML9mDtspgf4Rh3Pn7UTYKqePNoDvhsWBAO5GoPNYshnAUGIazVGmw==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@next/env\": \"14.2.15\",\n         \"@swc/helpers\": \"0.5.5\",\n@@ -11997,7 +12062,6 @@\n       \"version\": \"2.3.2\",\n       \"resolved\": \"https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz\",\n       \"integrity\": \"sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==\",\n-      \"dev\": true,\n       \"hasInstallScript\": true,\n       \"license\": \"MIT\",\n       \"optional\": true,\n@@ -12037,7 +12101,6 @@\n         }\n       ],\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"nanoid\": \"^3.3.16\",\n         \"picocolors\": \"^1.1.1\",\n@@ -12178,7 +12241,6 @@\n       \"version\": \"10.24.3\",\n       \"resolved\": \"https://registry.npmjs.org/preact/-/preact-10.24.3.tgz\",\n       \"integrity\": \"sha512-Z2dPnBnMUfyQfSQ+GBdsGa16hz35YmLmtTLhM169uW944hYL6xzTYkJjC07j+Wosz733pMWx0fgON3JNw1jJQA==\",\n-      \"peer\": true,\n       \"funding\": {\n         \"type\": \"opencollective\",\n         \"url\": \"https://opencollective.com/preact\"\n@@ -12226,7 +12288,6 @@\n       \"resolved\": \"https://registry.npmjs.org/prisma/-/prisma-5.21.1.tgz\",\n       \"integrity\": \"sha512-PB+Iqzld/uQBPaaw2UVIk84kb0ITsLajzsxzsadxxl54eaU5Gyl2/L02ysivHxK89t7YrfQJm+Ggk37uvM70oQ==\",\n       \"hasInstallScript\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@prisma/engines\": \"5.21.1\"\n       },\n@@ -12334,7 +12395,6 @@\n       \"version\": \"18.3.1\",\n       \"resolved\": \"https://registry.npmjs.org/react/-/react-18.3.1.tgz\",\n       \"integrity\": \"sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"loose-envify\": \"^1.1.0\"\n       },\n@@ -12346,7 +12406,6 @@\n       \"version\": \"18.3.1\",\n       \"resolved\": \"https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz\",\n       \"integrity\": \"sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"loose-envify\": \"^1.1.0\",\n         \"scheduler\": \"^0.23.2\"\n@@ -12583,6 +12642,7 @@\n       \"resolved\": \"https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz\",\n       \"integrity\": \"sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.10.0\"\n       }\n@@ -12721,7 +12781,6 @@\n       \"resolved\": \"https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz\",\n       \"integrity\": \"sha512-RFnrW4lhXA3s3eqHDZvN654g8OTjzRfqpIRJYczCGB6HzphckVAi/Qh4tbPUbRuDi7s1Llv8g/NspLkttY3gTA==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/estree\": \"1.0.9\"\n       },\n@@ -12846,6 +12905,7 @@\n       \"resolved\": \"https://registry.npmjs.org/schema-utils/-/schema-utils-4.3.3.tgz\",\n       \"integrity\": \"sha512-eflK8wEtyOE6+hsaRVPxvUKYCpRgzLqDTb8krvAsRIwOGlHoSgYLgBXoubGgLd2fT41/OUYdb48v4k4WWHQurA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@types/json-schema\": \"^7.0.9\",\n         \"ajv\": \"^8.9.0\",\n@@ -12882,6 +12942,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv-keywords/-/ajv-keywords-5.1.0.tgz\",\n       \"integrity\": \"sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"fast-deep-equal\": \"^3.1.3\"\n       },\n@@ -12893,7 +12954,8 @@\n       \"version\": \"1.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz\",\n       \"integrity\": \"sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/secure-json-parse\": {\n       \"version\": \"4.1.0\",\n@@ -13139,6 +13201,7 @@\n       \"resolved\": \"https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz\",\n       \"integrity\": \"sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"buffer-from\": \"^1.0.0\",\n         \"source-map\": \"^0.6.0\"\n@@ -13149,6 +13212,7 @@\n       \"resolved\": \"https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz\",\n       \"integrity\": \"sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==\",\n       \"license\": \"BSD-3-Clause\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.10.0\"\n       }\n@@ -13619,6 +13683,7 @@\n       \"resolved\": \"https://registry.npmjs.org/terser/-/terser-5.48.0.tgz\",\n       \"integrity\": \"sha512-J/9An6vs9Us6wKRriSFXBWdRZapREHqFzdNUKk0pmu804EMR6dr6winwo7e5JDxN4xahxQsuysyYFwlwj4XN/Q==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/source-map\": \"^0.3.3\",\n         \"acorn\": \"^8.15.0\",\n@@ -13636,7 +13701,8 @@\n       \"version\": \"2.20.3\",\n       \"resolved\": \"https://registry.npmjs.org/commander/-/commander-2.20.3.tgz\",\n       \"integrity\": \"sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/text-table\": {\n       \"version\": \"0.2.0\",\n@@ -13741,7 +13807,6 @@\n       \"integrity\": \"sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=12\"\n       },\n@@ -13917,7 +13982,6 @@\n       \"resolved\": \"https://registry.npmjs.org/typescript/-/typescript-5.6.3.tgz\",\n       \"integrity\": \"sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"bin\": {\n         \"tsc\": \"bin/tsc\",\n         \"tsserver\": \"bin/tsserver\"\n@@ -14249,7 +14313,6 @@\n       \"integrity\": \"sha512-7ULLwsCdYx/nRyrpiEwvqb5TFHrMVZyBt+rg/OAXT7rgj/z+DtTDyKFeLAdDkubDVDKD8jOsndmy7m55XcfUsw==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"lightningcss\": \"^1.32.0\",\n         \"picomatch\": \"^4.0.5\",\n@@ -14327,6 +14390,7 @@\n       \"resolved\": \"https://registry.npmjs.org/watchpack/-/watchpack-2.5.2.tgz\",\n       \"integrity\": \"sha512-6i/00NBjP4yGPs+caKSyRfpTF/8Torsu0MOW3mMzIbhgISFder8i7xbqgHlLMwJrdiN8ndBV3UA1/AfzPSr+jg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"graceful-fs\": \"^4.1.2\"\n       },\n@@ -14391,6 +14455,7 @@\n       \"resolved\": \"https://registry.npmjs.org/webpack-sources/-/webpack-sources-3.5.1.tgz\",\n       \"integrity\": \"sha512-jyuiGJdtvY434z5bUZrjz67v76/ePNvFZTp9Mdz29IlH4+GPsgyGjiv0fKI+M7BdkU6ADjulUcKAd3tUK3WlEw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=10.13.0\"\n       }\n@@ -14400,6 +14465,7 @@\n       \"resolved\": \"https://registry.npmjs.org/eslint-scope/-/eslint-scope-5.1.1.tgz\",\n       \"integrity\": \"sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"esrecurse\": \"^4.3.0\",\n         \"estraverse\": \"^4.1.1\"\n@@ -14413,6 +14479,7 @@\n       \"resolved\": \"https://registry.npmjs.org/estraverse/-/estraverse-4.3.0.tgz\",\n       \"integrity\": \"sha512-39nnKffWz8xN1BU/2c79n9nB9HDzo0niYUqx6xyqUnyoAnQyyWpOTdZEeiCch8BBu515t4wp9ZmgVfVhn9EBpw==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=4.0\"\n       }\n@@ -14422,6 +14489,7 @@\n       \"resolved\": \"https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz\",\n       \"integrity\": \"sha512-aU5EJuIN2WDemCcAp2vFBfp/m4EAhWJnUNSSw0ixs7/kXbd6Pg64EmwJkNdFhB8aWt1sH2CTXrLxo/iAGV3oPQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">= 0.6\"\n       }",
+          "actualWorkers": 2
+        },
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "/home/runner/work/web/web/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/runner/work/web/web/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/furqan-app/web/commit/2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+            "commitHash": "2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+            "prHref": "https://github.com/furqan-app/web/pull/168",
+            "prTitle": "chore: fix stale package-lock.json breaking npm ci",
+            "prBaseHash": "e16bb6ce2c09c0d62641197eda75e5239df26ac3",
+            "buildHref": "https://github.com/furqan-app/web/actions/runs/30647474882"
+          },
+          "gitCommit": {
+            "shortHash": "2de6d79",
+            "hash": "2de6d79ad791b6f16cf107f8b6af8fe1087e5816",
+            "subject": "Merge ff2d4853e3638c7a2ea91a42059c1e5c604dafde into e16bb6ce2c09c0d62641197eda75e5239df26ac3",
+            "body": "Merge ff2d4853e3638c7a2ea91a42059c1e5c604dafde into e16bb6ce2c09c0d62641197eda75e5239df26ac3\n",
+            "author": {
+              "name": "Yousef Rady",
+              "email": "54912410+usef@users.noreply.github.com",
+              "time": 1785515488000
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "time": 1785515488000
+            },
+            "branch": "HEAD"
+          },
+          "gitDiff": "diff --git a/package-lock.json b/package-lock.json\nindex a5ee475..00d604e 100644\n--- a/package-lock.json\n+++ b/package-lock.json\n@@ -162,7 +162,6 @@\n       \"version\": \"7.25.8\",\n       \"resolved\": \"https://registry.npmjs.org/@babel/core/-/core-7.25.8.tgz\",\n       \"integrity\": \"sha512-Oixnb+DzmRT30qu9d3tJSQkxuygWm32DFykT4bRoORPa9hZ/L4KhVB/XiRm6KG+roIEM7DBQlmg27kw2HZkdZg==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@ampproject/remapping\": \"^2.2.0\",\n         \"@babel/code-frame\": \"^7.25.7\",\n@@ -1795,13 +1794,38 @@\n         \"node\": \">=6.9.0\"\n       }\n     },\n+    \"node_modules/@emnapi/core\": {\n+      \"version\": \"1.11.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/core/-/core-1.11.3.tgz\",\n+      \"integrity\": \"sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"peer\": true,\n+      \"dependencies\": {\n+        \"@emnapi/wasi-threads\": \"1.2.3\",\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n+    \"node_modules/@emnapi/runtime\": {\n+      \"version\": \"1.11.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.3.tgz\",\n+      \"integrity\": \"sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@emnapi/wasi-threads\": {\n-      \"version\": \"1.2.2\",\n-      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz\",\n-      \"integrity\": \"sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==\",\n+      \"version\": \"1.2.3\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.3.tgz\",\n+      \"integrity\": \"sha512-ELEBe8PsLvvJ6QMr0zLt8ffvOHW/dc1m3CEzNMg7aJUv3bMaoDtw2TXyDAwkYBuroxxuHEwhRTLJSe5sya547g==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n       \"optional\": true,\n+      \"peer\": true,\n       \"dependencies\": {\n         \"tslib\": \"^2.4.0\"\n       }\n@@ -2581,6 +2605,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@jridgewell/source-map/-/source-map-0.3.11.tgz\",\n       \"integrity\": \"sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/gen-mapping\": \"^0.3.5\",\n         \"@jridgewell/trace-mapping\": \"^0.3.25\"\n@@ -2818,7 +2843,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/api/-/api-1.9.1.tgz\",\n       \"integrity\": \"sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=8.0.0\"\n       }\n@@ -2840,7 +2864,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/core/-/core-2.9.0.tgz\",\n       \"integrity\": \"sha512-m2nckMT80NnmjTYSPjJQObBJ+8dgkoajEOUbznL8AHZ3T3yHRk2P7gI1PhEBc1+lOnrYE9UWrWHqJDsmqjmNbw==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/semantic-conventions\": \"^1.29.0\"\n       },\n@@ -2856,7 +2879,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/instrumentation/-/instrumentation-0.220.0.tgz\",\n       \"integrity\": \"sha512-xQx3E2WxP1mDvKzxLxX+CTCtNLa560YJZ3087qYHerl2YmiKpv7AH+dAy7vmx+eVrZ5BwhfWUAVoKOoxCNHcpw==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/api-logs\": \"0.220.0\",\n         \"import-in-the-middle\": \"^3.0.0\",\n@@ -2907,7 +2929,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@opentelemetry/sdk-trace-base/-/sdk-trace-base-2.9.0.tgz\",\n       \"integrity\": \"sha512-cp9zmTl62R8PJrpvFcmc8N2JQU/xfa0S+61q511Nji+QxCfZ8Ifvg7H27G8cANe4crg4RTrWsVvanHiXjSp6ag==\",\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@opentelemetry/core\": \"2.9.0\",\n         \"@opentelemetry/resources\": \"2.9.0\",\n@@ -2970,7 +2991,6 @@\n       \"integrity\": \"sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==\",\n       \"devOptional\": true,\n       \"license\": \"Apache-2.0\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"playwright\": \"1.61.1\"\n       },\n@@ -5044,6 +5064,18 @@\n         \"node\": \"^20.19.0 || >=22.12.0\"\n       }\n     },\n+    \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/core\": {\n+      \"version\": \"1.11.1\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/core/-/core-1.11.1.tgz\",\n+      \"integrity\": \"sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"@emnapi/wasi-threads\": \"1.2.2\",\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/runtime\": {\n       \"version\": \"1.11.1\",\n       \"resolved\": \"https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.1.tgz\",\n@@ -5055,6 +5087,17 @@\n         \"tslib\": \"^2.4.0\"\n       }\n     },\n+    \"node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/wasi-threads\": {\n+      \"version\": \"1.2.2\",\n+      \"resolved\": \"https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz\",\n+      \"integrity\": \"sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==\",\n+      \"dev\": true,\n+      \"license\": \"MIT\",\n+      \"optional\": true,\n+      \"dependencies\": {\n+        \"tslib\": \"^2.4.0\"\n+      }\n+    },\n     \"node_modules/@rolldown/binding-win32-arm64-msvc\": {\n       \"version\": \"1.1.5\",\n       \"resolved\": \"https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.1.5.tgz\",\n@@ -5144,7 +5187,6 @@\n       \"resolved\": \"https://registry.npmjs.org/picomatch/-/picomatch-4.0.5.tgz\",\n       \"integrity\": \"sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=12\"\n       },\n@@ -6520,7 +6562,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@svgr/core/-/core-8.1.0.tgz\",\n       \"integrity\": \"sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@babel/core\": \"^7.21.3\",\n         \"@svgr/babel-preset\": \"8.1.0\",\n@@ -6705,7 +6746,8 @@\n       \"version\": \"7.0.15\",\n       \"resolved\": \"https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz\",\n       \"integrity\": \"sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@types/json5\": {\n       \"version\": \"0.0.29\",\n@@ -6732,7 +6774,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@types/react/-/react-18.3.11.tgz\",\n       \"integrity\": \"sha512-r6QZ069rFTjrEYgFdOck1gK7FLVsgJE7tTz0pQBczlBNUhBNk0MQH4UbnFSwjpQLMkLzgqvBBa+qGpLje16eTQ==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/prop-types\": \"*\",\n         \"csstype\": \"^3.0.2\"\n@@ -6743,7 +6784,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@types/react-dom/-/react-dom-18.3.1.tgz\",\n       \"integrity\": \"sha512-qW1Mfv8taImTthu4KoXgDfLuk4bydU6Q/TkADnDWWHwi4NX4BR+LWfTp2sVmTqRrsHvyDDTelgelxJ+SsejKKQ==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/react\": \"*\"\n       }\n@@ -6801,7 +6841,6 @@\n       \"resolved\": \"https://registry.npmjs.org/@typescript-eslint/parser/-/parser-8.10.0.tgz\",\n       \"integrity\": \"sha512-E24l90SxuJhytWJ0pTQydFT46Nk0Z+bsLKo/L8rtQSL93rQ6byd1V/QbDpHUTdLPOMsBCcYXZweADNCfOCmOAg==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@typescript-eslint/scope-manager\": \"8.10.0\",\n         \"@typescript-eslint/types\": \"8.10.0\",\n@@ -7067,6 +7106,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/ast/-/ast-1.14.1.tgz\",\n       \"integrity\": \"sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/helper-numbers\": \"1.13.2\",\n         \"@webassemblyjs/helper-wasm-bytecode\": \"1.13.2\"\n@@ -7076,25 +7116,29 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/floating-point-hex-parser/-/floating-point-hex-parser-1.13.2.tgz\",\n       \"integrity\": \"sha512-6oXyTOzbKxGH4steLbLNOu71Oj+C8Lg34n6CqRvqfS2O71BxY6ByfMDRhBytzknj9yGUPVJ1qIKhRlAwO1AovA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-api-error\": {\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-api-error/-/helper-api-error-1.13.2.tgz\",\n       \"integrity\": \"sha512-U56GMYxy4ZQCbDZd6JuvvNV/WFildOjsaWD3Tzzvmw/mas3cXzRJPMjP83JqEsgSbyrmaGjBfDtV7KDXV9UzFQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-buffer\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-buffer/-/helper-buffer-1.14.1.tgz\",\n       \"integrity\": \"sha512-jyH7wtcHiKssDtFPRB+iQdxlDf96m0E39yb0k5uJVhFGleZFoNw1c4aeIcVUPPbXUVJ94wwnMOAqUHyzoEPVMA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-numbers\": {\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-numbers/-/helper-numbers-1.13.2.tgz\",\n       \"integrity\": \"sha512-FE8aCmS5Q6eQYcV3gI35O4J789wlQA+7JrqTTpJqn5emA4U2hvwJmvFRC0HODS+3Ye6WioDklgd6scJ3+PLnEA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/floating-point-hex-parser\": \"1.13.2\",\n         \"@webassemblyjs/helper-api-error\": \"1.13.2\",\n@@ -7105,13 +7149,15 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-wasm-bytecode/-/helper-wasm-bytecode-1.13.2.tgz\",\n       \"integrity\": \"sha512-3QbLKy93F0EAIXLh0ogEVR6rOubA9AoZ+WRYhNbFyuB70j3dRdwH9g+qXhLAO0kiYGlg3TxDV+I4rQTr/YNXkA==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/helper-wasm-section\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/helper-wasm-section/-/helper-wasm-section-1.14.1.tgz\",\n       \"integrity\": \"sha512-ds5mXEqTJ6oxRoqjhWDU83OgzAYjwsCV8Lo/N+oRsNDmx/ZDpqalmrtgOMkHwxsG0iI//3BwWAErYRHtgn0dZw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7124,6 +7170,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/ieee754/-/ieee754-1.13.2.tgz\",\n       \"integrity\": \"sha512-4LtOzh58S/5lX4ITKxnAK2USuNEvpdVV9AlgGQb8rJDHaLeHciwG4zlGr0j/SNWlr7x3vO1lDEsuePvtcDNCkw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@xtuc/ieee754\": \"^1.2.0\"\n       }\n@@ -7133,6 +7180,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/leb128/-/leb128-1.13.2.tgz\",\n       \"integrity\": \"sha512-Lde1oNoIdzVzdkNEAWZ1dZ5orIbff80YPdHx20mrHwHrVNNTjNr8E3xz9BdpcGqRQbAEa+fkrCb+fRFTl/6sQw==\",\n       \"license\": \"Apache-2.0\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@xtuc/long\": \"4.2.2\"\n       }\n@@ -7141,13 +7189,15 @@\n       \"version\": \"1.13.2\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/utf8/-/utf8-1.13.2.tgz\",\n       \"integrity\": \"sha512-3NQWGjKTASY1xV5m7Hr0iPeXD9+RDobLll3T9d2AO+g3my8xy5peVyjSag4I50mR1bBSN/Ct12lo+R9tJk0NZQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/@webassemblyjs/wasm-edit\": {\n       \"version\": \"1.14.1\",\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-edit/-/wasm-edit-1.14.1.tgz\",\n       \"integrity\": \"sha512-RNJUIQH/J8iA/1NzlE4N7KtyZNHi3w7at7hDjvRNm5rcUXa00z1vRz3glZoULfJ5mpvYhLybmVcwcjGrC1pRrQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7164,6 +7214,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-gen/-/wasm-gen-1.14.1.tgz\",\n       \"integrity\": \"sha512-AmomSIjP8ZbfGQhumkNvgC33AY7qtMCXnN6bL2u2Js4gVCg8fp735aEiMSBbDR7UQIj90n4wKAFUSEd0QN2Ukg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-wasm-bytecode\": \"1.13.2\",\n@@ -7177,6 +7228,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-opt/-/wasm-opt-1.14.1.tgz\",\n       \"integrity\": \"sha512-PTcKLUNvBqnY2U6E5bdOQcSM+oVP/PmrDY9NzowJjislEjwP/C4an2303MCVS2Mg9d3AJpIGdUFIQQWbPds0Sw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-buffer\": \"1.14.1\",\n@@ -7189,6 +7241,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wasm-parser/-/wasm-parser-1.14.1.tgz\",\n       \"integrity\": \"sha512-JLBl+KZ0R5qB7mCnud/yyX08jWFw5MsoalJ1pQ4EdFlgj9VdXKGuENGsiCIjegI1W7p91rUlcB/LB5yRJKNTcQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@webassemblyjs/helper-api-error\": \"1.13.2\",\n@@ -7203,6 +7256,7 @@\n       \"resolved\": \"https://registry.npmjs.org/@webassemblyjs/wast-printer/-/wast-printer-1.14.1.tgz\",\n       \"integrity\": \"sha512-kPSSXE6De1XOR820C90RIo2ogvZG+c3KiHzqUoO/F34Y2shGzesfqv7o57xrxovZJH/MetF5UjroJ/R/3isoiw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@webassemblyjs/ast\": \"1.14.1\",\n         \"@xtuc/long\": \"4.2.2\"\n@@ -7212,20 +7266,21 @@\n       \"version\": \"1.2.0\",\n       \"resolved\": \"https://registry.npmjs.org/@xtuc/ieee754/-/ieee754-1.2.0.tgz\",\n       \"integrity\": \"sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==\",\n-      \"license\": \"BSD-3-Clause\"\n+      \"license\": \"BSD-3-Clause\",\n+      \"peer\": true\n     },\n     \"node_modules/@xtuc/long\": {\n       \"version\": \"4.2.2\",\n       \"resolved\": \"https://registry.npmjs.org/@xtuc/long/-/long-4.2.2.tgz\",\n       \"integrity\": \"sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==\",\n-      \"license\": \"Apache-2.0\"\n+      \"license\": \"Apache-2.0\",\n+      \"peer\": true\n     },\n     \"node_modules/acorn\": {\n       \"version\": \"8.17.0\",\n       \"resolved\": \"https://registry.npmjs.org/acorn/-/acorn-8.17.0.tgz\",\n       \"integrity\": \"sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"bin\": {\n         \"acorn\": \"bin/acorn\"\n       },\n@@ -7238,6 +7293,7 @@\n       \"resolved\": \"https://registry.npmjs.org/acorn-import-phases/-/acorn-import-phases-1.0.4.tgz\",\n       \"integrity\": \"sha512-wKmbr/DDiIXzEOiWrTTUcDm24kQ2vGfZQvM2fwg2vXqR5uW6aapr7ObPtj1th32b9u90/Pf4AItvdTh42fBmVQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=10.13.0\"\n       },\n@@ -7287,6 +7343,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv-formats/-/ajv-formats-2.1.1.tgz\",\n       \"integrity\": \"sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"ajv\": \"^8.0.0\"\n       },\n@@ -7304,6 +7361,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz\",\n       \"integrity\": \"sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"fast-deep-equal\": \"^3.1.3\",\n         \"fast-uri\": \"^3.0.1\",\n@@ -7319,7 +7377,8 @@\n       \"version\": \"1.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz\",\n       \"integrity\": \"sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/ansi-regex\": {\n       \"version\": \"5.0.1\",\n@@ -7764,7 +7823,6 @@\n         }\n       ],\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"baseline-browser-mapping\": \"^2.10.12\",\n         \"caniuse-lite\": \"^1.0.30001782\",\n@@ -7783,7 +7841,8 @@\n       \"version\": \"1.1.2\",\n       \"resolved\": \"https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz\",\n       \"integrity\": \"sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/busboy\": {\n       \"version\": \"1.6.0\",\n@@ -7945,6 +8004,7 @@\n       \"resolved\": \"https://registry.npmjs.org/chrome-trace-event/-/chrome-trace-event-1.0.4.tgz\",\n       \"integrity\": \"sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=6.0\"\n       }\n@@ -8860,7 +8920,6 @@\n       \"integrity\": \"sha512-ypowyDxpVSYpkXr9WPv2PAZCtNip1Mv5KTW0SCurXv/9iOpcrH9PaqUElksqEB6pChqHGDRCFTyrZlGhnLNGiA==\",\n       \"deprecated\": \"This version is no longer supported. Please see https://eslint.org/version-support for other options.\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@eslint-community/eslint-utils\": \"^4.2.0\",\n         \"@eslint-community/regexpp\": \"^4.6.1\",\n@@ -9024,7 +9083,6 @@\n       \"resolved\": \"https://registry.npmjs.org/eslint-plugin-import/-/eslint-plugin-import-2.31.0.tgz\",\n       \"integrity\": \"sha512-ixmkI62Rbc2/w8Vfxyh1jQRTdRTF52VxwRVHl/ykPAmqG+Nb7/kNn+byLP0LxPgI7zWA16Jt82SybJInmMia3A==\",\n       \"dev\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@rtsao/scc\": \"^1.1.0\",\n         \"array-includes\": \"^3.1.8\",\n@@ -9291,6 +9349,7 @@\n       \"resolved\": \"https://registry.npmjs.org/events/-/events-3.3.0.tgz\",\n       \"integrity\": \"sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.8.x\"\n       }\n@@ -9378,7 +9437,8 @@\n           \"url\": \"https://opencollective.com/fastify\"\n         }\n       ],\n-      \"license\": \"BSD-3-Clause\"\n+      \"license\": \"BSD-3-Clause\",\n+      \"peer\": true\n     },\n     \"node_modules/fastq\": {\n       \"version\": \"1.17.1\",\n@@ -10450,6 +10510,7 @@\n       \"resolved\": \"https://registry.npmjs.org/jest-worker/-/jest-worker-27.5.1.tgz\",\n       \"integrity\": \"sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@types/node\": \"*\",\n         \"merge-stream\": \"^2.0.0\",\n@@ -10464,6 +10525,7 @@\n       \"resolved\": \"https://registry.npmjs.org/supports-color/-/supports-color-8.1.1.tgz\",\n       \"integrity\": \"sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"has-flag\": \"^4.0.0\"\n       },\n@@ -10919,6 +10981,7 @@\n       \"resolved\": \"https://registry.npmjs.org/loader-runner/-/loader-runner-4.3.2.tgz\",\n       \"integrity\": \"sha512-DFEqQ3ihfS9blba08cLfYf1NRAIEm+dDjic073DRDc3/JspI/8wYmtDsHwd3+4hwvdxSK7PGaElfTmm0awWJ4w==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=6.11.5\"\n       },\n@@ -11041,7 +11104,8 @@\n       \"version\": \"2.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/merge-stream/-/merge-stream-2.0.0.tgz\",\n       \"integrity\": \"sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/merge2\": {\n       \"version\": \"1.4.1\",\n@@ -11121,6 +11185,7 @@\n       \"resolved\": \"https://registry.npmjs.org/minimizer-webpack-plugin/-/minimizer-webpack-plugin-5.6.1.tgz\",\n       \"integrity\": \"sha512-DoeAZz8Q1C1znwsUzej1fdoi4jCf7/+Em27ouLqfK/+3m8G+D7yDhUwrc3CNhjSzGUN1kn7Iv4sWmjflQHenpw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/trace-mapping\": \"^0.3.25\",\n         \"jest-worker\": \"^27.4.5\",\n@@ -11281,13 +11346,13 @@\n       \"version\": \"2.6.2\",\n       \"resolved\": \"https://registry.npmjs.org/neo-async/-/neo-async-2.6.2.tgz\",\n       \"integrity\": \"sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/next\": {\n       \"version\": \"14.2.15\",\n       \"resolved\": \"https://registry.npmjs.org/next/-/next-14.2.15.tgz\",\n       \"integrity\": \"sha512-h9ctmOokpoDphRvMGnwOJAedT6zKhwqyZML9mDtspgf4Rh3Pn7UTYKqePNoDvhsWBAO5GoPNYshnAUGIazVGmw==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@next/env\": \"14.2.15\",\n         \"@swc/helpers\": \"0.5.5\",\n@@ -11997,7 +12062,6 @@\n       \"version\": \"2.3.2\",\n       \"resolved\": \"https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz\",\n       \"integrity\": \"sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==\",\n-      \"dev\": true,\n       \"hasInstallScript\": true,\n       \"license\": \"MIT\",\n       \"optional\": true,\n@@ -12037,7 +12101,6 @@\n         }\n       ],\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"nanoid\": \"^3.3.16\",\n         \"picocolors\": \"^1.1.1\",\n@@ -12178,7 +12241,6 @@\n       \"version\": \"10.24.3\",\n       \"resolved\": \"https://registry.npmjs.org/preact/-/preact-10.24.3.tgz\",\n       \"integrity\": \"sha512-Z2dPnBnMUfyQfSQ+GBdsGa16hz35YmLmtTLhM169uW944hYL6xzTYkJjC07j+Wosz733pMWx0fgON3JNw1jJQA==\",\n-      \"peer\": true,\n       \"funding\": {\n         \"type\": \"opencollective\",\n         \"url\": \"https://opencollective.com/preact\"\n@@ -12226,7 +12288,6 @@\n       \"resolved\": \"https://registry.npmjs.org/prisma/-/prisma-5.21.1.tgz\",\n       \"integrity\": \"sha512-PB+Iqzld/uQBPaaw2UVIk84kb0ITsLajzsxzsadxxl54eaU5Gyl2/L02ysivHxK89t7YrfQJm+Ggk37uvM70oQ==\",\n       \"hasInstallScript\": true,\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@prisma/engines\": \"5.21.1\"\n       },\n@@ -12334,7 +12395,6 @@\n       \"version\": \"18.3.1\",\n       \"resolved\": \"https://registry.npmjs.org/react/-/react-18.3.1.tgz\",\n       \"integrity\": \"sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"loose-envify\": \"^1.1.0\"\n       },\n@@ -12346,7 +12406,6 @@\n       \"version\": \"18.3.1\",\n       \"resolved\": \"https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz\",\n       \"integrity\": \"sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"loose-envify\": \"^1.1.0\",\n         \"scheduler\": \"^0.23.2\"\n@@ -12583,6 +12642,7 @@\n       \"resolved\": \"https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz\",\n       \"integrity\": \"sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.10.0\"\n       }\n@@ -12721,7 +12781,6 @@\n       \"resolved\": \"https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz\",\n       \"integrity\": \"sha512-RFnrW4lhXA3s3eqHDZvN654g8OTjzRfqpIRJYczCGB6HzphckVAi/Qh4tbPUbRuDi7s1Llv8g/NspLkttY3gTA==\",\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"@types/estree\": \"1.0.9\"\n       },\n@@ -12846,6 +12905,7 @@\n       \"resolved\": \"https://registry.npmjs.org/schema-utils/-/schema-utils-4.3.3.tgz\",\n       \"integrity\": \"sha512-eflK8wEtyOE6+hsaRVPxvUKYCpRgzLqDTb8krvAsRIwOGlHoSgYLgBXoubGgLd2fT41/OUYdb48v4k4WWHQurA==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@types/json-schema\": \"^7.0.9\",\n         \"ajv\": \"^8.9.0\",\n@@ -12882,6 +12942,7 @@\n       \"resolved\": \"https://registry.npmjs.org/ajv-keywords/-/ajv-keywords-5.1.0.tgz\",\n       \"integrity\": \"sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"fast-deep-equal\": \"^3.1.3\"\n       },\n@@ -12893,7 +12954,8 @@\n       \"version\": \"1.0.0\",\n       \"resolved\": \"https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz\",\n       \"integrity\": \"sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/secure-json-parse\": {\n       \"version\": \"4.1.0\",\n@@ -13139,6 +13201,7 @@\n       \"resolved\": \"https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz\",\n       \"integrity\": \"sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"buffer-from\": \"^1.0.0\",\n         \"source-map\": \"^0.6.0\"\n@@ -13149,6 +13212,7 @@\n       \"resolved\": \"https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz\",\n       \"integrity\": \"sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==\",\n       \"license\": \"BSD-3-Clause\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=0.10.0\"\n       }\n@@ -13619,6 +13683,7 @@\n       \"resolved\": \"https://registry.npmjs.org/terser/-/terser-5.48.0.tgz\",\n       \"integrity\": \"sha512-J/9An6vs9Us6wKRriSFXBWdRZapREHqFzdNUKk0pmu804EMR6dr6winwo7e5JDxN4xahxQsuysyYFwlwj4XN/Q==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"@jridgewell/source-map\": \"^0.3.3\",\n         \"acorn\": \"^8.15.0\",\n@@ -13636,7 +13701,8 @@\n       \"version\": \"2.20.3\",\n       \"resolved\": \"https://registry.npmjs.org/commander/-/commander-2.20.3.tgz\",\n       \"integrity\": \"sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==\",\n-      \"license\": \"MIT\"\n+      \"license\": \"MIT\",\n+      \"peer\": true\n     },\n     \"node_modules/text-table\": {\n       \"version\": \"0.2.0\",\n@@ -13741,7 +13807,6 @@\n       \"integrity\": \"sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=12\"\n       },\n@@ -13917,7 +13982,6 @@\n       \"resolved\": \"https://registry.npmjs.org/typescript/-/typescript-5.6.3.tgz\",\n       \"integrity\": \"sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==\",\n       \"devOptional\": true,\n-      \"peer\": true,\n       \"bin\": {\n         \"tsc\": \"bin/tsc\",\n         \"tsserver\": \"bin/tsserver\"\n@@ -14249,7 +14313,6 @@\n       \"integrity\": \"sha512-7ULLwsCdYx/nRyrpiEwvqb5TFHrMVZyBt+rg/OAXT7rgj/z+DtTDyKFeLAdDkubDVDKD8jOsndmy7m55XcfUsw==\",\n       \"dev\": true,\n       \"license\": \"MIT\",\n-      \"peer\": true,\n       \"dependencies\": {\n         \"lightningcss\": \"^1.32.0\",\n         \"picomatch\": \"^4.0.5\",\n@@ -14327,6 +14390,7 @@\n       \"resolved\": \"https://registry.npmjs.org/watchpack/-/watchpack-2.5.2.tgz\",\n       \"integrity\": \"sha512-6i/00NBjP4yGPs+caKSyRfpTF/8Torsu0MOW3mMzIbhgISFder8i7xbqgHlLMwJrdiN8ndBV3UA1/AfzPSr+jg==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"graceful-fs\": \"^4.1.2\"\n       },\n@@ -14391,6 +14455,7 @@\n       \"resolved\": \"https://registry.npmjs.org/webpack-sources/-/webpack-sources-3.5.1.tgz\",\n       \"integrity\": \"sha512-jyuiGJdtvY434z5bUZrjz67v76/ePNvFZTp9Mdz29IlH4+GPsgyGjiv0fKI+M7BdkU6ADjulUcKAd3tUK3WlEw==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=10.13.0\"\n       }\n@@ -14400,6 +14465,7 @@\n       \"resolved\": \"https://registry.npmjs.org/eslint-scope/-/eslint-scope-5.1.1.tgz\",\n       \"integrity\": \"sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"dependencies\": {\n         \"esrecurse\": \"^4.3.0\",\n         \"estraverse\": \"^4.1.1\"\n@@ -14413,6 +14479,7 @@\n       \"resolved\": \"https://registry.npmjs.org/estraverse/-/estraverse-4.3.0.tgz\",\n       \"integrity\": \"sha512-39nnKffWz8xN1BU/2c79n9nB9HDzo0niYUqx6xyqUnyoAnQyyWpOTdZEeiCch8BBu515t4wp9ZmgVfVhn9EBpw==\",\n       \"license\": \"BSD-2-Clause\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">=4.0\"\n       }\n@@ -14422,6 +14489,7 @@\n       \"resolved\": \"https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz\",\n       \"integrity\": \"sha512-aU5EJuIN2WDemCcAp2vFBfp/m4EAhWJnUNSSw0ixs7/kXbd6Pg64EmwJkNdFhB8aWt1sH2CTXrLxo/iAGV3oPQ==\",\n       \"license\": \"MIT\",\n+      \"peer\": true,\n       \"engines\": {\n         \"node\": \">= 0.6\"\n       }",
+          "actualWorkers": 2
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "/home/runner/work/web/web/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-report/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 2,
+    "webServer": {
+      "command": "npm run e2e:build && npm run e2e:start",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": false,
+      "timeout": 1200000
+    }
+  },
+  "suites": [
+    {
+      "title": "visual.spec.ts",
+      "file": "visual.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "home (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1592,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:31.166Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-9a9eb3fc9e50f7d4da7b",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1252,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:03.994Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ee873f6f6c111f3eb465",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1946,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:31.170Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-86f84f8f2bb17a69bbb3",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 3783,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8973 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8973 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8973 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:04.319Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/page-1-ar-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/page-1-ar-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 3869,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7868 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7868 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 7868 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-31T16:37:09.900Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/page-1-ar-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/page-1-ar-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-17e5128d70109ffa7a29",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1814,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:33.113Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-63c482371c08681abdf3",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 118,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:05.426Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-84e9714f88b655818f46",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3066,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:33.466Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-10827dd7cd6462184a2c",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2556,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:05.583Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-548426ff2d3576db6a8e",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2315,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:34.953Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-253b089809e5f649606f",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1745,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:08.175Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-f21e989233ad1b81dfb0",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1617,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:36.562Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-bb6ffc3d04524f80e084",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1012,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:09.949Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-1a07b3acca07ecaa628f",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1969,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:37.304Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8ac841b00620eb909446",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1638,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:11.003Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-51981b0a719d7d820778",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 5235,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 21659 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 21659 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 62
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 60 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/2`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 62 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`spread-2-3-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 63 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 64 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 62
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 21659 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  60 |         await withTheme(page, theme);\n  61 |         await page.goto(`/${locale}/pages/2`);\n> 62 |         await expect(page).toHaveScreenshot(`spread-2-3-${suffix}.png`);\n     |                            ^\n  63 |       });\n  64 |     });\n  65 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:38.230Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "spread-2-3-ar-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/spread-2-3-ar-dark-desktop-linux.png"
+                        },
+                        {
+                          "name": "spread-2-3-ar-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop/spread-2-3-ar-dark-actual.png"
+                        },
+                        {
+                          "name": "spread-2-3-ar-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop/spread-2-3-ar-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 62
+                      }
+                    },
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 6955,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 62
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 60 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/2`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 62 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`spread-2-3-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 63 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 64 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 62
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  60 |         await withTheme(page, theme);\n  61 |         await page.goto(`/${locale}/pages/2`);\n> 62 |         await expect(page).toHaveScreenshot(`spread-2-3-${suffix}.png`);\n     |                            ^\n  63 |       });\n  64 |     });\n  65 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-31T16:36:45.861Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "spread-2-3-ar-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/spread-2-3-ar-dark-desktop-linux.png"
+                        },
+                        {
+                          "name": "spread-2-3-ar-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop-retry1/spread-2-3-ar-dark-actual.png"
+                        },
+                        {
+                          "name": "spread-2-3-ar-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop-retry1/spread-2-3-ar-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-409e0--ar-dark-double-page-spread-desktop-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 62
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-71b1db7ba6756affb10e",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 134,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:12.669Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-71825b97452f6d8a7a69",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4806,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:39.308Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-3a49443b7644a998f564",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2665,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:12.831Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-6949eef9d772ce811530",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4438,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:44.151Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8b27ddc00e6fd40a3a26",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3236,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:15.679Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-e197cd49d16f64062fab",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (en-light)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1466,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:48.618Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-fec7a6e1ca53421fbcdd",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 883,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:15.523Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-d34961f9f76700a05007",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (en-light)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2258,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:50.119Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-af2b7d07f230a2eeae7c",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1513,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:16.439Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-35e69571c9476c4f9608",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (en-light)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1871,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:52.442Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8457cc41e08531a67b6c",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 98,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:17.994Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-436d39f58f5fa9e8e200",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (en-light)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3857,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:55.268Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8b33a63ee5b53adb6658",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2234,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:18.123Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-bf1ff087c0e967019699",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (en-light)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3531,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:54.344Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ba8b29e454f54de6aa33",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2175,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:19.149Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-1b0db3cb1e75e10a4219",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1254,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:57.919Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-4277d25df68e39ecc37d",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 859,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:20.390Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-810ab6487b9ad1888a41",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1611,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:59.201Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-7ed7f55dc179f2707aa1",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1287,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:21.269Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ddb4e1be79aed0ceac76",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1764,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:36:59.455Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-0c9ba8c7e4e06caa8787",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 91,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:21.361Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8d0680ea1d544eeba9cf",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2280,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:00.845Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-78c12971736376cd6409",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2250,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:21.470Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-4f31222ac6a3eb3a864e",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2236,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:01.250Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-530fab5cd34689c93f1a",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2006,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T16:37:22.603Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-6feee3d17c241c48a9a7",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-31T16:33:33.330Z",
+    "duration": 231407.789,
+    "expected": 34,
+    "skipped": 4,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}
