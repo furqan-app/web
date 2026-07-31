@@ -143,6 +143,12 @@
     "checkOff": "Check off",
     "undoCheckOff": "Undo check-off",
     "nextAssignment": "Next",
+    "playback": {
+      "play": "Play",
+      "pause": "Pause",
+      "loading": "Loading",
+      "retry": "Retry loading"
+    },
     "pagesPerDay": "pages/day",
     "targetRange": "Target range (juz)",
     "to": "to",
@@ -227,6 +233,7 @@
   "recitation": {
     "settingsTitle": "Recitation settings",
     "settingsDescription": "Choose a reciter and configure playback.",
+    "playingOverride": "Playing",
     "reciter": "Reciter",
     "stopPoint": "Stop at",
     "stopPointPage": "End of page",

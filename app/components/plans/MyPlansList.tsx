@@ -229,6 +229,7 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
             {assignments.map((assignment) => (
               <PlanAssignmentRow
                 key={assignment.trackKey}
+                planId={plan.id}
                 assignment={assignment}
                 onToggle={() =>
                   assignment.completed

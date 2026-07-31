@@ -35,6 +35,8 @@ import {
   RECITATION_HIGHLIGHT_CLASS,
 } from "@/app/constants/recitation";
 import {
+  ActiveOverride,
+  PlaybackOverride,
   RangePoint,
   RecitationSettings,
   RecitationStatus,
@@ -129,13 +131,21 @@ type RecitationContextType = {
   // floor for its page-type input, with no DB lookup needed.
   currentPageNumber: number | null;
   setCurrentPageNumber: (page: number | null) => void;
-  play: (startVerseKey: string) => void;
+  play: (startVerseKey: string, overrides?: PlaybackOverride) => void;
   togglePlayPause: () => void;
   stop: () => void;
   registerWordRef: (location: string, el: HTMLElement | null) => void;
   isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
+  // Identity + human-readable label for an active play() override (e.g. a
+  // wird's "Listening · Page 1–5"), or null when playback is following the
+  // user's own settings. `id` lets a UI surface (PlanAssignmentRow) tell its
+  // own session apart from an unrelated session merely reciting inside the
+  // same pages — a page-range overlap is not identity. `label` is surfaced
+  // by RecitationSettingsSheet as a read-only banner — see
+  // docs/plans/listening-wird-inline-playback.md.
+  activeOverride: ActiveOverride | null;
 };
 
 const RecitationContext = createContext<RecitationContextType | undefined>(undefined);
@@ -163,6 +173,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [currentPageNumber, setCurrentPageNumber] = useState<number | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeOverride, setActiveOverride] = useState<ActiveOverride | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const verseTimingsRef = useRef<VerseTiming[]>([]);
@@ -175,6 +186,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const stopChapterIdRef = useRef<number | null>(null);
   const perAyahRepeatsDoneRef = useRef(0);
   const rangeRepeatsDoneRef = useRef(0);
+  // Non-null while an explicit play() override (e.g. a wird's page range) is
+  // active — consulted instead of settings.rangeRepeatCount. Reset to null on
+  // every plain (non-override) play() and whenever the stop-point-changed
+  // effect recomputes the stop target, per docs/plans/listening-wird-inline-playback.md.
+  const rangeRepeatOverrideRef = useRef<number | null>(null);
   const currentVerseKeyRef = useRef<string | null>(null);
   const currentChapterIdRef = useRef<number | null>(null);
   const loadedReciterIdRef = useRef<number | null>(null);
@@ -254,6 +270,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     currentVerseKeyRef.current = null;
     setCurrentVerseKey(null);
     setRecitedPage(null);
+    rangeRepeatOverrideRef.current = null;
+    setActiveOverride(null);
     clearHighlight();
   }, [clearHighlight]);
 
@@ -271,36 +289,46 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   }, [mushafId]);
 
   const play = useCallback(
-    async (verseKey: string) => {
+    async (verseKey: string, overrides?: PlaybackOverride) => {
       const reciterId = settings.reciterId ?? reciters[0]?.id;
       if (!reciterId) return;
 
       const chapterId = parseChapterIdFromVerseKey(verseKey);
       setStatus("loading");
+      // Published before the awaits below so a UI row can recognise "this
+      // session is mine" while it's still loading (re-entry guard) — cleared
+      // again on every failure path below.
+      setActiveOverride(overrides ? { id: overrides.id, label: overrides.label } : null);
 
       try {
         // resolveStopTarget's DB-backed scopes (page/rub/hizb/juz) only need
         // verseKey, not chapterAudio — so it's kicked off alongside the
         // chapter-audio fetch instead of after it. "surah" internally awaits
-        // the same chapterAudioPromise, so this never double-fetches.
+        // the same chapterAudioPromise, so this never double-fetches. When an
+        // override is given, skip resolveStopTarget entirely — the caller
+        // already knows the exact stop target (e.g. a wird's page range).
         const chapterAudioPromise = fetchChapterAudio(reciterId, chapterId);
         const [chapterAudio, versePages, stopTarget] = await Promise.all([
           chapterAudioPromise,
           getVersePages(),
-          resolveStopTarget(
-            verseKey,
-            settings.stopPoint,
-            chapterAudioPromise,
-            chapterId,
-            mushafId,
-            settings.rangeTo,
-          ),
+          overrides
+            ? Promise.resolve({ verseKey: overrides.stopVerseKey, chapterId: overrides.stopChapterId })
+            : resolveStopTarget(
+                verseKey,
+                settings.stopPoint,
+                chapterAudioPromise,
+                chapterId,
+                mushafId,
+                settings.rangeTo,
+              ),
         ]);
 
         const startTiming = chapterAudio.verseTimings.find((vt) => vt.verseKey === verseKey);
         const audio = audioRef.current;
         if (!startTiming || !audio) {
           setStatus("idle");
+          rangeRepeatOverrideRef.current = null;
+          setActiveOverride(null);
           return;
         }
 
@@ -309,6 +337,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         startVerseKeyRef.current = verseKey;
         stopVerseKeyRef.current = stopTarget.verseKey;
         stopChapterIdRef.current = stopTarget.chapterId;
+        rangeRepeatOverrideRef.current = overrides ? overrides.rangeRepeatCount : null;
         perAyahRepeatsDoneRef.current = 0;
         rangeRepeatsDoneRef.current = 0;
         currentVerseKeyRef.current = verseKey;
@@ -323,7 +352,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         await audio.play();
         setStatus("playing");
       } catch {
+        // play() can reject (autoplay policy, network) — the optimistic
+        // override set above must not survive it, or the settings sheet
+        // keeps showing "Playing: …" with nothing actually playing.
         setStatus("idle");
+        rangeRepeatOverrideRef.current = null;
+        setActiveOverride(null);
       }
     },
     [settings, reciters, getVersePages, clearHighlight, mushafId],
@@ -537,7 +571,9 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       // matching it alone is sufficient — no need to also compare chapter id.
       const isStopVerse = previousVerseKey === stopVerseKeyRef.current;
       if (previousTiming && isStopVerse) {
-        const rangeTarget = resolveRepeatTarget(settings.rangeRepeatCount);
+        const rangeTarget = resolveRepeatTarget(
+          rangeRepeatOverrideRef.current ?? settings.rangeRepeatCount,
+        );
         if (rangeRepeatsDoneRef.current + 1 < rangeTarget) {
           rangeRepeatsDoneRef.current += 1;
           perAyahRepeatsDoneRef.current = 0;
@@ -589,9 +625,13 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     const decision = decideChapterEnd(
       chapterId,
       stopChapterIdRef.current,
-      settings.stopPoint,
+      // An explicit play() override is always a bounded, repeatable range —
+      // it carries its own stop target and repeat count, so the user's
+      // persisted stopPoint ("none" or otherwise) must not gate it. Without
+      // the override, fall back to the original rule.
+      rangeRepeatOverrideRef.current != null || settings.stopPoint !== "none",
       rangeRepeatsDoneRef.current,
-      resolveRepeatTarget(settings.rangeRepeatCount),
+      resolveRepeatTarget(rangeRepeatOverrideRef.current ?? settings.rangeRepeatCount),
     );
     switch (decision.action) {
       case "repeat-range":
@@ -643,6 +683,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       if (!cancelled) {
         stopVerseKeyRef.current = target.verseKey;
         stopChapterIdRef.current = target.chapterId;
+        rangeRepeatOverrideRef.current = null;
+        setActiveOverride(null);
       }
     })();
     return () => {
@@ -652,6 +694,19 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // switching mushaf mid-playback must recompute where the range ends.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.stopPoint, mushafId, settings.rangeTo]);
+
+  // Editing "Repeat whole range" mid-session also ends an override's framing —
+  // that control is exactly what the override's rangeRepeatCount replaces, so
+  // touching it means the user is taking the session back. Deliberately kept
+  // separate from the stop-target effect above: a repeat-count edit must NOT
+  // re-resolve where the range ends (the wird's stop target stays put; only
+  // the repeat count falls back to the user's own setting).
+  useEffect(() => {
+    if (status === "idle") return;
+    rangeRepeatOverrideRef.current = null;
+    setActiveOverride(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.rangeRepeatCount]);
 
   // Reciter changed mid-session — reload the current chapter's audio for the
   // new reciter and resume at the same verse position.
@@ -723,6 +778,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         isSettingsOpen,
         openSettings,
         closeSettings,
+        activeOverride,
       }}
     >
       {/* Mounted once above the reader's route tree so playback survives both

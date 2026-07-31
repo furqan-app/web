@@ -47,3 +47,21 @@ export type RecitationSettings = {
 };
 
 export type RecitationStatus = "idle" | "loading" | "playing" | "paused";
+
+// An explicit, caller-supplied playback range that bypasses
+// settings.stopPoint / resolveStopTarget entirely (listening-wird inline
+// playback — see docs/plans/listening-wird-inline-playback.md). `id` is a
+// stable identity for whatever launched the session, so a UI surface can
+// tell "this is my session" apart from any other session that merely
+// happens to be reciting inside the same pages. `label` is the
+// human-readable form shown by RecitationSettingsSheet.
+export type PlaybackOverride = {
+  stopVerseKey: string;
+  stopChapterId: number;
+  rangeRepeatCount: number;
+  id: string;
+  label: string;
+};
+
+// The publicly observable part of an active PlaybackOverride.
+export type ActiveOverride = Pick<PlaybackOverride, "id" | "label">;
