@@ -139,3 +139,39 @@ Walked through with the user (2026-07-30):
 - Completion nudge/toast deferred to a separate ticket (Trello #161) since no toast system exists yet and picking one is its own decision.
 - Settings-sheet indicator: track name + page range (e.g. "Listening · Page 1–5"), placed as a banner directly under the sheet title, informational only — no change to control interactivity or a warning note (2026-07-30, prompted by manual testing surfacing the disconnect).
 - Review fixes (2026-07-31, see `docs/plans/listening-wird-inline-playback-fixes.md`): overrides carry a stable `id` (`activeOverride: { id, label } | null`) so a row's "active" state is an identity check, not a page-range comparison; `decideChapterEnd` takes `isRepeatableRange` instead of the raw `stopPoint` so an override's whole-range repeat is never silently gated by an unrelated persisted `"none"` setting; editing "Repeat whole range" mid-session now clears the override via its own effect (separate from the stop-point effect, so it never re-resolves the stop target); `activeOverride` is set optimistically before the network awaits in `play()` and cleared on both its failure paths, fixing a stale banner leak; `PlanAssignmentRow`'s bounds handling distinguishes pending from failed with a retry affordance, and honors the row's `disabled` prop for starting (not pausing) playback; the page-range comparison duplicated between `PlanAssignmentRow` and `PlansWidget` is now shared via `app/lib/plans/assignment-range.ts`.
+
+## Addendum — Disable Stop-at/Repeat During an Override (2026-08-01)
+
+**Supersedes:** the Constraints/What-NOT-to-Do items above saying "the settings sheet stays fully editable at all times, no new disabled states" — that decision is explicitly reversed here, not silently violated. The read-only banner alone didn't read as strong enough visual differentiation; disabling the two controls the override actually supersedes makes it unambiguous.
+
+**Scope — exactly two controls, nothing else.** While `activeOverride != null`, `RecitationSettingsSheet` disables:
+- The "Stop at" `RadioGroup` (all 6 pills) — pass `disabled={activeOverride != null}` to the `RadioGroup` root; Radix cascades `disabled` to every `RadioGroupItem`, and a `disabled` radio input ignores its associated `<label>` click natively. Add the same boolean to each pill's className branch so the visible label looks disabled too (opacity/cursor), since the pills render their own styled `<label>` around a `sr-only` input rather than relying on the input's own visual state.
+- `CustomRangePicker`'s own controls, when `settings.stopPoint === "custom"` was already selected before the override started: the Page/Verse toggle buttons, the page number `Input`, `SurahCombobox`'s trigger `Button`, and the ayah number `Input`. `CustomRangePicker` gains a `disabled?: boolean` prop threaded to all four.
+- The "Repeat whole range" `RepeatStepper` — `RepeatStepper` gains a `disabled?: boolean` prop threaded to both its `+`/`-` `Button`s (shadcn `Button`'s base classes already style `disabled:pointer-events-none disabled:opacity-50`, no new styling needed there).
+
+**Left alone, deliberately:** Reciter (`ReciterCombobox`), "Repeat each ayah" (the other `RepeatStepper` call), Playback speed, Pause between repeats. None of these interact with `rangeRepeatOverrideRef`/`stopVerseKeyRef` — they already apply on top of an override session unchanged (reciter swap reloads the current chapter's audio at the same position; per-ayah repeat, speed, and pause-between-repeats are read directly off `settings` by `handleTimeUpdate`/`scheduleSeek` regardless of override state).
+
+**No new escape hatch, no new copy.** Previously, touching Stop-at/Repeat while an override was live silently ended the wird framing (fell back to plain settings-driven playback) — that was the *only* non-Stop way out of an override session. With those controls disabled, Stop is now the only way to end one. This is intentional (confirmed with the user) — no replacement "release" affordance is added. No explanatory microcopy is added next to the disabled controls either — the existing "Playing: {label}" banner above them is the only context, per the same "no new 'following your wird' copy" spirit the original constraint already established (even though the constraint's "no disabled states" half is reversed, its "no extra copy" half still holds).
+
+**The two "clears the override" effects (stop-point-changed, rangeRepeatCount-changed) are left in place, unused-but-harmless.** Since the sheet no longer lets the user change `settings.stopPoint`/`settings.rangeTo`/`settings.rangeRepeatCount` while an override is active, those effects can no longer fire from this UI — but they stay as a defensive backstop against any future non-sheet caller of `updateSettings` for those keys, and removing them buys nothing.
+
+### Files to Change (this addendum)
+
+- `app/components/RecitationSettingsSheet.tsx`:
+  - `RadioGroup` (Stop at): add `disabled={activeOverride != null}`; each pill's `<label>` className branch adds a disabled visual state.
+  - `CustomRangePicker`: new `disabled?: boolean` prop (default `false`), threaded to the Page/Verse toggle buttons, page `Input`, `SurahCombobox` trigger, and ayah `Input`; call site passes `disabled={activeOverride != null}`.
+  - `RepeatStepper`: new `disabled?: boolean` prop (default `false`), threaded to both stepper `Button`s; only the "Repeat whole range" call site passes `disabled={activeOverride != null}` — the "Repeat each ayah" call site does not.
+- `docs/architecture/DECISIONS.md` — update the Recitation Playback decision's override paragraph: replace "the sheet gains no disabled states" with the reversed rule and a pointer to this addendum.
+
+### What NOT to Do (this addendum)
+
+- Do not disable Reciter, "Repeat each ayah", Playback speed, or Pause between repeats — none of them conflict with an active override.
+- Do not add a "release"/"take over" affordance — Stop is the only way out, confirmed with the user.
+- Do not add explanatory copy next to the disabled controls — the existing top banner is the only context.
+- Do not remove the two "clears the override" effects — they're a harmless defensive backstop, not dead code to clean up.
+
+### Decisions Made (this addendum)
+
+- Disabling Stop-at + Repeat-whole-range during an active override supersedes the original "fully editable, no disabled states" constraint — confirmed with the user as a deliberate reversal, not an oversight.
+- Scope is exactly those two controls; everything else in the sheet stays interactive since it doesn't interact with the override.
+- No escape hatch beyond Stop; no new explanatory copy beyond the existing banner.

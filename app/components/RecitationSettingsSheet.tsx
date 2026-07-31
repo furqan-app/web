@@ -179,12 +179,14 @@ const SurahCombobox = ({
   minSurah,
   onChange,
   portalContainer,
+  disabled = false,
 }: {
   chapters: SurahResult[];
   value: number | null;
   minSurah: number;
   onChange: (surah: number) => void;
   portalContainer: HTMLElement | null;
+  disabled?: boolean;
 }) => {
   const locale = useLocale();
   const t = useTranslations();
@@ -201,6 +203,7 @@ const SurahCombobox = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className="flex-1 justify-between rounded-xl border-border bg-card font-normal h-auto py-2.5"
         >
           {selected ? (
@@ -257,6 +260,7 @@ const CustomRangePicker = ({
   referenceAyah,
   referencePage,
   portalContainer,
+  disabled = false,
 }: {
   chapters: SurahResult[];
   rangeTo: RangePoint | null;
@@ -265,6 +269,7 @@ const CustomRangePicker = ({
   referenceAyah: number;
   referencePage: number;
   portalContainer: HTMLElement | null;
+  disabled?: boolean;
 }) => {
   const t = useTranslations();
 
@@ -333,6 +338,7 @@ const CustomRangePicker = ({
             <button
               key={value}
               type="button"
+              disabled={disabled}
               onClick={() =>
                 onChange(
                   value === "page"
@@ -340,10 +346,10 @@ const CustomRangePicker = ({
                     : { type: "verse", surah, ayah },
                 )
               }
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors ${
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 isSelected
                   ? "border-primary bg-primary/10 text-primary font-medium"
-                  : "border-border bg-card text-foreground hover:bg-accent"
+                  : `border-border bg-card text-foreground ${disabled ? "" : "hover:bg-accent"}`
               }`}
             >
               <Icon
@@ -363,6 +369,7 @@ const CustomRangePicker = ({
           min={referencePage}
           max={MUSHAF_LAST_PAGE}
           value={pageInput}
+          disabled={disabled}
           onChange={(e) => setPageInput(e.target.value)}
           onBlur={commitPage}
           onKeyDown={(e) => {
@@ -382,6 +389,7 @@ const CustomRangePicker = ({
               onChange({ type: "verse", surah: nextSurah, ayah: clampedAyah });
             }}
             portalContainer={portalContainer}
+            disabled={disabled}
           />
           <Input
             type="number"
@@ -390,6 +398,7 @@ const CustomRangePicker = ({
             max={ayahCeil}
             value={ayahInput}
             className="w-20 shrink-0"
+            disabled={disabled}
             onChange={(e) => setAyahInput(e.target.value)}
             onBlur={commitAyah}
             onKeyDown={(e) => {
@@ -406,10 +415,12 @@ const RepeatStepper = ({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: RepeatCount;
   onChange: (value: RepeatCount) => void;
+  disabled?: boolean;
 }) => (
   <div className="flex items-center justify-between">
     <span className="text-sm text-foreground">{label}</span>
@@ -419,6 +430,7 @@ const RepeatStepper = ({
         variant="outline"
         size="icon"
         className="h-8 w-8"
+        disabled={disabled}
         onClick={() => onChange(nextRepeatCount(value, -1))}
       >
         <Minus className="size-3.5" />
@@ -431,6 +443,7 @@ const RepeatStepper = ({
         variant="outline"
         size="icon"
         className="h-8 w-8"
+        disabled={disabled}
         onClick={() => onChange(nextRepeatCount(value, 1))}
       >
         <Plus className="size-3.5" />
@@ -513,18 +526,24 @@ export const RecitationSettingsSheet = () => {
             <RadioGroup
               value={settings.stopPoint}
               onValueChange={(value) => updateSettings({ stopPoint: value as StopPoint })}
+              disabled={activeOverride != null}
               className="grid grid-cols-2 gap-2"
             >
               {STOP_POINT_OPTIONS.map(({ value, icon: Icon, labelKey, fallback }) => {
                 const isSelected = settings.stopPoint === value;
+                const isDisabled = activeOverride != null;
                 return (
                   <label
                     key={value}
                     htmlFor={`stop-${value}`}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                      isDisabled
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer"
+                    } ${
                       isSelected
                         ? "border-primary bg-primary/10 text-primary font-medium"
-                        : "border-border bg-card text-foreground hover:bg-accent"
+                        : `border-border bg-card text-foreground ${isDisabled ? "" : "hover:bg-accent"}`
                     }`}
                   >
                     <RadioGroupItem value={value} id={`stop-${value}`} className="sr-only" />
@@ -548,6 +567,7 @@ export const RecitationSettingsSheet = () => {
               referenceAyah={referenceAyah}
               referencePage={referencePage}
               portalContainer={sheetContentEl}
+              disabled={activeOverride != null}
             />
           ) : null}
 
@@ -566,6 +586,7 @@ export const RecitationSettingsSheet = () => {
                 label={t("recitation.repeatRange", "Repeat whole range")}
                 value={settings.rangeRepeatCount}
                 onChange={(value) => updateSettings({ rangeRepeatCount: value })}
+                disabled={activeOverride != null}
               />
             ) : null}
           </div>
