@@ -5,6 +5,20 @@ description: Quality gate for the current branch. Spawns a review subagent (mode
 
 # /review-fq-work
 
+Read and follow [`docs/workflow/review-work.md`](../../../docs/workflow/review-work.md).
+
+## Claude-specific: spawning the reviewer
+
+Spawn the review using `runSubagent` with `model` set to the chosen value:
+- Opus → `Claude Opus 4 (Anthropic)`
+- Sonnet → `Claude Sonnet 4.5 (Anthropic)`
+- Haiku → `Claude Haiku 3.5 (Anthropic)`
+
+Default: Opus.
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Spawns a subagent to review code changes across three dimensions. Terminal output only.
 
 Accepts an optional scope argument:

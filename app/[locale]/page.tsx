@@ -3,6 +3,10 @@ import { SurahList } from "../components/SurahList";
 import { getSurahs } from "../hooks/get-surahs";
 import { Locale } from "../types/config";
 
+// Bounds Hostinger CDN edge-cache poisoning to a 5-minute window instead of
+// Next's default 1-year s-maxage (see ADR 0035).
+export const revalidate = 300;
+
 export default async function Home({
   params: { locale },
 }: {

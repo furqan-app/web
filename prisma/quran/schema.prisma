@@ -9,19 +9,20 @@ datasource db {
 }
 
 model Chapter {
-  id               Int     @id @default(autoincrement())
-  chapter_number   Int
-  bismillah_pre    Boolean @default(false)
-  revelation_order Int
-  revelation_place String
-  name_complex     String
-  name_arabic      String
-  name_simple      String
-  verses_count     Int
-  pages            String
-  translated_name  String
-  verses           Verse[]
-  pageMetadata     PageMetadata[]
+  id                 Int                  @id @default(autoincrement())
+  chapter_number     Int
+  bismillah_pre      Boolean              @default(false)
+  revelation_order   Int
+  revelation_place   String
+  name_complex       String
+  name_arabic        String
+  name_simple        String
+  verses_count       Int
+  pages              String
+  translated_name    String
+  verses             Verse[]
+  pageMetadata       PageMetadata[]
+  mushafPageMetadata MushafPageMetadata[]
 
   @@map("chapters")
 }
@@ -42,14 +43,14 @@ model Verse {
   juz_number         Int
   chapter            Chapter @relation(fields: [chapter_id], references: [id])
   Word               Word[]
-  startRub           Rub[]  @relation("StartVerse")
-  endRub             Rub[]  @relation("EndVerse")
+  startRub           Rub[]   @relation("StartVerse")
+  endRub             Rub[]   @relation("EndVerse")
 
   @@map("verses")
 }
 
 model Word {
-  id               Int     @id @default(autoincrement())
+  id               Int                @id @default(autoincrement())
   position         Int
   audio_url        String?
   verse_key        String
@@ -64,28 +65,59 @@ model Word {
   line_number      Int
   text             String
   verse            Verse              @relation(fields: [verse_id], references: [id])
-  mushafLayouts    WordMushafLayout[]
+  mushafLayouts    MushafWordLayout[]
   // WordTranslation     WordTranslation[]
   // WordTransliteration WordTransliteration[]
 
   @@map("words")
 }
 
-// Generic per-mushaf line-layout override, keyed by mushaf id. Word.line_number
-// above is seeded under mushaf=2; other mushaf editions (e.g. mushaf=19, used
-// for Tajweed mode) group words into lines differently. A new mushaf edition
-// is a new set of rows here, not a new column/table. See ADR 0023 Addendum 6.
-model WordMushafLayout {
+// A mushaf edition's COMPLETE word placement — both page and line. A mushaf is a
+// typeset book: a committee fixes where every word sits for that specific print
+// edition, so editions disagree on page boundaries, not only on line breaks (56
+// verses and 361 words differ between mushaf 2 and mushaf 19). There is no base
+// edition and no override layer — mushaf 2 and 19 are equal sets of rows here,
+// and a further edition is a further set of rows, never a schema change.
+//
+// Word.page_number / Word.line_number above survive ONLY as a denormalized
+// mirror of the default edition, for mark canonicalization and legacy queries.
+// They are not the canonical placement of anything — read this table instead.
+// See ADR 0033.
+model MushafWordLayout {
   id          Int  @id @default(autoincrement())
-  word_id     Int
   mushaf_id   Int
+  word_id     Int
+  page_number Int
   line_number Int
   word        Word @relation(fields: [word_id], references: [id])
 
-  @@unique([word_id, mushaf_id])
-  @@map("word_mushaf_layouts")
+  @@unique([mushaf_id, word_id])
+  @@index([mushaf_id, page_number])
+  @@map("mushaf_word_layouts")
 }
 
+// Per-edition page summary. Derived from which verses land on which page, so it
+// diverges wherever pagination does: mushaf 2 and 19 differ on 8 pages —
+// page_surahs on 586/590/593/595/597/598, and hizb_position sits on page 599
+// for mushaf 2 but page 600 for mushaf 19. See ADR 0033.
+model MushafPageMetadata {
+  id            Int     @id @default(autoincrement())
+  mushaf_id     Int
+  page_number   Int
+  surah_id      Int
+  page_surahs   String
+  juz_number    Int
+  hizb_number   Int
+  hizb_position String?
+  chapter       Chapter @relation(fields: [surah_id], references: [id])
+
+  @@unique([mushaf_id, page_number])
+  @@map("mushaf_page_metadata")
+}
+
+// Superseded by MushafPageMetadata (ADR 0033). Retained only until its remaining
+// consumers move to the per-edition table; holds the default edition's values.
+// Do not add new readers.
 model PageMetadata {
   id            Int     @id @default(autoincrement())
   page_number   Int     @unique
@@ -122,19 +154,19 @@ model Rub {
   verse_mapping_end   Int
   verses_count        Int
   rubVerseMappings    RubVerseMapping[] @relation("RubToRubVerseMapping")
-  startVerse          Verse  @relation("StartVerse", fields: [verse_mapping_start], references: [id])
-  endVerse            Verse  @relation("EndVerse", fields: [verse_mapping_end], references: [id])
+  startVerse          Verse             @relation("StartVerse", fields: [verse_mapping_start], references: [id])
+  endVerse            Verse             @relation("EndVerse", fields: [verse_mapping_end], references: [id])
 
   @@map("rubs")
 }
 
 model RubVerseMapping {
-  id             Int  @id @default(autoincrement())
+  id             Int @id @default(autoincrement())
   rub_number     Int
   chapter_number Int
   start_verse    Int
   end_verse      Int
-  rub            Rub  @relation("RubToRubVerseMapping", fields: [rub_number], references: [rub_number])
+  rub            Rub @relation("RubToRubVerseMapping", fields: [rub_number], references: [rub_number])
 
   @@map("rub_verse_mappings")
 }

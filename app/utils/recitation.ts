@@ -1,5 +1,5 @@
 import { QURAN_LAST_CHAPTER_ID } from "@/app/constants/recitation";
-import { RepeatCount, StopPoint, VerseTiming } from "@/app/types/recitation";
+import { RepeatCount, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
 
 export type ChapterEndDecision =
@@ -10,19 +10,22 @@ export type ChapterEndDecision =
 // Decides what should happen once a chapter's audio has fully ended and any
 // per-ayah repeat on its last verse is exhausted — the three-way branch from
 // docs/plans/recitation-playback.md Addendum 5's chaining decision tree.
-// "none" never repeats a range (there's no bounded range to repeat back to —
-// the whole-range stepper is hidden for it in the UI, but the engine must
-// not trust that alone since a stale rangeRepeatCount from a previous
-// stopPoint could still be stored).
+// `isRepeatableRange` is false exactly when playback has no bounded range to
+// repeat back to: settings.stopPoint === "none" with no play() override
+// active. An explicit play() override (a wird's page range, see
+// docs/plans/listening-wird-inline-playback.md) always IS a bounded range
+// regardless of what the user's persisted stopPoint happens to say — the
+// caller computes this, not this function, since only the caller knows
+// whether an override is live.
 export const decideChapterEnd = (
   currentChapterId: number,
   stopChapterId: number | null,
-  stopPoint: StopPoint,
+  isRepeatableRange: boolean,
   rangeRepeatsDone: number,
   rangeRepeatTarget: number,
 ): ChapterEndDecision => {
   if (currentChapterId === stopChapterId) {
-    if (stopPoint !== "none" && rangeRepeatsDone + 1 < rangeRepeatTarget) {
+    if (isRepeatableRange && rangeRepeatsDone + 1 < rangeRepeatTarget) {
       return { action: "repeat-range" };
     }
     return { action: "stop" };

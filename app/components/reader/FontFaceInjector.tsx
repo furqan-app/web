@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuranTajweed } from "@/app/contexts/QuranTajweedContext";
+import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { ensurePageFonts } from "@/app/utils/page-font-registry";
 
 type Props = {
@@ -55,7 +55,7 @@ function useLruIds(ids: number[]): number[] {
 }
 
 export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
-  const { tajweedMode } = useQuranTajweed();
+  const { edition } = useQuranMushaf();
 
   // Tajweed keyed <style> ids — pure CSS declaration, safe to over-list with
   // the pair-expanded pageIds (browsers never fetch an unrendered @font-face).
@@ -70,10 +70,13 @@ export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
   const baseInjectedIdsKey = baseInjectedIds.join(",");
 
   useEffect(() => {
-    ensurePageFonts(baseInjectedIds);
+    // Colour-glyph editions load via the keyed <style> path below instead —
+    // registering them here too would download every page font twice.
+    if (edition.usesColorGlyphs) return;
+    ensurePageFonts(baseInjectedIds, edition);
     // baseInjectedIds is a new array each render; the joined key is the real dep.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseInjectedIdsKey]);
+  }, [baseInjectedIdsKey, edition]);
 
   // Shared tajweed-rule color overrides (indices 3–9). Frame slots 10–12 differ
   // per theme to match each card background (Trello #113, ADR 0023 Addendum 13).
@@ -83,9 +86,9 @@ export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
   // but as one keyed <style> per page id, content static after mount. React
   // mounts/unmounts whole elements on LRU change and never rewrites a live
   // sheet, so committing never resets a sibling page's tajweed face either.
-  // Only injected (and therefore only fetched) when Tajweed mode is on — the
+  // Only injected (and therefore only fetched) for a colour-glyph edition — the
   // COLRv1 fonts are ~9-10x heavier than the base font. See ADR 0023.
-  if (!tajweedMode) return null;
+  if (!edition.usesColorGlyphs) return null;
 
   return (
     <>
@@ -95,22 +98,22 @@ export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
           dangerouslySetInnerHTML={{
             __html: `
 @font-face {
-  font-family: 'quran-p${id}-tajweed';
-  src: url('/fonts/v4/colrv1/woff2/p${id}.woff2') format('woff2');
+  font-family: '${edition.fontFamily(id)}';
+  src: url('${edition.fontUrl(id)}') format('woff2');
   font-display: block;
 }
 @font-palette-values --Light {
-  font-family: 'quran-p${id}-tajweed';
+  font-family: '${edition.fontFamily(id)}';
   base-palette: 0;
   override-colors: ${RULE_OVERRIDES}, 10 #ffffff, 11 #ffffff, 12 #ffffff;
 }
 @font-palette-values --Dark {
-  font-family: 'quran-p${id}-tajweed';
+  font-family: '${edition.fontFamily(id)}';
   base-palette: 1;
   override-colors: 3 #F556B0, 4 #E1AB5B, 5 #D9C78C, 6 #20DF76, 7 #26ACD9, 8 #3FD3E4, 9 #F556B0, 10 #192533, 11 #192533, 12 #192533;
 }
 @font-palette-values --Gold {
-  font-family: 'quran-p${id}-tajweed';
+  font-family: '${edition.fontFamily(id)}';
   base-palette: 2;
   override-colors: ${RULE_OVERRIDES}, 10 #faf9f4, 11 #faf9f4, 12 #faf9f4;
 }`,

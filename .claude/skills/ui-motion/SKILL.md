@@ -5,6 +5,11 @@ description: Animation and interaction-polish guidance for Furqan UI work — wh
 
 # /ui-motion
 
+Read and follow [`docs/workflow/ui-motion.md`](../../../docs/workflow/ui-motion.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Motion and interaction-polish reference for UI tasks. Load this alongside `docs/design/design-principles.md` (static aesthetic direction) — this skill covers *how things move and respond*, not colors/spacing/layout.
 
 Stack assumptions: Tailwind CSS, shadcn/ui, Radix primitives (`react-dialog`, `react-dropdown-menu`, `react-tabs`). No JS animation library is installed — default to CSS transitions, not Framer Motion or springs. If a task genuinely needs JS-driven physics (drag-to-dismiss, momentum), stop and confirm with the user before adding a dependency.

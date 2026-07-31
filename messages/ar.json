@@ -144,6 +144,12 @@
     "checkOff": "وضع علامة إتمام",
     "undoCheckOff": "التراجع عن علامة الإتمام",
     "nextAssignment": "التالي",
+    "playback": {
+      "play": "تشغيل",
+      "pause": "إيقاف مؤقت",
+      "loading": "جارٍ التحميل",
+      "retry": "إعادة المحاولة"
+    },
     "pagesPerDay": "صفحة/يوم",
     "targetRange": "النطاق المستهدف (بالأجزاء)",
     "to": "إلى",
@@ -228,6 +234,7 @@
   "recitation": {
     "settingsTitle": "إعدادات التلاوة",
     "settingsDescription": "اختر قارئًا واضبط إعدادات التشغيل.",
+    "playingOverride": "قيد التشغيل",
     "reciter": "القارئ",
     "stopPoint": "التوقف عند",
     "stopPointPage": "نهاية الصفحة",
@@ -245,9 +252,16 @@
     "stopPointHizb": "نهاية الحزب",
     "stopPointJuz": "نهاية الجزء",
     "stopPointNone": "بدون توقف",
+    "stopPointCustom": "نقطة مخصصة",
     "repeatSectionLabel": "التكرار",
     "reciterPlaceholder": "اختر قارئًا",
     "reciterSearchPlaceholder": "ابحث عن قارئ…",
-    "reciterEmpty": "لم يتم العثور على قارئ."
+    "reciterEmpty": "لم يتم العثور على قارئ.",
+    "rangeTo": "التوقف عند نقطة",
+    "rangeTypePage": "صفحة",
+    "rangeTypeVerse": "آية",
+    "surahPlaceholder": "اختر سورة",
+    "surahSearchPlaceholder": "ابحث عن سورة…",
+    "surahEmpty": "لم يتم العثور على سورة."
   }
 }

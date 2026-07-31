@@ -7,6 +7,7 @@ import { Link } from "@/i18n/routing";
 import useTranslations from "@/app/hooks/use-translations";
 import { toLocaleNumeral } from "@/app/utils/i18n";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
+import { useVersePages } from "@hooks/use-verse-pages";
 
 type Props = {
   rubs: RubWithVerses[];
@@ -35,6 +36,14 @@ const RubList = ({ rubs, surahs }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
+  const { data: versePages } = useVersePages();
+
+  // A rub starts at a verse, and which page that verse sits on depends on the
+  // mushaf edition — 56 verses land on a different page between editions, so a
+  // hardcoded page number would send the reader to the wrong page in one of them
+  // (ADR 0033). Falls back to the default edition's page until the map loads.
+  const pageOfVerse = (startVerse: { verse_key: string; page_number: number }) =>
+    versePages?.[startVerse.verse_key] ?? startVerse.page_number;
 
   const juzGroups = buildJuzGroups(rubs);
 
@@ -50,7 +59,7 @@ const RubList = ({ rubs, surahs }: Props) => {
               {t("juz", "Juz")} {toLocaleNumeral(group.juzNumber, locale)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {t("page", "Page")} {toLocaleNumeral(group.rubs[0].startVerse.page_number, locale)}
+              {t("page", "Page")} {toLocaleNumeral(pageOfVerse(group.rubs[0].startVerse), locale)}
             </span>
           </div>
 
@@ -73,7 +82,7 @@ const RubList = ({ rubs, surahs }: Props) => {
             return (
               <Link
                 key={rub.id}
-                href={`${basePath}/${rub.startVerse.page_number}`}
+                href={`${basePath}/${pageOfVerse(rub.startVerse)}`}
                 locale={locale}
                 dir="rtl"
                 className="flex items-center gap-3 px-4 py-[13px] border-b border-border bg-background hover:bg-accent transition-colors"
@@ -133,7 +142,7 @@ const RubList = ({ rubs, surahs }: Props) => {
                 </div>
 
                 <span className="shrink-0 text-[13px] font-medium text-muted-foreground min-w-[22px]">
-                  {toLocaleNumeral(rub.startVerse.page_number, locale)}
+                  {toLocaleNumeral(pageOfVerse(rub.startVerse), locale)}
                 </span>
               </Link>
             );

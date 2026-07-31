@@ -3,6 +3,7 @@ import { RecitationSettings } from "@/app/types/recitation";
 export const DEFAULT_RECITATION_SETTINGS: RecitationSettings = {
   reciterId: null,
   stopPoint: "page",
+  rangeTo: null,
   perAyahRepeatCount: 1,
   rangeRepeatCount: 1,
   playbackSpeed: 1,

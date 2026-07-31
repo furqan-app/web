@@ -425,3 +425,108 @@ This only affects the **same-chapter** seek-back path. The cross-chapter reload 
 - `grep -n "router.push" app/contexts/RecitationContext.tsx app/components/reader/RecitationFollow.tsx` returns nothing, confirming the bullet's `router.push` claim was stale.
 - Checked the rest of `DECISIONS.md` for other stray `router.push` references: lines 352–395 (the "Reader Page Navigation" section, `QuranSwipeNav`) are unrelated and still accurate — that component genuinely still uses `router.push` for its own swipe-commit path, distinct from recitation auto-advance.
 - No dev server needed — docs-only change, no `app/`/`components/`/`lib/`/`prisma/` paths touched.
+
+## Addendum 9: Custom "stop at" point — page or verse, independent of the launch verse (Trello #158)
+
+**Date:** 2026-07-30
+**Status:** implemented
+
+### Problem
+
+`stopPoint` (`page`/`surah`/`rub`/`hizb`/`juz`/`none`) always derives the end of playback from a **scope containing the start verse** — "end of this page," "end of this surah," etc. There is no way to pick an arbitrary, independent end point: e.g. "play until page 8" while starting on page 3, or "play until verse 4:10" regardless of what scope that falls in.
+
+### Scope decisions (confirmed with user)
+
+- Added **alongside** the existing five stop points, not a replacement.
+- The end point can be **either** a page number or a surah:ayah verse reference (user's choice per range, not fixed to one unit).
+- **Start stays exactly as today** — whatever verse launched playback (header quick-play's page-first-verse, or MarkModal's "play from here" clicked verse). There is no new "from" picker. This was a deliberate simplification after considering a full from+to picker: the other five stop points never carry a "from" either (they only ever redefine where an already-started session stops), and giving custom an independent "from" would have required either a separate "Play range" entry point divorced from the existing quick-play/MarkModal flows, or making a stored "from" silently override MarkModal's "play from here" semantics — both rejected.
+- Entry is manual number/dropdown inputs in the settings sheet — no click-to-pick-from-the-page flow, fully self-contained in the sheet.
+- Verse input is a searchable surah dropdown (mirrors the existing reciter combobox) + a numeric ayah input, not a free-text `"2:5"` field.
+- **The picker must make an invalid (before-start) range unreachable in the UI**, not merely validate it after entry. Since MarkModal's "play from here" no longer opens the settings sheet at all (Addendum 6 — it calls `play()` directly), the only place this picker is ever configured is the gear icon on `RecitationPlayerBar`, so the picker is floored against whatever `RecitationContext` already knows as "the relevant verse right now": `currentVerseKey` if a session is actively playing, else `pageFirstVerseKey` (current page's first verse — same default the header quick-play button uses). The one residual gap — configuring custom relative to page N via the gear icon, then separately starting playback elsewhere on an earlier page M via a MarkModal click — is **accepted as out of scope**, no play-time guard. It requires a deliberate multi-step detour, not an accident.
+
+### Data model
+
+- `StopPoint` (`app/types/recitation.ts`) widens to `"page" | "surah" | "rub" | "hizb" | "juz" | "none" | "custom"`.
+- New type: `RangePoint = { type: "page"; page: number } | { type: "verse"; surah: number; ayah: number }`.
+- Settings gain `rangeTo: RangePoint | null` (persisted via `localStorage`, same as every other recitation setting). No `rangeFrom` — see above.
+
+### New endpoint
+
+`GET /api/quran/pages/[pageId]/bounds` → `jsonResponse({ data: { lastVerseKey, lastChapterId } })`. Mirrors the existing `verses/[verseKey]/stop-point` route's pattern exactly: `quranPrisma.verse.findFirst({ where: { page_number: pageId }, orderBy: { id: "desc" } })` — `findFirst`, never `findUnique` (`Verse.verse_key`/`page_number` are not `@unique`). Only returns the **last** verse of the page (what "to" needs) — no `firstVerseKey`, since nothing in this addendum resolves a "from" from a page.
+
+### Decision tree — resolving the custom stop target
+
+| `rangeTo.type` | Resolution | DB call? |
+|---|---|---|
+| `"verse"` | `verseKey = ${rangeTo.surah}:${rangeTo.ayah}`, `chapterId = rangeTo.surah` | No |
+| `"page"` | `pages/[rangeTo.page]/bounds` → `{ lastVerseKey, lastChapterId }` | Yes |
+
+Plugged into `resolveStopTarget` (`app/contexts/RecitationContext.tsx`) as a new `stopPoint === "custom"` branch, alongside the existing `"surah"` (sync) and DB-scoped (`page`/`rub`/`hizb`/`juz`, via `fetchStopPoint`) branches. Used unchanged by both `play()`'s initial resolution and the existing mid-session stop-point-changed effect. Everything downstream — cross-chapter chaining (`decideChapterEnd`/`chainToNextChapter`), per-ayah repeat, whole-range repeat (stays visible for `"custom"`, same reasoning as `"juz"`/`"hizb"`/`"rub"` — it's a bounded range, not `"none"`), speed, pause — is reused with zero changes.
+
+### Decision tree — constraining the "to" picker (UI only, no DB calls)
+
+Reference verse = `currentVerseKey ?? pageFirstVerseKey` (both already live in `RecitationContext`; `pageFirstVerseKey` added in Addendum 4). Reference page = `recitedPage ?? currentPageNumber` (`recitedPage` already published per Addendum 8's confirmed mechanism; `currentPageNumber` is a new plain-number field alongside `pageFirstVerseKey`, since a verse key alone doesn't carry its page number without a lookup — see Files to Change).
+
+| "to" input | Constraint | Source |
+|---|---|---|
+| Page number | `min = ` reference page | `recitedPage ?? currentPageNumber`, no lookup |
+| Surah dropdown | Excludes any surah `<` reference verse's surah | Parsed from `currentVerseKey ?? pageFirstVerseKey` |
+| Ayah number | If selected surah `===` reference verse's surah: `min = ` reference verse's ayah number. Else: capped only by the selected surah's own `verses_count` | Same parse; `verses_count` from `public/quran/chapters.json` |
+
+Both constraints re-run whenever the reference (current verse/page) changes, so a stale "to" from an earlier session doesn't silently become invalid — the picker's bounds are always live.
+
+### Verified test cases
+
+1. **Page → page spanning a surah boundary:** playing page 106 (Addendum 5's known case: `4:176` chapter 4, `5:1`–`5:2` chapter 5). User opens gear icon, selects "Custom point," picker floors at page 106. Sets "to" = page 108. `pages/108/bounds` resolves to some `{lastVerseKey, lastChapterId}` in chapter 5 or later. Since target chapter > current chapter (4), `chainToNextChapter` fires exactly as the existing page-stop cross-surah fix already handles — no new chaining logic needed, just a different (larger) target.
+2. **Verse → verse spanning chapters:** start `1:1` (Al-Fatiha). Gear icon floors surah dropdown at 1, ayah at 1. User picks surah 3, ayah 5 → `rangeTo = {type: "verse", surah: 3, ayah: 5}`. Resolved synchronously (no DB call): `stopVerseKey = "3:5"`, `stopChapterId = 3`. Chapter 1 ends → chains to 2 → chains to 3 → reaches `3:5` → stop/repeat logic applies normally, same as the existing juz cross-chapter case.
+3. **Page-type "to" while idle on a different page:** nothing playing, viewing page 50. Opens gear icon, picks "Custom point," "to" picker floors page-number input at 50 (from `currentPageNumber`, no lookup) and surah dropdown at whatever `pageFirstVerseKey`'s surah is. Sets "to" = page 52, closes sheet. Later, presses the header quick-play button on page 50 → `play()` starts at page 50's first verse, `resolveStopTarget` resolves `"custom"` → `pages/52/bounds` → stop target is page 52's last verse. Matches what was configured; no drift because both the picker's floor and the actual play start used the same `pageFirstVerseKey`.
+
+### Files to Change
+
+- `app/types/recitation.ts` — `StopPoint` widens with `"custom"`; new `RangePoint` type; settings type gains `rangeTo: RangePoint | null`.
+- `app/api/quran/pages/[pageId]/bounds/route.ts` — new. `GET`, returns `{ lastVerseKey, lastChapterId }` for the given page, `findFirst`/`orderBy: { id: "desc" }`, `jsonResponse()` envelope, per `docs/standards/api-conventions.md`.
+- `app/utils/recitation-api.ts` — new `fetchPageBounds(pageId: number): Promise<{ lastVerseKey: string; lastChapterId: number }>`.
+- `app/contexts/RecitationContext.tsx` — `resolveStopTarget` gains the `"custom"` branch (table above); add `currentPageNumber: number | null` state + `setCurrentPageNumber` alongside the existing `pageFirstVerseKey`/`setPageFirstVerseKey` (Addendum 4); default/persist `rangeTo` in the settings object exactly like every other recitation setting.
+- `app/components/reader/RecitationPageSync.tsx` — extend props to also pass the current page's plain number (`pageId`, already known to `ReaderPage`, a Server Component, as a route param) alongside `firstVerseKey`; call `setCurrentPageNumber` in the same `useEffect`.
+- `app/components/reader/ReaderPage.tsx` — pass the page number prop to `RecitationPageSync`.
+- `app/components/RecitationSettingsSheet.tsx` — add `"custom"` as a 7th `STOP_POINT_OPTIONS` tile (new icon, e.g. `MapPin`); commits immediately on select via `updateSettings({ stopPoint: "custom" })`, same as the other six. When `settings.stopPoint === "custom"`, render an inline "to" picker below the grid: a page/verse type toggle, then either a numeric page input or a surah combobox (reusing the `ReciterCombobox` pattern, sourced from `public/quran/chapters.json`) + ayah number input — bounds per the constraint table above. Any change calls `updateSettings({ rangeTo: {...} })` live.
+- `app/contexts/RecitationContext.tsx` (or a small new client-side loader) — fetch `public/quran/chapters.json` once, exposed via context alongside `reciters`, for the surah dropdown's names + `verses_count` caps.
+- i18n keys: `recitation.stopPointCustom`, plus labels for the "to" picker (page/verse toggle, page number placeholder, surah/ayah labels).
+
+### Constraints
+
+- Do not give `"custom"` a "from" input or a separate "Play range" entry point — start is always whatever launched playback, unchanged from every other stop point.
+- `"custom"` commits to `settings.stopPoint` immediately on radio selection, same as the other six — do not gate it behind a separate confirm/apply action.
+- `pages/[pageId]/bounds` returns only `lastVerseKey`/`lastChapterId` — do not add `firstVerseKey`/`firstChapterId` "for symmetry"; nothing in this addendum needs them.
+- The "to" picker's bounds must be re-derived from live context state (`currentVerseKey ?? pageFirstVerseKey`, `recitedPage ?? currentPageNumber`) on every render where the sheet is open, not captured once — a stale floor from an earlier session must not persist.
+- Do not add a play-time guard for the accepted residual gap (custom "to" configured relative to one page/verse, then playback actually starts elsewhere via a MarkModal click) — confirmed out of scope.
+- Whole-range repeat stays visible for `"custom"` (only hidden for `"none"`) — no change to that existing condition.
+
+### What NOT to Do
+
+- Do not replace the existing `page`/`surah`/`rub`/`hizb`/`juz`/`none` stop points — `"custom"` is additive.
+- Do not resolve "to" via client-side approximation (e.g. inferring a verse's page from `chapters.json`'s per-surah page range) where an exact DB lookup is cheap and available — the `pages/[pageId]/bounds` endpoint exists specifically to keep the picker's page-type resolution exact.
+- Do not let MarkModal's "play from here" open the settings sheet or otherwise interact with `rangeTo` — that flow is unchanged from Addendum 6.
+- Do not use `findUnique` for `verse_key`/`page_number` lookups in the new endpoint.
+
+### Decisions Made
+
+- Custom range is additive to the existing six stop points — confirmed 2026-07-30.
+- Either page or verse, independently choosable for the "to" point — confirmed 2026-07-30.
+- No independent "from" picker — start stays whatever launched playback; custom only ever defines "to" — confirmed 2026-07-30, after weighing and rejecting a full from+to picker (see Problem/Scope decisions above for the rejected alternatives and why).
+- Manual number/dropdown inputs, no click-to-pick-from-the-page flow — confirmed 2026-07-30.
+- Surah dropdown + ayah number for verse input, not a free-text `"surah:ayah"` field — confirmed 2026-07-30.
+- "To" picker must make an invalid (before-start) range unreachable by construction, floored against live `RecitationContext` state — confirmed 2026-07-30.
+- The one residual gap (gear-icon-configured custom range vs. a later MarkModal click elsewhere) is accepted out of scope, no play-time guard — confirmed 2026-07-30.
+
+### Implementation Notes (2026-07-30)
+
+- `RecitationPageSync` is rendered by `ReaderPager.tsx`, not `ReaderPage.tsx` — the plan's "Files to Change" named `ReaderPage.tsx` per Addendum 4's original wording, but the persistent-pager refactor (ADR 0028) moved that render call into `ReaderPager` afterward. `pageNumber` is `ReaderPager`'s existing `anchor`/`pageNumber` local, threaded through as a new `RecitationPageSync` prop alongside the existing `firstVerseKey` — no new state derivation needed.
+- `resolveStopTarget`'s `"custom"` branch, when `rangeTo` is `null` (stopPoint switched to `"custom"` but the picker was never opened/interacted with), falls back to `"surah"` behavior (end of the start verse's own chapter) rather than resolving to nothing — a defensive default not explicitly specified in the plan, added so an unconfigured "custom" selection degrades gracefully instead of erroring.
+- `CustomRangePicker` seeds `rangeTo` to a live default the moment the sheet renders it (`useEffect` — see "the picker's bounds are always live" constraint) rather than waiting for the user's first interaction, so the two are never out of sync: what's displayed always matches what `resolveStopTarget` will actually use, even if the user closes the sheet without touching the picker.
+- Reused `MUSHAF_LAST_PAGE` (`app/constants/plans.ts`) for the page input's upper bound instead of a new constant — same value (604) already established for the plans feature.
+- Verified via `npm run lint` (clean) and `npx tsc --noEmit` (clean, no errors) in the worktree, plus live in a real browser (Playwright against the dev server, after starting the local `quran-db`/`app-db` containers): opened the settings sheet on `/en/pages/2`, selected "Custom point" — the page-type "to" input defaulted to `2` (the current page, i.e. `pageFirstVerseKey`-derived floor); switched to "Verse" — surah defaulted to "Al-Baqarah" (surah 2) with ayah `1`, and opening the surah dropdown confirmed Al-Fatiha (surah 1) is excluded from the list (floored below `referenceSurah`). Also verified the new `GET /api/quran/pages/[pageId]/bounds` endpoint directly: a real page (`5`) returns `{lastVerseKey: "2:29", lastChapterId: 2}`; an out-of-range page (`9999`) returns `404`; a non-numeric id (`abc`) returns `422`.
+- Initially, number inputs in `CustomRangePicker` clamped on every keystroke (`onChange`), which fought typing mid-entry (e.g. typing "12" with a floor of 5 snapped to "5" after the first digit). Fixed by buffering both the page and ayah inputs as local raw-text state, clamping/committing only on blur (or Enter) — verified live: typing "150" showed the unclamped intermediate value at every keystroke, then committed to `150` (in range) on blur; typing "999" (above Al-Baqarah's 286-verse ceiling) likewise showed unclamped while typing, then clamped to `286` only on blur.
+- **Critical bug found via `/review-fq-work` (Opus) before shipping, fixed same session:** a persisted `rangeTo` can resolve to a chapter *behind* wherever a session actually starts — not just via the already-accepted "residual gap" (gear-icon-configured range vs. a later MarkModal click elsewhere), but via the much more common flow of configuring custom while viewing one page, then later quick-playing from a different, later page (`rangeTo` survives in `localStorage` across navigations; the picker only re-derives its *floor* while the sheet is open, it doesn't invalidate an already-stored value). Without a guard, `decideChapterEnd`'s "chain to next chapter" branch never finds a chapter match (the stop chapter is already behind) and plays straight through to `114:6` instead of ever stopping. **Fix:** `resolveStopTarget`'s `"custom"` branch now compares the resolved target's `chapterId` against the actual start chapter; if the target is behind, it falls back to `"surah"` behavior (end of the start verse's own chapter) — the same fallback already used for an unconfigured `rangeTo`, now shared via one `resolveSurahFallback` helper instead of duplicated. Verified live: seeded `rangeTo: {type: "page", page: 1}` (chapter 1) via `localStorage`, navigated to page 300 (chapter 18, Al-Kahf), pressed quick-play — audio loaded chapter 18 (not chapter 1, and no error/hang), confirming the fallback engaged rather than the stale target being used as-is.
+- Other findings from the same review pass (ayah-ceiling collapsing to floor before `chapters` loads, `fetchChapters` lacking response validation, the corrective effect not capping `rangeTo.page` at `MUSHAF_LAST_PAGE`, missing `try/catch` around the mid-session recompute, `SurahCombobox`/`ReciterCombobox` duplication, and a few naming/placement nits) were reported but **not fixed in this pass** — scoped out as non-critical by the user; left for a follow-up task if picked up later.
+- **`main` landed ADR 0033 (multi-mushaf editions) while this branch was open, requiring re-threading before merging — resolved same session, before opening the PR.** A page number became meaningful only relative to a mushaf edition; `Verse.page_number`/`Word.page_number` survive only as a denormalized default-edition mirror, and the canonical per-edition page/line placement moved to a new `MushafWordLayout(mushaf_id, word_id, page_number, line_number)` table. Concretely: `resolveStopTarget` gained a `mushafId` parameter (from `useQuranMushaf()`) alongside `rangeTo`; `fetchPageBounds`/the `pages/[pageId]/bounds` route both gained a `mushafId`/`?mushaf=` parameter and the route was rewritten to query `quranPrisma.mushafWordLayout` (mirroring the already-updated `stop-point` route's `resolvePageStop`) instead of `quranPrisma.verse.findFirst({where: {page_number}})`, which would have silently resolved against the wrong edition's page boundaries for any non-default mushaf. `RecitationSettingsSheet.tsx`/`CustomRangePicker` needed **no changes** — `mushafId` threading is entirely internal to `RecitationContext`'s resolution, never surfaced to the picker UI, since the picker only ever stores a bare page number/verse reference. Verified against real seeded data (`npm run seed:quran -- --force`, required since the local DB predated the new `mushaf_word_layouts` table): page 120's last verse is `5:76` under the default edition (mushaf 2) but `5:77` under the tajweed edition (mushaf 19) — exactly the divergent-boundary example ADR 0033 documents, confirming the endpoint resolves per-edition correctly rather than always returning the default edition's answer.

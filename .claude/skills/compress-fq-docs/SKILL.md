@@ -12,6 +12,11 @@ description: >
 
 # compress-fq-docs
 
+Read and follow [`docs/workflow/compress-docs.md`](../../../docs/workflow/compress-docs.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Furqan docs drift toward verbosity — code blocks that illustrate rules already in prose, hedging
 language, long phrases where short ones work. Compress them to tight, direct rules without losing
 any constraint.

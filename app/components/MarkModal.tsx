@@ -79,7 +79,7 @@ export function MarkModal({
   authorName,
   grantId,
 }: ModalProps) {
-  const { reload: reloadMarks } = useMarks(markFor.page_number, grantId);
+  const { reload: reloadMarks } = useMarks([markFor.page_number], grantId);
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
   const t = useTranslations();

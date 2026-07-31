@@ -1,0 +1,26 @@
+{
+  "servers": {
+    "trello": {
+      "command": "npx",
+      "args": ["-y", "@delorenj/mcp-server-trello"],
+      "env": {
+        "TRELLO_API_KEY": "${input:trelloApiKey}",
+        "TRELLO_TOKEN": "${input:trelloToken}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "trelloApiKey",
+      "type": "promptString",
+      "description": "Trello API Key — get from https://trello.com/power-ups/admin",
+      "password": true
+    },
+    {
+      "id": "trelloToken",
+      "type": "promptString",
+      "description": "Trello Token — generate at https://trello.com/1/authorize?expiration=never&name=furqan&scope=read,write&response_type=token&key=YOUR_API_KEY",
+      "password": true
+    }
+  ]
+}

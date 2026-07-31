@@ -28,7 +28,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # generated prisma clients (build artifacts — run `npm run prisma-generate`)
-/app/generated/
+# No trailing slash: worktrees symlink this path (see /start-fq-task), and a
+# trailing-slash pattern only matches a directory, not a symlink of that name.
+/app/generated
 
 # local env files
 .env*.local
@@ -39,6 +41,8 @@ yarn-error.log*
 
 # mcp config (contains secrets)
 .mcp.json
+opencode.json
+.cursor/mcp.json
 .playwright-mcp
 
 # vercel

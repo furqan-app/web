@@ -14,7 +14,10 @@ declare const self: ServiceWorkerGlobalScope;
 
 // Bumped manually (never automatically on every deploy) when a change
 // affects cached page output (reader markup, font logic) — see ADR 0013.
-const PAGES_CACHE_VERSION = 1;
+// v2: per-page content JSON moved under /quran/pages/{mushafId}/ when mushaf
+// editions gained their own word placement (ADR 0033), so every v1 JSON entry
+// is a stale path and must not be served.
+const PAGES_CACHE_VERSION = 2;
 const PAGES_CACHE_NAME = `pages-v${PAGES_CACHE_VERSION}`;
 const TOTAL_PAGES = 604;
 
@@ -25,8 +28,16 @@ const isPageFont = (url: URL) =>
   /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
 // Static per-page content JSON the pager fetches (ADR 0028) — immutable.
+// Scoped per mushaf edition: page N of one edition holds different words than
+// page N of another (ADR 0033).
 const isPageJson = (url: URL) =>
-  /^\/quran\/pages\/[0-9]+\.json$/.test(url.pathname);
+  /^\/quran\/pages\/[0-9]+\/[0-9]+\.json$/.test(url.pathname);
+
+// Per-edition verse_key → page map (ADR 0033) — immutable, same caching as page
+// JSON. Without this, rub navigation and edition switching fall back to the
+// default edition's page numbers when offline.
+const isVersePagesJson = (url: URL) =>
+  /^\/quran\/verse-pages\/[0-9]+\.json$/.test(url.pathname);
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -49,7 +60,7 @@ const serwist = new Serwist({
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     {
-      matcher: ({ url }) => isPageJson(url),
+      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     ...defaultCache,
@@ -65,8 +76,14 @@ serwist.addEventListeners();
 // the localized app shell is precached via the Serwist build manifest, not here.
 type PrecacheMessage = { type: "START_PRECACHE" };
 
+// The DEFAULT edition only. Bulk-precaching a second edition would roughly
+// double the installed cache against an already-fragile iOS quota, and the
+// tajweed edition's COLRv1 fonts are excluded from precache for the same reason
+// (ADR 0014, ADR 0023). Non-default editions load over the network on demand and
+// are still runtime-cached once fetched.
+const PRECACHE_MUSHAF_ID = 2;
 const fontUrl = (id: number) => `/fonts/v1/woff2/p${id}.woff2`;
-const jsonUrl = (id: number) => `/quran/pages/${id}.json`;
+const jsonUrl = (id: number) => `/quran/pages/${PRECACHE_MUSHAF_ID}/${id}.json`;
 
 async function reportProgress(cached: number) {
   const clients = await self.clients.matchAll({ type: "window" });
