@@ -5,9 +5,58 @@ description: Socratic planning and investigation for Furqan features and bugs. P
 
 # /plan-fq-task
 
-Socratic planning and investigation for features and bugs.
+Read and follow [`docs/workflow/plan-task.md`](../../../docs/workflow/plan-task.md).
 
-## What this skill does
+After completing the ADR check (step 4 in the workflow doc), do these Claude-specific steps before writing the plan:
+
+## Step 5 — Ensure a Trello ticket
+
+Every task must have a Trello ticket on the "Furqan" board before implementation starts (see `mcp__trello__get_active_board_info`).
+
+- Check whether a card already covers this work (`mcp__trello__get_cards_by_list_id` across the relevant lists, or ask the user if unsure).
+- If none exists, create one in the **Todo** list (`mcp__trello__add_card_to_list`):
+  - Title: the plan's task title
+  - Description: one-paragraph summary from the plan, plus a link/reference to `docs/plans/<slug>.md`
+  - Label: `Feature` or `Bug` matching the plan's `Type`
+- Note the card ID/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
+
+## Step 6 — Create the worktree
+
+Derive the slug from the planned filename (e.g. `fix-search-debounce`). Then:
+
+- Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
+- If one exists, skip the rest of this step — the plan will be written into that worktree in step 7.
+- If none exists:
+  1. Derive the branch name from the Trello card: `<type>/<card-short-id>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
+  2. Check whether the branch already exists: `git branch --list <branch-name>`
+     ```bash
+     # Branch does NOT exist yet:
+     git worktree add ../furqan-<slug> -b <branch-name>
+
+     # Branch already exists:
+     git worktree add ../furqan-<slug> <branch-name>
+     ```
+  3. Record the entry in `~/.claude/furqan-worktrees.json` (merge with existing — do not overwrite):
+     ```json
+     { "<slug>": { "worktreePath": "../furqan-<slug>", "branch": "<branch-name>" } }
+     ```
+     Omit `port` here — it is assigned by `/start-fq-task` when the dev server is started.
+
+After creating (or finding) the worktree, resolve its **absolute path** once — `git worktree list | grep furqan-<slug> | awk '{print $1}'` — and use that absolute path (`<abs>` below) for every subsequent file write and command. Never build paths from the relative `../furqan-<slug>` form.
+
+## Step 7 — Write the plan (worktree path)
+
+Write all plan-phase files into the **worktree** (`<abs>`), not the main repo:
+- Plan: `<abs>/docs/plans/<slug>.md`
+- ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
+- DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`
+
+Use the plan file format from the workflow doc.
+
+---
+<!-- original content preserved below this line for reference only -->
+
+## What this skill does (legacy)
 
 **For features:** Reads the codebase and asks adversarial questions one at a time until shared understanding is reached, verifies the proposed solution against concrete examples, then writes a spec.
 
@@ -110,11 +159,13 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 
    **Do not** symlink `node_modules`, `.env.local`, or start a dev server here — those steps belong in `/start-fq-task`.
 
+   After creating (or finding) the worktree, resolve its **absolute path** once — `git worktree list | grep furqan-<slug> | awk '{print $1}'` — and use that absolute path (`<abs>` below) for every subsequent file write and command. Never build paths from the relative `../furqan-<slug>` form: it resolves against the shell's cwd, and the Write tool silently creates any missing directories, so a wrong resolution has produced plan files in a stray directory outside the repo.
+
 7. **Write the plan**
-   - Write all plan-phase files into the worktree, not the main repo:
-     - Plan: `../furqan-<slug>/docs/plans/<slug>.md`
-     - ADR (if created in step 4): `../furqan-<slug>/docs/architecture/adr/NNNN-<slug>.md`
-     - DECISIONS.md update (if any): `../furqan-<slug>/docs/architecture/DECISIONS.md`
+   - Write all plan-phase files into the worktree (at its resolved absolute path `<abs>`), not the main repo:
+     - Plan: `<abs>/docs/plans/<slug>.md`
+     - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
+     - DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`
    - Plan content:
      - What we're building / what the bug is
      - Root cause (bugs) or approach (features)
@@ -174,7 +225,7 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 - Do not treat silence as agreement — wait for an explicit confirmation before writing the plan.
 - Do not skip the ADR check — run it explicitly before writing the plan.
 - Do not put the ADR check after the plan — it must come before.
-- Do not write plan files into the main repo working tree — they must go into the worktree created in step 6 (`../furqan-<slug>/docs/...`). Writing to the main repo leaves them absent from the feature branch.
+- Do not write plan files into the main repo working tree — they must go into the worktree created in step 6, addressed by its resolved **absolute** path. Writing to the main repo leaves them absent from the feature branch; writing via the relative `../furqan-<slug>` form has created stray directories outside the repo.
 - Do not create the worktree before the Trello card exists — the branch name is derived from the card.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation (plans, COMPONENTS.md, DECISIONS.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

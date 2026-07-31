@@ -35,6 +35,7 @@
   "settings": "الإعدادات",
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
+  "pageView": "عرض الصفحة",
   "appearance": "المظهر",
   "tajweedMode": "ألوان التجويد",
   "tajweedModeLabel": "تلوين أحكام التجويد",
@@ -134,9 +135,106 @@
       "cancel": "إلغاء"
     }
   },
+  "plans": {
+    "navLink": "خططي",
+    "pageTitle": "الأوراد وخطط التعلم",
+    "signedOut": "سجّل الدخول لرؤية أورادك اليومية وخطط التعلم.",
+    "empty": "لا توجد خطط بعد — اشترك في إحداها بالأسفل.",
+    "nothingToday": "لا يوجد شيء مستحق اليوم.",
+    "checkOff": "وضع علامة إتمام",
+    "undoCheckOff": "التراجع عن علامة الإتمام",
+    "nextAssignment": "التالي",
+    "playback": {
+      "play": "تشغيل",
+      "pause": "إيقاف مؤقت",
+      "loading": "جارٍ التحميل",
+      "retry": "إعادة المحاولة"
+    },
+    "pagesPerDay": "صفحة/يوم",
+    "targetRange": "النطاق المستهدف (بالأجزاء)",
+    "to": "إلى",
+    "enroll": "ابدأ الخطة",
+    "saveChanges": "حفظ التعديل",
+    "enrollError": "حدث خطأ ما. حاول مرة أخرى.",
+    "offlineNotice": "اتصل بالإنترنت لتسجيل التقدم",
+    "myPlans": "خططي",
+    "hero": {
+      "title": "وِردك اليوم",
+      "of": "من",
+      "today": "اليوم",
+      "streakDays": "يوماً متتالياً",
+      "last7Days": "آخر ٧ أيام",
+      "allDone": "أحسنت، أتممتَ وِردك لهذا اليوم",
+      "keepGoing": "استمر — أنت الآن على"
+    },
+    "browse": {
+      "title": "أورادٌ وخطط جديدة",
+      "description": "اشترك في ورد جديد، أو عدّل ورداً نشطاً.",
+      "addNew": "ورد جديد",
+      "addNewDescription": "استكشف الأوراد وخطط التعلم المتاحة",
+      "back": "رجوع",
+      "next": "التالي",
+      "previous": "السابق",
+      "husunOverview": "خمسة مسارات مترابطة: تحفظ صفحة جديدة يومياً، وتحضّرها، وتراجعها قريباً وبعيداً — تلقائياً حسب ما تحفظه. تختار أنت فقط معدل الحفظ ونطاقه."
+    },
+    "templates": {
+      "dailyWird": {
+        "label": "الورد اليومي",
+        "description": "اقرأ عددًا من الصفحات يوميًا، وتدور القراءة على كامل المصحف."
+      },
+      "listeningWird": {
+        "label": "ورد الاستماع",
+        "description": "استمع إلى عدد من الصفحات يوميًا، وتدور الاستماع على كامل المصحف."
+      },
+      "husun": {
+        "label": "الحصون الخمسة",
+        "description": "برنامج حفظ متكامل من خمسة مسارات."
+      }
+    },
+    "tracks": {
+      "reading": "القراءة",
+      "listening": "الاستماع",
+      "tilawa": "القراءة المستمرة",
+      "hifz": "الحفظ الجديد",
+      "tahdeer": "التحضير",
+      "qareeb": "مراجعة القريب",
+      "baeed": "مراجعة البعيد"
+    },
+    "activities": {
+      "read": "قراءة",
+      "listen": "استماع",
+      "memorize": "حفظ",
+      "review": "مراجعة"
+    },
+    "status": {
+      "active": "نشطة",
+      "paused": "متوقفة مؤقتًا",
+      "completed": "مكتملة",
+      "abandoned": "متروكة"
+    },
+    "actions": {
+      "label": "إجراءات الخطة",
+      "edit": "تعديل",
+      "pause": "إيقاف مؤقت",
+      "resume": "استئناف",
+      "markCompleted": "وضع علامة اكتمال",
+      "abandon": "ترك الخطة"
+    },
+    "history": {
+      "toggle": "السجل",
+      "loading": "جارٍ التحميل…",
+      "empty": "لا يوجد سجل بعد."
+    },
+    "widget": {
+      "open": "خطط اليوم",
+      "title": "خطط اليوم",
+      "description": "المهام المطلوبة اليوم من خططك النشطة."
+    }
+  },
   "recitation": {
     "settingsTitle": "إعدادات التلاوة",
     "settingsDescription": "اختر قارئًا واضبط إعدادات التشغيل.",
+    "playingOverride": "قيد التشغيل",
     "reciter": "القارئ",
     "stopPoint": "التوقف عند",
     "stopPointPage": "نهاية الصفحة",
@@ -154,10 +252,16 @@
     "stopPointHizb": "نهاية الحزب",
     "stopPointJuz": "نهاية الجزء",
     "stopPointNone": "بدون توقف",
+    "stopPointCustom": "نقطة مخصصة",
     "repeatSectionLabel": "التكرار",
     "reciterPlaceholder": "اختر قارئًا",
     "reciterSearchPlaceholder": "ابحث عن قارئ…",
-    "reciterEmpty": "لم يتم العثور على قارئ."
-  },
-  "viewingChipGeneric": ""
+    "reciterEmpty": "لم يتم العثور على قارئ.",
+    "rangeTo": "التوقف عند نقطة",
+    "rangeTypePage": "صفحة",
+    "rangeTypeVerse": "آية",
+    "surahPlaceholder": "اختر سورة",
+    "surahSearchPlaceholder": "ابحث عن سورة…",
+    "surahEmpty": "لم يتم العثور على سورة."
+  }
 }

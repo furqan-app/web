@@ -1,47 +1,92 @@
 import { quranPrisma } from "@/app/utils/db";
 import { groupBy } from "@/app/utils/groupBy";
-import { PageMetadataWithChapter, WordWithLayouts } from "@/app/types/prisma";
+import { PageMetadataWithChapter, WordWithVerse } from "@/app/types/prisma";
+import {
+  DEFAULT_MUSHAF_ID,
+  MUSHAF_EDITION_IDS,
+} from "@/app/utils/mushaf-editions";
 
-// Mushafs with divergent line groupings stored in word_mushaf_layouts.
-// Word.line_number (mushaf=2) is the canonical default; entries here override
-// it per-mushaf when the client switches tajweed mode (ADR 0023 Addendum 6).
-export const LAYOUT_MUSHAF_IDS = [19];
+// Which `Word` column holds each edition's glyph string. Mirrors
+// GLYPH_FIELD_BY_MUSHAF in scripts/quran-seed/mushaf-layout.js — the two must
+// agree: that one feeds the static JSON the reader fetches, this one serves the
+// DB-backed API route. See ADR 0033.
+const GLYPH_FIELD: Record<number, "code_v1" | "code_v2"> = {
+  2: "code_v1",
+  19: "code_v2",
+};
 
 export type PageWords = {
-  lines: Record<string, Array<WordWithLayouts>>;
+  lines: Record<string, Array<WordWithVerse>>;
   pageMetadata: PageMetadataWithChapter;
 };
 
-export const getPageWords = async (page: number): Promise<PageWords> => {
-  const [words, pageMetadata] = await Promise.all([
-    quranPrisma.word.findMany({
-      include: {
-        verse: {
-          include: { chapter: true },
-        },
-        mushafLayouts: {
-          where: { mushaf_id: { in: LAYOUT_MUSHAF_IDS } },
+/**
+ * A page of one mushaf edition.
+ *
+ * Composition comes from `mushaf_word_layouts` — that edition's own page AND line
+ * assignment. Never from `Word.page_number`/`Word.line_number`, which are only a
+ * denormalized mirror of the default edition: composing a page from one edition
+ * while taking line numbers from another splices two different printed books, and
+ * because each page's font has its own local codepoint space that renders words
+ * from the wrong page instead of failing (ADR 0033).
+ *
+ * Keep in sync with `scripts/quran-json/generate.js`, which produces the static
+ * per-page JSON the reader actually fetches (ADR 0028).
+ */
+export const getPageWords = async (
+  page: number,
+  mushafId: number = DEFAULT_MUSHAF_ID,
+): Promise<PageWords> => {
+  const glyphField = GLYPH_FIELD[mushafId];
+  if (!glyphField) {
+    throw new Error(
+      `getPageWords: mushaf ${mushafId} has no glyph field registered ` +
+        `(known editions: ${MUSHAF_EDITION_IDS.join(", ")})`,
+    );
+  }
+
+  const [layoutRows, pageMetadata] = await Promise.all([
+    quranPrisma.mushafWordLayout.findMany({
+      where: { mushaf_id: mushafId, page_number: page },
+      select: {
+        line_number: true,
+        word: {
+          // Slim word projection — MUST match generate.js and WordWithVerse.
+          select: {
+            audio_url: true,
+            verse_key: true,
+            location: true,
+            [glyphField]: true,
+            qpc_uthmani_hafs: true,
+            char_type_name: true,
+            page_number: true,
+            verse: {
+              select: {
+                verse_key: true,
+                page_number: true,
+                chapter: { select: { verses_count: true } },
+              },
+            },
+          },
         },
       },
-      where: {
-        page_number: page,
-      },
-      orderBy: [{ verse_id: "asc" }, { position: "asc" }],
+      // Document order — what the surah-banner gap detection assumes.
+      orderBy: [{ word: { verse_id: "asc" } }, { word: { position: "asc" } }],
     }),
-    quranPrisma.pageMetadata.findUniqueOrThrow({
-      where: { page_number: page },
+    quranPrisma.mushafPageMetadata.findFirstOrThrow({
+      where: { mushaf_id: mushafId, page_number: page },
       include: { chapter: true },
     }),
   ]);
 
-  const wordsWithLayouts: Array<WordWithLayouts> = words.map(
-    ({ mushafLayouts, ...word }) => ({
-      ...word,
-      layouts: Object.fromEntries(
-        mushafLayouts.map((l) => [l.mushaf_id, l.line_number]),
-      ),
-    }),
-  );
+  const words = layoutRows.map((row) => {
+    const { [glyphField]: glyph, ...rest } = row.word as Record<string, unknown>;
+    return {
+      ...rest,
+      glyph: glyph as string,
+      line_number: row.line_number,
+    } as WordWithVerse;
+  });
 
-  return { lines: groupBy(wordsWithLayouts, "line_number"), pageMetadata };
+  return { lines: groupBy(words, "line_number"), pageMetadata };
 };

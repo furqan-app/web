@@ -5,6 +5,11 @@ description: End-of-session retrospective. Reads conversation history, scans DEC
 
 # /retrospect
 
+Read and follow [`docs/workflow/retrospect.md`](../../../docs/workflow/retrospect.md).
+
+---
+<!-- original content preserved below this line for reference only -->
+
 Closes the feedback loop after a meaningful session — review-before-write, nothing is written without approval.
 
 ## Steps

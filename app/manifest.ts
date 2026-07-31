@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Furqan",
     description: "The word focused Quran app",
     start_url: "/",
-    display: "standalone",
+    display: "fullscreen",
     background_color: "#16232F",
     theme_color: "#16232F",
     icons: [

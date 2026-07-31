@@ -9,6 +9,12 @@ const {
   deriveRubVerseMappings,
   derivePageMetadata,
 } = require("../quran-seed/derive");
+const {
+  fetchMushafLayout,
+  layoutFromSeededWords,
+  LAYOUT_MUSHAF_IDS,
+  DEFAULT_MUSHAF_ID,
+} = require("../quran-seed/mushaf-layout");
 
 // Full dataset, not a trim — see docs/plans/visual-e2e-testing.md Addendum 1:
 // `generateStaticParams` hardcodes all 604 pages, so `next build` requires
@@ -41,6 +47,41 @@ async function main() {
   const { verses, words } = await fetchVersesAndWords((page) => bar.update(page));
   bar.stop();
 
+  // Per-edition word placement. `getPageWords` composes every page from
+  // `mushaf_word_layouts` and reads `mushaf_page_metadata` with findFirstOrThrow
+  // (ADR 0033), so a fixture without these tables renders empty pages and fails
+  // the build outright — they are not optional extras here.
+  const mushafWordLayouts = [];
+  const mushafPageMetadata = [];
+  for (const mushafId of LAYOUT_MUSHAF_IDS) {
+    let rows;
+    let pageOf;
+    if (mushafId === DEFAULT_MUSHAF_ID) {
+      console.log(`Deriving mushaf=${mushafId} word placement from fetched words…`);
+      rows = layoutFromSeededWords(mushafId, words);
+      pageOf = (v) => v.page_number;
+    } else {
+      console.log(`Fetching mushaf=${mushafId} word placement (${TOTAL_PAGES} pages)…`);
+      const layoutBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      layoutBar.start(TOTAL_PAGES, 0);
+      const fetched = await fetchMushafLayout(
+        mushafId,
+        new Set(words.map((w) => w.id)),
+        (page) => layoutBar.update(page)
+      );
+      layoutBar.stop();
+      rows = fetched.rows;
+      pageOf = (v) => fetched.versePages.get(v.verse_key);
+    }
+    mushafWordLayouts.push(...rows);
+    mushafPageMetadata.push(
+      ...derivePageMetadata(verses, pageOf).map((row) => ({
+        ...row,
+        mushaf_id: mushafId,
+      }))
+    );
+  }
+
   console.log(`Deriving rubs / rub_verse_mappings / page_metadata…`);
   const rubs = deriveRubs(verses);
   const rubVerseMappings = deriveRubVerseMappings(verses);
@@ -52,9 +93,11 @@ async function main() {
     insertStatements("chapters", chapters) +
     insertStatements("verses", verses) +
     insertStatements("words", words) +
+    insertStatements("mushaf_word_layouts", mushafWordLayouts) +
     insertStatements("rubs", rubs) +
     insertStatements("rub_verse_mappings", rubVerseMappings) +
-    insertStatements("page_metadata", pageMetadata);
+    insertStatements("page_metadata", pageMetadata) +
+    insertStatements("mushaf_page_metadata", mushafPageMetadata);
 
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, sql);
@@ -62,7 +105,9 @@ async function main() {
   console.log(
     `\n✓ Wrote ${OUT_FILE}\n` +
       `  chapters=${chapters.length} verses=${verses.length} words=${words.length} ` +
-      `rubs=${rubs.length} rub_verse_mappings=${rubVerseMappings.length} page_metadata=${pageMetadata.length}`
+      `mushaf_word_layouts=${mushafWordLayouts.length} rubs=${rubs.length} ` +
+      `rub_verse_mappings=${rubVerseMappings.length} page_metadata=${pageMetadata.length} ` +
+      `mushaf_page_metadata=${mushafPageMetadata.length}`
   );
 }
 

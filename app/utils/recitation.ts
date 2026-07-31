@@ -1,6 +1,5 @@
-import { getPagePair } from "@/app/utils/quran-pages";
 import { QURAN_LAST_CHAPTER_ID } from "@/app/constants/recitation";
-import { RepeatCount, StopPoint, VerseTiming } from "@/app/types/recitation";
+import { RepeatCount, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
 
 export type ChapterEndDecision =
@@ -11,19 +10,22 @@ export type ChapterEndDecision =
 // Decides what should happen once a chapter's audio has fully ended and any
 // per-ayah repeat on its last verse is exhausted — the three-way branch from
 // docs/plans/recitation-playback.md Addendum 5's chaining decision tree.
-// "none" never repeats a range (there's no bounded range to repeat back to —
-// the whole-range stepper is hidden for it in the UI, but the engine must
-// not trust that alone since a stale rangeRepeatCount from a previous
-// stopPoint could still be stored).
+// `isRepeatableRange` is false exactly when playback has no bounded range to
+// repeat back to: settings.stopPoint === "none" with no play() override
+// active. An explicit play() override (a wird's page range, see
+// docs/plans/listening-wird-inline-playback.md) always IS a bounded range
+// regardless of what the user's persisted stopPoint happens to say — the
+// caller computes this, not this function, since only the caller knows
+// whether an override is live.
 export const decideChapterEnd = (
   currentChapterId: number,
   stopChapterId: number | null,
-  stopPoint: StopPoint,
+  isRepeatableRange: boolean,
   rangeRepeatsDone: number,
   rangeRepeatTarget: number,
 ): ChapterEndDecision => {
   if (currentChapterId === stopChapterId) {
-    if (stopPoint !== "none" && rangeRepeatsDone + 1 < rangeRepeatTarget) {
+    if (isRepeatableRange && rangeRepeatsDone + 1 < rangeRepeatTarget) {
       return { action: "repeat-range" };
     }
     return { action: "stop" };
@@ -71,31 +73,8 @@ export const findActiveWordLocation = (
   return segment ? `${verseTiming.verseKey}:${segment[0]}` : null;
 };
 
-// Page ids currently visible in the reader: just the current page in single
-// view / forced-single below `lg`, or the whole pair in active double view.
-// Mirrors QuranSpread's own `view === "double" && isLgUp` display gate.
-export const computeVisiblePageSet = (
-  displayedPageId: number,
-  isDoubleViewActive: boolean,
-): Set<number> => {
-  if (!isDoubleViewActive) return new Set([displayedPageId]);
-  const { rightPage, leftPage } = getPagePair(displayedPageId);
-  return new Set([rightPage, leftPage]);
-};
-
-// Extracts the reader base path + currently displayed page id from a
-// (locale-stripped) pathname, e.g. "/pages/12" or "/mushaf/abc123/pages/12".
-// Returns null when not on a paged reader route (no page-follow target).
-export const parseReaderPathname = (
-  pathname: string,
-): { basePath: string; pageId: number } | null => {
-  const match = pathname.match(/^((?:\/mushaf\/[^/]+)?\/pages)\/(\d+)$/);
-  if (!match) return null;
-  return { basePath: match[1], pageId: Number(match[2]) };
-};
-
 // The verse_key of the first word on a page, used as the default start point
-// for the header's "listen from here" quick-play button.
+// for the voice panel's play-current-Safha button.
 export const getFirstVerseKeyOfPage = (
   lines: Record<string, Array<WordWithVerse>>,
 ): string | null => {

@@ -1,14 +1,7 @@
 import { getPageWords } from "@/app/hooks/get-page-words";
-import { getLanguageDirection } from "@/app/utils/i18n";
 import { getPagePair } from "@/app/utils/quran-pages";
-import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { Locale } from "@/app/types/config";
-import { QuranSwipeNav } from "@/app/components/QuranSwipeNav";
-import { QuranSafhaViewToggle } from "@/app/components/QuranSafhaViewToggle";
-import { RecitationPlayButton } from "@/app/components/RecitationPlayButton";
-import { QuranSpread } from "@/app/components/reader/QuranSpread";
-import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
-import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
+import { ReaderPager } from "@/app/components/reader/ReaderPager";
 
 type ReaderPageProps = {
   pageId: string;
@@ -22,9 +15,11 @@ type ReaderPageProps = {
   viewingOwnerName?: string | null;
 };
 
-const TOTAL_PAGES = 604;
-const TOTAL_PAIRS = TOTAL_PAGES / 2;
-
+// SSR entry for the reader (ADR 0028). Statically generated per page for deep
+// links / SEO / first paint, it fetches only the CURRENT pair's words (sequential
+// per ADR 0013) and hands off to the persistent client `ReaderPager`, which owns
+// all subsequent navigation client-side (no router.push, no per-swipe remount).
+// The old five-panel carousel (~10 pages fetched + mounted per view) is gone.
 export const ReaderPage = async ({
   pageId,
   locale,
@@ -35,106 +30,22 @@ export const ReaderPage = async ({
   const pageNumber = Number(pageId);
   const { rightPage: rightPageId, leftPage: leftPageId } = getPagePair(pageNumber);
 
-  // Sequential, not Promise.all: each getPageWords already issues 2 concurrent
-  // queries. Fetching pair members concurrently would double peak concurrent
-  // connections per static-generation worker (4 vs the original 2), which can
-  // exceed the DB's max_connections during a full 604-page build. (ADR 0013)
-  const rightPageWords = await getPageWords(rightPageId);
-  const leftPageWords = await getPageWords(leftPageId);
-
-  const isRTL = getLanguageDirection(locale) === "rtl";
-
-  // Single-step nav (unchanged): steps one page at a time. Used whenever the
-  // spread isn't active (single view, or forced-single below `lg`).
-  const getNavigationHref = (isNext: boolean) => {
-    const isFirstPage = pageId === "1";
-    const isLastPage = pageId === String(TOTAL_PAGES);
-
-    if ((isRTL && !isNext) || (!isRTL && isNext)) {
-      return isFirstPage ? String(TOTAL_PAGES) : String(pageNumber - 1);
-    }
-    return isLastPage ? "1" : String(pageNumber + 1);
-  };
-
-  // Pair-step nav: steps a whole pair at a time, anchored to the neighbor
-  // pair's odd (right-hand) page id. Used when the double-page spread is active.
-  // rightPageId is the odd (right-hand) member = pairIndex * 2 - 1, so the pair
-  // index is derivable from it — no need to re-run the pairing formula here.
-  const pairIndex = (rightPageId + 1) / 2;
-  const getPairNavigationHref = (isNext: boolean) => {
-    const isFirstPair = pairIndex === 1;
-    const isLastPair = pairIndex === TOTAL_PAIRS;
-
-    const neighborIndex =
-      (isRTL && !isNext) || (!isRTL && isNext)
-        ? isFirstPair
-          ? TOTAL_PAIRS
-          : pairIndex - 1
-        : isLastPair
-          ? 1
-          : pairIndex + 1;
-
-    return String(neighborIndex * 2 - 1);
-  };
-
-  const singleStepNav = {
-    prevHref: `${basePath}/${getNavigationHref(false)}`,
-    nextHref: `${basePath}/${getNavigationHref(true)}`,
-  };
-  const pairStepNav = {
-    prevHref: `${basePath}/${getPairNavigationHref(false)}`,
-    nextHref: `${basePath}/${getPairNavigationHref(true)}`,
-  };
-
-  // Plain page-order hrefs for swipe (locale-independent page order, see
-  // fix-mobile-swipe-direction.md Addendum).
-  const nextPageNum = pageNumber === TOTAL_PAGES ? 1 : pageNumber + 1;
-  const prevPageNum = pageNumber === 1 ? TOTAL_PAGES : pageNumber - 1;
-
-  // The currently-displayed page's first verse — where the header "listen"
-  // button starts from. pageNumber is whichever pair member was requested
-  // (rightPageId or leftPageId), so pick the matching fetched page's words.
-  const currentPageWords = pageNumber === rightPageId ? rightPageWords : leftPageWords;
-  const firstVerseKey = getFirstVerseKeyOfPage(currentPageWords.lines);
+  // Sequential (not Promise.all) so a static-build worker stays within the DB
+  // connection limit (ADR 0013).
+  const initialRightData = await getPageWords(rightPageId);
+  const initialLeftData = await getPageWords(leftPageId);
 
   return (
-    <>
-      {/* FontFaceInjector must be a "use client" component — see ADR 0020.
-          Inline <style> in a Server Component is hoisted differently by the
-          Next.js RSC pipeline on client vs SSR, causing hydration mismatches. */}
-      <FontFaceInjector pageIds={[rightPageId, leftPageId]} />
-      <RecitationPageSync firstVerseKey={firstVerseKey} />
-      <link
-        rel="preload"
-        href={`/fonts/v1/ttf/p${pageId}.ttf`}
-        as="font"
-        type="font/ttf"
-        crossOrigin="anonymous"
-      />
-      <QuranSwipeNav
-        prevHref={`${basePath}/${prevPageNum}`}
-        nextHref={`${basePath}/${nextPageNum}`}
-      >
-        <div className="bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0 gap-2">
-          <div className="hidden md:flex items-center gap-2">
-            <QuranSafhaViewToggle />
-            <RecitationPlayButton firstVerseKey={firstVerseKey} />
-          </div>
-          <div className="w-full flex justify-center items-start md:items-center px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
-            <QuranSpread
-              currentPageId={pageNumber}
-              rightPage={{ pageId: rightPageId, ...rightPageWords }}
-              leftPage={{ pageId: leftPageId, ...leftPageWords }}
-              isRTL={isRTL}
-              locale={locale}
-              grantId={grantId}
-              viewingOwnerName={viewingOwnerName}
-              singleStepNav={singleStepNav}
-              pairStepNav={pairStepNav}
-            />
-          </div>
-        </div>
-      </QuranSwipeNav>
-    </>
+    <ReaderPager
+      initialPage={pageNumber}
+      rightPageId={rightPageId}
+      leftPageId={leftPageId}
+      initialRightData={initialRightData}
+      initialLeftData={initialLeftData}
+      locale={locale}
+      basePath={basePath}
+      grantId={grantId}
+      viewingOwnerName={viewingOwnerName}
+    />
   );
 };

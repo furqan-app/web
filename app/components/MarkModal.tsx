@@ -1,13 +1,12 @@
 import { useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { Verse } from "@/app/generated/quran-client";
 import { Bookmark, Eraser, User, Volume1, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
 import { useOnlineStatus } from "../hooks/use-online-status";
-import { WordWithVerse } from "../types/prisma";
+import { VerseForMark, WordWithVerse } from "../types/prisma";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { getWordAudioUrl } from "../constants/word-audio";
 import { addPageMark } from "../server/actions/addPageMark";
@@ -28,7 +27,7 @@ const COMMENT_MAX_LENGTH = 500;
 type ModalProps = {
   isOpen: boolean;
   close: () => void;
-  markFor: WordWithVerse | Verse;
+  markFor: WordWithVerse | VerseForMark;
   verseDisplayText?: string;
   // The current mark's category key + optional comment, when this spot is
   // already marked (ADR 0025 — one mark per spot).
@@ -57,14 +56,17 @@ const MarkedByLine = ({ authorName }: { authorName?: string | null }) => {
 };
 
 const getTitle = (
-  markFor: WordWithVerse | Verse,
+  markFor: WordWithVerse | VerseForMark,
   verseDisplayText?: string,
 ) => {
   if ("location" in markFor) {
     return markFor.qpc_uthmani_hafs;
   }
 
-  return verseDisplayText ?? markFor.text_uthmani;
+  // Verse-level mark: the caller (QuranSafha.selectWord) always supplies
+  // verseDisplayText (built from the verse's words), so the full verse text no
+  // longer travels on every page word — see ADR 0028 / VerseForMark.
+  return verseDisplayText ?? "";
 };
 
 export function MarkModal({
@@ -77,7 +79,7 @@ export function MarkModal({
   authorName,
   grantId,
 }: ModalProps) {
-  const { reload: reloadMarks } = useMarks(markFor.page_number, grantId);
+  const { reload: reloadMarks } = useMarks([markFor.page_number], grantId);
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
   const t = useTranslations();

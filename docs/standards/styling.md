@@ -66,7 +66,33 @@ Every theme class must define all of these CSS custom properties:
 --accent, --accent-foreground
 --destructive, --destructive-foreground
 --border, --input, --ring, --radius
+--gold, --gold-muted, --overlay
 ```
+
+`--gold`/`--gold-muted` mark Mushaf-identity elements only (never interactive ones —
+`--primary`/`--accent` cover interaction); themes without a distinct gold identity should
+alias them to their own `--accent-foreground`/`--accent` rather than inventing a new hue. See
+[ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md). `--overlay` is the
+modal/drawer scrim color, consumed as `bg-overlay/80` — an HSL triplet (no baked-in alpha) so
+the Tailwind opacity-slash syntax works, same as every other token here.
+
+The reader's depth family (`--mushaf-rim-*`, `--mushaf-sheet-*`, `--mushaf-crease*`,
+`--mushaf-page-cast`, `--reader-chrome-*`) follows the same "every theme defines every token" rule as
+the rest, and the reader's depth **rules** are declared once, theme-agnostically — a theme supplies
+only values. A missing token there does not fall back to something sensible; it flattens that
+theme's page. Do not reintroduce a theme-scoped copy of a depth rule to serve one theme; add or
+retune that theme's tokens instead.
+
+**The page face carries no added light in any theme.** It is a flat `--mushaf-paper` fill; depth
+comes from the page's edges only — rim, sheet stack, binding crease, and a cast shadow where there
+is a desk to catch it. Shading (a darkening pass) is allowed; lighting the face is not.
+
+Values still differ where the medium differs. `--reader-chrome-shadow` and `--mushaf-page-cast` are
+`none`/transparent in dark, because on a `(7,15,23)` background a shadow produces no visible pixels,
+and real shadows in light/gold. Dark instead gets its page-to-desk separation from a **uniformly**
+lighter `--mushaf-paper` — a flat colour step, not a gradient. These are value differences, not
+structural ones. See [ADR 0032](../architecture/adr/0032-dark-surface-depth-from-light.md) (and its
+2026-07-29 supersede) and the Reader Surface Depth entry in DECISIONS.md.
 
 ### Adding a new theme
 

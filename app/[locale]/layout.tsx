@@ -7,11 +7,14 @@ import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "@/app/providers/QueryProvider";
 import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
 import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
-import { QuranTajweedProvider } from "@/app/contexts/QuranTajweedContext";
+import { QuranMushafProvider } from "@/app/contexts/QuranMushafContext";
 import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
+import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
+import { ReaderPageProvider } from "@/app/contexts/ReaderPageContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
+import { PlansWidget } from "@components/plans/PlansWidget";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -44,20 +47,25 @@ export default async function LocaleLayout({
       <NextIntlClientProvider messages={messages}>
         <SessionProvider>
           <QuranFontScaleProvider>
-            <QuranTajweedProvider>
+            <QuranMushafProvider>
               <QuranSafhaViewProvider>
                 <RecitationProvider>
                   <QueryProvider>
                     <SidebarProvider>
-                      <Nav />
-                      {children}
-                      <RecitationPlayerBar />
-                      <RecitationSettingsSheet />
+                      <NavOverlayProvider>
+                        <ReaderPageProvider>
+                          <Nav />
+                          {children}
+                          <RecitationPlayerBar />
+                          <RecitationSettingsSheet />
+                          <PlansWidget />
+                        </ReaderPageProvider>
+                      </NavOverlayProvider>
                     </SidebarProvider>
                   </QueryProvider>
                 </RecitationProvider>
               </QuranSafhaViewProvider>
-            </QuranTajweedProvider>
+            </QuranMushafProvider>
           </QuranFontScaleProvider>
         </SessionProvider>
       </NextIntlClientProvider>

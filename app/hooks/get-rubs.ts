@@ -7,6 +7,10 @@ export const getRubs = async (): Promise<RubWithVerses[]> => {
       rubVerseMappings: { orderBy: [{ chapter_number: "asc" }, { start_verse: "asc" }] },
       startVerse: {
         select: {
+          // page_number is the DEFAULT edition's page, kept as the SSR fallback.
+          // The active edition's page is resolved client-side from verse_key via
+          // useVersePages (ADR 0033).
+          verse_key: true,
           page_number: true,
           Word: {
             select: {
