@@ -46,9 +46,9 @@ export const fetchStopPoint = async (
 export const fetchPageBounds = async (
   pageId: number,
   mushafId: number,
-): Promise<{ lastVerseKey: string; lastChapterId: number }> => {
+): Promise<{ firstVerseKey: string; lastVerseKey: string; lastChapterId: number }> => {
   const res = await fetch(`/api/quran/pages/${pageId}/bounds?mushaf=${mushafId}`);
-  return unwrap<{ lastVerseKey: string; lastChapterId: number }>(res);
+  return unwrap<{ firstVerseKey: string; lastVerseKey: string; lastChapterId: number }>(res);
 };
 
 // Static committed file (Static Generation Strategy decision), not an API

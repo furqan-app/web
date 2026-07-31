@@ -10,6 +10,7 @@ import {
   CircleDot,
   FileText,
   Gauge,
+  Headphones,
   Infinity as InfinityIcon,
   MapPin,
   Minus,
@@ -453,6 +454,7 @@ export const RecitationSettingsSheet = () => {
     pageFirstVerseKey,
     recitedPage,
     currentPageNumber,
+    activeOverride,
   } = useRecitation();
   // Popovers rendered inside this Sheet (e.g. ReciterCombobox) must portal
   // here instead of document.body — see components/ui/popover.tsx.
@@ -487,6 +489,15 @@ export const RecitationSettingsSheet = () => {
         </SheetHeader>
 
         <div className="p-4 space-y-6 mt-2 overflow-y-auto">
+          {activeOverride ? (
+            <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2.5 text-sm text-primary">
+              <Headphones className="size-4 shrink-0" strokeWidth={1.8} />
+              <span className="truncate">
+                {t("recitation.playingOverride", "Playing")}: {activeOverride.label}
+              </span>
+            </div>
+          ) : null}
+
           <div>
             <SectionHeader icon={Users} label={t("recitation.reciter", "Reciter")} />
             <ReciterCombobox

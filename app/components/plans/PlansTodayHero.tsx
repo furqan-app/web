@@ -124,6 +124,7 @@ export const PlansTodayHero = () => {
         {rows.map(({ plan, assignment }) => (
           <PlanAssignmentRow
             key={`${plan.planId}-${assignment.trackKey}`}
+            planId={plan.planId}
             assignment={assignment}
             onToggle={() =>
               assignment.completed

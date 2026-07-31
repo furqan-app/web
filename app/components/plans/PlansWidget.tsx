@@ -12,6 +12,7 @@ import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { PLAN_TEMPLATE_UI } from "@constants/plan-ui";
 import type { TrackAssignment } from "@/app/lib/plans/engine";
+import { isPageInAssignmentRange } from "@/app/lib/plans/assignment-range";
 import { PlanAssignmentRow } from "./PlanAssignmentRow";
 import {
   Sheet,
@@ -32,10 +33,10 @@ const inRange = (
   isPlaybackActive: boolean,
 ): boolean => {
   if (assignment.activity === "listen" && isPlaybackActive && recitedPage != null) {
-    return recitedPage >= assignment.rangeStart && recitedPage <= assignment.rangeEnd;
+    return isPageInAssignmentRange(assignment, recitedPage);
   }
   if (!visiblePages) return false;
-  return visiblePages.some((p) => p >= assignment.rangeStart && p <= assignment.rangeEnd);
+  return visiblePages.some((p) => isPageInAssignmentRange(assignment, p));
 };
 
 // Floating pill on reader routes surfacing every active plan's today
@@ -146,6 +147,7 @@ export const PlansWidget = () => {
                   plan.assignments.map((assignment) => (
                     <PlanAssignmentRow
                       key={assignment.trackKey}
+                      planId={plan.planId}
                       assignment={assignment}
                       onToggle={() =>
                         assignment.completed
