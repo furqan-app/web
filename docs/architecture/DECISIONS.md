@@ -15,6 +15,7 @@ AI agents load this file at the start of every task. The `adr/` directory contai
 - Never add server-side dynamic rendering to Quran page routes.
 - Static data (surah list, juz/hizb info) must be pre-computed, not calculated at runtime.
 - User-specific data is always fetched client-side via React Query after hydration.
+- `app/[locale]/page.tsx`, `app/[locale]/pages/[id]/page.tsx`, and `app/[locale]/pages/vertical/page.tsx` each export `export const revalidate = 300`. Next's default for a static route with no `revalidate` export is `Cache-Control: s-maxage=31536000` (one year) — an assumption that the host purges its edge cache on deploy (Vercel's model). Hostinger's CDN does not reliably do this, so any bad response ever cached under one of these URLs (a deploy race, a leaked RSC payload, stale asset references) would otherwise persist for up to a year with no invalidation path available to us. The 300s bound caps that blast radius to 5 minutes instead. See [ADR 0035](adr/0035-bounded-revalidate-on-static-document-routes.md). Do not remove it as an "unnecessary" cache-hit-rate optimization — routes backed by `getServerSession` (marks, plans, mushaf hub) are already excluded from this risk automatically (cookie reads make Next mark them dynamic).
 
 ---
 

@@ -7,6 +7,10 @@ import {
   MUSHAF_EDITION_IDS,
 } from "@/app/utils/mushaf-editions";
 
+// Bounds Hostinger CDN edge-cache poisoning to a 5-minute window instead of
+// Next's default 1-year s-maxage (see ADR 0035).
+export const revalidate = 300;
+
 // statically generate all pages in build time. The route shell is
 // edition-agnostic (content is fetched client-side per edition), so the range
 // must cover the LONGEST edition — a shorter hardcoded value would silently
