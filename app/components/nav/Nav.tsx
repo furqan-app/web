@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 import { Maximize2, Minimize2, PanelLeftOpen } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
 import { UserMenu } from "./UserMenu";
+import { ContinueReadingLink } from "./ContinueReadingLink";
 import { SharedMushafLink } from "./SharedMushafLink";
 import { MarksLink } from "./MarksLink";
 import { PlansLink } from "./PlansLink";
@@ -90,8 +91,9 @@ export const Nav = () => {
           <SearchBar />
         </div>
 
-        {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}
+        {/* End: continue-reading + shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}
         <div className="flex items-center gap-1 flex-shrink-0">
+          <ContinueReadingLink />
           <SharedMushafLink />
           <MarksLink />
           <PlansLink />
