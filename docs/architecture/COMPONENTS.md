@@ -5,14 +5,14 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-07-27
+Last updated: 2026-07-31
 
 ---
 
 ## Zone: nav
 
 ```
-Nav                          — top bar, always visible; responsive (mobile/desktop layouts)
+Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch
   FurqanLogo                 — brand mark (SVG, links to home)
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
