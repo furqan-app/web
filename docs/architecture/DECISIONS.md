@@ -293,18 +293,6 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
-## Reader Focus Mode (Nav / recitation-bar overlay)
-
-**Decision:** `NavOverlayContext`'s `isOverlayMode` drives a single fixed/hidden CSS treatment for Nav and the recitation bar (shared `overlayVisible` state, kept in sync per the "Sync voice panel with nav overlay" addendum) across three breakpoint bands, each with its own trigger: mobile/tablet (tap the reader background, unconditional), and desktop ≥1367px (an explicit Nav toggle button + hover-reveal, gated behind a persisted `desktopFocusEnabled` preference). See [ADR 0034](adr/0034-desktop-focus-mode-hover-reveal.md) and `docs/plans/tablet-nav-overlay.md`.
-
-**Constraints:**
-- `toggleOverlay()` (in `NavOverlayContext`) keeps its own explicit `isMobile || isTablet` guard, checked before flipping `overlayVisible` — every call site (currently `ReaderPager`'s background click) inherits this automatically. Do not bypass it by writing `setOverlayVisible` directly from a new call site, and do not remove the guard as "redundant with `isOverlayMode`" — `isOverlayMode` now also turns true for desktop-focus-on, and without this guard a bare check would silently re-enable click-to-toggle on desktop, which was explicitly rejected (accidental-selection risk).
-- **`isOverlayMode` vs `isTouchOverlayMode`.** The context exposes both. `isOverlayMode` (broad — true for mobile/tablet tap-mode OR desktop-focus-on) drives the fixed/hidden CSS on Nav and the recitation bar, where either platform's hidden state looks identical. `isTouchOverlayMode` (narrow — true for mobile/tablet only, the original pre-desktop meaning) is what `QuranSafha` must pass down to `QuranWord`/`QuranLine` for click-vs-long-press gesture disambiguation, since that logic assumes "overlay mode ⇒ touch device, so plain clicks are suppressed in favor of long-press." Passing the broad flag there blocked desktop word-clicks entirely once desktop focus mode was on (no long-press ever fires with a mouse) — caught in review before ship, not shipped. Any future consumer of overlay state must pick the correct one deliberately; do not assume `isOverlayMode` implies a touch context.
-- `isDesktopUp` (≥1367px, width-only) is intentionally decoupled from the Desktop Reading Group's dual ≥1367px-and-≥800px-tall gate — a short desktop window still gets the focus-mode toggle, it just keeps the existing full-width bottom recitation bar.
-- Hiding the OS status bar (clock/battery/signal) on mobile/tablet is explicitly out of scope: no web standard supports it in iOS Safari (no `requestFullscreen()` for non-video elements), so any Fullscreen-API-based approach would be Android/desktop-only and was deferred rather than shipped as a partial/inconsistent experience. Do not assume this is covered by the existing overlay work.
-
----
-
 ## Quran Safha Viewport Fit
 
 **Decision:** All vertical rhythm in `QuranSafha`/`QuranLine` below the site nav (wrapper padding, card padding, header/footer band gaps, per-line gap, surah-heading block) is derived from the same `vh`-based `FONT_V1` scale that drives word font-size, exposed as CSS custom properties on the `QuranSafha` root. Reading font size itself is never shrunk to make pages fit. See [ADR 0004](adr/0004-quran-safha-viewport-fit.md).

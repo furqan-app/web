@@ -959,16 +959,6 @@ body,
     .fq-recitation-bar-reader > div {
       max-width: none;
     }
-    /* Desktop focus mode (ADR 0034): the shared `.translate-y-full` Tailwind
-       utility (also used by the mobile/tablet full-width bar, where centering
-       doesn't apply) sets `transform: translateY(100%)` alone, which would
-       replace — not add to — this block's `translateX(-50%)` centering above,
-       animating a diagonal slide instead of a clean vertical one. Two-class
-       selector out-specifies the one-class utility, so this wins without
-       `!important`, keeping the centering while still hiding vertically. */
-    .fq-recitation-bar-reader.translate-y-full {
-      transform: translateX(-50%) translateY(100%);
-    }
   }
 
   /* Tablet landscape full-screen (1024px–1366px): nav is a fixed overlay so the
