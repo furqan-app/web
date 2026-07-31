@@ -1,0 +1,2189 @@
+{
+  "config": {
+    "argv": [
+      "/opt/hostedtoolcache/node/20.20.2/x64/bin/node",
+      "/home/runner/work/web/web/node_modules/.bin/playwright",
+      "test"
+    ],
+    "configFile": "/home/runner/work/web/web/playwright.config.ts",
+    "rootDir": "/home/runner/work/web/web/e2e/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "ci": {
+        "commitHref": "https://github.com/furqan-app/web/commit/80ca4cac8b60904a48ef06fea46a69fbb558f463",
+        "commitHash": "80ca4cac8b60904a48ef06fea46a69fbb558f463",
+        "prHref": "https://github.com/furqan-app/web/pull/160",
+        "prTitle": "feat(nav): browser fullscreen focus mode + PWA status-bar removal",
+        "prBaseHash": "e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c",
+        "buildHref": "https://github.com/furqan-app/web/actions/runs/30633920157"
+      },
+      "gitCommit": {
+        "shortHash": "80ca4ca",
+        "hash": "80ca4cac8b60904a48ef06fea46a69fbb558f463",
+        "subject": "Merge 003d46bfc9580209b41c73218310eb138da56604 into e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c",
+        "body": "Merge 003d46bfc9580209b41c73218310eb138da56604 into e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c\n",
+        "author": {
+          "name": "Taha Mohamed",
+          "email": "taha.mohamed@ft.com",
+          "time": 1785503899000
+        },
+        "committer": {
+          "name": "GitHub",
+          "email": "noreply@github.com",
+          "time": 1785503899000
+        },
+        "branch": "HEAD"
+      },
+      "gitDiff": "diff --git a/app/components/nav/Nav.tsx b/app/components/nav/Nav.tsx\nindex 07a9f6c..630f4fc 100644\n--- a/app/components/nav/Nav.tsx\n+++ b/app/components/nav/Nav.tsx\n@@ -1,8 +1,9 @@\n \"use client\";\n \n+import { useEffect, useLayoutEffect, useState } from \"react\";\n import { usePathname } from \"next/navigation\";\n import { useLocale } from \"next-intl\";\n-import { PanelLeftOpen } from \"lucide-react\";\n+import { Maximize2, Minimize2, PanelLeftOpen } from \"lucide-react\";\n import { SearchBar } from \"@components/search/SearchBar\";\n import { UserMenu } from \"./UserMenu\";\n import { SharedMushafLink } from \"./SharedMushafLink\";\n@@ -13,15 +14,38 @@ import { FurqanLogo } from \"./FurqanLogo\";\n import { Button } from \"@/components/ui/button\";\n import { useSidebar } from \"@/app/contexts/SidebarContext\";\n import { useNavOverlay } from \"@/app/contexts/NavOverlayContext\";\n+import { useIsDesktopUp } from \"@/app/hooks/use-is-desktop-up\";\n import { getLanguageDirection } from \"@/app/utils/i18n\";\n import { cn } from \"@/lib/utils\";\n \n+const useIsomorphicLayoutEffect =\n+  typeof window !== \"undefined\" ? useLayoutEffect : useEffect;\n+\n export const Nav = () => {\n   const pathname = usePathname();\n   const locale = useLocale();\n   const isRTL = getLanguageDirection(locale) === \"rtl\";\n   const { setOpen } = useSidebar();\n   const { isOverlayMode, overlayVisible } = useNavOverlay();\n+  const isDesktopUp = useIsDesktopUp();\n+\n+  const [isFullscreen, setIsFullscreen] = useState(false);\n+  const [fullscreenEnabled, setFullscreenEnabled] = useState(false);\n+\n+  useIsomorphicLayoutEffect(() => {\n+    setFullscreenEnabled(!!document.fullscreenEnabled);\n+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);\n+    document.addEventListener(\"fullscreenchange\", onChange);\n+    return () => document.removeEventListener(\"fullscreenchange\", onChange);\n+  }, []);\n+\n+  const toggleFullscreen = () => {\n+    if (!document.fullscreenElement) {\n+      document.documentElement.requestFullscreen().catch(() => {});\n+    } else {\n+      document.exitFullscreen();\n+    }\n+  };\n \n   const isOnPagesRoute = pathname?.includes(\"/pages/\");\n \n@@ -32,45 +56,65 @@ export const Nav = () => {\n         // just the toggle-hide overlay; matches RecitationPlayerBar exactly so the\n         // two bars read as one consistent floating-chrome style, both letting the\n         // Mushaf show through underneath).\n-        \"text-foreground px-4 shadow h-14 flex items-center bg-background/75 backdrop-blur-md border-b border-border/50\",\n+        \"text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50\",\n         isOverlayMode && \"fixed top-0 inset-x-0 z-50 transition-transform duration-300\",\n         isOverlayMode && !overlayVisible && \"-translate-y-full\",\n       )}\n-      style={isOverlayMode ? { transitionTimingFunction: \"cubic-bezier(0.23, 1, 0.32, 1)\" } : undefined}\n+      style={{\n+        paddingTop: \"env(safe-area-inset-top, 0px)\",\n+        ...(isOverlayMode ? { transitionTimingFunction: \"cubic-bezier(0.23, 1, 0.32, 1)\" } : {}),\n+      }}\n     >\n-      {/* Start: sidebar trigger (mobile, pages route only) + logo */}\n-      <div className=\"flex items-center gap-2 flex-shrink-0\">\n-        <FurqanLogo />\n+      <div className=\"h-14 flex items-center\">\n+        {/* Start: sidebar trigger (mobile, pages route only) + logo */}\n+        <div className=\"flex items-center gap-2 flex-shrink-0\">\n+          <FurqanLogo />\n \n-        {isOnPagesRoute && (\n-          <Button\n-            variant=\"ghost\"\n-            size=\"icon\"\n-            onClick={() => setOpen(true)}\n-            aria-label=\"Open navigation\"\n-          >\n-            <PanelLeftOpen\n-              className={cn(\"size-5\", isRTL && \"rotate-180\")}\n-              strokeWidth={1.7}\n-            />\n-          </Button>\n-        )}\n-      </div>\n+          {isOnPagesRoute && (\n+            <Button\n+              variant=\"ghost\"\n+              size=\"icon\"\n+              onClick={() => setOpen(true)}\n+              aria-label=\"Open navigation\"\n+            >\n+              <PanelLeftOpen\n+                className={cn(\"size-5\", isRTL && \"rotate-180\")}\n+                strokeWidth={1.7}\n+              />\n+            </Button>\n+          )}\n+        </div>\n \n-      {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}\n-      <div className=\"flex-1 flex justify-center px-2 md:px-4\">\n-        <SearchBar />\n-      </div>\n+        {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}\n+        <div className=\"flex-1 flex justify-center px-2 md:px-4\">\n+          <SearchBar />\n+        </div>\n \n-      {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}\n-      <div className=\"flex items-center gap-1 flex-shrink-0\">\n-        <SharedMushafLink />\n-        <MarksLink />\n-        <PlansLink />\n-        <div className=\"hidden md:flex items-center\">\n-          <UserMenu />\n+        {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}\n+        <div className=\"flex items-center gap-1 flex-shrink-0\">\n+          <SharedMushafLink />\n+          <MarksLink />\n+          <PlansLink />\n+          <div className=\"hidden md:flex items-center\">\n+            <UserMenu />\n+          </div>\n+          {isDesktopUp && fullscreenEnabled && (\n+            <Button\n+              variant=\"ghost\"\n+              size=\"icon\"\n+              onClick={toggleFullscreen}\n+              aria-label={isFullscreen ? \"Exit focus mode\" : \"Enter focus mode\"}\n+              aria-pressed={isFullscreen}\n+            >\n+              {isFullscreen ? (\n+                <Minimize2 className=\"size-5\" strokeWidth={1.7} />\n+              ) : (\n+                <Maximize2 className=\"size-5\" strokeWidth={1.7} />\n+              )}\n+            </Button>\n+          )}\n+          <SettingsSidebar />\n         </div>\n-        <SettingsSidebar />\n       </div>\n     </nav>\n   );\ndiff --git a/app/hooks/use-is-desktop-up.ts b/app/hooks/use-is-desktop-up.ts\nnew file mode 100644\nindex 0000000..eae99f1\n--- /dev/null\n+++ b/app/hooks/use-is-desktop-up.ts\n@@ -0,0 +1,23 @@\n+\"use client\";\n+\n+import { useEffect, useLayoutEffect, useState } from \"react\";\n+\n+const DESKTOP_UP_QUERY = \"(min-width: 1367px)\";\n+\n+const useIsomorphicLayoutEffect =\n+  typeof window !== \"undefined\" ? useLayoutEffect : useEffect;\n+\n+export function useIsDesktopUp() {\n+  const [isDesktopUp, setIsDesktopUp] = useState(false);\n+\n+  useIsomorphicLayoutEffect(() => {\n+    const mql = window.matchMedia(DESKTOP_UP_QUERY);\n+    setIsDesktopUp(mql.matches);\n+\n+    const onChange = (e: MediaQueryListEvent) => setIsDesktopUp(e.matches);\n+    mql.addEventListener(\"change\", onChange);\n+    return () => mql.removeEventListener(\"change\", onChange);\n+  }, []);\n+\n+  return isDesktopUp;\n+}\ndiff --git a/app/layout.tsx b/app/layout.tsx\nindex 086bd5d..44dff5c 100644\n--- a/app/layout.tsx\n+++ b/app/layout.tsx\n@@ -15,13 +15,17 @@ export const metadata: Metadata = {\n   },\n   appleWebApp: {\n     capable: true,\n-    statusBarStyle: \"default\",\n+    // black-translucent makes the iOS status bar transparent, overlaying app\n+    // content. viewportFit:cover below + env(safe-area-inset-top) on the navbar\n+    // prevents nav content being hidden behind the notch on notched devices.\n+    statusBarStyle: \"black-translucent\",\n     title: \"Furqan\",\n   },\n };\n \n export const viewport: Viewport = {\n   themeColor: \"#16232F\",\n+  viewportFit: \"cover\",\n };\n \n const tajawal = Tajawal({\ndiff --git a/app/manifest.ts b/app/manifest.ts\nindex e6fe8a5..424cb1f 100644\n--- a/app/manifest.ts\n+++ b/app/manifest.ts\n@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {\n     short_name: \"Furqan\",\n     description: \"The word focused Quran app\",\n     start_url: \"/\",\n-    display: \"standalone\",\n+    display: \"fullscreen\",\n     background_color: \"#16232F\",\n     theme_color: \"#16232F\",\n     icons: [\ndiff --git a/docs/architecture/COMPONENTS.md b/docs/architecture/COMPONENTS.md\nindex b76770e..b0d16ba 100644\n--- a/docs/architecture/COMPONENTS.md\n+++ b/docs/architecture/COMPONENTS.md\n@@ -5,14 +5,14 @@ Lightweight inventory of all app components. One line per component. Not a props\n **Before modifying a shared component, check this file to understand all callers.**  \n **After adding, removing, or reorganising components in any task, update this file.**\n \n-Last updated: 2026-07-27\n+Last updated: 2026-07-31\n \n ---\n \n ## Zone: nav\n \n ```\n-Nav                          — top bar, always visible; responsive (mobile/desktop layouts)\n+Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch\n   FurqanLogo                 — brand mark (SVG, links to home)\n   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay\n     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)\ndiff --git a/docs/plans/feature-pwa-fullscreen-focus-mode.md b/docs/plans/feature-pwa-fullscreen-focus-mode.md\nnew file mode 100644\nindex 0000000..2b6fd41\n--- /dev/null\n+++ b/docs/plans/feature-pwa-fullscreen-focus-mode.md\n@@ -0,0 +1,72 @@\n+# Feature: Browser Fullscreen & PWA Status-Bar Focus Mode\n+\n+**Type:** feature  \n+**Date:** 2026-07-31  \n+**Status:** implemented  \n+**Trello:** #136 https://trello.com/c/wwxdYFNn\n+\n+## Summary\n+\n+Two independent focus improvements. Desktop: a button in the navbar on all pages that calls the browser's Fullscreen API, removing browser chrome (address bar, tabs, OS taskbar) while keeping the app's own navbar and recitation bar always visible. Mobile/tablet installed PWA: change the manifest display mode so the OS status bar (clock, wifi, battery) is hidden by default with no user action needed.\n+\n+This replaces the approach from the reverted PR #155, which incorrectly hid the app's own nav and recitation bar instead of using the browser's native fullscreen.\n+\n+## Root Cause / Approach\n+\n+PR #155 toggled `NavOverlayContext`'s `overlayVisible` to hide the app's navbar and recitation bar — the same tap-to-toggle mechanism used on mobile. That is the wrong target. Focus mode on desktop should remove **browser** chrome via `document.documentElement.requestFullscreen()`, not app chrome. The app's navbar and recitation bar must always be visible on desktop.\n+\n+For mobile/tablet PWA: the manifest currently uses `display: \"standalone\"`, which preserves the OS status bar. Changing to `\"fullscreen\"` removes it on Android. For iOS, `appleWebApp.statusBarStyle: \"black-translucent\"` + `viewport-fit: \"cover\"` makes the bar transparent/overlapping; safe-area padding on the navbar prevents content being hidden behind the notch.\n+\n+## Decision Tree / Algorithm\n+\n+| Platform | Trigger | Mechanism | App nav visible? |\n+|---|---|---|---|\n+| Desktop (≥1367px) | Click button in Nav | `requestFullscreen()` / `exitFullscreen()` | Yes — always |\n+| Mobile/Tablet PWA | Install | `manifest.display: \"fullscreen\"` (Android) | Yes |\n+| Mobile/Tablet PWA | Install | `statusBarStyle: \"black-translucent\"` + `viewport-fit: cover` (iOS) | Yes |\n+| Mobile/Tablet browser | — | No change | Yes |\n+\n+Button visibility:\n+| Condition | Button |\n+|---|---|\n+| Desktop (≥1367px), not fullscreen | `Maximize2` icon |\n+| Desktop (≥1367px), fullscreen | `Minimize2` icon |\n+| Mobile or tablet | Hidden |\n+| `document.fullscreenEnabled === false` | Hidden (API unavailable) |\n+\n+## Verified Test Cases\n+\n+1. Desktop user clicks Maximize2 → browser enters fullscreen, button switches to Minimize2, navbar and recitation bar remain visible.\n+2. Desktop user presses Esc or clicks Minimize2 → browser exits fullscreen, button switches back to Maximize2.\n+3. Desktop user opens a non-reader page (e.g. marks, plans) → button is still present (all pages).\n+4. Mobile/tablet user opens PWA (installed) → status bar absent; no button shown.\n+5. Mobile/tablet browser (non-installed) → no change; no button shown.\n+\n+## Files to Change\n+\n+- `app/hooks/use-is-desktop-up.ts` — **new file**: `(min-width: 1367px)` query, same `useIsomorphicLayoutEffect` pattern as `use-is-tablet.ts`\n+- `app/components/nav/Nav.tsx` — add fullscreen toggle button (desktop only, all pages); track state via `fullscreenchange` event; add `pt-[env(safe-area-inset-top)]` to `<nav>` for iOS notch safety\n+- `app/manifest.ts` — `display: \"standalone\"` → `\"fullscreen\"`\n+- `app/layout.tsx` — `statusBarStyle: \"default\"` → `\"black-translucent\"`; add `viewportFit: \"cover\"` to the `viewport` export\n+\n+## Constraints\n+\n+- `viewport-fit: \"cover\"` extends the viewport into the device notch/safe area. The navbar **must** carry `padding-top: env(safe-area-inset-top, 0px)` (Tailwind arbitrary value: `pt-[env(safe-area-inset-top,0px)]`) or the top of the navbar will be hidden behind the iOS status bar on notched iPhones. No other component currently needs this because the navbar sits at the very top.\n+- `display: \"fullscreen\"` in the manifest only affects installed PWA on Android (and some Chromium-based desktop browsers). iOS Safari ignores it and always treats PWA as `standalone`. The `statusBarStyle: \"black-translucent\"` change handles iOS.\n+- `document.exitFullscreen()` is only callable when `document.fullscreenElement` is non-null. `requestFullscreen()` is only callable when `document.fullscreenEnabled` is true. Both conditions must be guarded.\n+- The `fullscreenchange` event fires on both enter and exit (including Esc key). The button state must derive from `document.fullscreenElement`, not from local toggle logic, to stay in sync when the user presses Esc.\n+- `NavOverlayContext` is unchanged. This feature does not touch `overlayVisible`, `isOverlayMode`, or any tap-to-toggle behavior.\n+\n+## What NOT to Do\n+\n+- Do NOT hide the app's navbar or recitation bar — that was the wrong approach in PR #155.\n+- Do NOT use `NavOverlayContext` or extend `isOverlayMode` for this feature.\n+- Do NOT add hover-reveal hotzone divs, `mouseenter`/`mouseleave` handlers, or localStorage persistence.\n+- Do NOT gate the fullscreen button to `/pages/` only — it should appear on all routes on desktop.\n+- Do NOT use `isOverlayMode` as a proxy for \"desktop focus is on\" — the two systems are independent.\n+\n+## Decisions Made\n+\n+- Fullscreen button visible on all pages (not reader-only), because fullscreen is a browser-level affordance not tied to any single route.\n+- `useIsDesktopUp` hook needed (same as reverted PR, but that specific hook was correct — only the overlay mechanism was wrong). Recreate it with the same `(min-width: 1367px)` query.\n+- No ADR: the Fullscreen API and safe-area-inset patterns are standard Web APIs with no project-specific encoding contract or non-obvious invariant.",
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/runner/work/web/web/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/furqan-app/web/commit/80ca4cac8b60904a48ef06fea46a69fbb558f463",
+            "commitHash": "80ca4cac8b60904a48ef06fea46a69fbb558f463",
+            "prHref": "https://github.com/furqan-app/web/pull/160",
+            "prTitle": "feat(nav): browser fullscreen focus mode + PWA status-bar removal",
+            "prBaseHash": "e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c",
+            "buildHref": "https://github.com/furqan-app/web/actions/runs/30633920157"
+          },
+          "gitCommit": {
+            "shortHash": "80ca4ca",
+            "hash": "80ca4cac8b60904a48ef06fea46a69fbb558f463",
+            "subject": "Merge 003d46bfc9580209b41c73218310eb138da56604 into e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c",
+            "body": "Merge 003d46bfc9580209b41c73218310eb138da56604 into e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c\n",
+            "author": {
+              "name": "Taha Mohamed",
+              "email": "taha.mohamed@ft.com",
+              "time": 1785503899000
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "time": 1785503899000
+            },
+            "branch": "HEAD"
+          },
+          "gitDiff": "diff --git a/app/components/nav/Nav.tsx b/app/components/nav/Nav.tsx\nindex 07a9f6c..630f4fc 100644\n--- a/app/components/nav/Nav.tsx\n+++ b/app/components/nav/Nav.tsx\n@@ -1,8 +1,9 @@\n \"use client\";\n \n+import { useEffect, useLayoutEffect, useState } from \"react\";\n import { usePathname } from \"next/navigation\";\n import { useLocale } from \"next-intl\";\n-import { PanelLeftOpen } from \"lucide-react\";\n+import { Maximize2, Minimize2, PanelLeftOpen } from \"lucide-react\";\n import { SearchBar } from \"@components/search/SearchBar\";\n import { UserMenu } from \"./UserMenu\";\n import { SharedMushafLink } from \"./SharedMushafLink\";\n@@ -13,15 +14,38 @@ import { FurqanLogo } from \"./FurqanLogo\";\n import { Button } from \"@/components/ui/button\";\n import { useSidebar } from \"@/app/contexts/SidebarContext\";\n import { useNavOverlay } from \"@/app/contexts/NavOverlayContext\";\n+import { useIsDesktopUp } from \"@/app/hooks/use-is-desktop-up\";\n import { getLanguageDirection } from \"@/app/utils/i18n\";\n import { cn } from \"@/lib/utils\";\n \n+const useIsomorphicLayoutEffect =\n+  typeof window !== \"undefined\" ? useLayoutEffect : useEffect;\n+\n export const Nav = () => {\n   const pathname = usePathname();\n   const locale = useLocale();\n   const isRTL = getLanguageDirection(locale) === \"rtl\";\n   const { setOpen } = useSidebar();\n   const { isOverlayMode, overlayVisible } = useNavOverlay();\n+  const isDesktopUp = useIsDesktopUp();\n+\n+  const [isFullscreen, setIsFullscreen] = useState(false);\n+  const [fullscreenEnabled, setFullscreenEnabled] = useState(false);\n+\n+  useIsomorphicLayoutEffect(() => {\n+    setFullscreenEnabled(!!document.fullscreenEnabled);\n+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);\n+    document.addEventListener(\"fullscreenchange\", onChange);\n+    return () => document.removeEventListener(\"fullscreenchange\", onChange);\n+  }, []);\n+\n+  const toggleFullscreen = () => {\n+    if (!document.fullscreenElement) {\n+      document.documentElement.requestFullscreen().catch(() => {});\n+    } else {\n+      document.exitFullscreen();\n+    }\n+  };\n \n   const isOnPagesRoute = pathname?.includes(\"/pages/\");\n \n@@ -32,45 +56,65 @@ export const Nav = () => {\n         // just the toggle-hide overlay; matches RecitationPlayerBar exactly so the\n         // two bars read as one consistent floating-chrome style, both letting the\n         // Mushaf show through underneath).\n-        \"text-foreground px-4 shadow h-14 flex items-center bg-background/75 backdrop-blur-md border-b border-border/50\",\n+        \"text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50\",\n         isOverlayMode && \"fixed top-0 inset-x-0 z-50 transition-transform duration-300\",\n         isOverlayMode && !overlayVisible && \"-translate-y-full\",\n       )}\n-      style={isOverlayMode ? { transitionTimingFunction: \"cubic-bezier(0.23, 1, 0.32, 1)\" } : undefined}\n+      style={{\n+        paddingTop: \"env(safe-area-inset-top, 0px)\",\n+        ...(isOverlayMode ? { transitionTimingFunction: \"cubic-bezier(0.23, 1, 0.32, 1)\" } : {}),\n+      }}\n     >\n-      {/* Start: sidebar trigger (mobile, pages route only) + logo */}\n-      <div className=\"flex items-center gap-2 flex-shrink-0\">\n-        <FurqanLogo />\n+      <div className=\"h-14 flex items-center\">\n+        {/* Start: sidebar trigger (mobile, pages route only) + logo */}\n+        <div className=\"flex items-center gap-2 flex-shrink-0\">\n+          <FurqanLogo />\n \n-        {isOnPagesRoute && (\n-          <Button\n-            variant=\"ghost\"\n-            size=\"icon\"\n-            onClick={() => setOpen(true)}\n-            aria-label=\"Open navigation\"\n-          >\n-            <PanelLeftOpen\n-              className={cn(\"size-5\", isRTL && \"rotate-180\")}\n-              strokeWidth={1.7}\n-            />\n-          </Button>\n-        )}\n-      </div>\n+          {isOnPagesRoute && (\n+            <Button\n+              variant=\"ghost\"\n+              size=\"icon\"\n+              onClick={() => setOpen(true)}\n+              aria-label=\"Open navigation\"\n+            >\n+              <PanelLeftOpen\n+                className={cn(\"size-5\", isRTL && \"rotate-180\")}\n+                strokeWidth={1.7}\n+              />\n+            </Button>\n+          )}\n+        </div>\n \n-      {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}\n-      <div className=\"flex-1 flex justify-center px-2 md:px-4\">\n-        <SearchBar />\n-      </div>\n+        {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}\n+        <div className=\"flex-1 flex justify-center px-2 md:px-4\">\n+          <SearchBar />\n+        </div>\n \n-      {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}\n-      <div className=\"flex items-center gap-1 flex-shrink-0\">\n-        <SharedMushafLink />\n-        <MarksLink />\n-        <PlansLink />\n-        <div className=\"hidden md:flex items-center\">\n-          <UserMenu />\n+        {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}\n+        <div className=\"flex items-center gap-1 flex-shrink-0\">\n+          <SharedMushafLink />\n+          <MarksLink />\n+          <PlansLink />\n+          <div className=\"hidden md:flex items-center\">\n+            <UserMenu />\n+          </div>\n+          {isDesktopUp && fullscreenEnabled && (\n+            <Button\n+              variant=\"ghost\"\n+              size=\"icon\"\n+              onClick={toggleFullscreen}\n+              aria-label={isFullscreen ? \"Exit focus mode\" : \"Enter focus mode\"}\n+              aria-pressed={isFullscreen}\n+            >\n+              {isFullscreen ? (\n+                <Minimize2 className=\"size-5\" strokeWidth={1.7} />\n+              ) : (\n+                <Maximize2 className=\"size-5\" strokeWidth={1.7} />\n+              )}\n+            </Button>\n+          )}\n+          <SettingsSidebar />\n         </div>\n-        <SettingsSidebar />\n       </div>\n     </nav>\n   );\ndiff --git a/app/hooks/use-is-desktop-up.ts b/app/hooks/use-is-desktop-up.ts\nnew file mode 100644\nindex 0000000..eae99f1\n--- /dev/null\n+++ b/app/hooks/use-is-desktop-up.ts\n@@ -0,0 +1,23 @@\n+\"use client\";\n+\n+import { useEffect, useLayoutEffect, useState } from \"react\";\n+\n+const DESKTOP_UP_QUERY = \"(min-width: 1367px)\";\n+\n+const useIsomorphicLayoutEffect =\n+  typeof window !== \"undefined\" ? useLayoutEffect : useEffect;\n+\n+export function useIsDesktopUp() {\n+  const [isDesktopUp, setIsDesktopUp] = useState(false);\n+\n+  useIsomorphicLayoutEffect(() => {\n+    const mql = window.matchMedia(DESKTOP_UP_QUERY);\n+    setIsDesktopUp(mql.matches);\n+\n+    const onChange = (e: MediaQueryListEvent) => setIsDesktopUp(e.matches);\n+    mql.addEventListener(\"change\", onChange);\n+    return () => mql.removeEventListener(\"change\", onChange);\n+  }, []);\n+\n+  return isDesktopUp;\n+}\ndiff --git a/app/layout.tsx b/app/layout.tsx\nindex 086bd5d..44dff5c 100644\n--- a/app/layout.tsx\n+++ b/app/layout.tsx\n@@ -15,13 +15,17 @@ export const metadata: Metadata = {\n   },\n   appleWebApp: {\n     capable: true,\n-    statusBarStyle: \"default\",\n+    // black-translucent makes the iOS status bar transparent, overlaying app\n+    // content. viewportFit:cover below + env(safe-area-inset-top) on the navbar\n+    // prevents nav content being hidden behind the notch on notched devices.\n+    statusBarStyle: \"black-translucent\",\n     title: \"Furqan\",\n   },\n };\n \n export const viewport: Viewport = {\n   themeColor: \"#16232F\",\n+  viewportFit: \"cover\",\n };\n \n const tajawal = Tajawal({\ndiff --git a/app/manifest.ts b/app/manifest.ts\nindex e6fe8a5..424cb1f 100644\n--- a/app/manifest.ts\n+++ b/app/manifest.ts\n@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {\n     short_name: \"Furqan\",\n     description: \"The word focused Quran app\",\n     start_url: \"/\",\n-    display: \"standalone\",\n+    display: \"fullscreen\",\n     background_color: \"#16232F\",\n     theme_color: \"#16232F\",\n     icons: [\ndiff --git a/docs/architecture/COMPONENTS.md b/docs/architecture/COMPONENTS.md\nindex b76770e..b0d16ba 100644\n--- a/docs/architecture/COMPONENTS.md\n+++ b/docs/architecture/COMPONENTS.md\n@@ -5,14 +5,14 @@ Lightweight inventory of all app components. One line per component. Not a props\n **Before modifying a shared component, check this file to understand all callers.**  \n **After adding, removing, or reorganising components in any task, update this file.**\n \n-Last updated: 2026-07-27\n+Last updated: 2026-07-31\n \n ---\n \n ## Zone: nav\n \n ```\n-Nav                          — top bar, always visible; responsive (mobile/desktop layouts)\n+Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch\n   FurqanLogo                 — brand mark (SVG, links to home)\n   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay\n     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)\ndiff --git a/docs/plans/feature-pwa-fullscreen-focus-mode.md b/docs/plans/feature-pwa-fullscreen-focus-mode.md\nnew file mode 100644\nindex 0000000..2b6fd41\n--- /dev/null\n+++ b/docs/plans/feature-pwa-fullscreen-focus-mode.md\n@@ -0,0 +1,72 @@\n+# Feature: Browser Fullscreen & PWA Status-Bar Focus Mode\n+\n+**Type:** feature  \n+**Date:** 2026-07-31  \n+**Status:** implemented  \n+**Trello:** #136 https://trello.com/c/wwxdYFNn\n+\n+## Summary\n+\n+Two independent focus improvements. Desktop: a button in the navbar on all pages that calls the browser's Fullscreen API, removing browser chrome (address bar, tabs, OS taskbar) while keeping the app's own navbar and recitation bar always visible. Mobile/tablet installed PWA: change the manifest display mode so the OS status bar (clock, wifi, battery) is hidden by default with no user action needed.\n+\n+This replaces the approach from the reverted PR #155, which incorrectly hid the app's own nav and recitation bar instead of using the browser's native fullscreen.\n+\n+## Root Cause / Approach\n+\n+PR #155 toggled `NavOverlayContext`'s `overlayVisible` to hide the app's navbar and recitation bar — the same tap-to-toggle mechanism used on mobile. That is the wrong target. Focus mode on desktop should remove **browser** chrome via `document.documentElement.requestFullscreen()`, not app chrome. The app's navbar and recitation bar must always be visible on desktop.\n+\n+For mobile/tablet PWA: the manifest currently uses `display: \"standalone\"`, which preserves the OS status bar. Changing to `\"fullscreen\"` removes it on Android. For iOS, `appleWebApp.statusBarStyle: \"black-translucent\"` + `viewport-fit: \"cover\"` makes the bar transparent/overlapping; safe-area padding on the navbar prevents content being hidden behind the notch.\n+\n+## Decision Tree / Algorithm\n+\n+| Platform | Trigger | Mechanism | App nav visible? |\n+|---|---|---|---|\n+| Desktop (≥1367px) | Click button in Nav | `requestFullscreen()` / `exitFullscreen()` | Yes — always |\n+| Mobile/Tablet PWA | Install | `manifest.display: \"fullscreen\"` (Android) | Yes |\n+| Mobile/Tablet PWA | Install | `statusBarStyle: \"black-translucent\"` + `viewport-fit: cover` (iOS) | Yes |\n+| Mobile/Tablet browser | — | No change | Yes |\n+\n+Button visibility:\n+| Condition | Button |\n+|---|---|\n+| Desktop (≥1367px), not fullscreen | `Maximize2` icon |\n+| Desktop (≥1367px), fullscreen | `Minimize2` icon |\n+| Mobile or tablet | Hidden |\n+| `document.fullscreenEnabled === false` | Hidden (API unavailable) |\n+\n+## Verified Test Cases\n+\n+1. Desktop user clicks Maximize2 → browser enters fullscreen, button switches to Minimize2, navbar and recitation bar remain visible.\n+2. Desktop user presses Esc or clicks Minimize2 → browser exits fullscreen, button switches back to Maximize2.\n+3. Desktop user opens a non-reader page (e.g. marks, plans) → button is still present (all pages).\n+4. Mobile/tablet user opens PWA (installed) → status bar absent; no button shown.\n+5. Mobile/tablet browser (non-installed) → no change; no button shown.\n+\n+## Files to Change\n+\n+- `app/hooks/use-is-desktop-up.ts` — **new file**: `(min-width: 1367px)` query, same `useIsomorphicLayoutEffect` pattern as `use-is-tablet.ts`\n+- `app/components/nav/Nav.tsx` — add fullscreen toggle button (desktop only, all pages); track state via `fullscreenchange` event; add `pt-[env(safe-area-inset-top)]` to `<nav>` for iOS notch safety\n+- `app/manifest.ts` — `display: \"standalone\"` → `\"fullscreen\"`\n+- `app/layout.tsx` — `statusBarStyle: \"default\"` → `\"black-translucent\"`; add `viewportFit: \"cover\"` to the `viewport` export\n+\n+## Constraints\n+\n+- `viewport-fit: \"cover\"` extends the viewport into the device notch/safe area. The navbar **must** carry `padding-top: env(safe-area-inset-top, 0px)` (Tailwind arbitrary value: `pt-[env(safe-area-inset-top,0px)]`) or the top of the navbar will be hidden behind the iOS status bar on notched iPhones. No other component currently needs this because the navbar sits at the very top.\n+- `display: \"fullscreen\"` in the manifest only affects installed PWA on Android (and some Chromium-based desktop browsers). iOS Safari ignores it and always treats PWA as `standalone`. The `statusBarStyle: \"black-translucent\"` change handles iOS.\n+- `document.exitFullscreen()` is only callable when `document.fullscreenElement` is non-null. `requestFullscreen()` is only callable when `document.fullscreenEnabled` is true. Both conditions must be guarded.\n+- The `fullscreenchange` event fires on both enter and exit (including Esc key). The button state must derive from `document.fullscreenElement`, not from local toggle logic, to stay in sync when the user presses Esc.\n+- `NavOverlayContext` is unchanged. This feature does not touch `overlayVisible`, `isOverlayMode`, or any tap-to-toggle behavior.\n+\n+## What NOT to Do\n+\n+- Do NOT hide the app's navbar or recitation bar — that was the wrong approach in PR #155.\n+- Do NOT use `NavOverlayContext` or extend `isOverlayMode` for this feature.\n+- Do NOT add hover-reveal hotzone divs, `mouseenter`/`mouseleave` handlers, or localStorage persistence.\n+- Do NOT gate the fullscreen button to `/pages/` only — it should appear on all routes on desktop.\n+- Do NOT use `isOverlayMode` as a proxy for \"desktop focus is on\" — the two systems are independent.\n+\n+## Decisions Made\n+\n+- Fullscreen button visible on all pages (not reader-only), because fullscreen is a browser-level affordance not tied to any single route.\n+- `useIsDesktopUp` hook needed (same as reverted PR, but that specific hook was correct — only the overlay mechanism was wrong). Recreate it with the same `(min-width: 1367px)` query.\n+- No ADR: the Fullscreen API and safe-area-inset patterns are standard Web APIs with no project-specific encoding contract or non-obvious invariant.",
+          "actualWorkers": 2
+        },
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "/home/runner/work/web/web/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/runner/work/web/web/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/furqan-app/web/commit/80ca4cac8b60904a48ef06fea46a69fbb558f463",
+            "commitHash": "80ca4cac8b60904a48ef06fea46a69fbb558f463",
+            "prHref": "https://github.com/furqan-app/web/pull/160",
+            "prTitle": "feat(nav): browser fullscreen focus mode + PWA status-bar removal",
+            "prBaseHash": "e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c",
+            "buildHref": "https://github.com/furqan-app/web/actions/runs/30633920157"
+          },
+          "gitCommit": {
+            "shortHash": "80ca4ca",
+            "hash": "80ca4cac8b60904a48ef06fea46a69fbb558f463",
+            "subject": "Merge 003d46bfc9580209b41c73218310eb138da56604 into e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c",
+            "body": "Merge 003d46bfc9580209b41c73218310eb138da56604 into e1502db11d2bf1799b5b0a4ed3acdc746bcebe3c\n",
+            "author": {
+              "name": "Taha Mohamed",
+              "email": "taha.mohamed@ft.com",
+              "time": 1785503899000
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "time": 1785503899000
+            },
+            "branch": "HEAD"
+          },
+          "gitDiff": "diff --git a/app/components/nav/Nav.tsx b/app/components/nav/Nav.tsx\nindex 07a9f6c..630f4fc 100644\n--- a/app/components/nav/Nav.tsx\n+++ b/app/components/nav/Nav.tsx\n@@ -1,8 +1,9 @@\n \"use client\";\n \n+import { useEffect, useLayoutEffect, useState } from \"react\";\n import { usePathname } from \"next/navigation\";\n import { useLocale } from \"next-intl\";\n-import { PanelLeftOpen } from \"lucide-react\";\n+import { Maximize2, Minimize2, PanelLeftOpen } from \"lucide-react\";\n import { SearchBar } from \"@components/search/SearchBar\";\n import { UserMenu } from \"./UserMenu\";\n import { SharedMushafLink } from \"./SharedMushafLink\";\n@@ -13,15 +14,38 @@ import { FurqanLogo } from \"./FurqanLogo\";\n import { Button } from \"@/components/ui/button\";\n import { useSidebar } from \"@/app/contexts/SidebarContext\";\n import { useNavOverlay } from \"@/app/contexts/NavOverlayContext\";\n+import { useIsDesktopUp } from \"@/app/hooks/use-is-desktop-up\";\n import { getLanguageDirection } from \"@/app/utils/i18n\";\n import { cn } from \"@/lib/utils\";\n \n+const useIsomorphicLayoutEffect =\n+  typeof window !== \"undefined\" ? useLayoutEffect : useEffect;\n+\n export const Nav = () => {\n   const pathname = usePathname();\n   const locale = useLocale();\n   const isRTL = getLanguageDirection(locale) === \"rtl\";\n   const { setOpen } = useSidebar();\n   const { isOverlayMode, overlayVisible } = useNavOverlay();\n+  const isDesktopUp = useIsDesktopUp();\n+\n+  const [isFullscreen, setIsFullscreen] = useState(false);\n+  const [fullscreenEnabled, setFullscreenEnabled] = useState(false);\n+\n+  useIsomorphicLayoutEffect(() => {\n+    setFullscreenEnabled(!!document.fullscreenEnabled);\n+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);\n+    document.addEventListener(\"fullscreenchange\", onChange);\n+    return () => document.removeEventListener(\"fullscreenchange\", onChange);\n+  }, []);\n+\n+  const toggleFullscreen = () => {\n+    if (!document.fullscreenElement) {\n+      document.documentElement.requestFullscreen().catch(() => {});\n+    } else {\n+      document.exitFullscreen();\n+    }\n+  };\n \n   const isOnPagesRoute = pathname?.includes(\"/pages/\");\n \n@@ -32,45 +56,65 @@ export const Nav = () => {\n         // just the toggle-hide overlay; matches RecitationPlayerBar exactly so the\n         // two bars read as one consistent floating-chrome style, both letting the\n         // Mushaf show through underneath).\n-        \"text-foreground px-4 shadow h-14 flex items-center bg-background/75 backdrop-blur-md border-b border-border/50\",\n+        \"text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50\",\n         isOverlayMode && \"fixed top-0 inset-x-0 z-50 transition-transform duration-300\",\n         isOverlayMode && !overlayVisible && \"-translate-y-full\",\n       )}\n-      style={isOverlayMode ? { transitionTimingFunction: \"cubic-bezier(0.23, 1, 0.32, 1)\" } : undefined}\n+      style={{\n+        paddingTop: \"env(safe-area-inset-top, 0px)\",\n+        ...(isOverlayMode ? { transitionTimingFunction: \"cubic-bezier(0.23, 1, 0.32, 1)\" } : {}),\n+      }}\n     >\n-      {/* Start: sidebar trigger (mobile, pages route only) + logo */}\n-      <div className=\"flex items-center gap-2 flex-shrink-0\">\n-        <FurqanLogo />\n+      <div className=\"h-14 flex items-center\">\n+        {/* Start: sidebar trigger (mobile, pages route only) + logo */}\n+        <div className=\"flex items-center gap-2 flex-shrink-0\">\n+          <FurqanLogo />\n \n-        {isOnPagesRoute && (\n-          <Button\n-            variant=\"ghost\"\n-            size=\"icon\"\n-            onClick={() => setOpen(true)}\n-            aria-label=\"Open navigation\"\n-          >\n-            <PanelLeftOpen\n-              className={cn(\"size-5\", isRTL && \"rotate-180\")}\n-              strokeWidth={1.7}\n-            />\n-          </Button>\n-        )}\n-      </div>\n+          {isOnPagesRoute && (\n+            <Button\n+              variant=\"ghost\"\n+              size=\"icon\"\n+              onClick={() => setOpen(true)}\n+              aria-label=\"Open navigation\"\n+            >\n+              <PanelLeftOpen\n+                className={cn(\"size-5\", isRTL && \"rotate-180\")}\n+                strokeWidth={1.7}\n+              />\n+            </Button>\n+          )}\n+        </div>\n \n-      {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}\n-      <div className=\"flex-1 flex justify-center px-2 md:px-4\">\n-        <SearchBar />\n-      </div>\n+        {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}\n+        <div className=\"flex-1 flex justify-center px-2 md:px-4\">\n+          <SearchBar />\n+        </div>\n \n-      {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}\n-      <div className=\"flex items-center gap-1 flex-shrink-0\">\n-        <SharedMushafLink />\n-        <MarksLink />\n-        <PlansLink />\n-        <div className=\"hidden md:flex items-center\">\n-          <UserMenu />\n+        {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}\n+        <div className=\"flex items-center gap-1 flex-shrink-0\">\n+          <SharedMushafLink />\n+          <MarksLink />\n+          <PlansLink />\n+          <div className=\"hidden md:flex items-center\">\n+            <UserMenu />\n+          </div>\n+          {isDesktopUp && fullscreenEnabled && (\n+            <Button\n+              variant=\"ghost\"\n+              size=\"icon\"\n+              onClick={toggleFullscreen}\n+              aria-label={isFullscreen ? \"Exit focus mode\" : \"Enter focus mode\"}\n+              aria-pressed={isFullscreen}\n+            >\n+              {isFullscreen ? (\n+                <Minimize2 className=\"size-5\" strokeWidth={1.7} />\n+              ) : (\n+                <Maximize2 className=\"size-5\" strokeWidth={1.7} />\n+              )}\n+            </Button>\n+          )}\n+          <SettingsSidebar />\n         </div>\n-        <SettingsSidebar />\n       </div>\n     </nav>\n   );\ndiff --git a/app/hooks/use-is-desktop-up.ts b/app/hooks/use-is-desktop-up.ts\nnew file mode 100644\nindex 0000000..eae99f1\n--- /dev/null\n+++ b/app/hooks/use-is-desktop-up.ts\n@@ -0,0 +1,23 @@\n+\"use client\";\n+\n+import { useEffect, useLayoutEffect, useState } from \"react\";\n+\n+const DESKTOP_UP_QUERY = \"(min-width: 1367px)\";\n+\n+const useIsomorphicLayoutEffect =\n+  typeof window !== \"undefined\" ? useLayoutEffect : useEffect;\n+\n+export function useIsDesktopUp() {\n+  const [isDesktopUp, setIsDesktopUp] = useState(false);\n+\n+  useIsomorphicLayoutEffect(() => {\n+    const mql = window.matchMedia(DESKTOP_UP_QUERY);\n+    setIsDesktopUp(mql.matches);\n+\n+    const onChange = (e: MediaQueryListEvent) => setIsDesktopUp(e.matches);\n+    mql.addEventListener(\"change\", onChange);\n+    return () => mql.removeEventListener(\"change\", onChange);\n+  }, []);\n+\n+  return isDesktopUp;\n+}\ndiff --git a/app/layout.tsx b/app/layout.tsx\nindex 086bd5d..44dff5c 100644\n--- a/app/layout.tsx\n+++ b/app/layout.tsx\n@@ -15,13 +15,17 @@ export const metadata: Metadata = {\n   },\n   appleWebApp: {\n     capable: true,\n-    statusBarStyle: \"default\",\n+    // black-translucent makes the iOS status bar transparent, overlaying app\n+    // content. viewportFit:cover below + env(safe-area-inset-top) on the navbar\n+    // prevents nav content being hidden behind the notch on notched devices.\n+    statusBarStyle: \"black-translucent\",\n     title: \"Furqan\",\n   },\n };\n \n export const viewport: Viewport = {\n   themeColor: \"#16232F\",\n+  viewportFit: \"cover\",\n };\n \n const tajawal = Tajawal({\ndiff --git a/app/manifest.ts b/app/manifest.ts\nindex e6fe8a5..424cb1f 100644\n--- a/app/manifest.ts\n+++ b/app/manifest.ts\n@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {\n     short_name: \"Furqan\",\n     description: \"The word focused Quran app\",\n     start_url: \"/\",\n-    display: \"standalone\",\n+    display: \"fullscreen\",\n     background_color: \"#16232F\",\n     theme_color: \"#16232F\",\n     icons: [\ndiff --git a/docs/architecture/COMPONENTS.md b/docs/architecture/COMPONENTS.md\nindex b76770e..b0d16ba 100644\n--- a/docs/architecture/COMPONENTS.md\n+++ b/docs/architecture/COMPONENTS.md\n@@ -5,14 +5,14 @@ Lightweight inventory of all app components. One line per component. Not a props\n **Before modifying a shared component, check this file to understand all callers.**  \n **After adding, removing, or reorganising components in any task, update this file.**\n \n-Last updated: 2026-07-27\n+Last updated: 2026-07-31\n \n ---\n \n ## Zone: nav\n \n ```\n-Nav                          — top bar, always visible; responsive (mobile/desktop layouts)\n+Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch\n   FurqanLogo                 — brand mark (SVG, links to home)\n   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay\n     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)\ndiff --git a/docs/plans/feature-pwa-fullscreen-focus-mode.md b/docs/plans/feature-pwa-fullscreen-focus-mode.md\nnew file mode 100644\nindex 0000000..2b6fd41\n--- /dev/null\n+++ b/docs/plans/feature-pwa-fullscreen-focus-mode.md\n@@ -0,0 +1,72 @@\n+# Feature: Browser Fullscreen & PWA Status-Bar Focus Mode\n+\n+**Type:** feature  \n+**Date:** 2026-07-31  \n+**Status:** implemented  \n+**Trello:** #136 https://trello.com/c/wwxdYFNn\n+\n+## Summary\n+\n+Two independent focus improvements. Desktop: a button in the navbar on all pages that calls the browser's Fullscreen API, removing browser chrome (address bar, tabs, OS taskbar) while keeping the app's own navbar and recitation bar always visible. Mobile/tablet installed PWA: change the manifest display mode so the OS status bar (clock, wifi, battery) is hidden by default with no user action needed.\n+\n+This replaces the approach from the reverted PR #155, which incorrectly hid the app's own nav and recitation bar instead of using the browser's native fullscreen.\n+\n+## Root Cause / Approach\n+\n+PR #155 toggled `NavOverlayContext`'s `overlayVisible` to hide the app's navbar and recitation bar — the same tap-to-toggle mechanism used on mobile. That is the wrong target. Focus mode on desktop should remove **browser** chrome via `document.documentElement.requestFullscreen()`, not app chrome. The app's navbar and recitation bar must always be visible on desktop.\n+\n+For mobile/tablet PWA: the manifest currently uses `display: \"standalone\"`, which preserves the OS status bar. Changing to `\"fullscreen\"` removes it on Android. For iOS, `appleWebApp.statusBarStyle: \"black-translucent\"` + `viewport-fit: \"cover\"` makes the bar transparent/overlapping; safe-area padding on the navbar prevents content being hidden behind the notch.\n+\n+## Decision Tree / Algorithm\n+\n+| Platform | Trigger | Mechanism | App nav visible? |\n+|---|---|---|---|\n+| Desktop (≥1367px) | Click button in Nav | `requestFullscreen()` / `exitFullscreen()` | Yes — always |\n+| Mobile/Tablet PWA | Install | `manifest.display: \"fullscreen\"` (Android) | Yes |\n+| Mobile/Tablet PWA | Install | `statusBarStyle: \"black-translucent\"` + `viewport-fit: cover` (iOS) | Yes |\n+| Mobile/Tablet browser | — | No change | Yes |\n+\n+Button visibility:\n+| Condition | Button |\n+|---|---|\n+| Desktop (≥1367px), not fullscreen | `Maximize2` icon |\n+| Desktop (≥1367px), fullscreen | `Minimize2` icon |\n+| Mobile or tablet | Hidden |\n+| `document.fullscreenEnabled === false` | Hidden (API unavailable) |\n+\n+## Verified Test Cases\n+\n+1. Desktop user clicks Maximize2 → browser enters fullscreen, button switches to Minimize2, navbar and recitation bar remain visible.\n+2. Desktop user presses Esc or clicks Minimize2 → browser exits fullscreen, button switches back to Maximize2.\n+3. Desktop user opens a non-reader page (e.g. marks, plans) → button is still present (all pages).\n+4. Mobile/tablet user opens PWA (installed) → status bar absent; no button shown.\n+5. Mobile/tablet browser (non-installed) → no change; no button shown.\n+\n+## Files to Change\n+\n+- `app/hooks/use-is-desktop-up.ts` — **new file**: `(min-width: 1367px)` query, same `useIsomorphicLayoutEffect` pattern as `use-is-tablet.ts`\n+- `app/components/nav/Nav.tsx` — add fullscreen toggle button (desktop only, all pages); track state via `fullscreenchange` event; add `pt-[env(safe-area-inset-top)]` to `<nav>` for iOS notch safety\n+- `app/manifest.ts` — `display: \"standalone\"` → `\"fullscreen\"`\n+- `app/layout.tsx` — `statusBarStyle: \"default\"` → `\"black-translucent\"`; add `viewportFit: \"cover\"` to the `viewport` export\n+\n+## Constraints\n+\n+- `viewport-fit: \"cover\"` extends the viewport into the device notch/safe area. The navbar **must** carry `padding-top: env(safe-area-inset-top, 0px)` (Tailwind arbitrary value: `pt-[env(safe-area-inset-top,0px)]`) or the top of the navbar will be hidden behind the iOS status bar on notched iPhones. No other component currently needs this because the navbar sits at the very top.\n+- `display: \"fullscreen\"` in the manifest only affects installed PWA on Android (and some Chromium-based desktop browsers). iOS Safari ignores it and always treats PWA as `standalone`. The `statusBarStyle: \"black-translucent\"` change handles iOS.\n+- `document.exitFullscreen()` is only callable when `document.fullscreenElement` is non-null. `requestFullscreen()` is only callable when `document.fullscreenEnabled` is true. Both conditions must be guarded.\n+- The `fullscreenchange` event fires on both enter and exit (including Esc key). The button state must derive from `document.fullscreenElement`, not from local toggle logic, to stay in sync when the user presses Esc.\n+- `NavOverlayContext` is unchanged. This feature does not touch `overlayVisible`, `isOverlayMode`, or any tap-to-toggle behavior.\n+\n+## What NOT to Do\n+\n+- Do NOT hide the app's navbar or recitation bar — that was the wrong approach in PR #155.\n+- Do NOT use `NavOverlayContext` or extend `isOverlayMode` for this feature.\n+- Do NOT add hover-reveal hotzone divs, `mouseenter`/`mouseleave` handlers, or localStorage persistence.\n+- Do NOT gate the fullscreen button to `/pages/` only — it should appear on all routes on desktop.\n+- Do NOT use `isOverlayMode` as a proxy for \"desktop focus is on\" — the two systems are independent.\n+\n+## Decisions Made\n+\n+- Fullscreen button visible on all pages (not reader-only), because fullscreen is a browser-level affordance not tied to any single route.\n+- `useIsDesktopUp` hook needed (same as reverted PR, but that specific hook was correct — only the overlay mechanism was wrong). Recreate it with the same `(min-width: 1367px)` query.\n+- No ADR: the Fullscreen API and safe-area-inset patterns are standard Web APIs with no project-specific encoding contract or non-obvious invariant.",
+          "actualWorkers": 2
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "/home/runner/work/web/web/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-report/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 2,
+    "webServer": {
+      "command": "npm run e2e:build && npm run e2e:start",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": false,
+      "timeout": 1200000
+    }
+  },
+  "suites": [
+    {
+      "title": "visual.spec.ts",
+      "file": "visual.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "home (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1370,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:39.646Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-9a9eb3fc9e50f7d4da7b",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 881,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:17.379Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ee873f6f6c111f3eb465",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1805,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:39.676Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-86f84f8f2bb17a69bbb3",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3063,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:18.424Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/page-1-ar-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/page-1-ar-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3334,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  8847 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-light.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-light.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 8847 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-31T13:23:22.968Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-light-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-light-mobile-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/page-1-ar-light-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-light-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/page-1-ar-light-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-light-single-page-short-opening-page-mobile-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-17e5128d70109ffa7a29",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1765,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:41.332Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-63c482371c08681abdf3",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 76,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:18.472Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-84e9714f88b655818f46",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2431,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:41.810Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-10827dd7cd6462184a2c",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3171,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:18.582Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-548426ff2d3576db6a8e",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (ar-light)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3039,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:43.134Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-253b089809e5f649606f",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1652,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:21.785Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-f21e989233ad1b81dfb0",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1314,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:44.276Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-bb6ffc3d04524f80e084",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1003,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:23.459Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-1a07b3acca07ecaa628f",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 4574,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 29489 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 29489 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  29501 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-ar-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-ar-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 29489 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 29501 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:45.626Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-ar-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-ar-dark-desktop-linux.png"
+                        },
+                        {
+                          "name": "page-1-ar-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-desktop/page-1-ar-dark-actual.png"
+                        },
+                        {
+                          "name": "page-1-ar-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-desktop/page-1-ar-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-desktop/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-ar-dark-single-page-short-opening-page-desktop/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2166,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-31T13:22:51.806Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "flaky"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8ac841b00620eb909446",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1431,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:24.497Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-51981b0a719d7d820778",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1763,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:46.205Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-71b1db7ba6756affb10e",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 108,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:25.948Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-71825b97452f6d8a7a69",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3458,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:47.984Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-3a49443b7644a998f564",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2236,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:26.077Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-6949eef9d772ce811530",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (ar-dark)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3408,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:51.466Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8b27ddc00e6fd40a3a26",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2346,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:27.905Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-e197cd49d16f64062fab",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (en-light)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1114,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:54.291Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-fec7a6e1ca53421fbcdd",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 870,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:28.338Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-d34961f9f76700a05007",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (en-light)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2435,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:54.889Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-af2b7d07f230a2eeae7c",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1234,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:29.227Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-35e69571c9476c4f9608",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (en-light)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1916,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:55.443Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8457cc41e08531a67b6c",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 73,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:30.487Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-436d39f58f5fa9e8e200",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (en-light)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2469,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:57.351Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8b33a63ee5b53adb6658",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2010,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:30.559Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-bf1ff087c0e967019699",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (en-light)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2472,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:57.378Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ba8b29e454f54de6aa33",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1668,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:30.577Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-1b0db3cb1e75e10a4219",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "home (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 38,
+          "column": 10,
+          "specs": [
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1478,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:59.850Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-4277d25df68e39ecc37d",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            },
+            {
+              "title": "surah list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 794,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:32.265Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-810ab6487b9ad1888a41",
+              "file": "visual.spec.ts",
+              "line": 39,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran page 1 (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 46,
+          "column": 10,
+          "specs": [
+            {
+              "title": "single page, short opening page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 4953,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:22:59.871Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-en-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-en-dark-desktop-linux.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop/page-1-en-dark-actual.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop/page-1-en-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    },
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 4592,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 50
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 48 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/1`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 50 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`page-1-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 51 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 52 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 53 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 50
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: page-1-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(page-1-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  48 |         await withTheme(page, theme);\n  49 |         await page.goto(`/${locale}/pages/1`);\n> 50 |         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);\n     |                            ^\n  51 |       });\n  52 |     });\n  53 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:50:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-31T13:23:06.559Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "page-1-en-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/page-1-en-dark-desktop-linux.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop-retry1/page-1-en-dark-actual.png"
+                        },
+                        {
+                          "name": "page-1-en-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop-retry1/page-1-en-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-page-1-en-dark-single-page-short-opening-page-desktop-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 50
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-7ed7f55dc179f2707aa1",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            },
+            {
+              "title": "single page, short opening page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1243,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:32.591Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-ddb4e1be79aed0ceac76",
+              "file": "visual.spec.ts",
+              "line": 47,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "quran pages 2-3 double-spread (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 54,
+          "column": 10,
+          "specs": [
+            {
+              "title": "double-page spread",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 4829,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 62
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 60 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/2`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 62 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`spread-2-3-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 63 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 64 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 62
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  60 |         await withTheme(page, theme);\n  61 |         await page.goto(`/${locale}/pages/2`);\n> 62 |         await expect(page).toHaveScreenshot(`spread-2-3-${suffix}.png`);\n     |                            ^\n  63 |       });\n  64 |     });\n  65 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:01.362Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "spread-2-3-en-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/spread-2-3-en-dark-desktop-linux.png"
+                        },
+                        {
+                          "name": "spread-2-3-en-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop/spread-2-3-en-dark-actual.png"
+                        },
+                        {
+                          "name": "spread-2-3-en-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop/spread-2-3-en-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 62
+                      }
+                    },
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 4515,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28",
+                        "location": {
+                          "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                          "column": 28,
+                          "line": 62
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 60 |\u001b[39m         \u001b[36mawait\u001b[39m withTheme(page\u001b[33m,\u001b[39m theme)\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`/${locale}/pages/2`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 62 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveScreenshot(\u001b[32m`spread-2-3-${suffix}.png`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 63 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 64 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "column": 28,
+                            "line": 62
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\n  30277 pixels (ratio 0.03 of all image pixels) are different.\n\n  Snapshot: spread-2-3-en-dark.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(spread-2-3-en-dark.png)\" with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 30277 pixels (ratio 0.03 of all image pixels) are different.\u001b[22m\n\n\n  60 |         await withTheme(page, theme);\n  61 |         await page.goto(`/${locale}/pages/2`);\n> 62 |         await expect(page).toHaveScreenshot(`spread-2-3-${suffix}.png`);\n     |                            ^\n  63 |       });\n  64 |     });\n  65 |\n    at /home/runner/work/web/web/e2e/tests/visual.spec.ts:62:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-31T13:23:07.936Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "spread-2-3-en-dark-expected.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/e2e/tests/visual.spec.ts-snapshots/spread-2-3-en-dark-desktop-linux.png"
+                        },
+                        {
+                          "name": "spread-2-3-en-dark-actual.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop-retry1/spread-2-3-en-dark-actual.png"
+                        },
+                        {
+                          "name": "spread-2-3-en-dark-diff.png",
+                          "contentType": "image/png",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop-retry1/spread-2-3-en-dark-diff.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/runner/work/web/web/test-results/visual-quran-pages-2-3-dou-4099b--en-dark-double-page-spread-desktop-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "column": 28,
+                        "line": 62
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-0c9ba8c7e4e06caa8787",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            },
+            {
+              "title": "double-page spread",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                      "location": {
+                        "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                        "line": 56,
+                        "column": 14
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 110,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:33.089Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "double-page spread only renders at lg+ (ADR 0013) — nothing distinct to capture on mobile",
+                          "location": {
+                            "file": "/home/runner/work/web/web/e2e/tests/visual.spec.ts",
+                            "line": 56,
+                            "column": 14
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-8d0680ea1d544eeba9cf",
+              "file": "visual.spec.ts",
+              "line": 55,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "search results (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 66,
+          "column": 10,
+          "specs": [
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3232,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:12.980Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-78c12971736376cd6409",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            },
+            {
+              "title": "search for a chapter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2142,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:33.219Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-4f31222ac6a3eb3a864e",
+              "file": "visual.spec.ts",
+              "line": 67,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "settings sheet (en-dark)",
+          "file": "visual.spec.ts",
+          "line": 85,
+          "column": 10,
+          "specs": [
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3300,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:14.037Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-530fab5cd34689c93f1a",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            },
+            {
+              "title": "open settings sheet",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1742,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-31T13:23:33.859Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8324bb52c49185e48ff4-6feee3d17c241c48a9a7",
+              "file": "visual.spec.ts",
+              "line": 86,
+              "column": 11
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-31T13:19:59.806Z",
+    "duration": 215885.745,
+    "expected": 32,
+    "skipped": 4,
+    "unexpected": 3,
+    "flaky": 1
+  }
+}
