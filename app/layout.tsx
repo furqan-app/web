@@ -15,13 +15,17 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    // black-translucent makes the iOS status bar transparent, overlaying app
+    // content. viewportFit:cover below + env(safe-area-inset-top) on the navbar
+    // prevents nav content being hidden behind the notch on notched devices.
+    statusBarStyle: "black-translucent",
     title: "Furqan",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: "#16232F",
+  viewportFit: "cover",
 };
 
 const tajawal = Tajawal({
