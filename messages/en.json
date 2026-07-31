@@ -84,6 +84,9 @@
   "page": "Page",
   "signOut": "Sign out",
   "signIn": "Sign in",
+  "continueReading": {
+    "navLink": "Continue Reading"
+  },
   "marks": {
     "navLink": "My Marks",
     "pageTitle": "My Marks",
