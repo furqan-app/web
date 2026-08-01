@@ -30,8 +30,6 @@
     --gold: 163 86% 35%;
     --gold-muted: 165 53% 93%;
     --overlay: 0 0% 0%;
-    --surah-frame-line: hsl(39 35% 25%);
-    --surah-frame-gold: #cdad80;
     /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
        the traditional gold Mushaf. Near-white paper and neutral gray ornaments;
        no gold, bronze, beige, or warm-gray tint. */
@@ -95,8 +93,6 @@
     --gold: 41 57% 43%;
     --gold-muted: 46 55% 86%;
     --overlay: 0 0% 0%;
-    --surah-frame-line: hsl(39 45% 20%);
-    --surah-frame-gold: #b8924a;
     /* Gold theme — richer warm ivory paper (the deeper, more golden variant that
        distinguishes it from the light theme). Safha info (juz/hizb/page number) is
        BLACK here, not gold, for contrast against the warm UI. */
@@ -167,8 +163,6 @@
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;
     --overlay: 212 52% 6%;
-    --surah-frame-line: hsl(209 51% 88%);
-    --surah-frame-gold: #cdad80;
     /* Printed-mushaf reader palette — deep warm blue-black paper, antique gold,
        off-white text. Consumed inside the tablet reader scope AND (as of the
        dark-theme unification pass) the desktop/portrait-tablet scope below
@@ -256,8 +250,6 @@
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;
     --overlay: 212 52% 6%;
-    --surah-frame-line: hsl(209 51% 88%);
-    --surah-frame-gold: #cdad80;
     --mushaf-paper: #141d27;
     /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
        change): repurposed from a light top-catch highlight to fully opaque BLACK —
@@ -587,19 +579,12 @@ body,
     .fq-spread .fq-safha-surah-glyph { color: var(--mushaf-ornament) !important; }
     .fq-spread .fq-safha-meta,
     .fq-spread .fq-safha-footer { color: var(--mushaf-metadata) !important; }
-    .fq-spread { --surah-frame-gold: var(--mushaf-ornament); }
-
     /* Dark theme — metadata, footer, ornaments → mushaf-text (off-white, not gold). */
     :root.theme-dark .fq-spread .fq-safha-meta,
     :root.theme-dark .fq-spread .fq-safha-footer,
     :root.theme-dark .fq-spread .fq-safha-surah-glyph,
     :root.theme-dark .fq-spread .fq-quran-safha .fq-inline-surah,
     :root.theme-dark .fq-spread .fq-ornament { color: var(--mushaf-text) !important; }
-    :root.theme-dark .fq-spread { --surah-frame-line: var(--mushaf-ornament); }
-
-    /* Light theme — neutralize warm frame line. */
-    :root.theme-light .fq-spread { --surah-frame-line: #4a4b4e; }
-
     /* Gold theme — surah name follows ink, not gold. */
     :root.theme-gold .fq-spread .fq-safha-surah-glyph,
     :root.theme-gold .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-text) !important; }
@@ -1137,18 +1122,6 @@ body,
     .fq-spread .fq-safha-footer {
       color: var(--mushaf-metadata) !important;
     }
-    /* Mute the surah-banner frame gold to the per-theme ornament colour (gold in
-       gold/dark, neutral gray in light). The frame SVG reads --surah-frame-gold. */
-    :root[data-safha-view="double"] .fq-spread {
-      --surah-frame-gold: var(--mushaf-ornament);
-    }
-    /* Light theme's frame line is a warm brown by default — neutralise it in the
-       reader so the modern light theme stays entirely gray (no warm tint). Gold
-       and dark keep their traditional frame line. */
-    :root.theme-light[data-safha-view="double"] .fq-spread {
-      --surah-frame-line: #4a4b4e;
-    }
-
     /* Dark theme — page CHROME (header/footer metadata, the surah-name glyph, the
        inline surah name, and the ◆ separators) takes the off-white text colour so
        the info reads quietly, not gold. Gold is reserved for the surah banner frame;
@@ -1160,12 +1133,6 @@ body,
     :root.theme-dark[data-safha-view="double"] .fq-spread .fq-ornament {
       color: var(--mushaf-text) !important;
     }
-    /* Dark theme — make the WHOLE surah frame gold (its line detail defaults to a
-       near-white, leaving the frame two-tone; force it to the ornament gold too). */
-    :root.theme-dark[data-safha-view="double"] .fq-spread {
-      --surah-frame-line: var(--mushaf-ornament);
-    }
-
     /* Gold theme — the surah name is NOT gold; render it in the ink text colour
        (matching the black safha info). Ornaments and the frame stay gold. */
     :root.theme-gold[data-safha-view="double"] .fq-spread .fq-safha-surah-glyph,

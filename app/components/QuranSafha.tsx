@@ -22,6 +22,13 @@ import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 // worst-case line-width/font-size ratio (p2, 2% margin); locks card minWidth
 // to font scale so it's stable from first render, independent of font metrics
 const QURAN_LINE_WIDTH_RATIO = 14.7;
+// Widest line/font-size ratio actually MEASURED across all 604 pages (range
+// 14.13–14.42; page 580 is the worst). Distinct from QURAN_LINE_WIDTH_RATIO on
+// purpose: that one is a padded FLOOR for the card's width and deliberately
+// exceeds any real line, this one is where the ink genuinely ends. Used to size
+// the surah frame so it matches the text block instead of overhanging it by
+// ~15px. Do not "unify" the two — they answer different questions.
+const QURAN_MAX_LINE_WIDTH_RATIO = 14.42;
 // Slots per page, not lines of words: pages 1-2 (fq-safha-center) render their
 // surah banner and bismillah as slots of their own alongside the text lines.
 // These counts are load-bearing now that the bars can BE the card's content —
@@ -35,16 +42,52 @@ const SKELETON_LINE_COUNT_SHORT = 8;
 // (see the render) doesn't remount them and restart the pulse animation.
 const SKELETON_BARS = Array.from({ length: SKELETON_LINE_COUNT }, (_, i) => i);
 
+// The frame art (KFGQPC glyph U+E000) is natively 8.11:1, far squatter than a
+// line slot, so spanning the text column makes its INK taller than 1em while its
+// LAYOUT slot stays 1em like every other line — the overflow is absolutely
+// positioned into the inter-line gap, leaving the 15-slot budget and the
+// equal-height spread untouched.
+//
+// height MUST stay `auto` so it follows the viewBox ratio and the art is never
+// distorted. Do not substitute a computed em height: the rendered column width is
+// not guaranteed to equal QURAN_LINE_WIDTH_RATIO em (that constant is the card's
+// minWidth floor, and the double-view cap can shrink the reading font under it),
+// so any hardcoded height silently stretches the frame vertically — an earlier
+// revision hardcoded 1.81em and measured 7.87:1 against the true 8.11:1.
+// To buy clearance from neighbouring lines, shrink --fq-surah-frame-w — width and
+// height then scale together and the ratio is preserved.
 const SurahBannerLine = ({ surahId }: { surahId: number }) => (
   <div
-    className="leading-none relative w-full"
-    style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
+    className="fq-surah-frame leading-none relative mx-auto"
+    style={{
+      marginBottom: "var(--fq-line-gap)",
+      height: "1em",
+      color: "var(--mushaf-ornament)",
+      // Match the text block, NOT the card's content box. w-full made the frame
+      // span the whole card, which is only the same thing when the text fills it:
+      // on mobile/tablet the font hits its 28px cap first (ADR 0011), so the lines
+      // sit narrower and centre while a w-full frame kept stretching past them.
+      // Sized to the measured widest line, not the padded card floor — see the
+      // constant. maxWidth keeps it honest if the card is ever narrower still.
+      width: `${QURAN_MAX_LINE_WIDTH_RATIO}em`,
+      maxWidth: "100%",
+    }}
   >
-    <SurahFrameSVG style={{ display: "block", width: "100%", height: "1em" }} />
+    <SurahFrameSVG
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        display: "block",
+        width: "var(--fq-surah-frame-w, 100%)",
+        height: "auto",
+      }}
+    />
     <span
       className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
       translate="no"
-      style={{ fontFamily: "var(--surah-names)", fontSize: "0.85em", lineHeight: 1 }}
+      style={{ fontFamily: "var(--surah-names)", fontSize: "1.18em", lineHeight: 1 }}
     >
       {`${surahId}`.padStart(3, "0")}
     </span>
