@@ -1,7 +1,7 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 
 // Visual regression smoke suite — see docs/plans/visual-e2e-testing.md and
-// ADR 0018. Covers 5 fixed screens x {ar, en} x {light, dark}, run against
+// ADR 0022. Covers 5 fixed screens x {ar, en} x {light, dark}, run against
 // both the "desktop" and "mobile" Playwright projects (except the double-page
 // spread, which only exists at lg+ and is skipped on "mobile").
 
@@ -23,12 +23,46 @@ const SETTINGS_LABEL: Record<Locale, string> = {
   ar: "الإعدادات",
   en: "Settings",
 };
+// The results dropdown's surah heading, which SearchQueryResults renders only
+// once `chapters.length > 0` — so it cannot match before results exist. Matched
+// by prefix because the count is rendered inside it as a localized numeral.
+// Deliberately not a locator for the result row itself: the home page's own
+// surah list renders each surah as a link with the same accessible name, so
+// `getByRole("link", { name: "Al-Fatihah" })` would resolve against the list
+// underneath the dropdown and pass before the search had rendered anything.
+const SEARCH_RESULTS_HEADING: Record<Locale, RegExp> = {
+  ar: /^السور \(/,
+  en: /^Surahs \(/,
+};
 
 /** Sets the theme in localStorage before first paint, mirroring app/utils/storage.ts's JSON.stringify shape. */
 async function withTheme(page: Page, theme: Theme) {
   await page.addInitScript((t) => {
     window.localStorage.setItem("theme", JSON.stringify(t));
   }, theme);
+}
+
+// Blocks until every mounted safha has painted its word rows.
+//
+// `toHaveScreenshot` decides a page has settled by comparing two screenshots
+// 100ms apart — but it disables CSS animations first, which freezes the loading
+// skeleton's `animate-pulse` and makes a half-loaded reader look like a settled
+// one. Its only built-in readiness signal, `document.fonts.ready`, resolves long
+// before the line content arrives (ADR 0034), so without this the captured frame
+// is whichever of {skeleton, text} the runner happened to reach — measured at
+// 4-in-8 runs, and the difference between the two lands right on the diff gate.
+//
+// This asserts content is PRESENT rather than that the skeleton is absent. A
+// `no .animate-pulse` check returns an empty list — and so passes instantly —
+// the moment that class is renamed, silently restoring the flake with no failing
+// test to reveal it. The length guard is the same hazard one level up: `every()`
+// on an empty list is vacuously true. See docs/plans/visual-e2e-testing.md
+// Addendum (2026-08-02).
+async function waitForReaderContent(page: Page) {
+  await page.waitForFunction(() => {
+    const safhas = Array.from(document.querySelectorAll(".fq-quran-safha"));
+    return safhas.length > 0 && safhas.every((el) => el.querySelector(".fq-safha-row"));
+  });
 }
 
 for (const locale of LOCALES) {
@@ -47,6 +81,7 @@ for (const locale of LOCALES) {
       test("single page, short opening page", async ({ page }) => {
         await withTheme(page, theme);
         await page.goto(`/${locale}/pages/1`);
+        await waitForReaderContent(page);
         await expect(page).toHaveScreenshot(`page-1-${suffix}.png`);
       });
     });
@@ -59,6 +94,7 @@ for (const locale of LOCALES) {
         );
         await withTheme(page, theme);
         await page.goto(`/${locale}/pages/2`);
+        await waitForReaderContent(page);
         await expect(page).toHaveScreenshot(`spread-2-3-${suffix}.png`);
       });
     });
@@ -68,16 +104,22 @@ for (const locale of LOCALES) {
         await withTheme(page, theme);
         await page.goto(`/${locale}`);
 
+        // Mobile opens search in a dialog while the nav's own search bar stays
+        // mounted, so both render a results dropdown — every locator below has to
+        // be scoped to the one under test or it hits a strict-mode violation.
+        let scope: Page | Locator = page;
         if (testInfo.project.name === "mobile") {
           await page.getByRole("button", { name: SEARCH_PLACEHOLDER[locale] }).click();
-          const dialog = page.getByRole("dialog");
-          await dialog.getByPlaceholder(SEARCH_PLACEHOLDER[locale]).fill(SEARCH_QUERY[locale]);
-        } else {
-          await page.getByPlaceholder(SEARCH_PLACEHOLDER[locale]).fill(SEARCH_QUERY[locale]);
+          scope = page.getByRole("dialog");
         }
+        await scope.getByPlaceholder(SEARCH_PLACEHOLDER[locale]).fill(SEARCH_QUERY[locale]);
 
-        // Debounced search (500ms) + results render.
-        await page.waitForTimeout(800);
+        // Positive wait on the rendered results rather than a fixed sleep: the
+        // old `waitForTimeout(800)` left only ~300ms after the 500ms debounce for
+        // the request and render, so the screenshot caught either the spinner or
+        // the dropdown depending on timing — 2 of the 4 search snapshots differed
+        // run-to-run at a ratio of ~0.05, well past the diff gate.
+        await expect(scope.getByText(SEARCH_RESULTS_HEADING[locale])).toBeVisible();
         await expect(page).toHaveScreenshot(`search-${suffix}.png`);
       });
     });
