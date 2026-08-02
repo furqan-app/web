@@ -134,7 +134,7 @@ Total: (4 screens × 2 viewports + 1 screen × 1 viewport) × 2 locales × 2 the
 
 - Confirmed with user 2026-07-16: regenerate now rather than defer.
 
-## Addendum (2026-08-02): Baseline PRs don't reliably trigger visual-e2e (Trello #177)
+## Addendum (2026-08-02): Opening-page flake — no readiness gate, and a diff gate too loose to catch it
 
 **Problem:** `update-visual-baselines.yml` uses `GH_TOKEN: ${{ github.token }}` on the `gh pr create` step, so baseline PRs are opened as `github-actions[bot]`. The repo's workflow approval policy (`approval_policy: first_time_contributors`) holds every `github-actions[bot]`-triggered `visual-e2e` run at `action_required`. Whether the test actually runs depends on a human manually approving the held run before the PR is merged.
 
@@ -182,3 +182,126 @@ The `pull_request` event fires normally for `github-actions[bot]` PRs — the GI
 
 - PAT over `workflow_dispatch` dispatch — keeps `visual-e2e` running as a proper PR check with the report comment and gh-pages diff link.
 - Commit author stays `github-actions[bot]` — only the `gh pr create` token changes.
+
+## Addendum (2026-08-02): Opening-page flake — no readiness gate, and a diff gate too loose to catch it
+
+**Type:** bug
+**Status:** implemented — code done and verified; **baseline regeneration still pending** (`update-visual-baselines` must run against this branch before the PR merges).
+**Trello:** [#174](https://trello.com/c/D4f3JMMH) — see the 2026-08-02 correction comment, which supersedes two claims in that card's description.
+**Follow-up ticket:** [#175](https://trello.com/c/BSX7EK3j) (tighten the gate; deliberately a second PR — see Sequencing).
+
+### Summary
+
+`visual-e2e` has failed on effectively every PR since 2026-07-22, always on `quran page 1` / `quran pages 2-3 double-spread` and on a different random subset each run. Two defects compound. **A:** the spec screenshots the reader without waiting for its client-hydrated content, and `toHaveScreenshot` disables animations *before* its stability check — which freezes the loading skeleton's `animate-pulse` and makes a half-loaded page look like a settled one. **B:** `maxDiffPixelRatio: 0.02` is far too loose for a mostly-uniform mushaf page, so the skeleton-vs-painted difference lands exactly on the gate (0.0192) and a month-stale baseline scores only ~2x it. The fix is a positive content wait in the spec plus a full baseline regeneration; the gate tightening is sequenced as a separate PR.
+
+### Root Cause
+
+**A — the spec has no readiness gate.** `e2e/tests/visual.spec.ts` does `page.goto()` then `toHaveScreenshot()`. Reader line content arrives after hydration (`QuranSafha`'s `lines: null` -> skeleton, ADR 0034), and `ReaderPager` mounts six panels. Playwright's stability heuristic is "two consecutive screenshots 100ms apart are identical", but `toHaveScreenshot` disables all CSS animations first — so a static skeleton satisfies it. Instrumented at screenshot time (system Chrome, 1280x800, production build against the e2e fixture):
+
+```
+AT-SHOT  pulses=62  fonts={p1:true,p2:true,p3:true}  status=loaded
+         panels=[{page:1,rows:0,bars:8},{page:2,rows:0,bars:8}, ...]
+AFTER    pulses=0   panels=[{page:1,rows:7},{page:2,rows:6}, ...]
+```
+
+The **fonts are ready and the content is not** — so this is not the ADR 0029 / `fix-quran-page-font-loading.md` font-readiness problem, and no font fix applies. Eight repeat loads produced two distinct screenshots (4/8 each) at *identical* computed state (`fontSize: 32.6087px`, `cardW: 624` in both): the only difference is whether the partner page had painted.
+
+**B — the gate is too loose to distinguish that from a real regression.** A mushaf page is mostly uniform paper, so pixelmatch flags few pixels even when the layout is wholly different. Scored on the real artifacts at the default `threshold: 0.2`:
+
+| pair | flagged ratio |
+|---|---|
+| skeleton frame vs painted frame, same layout | **0.0192** |
+| whole design generation apart (CI actual vs committed baseline) | **0.037-0.061** |
+
+Against a 0.02 gate, defect A's two outcomes straddle the threshold — that is the flake. And because a stale baseline only scores ~2x the gate, `update-visual-baselines` rewrites just the ~3 files that happen to cross on a given run, which is why the 12 opening-page baselines carry four different vintages and four of them still date from 2026-07-12.
+
+**Why the card's "rules out a stale baseline" is wrong.** The `25723 px (ratio 0.03)` line in the trace is Playwright's stability check — the page against *itself* 100ms later — not a comparison with the baseline; `37569 (0.04)` is the only baseline comparison, and `results.json` records `["failed","passed"]`, so attempt 2 passed rather than scoring 0.04. `page-1-en-dark-desktop-linux.png` is md5 `6a61c8b7991beb68a102d1ab1af10b17` from `b2abf10` (2026-07-12) through HEAD, and renders side nav arrows and a ~290px content-sized card — impossible under current code at 1280x800, where `7f26778` (2026-07-22) added `.fq-nav-arrow { display: none !important }` for the 1024-1366px band. The baselines are stale *and* there is real nondeterminism; they are separate facts.
+
+### Decision Tree / Algorithm
+
+Which tests get the readiness wait, and what it waits on:
+
+| Test | What it was waiting on | Wait added |
+|---|---|---|
+| `quran page 1` (desktop + mobile) | nothing — `goto` then screenshot | rows painted in every mounted safha |
+| `quran pages 2-3 double-spread` (desktop) | nothing — `goto` then screenshot | rows painted in every mounted safha |
+| `search results` (desktop + mobile) | fixed `waitForTimeout(800)` | results heading visible, scoped to the searchbar under test |
+| `home / surah list` | nothing needed — fully server-rendered | none |
+| `settings sheet` | fixed `waitForTimeout(600)` for the slide-in | none — see Constraints |
+
+Both waits are **positive** assertions on rendered content:
+
+- **Reader:** every mounted `.fq-quran-safha` contains at least one `.fq-safha-row`, *and* at least one safha exists. Not `document.querySelectorAll(".animate-pulse").length === 0` — a "no bars present" check returns `0` and passes instantly if the skeleton's class is ever renamed, silently restoring the flake. The `length > 0` guard closes the same hazard one level up, since `every()` on an empty list is vacuously true. Every one of the 604 pages has at least one word row, so the predicate is never unsatisfiable.
+- **Search:** the results dropdown's surah heading, which `SearchQueryResults` renders only once `chapters.length > 0`. Deliberately *not* a locator for the result row: the home page's own surah list renders each surah as a link with the same accessible name, so `getByRole("link", { name: "Al-Fatihah" })` resolves against the list underneath the dropdown and passes before the search has rendered anything.
+
+**Search scoping (found during implementation).** On mobile the search dialog opens while the nav's own search bar stays mounted, so *two* `SearchQueryResults` render and any page-level locator hits a Playwright strict-mode violation ("resolved to 2 elements"). The test now derives a `scope` (`page` on desktop, `page.getByRole("dialog")` on mobile) once, and both the fill and the wait go through it.
+
+### Verified Test Cases
+
+| Scenario | Measured |
+|---|---|
+| 8 loads via the ungated path (`goto` -> screenshot) | 2 distinct images, 4/8 each — skeleton vs painted partner page |
+| 3 runs through Playwright's own `toHaveScreenshot` assertion, warm | run-to-run diff **0.0** on all 12 opening-page shots |
+| 4 runs through the assertion at 8x CPU throttle + 300ms latency | run-to-run diff **0.0** on all 4 desktop shots |
+| skeleton frame vs painted frame, scored at `threshold: 0.2` | **0.0192** — against a 0.02 gate |
+| CI `actual` vs committed baseline, en-dark + ar-light desktop | **0.0612 / 0.0560** (Playwright reported 0.0367 / 0.0328; it also excludes anti-aliased pixels, which this re-scoring does not) |
+| no-JS render (pure SSR + CSS) at 1280x800 | `fontSize: 24.8px`, `data-safha-view: null` — confirms the 24.8px arm is the pre-tablet-band baseline, not a runtime state |
+
+Playwright's own assertion never produced run-to-run variance locally, warm or throttled. That is the argument for tightening the gate in a follow-up rather than loosening the fix: the floor is genuinely zero, so 0.002 is affordable once CI confirms it.
+
+**After implementation** — same 4 reader cases captured 10x each, both ways, under identical conditions. A green suite alone would not have shown this, because locally the flake only surfaces through the ungated capture path:
+
+| Capture path | Distinct images / 10 runs | Captures containing skeleton bars |
+|---|---|---|
+| ungated (`goto` -> `fonts.ready` -> screenshot) | 2, 2, 2, 1 | **40 / 40** |
+| gated (`goto` -> `waitForReaderContent` -> screenshot) | 1, 1, 1, 1 | **0 / 40** |
+
+Three consecutive full-suite runs (36 snapshots each) through the real assertion: **0 of 72 pairwise comparisons nonzero, worst ratio 0.00000.**
+
+**The search flake was found by this verification, not by the investigation** — the earlier 3-run check only diffed the opening pages. `search-ar-dark-desktop` and `search-ar-light-desktop` differed run-to-run at **0.0498 / 0.0568**, capturing the spinner instead of the results dropdown. Both would have exceeded even the current 0.02 gate, and the baseline regeneration in this PR would have frozen a spinner into a baseline. Fixed here rather than deferred, on that basis (user, 2026-08-02).
+
+### Files to Change
+
+- `e2e/tests/visual.spec.ts` — add a `waitForReaderContent` helper and call it in the `quran page 1` and `quran pages 2-3 double-spread` tests, after `page.goto` and before `toHaveScreenshot`. Replace the search test's `waitForTimeout(800)` with a positive wait on `SEARCH_RESULTS_HEADING`, and hoist the mobile/desktop `scope` locator so the fill and the wait share it. Fix the header comment's stale "ADR 0018" reference. Comment both waits with *why* they cannot be absence checks.
+- `playwright.config.ts` — fix the same stale "ADR 0018" reference; 0018 is the Sentry Slack relay webhook, visual e2e is **ADR 0022**. `maxDiffPixelRatio` stays at `0.02` in this PR (see Sequencing).
+- `e2e/tests/visual.spec.ts-snapshots/**` — regenerate **all** baselines via the `update-visual-baselines` workflow after the spec change merges. Not only the four pre-tablet-band ones: every current baseline was captured through the ungated path, so none is trustworthy.
+- `docs/architecture/adr/0022-visual-e2e-testing.md` — addendum recording the readiness invariant and the gate measurements.
+- `docs/architecture/DECISIONS.md` — two constraints under "Visual E2E Testing".
+
+### Sequencing
+
+Two PRs, deliberately.
+
+1. **This PR:** readiness wait + the ADR-reference comment fix + full baseline regeneration, gate left at `0.02`.
+2. **[#175](https://trello.com/c/BSX7EK3j), after 2-3 PRs have run green:** `maxDiffPixelRatio` -> `0.002`.
+
+Tightening in the same PR would mean the new value never runs against a known-good baseline before merge. If CI runner anti-aliasing drifts between the regeneration run and later runs, the suite goes red for everyone with no way to separate runner drift from a real regression.
+
+### Constraints
+
+- The readiness wait must be a positive assertion on rendered content. Any "absence of loading state" form (no `.animate-pulse`, no `[data-loading]`) passes vacuously the moment the class or attribute is renamed, and re-introduces the flake with no failing test to catch it.
+- Do not treat this as a font-readiness bug. `document.fonts.status` was `loaded` and all three page fonts reported `check() === true` at the moment the skeleton was captured — the late resource is the page's line content, not its font. ADR 0029, `fix-safha-swipe-flicker.md`, and `fix-quran-page-font-loading.md` are all about the font path and none of their mechanisms apply.
+- Baselines still go only through the `workflow_dispatch` job, never a locally-committed PNG (existing ADR 0022 constraint, unchanged) — the local runs in this investigation used a throwaway config writing to a scratch directory and the committed baselines were never touched.
+- Do not raise `expect.toHaveScreenshot.threshold` (the per-pixel YIQ tolerance) from its 0.2 default in either PR. It was considered and rejected: it widens exposure to font-rendering differences between CI runner images, which is a different and noisier failure mode than the pixel-count gate.
+- Do not add the *reader* wait to the home/search/settings tests — those screens have no `.fq-quran-safha`, so its predicate would never be satisfied and every one of those tests would time out. The search test needs its own predicate, on its own results markup.
+- Any locator in the search test must be scoped to the searchbar under test. Mobile opens search in a dialog while the nav's own searchbar stays mounted, so two `SearchQueryResults` render and a page-level locator fails with a Playwright strict-mode violation. This is why the test derives `scope` once and routes both the fill and the wait through it.
+- The settings-sheet test's `waitForTimeout(600)` is deliberately left alone. It waits on a CSS slide-in, which `toHaveScreenshot` disables outright before its own stability check, and it measured zero run-to-run variance across three full suite runs — so there is no evidence it is unsound and no reason to churn it in a bugfix PR.
+- Do not "fix" this by raising `retries` or by quarantining the two opening-page specs. Retries only re-roll the same coin, and quarantine removes the only coverage the reader has.
+
+### What NOT to Do
+
+- Do not chase a runtime layout-band flip between `--fq-word-base` (24.8px) and `--fq-t-word` (32.6px). It was investigated at length and does not exist: 12 instrumented loads reported `fontSize: 32.6087px`, `mqTablet: true`, `data-safha-view: "double"` every single time, with zero intermediate states. The 24.8px arm comes from baselines predating `7f26778` (2026-07-22).
+- Do not regenerate baselines *before* the readiness wait lands — the regeneration would capture the same coin flip and bake a skeleton into a baseline.
+- Do not modify `QuranSafha`, `ReaderPager`, or any production component for this. The defect is entirely in the test harness; the skeleton behaviour under test is correct and deliberate (ADR 0034).
+- Do not use `page.waitForLoadState("networkidle")` as the gate. The reader keeps issuing requests after the spread has painted (neighbour-panel JSON, marks, reciters, session), so it is both slower and not a signal about the thing being screenshotted.
+
+### Decisions Made
+
+- **Positive content wait, not skeleton-absence** — chosen so a class rename fails loudly rather than silently disabling the gate.
+- **Gate tightening split into a second PR** (user, 2026-08-02) — so the new value is validated against a known-good baseline before it can block anyone.
+- **`maxDiffPixelRatio` -> 0.002, `threshold` unchanged at 0.2** (user, 2026-08-02) — measured run-to-run floor is 0.0, so the tighter pixel-count gate is affordable; widening the per-pixel colour tolerance is not, because it invites runner-image font drift.
+- **Regenerate all 36 baselines, not just the 4 stale ones** — every existing baseline was produced through the ungated capture path.
+- **Search test fixed in this PR rather than deferred** (user, 2026-08-02) — same root cause (a fixed sleep standing in for a readiness signal), and it had to land *before* the regeneration or a spinner would have been frozen into a baseline. Widened this plan's scope in place rather than opening an addendum, since the branch is still open.
+- **Search waits on the results heading, not the result row** — the home page's surah list renders links with the same accessible name, so a row locator would resolve against the list beneath the dropdown and pass early. The heading only exists once `chapters.length > 0`.
+- **No production component touched to make the search test targetable.** A `data-testid` on `SearchQueryResults` was considered and rejected: the heading gives an unambiguous locator with a loud (timeout) failure mode, so the plan's "test-harness only" constraint holds.
+- **Trello #174's description left intact, correction appended as a comment** (user, 2026-08-02) — preserves the original hypothesis and how it was misread.
