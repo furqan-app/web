@@ -16,6 +16,9 @@ import { cn } from "@/lib/utils";
 // (isOverlayMode/overlayVisible), same toggle, same transform pattern as
 // Nav.tsx — see docs/plans/tablet-nav-overlay.md Addendum "Sync voice panel
 // with nav overlay".
+// At >=1367px + >=800px (Desktop Reading Group), globals.css transforms
+// fq-recitation-bar-rail into a narrow vertical rail fixed to the screen-right.
+// See docs/plans/recitation-bar-vertical-rail.md.
 export const RecitationPlayerBar = () => {
   const {
     status,
@@ -59,10 +62,9 @@ export const RecitationPlayerBar = () => {
         // primary text specifically (dark-theme-only white override).
         "fq-recitation-bar fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-background/75 backdrop-blur-md",
         // Reader-only marker: at >=1367px and >=800px tall, globals.css turns the
-        // bar into a floating card matched to the spread's measured width. Off the
-        // reader route there is no spread to match, so the bar keeps its
-        // full-width form.
-        isOnReaderRoute && "fq-recitation-bar-reader",
+        // bar into a vertical rail fixed to the screen-right. Off the reader route
+        // there is no spread to anchor to, so the bar keeps its full-width form.
+        isOnReaderRoute && "fq-recitation-bar-rail",
         isOverlayMode && "transition-transform duration-300",
         isOverlayMode && !overlayVisible && "translate-y-full",
       )}
@@ -92,11 +94,11 @@ export const RecitationPlayerBar = () => {
           )}
         </button>
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-foreground">
+        <div className="fq-recitation-info min-w-0 flex-1">
+          <p className="fq-recitation-reciter-name truncate text-sm font-medium text-foreground">
             {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
           </p>
-          <p className="truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
+          <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
         </div>
 
         <button

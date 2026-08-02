@@ -889,60 +889,46 @@ body,
     }
   }
 
-  /* Reading group: spread above, floating recitation bar below, centred together.
-     Height-gated as well as width-gated. The card is content-sized and the reading
-     font is keyed to the VIEWPORT (max(24px, 2.9vh), ADR 0004), so the card cannot
-     shrink to make room — reserving space for the bar has to come out of the
-     column's spare height, and below ~794px tall there isn't enough (measured:
-     634px card + 104px reservation + 56px nav). Under the gate, desktop keeps the
+  /* Reading group: vertical rail beside the spread. Height-gated as well as
+     width-gated (same gate as before). Below either threshold, desktop keeps the
      full-width bottom-edge bar it has always had. Never close this gap by touching
-     baseScaleViewHeight — that is the reading size (ADR 0004/0005). */
+     baseScaleViewHeight — that is the reading size (ADR 0004/0005).
+     See docs/plans/recitation-bar-vertical-rail.md. */
   @media (min-width: 1367px) and (min-height: 800px) {
-    .fq-reader-outer {
-      /* 60px bar + 24px bottom offset + 20px breathing gap. !important beats the
-         JSX `pb-4` utility, same reason as the tablet block below. */
-      padding-bottom: 104px !important;
-    }
-
-    /* Floating bar, matched to the spread. Width and centre are published by
-       QuranSpread's ResizeObserver because the card is content-sized and moves
-       with the font-scale control — no CSS value tracks it. The fallback keeps a
-       sane bar on reader routes that don't mount the pager. The spread's centre is
-       ~8px off the viewport centre (`md:ps-14 md:pe-10`), which is why this is a
-       measured centre and not `left: 50%`. The !important terms beat the JSX
-       `inset-x-0` / `bottom-0` utilities — the utility layer wins over @layer base
-       by source order, same as the tablet block below. */
-    .fq-recitation-bar-reader {
-      right: auto !important;
-      left: var(--fq-spread-center, 50%) !important;
-      transform: translateX(-50%);
-      width: var(--fq-spread-width, min(860px, 100vw - 96px));
-      min-height: 60px;
-      bottom: 24px !important;
-      /* Width/style only — the colour stays the JSX `border-border/50` utility,
-         which wins on source order anyway. Same for the background: light and gold
-         keep the translucent glass that matches Nav (a prior correction round);
-         only dark overrides it below, because translucency over (7,15,23) produces
-         no lift at all. */
-      border-width: 1px;
+    /* Rail: fixed right edge, vertically centred. !important terms beat the JSX
+       `inset-x-0` / `bottom-0` utilities (utility layer wins over @layer base on
+       source order). border-width !important also beats the JSX `border-t` utility
+       so all four sides get 1px. */
+    .fq-recitation-bar-rail {
+      left: auto !important;
+      bottom: auto !important;
+      right: 24px !important;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 56px;
+      border-width: 1px !important;
       border-style: solid;
       border-radius: calc(var(--radius) + 4px);
       box-shadow: var(--reader-chrome-bar-shadow);
     }
-    /* The bar's BACKGROUND stays theme-scoped, unlike the nav arrows'. This is a
-       real medium difference, not a missed de-duplication: light and gold read as
-       translucent glass over the page, which produces no lift at all over
-       (7,15,23), so dark needs an opaque face. It also cannot be token-driven from
-       the base layer — a plain `background-color` here loses to the JSX utility on
-       source order, and only the `:root.theme-*` form has the specificity to win. */
-    :root.theme-dark .fq-recitation-bar-reader {
+    /* Dark needs an opaque face — translucency over (7,15,23) produces no lift.
+       `:root.theme-dark` specificity (0,2,0) beats the JSX `bg-background/75`
+       utility (0,1,0) without needing !important. */
+    :root.theme-dark .fq-recitation-bar-rail {
       background-color: var(--reader-chrome-face);
       border-color: var(--reader-chrome-rim);
     }
-    /* The bar's inner row is capped at max-w-3xl for the full-width form; inside
-       the floating bar the bar itself is the cap, so let the row fill it. */
-    .fq-recitation-bar-reader > div {
+    /* Rail inner column: vertical stack, centred, overrides the horizontal layout. */
+    .fq-recitation-bar-rail > div {
       max-width: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 0.375rem;
+    }
+    /* Info div: not flex-1 in rail, text centred. */
+    .fq-recitation-bar-rail .fq-recitation-info {
+      display: none;
     }
   }
 
