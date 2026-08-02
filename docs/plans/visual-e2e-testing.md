@@ -188,7 +188,7 @@ The `pull_request` event fires normally for `github-actions[bot]` PRs — the GI
 **Type:** bug
 **Status:** implemented — code done and verified; **baseline regeneration still pending** (`update-visual-baselines` must run against this branch before the PR merges).
 **Trello:** [#174](https://trello.com/c/D4f3JMMH) — see the 2026-08-02 correction comment, which supersedes two claims in that card's description.
-**Follow-up ticket:** [#175](https://trello.com/c/BSX7EK3j) (tighten the gate; deliberately a second PR — see Sequencing).
+**Follow-up ticket:** [#175](https://trello.com/c/BSX7EK3j) (tighten the gate; implemented).
 
 ### Summary
 
