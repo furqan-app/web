@@ -15,7 +15,7 @@ export default defineConfig({
     ? [["html", { open: "never" }], ["json", { outputFile: "playwright-report/results.json" }]]
     : "list",
   expect: {
-    toHaveScreenshot: { maxDiffPixelRatio: 0.02 },
+    toHaveScreenshot: { maxDiffPixelRatio: 0.002 },
   },
   use: {
     baseURL: "http://localhost:3000",
