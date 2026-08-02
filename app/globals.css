@@ -615,7 +615,8 @@ body,
          lines flush; a real `gap` gives every line the same breathing room (matching
          the header/footer `--fq-line-gap` margins) and `flex-start` lets any surplus
          on the shorter, items-stretch'd page collect at the bottom instead of
-         stretching the gaps unevenly. See Addendum 3. */
+         stretching the gaps unevenly. See Addendum 3. Viewports with real slack to
+         claim override this to `space-between` — see the min-height:800px block. */
       justify-content: flex-start;
       gap: var(--fq-line-gap);
       align-items: center;
@@ -647,6 +648,73 @@ body,
       justify-content: flex-start !important;
       gap: var(--fq-line-gap);
       padding-block: 0.2em !important;
+    }
+  }
+
+  /* ---- Reader rhythm: leftover height becomes line gaps (Trello #172) -------
+     The reader card is content-height at md+, so on a tall viewport the space the
+     page does not need sat as empty background above and below the book (measured
+     142px at 1440x900) while the lines stayed at the flat --fq-line-gap floor. The
+     card now stretches to the reader's full height band and `space-between` hands
+     that surplus to the inter-line gaps — the same model mobile has used since
+     ADR 0011, and what makes mobile read like a printed mushaf.
+
+     Gated on min-height:800px because that surplus is what pays for it: below that
+     the 15 vh-derived lines already fill the band, so stretching would only push
+     the card under the fixed recitation bar. Short viewports keep the flex-start +
+     floor-gap layout unchanged.
+
+     `gap` stays under `space-between` as the FLOOR: flexbox only ever distributes
+     positive free space, so a page taller than the band degrades to flex-start with
+     the floor intact rather than overlapping lines. */
+  @media (min-width: 768px) and (min-height: 800px) {
+    .fq-reader-outer > .fq-reader-spread-container {
+      flex: 1 1 auto;
+      min-height: 0;
+      align-items: stretch;
+    }
+    /* Stretch, not percentages: `height: 100%` inside a flex-grown box resolves to
+       `auto` (DECISIONS.md — the same trap the earlier fixed-height attempt hit), so
+       the height has to arrive by `align-items: stretch` at every level. Dropping
+       these explicit heights is what lets the stretch pass through; below the page
+       wrapper the box IS definitely sized, so its own `h-full` children resolve. */
+    .fq-reader-spread-container > .fq-spread-col,
+    .fq-spread-col > .fq-spread,
+    .fq-spread > div {
+      height: auto;
+    }
+    /* Reserve the horizontal recitation bar's band. On reader routes that bar is a
+       permanent fixture (RecitationPlayerBar renders even when idle, so its play
+       button can start the current safha) and it is `fixed`, so a stretched spread
+       would run underneath it. 76px = the 57px bar + clearance. The desktop reading
+       group turns the bar into a right-edge rail and gives this band back; the
+       tablet band is full-bleed and already zeroes it. !important beats `pb-4`. */
+    .fq-reader-outer {
+      padding-bottom: 76px !important;
+    }
+    .fq-spread .fq-quran-safha {
+      justify-content: space-between;
+    }
+    /* Opening pages stay centred as a block — `.fq-safha-center` above already says
+       so, repeated here only because this block's rule would otherwise win on
+       source order. */
+    .fq-spread .fq-quran-safha.fq-safha-center {
+      justify-content: center;
+    }
+    /* The skeleton must mirror the real distribution or the lines jump when the
+       page font lands. */
+    .fq-spread .fq-skeleton-lines {
+      justify-content: space-between !important;
+    }
+  }
+
+  /* Small-laptop / portrait-tablet band (768–1023px): same stretch as above, but it
+     needs its own desk margin — the desktop group's lives at ≥1367px and the
+     1024–1366px band is deliberately full-bleed, so without this the stretched card
+     butts against the nav. Kept small (16px): every px here comes out of the gaps. */
+  @media (min-width: 768px) and (max-width: 1023px) and (min-height: 800px) {
+    .fq-reader-outer > .fq-reader-spread-container {
+      padding-block: 16px;
     }
   }
 
@@ -895,6 +963,21 @@ body,
      baseScaleViewHeight — that is the reading size (ADR 0004/0005).
      See docs/plans/recitation-bar-vertical-rail.md. */
   @media (min-width: 1367px) and (min-height: 800px) {
+    /* No bottom bar to clear at this size — the player is the right-edge rail — so
+       the band the rhythm block reserves goes back to the page, and the book keeps
+       a thin desk margin instead of touching the nav and the viewport floor. */
+    .fq-reader-outer {
+      padding-bottom: 0 !important;
+    }
+    .fq-reader-outer > .fq-reader-spread-container {
+      padding-block: 64px;
+    }
+    /* Wider paper around the same line. The text block cannot be stretched to fill
+       a wider page (a mushaf line is justified by the font's own kashida, never by
+       word spacing — DECISIONS.md), so the extra width goes to the page margin. */
+    .fq-spread .fq-content {
+      padding-inline: 56px;
+    }
     /* Rail: fixed right edge, vertically centred. !important terms beat the JSX
        `inset-x-0` / `bottom-0` utilities (utility layer wins over @layer base on
        source order). border-width !important also beats the JSX `border-t` utility
