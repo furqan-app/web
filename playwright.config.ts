@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Visual regression suite — see docs/plans/visual-e2e-testing.md and ADR 0018.
+// Visual regression suite — see docs/plans/visual-e2e-testing.md and ADR 0022.
 // Run via `npm run e2e:test` (loads .env.e2e, so the app under test points at
 // the dedicated e2e-only databases from compose.e2e.yml, never dev's DBs).
 export default defineConfig({
