@@ -104,7 +104,7 @@ export const QuranSpread = ({
   const leftIsPartner = leftPage.pageId !== currentPageId;
 
   return (
-    <div className="flex-1 min-w-0 flex justify-center items-center md:h-full md:items-stretch">
+    <div className="fq-spread-col flex-1 min-w-0 flex justify-center items-center md:h-full md:items-stretch">
       <NavigationArrow href={nav.prevHref} isRTL={isRTL} isNext={false} onNavigate={onNavigate} />
       {/* `.fq-spread` (static) scopes every CSS display/cap/margin gate to cards
           inside a spread, so the standalone QuranSafha in QuranPage is unaffected.
