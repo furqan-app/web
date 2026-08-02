@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-07-07
-**Status:** implemented
+**Status:** implemented (see Addendum 2026-08-02 for open bug fix)
 
 ## Summary
 
@@ -133,6 +133,55 @@ Total: (4 screens × 2 viewports + 1 screen × 1 viewport) × 2 locales × 2 the
 ### Decisions Made
 
 - Confirmed with user 2026-07-16: regenerate now rather than defer.
+
+## Addendum (2026-08-02): Opening-page flake — no readiness gate, and a diff gate too loose to catch it
+
+**Problem:** `update-visual-baselines.yml` uses `GH_TOKEN: ${{ github.token }}` on the `gh pr create` step, so baseline PRs are opened as `github-actions[bot]`. The repo's workflow approval policy (`approval_policy: first_time_contributors`) holds every `github-actions[bot]`-triggered `visual-e2e` run at `action_required`. Whether the test actually runs depends on a human manually approving the held run before the PR is merged.
+
+**Investigation (2026-08-02):** Checked all four runs from the card via `gh api` + `gh run list`. The "inconsistency" across runs:
+
+| Branch | Date | visual-e2e outcome | Why |
+|---|---|---|---|
+| `update-baselines/main-29189869375` | 2026-07-12 | ran, success | `usef` manually approved the held run (triggering_actor: `usef`) |
+| `update-baselines/main-29454306352` | 2026-07-16 | never ran | nobody approved; PR merged with run stuck at `action_required` |
+| `update-baselines/main-30647626956` | 2026-07-31 | never ran | nobody approved; same |
+| `update-baselines/fix-174-...-30723287247` | 2026-08-01 | ran, success | `taha7` manually approved (triggering_actor: `taha7`) |
+
+The `pull_request` event fires normally for `github-actions[bot]` PRs — the GITHUB_TOKEN restriction documented by GitHub ("GITHUB_TOKEN events do not create new workflow runs") does not apply to `pull_request` events from PRs opened by a bot. What blocks the run is the approval gate, not a missing event.
+
+**Root cause:** `approval_policy: first_time_contributors` treats `github-actions[bot]` as an external contributor and gates every run it triggers.
+
+**Fix:** On the `gh pr create` step, replace `GH_TOKEN: ${{ github.token }}` with `GH_TOKEN: ${{ secrets.FURQAN_ACTIONS_TOKEN }}`. When opened with a PAT owned by a repo member (taha7), the PR author is not `github-actions[bot]` and the approval gate does not apply — `visual-e2e` runs automatically.
+
+**Human prerequisite (cannot be automated):** Create a fine-grained PAT scoped to `furqan-app/web` with `contents: write` + `pull-requests: write`, then store it as the repo secret `FURQAN_ACTIONS_TOKEN`. The implementation step below is blocked until this secret exists.
+
+### Decision Tree
+
+| PR opened with | PR author | Approval gate applies? | visual-e2e runs? |
+|---|---|---|---|
+| `github.token` | `github-actions[bot]` | Yes (`first_time_contributors`) | Only if a human approves the held run |
+| Fine-grained PAT (taha7) | `taha7` | No (repo member) | Yes, automatically |
+
+### Files to Change
+
+- `.github/workflows/update-visual-baselines.yml` — on the `Commit updated baselines` step, change `GH_TOKEN: ${{ github.token }}` to `GH_TOKEN: ${{ secrets.FURQAN_ACTIONS_TOKEN }}`.
+
+### Constraints
+
+- The PAT must have `contents: write` + `pull-requests: write` — same as what `github.token` currently provides via the job-level `permissions` block. No other scopes are needed.
+- Do not change the `git config user.name` / `git config user.email` lines — the commit author (`github-actions[bot]`) is separate from the PR author (PAT owner) and can stay as-is.
+- Do not widen the repo's `approval_policy` to `all_contributors` or `none` as an alternative — that weakens protection against untrusted fork PRs across the whole repo.
+- The PAT is a personal token tied to taha7's account. If the PAT is revoked or expires, baseline PRs revert to the broken behavior silently. Rotation or renewal is a manual step.
+
+### What NOT to Do
+
+- Do not use `workflow_dispatch` + explicit dispatch from within `update-visual-baselines.yml` as the fix — a dispatched `visual-e2e` run would not be attached to the PR as a check, breaking the report-comment flow (no `github.event.pull_request.number`).
+- Do not use `repository_dispatch` for the same reason.
+
+### Decisions Made
+
+- PAT over `workflow_dispatch` dispatch — keeps `visual-e2e` running as a proper PR check with the report comment and gh-pages diff link.
+- Commit author stays `github-actions[bot]` — only the `gh pr create` token changes.
 
 ## Addendum (2026-08-02): Opening-page flake — no readiness gate, and a diff gate too loose to catch it
 
