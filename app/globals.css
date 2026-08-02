@@ -409,6 +409,7 @@ body,
       --fq-heading-h: calc(var(--fq-mobile-font) * 2.4) !important; /* surah glyph + Bismillah internal block */
     }
     .fq-quran-safha {
+      --fq-safha-font: var(--fq-mobile-font);
       font-size: var(--fq-mobile-font);
       flex: 1 1 0%;
       min-height: 0;
@@ -599,6 +600,9 @@ body,
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
      Mirrors the `@media (max-width: 767px)` mobile block above. */
   @media (min-width: 768px) {
+    .fq-quran-safha {
+      --fq-safha-font: var(--fq-word-base);
+    }
     .fq-quran-safha.fq-tajweed {
       font-size: calc(var(--fq-word-base) * 0.85);
     }
@@ -769,6 +773,7 @@ body,
       --fq-dv-word: calc((50vw - 136px) / 14.7);
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
+      --fq-safha-font: min(var(--fq-word-base), var(--fq-dv-word));
       font-size: min(var(--fq-word-base), var(--fq-dv-word));
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
@@ -1255,6 +1260,7 @@ body,
       --fq-t-word: min(calc((50vw - 16px) / 14.7), calc((100dvh - 50px) / 23));
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
+      --fq-safha-font: var(--fq-t-word);
       font-size: var(--fq-t-word);
       /* Grow to fill the card, then distribute the 15 lines evenly across that
          height (space-between) so they span the full page like a printed mushaf
