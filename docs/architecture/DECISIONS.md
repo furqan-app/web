@@ -292,17 +292,19 @@ const user = extractUser(request); // { id, email, ... }
 
 ## Desktop Reading Group (≥1367px)
 
-**Decision:** At `≥1367px` wide **and** `≥800px` tall, the reader is laid out as one vertically-centred group — spread on top, floating recitation bar below — with circular navigation buttons beside the paper. The bar's width and centre are **measured at runtime**: `QuranSpread` observes its own `.fq-spread` element and publishes `--fq-spread-width` / `--fq-spread-center` on `<html>`, which the bar consumes. Below either threshold, desktop keeps the full-width bottom-edge bar.
+**Decision:** At `≥1367px` wide **and** `≥800px` tall, the reader places a fixed vertical rail on the screen-right edge (`right: 24px`, vertically centred) containing the recitation controls (play/pause, verse key, settings, stop). The mushaf spread stays visually centred with no asymmetric offset — the rail overlays the existing lateral whitespace (spread is capped at 860px, leaving ≥253px per side at 1367px). Below either threshold, desktop keeps the full-width bottom-edge bar. This replaces the previous "floating centred card below the spread" layout (see `docs/plans/recitation-bar-vertical-rail.md`).
 
-**Rationale:** The card is content-sized and its width tracks the user's font-scale control, so no CSS value can match it. And the reading font is keyed to the viewport (`max(24px, 2.9vh)`, ADR 0004), so the card cannot shrink to make room for the bar — the space has to come from the column's spare height, which runs out below ~794px tall (634px card + 104px reservation + 56px nav).
+**Rationale:** Moving the bar off the bottom edge reclaims the 104px bottom padding previously reserved for it, yielding +0.13–0.15 em of inter-line gap at every desktop/large-tablet band (pairs with the reader rhythm ticket #172). The rail is fixed-right at a viewport offset and does not need to know the spread's dimensions.
+
+**Retired contract — `--fq-spread-width` / `--fq-spread-center`:** These custom properties were formerly published by `QuranSpread`'s `useSpreadMetrics` ResizeObserver hook and consumed by the floating bar to match the spread's measured width. Both the hook and its consumers have been removed (2026-08-02). Do not re-add them without a new justification — the bar no longer needs the spread's dimensions.
 
 **Constraints:**
-- The measurement writes directly to `documentElement.style` — never React state. The pager mounts three panels; re-rendering the reader tree on a resize tick is the same trap ADR 0028 documents for the recitation subscription.
-- Publish the centre only when it falls inside the viewport. The pager parks its neighbour panels a full viewport to either side, and an off-screen panel writing last puts the bar off-axis.
-- Listen for `window resize` as well as `ResizeObserver`: a window resize re-centres the spread **without changing its size**, so the observer never fires and the centre goes stale (measured 9px off).
+- The rail is desktop-only (≥1367px + ≥800px). Tablet (1024–1366px) has no lateral space (spread fills edge-to-edge); it keeps the full-width bottom bar with nav-overlay sync unchanged.
+- Rail position is fixed-right regardless of locale (AR/EN). The mushaf spread layout is not adjusted.
 - Never widen the height gate by reducing `baseScaleViewHeight` or any font math — that is the reading size (ADR 0004), and changing it also requires regenerating the `tailwindFontUtility` safelist (ADR 0005).
 - Nav arrows need `align-self: center` (the parent is `items-stretch` at `md+`) and ≥24px inline margin: the sheet stack peeks 16px past the card's outer edge, and at 0 margin the arrow sat on top of it.
-- Layout declarations on the bar need `!important` to beat the JSX `inset-x-0` / `bottom-0` utilities. Colour declarations that a utility already sets (its background, its border colour) will silently lose on source order — do not leave them in as dead code; either raise specificity deliberately or drop them.
+- Layout declarations on the rail need `!important` to beat the JSX `inset-x-0` / `bottom-0` utilities. Colour declarations that a utility already sets will silently lose on source order — raise specificity deliberately or drop them.
+- `--reader-chrome-bar-shadow` is `none` in dark theme; the rail must honour this — do not add a shadow override. Verify by sampling rendered pixels in all three themes.
 
 ---
 
