@@ -183,6 +183,14 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Nav Z-Index Invariant
+
+**Decision:** The `<nav>` element must carry `relative z-10` in its base `className` (non-overlay mode). `backdrop-blur-md` creates a CSS stacking context with `z-index: auto`, and reader content (specifically `.fq-reader-pager-strip` with `transform: translateX(-100%)`) creates its own `z-index: auto` stacking context later in the DOM — painting over the nav and hiding the search dropdown. `relative` makes z-index apply to the nav; `z-10` ensures the nav's stacking context ranks above reader content (z:auto = 0) without competing with RecitationPlayerBar (z-40) or Radix portals. In overlay mode (`fixed top-0 inset-x-0 z-50`) this is already satisfied and unchanged.
+
+**Constraint:** Do not remove `relative z-10` from the nav's base class. Doing so silently hides the desktop search dropdown on all reader pages.
+
+---
+
 ## Sidebar Trigger Architecture
 
 **Decision:** `Nav` (global, `app/[locale]/layout.tsx`) and `Sidebar` (pages-only, `app/[locale]/pages/layout.tsx`) live at different layout levels and cannot share state via props. `SidebarContext` (`app/contexts/SidebarContext.tsx`), provided in the locale layout, bridges them: `Nav` owns the trigger button and calls `setOpen(true)`; `Sidebar`'s `Sheet` is a controlled component reading `open`/`setOpen` from the same context. The trigger is visible at all breakpoints, gated only by `pathname.includes("/pages/")` (trailing slash required — a bare `"/pages"` substring match false-positives on any route containing that string, e.g. a hypothetical `/pages-list`).
