@@ -1292,7 +1292,11 @@ body,
      classList toggling from RecitationContext's timeupdate handler, not React
      state/className, since it fires ~4x/second and re-rendering the word tree
      at that rate is a real perf risk. Plain CSS (not a Tailwind utility
-     string) because there's no JSX call site for Tailwind's JIT to scan. */
+     string) because there's no JSX call site for Tailwind's JIT to scan.
+     The class lands on every element matching the recited word's
+     `[data-fq-word]`, which is normally more than one — the pager mounts the
+     same page in two panels and hides one of them, so only the visible match
+     shows (ADR 0021's 2026-08-03 addendum). */
   .fq-recitation-active-word {
     background-color: hsl(var(--primary) / 0.22);
     border-radius: 0.2em;
