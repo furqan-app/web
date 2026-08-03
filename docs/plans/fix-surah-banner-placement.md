@@ -2,7 +2,7 @@
 
 **Type:** bug  
 **Date:** 2026-07-07  
-**Status:** implemented (Addendum 8 — blocked on the QUL licence gate before merge)  
+**Status:** implemented  
 **Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf  
 **Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread  
 **Trello #133:** https://trello.com/c/eFWXR9ca — surah name frame, full text width (Addendum 8)  
@@ -445,3 +445,61 @@ Measured after the fix (page 151): frame 14.42em at 390×844 / 768×1024 / 1440�
 - The banner's **layout** slot is 1em; its **ink** is 1.81em. These are deliberately different.
 - The cartouche interior stays unfilled so `--mushaf-paper` shows through, as in print. This removes the `hsl(var(--card))` body fill.
 - Full width beats exact ink height, on the evidence of the measured KFGQPC layout.
+
+---
+
+## Addendum 9 — Fix frame width in tajweed mode (Trello #179)
+
+**Date:** 2026-08-02
+**Branch:** `bug/179-surah-frame-tajweed-width`
+**Trello #179:** https://trello.com/c/PDRUYUAr/179-surah-frame-in-tajweed-is-not-full-width
+
+### Root cause
+
+`SurahBannerLine`'s outer div has `width: ${QURAN_MAX_LINE_WIDTH_RATIO}em` (= `14.42em`). The `em` unit resolves against the **parent's computed `font-size`** — `.fq-quran-safha`. In tajweed mode, CSS overrides that `font-size` to a scaled-down value:
+
+- Mobile (`≤767px`): `font-size: calc(var(--fq-mobile-font) * 0.88)`
+- Desktop single (`≥768px`): `font-size: calc(var(--fq-word-base) * 0.85)`
+- Desktop double: `calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.85)`
+- Tablet double: `calc(var(--fq-t-word) * 0.85)`
+
+So in tajweed mode `14.42em` resolves to `14.42 × 0.85 × base ≈ 12.26 × base` on desktop — **83% of the intended width**. The card is still `≥ 14.7 × base` wide, so the frame is visibly narrower than the text column.
+
+In non-tajweed mode `.fq-quran-safha`'s font-size IS the base, so `14.42em` was correct there.
+
+### Fix
+
+Introduce a `--fq-safha-font` CSS custom property on `.fq-quran-safha` at each breakpoint, holding the **base reading font before any mode-specific scaling**. The tajweed overrides only touch `font-size`, not this property, so it remains stable across modes.
+
+Replace `width: ${QURAN_MAX_LINE_WIDTH_RATIO}em` in the JSX with `width: calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))`.
+
+### Decision tree
+
+| Breakpoint | `--fq-safha-font` value | Frame width |
+|---|---|---|
+| Mobile (`≤767px`) | `var(--fq-mobile-font)` | `14.42 × --fq-mobile-font` |
+| Desktop single (`≥768px`) | `var(--fq-word-base)` | `14.42 × --fq-word-base` |
+| Desktop double (`≥1024px` + `data-safha-view=double`) | `min(var(--fq-word-base), var(--fq-dv-word))` | `14.42 × min(base, dv-cap)` |
+| Tablet double (`1024–1366px` + `data-safha-view=double`) | `var(--fq-t-word)` | `14.42 × --fq-t-word` |
+
+### Verified cases
+
+| Context | Before (broken) | After (fix) |
+|---|---|---|
+| Desktop tajweed | `14.42 × 0.85 × base ≈ 12.26 × base` | `14.42 × base` |
+| Mobile tajweed | `14.42 × 0.88 × mobile ≈ 12.69 × mobile` | `14.42 × mobile` |
+| Desktop double tajweed | `14.42 × 0.85 × min(base, dv)` | `14.42 × min(base, dv)` |
+| Non-tajweed (all) | unchanged — `em` already resolved to base | unchanged |
+
+### Files to change
+
+- `app/globals.css` — add `--fq-safha-font: <value>` to each `.fq-quran-safha` rule at the four breakpoints (mobile, desktop single, desktop double, tablet double). Each value mirrors the corresponding non-tajweed `font-size` that already exists in those rules.
+- `app/components/QuranSafha.tsx` — `SurahBannerLine`: change `width: \`${QURAN_MAX_LINE_WIDTH_RATIO}em\`` → `width: \`calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))\``
+
+No change to: gap algorithm, `RenderItem[]`, `BismillahLine`, `QuranLine.tsx`, SVG, schema, DB.
+
+### What NOT to do
+
+- Do not compensate by dividing out the scaling factor in CSS (`calc(14.42 / 0.85 * 1em)`) — duplicates the `0.85`/`0.88` magic numbers from the tajweed scale definitions; changing one requires changing the other.
+- Do not change `maxWidth: "100%"` — it remains as a clip guard for narrow viewports.
+- Do not remove the `--fq-safha-font` property from non-tajweed breakpoints — it is also used in non-tajweed mode (the result happens to equal what `em` previously produced, but the custom property is the correct source going forward).

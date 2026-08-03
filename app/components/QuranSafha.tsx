@@ -69,7 +69,7 @@ const SurahBannerLine = ({ surahId }: { surahId: number }) => (
       // sit narrower and centre while a w-full frame kept stretching past them.
       // Sized to the measured widest line, not the padded card floor — see the
       // constant. maxWidth keeps it honest if the card is ever narrower still.
-      width: `${QURAN_MAX_LINE_WIDTH_RATIO}em`,
+      width: `calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))`,
       maxWidth: "100%",
     }}
   >
