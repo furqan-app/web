@@ -263,5 +263,29 @@
     "surahPlaceholder": "اختر سورة",
     "surahSearchPlaceholder": "ابحث عن سورة…",
     "surahEmpty": "لم يتم العثور على سورة."
+  },
+  "notifications": {
+    "bellLabel": "الإشعارات",
+    "feed": {
+      "title": "الإشعارات",
+      "empty": "لا توجد إشعارات بعد",
+      "loading": "جارٍ التحميل…",
+      "markAllRead": "تحديد الكل كمقروء"
+    },
+    "settings": {
+      "title": "الإشعارات",
+      "enablePush": "إشعارات الدفع",
+      "enablePushDescription": "احصل على إشعارات بالتذكيرات والتحديثات على هذا الجهاز"
+    },
+    "types": {
+      "plansDailyReminder": {
+        "title": "حان وقت وردك اليومي",
+        "body": "مهمة {{template}} لهذا اليوم جاهزة."
+      },
+      "systemTest": {
+        "title": "إشعار تجريبي",
+        "body": "هذا إشعار تجريبي."
+      }
+    }
   }
 }

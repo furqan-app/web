@@ -5,7 +5,7 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-07-31
+Last updated: 2026-08-03
 
 ---
 
@@ -19,12 +19,16 @@ Nav                          — top bar, always visible; responsive (mobile/des
   SharedMushafLink           — always-visible link to /mushaf hub (signed in or out); icon+label on desktop, icon-only on mobile
   MarksLink                  — always-visible link to /marks (self marks list); icon+label on desktop, icon-only on mobile; mirrors SharedMushafLink
   PlansLink                  — always-visible link to /plans (daily awrad & learning plans hub); icon+label on desktop, icon-only on mobile; mirrors MarksLink
-  SettingsSidebar            — font scale + theme + tajweed mode + account + offline access panel (Sheet); account section shown on mobile only
+  NotificationBell           — always-visible bell icon (ADR 0037); Popover showing NotificationFeed; unread-count dot sourced from useNotifications
+    NotificationFeed         — feed list (max-h scroll) + "mark all read"; renders NotificationItem per row
+      NotificationItem       — single row: unread dot + rendered title/body, links to the notification's content.url and marks read on click
+  SettingsSidebar            — font scale + theme + tajweed mode + account + offline access + notifications panel (Sheet); account section shown on mobile only
     QuranFontScaleControls   — 1–10 scale slider, reads/writes QuranFontScaleContext
     ThemeToggle              — cycles named themes
     (Tajweed Colors section) — shadcn Switch, reads/writes QuranMushafContext (mushafId 2 ↔ 19; ADR 0023, ADR 0033)
     LanguageToggle           — ar ↔ en locale switch
     AccountCard              — mobile-only sign in/out card (name+email+sign out, or sign in button); session via next-auth
+    EnablePushToggle         — Web Push permission/subscribe toggle (ADR 0037); renders nothing when the browser doesn't support Push
     (Offline Access section) — installed-PWA-only; shows cached/604 progress via usePwaPrecache
   UserMenu                   — sign in / account dropdown (desktop only; AccountCard is its mobile counterpart in SettingsSidebar)
   Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic); controlled via SidebarContext; also rendered by the grant reader layout

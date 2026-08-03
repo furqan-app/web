@@ -747,6 +747,24 @@ amends ADR 0024).
 
 ---
 
+## Notification System
+
+**Decision:** Base notification system (push, email, in-app) built as plain-function modules under `app/lib/notifications/`, mirroring `app/lib/plans/`'s no-class style. `dispatch.ts` (`dispatchNotification`) orchestrates: resolves the notification type from a typed registry (`NOTIFICATION_TYPES` in `app/constants/notifications.ts`, same pattern as `PLAN_TEMPLATES`), resolves channels via the pure `resolveChannels` (explicit request → type default → `available`, unavailable channels recorded `skipped` not dropped), persists a `Notification` + per-channel `NotificationDelivery` rows, then calls each channel (`in_app`/`push`/`email`, `app/lib/notifications/channels/`) via `Promise.allSettled` — one failing channel never blocks the others. Reminders (`ScheduledNotification` rows) are polled by a secret-guarded cron Route Handler (`app/api/cron/reminders/route.ts`), not a queue/worker — no Redis exists in this stack. See [ADR 0037](adr/0037-notification-dispatch-and-channels.md).
+
+**Rationale:** Greenfield feature needing extensibility (new channels, new event types) without a class/DI framework. See ADR 0037 for the queue-vs-cron-poll tradeoff.
+
+**Constraints:**
+- `NotificationChannel` implementations must never throw — `send()` returns `{status: "failed", error}` instead; `dispatch.ts` depends only on the narrow `NotificationStore`/`ChannelRegistry` interfaces, never on Prisma or a channel SDK directly.
+- Adding a notification type is a new `NOTIFICATION_TYPES` entry only; adding a channel is a new file under `channels/` + one `registry.ts` line. Never edit `dispatch.ts` for either.
+- No user notification-preference table exists yet (deliberately deferred) — `resolveChannels(typeDef, requested, available)` is the reserved seam: a prefs lookup becomes one more input there, never a change to `dispatch.ts`.
+- `Notification`/`NotificationDelivery`/`PushSubscription`/`ScheduledNotification` live in `prisma/app/schema.prisma` (appPrisma) with scalar `user_id` only — no relation to `User` (ADR 0008).
+- `PushSubscription.endpoint_hash` (sha256 of the raw endpoint) is the unique key, not the endpoint itself — raw Web Push endpoints can exceed MySQL's practical index length.
+- `app/api/cron/reminders/route.ts` is deliberately excluded from the `auth-middleware` protected-routes matcher (machine-called, guarded by `x-cron-secret` timing-safe compare instead — mirrors the Sentry webhook relay, ADR 0018). Do not add session auth to it.
+- Reminders have no per-user timezone source (no `User.timezone` column) — `ScheduledNotification.timezone` is captured from the client (`Intl.DateTimeFormat().resolvedOptions().timeZone`) at enqueue time. Rendered notification locale defaults to `ar` (i18n decision) when no per-user locale is available (e.g. cron-triggered sends).
+- `app/lib/notifications/render-context.ts` reads `messages/<locale>.json` directly (not next-intl's `getTranslations`) because the cron path has no request-scoped `headers()`/RSC context.
+
+---
+
 ## CI: Visual e2e Skip on Config-Only PRs
 
 **Decision:** `.github/workflows/visual-e2e.yml` uses `on.pull_request.paths-ignore` (not an allowlist) to skip the suite when every changed file in a PR matches: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`. See `docs/plans/skip-e2e-config-changes.md`.

@@ -9,6 +9,7 @@ import { UserMenu } from "./UserMenu";
 import { SharedMushafLink } from "./SharedMushafLink";
 import { MarksLink } from "./MarksLink";
 import { PlansLink } from "./PlansLink";
+import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,7 @@ export const Nav = () => {
           <SharedMushafLink />
           <MarksLink />
           <PlansLink />
+          <NotificationBell />
           <div className="hidden md:flex items-center">
             <UserMenu />
           </div>
