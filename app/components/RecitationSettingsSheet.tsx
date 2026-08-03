@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRecitation } from "@/app/contexts/RecitationContext";
+import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import useTranslations from "@/app/hooks/use-translations";
 import { Button } from "@/components/ui/button";
@@ -92,84 +93,36 @@ const RANGE_TYPE_OPTIONS: { value: RangePoint["type"]; icon: typeof Users; label
   { value: "verse", icon: BookMarked, labelKey: "recitation.rangeTypeVerse", fallback: "Verse" },
 ];
 
-const ReciterCombobox = ({
-  reciters,
-  value,
-  onChange,
-  portalContainer,
+const ReciterTrigger = ({
+  selected,
+  open,
 }: {
-  reciters: Reciter[];
-  value: number | null;
-  onChange: (id: number) => void;
-  portalContainer: HTMLElement | null;
+  selected: Reciter | null;
+  open: boolean;
 }) => {
   const t = useTranslations();
-  const [open, setOpen] = useState(false);
-  const selected = reciters.find((r) => r.id === value) ?? null;
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between rounded-xl border-border bg-card font-normal h-auto py-2.5"
-        >
-          {selected ? (
-            <span className="flex flex-col items-start text-start">
-              <span className="text-foreground">{selected.translatedName}</span>
-              {selected.style ? (
-                <span className="text-xs text-muted-foreground">{selected.style}</span>
-              ) : null}
-            </span>
-          ) : (
-            <span className="text-muted-foreground">
-              {t("recitation.reciterPlaceholder", "Choose a reciter")}
-            </span>
-          )}
-          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
-        align="start"
-        container={portalContainer}
-      >
-        <Command>
-          <CommandInput
-            placeholder={t("recitation.reciterSearchPlaceholder", "Search reciters…")}
-          />
-          <CommandList>
-            <CommandEmpty>{t("recitation.reciterEmpty", "No reciter found.")}</CommandEmpty>
-            <CommandGroup>
-              {reciters.map((reciter) => (
-                <CommandItem
-                  key={reciter.id}
-                  value={`${reciter.translatedName} ${reciter.style ?? ""}`}
-                  onSelect={() => {
-                    onChange(reciter.id);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={`me-2 size-4 ${reciter.id === value ? "opacity-100 text-primary" : "opacity-0"}`}
-                  />
-                  <span className="flex flex-col">
-                    <span className="text-foreground">{reciter.translatedName}</span>
-                    {reciter.style ? (
-                      <span className="text-xs text-muted-foreground">{reciter.style}</span>
-                    ) : null}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <Button
+      type="button"
+      variant="outline"
+      role="combobox"
+      aria-expanded={open}
+      className="w-full justify-between rounded-xl border-border bg-card font-normal h-auto py-2.5"
+    >
+      {selected ? (
+        <span className="flex flex-col items-start text-start">
+          <span className="text-foreground">{selected.translatedName}</span>
+          {selected.style ? (
+            <span className="text-xs text-muted-foreground">{selected.style}</span>
+          ) : null}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">
+          {t("recitation.reciterPlaceholder", "Choose a reciter")}
+        </span>
+      )}
+      <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+    </Button>
   );
 };
 
@@ -518,6 +471,9 @@ export const RecitationSettingsSheet = () => {
               value={settings.reciterId}
               onChange={(id) => updateSettings({ reciterId: id })}
               portalContainer={sheetContentEl}
+              trigger={({ selected, open }) => (
+                <ReciterTrigger selected={selected} open={open} />
+              )}
             />
           </div>
 

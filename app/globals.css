@@ -975,7 +975,7 @@ body,
       right: 24px !important;
       top: 50%;
       transform: translateY(-50%);
-      width: 56px;
+      width: 96px;
       border-width: 1px !important;
       border-style: solid;
       border-radius: calc(var(--radius) + 4px);
@@ -999,6 +999,14 @@ body,
     /* Info div: not flex-1 in rail, text centred. */
     .fq-recitation-bar-rail .fq-recitation-info {
       display: none;
+    }
+    /* Rail-only reciter trigger: hidden by default (bar form shows the name
+       inline in .fq-recitation-info instead); revealed here, truncated to the
+       96px rail width minus its padding. Trello #183. */
+    .fq-recitation-bar-rail .fq-recitation-rail-reciter {
+      display: flex;
+      width: 100%;
+      max-width: 80px;
     }
   }
 
