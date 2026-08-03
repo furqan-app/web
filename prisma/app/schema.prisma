@@ -63,6 +63,99 @@ model MushafAccessGrant {
   @@map("mushaf_access_grants")
 }
 
+// A single notification event delivered to one user (ADR 0037). Scalar user
+// ref only (no relation — ADR 0008 pattern). `type` is a key into the typed
+// NOTIFICATION_TYPES registry (app/constants/notifications.ts) — types are
+// code, not DB rows. `channels` is the resolved channel list at dispatch time
+// (audit trail), independent of what actually succeeded (see
+// NotificationDelivery for per-channel outcome). read_at lives directly on
+// the row since a notification has exactly one recipient.
+model Notification {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  type       String
+  payload    Json
+  channels   Json
+  read_at    DateTime?
+  created_at DateTime  @default(now())
+
+  deliveries NotificationDelivery[]
+
+  @@index([user_id, created_at])
+  @@index([user_id, read_at])
+  @@map("notifications")
+}
+
+// Per-channel delivery outcome for one Notification. Separate table (not
+// embedded JSON) so status is queryable and the unique composite gives
+// idempotent retries.
+model NotificationDelivery {
+  id              Int       @id @default(autoincrement())
+  notification_id Int
+  channel         String // in_app | push | email
+  status          String // pending | sent | failed | skipped
+  attempts        Int       @default(0)
+  error           String?   @db.Text
+  delivered_at    DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  notification Notification @relation(fields: [notification_id], references: [id])
+
+  @@unique([notification_id, channel])
+  @@index([status])
+  @@map("notification_deliveries")
+}
+
+// A registered Web Push subscription for one user/device. endpoint_hash is a
+// sha256 of endpoint used as the unique key — raw push endpoints (FCM/Mozilla)
+// routinely exceed MySQL's practical utf8mb4 index length.
+model PushSubscription {
+  id            Int       @id @default(autoincrement())
+  user_id       Int
+  endpoint      String    @db.Text
+  endpoint_hash String    @unique @db.Char(64)
+  p256dh        String    @db.VarChar(255)
+  auth          String    @db.VarChar(255)
+  user_agent    String?
+  created_at    DateTime  @default(now())
+  last_used_at  DateTime?
+  failed_at     DateTime?
+
+  @@index([user_id])
+  @@map("push_subscriptions")
+}
+
+// A reminder: the same notification concept (type + payload + channels),
+// triggered later by the cron-polled dispatcher instead of immediately.
+// timezone is captured from the client at enqueue time (no User.timezone
+// column exists) so `daily` recurrence can compute the next local-day
+// occurrence. dedupe_key makes enqueueing idempotent (e.g.
+// "plans.daily_reminder:<userId>:<date>"). claim_id/locked_at implement a
+// lease so the cron route can safely claim a batch under MySQL (no
+// UPDATE...RETURNING).
+model ScheduledNotification {
+  id             Int       @id @default(autoincrement())
+  user_id        Int
+  type           String
+  payload        Json
+  channels       Json?
+  scheduled_for  DateTime
+  recurrence     String? // null = one-shot, "daily"
+  timezone       String? // IANA, e.g. "Africa/Cairo"
+  status         String    @default("pending") // pending | dispatched | cancelled | failed
+  dedupe_key     String?   @unique
+  claim_id       String?
+  locked_at      DateTime?
+  dispatched_at  DateTime?
+  last_error     String?   @db.Text
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  @@index([status, scheduled_for])
+  @@map("scheduled_notifications")
+}
+
 // Enrollment in a plan template (ADR 0030). template_key refers to the typed
 // TS constants in app/constants/plans.ts — templates are code, not DB rows.
 // Scalar user ref only (no relation — ADR 0008 pattern). params holds
