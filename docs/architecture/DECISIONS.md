@@ -459,6 +459,18 @@ payload; windowing removes the mass mount.
   flushes passive effects synchronously, so an inline follow runs mid-commit (guarded out, never
   retries → never returns) and nests a flush. See ADR 0028 and the plan.
 - The window unit is breakpoint-dependent (page vs spread) — do not hardcode single-page.
+- **The same page is mounted more than once at the same time.** `getPagePair(N)` makes `pair(N)` and
+  `pair(N±1)` overlap, so in the single-page layout two of the three panels render the same page; and
+  `QuranSpread` always mounts *both* members of a pair, hiding the non-current one with
+  `.fq-spread .fq-safha-partner { display: none }` because the single-vs-double display gate is CSS,
+  not JS (ADR 0013 Addendum 4). A hidden copy is fully mounted, runs its effects, and matches
+  selectors. Anything that reaches a word in the DOM must therefore tolerate **multiple live matches
+  per `word.location`** and must never cache one element per location — a one-element map picks its
+  winner from mount/commit history, not from visibility, and survivors are `memo`'d and *moved* by the
+  keyed window so they never re-register after an eviction. This shipped as the recitation word-tracking
+  bug (Trello #182): the highlight advanced on a `display:none` copy while a stale one sat frozen on the
+  visible page. Do not "fix" it by deduping the mount — the three-panel window and the CSS display gate
+  are both load-bearing.
 - The commit **slide** belongs to the swipe gesture alone. It exists to continue a drag's live
   transform from where the finger released, so `animateCommit` animates only when its `animate` arg
   is true (swipe); the in-spread arrows and the keyboard pass false and commit instantly via
@@ -675,7 +687,7 @@ amends ADR 0024).
 
 **Constraints:**
 - QDC is now a **runtime** dependency, not just a seed-time one (previously only `scripts/quran-seed/` called it at build time) — if QDC is down, playback breaks, not just re-seeding.
-- Word-level highlight updates use a direct DOM ref registry, not React state/re-renders down the `QuranSafha`/`QuranWord` tree — `timeupdate` fires ~4×/second and re-rendering the full word list at that rate is a real perf risk. Do not copy this pattern for lower-frequency UI; the existing URL-param-driven `highlight.ts` approach remains the norm elsewhere.
+- Word-level highlight updates go straight to the DOM, not through React state/re-renders down the `QuranSafha`/`QuranWord` tree — `timeupdate` fires ~4×/second and re-rendering the full word list at that rate is a real perf risk. Do not copy this pattern for lower-frequency UI; the existing URL-param-driven `highlight.ts` approach remains the norm elsewhere. The mechanism is a **`data-fq-word` attribute plus a live `document.querySelectorAll` at highlight time**, toggling the class on *every* match — **not** a ref registry keyed by word location, which was superseded after Trello #182 (ADR 0021's 2026-08-03 addendum, `docs/plans/recitation-playback.md` Addendum 11). A `location` identifies content, not a unique DOM node: the reader mounts the same page in more than one panel at once, so a one-element-per-location map silently highlights a hidden copy and leaks stale classes onto the visible one. Equally, do not add per-word React state on the provider — a `setState` per recited word rebuilds the context object ~4×/second and re-renders every consumer, which is precisely what going to the DOM directly exists to avoid.
 - Auto-advance always targets the recited verse's exact page number — never the locale-flipped `next`/`prev` href logic (`ReaderPage.tsx`'s `getNavigationHref`), which encodes *visual* swipe direction, not reading-order page sequence. Under the pager (ADR 0028) this is `RecitationFollow` calling `followTo`/`commitTo`, not `router.push` (removed — see the Decision above).
 - Manual navigation (arrows/swipe/sidebar) during playback does **not** pause audio — playback keeps running on its own timeline. Under the pager (ADR 0028), swiping away while playing snaps back to the recited page (the `RecitationFollow` leaf pulls the visible window back), so you effectively cannot browse away mid-playback. Do not add logic that pauses playback on manual nav; this was explicitly decided against. (If free browsing during playback is wanted later, change the follow to trigger only when `recitedPage` *advances*, not on every anchor change — a known, deliberately-deferred trade-off.)
 - ~~Chapter-end stops playback (no auto-continue into the next surah) — do not add cross-chapter auto-continue without revisiting this decision.~~ **Superseded 2026-07-16** — cross-chapter chaining was added to support `stopPoint: "hizb" | "juz" | "none"` (and to correctly fix `"page"` when a page spans two chapters). See ADR 0021 Addendum (2026-07-16) and `docs/plans/recitation-playback.md` Addendum 5.

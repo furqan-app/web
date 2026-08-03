@@ -1,4 +1,4 @@
-import { ChapterAudio, Reciter, VerseTiming } from "@/app/types/recitation";
+import { ChapterAudio, Reciter, VerseSegment, VerseTiming } from "@/app/types/recitation";
 import { RecitationProvider, RecitationProviderError } from "@/app/lib/recitation/provider";
 
 const QDC_BASE_URL = "https://api.qurancdn.com/api/qdc";
@@ -14,7 +14,14 @@ type QdcVerseTiming = {
   verse_key: string;
   timestamp_from: number;
   timestamp_to: number;
-  segments: Array<[number, number, number]>;
+  // Deliberately `number[][]`, not the 3-tuple the domain type uses: QDC really
+  // does serve malformed entries — one- and two-element arrays such as reciter
+  // 7's `[30, 2466306]` at 2:114 and reciter 161's `[610700]` at 18:31. Typed
+  // honestly here and filtered to real triples when mapping below, so
+  // `VerseSegment` stays a true 3-tuple everywhere downstream. Destructured as
+  // `[, startMs, endMs]` a short entry yields `endMs === undefined`, every
+  // comparison against it is false, and that word silently never highlights.
+  segments?: number[][];
 };
 
 type QdcAudioFile = {
@@ -64,7 +71,9 @@ async function getChapterAudio(
     verseKey: vt.verse_key,
     timestampFrom: vt.timestamp_from,
     timestampTo: vt.timestamp_to,
-    segments: vt.segments,
+    segments: (vt.segments ?? []).filter(
+      (segment): segment is VerseSegment => segment.length === 3,
+    ),
   }));
 
   return {
