@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 import { toLocaleNumeral } from "@utils/i18n";
 import { Link } from "@/i18n/routing";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
+import { useSidebar } from "@/app/contexts/SidebarContext";
 
 type Props = {
   surah: SurahResult;
@@ -15,6 +16,7 @@ export const SurahListItem = ({ surah }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
+  const { setOpen } = useSidebar();
 
   const surahStartingPage = surah.pages.split("-")[0];
   const glyphCode = String(surah.id).padStart(3, "0");
@@ -23,6 +25,7 @@ export const SurahListItem = ({ surah }: Props) => {
     <Link
       locale={locale}
       href={`${basePath}/${surahStartingPage}`}
+      onClick={() => setOpen(false)}
       className="flex items-center gap-3 p-4 bg-card border border-border rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
     >
       <div className="flex-none w-10 h-10 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground font-bold text-sm">
