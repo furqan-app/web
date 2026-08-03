@@ -1,11 +1,10 @@
 "use client";
 
-import { memo, MouseEvent, useCallback, useRef } from "react";
+import { memo, MouseEvent, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { highlight, HighlightType } from "../utils/highlight";
 import { WordWithVerse } from "../types/prisma";
 import { MARK_CATEGORIES } from "../constants/marks";
-import { useRecitation } from "@/app/contexts/RecitationContext";
 
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_SLOP = 10; // px — max movement before a press is treated as a swipe
@@ -30,13 +29,6 @@ export const QuranWord = memo(function QuranWord({
   onWordLongPressed,
 }: QuranWordProps) {
   const searchParams = useSearchParams();
-  const { registerWordRef } = useRecitation();
-  // Stable per word.location so re-renders (e.g. searchParams changes) don't
-  // needlessly unregister/re-register this word's DOM ref every time.
-  const wordRefCallback = useCallback(
-    (el: HTMLDivElement | null) => registerWordRef(word.location, el),
-    [registerWordRef, word.location],
-  );
   const highlightedVerseKey = highlight.getHighlightedVerseKey(searchParams);
   const highlightType = highlight.getHighlightType(searchParams);
 
@@ -58,7 +50,11 @@ export const QuranWord = memo(function QuranWord({
 
   return (
     <div
-      ref={wordRefCallback}
+      // Recitation's word-level highlight finds its targets by this attribute
+      // (RecitationContext.setWordHighlightClass), so this component does not
+      // consume RecitationContext at all — which is what keeps a context that
+      // ticks per recited word from re-rendering the whole word tree (ADR 0021).
+      data-fq-word={word.location}
       onClick={(e) => {
         // In overlay mode, a short tap should reach the ReaderPager strip (nav toggle).
         // Long presses are handled in onTouchEnd with e.preventDefault(), which
