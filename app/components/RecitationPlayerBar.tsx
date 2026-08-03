@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Pause, Play, Settings as SettingsIcon, Square } from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
@@ -10,8 +11,8 @@ import { cn } from "@/lib/utils";
 // Fixed bottom bar, mounted app-wide in app/[locale]/layout.tsx. On reader
 // routes (self + grant) it's a permanent fixture — even idle, so its play
 // button can start playback of the current Safha — mirroring the nav, which
-// it must always follow. Off the reader route it only shows during an
-// active/paused session (background playback, ADR 0021). On tablet/mobile
+// it must always follow. Off the reader route, recitation is stopped (hard
+// stop, ADR 0021 Addendum 2026-08-02) so the bar never appears there. On tablet/mobile
 // reader routes it also mirrors the nav overlay's show/hide
 // (isOverlayMode/overlayVisible), same toggle, same transform pattern as
 // Nav.tsx — see docs/plans/tablet-nav-overlay.md Addendum "Sync voice panel
@@ -37,6 +38,13 @@ export const RecitationPlayerBar = () => {
 
   const isOnReaderRoute = Boolean(pathname?.includes("/pages/"));
   const isIdle = status === "idle";
+
+  // Hard-stop recitation when the user navigates away from any reader route.
+  // Supersedes ADR 0021's background mini-player behavior (Trello #152).
+  // Must sit before the early return — React rules forbid hooks after conditionals.
+  useEffect(() => {
+    if (!isOnReaderRoute && !isIdle) stop();
+  }, [isOnReaderRoute, isIdle, stop]);
 
   if (isIdle && !(isOnReaderRoute && pageFirstVerseKey)) return null;
 
