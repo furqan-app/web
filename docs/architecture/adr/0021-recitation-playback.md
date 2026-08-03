@@ -35,6 +35,14 @@ Because the context lives above the reader's route tree, the `<audio>` element i
 - **-** Timing/segment data is re-fetched every time a chapter starts playing (not cached across sessions) — acceptable for v1, revisit if usage shows this is a real cost or latency issue.
 - **-** The direct-DOM-ref highlight mechanism is an exception to this codebase's otherwise-React-state-driven highlight pattern (`highlight.ts`'s URL-param approach) — justified only by the 4×/second update frequency; do not copy this pattern for anything lower-frequency.
 
+## Addendum (2026-08-02): Supersedes "background mini-player" — hard stop on route leave
+
+**The background-playback requirement ("keep playing after leaving the reader entirely") stated in the original Context section and encoded as a Consequences bullet is superseded.** Trello #152 reported that `RecitationPlayerBar` overlaps content on non-reader pages (e.g. `/mushaf` hub) because those pages carry no bottom-padding counterpart for the bar. The decision is to hard-stop recitation when the user navigates away from any `/pages/` route rather than maintaining a background mini-player.
+
+**Mechanism:** a `useEffect` in `RecitationPlayerBar` calls `stop()` when `isOnReaderRoute` transitions to `false` while not idle. See `docs/plans/recitation-playback.md` Addendum 10.
+
+---
+
 ## Addendum (2026-07-16): Supersedes "no cross-chapter auto-continue" — general chaining added
 
 **This addendum supersedes the original decision's "Chapter-end stops playback (no auto-continue into the next surah)" consequence and its matching Consequences bullet.** Trello #96 asked for "end of Juz'"/hizb/rub stop points and a "no stop" (continuous-until-Quran-end) mode. Both require playback to continue past the boundary of the currently-loaded chapter's audio, since a juz/hizb/rub boundary — and obviously "no stop" — routinely falls in a **later chapter** than where playback started (e.g. Juz 1 starts in chapter 1, ends at 2:141 in chapter 2; Juz 30 spans chapters 78–114).
