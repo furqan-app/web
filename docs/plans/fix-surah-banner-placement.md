@@ -6,6 +6,7 @@
 **Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf  
 **Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread  
 **Trello #133:** https://trello.com/c/eFWXR9ca — surah name frame, full text width (Addendum 8)  
+**Trello #135:** https://trello.com/c/UzotHxvn/135-on-the-first-2-pages-there-should-be-a-space-between-the-surah-frame-and-bismillah-svg (Addendum 10)  
 **Trello:** https://trello.com/c/sRC6NhMS/72-surah-name-banners-render-at-end-of-page-madani-layout
 
 ## Summary
@@ -503,3 +504,82 @@ No change to: gap algorithm, `RenderItem[]`, `BismillahLine`, `QuranLine.tsx`, S
 - Do not compensate by dividing out the scaling factor in CSS (`calc(14.42 / 0.85 * 1em)`) — duplicates the `0.85`/`0.88` magic numbers from the tajweed scale definitions; changing one requires changing the other.
 - Do not change `maxWidth: "100%"` — it remains as a clip guard for narrow viewports.
 - Do not remove the `--fq-safha-font` property from non-tajweed breakpoints — it is also used in non-tajweed mode (the result happens to equal what `em` previously produced, but the custom property is the correct source going forward).
+
+---
+
+## Addendum 10 — Fixed line-slot template for pages 1–2 (Trello #135)
+
+**Date:** 2026-08-03
+**Branch:** `bug/135-opening-page-line-slots`
+**Trello #135:** https://trello.com/c/UzotHxvn — "On the first 2 pages there should be a space between the surah frame and bismillah svg"
+
+### Supersedes
+
+Addendum 4's claim that "Pages 1 and 2 handled by the general algorithm (no special-casing)" and the matching DECISIONS.md line ("Surah Banner Placement — IMPLEMENTED (gap-derived)"). This addendum adds a page-specific override for pages 1–2 **only** — the gap-detection algorithm from Addendum 4 is untouched for every other surah-opening page (112 others, verified 114/114 in DECISIONS.md).
+
+### Problem
+
+Pages 1 (Fatiha) and 2 (opening of Baqara) place the banner/Bismillah at the start of the missing-slot run and drop the rest of the gap (7 slots on both pages), then paper over the resulting cramped spacing with the `.fq-safha-center` CSS special case (`justify-content: center; gap: 0.55em`), which centers the compact block and fakes symmetric top/bottom whitespace instead of reproducing a real slot layout. Reported: no real breathing room between the surah-name frame and the Bismillah SVG.
+
+### Root cause
+
+`QuranSafha.tsx`'s gap-group loop (Addendum 4) treats the missing 1–15 slots before the first real content line as one run, consumes only 1–2 slots for banner/bismillah, and silently discards the remainder instead of rendering them as blank line elements.
+
+### Ground truth (measured, not assumed)
+
+Per-word `line_number` values from `public/quran/pages/2/1.json` and `.../2/2.json` (mushaf id 2, default/Hafs edition):
+
+| Page | Real content line range | Content lines | Bismillah source |
+|---|---|---|---|
+| 1 (Fatiha) | 9–15 | 7 | verse 1:1 itself (real text — surah 1 is in `CHAPTERS_WITHOUT_BISMILLAH`, no SVG) |
+| 2 (Baqara) | 10–15 | 6 | not in verse data — needs `BismillahLine` SVG |
+
+Both pages end flush at slot 15 (no trailing content slack). The fix does not use these `line_number` values for placement — they only confirm the content-line *counts* (7 and 6) match the fixed template below regardless of the pages' differing raw gap sizes (8 vs 9 missing slots).
+
+### Decision tree — fixed 15-slot template, `page <= 2` only
+
+| slot | page 1 | page 2 |
+|---|---|---|
+| 1–3 | blank | blank |
+| 4 | `SurahBannerLine` (surah 1) | `SurahBannerLine` (surah 2) |
+| 5 | blank | blank |
+| 6 | 1st content line (Bismillah is verse 1:1, rendered inline as real text) | `BismillahLine` (SVG) |
+| 7–12 | — (page 1's 7 content lines fill 6–12) | content lines 1–6, sequential |
+| 6–12 | content lines 1–7, sequential | — |
+| 13–15 | blank | blank |
+
+Every page <=2 slot renders as a real flex child (`1em` height, `leading-none`) — blank slots included. No CSS centering trick; pages 1–2 use the identical `justify-between`/`space-between` flex rhythm every other page already uses.
+
+### Verified test cases
+
+- **Page 1:** blank×3 (1–3), banner (4), blank (5), 7 content lines sequential (6–12, first line carries the real Bismillah verse text), blank×3 (13–15). Total 15 slots.
+- **Page 2:** blank×3 (1–3), banner (4), blank (5), Bismillah SVG (6), 6 content lines sequential (7–12), blank×3 (13–15). Total 15 slots.
+
+### Files to Change
+
+- `app/components/QuranSafha.tsx`:
+  - Add a `page <= 2` branch before the general gap-detection loop: build `renderItems` directly from the fixed template (banner@4, bismillah@6 for page 2 only, content lines re-sequenced starting at slot 6/page 1 or 7/page 2, blank items for 1–3/5/13–15). The general Addendum 4 algorithm (lines ~332–393) runs unchanged for `page > 2`.
+  - Add a `blank` `RenderItem` variant (`{ type: "blank"; slot: number }`) and a bare 1em-height div to render it — same sizing rule as `SurahBannerLine`/`BismillahLine` (`height: 1em`, `leading-none`, no margin — spacing comes from the flex `gap`/`space-between`, not inline margin).
+  - Remove `page <= 2 ? "fq-safha-center" : ""` from the `fq-quran-safha` className (line 495).
+  - Remove `SKELETON_LINE_COUNT_SHORT` (line 40) and the `page <= 2` skeleton branching (lines 513, 516, 521) — skeleton always uses `SKELETON_LINE_COUNT` (15) with the standard `fq-skeleton-lines justify-between` shape, matching the real 15-slot layout pages 1–2 now use.
+- `app/globals.css` — remove all four `.fq-safha-center` rules and their surrounding comments: mobile (line 446), desktop-spread (line 641), the `min-height:800px` override (line 705), and tablet/desktop-double (line 1274–1278).
+- `docs/architecture/DECISIONS.md` — amend "Surah Banner Placement — IMPLEMENTED (gap-derived)": note that pages 1–2 are a fixed-template exception (banner@4, bismillah@6 for page 2), not gap-derived, and reference this addendum.
+
+### Constraints
+
+- Only `page <= 2` uses the fixed template. Every other surah-opening page keeps the untouched Addendum 4 gap-detection algorithm — do not touch that code path or its `RenderItem` shapes beyond adding the new `blank` variant.
+- Blank/banner/bismillah slots stay at `1em` height (existing DECISIONS.md constraint) — no exceptions for the new blank slots.
+- The loading skeleton for pages 1–2 must match the new real 15-slot layout exactly, or the skeleton→content transition jumps (ADR 0034 — content and skeleton must occupy identical geometry).
+
+### What NOT to Do
+
+- Do not derive the pages 1–2 slot positions from real `line_number` data — the template is fixed regardless of source data (confirmed: it works for both pages despite their differing raw missing-slot counts, 8 vs 9).
+- Do not keep `.fq-safha-center`/`gap: 0.55em` as a fallback alongside the new template — it is fully replaced, not layered.
+- Do not change the gap-detection algorithm, existing `RenderItem` variants, or `QuranLine.tsx` for pages other than 1–2.
+- Do not reintroduce `SKELETON_LINE_COUNT_SHORT` or any short-skeleton branch for pages 1–2.
+
+### Decisions Made
+
+- Pages 1–2 get a fixed, hardcoded 15-slot template — not derived from `line_number` gap data — because both pages' real content-line counts (7 and 6) happen to fit the same slot assignment regardless of their differing raw gap sizes.
+- The `.fq-safha-center` CSS mechanism (centered block + fixed `0.55em` gap) is removed entirely, not kept as a fallback.
+- The general gap-detection algorithm (Addendum 4) is preserved unmodified for all 112 other surah-opening pages.
