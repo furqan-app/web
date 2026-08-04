@@ -10,6 +10,7 @@ import { ContinueReadingLink } from "./ContinueReadingLink";
 import { SharedMushafLink } from "./SharedMushafLink";
 import { MarksLink } from "./MarksLink";
 import { PlansLink } from "./PlansLink";
+import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ export const Nav = () => {
         // just the toggle-hide overlay; matches RecitationPlayerBar exactly so the
         // two bars read as one consistent floating-chrome style, both letting the
         // Mushaf show through underneath).
-        "text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50",
+        "relative z-10 text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50",
         isOverlayMode && "fixed top-0 inset-x-0 z-50 transition-transform duration-300",
         isOverlayMode && !overlayVisible && "-translate-y-full",
       )}
@@ -97,6 +98,7 @@ export const Nav = () => {
           <SharedMushafLink />
           <MarksLink />
           <PlansLink />
+          <NotificationBell />
           <div className="hidden md:flex items-center">
             <UserMenu />
           </div>

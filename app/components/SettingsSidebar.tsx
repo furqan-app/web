@@ -13,6 +13,7 @@ import { useQuranMushaf } from "@contexts/QuranMushafContext";
 import { DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID } from "@utils/mushaf-editions";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
+import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -127,6 +128,7 @@ export const SettingsSidebar = () => {
               />
             </div>
           </div>
+          <EnablePushToggle />
           {isStandalone ? (
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-2">

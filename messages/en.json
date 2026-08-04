@@ -265,5 +265,29 @@
     "surahPlaceholder": "Choose a surah",
     "surahSearchPlaceholder": "Search surahs…",
     "surahEmpty": "No surah found."
+  },
+  "notifications": {
+    "bellLabel": "Notifications",
+    "feed": {
+      "title": "Notifications",
+      "empty": "No notifications yet",
+      "loading": "Loading…",
+      "markAllRead": "Mark all read"
+    },
+    "settings": {
+      "title": "Notifications",
+      "enablePush": "Push notifications",
+      "enablePushDescription": "Get notified about reminders and updates on this device"
+    },
+    "types": {
+      "plansDailyReminder": {
+        "title": "Time for your daily wird",
+        "body": "Your {{template}} assignment for today is ready."
+      },
+      "systemTest": {
+        "title": "Test notification",
+        "body": "This is a test notification."
+      }
+    }
   }
 }

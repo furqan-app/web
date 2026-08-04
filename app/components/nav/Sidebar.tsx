@@ -32,7 +32,12 @@ const Sidebar = ({ surahs, rubs }: Props) => {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent side={isRTL ? "right" : "left"} hideDefaultClose className="w-64 p-0 flex flex-col overflow-hidden">
+      <SheetContent
+        side={isRTL ? "right" : "left"}
+        dir={getLanguageDirection(locale)}
+        hideDefaultClose
+        className="w-64 p-0 flex flex-col overflow-hidden"
+      >
         <SheetTitle className="sr-only">
           {t("sidebar.title", "Quran navigation")}
         </SheetTitle>
@@ -46,7 +51,11 @@ const Sidebar = ({ surahs, rubs }: Props) => {
             </Button>
           </SheetClose>
         </div>
-        <Tabs defaultValue="surahs" className="flex-1 flex flex-col min-h-0">
+        <Tabs
+          defaultValue="surahs"
+          dir={getLanguageDirection(locale)}
+          className="flex-1 flex flex-col min-h-0"
+        >
           <TabsList className="w-full rounded-none justify-around shrink-0">
             <TabsTrigger value="surahs" className="flex-1">
               {t("surahs", "Surahs")}
@@ -56,7 +65,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="surahs" className="flex-1 overflow-y-auto p-4 mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            <SurahList surahs={surahs} className="sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-2" />
+            <SurahList surahs={surahs} className="sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-2" />
           </TabsContent>
           <TabsContent value="rubs" className="flex-1 overflow-y-auto mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
             <RubList rubs={rubs} surahs={surahs} />

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -75,63 +74,6 @@ const NavigationArrow = ({
   );
 };
 
-// Publishes the spread's measured width and centre as CSS custom properties on
-// <html>, so the floating recitation bar (>=1367px) can match the paper. The card
-// is content-sized and tracks the font-scale control, so there is no CSS value to
-// key off. Writes straight to the style attribute — never React state: the pager
-// mounts three panels and re-rendering the reader tree on every resize tick is the
-// same trap ADR 0028 documents for the recitation subscription. All three panels
-// are the same width, so whichever writes last is correct, and a panel whose data
-// lands late self-heals on its own observer firing.
-const useSpreadMetrics = (ref: React.RefObject<HTMLDivElement>) => {
-  // Layout effect, not useEffect: the bar falls back to `left: 50%` / a fixed
-  // max-width until these land, so measuring after paint shows the bar at the
-  // wrong width for one frame and then snaps (~186px at 1538px). Same
-  // isomorphic guard the repo's use-is-tablet/use-is-mobile hooks use.
-  const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
-  useIsomorphicLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    let queued = false;
-    const publish = () => {
-      queued = false;
-      const rect = el.getBoundingClientRect();
-      if (rect.width === 0) return;
-      const root = document.documentElement;
-      // Width is identical across panels, so it is safe to write from any of
-      // them. The centre is not: the pager parks its neighbours a full viewport
-      // to either side, and an off-screen panel writing last would put the bar
-      // off-axis — so that write is guarded, and only that one.
-      root.style.setProperty("--fq-spread-width", `${rect.width}px`);
-      const center = rect.left + rect.width / 2;
-      if (center < 0 || center > window.innerWidth) return;
-      root.style.setProperty("--fq-spread-center", `${center}px`);
-    };
-
-    // Coalesce to one measure per frame: three panels are mounted, each with its
-    // own listener, so an un-throttled drag-resize would interleave three rect
-    // reads with three root-style writes per tick.
-    const schedule = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(publish);
-    };
-
-    publish();
-    const observer = new ResizeObserver(schedule);
-    observer.observe(el);
-    // A window resize re-centres the spread WITHOUT changing its size, which the
-    // ResizeObserver never sees — the centre would go stale and the bar would sit
-    // off-axis. Measured: 9px off with the observer alone.
-    window.addEventListener("resize", schedule);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", schedule);
-    };
-  }, [ref, useIsomorphicLayoutEffect]);
-};
 
 export const QuranSpread = ({
   currentPageId,
@@ -145,8 +87,6 @@ export const QuranSpread = ({
   pairStepNav,
   onNavigate,
 }: QuranSpreadProps) => {
-  const spreadRef = useRef<HTMLDivElement>(null);
-  useSpreadMetrics(spreadRef);
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
   // useIsLgUp is used ONLY to pick the nav-arrow href (single-step vs pair-step).
@@ -164,7 +104,7 @@ export const QuranSpread = ({
   const leftIsPartner = leftPage.pageId !== currentPageId;
 
   return (
-    <div className="flex-1 min-w-0 flex justify-center items-center md:h-full md:items-stretch">
+    <div className="fq-spread-col flex-1 min-w-0 flex justify-center items-center md:h-full md:items-stretch">
       <NavigationArrow href={nav.prevHref} isRTL={isRTL} isNext={false} onNavigate={onNavigate} />
       {/* `.fq-spread` (static) scopes every CSS display/cap/margin gate to cards
           inside a spread, so the standalone QuranSafha in QuranPage is unaffected.
@@ -173,7 +113,6 @@ export const QuranSpread = ({
           underneath" layers peek toward its outer (spine-away) edge via
           stackPeekSide, never bridging the seam. */}
       <div
-        ref={spreadRef}
         className={`flex ${!isRTL ? "flex-row-reverse" : ""} items-stretch gap-0 fq-spread md:h-full`}
       >
         <div className={rightIsPartner ? "fq-safha-partner" : undefined}>

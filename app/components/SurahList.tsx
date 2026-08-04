@@ -8,7 +8,7 @@ type Props = {
 };
 
 export const SurahList = ({ surahs, className }: Props) => (
-  <div className={cn("grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3", className)}>
+  <div className={cn("grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3", className)}>
     {surahs.map((surah) => (
       <SurahListItem key={surah.id} surah={surah} />
     ))}
