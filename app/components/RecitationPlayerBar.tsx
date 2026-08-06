@@ -2,10 +2,11 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Pause, Play, Settings as SettingsIcon, Square } from "lucide-react";
+import { ChevronsUpDown, Pause, Play, Settings as SettingsIcon, Square } from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import useTranslations from "@/app/hooks/use-translations";
+import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
 import { cn } from "@/lib/utils";
 
 // Fixed bottom bar, mounted app-wide in app/[locale]/layout.tsx. On reader
@@ -26,6 +27,7 @@ export const RecitationPlayerBar = () => {
     currentVerseKey,
     reciters,
     settings,
+    updateSettings,
     pageFirstVerseKey,
     play,
     togglePlayPause,
@@ -103,11 +105,52 @@ export const RecitationPlayerBar = () => {
         </button>
 
         <div className="fq-recitation-info min-w-0 flex-1">
-          <p className="fq-recitation-reciter-name truncate text-sm font-medium text-foreground">
-            {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-          </p>
+          <ReciterCombobox
+            reciters={reciters}
+            value={settings.reciterId}
+            onChange={(id) => updateSettings({ reciterId: id })}
+            portalContainer={null}
+            contentClassName="w-64 p-0"
+            side="top"
+            trigger={({ open }) => (
+              <button
+                type="button"
+                aria-expanded={open}
+                className="fq-recitation-reciter-name flex min-w-0 items-center gap-1 truncate text-sm font-medium text-foreground"
+              >
+                <span className="truncate">
+                  {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                </span>
+                <ChevronsUpDown className="size-3 shrink-0 opacity-50" />
+              </button>
+            )}
+          />
           <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
         </div>
+
+        {isOnReaderRoute ? (
+          <ReciterCombobox
+            reciters={reciters}
+            value={settings.reciterId}
+            onChange={(id) => updateSettings({ reciterId: id })}
+            portalContainer={null}
+            contentClassName="w-64 p-0"
+            side="left"
+            trigger={({ open }) => (
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                className="fq-recitation-rail-reciter hidden flex-col items-center gap-0.5 text-foreground"
+              >
+                <span className="fq-recitation-rail-reciter-name w-full truncate text-center text-[10px] font-medium leading-tight">
+                  {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                </span>
+                <ChevronsUpDown className="size-3 shrink-0 opacity-50" />
+              </button>
+            )}
+          />
+        ) : null}
 
         <button
           type="button"

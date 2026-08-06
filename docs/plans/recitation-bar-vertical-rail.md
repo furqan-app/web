@@ -83,7 +83,78 @@ Lateral clearance at ≥1367px: spread capped at 860px → ≥253px per side →
 ## Decisions Made
 
 - Rail position: fixed right, `right: 24px`, vertically centered (`top: 50% + translateY(-50%)`). Not locale-aware — always right side regardless of AR/EN.
-- Rail content: play/pause + verse key + settings + stop. Reciter name omitted (visible in settings sheet).
-- Rail width: 56px.
+- ~~Rail content: play/pause + verse key + settings + stop. Reciter name omitted (visible in settings sheet).~~ **Superseded — see Addendum below (Trello #183).**
+- ~~Rail width: 56px.~~ **Superseded — see Addendum below (Trello #183): 96px.**
 - `useSpreadMetrics` is removed entirely — the hook's only consumer was the retired floating-bar CSS block.
 - Trello card title "desktop/tablet" is corrected to "desktop only" in this plan.
+
+## Addendum: Reciter Dropdown in Bar + Rail (2026-08-04, Trello #183)
+
+**Type:** feature
+**Status:** implemented
+
+### Summary
+
+"Make reciter names as a drop list in recitation bar" (Trello #183). The reciter name in `RecitationPlayerBar` is currently plain text — clicking it does nothing; changing reciter requires opening the full settings sheet (gear icon). This turns the reciter name itself into a dropdown trigger that opens the same searchable reciter combobox already used in `RecitationSettingsSheet`, on both bar forms:
+
+- **Full-width bar** (mobile/tablet/desktop-below-rail-threshold): the existing reciter-name `<p>` becomes a button (name + chevron, same truncation, same position). Verse-key line below is untouched.
+- **Rail** (desktop ≥1367px × ≥800px): the rail currently hides the reciter name entirely (`globals.css:1000`, `.fq-recitation-bar-rail .fq-recitation-info { display: none; }`) — this is being reversed. The rail widens **56px → 96px** and gains a reciter trigger (truncated name + chevron) in its vertical icon stack, between the verse-key text and the settings icon.
+
+Reciter switching itself needs no new logic — `RecitationContext`'s existing mid-session effect (`RecitationContext.tsx:723-759`) already reloads the current chapter's audio for a new `reciterId` and resumes at the same verse position when `updateSettings({ reciterId })` fires. This task is UI-only: exposing that same setter from a new place.
+
+### Approach
+
+1. **Extract `ReciterCombobox`** out of `RecitationSettingsSheet.tsx` (currently a private, non-exported component at `RecitationSettingsSheet.tsx:95-174`) into `app/components/recitation/ReciterCombobox.tsx`, generalized to accept a custom trigger instead of always rendering its own full-width settings-style button:
+   - Props: `reciters`, `value`, `onChange`, `portalContainer` (unchanged), plus new `trigger: (ctx: { selected: Reciter | null; open: boolean }) => ReactNode`, `contentClassName?: string`, `side?: "top" | "left" | ...` (default unset/auto), `align?: ...`.
+   - `RecitationSettingsSheet.tsx` passes a `trigger` that reproduces its current full-width button exactly (byte-for-byte visual parity) and keeps `className="w-[--radix-popover-trigger-width] p-0"` + `align="start"` on the content — no behavior change there.
+   - `PopoverContent`'s `container` prop stays `portalContainer`-driven per the existing nested-Popover-in-Sheet rule (DECISIONS.md, Font/Recitation section, ~line 174) for the settings-sheet call site. The bar/rail call sites pass `portalContainer={null}` (default body portal) — `RecitationPlayerBar` is mounted directly in `app/[locale]/layout.tsx`, not nested inside any Dialog/Sheet, so no focus-trap conflict exists there.
+
+2. **Bar/rail popover sizing**: unlike the settings sheet (whose trigger is a full-width button, so `w-[--radix-popover-trigger-width]` is a sensible content width), the bar/rail triggers are narrow. Their `ReciterCombobox` usage passes a fixed `contentClassName="w-64 p-0"` (~256px) instead, with explicit `side`:
+   - Full bar: `side="top"` (bar sits at the screen bottom; popover opens upward).
+   - Rail: `side="left"` (rail sits fixed at the screen's right edge; popover opens toward the spread, away from the screen edge). This is a physical, non-RTL-flipped side — matches the rail's own existing "not locale-aware, always right" decision above.
+
+3. **`RecitationPlayerBar.tsx` changes**:
+   - Replace the `<p className="fq-recitation-reciter-name ...">` text (line 106-108) with `<ReciterCombobox reciters={reciters} value={settings.reciterId} onChange={(id) => updateSettings({ reciterId: id })} portalContainer={null} contentClassName="w-64 p-0" side="top" trigger={...} />`. The trigger renders a `<button>` with the same `fq-recitation-reciter-name truncate text-sm font-medium text-foreground` classes plus a small trailing chevron, same fallback text (`t("recitation.nowPlaying", "Recitation")`) when no reciter resolves.
+   - Add a second, rail-only trigger instance rendered when `isOnReaderRoute` (rail is desktop-reader-only), positioned between the verse-key `<p>` and the settings button in JSX order — CSS visibility is what actually switches bar-form vs rail-form (both render always; `globals.css` hides/shows via the media query), so both the full-bar trigger and the rail trigger exist in the DOM simultaneously and each is shown/hidden by its own wrapper class, exactly like the existing `fq-recitation-info` split.
+   - `updateSettings` must be added to the `useRecitation()` destructure (not currently pulled in this component).
+
+4. **`globals.css` rail block** (`@media (min-width: 1367px) and (min-height: 800px)`, ~line 968-1003):
+   - `.fq-recitation-bar-rail` width: `56px` → `96px`.
+   - `.fq-recitation-bar-rail .fq-recitation-info { display: none; }` stays as-is (that's the bar-form info block — name/verse-key pair — which the rail never shows as a unit).
+   - New rule for the rail-only reciter trigger's wrapper class (e.g. `.fq-recitation-rail-reciter`): hidden by default (bar form doesn't show it), `display: flex` inside the rail media query. Truncation via `max-width` matching the new 96px rail minus padding.
+
+### Decision Tree
+
+| Bar form | Breakpoint | Reciter UI | Popover side | Popover width |
+|---|---|---|---|---|
+| Full bar | `< 1367px` or `< 800px` tall | Name+chevron replaces old plain text, same position | `top` | `w-64` fixed |
+| Rail | `≥1367px` width **and** `≥800px` tall | New trigger (truncated name+chevron) in icon stack, rail widened 56→96px | `left` | `w-64` fixed |
+
+### Verified Test Cases
+
+- **Mid-playback reciter change**: user taps trigger, picks a different reciter while audio is playing → `updateSettings({reciterId})` fires → existing effect (`RecitationContext.tsx:723`) reloads chapter audio for new reciter, seeks to `currentVerseKeyRef`'s timing, resumes playback (`wasPlaying` was true). No new code needed for this path — verified it's already covered by production logic, not something this task must build.
+- **No reciter loaded yet** (`reciters` still fetching, `settings.reciterId` null): trigger shows fallback `t("recitation.nowPlaying", "Recitation")` text with chevron; clicking opens popover with empty list + `CommandEmpty` — identical to today's settings-sheet placeholder behavior, no special-casing.
+- **Rail lateral clearance at minimum breakpoint** (1367px viewport): spread capped 860px → ≥253px clearance per side (per original plan's Verified Geometry). New rail footprint: 96px width + 24px right offset = 120px from screen edge — well inside the 253px budget, no overlap with spread or nav arrows.
+- **RTL (Arabic locale)**: rail stays right-anchored regardless of locale (unchanged decision); popover `side="left"` is a physical direction, not logical — correct in both locales since the rail's own position doesn't flip either.
+
+### Files to Change
+
+- `app/components/recitation/ReciterCombobox.tsx` — **new file**, extracted+generalized from `RecitationSettingsSheet.tsx`'s private component (trigger render-prop, configurable content width/side).
+- `app/components/RecitationSettingsSheet.tsx` — remove local `ReciterCombobox`, import from new location, pass a `trigger` reproducing the current full-width button exactly.
+- `app/components/RecitationPlayerBar.tsx` — pull in `updateSettings`; replace static reciter-name `<p>` with a `ReciterCombobox` trigger; add rail-only trigger instance; add rail marker class.
+- `app/globals.css` — rail width `56px → 96px`; new display rule for the rail-only reciter trigger wrapper, scoped inside the existing rail media query.
+- `docs/architecture/DECISIONS.md` — update the Desktop Reading Group / rail section: rail width is now 96px, reciter name is shown (superseding "omitted"), reciter dropdown reuses `ReciterCombobox` (extracted, shared with settings sheet).
+
+### Constraints
+
+- Reciter-switch playback logic (`RecitationContext.tsx:723-759`) is untouched — this task is UI-only.
+- Settings sheet's `ReciterCombobox` usage must remain visually and behaviorally identical after extraction (same trigger button, same `w-[--radix-popover-trigger-width]` content width, same `portalContainer` nesting fix).
+- Mobile/tablet full-bar layout otherwise unchanged — only the name line becomes interactive.
+- Rail stays right-anchored, not locale-aware (unchanged from original plan).
+
+### What NOT to Do
+
+- Do not add an icon-only (no name) rail trigger — considered and explicitly rejected in favor of showing the truncated name, which is why the rail widens.
+- Do not reuse `w-[--radix-popover-trigger-width]` for the bar/rail popovers — their triggers are too narrow for a search input + reciter list; use a fixed `w-64` instead.
+- Do not add any new mid-playback reciter-switch logic — the existing effect already handles it.
+- Do not use `writing-mode: vertical-rl` for the rail's reciter name — a horizontal truncated label in the widened 96px rail was chosen instead (this supersedes the original plan's writing-mode prohibition only in the sense that there's now a name to consider at all; the prohibition itself is moot since the name is horizontal, not rotated).
