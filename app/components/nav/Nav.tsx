@@ -7,8 +7,6 @@ import { Maximize2, Minimize2, PanelLeftOpen } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
 import { UserMenu } from "./UserMenu";
 import { SharedMushafLink } from "./SharedMushafLink";
-import { MarksLink } from "./MarksLink";
-import { PlansLink } from "./PlansLink";
 import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
@@ -91,15 +89,11 @@ export const Nav = () => {
           <SearchBar />
         </div>
 
-        {/* End: shared-mushaf + marks + plans links (always visible) + user menu (desktop only) + settings */}
+        {/* End: shared-mushaf link + notifications + account menu (all always visible) + settings */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <SharedMushafLink />
-          <MarksLink />
-          <PlansLink />
           <NotificationBell />
-          <div className="hidden md:flex items-center">
-            <UserMenu />
-          </div>
+          <UserMenu />
           {isDesktopUp && fullscreenEnabled && (
             <Button
               variant="ghost"

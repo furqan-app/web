@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useNotifications } from "@/app/hooks/use-notifications";
 import { NotificationFeed } from "@/app/components/notifications/NotificationFeed";
 
-/** Always-visible navbar bell — mounted alongside PlansLink/MarksLink. */
+/** Always-visible navbar bell — mounted alongside SharedMushafLink. */
 export const NotificationBell = () => {
   const t = useTranslations();
   const { data } = useNotifications();
