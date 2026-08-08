@@ -17,20 +17,17 @@ Nav                          — top bar, always visible; responsive (mobile/des
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
   SharedMushafLink           — always-visible link to /mushaf hub (signed in or out); icon+label on desktop, icon-only on mobile
-  MarksLink                  — always-visible link to /marks (self marks list); icon+label on desktop, icon-only on mobile; mirrors SharedMushafLink
-  PlansLink                  — always-visible link to /plans (daily awrad & learning plans hub); icon+label on desktop, icon-only on mobile; mirrors MarksLink
   NotificationBell           — always-visible bell icon (ADR 0037); Popover showing NotificationFeed; unread-count dot sourced from useNotifications
     NotificationFeed         — feed list (max-h scroll) + "mark all read"; renders NotificationItem per row
       NotificationItem       — single row: unread dot + rendered title/body, links to the notification's content.url and marks read on click
-  SettingsSidebar            — font scale + theme + tajweed mode + account + offline access + notifications panel (Sheet); account section shown on mobile only
+  UserMenu                   — always-visible account dropdown (Trello #186 — previously desktop-only with a mobile AccountCard counterpart in SettingsSidebar, now the single account access point at every breakpoint); icon+"Account" label at md+, icon-only below; dropdown carries sign in/out plus always-visible "My Marks"/"My Plans" links, shown regardless of session state
+  SettingsSidebar            — font scale + theme + tajweed mode + offline access + notifications panel (Sheet); no longer carries an Account section (moved to UserMenu, Trello #186)
     QuranFontScaleControls   — 1–10 scale slider, reads/writes QuranFontScaleContext
     ThemeToggle              — cycles named themes
     (Tajweed Colors section) — shadcn Switch, reads/writes QuranMushafContext (mushafId 2 ↔ 19; ADR 0023, ADR 0033)
     LanguageToggle           — ar ↔ en locale switch
-    AccountCard              — mobile-only sign in/out card (name+email+sign out, or sign in button); session via next-auth
     EnablePushToggle         — Web Push permission/subscribe toggle (ADR 0037); renders nothing when the browser doesn't support Push
     (Offline Access section) — installed-PWA-only; shows cached/604 progress via usePwaPrecache
-  UserMenu                   — sign in / account dropdown (desktop only; AccountCard is its mobile counterpart in SettingsSidebar)
   Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic); controlled via SidebarContext; also rendered by the grant reader layout
     SurahList                — grid of surah cards [SHARED — also used on home page]
       SurahListItem          — single surah card; link uses useReaderBasePath (grant-aware)
