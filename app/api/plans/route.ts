@@ -47,7 +47,7 @@ const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> 
   const { targetStart, targetEnd } = item.params;
   if (targetStart === undefined || targetEnd === undefined) return item;
   // targetStart/targetEnd are verse ordinals for a verse-unit enrollment
-  // (ADR 0037) — convert to the page they fall on before the page-based juz
+  // (ADR 0038) — convert to the page they fall on before the page-based juz
   // lookup, same as resolvePlanParams does in reverse at enroll/edit time.
   const isVerseUnit = item.params.unit === "verse";
   const startPage = isVerseUnit ? pageOfVerse(targetStart) : targetStart;

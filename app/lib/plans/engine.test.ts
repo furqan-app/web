@@ -538,10 +538,10 @@ describe("PLAN_TEMPLATES shape", () => {
   });
 });
 
-// Verse-unit enrollments (ADR 0037) — same rule kinds, verse-ordinal math.
+// Verse-unit enrollments (ADR 0038) — same rule kinds, verse-ordinal math.
 // params.unit: "verse" is enrollment-wide; every track in the enrollment
 // shares it.
-describe("verse-unit (ADR 0037)", () => {
+describe("verse-unit (ADR 0038)", () => {
   it("fixed_cycle: assigns the first N verses on day one, whole-mushaf bounds become 1-6236", () => {
     const [a] = deriveAssignments(wird, { unit: "verse", quantities: { reading: 6 } }, [], TODAY);
     expect(a).toMatchObject({ trackKey: "reading", unit: "verse", rangeStart: 1, rangeEnd: 6 });

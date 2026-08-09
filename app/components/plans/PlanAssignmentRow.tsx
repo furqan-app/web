@@ -28,7 +28,7 @@ const formatRange = (start: number, end: number, locale: string) =>
     ? toLocaleNumeral(start, locale)
     : `${toLocaleNumeral(start, locale)}–${toLocaleNumeral(end, locale)}`;
 
-// Verse-unit ranges (ADR 0037) display as surah:verse, not a raw ordinal.
+// Verse-unit ranges (ADR 0038) display as surah:verse, not a raw ordinal.
 const formatVerseRange = (startKey: string, endKey: string) =>
   startKey === endKey ? startKey : `${startKey}–${endKey}`;
 
@@ -52,7 +52,7 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
 
   // Verse-unit ranges display as surah:verse and deep-link to the page the
   // *start* verse falls on — resolved client-side from the same static
-  // assets the engine uses server-side (ADR 0037), not re-derived here.
+  // assets the engine uses server-side (ADR 0038), not re-derived here.
   // Gated: page-unit rows (the majority) never fetch/build the index.
   const verseIndex = usePlanVerseIndex({ enabled: isVerseUnit });
   const linkPage = isVerseUnit ? verseIndex.data?.pageOf(rangeStart) : rangeStart;

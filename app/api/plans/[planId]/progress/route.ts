@@ -67,7 +67,7 @@ export async function GET(
 /**
  * POST /api/plans/:planId/progress — manual check-off (D5) for one track on
  * one local date. Body: { track_key, date, range_start, range_end } with an
- * inclusive range in the enrollment's own unit (page or verse, ADR 0037).
+ * inclusive range in the enrollment's own unit (page or verse, ADR 0038).
  * One entry per (plan, track, day) — re-checking the same day updates the
  * range in place; history is otherwise append-only.
  */
@@ -112,7 +112,7 @@ export async function POST(
     return jsonResponse({ code: 422, message: "Unknown track for this plan" });
   }
 
-  // The valid bound depends on the enrollment's own unit (ADR 0037) — a
+  // The valid bound depends on the enrollment's own unit (ADR 0038) — a
   // verse-unit plan's ranges legitimately exceed MUSHAF_LAST_PAGE.
   const unit: PlanUnit = (plan.params as UserPlanParams | null)?.unit ?? "page";
   const rangeMin = unit === "page" ? MUSHAF_FIRST_PAGE : MUSHAF_FIRST_VERSE;

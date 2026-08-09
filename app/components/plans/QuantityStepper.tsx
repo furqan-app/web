@@ -7,7 +7,7 @@ type Props = {
   value: number;
   onChange: (value: number) => void;
   min?: number;
-  /** 1 (default) = whole-number stepper; 0.5 = fractional-page mode (ADR 0037). */
+  /** 1 (default) = whole-number stepper; 0.5 = fractional-page mode (ADR 0038). */
   step?: number;
 };
 

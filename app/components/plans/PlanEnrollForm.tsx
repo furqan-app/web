@@ -24,7 +24,7 @@ const EDITABLE_QUANTITY_TRACKS: Record<string, string[]> = {
 };
 
 /**
- * How quantities are expressed for this enrollment (ADR 0037) — a single
+ * How quantities are expressed for this enrollment (ADR 0038) — a single
  * enrollment-wide choice, applied to every quantity field in the form:
  * "pages" = page-unit enrollment, whole pages/day (pre-widening behavior,
  * unchanged); "verses" = verse-unit enrollment, whole verses/day; "fraction"
@@ -131,7 +131,7 @@ export const PlanEnrollForm = ({ templateKey, existingPlan, onDone }: Props) => 
     { key: "verses", labelKey: "plans.quantityMode.verses", defaultLabel: "Verses" },
     { key: "fraction", labelKey: "plans.quantityMode.fraction", defaultLabel: "Fraction of a page" },
   ];
-  // A track's unit is fixed for its enrollment's lifetime (ADR 0037) — an
+  // A track's unit is fixed for its enrollment's lifetime (ADR 0038) — an
   // edit can switch between "verses" and "fraction" (both verse-unit), but
   // never cross into/out of "pages" (page-unit), since the server rejects a
   // unit change on PATCH.

@@ -7,7 +7,7 @@
 
 ## Summary
 
-The plan engine (`docs/plans/awrad-learning-plans.md`, ADR 0030) is page-canonical: every quantity is whole pages/day. Users want finer granularity — a fixed verse count/day ("3 ayah/day") or a fractional-page pace ("half a page/day") — without pages disappearing as an option. Unit becomes a **per-enrollment** choice (`"page"` or `"verse"`), not a global cutover: existing page-unit enrollments and their history are untouched; the engine gains a parallel verse-native math path. See [ADR 0037](../architecture/adr/0037-plan-engine-per-enrollment-verse-unit.md) for the page-vs-verse-canonical trade-off this supersedes from ADR 0030.
+The plan engine (`docs/plans/awrad-learning-plans.md`, ADR 0030) is page-canonical: every quantity is whole pages/day. Users want finer granularity — a fixed verse count/day ("3 ayah/day") or a fractional-page pace ("half a page/day") — without pages disappearing as an option. Unit becomes a **per-enrollment** choice (`"page"` or `"verse"`), not a global cutover: existing page-unit enrollments and their history are untouched; the engine gains a parallel verse-native math path. See [ADR 0038](../architecture/adr/0038-plan-engine-per-enrollment-verse-unit.md) for the page-vs-verse-canonical trade-off this supersedes from ADR 0030.
 
 ## Approach
 
@@ -93,7 +93,7 @@ Walked through with the user (2026-08-02):
 - `app/lib/plans/verse-index.ts` (new) — `pageOfVerse`, `verseKeyOfOrdinal`, `pageVerseCount`, `pageFirstVerseOrdinal`, `pageLastVerseOrdinal`, all reading the two static JSON files (module-scope cached, synchronous `fs.readFileSync`).
 - `app/lib/plans/verse-index.test.ts` (new) — round-trip tests, boundary pages (1, 604), total-verse-count sanity (`MUSHAF_LAST_VERSE === 6236`), out-of-range throws.
 - `app/lib/plans/engine.ts` — every rule-kind branch gains the verse-unit path (`fixedCycleBounds`, `cursorAdvanceTarget`, `unitsPerDay`'s `{unit:"pages"}` resolution) reading from `verse-index.ts`; `unit` read once per `deriveAssignments` call (`params.unit ?? "page"`). Existing page-unit branches verified unchanged (42 pre-existing tests pass with zero edits).
-- `app/lib/plans/engine.test.ts` — new "verse-unit (ADR 0037)" describe block covering all 5 rule kinds in verse mode plus the fractional-page live-recompute case.
+- `app/lib/plans/engine.test.ts` — new "verse-unit (ADR 0038)" describe block covering all 5 rule kinds in verse mode plus the fractional-page live-recompute case.
 - `app/lib/plans/validate-params.ts` (`resolvePlanParams`) — accept enrollment-wide `params.unit`; convert juz-picked target ranges to verse ordinals when resolved; validate `{unit:"pages"}` quantity overrides (positive finite number, only when `unit === "verse"`); reject a `PATCH` whose resolved unit differs from the plan's existing unit (`422`).
 - `app/constants/plans.ts` — husun's verse-equivalent default constants (table above), applied by `engine.ts`'s `toVerseEquivalent` conversion at read time (no separate stored table).
 - `app/components/plans/PlanEnrollForm.tsx` — a 3-way pages/verses/fraction segmented control (enrollment-wide, not per-field — see Decisions Made); "fraction" mode allows 0.5 steps in `QuantityStepper`; edit mode locks the control to the plan's existing unit group.
@@ -101,7 +101,7 @@ Walked through with the user (2026-08-02):
 - `app/components/plans/PlanAssignmentRow.tsx` — verse-unit rows render `surah:verse–surah:verse` and resolve their `/pages/{page}` link + playback bounds via the new client verse index instead of `usePageVerseBounds`.
 - `app/hooks/use-plan-verse-index.ts` (new) — client-side (`fetch`-based) mirror of `verse-index.ts`'s ordinal↔page↔verse-key math, since the server-only module can't be imported into a client component.
 - `messages/ar.json` / `messages/en.json` — `plans.versesPerDay`, `plans.quantityMode.{pages,verses,fraction}`.
-- `docs/architecture/adr/0037-plan-engine-per-enrollment-verse-unit.md` — written.
+- `docs/architecture/adr/0038-plan-engine-per-enrollment-verse-unit.md` — written.
 - `docs/architecture/DECISIONS.md` — updated.
 - `docs/architecture/COMPONENTS.md` — `PlanEnrollForm` and `PlanAssignmentRow` entries updated for the new unit toggle and verse-unit display/link behavior.
 
@@ -115,7 +115,7 @@ Walked through with the user (2026-08-02):
 
 ## What NOT to Do
 
-- Do not migrate existing `PlanProgressEntry` rows to verse ordinals — they stay page-unit forever, unchanged (ADR 0037 supersedes the earlier global-cutover approach explicitly for this reason).
+- Do not migrate existing `PlanProgressEntry` rows to verse ordinals — they stay page-unit forever, unchanged (ADR 0038 supersedes the earlier global-cutover approach explicitly for this reason).
 - Do not make unit an editable `PATCH` field — changing pace/quantity is fine, changing unit requires a new enrollment.
 - Do not add a new Quran-data generator script — `chapters.json` and `verse-pages/2.json` already exist and already cover everything `verse-index.ts` needs.
 - Do not lock "half a page" to a fixed verse count at enroll time — it must recompute from the actual current page every day (confirmed, reverses an earlier draft of this plan).
@@ -124,7 +124,7 @@ Walked through with the user (2026-08-02):
 
 ## Decisions Made
 
-- Unit (`page` | `verse`) is a per-enrollment choice, not a global engine cutover — supersedes ADR 0030's page-canonical decision via ADR 0037, chosen specifically to avoid migrating existing `PlanProgressEntry` data.
+- Unit (`page` | `verse`) is a per-enrollment choice, not a global engine cutover — supersedes ADR 0030's page-canonical decision via ADR 0038, chosen specifically to avoid migrating existing `PlanProgressEntry` data.
 - Verse-ordinal/page-lookup math is built on the already-committed static `chapters.json` + `verse-pages/2.json`, not a new generated data file and not live DB queries — keeps the engine's zero-DB-call purity.
 - "N ayah/day" is a fixed daily quantity (not a randomized min–max range).
 - "Half a page/day" is a fractional-page quantity resolved fresh every day from the actual page the day's cursor starts on (not locked at enroll time, not based on remaining verses on that page).
@@ -142,4 +142,4 @@ Walked through with the user (2026-08-02):
 - `app/lib/plans/assignment-range.ts`'s `isPageInAssignmentRange` (the reader widget's "in range" highlight) compared a page number directly against verse-ordinal ranges. Now takes an optional `pageVerseSpan` (the page's own verse-ordinal span, from the client verse index) and does an interval-overlap check for verse-unit assignments.
 - `app/components/plans/MyPlansList.tsx`'s history timeline rendered every entry as `"Page {range}"` regardless of unit. Now branches on the per-entry `unit` (added to `GET /api/plans/:planId/progress`'s response) and renders `surah:verse` for verse-unit rows.
 - `app/hooks/use-plan-verse-index.ts` was rewritten to reuse the existing `fetchChapters`/`fetchVersePages` helpers (was re-fetching the same static files under a second React Query key) and to accept an `enabled` flag so page-unit rows — the majority — never build the 6236-entry index at all; it also gained `pageVerseSpan` for the highlight fix above. `PlanAssignmentRow`'s loading/error state no longer falls back to treating a raw verse ordinal as a page number for its deep-link — it renders inert (no link) until the index resolves.
-- Minor: `engine.ts`'s fractional-page resolution now guards `unit === "verse"` before treating a cursor position as a verse ordinal; removed an unused `QuantityStepper` prop; fixed a stale DECISIONS.md sentence that still said the engine was "page-canonical only"; corrected ADR 0037's own description of the unit model (it originally described a per-track `units` record that was never built — see the enrollment-wide clarification above).
+- Minor: `engine.ts`'s fractional-page resolution now guards `unit === "verse"` before treating a cursor position as a verse ordinal; removed an unused `QuantityStepper` prop; fixed a stale DECISIONS.md sentence that still said the engine was "page-canonical only"; corrected ADR 0038's own description of the unit model (it originally described a per-track `units` record that was never built — see the enrollment-wide clarification above).

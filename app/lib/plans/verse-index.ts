@@ -1,6 +1,6 @@
 /**
  * Verse-ordinal ↔ page-number resolution for verse-unit plan enrollments
- * (ADR 0037). Pure, synchronous, zero DB calls — built entirely from the
+ * (ADR 0038). Pure, synchronous, zero DB calls — built entirely from the
  * already-committed static Quran assets (public/quran/chapters.json,
  * public/quran/verse-pages/2.json — mushaf 2, DEFAULT_MUSHAF_ID), read once
  * and cached at module scope, same convention as app/hooks/get-surahs.ts.

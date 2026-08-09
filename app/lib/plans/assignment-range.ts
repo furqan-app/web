@@ -6,7 +6,7 @@ import type { TrackAssignment } from "./engine";
  * must call it rather than re-inlining the range check.
  *
  * For a page-unit assignment this is a direct page-to-page-range comparison.
- * For a verse-unit assignment (ADR 0037) `rangeStart`/`rangeEnd` are verse
+ * For a verse-unit assignment (ADR 0038) `rangeStart`/`rangeEnd` are verse
  * ordinals, not pages, so a raw `page` can't be compared to them directly —
  * the caller must supply `pageVerseSpan`, the verse-ordinal span of that
  * page's own verses (from the client verse index), and this checks whether

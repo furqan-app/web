@@ -1,7 +1,7 @@
 /**
  * Shared juz-range resolution + params hardening for POST /api/plans and
  * PATCH /api/plans/:planId (Companion Redesign, docs/plans/daily-awrad-ui.md;
- * widened for per-enrollment verse units by ADR 0037).
+ * widened for per-enrollment verse units by ADR 0038).
  * Juz numbers are UI/enroll-time only — resolved to pages (then, for a
  * verse-unit enrollment, to verse ordinals) here so UserPlanParams never
  * stores a juz number directly (D3).
@@ -32,7 +32,7 @@ export type ResolvePlanParamsResult =
  * base — callers pass `{}` for a bare status-only PATCH.
  *
  * `existingUnit` (PATCH only) is the enrollment's current unit — a track's
- * unit is fixed for its lifetime (ADR 0037), so an edit that tries to change
+ * unit is fixed for its lifetime (ADR 0038), so an edit that tries to change
  * it is rejected. The edit form always resends the current `params.unit`
  * verbatim, same as it does for `quantities`.
  */
@@ -104,7 +104,7 @@ export const resolvePlanParams = async (
         continue;
       }
       // {unit:"pages", amount} — only meaningful on a verse-unit enrollment
-      // (page-unit tracks are already whole-page precision, ADR 0037).
+      // (page-unit tracks are already whole-page precision, ADR 0038).
       if (
         unit !== "verse" ||
         typeof value !== "object" ||

@@ -19,7 +19,7 @@ export const PLAN_ACTIVITIES = ["read", "listen", "memorize", "review"] as const
 export type PlanActivity = (typeof PLAN_ACTIVITIES)[number];
 
 /**
- * "page" (v1) or "verse" (ADR 0037). Unit is an enrollment-time choice, not a
+ * "page" (v1) or "verse" (ADR 0038). Unit is an enrollment-time choice, not a
  * template-fixed property — the same template supports either per enrollment.
  * Fixed for the life of an enrollment; never migrated or switched mid-plan.
  */
@@ -88,7 +88,7 @@ export type PlanTemplate = {
  * verse-unit one). The `{unit:"pages"}` form is only valid on a verse-unit
  * enrollment: a fractional/whole page pace (e.g. 0.5), resolved fresh every
  * day from the verse count of whatever page that day's cursor starts on
- * (ADR 0037) — never locked at enroll time.
+ * (ADR 0038) — never locked at enroll time.
  */
 export type PlanQuantity = number | { unit: "pages"; amount: number };
 
@@ -98,7 +98,7 @@ export type PlanQuantity = number | { unit: "pages"; amount: number };
  * targetStart/targetEnd bound cursor_advance tracks (e.g. "memorize Juz Amma"),
  * in the enrollment's unit (pages or verse ordinals).
  * endDate ("YYYY-MM-DD") is required by the "calendar" missed-day policy.
- * unit (ADR 0037): the enrollment's working unit for every track's range math
+ * unit (ADR 0038): the enrollment's working unit for every track's range math
  * — chosen once at enroll time, fixed for the enrollment's lifetime, never
  * migrated. Absent means "page", matching every pre-widening enrollment.
  */

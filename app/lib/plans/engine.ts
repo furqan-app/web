@@ -1,5 +1,5 @@
 /**
- * Plan assignment engine (ADR 0030, widened by ADR 0037).
+ * Plan assignment engine (ADR 0030, widened by ADR 0038).
  *
  * Pure functions — no DB, no clock. The daily assignment is derived from
  * (template, enrollment params, progress log, date) and is never stored.
@@ -130,7 +130,7 @@ const fixedCycleBounds = (
  * "calendar" missed-day policy (D4) with an endDate, the remaining quantity is
  * spread over the remaining days instead. `cursorStart` is where today's
  * range would begin, in the enrollment's unit — needed only to resolve a
- * `{unit:"pages"}` fractional override (verse-unit tracks only, ADR 0037):
+ * `{unit:"pages"}` fractional override (verse-unit tracks only, ADR 0038):
  * "half a page" always means half of *that page's* actual verse count,
  * resolved fresh every call, never locked in at enroll time.
  */
@@ -282,7 +282,7 @@ export const deriveAssignments = (
   entries: ProgressLogEntry[],
   date: string
 ): TrackAssignment[] => {
-  // Enrollment-wide (ADR 0037) — every track in one enrollment shares the
+  // Enrollment-wide (ADR 0038) — every track in one enrollment shares the
   // same unit; never mixed, never inferred from stored data.
   const unit: PlanUnit = params.unit ?? "page";
 

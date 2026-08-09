@@ -10,7 +10,7 @@ import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
  * verse-pages file isn't downloaded/cached a second time under a separate
  * React Query key for users who also open the reader. Always resolves
  * against mushaf 2 (DEFAULT_MUSHAF_ID) — plan ranges are always expressed
- * against that edition's page layout (ADR 0037), independent of the reader's
+ * against that edition's page layout (ADR 0038), independent of the reader's
  * own active-edition setting.
  *
  * Used only to *display* a verse-unit assignment's range and resolve its

@@ -1,4 +1,4 @@
-# ADR 0037: Plan engine — per-enrollment verse unit, no global page→verse cutover
+# ADR 0038: Plan engine — per-enrollment verse unit, no global page→verse cutover
 
 **Date:** 2026-08-02
 **Status:** Accepted
