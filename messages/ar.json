@@ -85,6 +85,9 @@
   "page": "صفحة",
   "signOut": "تسجيل الخروج",
   "signIn": "تسجيل الدخول",
+  "continueReading": {
+    "navLink": "متابعة القراءة"
+  },
   "marks": {
     "navLink": "علاماتي",
     "pageTitle": "علاماتي",

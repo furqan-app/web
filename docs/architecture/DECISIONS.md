@@ -203,6 +203,18 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Nav-Mounted State Must Be Live, Not One-Shot
+
+**Decision:** Any client state a `Nav`-mounted component (or other always-mounted, non-remounting layout element) displays and that can change *while the app is already open* must be plain React state kept current by a setter — e.g. a small context updated in lockstep with `localStorage` — never a `localStorage.getItem` read done once in a mount-only `useEffect`.
+
+**Rationale:** `Nav` (`app/[locale]/layout.tsx`) is mounted once per browser session and never remounts during in-app client-side navigation. A component under it that reads `localStorage` once on mount (matching the otherwise-correct hydration pattern used for *initial* preferences like `QuranMushafContext`) silently goes stale the instant something elsewhere in the same session writes a new value — no remount ever happens to trigger a re-read. Confirmed live for `ContinueReadingLink`/`LastReadPageContext` (`docs/plans/save-last-read-page.md`, "What NOT to Do"): scripted browser testing showed the nav link kept pointing at an old page number after in-app navigation had already saved a new one, and clicking the stale link then silently overwrote real progress with the stale page.
+
+**Constraints:**
+- The mount-only-`useEffect`-read-from-`localStorage` pattern (as used by `QuranMushafContext`/`QuranSafhaViewContext`/`QuranFontScaleContext`) is still correct for state that's only ever changed by a user action *inside the component that owns it* (a settings toggle, a font-scale slider) — those components re-render on their own write, so staleness never occurs. It is **not** safe for state written by a *different*, independently-mounted component (e.g. a reader-side sync effect writing a value a separate nav link displays).
+- When state crosses that boundary — written by one always-mounted piece, displayed by another — route both through a shared context whose setter updates React state and `localStorage` together, so every consumer re-renders live. See `LastReadPageContext` for the reference shape.
+
+---
+
 ## Surah Banner Placement — IMPLEMENTED (gap-derived)
 
 **Decision:** Surah-name and bismillah lines are placed by **gap detection**: of line slots 1–15, whichever are absent from the page's occupied line numbers are exactly where the banner/bismillah lines belong. A 2-slot gap renders banner + bismillah, a 1-slot gap renders bismillah only (the name was on the previous page's end banner) or the banner alone for surahs 1 and 9, and a trailing gap after a surah's last verse renders the next surah's end banner. See `docs/plans/fix-surah-banner-placement.md` Addendum 4 for the algorithm and Addenda 5–7 for the decorative frame and sizing.
