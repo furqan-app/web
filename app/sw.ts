@@ -132,3 +132,64 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
     event.waitUntil(precacheAllPages());
   }
 });
+
+// Base notification system (ADR 0037) — Web Push handlers.
+type PushNotificationData = { title?: string; body?: string; url?: string; notificationId?: number };
+
+self.addEventListener("push", (event: PushEvent) => {
+  let data: PushNotificationData = {};
+  try {
+    data = event.data?.json() ?? {};
+  } catch {
+    data = {};
+  }
+
+  const title = data.title ?? "Furqan";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: data.notificationId ? String(data.notificationId) : undefined,
+      data: { url: data.url ?? "/" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
+  event.notification.close();
+  const url = (event.notification.data as { url?: string } | undefined)?.url ?? "/";
+
+  event.waitUntil(
+    (async () => {
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const existing = clients.find((client) => new URL(client.url).origin === self.location.origin);
+      if (existing) {
+        await existing.navigate(url);
+        await existing.focus();
+        return;
+      }
+      await self.clients.openWindow(url);
+    })()
+  );
+});
+
+type PushSubscriptionChangeEvent = ExtendableEvent & { oldSubscription: PushSubscription | null };
+
+self.addEventListener("pushsubscriptionchange", ((event: PushSubscriptionChangeEvent) => {
+  event.waitUntil(
+    (async () => {
+      const applicationServerKey = event.oldSubscription?.options.applicationServerKey ?? undefined;
+      const subscription = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      });
+      const json = subscription.toJSON();
+      await fetch("/api/notifications/push-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+      });
+    })()
+  );
+}) as EventListener);

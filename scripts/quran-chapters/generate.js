@@ -31,7 +31,6 @@ async function main() {
         id: true,
         name_arabic: true,
         name_simple: true,
-        translated_name: true,
         verses_count: true,
         revelation_place: true,
         pages: true,

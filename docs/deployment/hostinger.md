@@ -127,7 +127,26 @@ GOOGLE_CLIENT_SECRET=<your Google client secret>
 
 QURAN_DATABASE_URL="mysql://u123456789_furqan_quran_user:<password>@localhost:3306/u123456789_furqan_quran"
 APP_DATABASE_URL="mysql://u123456789_furqan_app_user:<password>@localhost:3306/u123456789_furqan_app"
+
+# Notification system (ADR 0037) — Web Push
+VAPID_PUBLIC_KEY=<generate once via `npx web-push generate-vapid-keys`>
+VAPID_PRIVATE_KEY=<same command, private half>
+VAPID_SUBJECT=mailto:support@furqan.app
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<same value as VAPID_PUBLIC_KEY — exposed client-side>
+
+# Notification system — email (falls back to a log-only transport if unset)
+SMTP_HOST=<your SMTP host>
+SMTP_PORT=587
+SMTP_USER=<your SMTP user>
+SMTP_PASS=<your SMTP password>
+EMAIL_FROM=no-reply@furqan.app
+
+# Notification system — cron reminder dispatch
+CRON_SECRET=<run `openssl rand -base64 32` locally to generate>
 ```
+
+> Rotating `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` invalidates every stored push
+> subscription — users must re-enable push notifications after a rotation.
 
 > The app runs **on** the Hostinger server, so its DB host is `localhost:3306`
 > (standard port — no Docker port offset). The `<prod-host>` in Phase 5 Option 1 is
@@ -165,6 +184,23 @@ https://furqan.taha7.com/api/auth/callback/google
 - [ ] `https://furqan.taha7.com` loads
 - [ ] A Quran page renders with real data
 - [ ] Google login completes successfully
+
+---
+
+## Phase 10 — Set up the notification reminders cron job
+
+The base notification system (ADR 0037) dispatches scheduled reminders via a
+secret-guarded Route Handler, polled by an external cron trigger — there is no
+in-process worker or queue.
+
+1. hPanel → **Advanced** → **Cron Jobs**
+2. Add a new job, every 5 minutes:
+   ```
+   curl -fsS -H "x-cron-secret: <CRON_SECRET value>" https://furqan.taha7.com/api/cron/reminders
+   ```
+3. Verify: check the job's run log after the first execution, or curl it manually
+   and confirm the response is `{ "data": { "claimed": 0, "dispatched": 0, "failed": 0 } }`
+   (or nonzero `claimed`/`dispatched` if a reminder was due).
 
 ---
 

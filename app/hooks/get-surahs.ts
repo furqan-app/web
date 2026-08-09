@@ -16,7 +16,6 @@ function isSurahResultArray(value: unknown): value is SurahResult[] {
                 typeof v.id === "number" &&
                 typeof v.name_arabic === "string" &&
                 typeof v.name_simple === "string" &&
-                typeof v.translated_name === "string" &&
                 typeof v.verses_count === "number" &&
                 typeof v.revelation_place === "string" &&
                 typeof v.pages === "string"

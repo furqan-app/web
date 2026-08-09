@@ -33,7 +33,25 @@ Because the context lives above the reader's route tree, the `<audio>` element i
 - **+** Reusing `/pages/[id]`'s existing pair-derivation for audio-driven navigation means zero new routing logic — the same URL a user would manually navigate to is what the player pushes to.
 - **-** Recitation now has a hard runtime dependency on QDC's uptime/CORS/API stability — a build-time-only dependency (the seeder) does not carry this risk; if QDC is down, playback (not just re-seeding) breaks.
 - **-** Timing/segment data is re-fetched every time a chapter starts playing (not cached across sessions) — acceptable for v1, revisit if usage shows this is a real cost or latency issue.
-- **-** The direct-DOM-ref highlight mechanism is an exception to this codebase's otherwise-React-state-driven highlight pattern (`highlight.ts`'s URL-param approach) — justified only by the 4×/second update frequency; do not copy this pattern for anything lower-frequency.
+- **-** The direct-DOM highlight mechanism is an exception to this codebase's otherwise-React-state-driven highlight pattern (`highlight.ts`'s URL-param approach) — justified only by the 4×/second update frequency; do not copy this pattern for anything lower-frequency. (The mechanism is now a `data-fq-word` attribute query, not a ref registry — see the 2026-08-03 addendum.)
+
+## Addendum (2026-08-03): Supersedes the DOM **ref registry** — highlight targets are addressed by attribute
+
+**The "direct DOM ref registry" half of the highlight mechanism is superseded.** The registry was a `Map<location, HTMLElement>` — one element per word. That assumption is false in this reader: `getPagePair(N)` makes `pair(N)` and `pair(N±1)` overlap, so in the single-page layout the pager's three-panel window (ADR 0028) mounts the same page in two panels at once, and `QuranSpread` mounts both members of every pair with the non-current one hidden by CSS (ADR 0013 Addendum 4). Several DOM elements therefore share one `location`, the last to attach wins the map slot, and which one that is depends on mount/commit history rather than on which is visible. Trello #182: the live highlight was observed advancing on a `display:none` copy in an off-screen panel while a stale, frozen highlight sat on the visible copy — the latter unreachable by removal, so it survived verse changes, `stop()`, and the next `play()`.
+
+**New mechanism:** `QuranWord` renders `data-fq-word={word.location}`; `RecitationContext` resolves targets with `document.querySelectorAll('[data-fq-word="…"]')` when the active word changes and toggles the class on every match. No registry, no element identity to track, no winner to pick — duplicates and hidden copies receive the class harmlessly. As a side effect `QuranWord` no longer consumes `RecitationContext` at all (the registry callback was its only use), so the word tree stops subscribing to a context that updates per recited word — which is what the original perf rationale wanted in the first place.
+
+**Invariant this establishes:** a word `location` identifies *content*, never a unique DOM node. Any future feature that needs to reach a word in the DOM — marks overlay, tajweed, e2e selectors — must tolerate multiple live matches and must not cache an element per location.
+
+See `docs/plans/recitation-playback.md` Addendum 11.
+
+## Addendum (2026-08-02): Supersedes "background mini-player" — hard stop on route leave
+
+**The background-playback requirement ("keep playing after leaving the reader entirely") stated in the original Context section and encoded as a Consequences bullet is superseded.** Trello #152 reported that `RecitationPlayerBar` overlaps content on non-reader pages (e.g. `/mushaf` hub) because those pages carry no bottom-padding counterpart for the bar. The decision is to hard-stop recitation when the user navigates away from any `/pages/` route rather than maintaining a background mini-player.
+
+**Mechanism:** a `useEffect` in `RecitationPlayerBar` calls `stop()` when `isOnReaderRoute` transitions to `false` while not idle. See `docs/plans/recitation-playback.md` Addendum 10.
+
+---
 
 ## Addendum (2026-07-16): Supersedes "no cross-chapter auto-continue" — general chaining added
 

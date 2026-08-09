@@ -441,12 +441,6 @@ body,
       flex-shrink: 0;
       white-space: nowrap;
     }
-    /* Short opening pages (1–2) have far fewer than 15 lines: center them as a block
-       with a modest gap rather than stretching edge-to-edge. */
-    .fq-quran-safha.fq-safha-center {
-      justify-content: center;
-      gap: 0.55em;
-    }
   }
 
   /* ---- Mobile reader: nav overlay + mushaf paper + book stack ------------ */
@@ -636,12 +630,6 @@ body,
       flex-shrink: 0;
       white-space: nowrap;
     }
-    /* Short opening pages (1–2): center as a block with a modest gap rather than
-       stretching their few lines edge-to-edge — mirrors the mobile rule above. */
-    .fq-spread .fq-quran-safha.fq-safha-center {
-      justify-content: center;
-      gap: 0.55em;
-    }
     /* Loading skeleton overlay: mirror the real spread line layout (flex-start +
        uniform --fq-line-gap + 0.2em padding-block above) so the placeholder lines
        sit exactly where the real lines will — no jump when the page font loads. Off
@@ -698,12 +686,6 @@ body,
     }
     .fq-spread .fq-quran-safha {
       justify-content: space-between;
-    }
-    /* Opening pages stay centred as a block — `.fq-safha-center` above already says
-       so, repeated here only because this block's rule would otherwise win on
-       source order. */
-    .fq-spread .fq-quran-safha.fq-safha-center {
-      justify-content: center;
     }
     /* The skeleton must mirror the real distribution or the lines jump when the
        page font lands. */
@@ -993,7 +975,7 @@ body,
       right: 24px !important;
       top: 50%;
       transform: translateY(-50%);
-      width: 56px;
+      width: 96px;
       border-width: 1px !important;
       border-style: solid;
       border-radius: calc(var(--radius) + 4px);
@@ -1017,6 +999,14 @@ body,
     /* Info div: not flex-1 in rail, text centred. */
     .fq-recitation-bar-rail .fq-recitation-info {
       display: none;
+    }
+    /* Rail-only reciter trigger: hidden by default (bar form shows the name
+       inline in .fq-recitation-info instead); revealed here, truncated to the
+       96px rail width minus its padding. Trello #183. */
+    .fq-recitation-bar-rail .fq-recitation-rail-reciter {
+      display: flex;
+      width: 100%;
+      max-width: 80px;
     }
   }
 
@@ -1271,14 +1261,6 @@ body,
       min-height: 0;
       justify-content: space-between;
     }
-    /* Pages 1–2 (fq-safha-center): center the few lines within the full-height card
-       instead of stretching them with space-between. Higher specificity beats the
-       general .fq-quran-safha rule above. Mirrors the desktop spread rule in the
-       @media (min-width:768px) block. */
-    :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-safha-center {
-      justify-content: center;
-      gap: 0.55em;
-    }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
       font-size: calc(var(--fq-t-word) * 0.85);
     }
@@ -1292,7 +1274,11 @@ body,
      classList toggling from RecitationContext's timeupdate handler, not React
      state/className, since it fires ~4x/second and re-rendering the word tree
      at that rate is a real perf risk. Plain CSS (not a Tailwind utility
-     string) because there's no JSX call site for Tailwind's JIT to scan. */
+     string) because there's no JSX call site for Tailwind's JIT to scan.
+     The class lands on every element matching the recited word's
+     `[data-fq-word]`, which is normally more than one — the pager mounts the
+     same page in two panels and hides one of them, so only the visible match
+     shows (ADR 0021's 2026-08-03 addendum). */
   .fq-recitation-active-word {
     background-color: hsl(var(--primary) / 0.22);
     border-radius: 0.2em;
