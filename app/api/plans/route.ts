@@ -10,6 +10,7 @@ import {
 } from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
 import { getPageJuzNumber } from "@/app/lib/plans/resolve-units";
+import { pageOfVerse } from "@/app/lib/plans/verse-index";
 
 export type UserPlanListItem = {
   id: number;
@@ -45,9 +46,15 @@ const serializePlan = (plan: {
 const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> => {
   const { targetStart, targetEnd } = item.params;
   if (targetStart === undefined || targetEnd === undefined) return item;
+  // targetStart/targetEnd are verse ordinals for a verse-unit enrollment
+  // (ADR 0037) — convert to the page they fall on before the page-based juz
+  // lookup, same as resolvePlanParams does in reverse at enroll/edit time.
+  const isVerseUnit = item.params.unit === "verse";
+  const startPage = isVerseUnit ? pageOfVerse(targetStart) : targetStart;
+  const endPage = isVerseUnit ? pageOfVerse(targetEnd) : targetEnd;
   const [juzStart, juzEnd] = await Promise.all([
-    getPageJuzNumber(targetStart),
-    getPageJuzNumber(targetEnd),
+    getPageJuzNumber(startPage),
+    getPageJuzNumber(endPage),
   ]);
   if (juzStart === null || juzEnd === null) return item;
   return { ...item, target_juz_start: juzStart, target_juz_end: juzEnd };

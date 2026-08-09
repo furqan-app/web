@@ -49,7 +49,8 @@ export async function PATCH(
   if (status !== undefined) data.status = status;
 
   if (hasParamsEdit) {
-    const resolved = await resolvePlanParams(body ?? {});
+    const existingUnit = (plan.params as { unit?: "page" | "verse" } | null)?.unit ?? "page";
+    const resolved = await resolvePlanParams(body ?? {}, existingUnit);
     if ("error" in resolved) {
       return jsonResponse({ code: 422, message: resolved.error });
     }

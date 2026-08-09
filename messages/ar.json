@@ -151,6 +151,12 @@
       "retry": "إعادة المحاولة"
     },
     "pagesPerDay": "صفحة/يوم",
+    "versesPerDay": "آية/يوم",
+    "quantityMode": {
+      "pages": "صفحات",
+      "verses": "آيات",
+      "fraction": "جزء من صفحة"
+    },
     "targetRange": "النطاق المستهدف (بالأجزاء)",
     "to": "إلى",
     "enroll": "ابدأ الخطة",

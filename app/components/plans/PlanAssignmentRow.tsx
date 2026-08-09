@@ -10,6 +10,7 @@ import type { TrackAssignment } from "@/app/lib/plans/engine";
 import { planPlaybackSessionId } from "@/app/lib/plans/assignment-range";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { usePageVerseBounds } from "@hooks/use-page-verse-bounds";
+import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -27,6 +28,10 @@ const formatRange = (start: number, end: number, locale: string) =>
     ? toLocaleNumeral(start, locale)
     : `${toLocaleNumeral(start, locale)}–${toLocaleNumeral(end, locale)}`;
 
+// Verse-unit ranges (ADR 0037) display as surah:verse, not a raw ordinal.
+const formatVerseRange = (startKey: string, endKey: string) =>
+  startKey === endKey ? startKey : `${startKey}–${endKey}`;
+
 // One track's today-assignment: icon + label + page range + check-off. Shared
 // between the hub's MyPlansList and the reader's PlansWidget sheet so the two
 // surfaces never drift apart.
@@ -40,28 +45,54 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
   const Icon = trackUi?.icon;
 
   const { rangeStart, rangeEnd } = assignment;
+  const isVerseUnit = assignment.unit === "verse";
   const isListen = assignment.activity === "listen";
   const isSinglePage = rangeStart === rangeEnd;
   const sessionId = planPlaybackSessionId(planId, assignment.trackKey);
 
-  const startBounds = usePageVerseBounds(rangeStart, { enabled: isListen });
-  const endBounds = usePageVerseBounds(rangeEnd, { enabled: isListen && !isSinglePage });
+  // Verse-unit ranges display as surah:verse and deep-link to the page the
+  // *start* verse falls on — resolved client-side from the same static
+  // assets the engine uses server-side (ADR 0037), not re-derived here.
+  // Gated: page-unit rows (the majority) never fetch/build the index.
+  const verseIndex = usePlanVerseIndex({ enabled: isVerseUnit });
+  const linkPage = isVerseUnit ? verseIndex.data?.pageOf(rangeStart) : rangeStart;
+  // While the verse index is still loading (or failed), a verse-unit row has
+  // no reliable page to link to — never guess by treating the raw ordinal as
+  // a page number.
+  const linkReady = !isVerseUnit || linkPage !== undefined;
+
+  // Page-unit tracks resolve playback bounds via /bounds (page -> verse
+  // range); verse-unit tracks already ARE verse ordinals, so bounds come
+  // straight from the verse index instead — no /bounds call needed.
+  const startBounds = usePageVerseBounds(rangeStart, { enabled: isListen && !isVerseUnit });
+  const endBounds = usePageVerseBounds(rangeEnd, {
+    enabled: isListen && !isSinglePage && !isVerseUnit,
+  });
 
   // Whichever query supplies the range's END bounds — the same one as the
   // start when the assignment is a single page (no second request fired).
   const endBoundsQuery = isSinglePage ? startBounds : endBounds;
 
-  const bounds =
-    startBounds.data && endBoundsQuery.data
+  const verseUnitBounds = (() => {
+    if (!isListen || !isVerseUnit) return null;
+    const firstVerseKey = verseIndex.data?.verseKeyOf(rangeStart);
+    const lastVerseKey = verseIndex.data?.verseKeyOf(rangeEnd);
+    if (!firstVerseKey || !lastVerseKey) return null;
+    return { firstVerseKey, lastVerseKey, lastChapterId: Number(lastVerseKey.split(":")[0]) };
+  })();
+
+  const bounds = isVerseUnit
+    ? verseUnitBounds
+    : startBounds.data && endBoundsQuery.data
       ? {
           firstVerseKey: startBounds.data.firstVerseKey,
           lastVerseKey: endBoundsQuery.data.lastVerseKey,
           lastChapterId: endBoundsQuery.data.lastChapterId,
         }
       : null;
-  // A failed /bounds fetch must not spin forever — surface it as a retry
-  // affordance instead.
-  const boundsError = isListen && (startBounds.isError || endBoundsQuery.isError);
+  // A failed /bounds fetch (or verse-index fetch) must not spin forever —
+  // surface it as a retry affordance instead.
+  const boundsError = isListen && (isVerseUnit ? verseIndex.isError : startBounds.isError || endBoundsQuery.isError);
   const boundsLoading = isListen && !bounds && !boundsError;
 
   // Identity, not page overlap: an unrelated session (player bar, MarkModal)
@@ -71,13 +102,25 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
   const isRowPlaying = isActiveRow && status === "playing";
   const isRowLoading = boundsLoading || (isActiveRow && status === "loading");
 
-  const rangeLabel = formatRange(assignment.rangeStart, assignment.rangeEnd, locale);
+  // Verse-unit: "surah:verse–surah:verse" (falls back to the raw ordinal
+  // range while the client-side verse index is still loading). Page-unit:
+  // "Page N–M", unchanged.
+  const formatRangeText = (start: number, end: number) => {
+    if (!isVerseUnit) return `${t("page", "Page")} ${formatRange(start, end, locale)}`;
+    const s = verseIndex.data?.verseKeyOf(start);
+    const e = verseIndex.data?.verseKeyOf(end);
+    return s && e ? formatVerseRange(s, e) : formatRange(start, end, locale);
+  };
+  const rangeLabel = formatRangeText(assignment.rangeStart, assignment.rangeEnd);
 
   const handlePlayTap = () => {
     if (isRowLoading) return;
     if (boundsError) {
-      startBounds.refetch();
-      if (!isSinglePage) endBounds.refetch();
+      if (isVerseUnit) verseIndex.refetch();
+      else {
+        startBounds.refetch();
+        if (!isSinglePage) endBounds.refetch();
+      }
       return;
     }
     if (!bounds) return;
@@ -91,7 +134,7 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
       stopChapterId: bounds.lastChapterId,
       rangeRepeatCount: assignment.repetitions ?? 1,
       id: sessionId,
-      label: `${trackLabel} · ${t("page", "Page")} ${rangeLabel}`,
+      label: `${trackLabel} · ${rangeLabel}`,
     });
   };
 
@@ -128,38 +171,47 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
         </button>
       ) : null}
 
-      <Link
-        href={`/pages/${assignment.rangeStart}`}
-        locale={locale}
-        className="flex items-center gap-3 flex-1 min-w-0"
-      >
-        {!isListen ? (
-          <span className="grid place-items-center size-8 rounded-lg bg-primary/10 text-primary flex-none">
-            {Icon ? <Icon className="size-4" strokeWidth={1.7} /> : null}
-          </span>
-        ) : null}
+      {(() => {
+        const content = (
+          <>
+            {!isListen ? (
+              <span className="grid place-items-center size-8 rounded-lg bg-primary/10 text-primary flex-none">
+                {Icon ? <Icon className="size-4" strokeWidth={1.7} /> : null}
+              </span>
+            ) : null}
 
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-foreground truncate">
-            {trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
-            {" · "}
-            {t("page", "Page")} {rangeLabel}
-            {assignment.repetitions ? ` · ×${toLocaleNumeral(assignment.repetitions, locale)}` : ""}
-          </div>
-          {assignment.completed && assignment.next ? (
-            <div className="text-xs text-muted-foreground/70">
-              {t("plans.nextAssignment", "Next")}: {t("page", "Page")}{" "}
-              {formatRange(assignment.next.rangeStart, assignment.next.rangeEnd, locale)}
-              {assignment.next.repetitions
-                ? ` · ×${toLocaleNumeral(assignment.next.repetitions, locale)}`
-                : ""}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-foreground truncate">
+                {trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
+                {" · "}
+                {rangeLabel}
+                {assignment.repetitions ? ` · ×${toLocaleNumeral(assignment.repetitions, locale)}` : ""}
+              </div>
+              {assignment.completed && assignment.next ? (
+                <div className="text-xs text-muted-foreground/70">
+                  {t("plans.nextAssignment", "Next")}:{" "}
+                  {formatRangeText(assignment.next.rangeStart, assignment.next.rangeEnd)}
+                  {assignment.next.repetitions
+                    ? ` · ×${toLocaleNumeral(assignment.next.repetitions, locale)}`
+                    : ""}
+                </div>
+              ) : null}
             </div>
-          ) : null}
-        </div>
-      </Link>
+          </>
+        );
+        // Not yet resolvable to a real page (verse index still loading/
+        // errored) — render inert rather than link to a guessed page.
+        return linkReady ? (
+          <Link href={`/pages/${linkPage}`} locale={locale} className="flex items-center gap-3 flex-1 min-w-0">
+            {content}
+          </Link>
+        ) : (
+          <div className="flex items-center gap-3 flex-1 min-w-0">{content}</div>
+        );
+      })()}
 
       <button
         type="button"

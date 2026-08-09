@@ -150,6 +150,12 @@
       "retry": "Retry loading"
     },
     "pagesPerDay": "pages/day",
+    "versesPerDay": "verses/day",
+    "quantityMode": {
+      "pages": "Pages",
+      "verses": "Verses",
+      "fraction": "Fraction of a page"
+    },
     "targetRange": "Target range (juz)",
     "to": "to",
     "enroll": "Start plan",

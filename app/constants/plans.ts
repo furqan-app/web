@@ -18,8 +18,12 @@ export const PLAN_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const PLAN_ACTIVITIES = ["read", "listen", "memorize", "review"] as const;
 export type PlanActivity = (typeof PLAN_ACTIVITIES)[number];
 
-/** v1 is page-canonical; "verse" is the planned future widening (D3). */
-export type PlanUnit = "page";
+/**
+ * "page" (v1) or "verse" (ADR 0037). Unit is an enrollment-time choice, not a
+ * template-fixed property — the same template supports either per enrollment.
+ * Fixed for the life of an enrollment; never migrated or switched mid-plan.
+ */
+export type PlanUnit = "page" | "verse";
 
 export type TrackRule =
   | {
@@ -79,18 +83,42 @@ export type PlanTemplate = {
 };
 
 /**
+ * A quantity override, per track. A plain number means "N units/day" in the
+ * enrollment's unit (pages/day for a page-unit enrollment, verses/day for a
+ * verse-unit one). The `{unit:"pages"}` form is only valid on a verse-unit
+ * enrollment: a fractional/whole page pace (e.g. 0.5), resolved fresh every
+ * day from the verse count of whatever page that day's cursor starts on
+ * (ADR 0037) — never locked at enroll time.
+ */
+export type PlanQuantity = number | { unit: "pages"; amount: number };
+
+/**
  * Per-enrollment configuration stored in UserPlan.params (JSON).
  * quantities override a track rule's defaultUnitsPerDay by track key.
- * targetStart/targetEnd bound cursor_advance tracks (e.g. "memorize Juz Amma").
+ * targetStart/targetEnd bound cursor_advance tracks (e.g. "memorize Juz Amma"),
+ * in the enrollment's unit (pages or verse ordinals).
  * endDate ("YYYY-MM-DD") is required by the "calendar" missed-day policy.
+ * unit (ADR 0037): the enrollment's working unit for every track's range math
+ * — chosen once at enroll time, fixed for the enrollment's lifetime, never
+ * migrated. Absent means "page", matching every pre-widening enrollment.
  */
 export type UserPlanParams = {
-  quantities?: Record<string, number>;
+  quantities?: Record<string, PlanQuantity>;
   startPage?: number;
   targetStart?: number;
   targetEnd?: number;
   endDate?: string;
+  unit?: PlanUnit;
 };
+
+/**
+ * Average verses/page across the whole mushaf (6236 verses / 604 pages),
+ * used only to derive husun's verse-equivalent rule defaults below — same
+ * "documented best-effort, editable per-enrollment" framing as the original
+ * page defaults (no authoritative source for either).
+ */
+const AVG_VERSES_PER_PAGE = 6236 / 604;
+export const toVerseEquivalent = (pages: number) => Math.round(pages * AVG_VERSES_PER_PAGE);
 
 export const USER_PLAN_STATUSES = [
   "active",

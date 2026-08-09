@@ -1,9 +1,15 @@
 /**
- * Plan assignment engine (ADR 0030).
+ * Plan assignment engine (ADR 0030, widened by ADR 0037).
  *
  * Pure functions — no DB, no clock. The daily assignment is derived from
  * (template, enrollment params, progress log, date) and is never stored.
- * All ranges are inclusive mushaf page ranges (page-canonical, D3).
+ *
+ * Ranges are inclusive and expressed in the enrollment's own unit
+ * (`params.unit`, defaulting to `"page"` for pre-widening enrollments):
+ * mushaf page numbers for a page-unit enrollment, global verse ordinals
+ * (1–6236, see verse-index.ts) for a verse-unit one. The unit is fixed for an
+ * enrollment's lifetime and applies to every track in it — never mixed within
+ * one enrollment, never inferred from a stored number's magnitude.
  *
  * Dates are "YYYY-MM-DD" strings in the user's local timezone — the client
  * supplies "today" (local-midnight day boundary, see the plan doc).
@@ -12,11 +18,22 @@
 import {
   MUSHAF_FIRST_PAGE,
   MUSHAF_LAST_PAGE,
+  toVerseEquivalent,
   type PlanTemplate,
   type PlanTrack,
+  type PlanUnit,
+  type TrackRule,
   type UserPlanParams,
 } from "@/app/constants/plans";
 import { addDays } from "@/app/lib/plans/dates";
+import {
+  MUSHAF_FIRST_VERSE,
+  MUSHAF_LAST_VERSE,
+  pageOfVerse,
+  pageFirstVerseOrdinal,
+  pageLastVerseOrdinal,
+  pageVerseCount,
+} from "@/app/lib/plans/verse-index";
 
 export type ProgressLogEntry = {
   track_key: string;
@@ -29,7 +46,7 @@ export type ProgressLogEntry = {
 export type TrackAssignment = {
   trackKey: string;
   activity: PlanTrack["activity"];
-  unit: PlanTrack["unit"];
+  unit: PlanUnit;
   rangeStart: number;
   rangeEnd: number;
   /** Only set for lookahead tracks (e.g. تحضير repetition count). */
@@ -91,20 +108,59 @@ const trackState = (
 };
 
 /**
+ * fixed_cycle's range, in the enrollment's unit. The template always declares
+ * this range in pages (e.g. the whole mushaf, 1–604); for a verse-unit
+ * enrollment it's converted to the verse ordinals spanning those same pages —
+ * so a "whole mushaf" page range naturally becomes 1–6236.
+ */
+const fixedCycleBounds = (
+  rule: Extract<TrackRule, { kind: "fixed_cycle" }>,
+  unit: PlanUnit
+): { start: number; end: number } =>
+  unit === "page"
+    ? { start: rule.rangeStart, end: rule.rangeEnd }
+    : {
+        start: pageFirstVerseOrdinal(rule.rangeStart),
+        end: pageLastVerseOrdinal(rule.rangeEnd),
+      };
+
+/**
  * Units/day for a self-advancing track: enrollment override, else the rule's
- * default; under the "calendar" missed-day policy (D4) with an endDate, the
- * remaining quantity is spread over the remaining days instead.
+ * (page-canonical) default converted to the enrollment's unit; under the
+ * "calendar" missed-day policy (D4) with an endDate, the remaining quantity is
+ * spread over the remaining days instead. `cursorStart` is where today's
+ * range would begin, in the enrollment's unit — needed only to resolve a
+ * `{unit:"pages"}` fractional override (verse-unit tracks only, ADR 0037):
+ * "half a page" always means half of *that page's* actual verse count,
+ * resolved fresh every call, never locked in at enroll time.
  */
 const unitsPerDay = (
   template: PlanTemplate,
   track: PlanTrack,
   params: UserPlanParams,
+  unit: PlanUnit,
   date: string,
   remainingUnits: number,
-  defaultUnits: number
+  defaultUnitsPerDayPages: number,
+  cursorStart: number
 ) => {
   const override = params.quantities?.[track.key];
-  const base = clampQuantity(override ?? defaultUnits);
+  const resolveBase = (): number => {
+    if (override === undefined) {
+      return unit === "page" ? defaultUnitsPerDayPages : toVerseEquivalent(defaultUnitsPerDayPages);
+    }
+    if (typeof override === "number") return override;
+    // {unit:"pages"} is only meaningful on a verse-unit track — validated at
+    // input time, but guarded here too since resolveBase() has no other way
+    // to know a page-unit call is misusing it (interpreting a page-unit
+    // cursor as a verse ordinal would silently return a wrong-but-plausible
+    // number instead of failing loud). Recompute from whichever page today's
+    // cursor starts on.
+    if (unit !== "verse") return defaultUnitsPerDayPages;
+    const page = pageOfVerse(cursorStart);
+    return Math.round(override.amount * pageVerseCount(page));
+  };
+  const base = clampQuantity(resolveBase());
   if (template.missedDayPolicy !== "calendar" || !params.endDate) return base;
   // A malformed endDate would make dayCountInclusive NaN and poison the range;
   // treat it as "no calendar spreading" and fall back to the base quantity.
@@ -119,20 +175,22 @@ const assignRange = (
   rangeStart: number,
   rangeEnd: number,
   state: TrackState,
+  unit: PlanUnit,
   repetitions?: number
 ): TrackAssignment => ({
   trackKey: track.key,
   activity: track.activity,
-  unit: track.unit,
+  unit,
   rangeStart,
   rangeEnd,
   ...(repetitions !== undefined ? { repetitions } : {}),
   completed: state.todayEntry !== null,
 });
 
-const cursorAdvanceTarget = (params: UserPlanParams) => ({
-  targetStart: params.targetStart ?? MUSHAF_FIRST_PAGE,
-  targetEnd: params.targetEnd ?? MUSHAF_LAST_PAGE,
+const cursorAdvanceTarget = (params: UserPlanParams, unit: PlanUnit) => ({
+  targetStart:
+    params.targetStart ?? (unit === "page" ? MUSHAF_FIRST_PAGE : MUSHAF_FIRST_VERSE),
+  targetEnd: params.targetEnd ?? (unit === "page" ? MUSHAF_LAST_PAGE : MUSHAF_LAST_VERSE),
 });
 
 /**
@@ -145,14 +203,15 @@ const cursorAdvanceTarget = (params: UserPlanParams) => ({
  */
 const todayEntryAssignment = (
   track: PlanTrack,
-  state: TrackState
+  state: TrackState,
+  unit: PlanUnit
 ): TrackAssignment | null => {
   if (!state.todayEntry) return null;
   const start = Number(state.todayEntry.range_start);
   const end = Number(state.todayEntry.range_end);
   if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
   const repetitions = track.rule.kind === "lookahead" ? track.rule.repetitions : undefined;
-  return assignRange(track, start, end, state, repetitions);
+  return assignRange(track, start, end, state, unit, repetitions);
 };
 
 /** Assignment for one self-advancing (source-free) track, or null when done. */
@@ -161,40 +220,36 @@ const deriveSourceFreeTrack = (
   track: PlanTrack,
   params: UserPlanParams,
   state: TrackState,
+  unit: PlanUnit,
   date: string
 ): TrackAssignment | null => {
-  const already = todayEntryAssignment(track, state);
+  const already = todayEntryAssignment(track, state, unit);
   if (already) return already;
 
   const rule = track.rule;
 
   if (rule.kind === "fixed_cycle") {
+    const { start: boundStart, end: boundEnd } = fixedCycleBounds(rule, unit);
     let start =
       state.lastEnd !== null
         ? state.lastEnd + 1
-        : Math.min(
-            Math.max(params.startPage ?? rule.rangeStart, rule.rangeStart),
-            rule.rangeEnd
-          );
-    if (start > rule.rangeEnd) start = rule.rangeStart; // wrap: next khatma
+        : Math.min(Math.max(params.startPage ?? boundStart, boundStart), boundEnd);
+    if (start > boundEnd) start = boundStart; // wrap: next khatma
     const units = unitsPerDay(
       template,
       track,
       params,
+      unit,
       date,
-      rule.rangeEnd - start + 1,
-      rule.defaultUnitsPerDay
+      boundEnd - start + 1,
+      rule.defaultUnitsPerDay,
+      start
     );
-    return assignRange(
-      track,
-      start,
-      Math.min(start + units - 1, rule.rangeEnd),
-      state
-    );
+    return assignRange(track, start, Math.min(start + units - 1, boundEnd), state, unit);
   }
 
   if (rule.kind === "cursor_advance") {
-    const { targetStart, targetEnd } = cursorAdvanceTarget(params);
+    const { targetStart, targetEnd } = cursorAdvanceTarget(params, unit);
     const start =
       state.lastEnd !== null
         ? state.lastEnd + 1
@@ -204,11 +259,13 @@ const deriveSourceFreeTrack = (
       template,
       track,
       params,
+      unit,
       date,
       targetEnd - start + 1,
-      rule.defaultUnitsPerDay
+      rule.defaultUnitsPerDay,
+      start
     );
-    return assignRange(track, start, Math.min(start + units - 1, targetEnd), state);
+    return assignRange(track, start, Math.min(start + units - 1, targetEnd), state, unit);
   }
 
   return null;
@@ -225,6 +282,10 @@ export const deriveAssignments = (
   entries: ProgressLogEntry[],
   date: string
 ): TrackAssignment[] => {
+  // Enrollment-wide (ADR 0037) — every track in one enrollment shares the
+  // same unit; never mixed, never inferred from stored data.
+  const unit: PlanUnit = params.unit ?? "page";
+
   const states = new Map<string, TrackState>();
   const sourceFree = new Map<string, TrackAssignment | null>();
 
@@ -237,7 +298,7 @@ export const deriveAssignments = (
     if (track.rule.kind === "fixed_cycle" || track.rule.kind === "cursor_advance") {
       sourceFree.set(
         track.key,
-        deriveSourceFreeTrack(template, track, params, states.get(track.key)!, date)
+        deriveSourceFreeTrack(template, track, params, states.get(track.key)!, unit, date)
       );
     }
   }
@@ -254,7 +315,7 @@ export const deriveAssignments = (
       continue;
     }
 
-    const already = todayEntryAssignment(track, state);
+    const already = todayEntryAssignment(track, state, unit);
     if (already) {
       assignments.push(already);
       continue;
@@ -269,15 +330,18 @@ export const deriveAssignments = (
 
     if (rule.kind === "trailing_window") {
       if (!hasHistory) continue;
-      const start = Math.max(source.minStart!, source.lastEnd! - rule.windowSize + 1);
-      assignments.push(assignRange(track, start, source.lastEnd!, state));
+      const windowSize = unit === "page" ? rule.windowSize : toVerseEquivalent(rule.windowSize);
+      const start = Math.max(source.minStart!, source.lastEnd! - windowSize + 1);
+      assignments.push(assignRange(track, start, source.lastEnd!, state, unit));
       continue;
     }
 
     if (rule.kind === "completed_cycle") {
       if (!hasHistory) continue;
+      const excludeTrailingWindow =
+        unit === "page" ? rule.excludeTrailingWindow : toVerseEquivalent(rule.excludeTrailingWindow);
       const regionStart = source.minStart!;
-      const regionEnd = source.lastEnd! - rule.excludeTrailingWindow;
+      const regionEnd = source.lastEnd! - excludeTrailingWindow;
       if (regionEnd < regionStart) continue;
       let start = state.lastEnd !== null ? state.lastEnd + 1 : regionStart;
       if (start > regionEnd) start = regionStart; // wrap within reviewed region
@@ -285,12 +349,14 @@ export const deriveAssignments = (
         template,
         track,
         params,
+        unit,
         date,
         regionEnd - start + 1,
-        rule.defaultUnitsPerDay
+        rule.defaultUnitsPerDay,
+        start
       );
       assignments.push(
-        assignRange(track, start, Math.min(start + units - 1, regionEnd), state)
+        assignRange(track, start, Math.min(start + units - 1, regionEnd), state, unit)
       );
       continue;
     }
@@ -308,8 +374,8 @@ export const deriveAssignments = (
     if (!sourceTrack) continue;
     const bound =
       sourceTrack.rule.kind === "fixed_cycle"
-        ? sourceTrack.rule.rangeEnd
-        : cursorAdvanceTarget(params).targetEnd;
+        ? fixedCycleBounds(sourceTrack.rule, unit).end
+        : cursorAdvanceTarget(params, unit).targetEnd;
     const sourceUnits =
       sourceAssignment !== null && sourceAssignment !== undefined
         ? sourceAssignment.rangeEnd - sourceAssignment.rangeStart + 1
@@ -322,6 +388,7 @@ export const deriveAssignments = (
         start,
         Math.min(start + sourceUnits - 1, bound),
         state,
+        unit,
         rule.repetitions
       )
     );
