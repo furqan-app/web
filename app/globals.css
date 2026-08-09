@@ -30,8 +30,6 @@
     --gold: 163 86% 35%;
     --gold-muted: 165 53% 93%;
     --overlay: 0 0% 0%;
-    --surah-frame-line: hsl(39 35% 25%);
-    --surah-frame-gold: #cdad80;
     /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
        the traditional gold Mushaf. Near-white paper and neutral gray ornaments;
        no gold, bronze, beige, or warm-gray tint. */
@@ -95,8 +93,6 @@
     --gold: 41 57% 43%;
     --gold-muted: 46 55% 86%;
     --overlay: 0 0% 0%;
-    --surah-frame-line: hsl(39 45% 20%);
-    --surah-frame-gold: #b8924a;
     /* Gold theme — richer warm ivory paper (the deeper, more golden variant that
        distinguishes it from the light theme). Safha info (juz/hizb/page number) is
        BLACK here, not gold, for contrast against the warm UI. */
@@ -167,8 +163,6 @@
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;
     --overlay: 212 52% 6%;
-    --surah-frame-line: hsl(209 51% 88%);
-    --surah-frame-gold: #cdad80;
     /* Printed-mushaf reader palette — deep warm blue-black paper, antique gold,
        off-white text. Consumed inside the tablet reader scope AND (as of the
        dark-theme unification pass) the desktop/portrait-tablet scope below
@@ -256,8 +250,6 @@
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;
     --overlay: 212 52% 6%;
-    --surah-frame-line: hsl(209 51% 88%);
-    --surah-frame-gold: #cdad80;
     --mushaf-paper: #141d27;
     /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
        change): repurposed from a light top-catch highlight to fully opaque BLACK —
@@ -417,6 +409,7 @@ body,
       --fq-heading-h: calc(var(--fq-mobile-font) * 2.4) !important; /* surah glyph + Bismillah internal block */
     }
     .fq-quran-safha {
+      --fq-safha-font: var(--fq-mobile-font);
       font-size: var(--fq-mobile-font);
       flex: 1 1 0%;
       min-height: 0;
@@ -447,12 +440,6 @@ body,
     .fq-quran-safha > .fq-safha-row > div {
       flex-shrink: 0;
       white-space: nowrap;
-    }
-    /* Short opening pages (1–2) have far fewer than 15 lines: center them as a block
-       with a modest gap rather than stretching edge-to-edge. */
-    .fq-quran-safha.fq-safha-center {
-      justify-content: center;
-      gap: 0.55em;
     }
   }
 
@@ -587,19 +574,12 @@ body,
     .fq-spread .fq-safha-surah-glyph { color: var(--mushaf-ornament) !important; }
     .fq-spread .fq-safha-meta,
     .fq-spread .fq-safha-footer { color: var(--mushaf-metadata) !important; }
-    .fq-spread { --surah-frame-gold: var(--mushaf-ornament); }
-
     /* Dark theme — metadata, footer, ornaments → mushaf-text (off-white, not gold). */
     :root.theme-dark .fq-spread .fq-safha-meta,
     :root.theme-dark .fq-spread .fq-safha-footer,
     :root.theme-dark .fq-spread .fq-safha-surah-glyph,
     :root.theme-dark .fq-spread .fq-quran-safha .fq-inline-surah,
     :root.theme-dark .fq-spread .fq-ornament { color: var(--mushaf-text) !important; }
-    :root.theme-dark .fq-spread { --surah-frame-line: var(--mushaf-ornament); }
-
-    /* Light theme — neutralize warm frame line. */
-    :root.theme-light .fq-spread { --surah-frame-line: #4a4b4e; }
-
     /* Gold theme — surah name follows ink, not gold. */
     :root.theme-gold .fq-spread .fq-safha-surah-glyph,
     :root.theme-gold .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-text) !important; }
@@ -614,6 +594,9 @@ body,
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
      Mirrors the `@media (max-width: 767px)` mobile block above. */
   @media (min-width: 768px) {
+    .fq-quran-safha {
+      --fq-safha-font: var(--fq-word-base);
+    }
     .fq-quran-safha.fq-tajweed {
       font-size: calc(var(--fq-word-base) * 0.85);
     }
@@ -630,7 +613,8 @@ body,
          lines flush; a real `gap` gives every line the same breathing room (matching
          the header/footer `--fq-line-gap` margins) and `flex-start` lets any surplus
          on the shorter, items-stretch'd page collect at the bottom instead of
-         stretching the gaps unevenly. See Addendum 3. */
+         stretching the gaps unevenly. See Addendum 3. Viewports with real slack to
+         claim override this to `space-between` — see the min-height:800px block. */
       justify-content: flex-start;
       gap: var(--fq-line-gap);
       align-items: center;
@@ -646,12 +630,6 @@ body,
       flex-shrink: 0;
       white-space: nowrap;
     }
-    /* Short opening pages (1–2): center as a block with a modest gap rather than
-       stretching their few lines edge-to-edge — mirrors the mobile rule above. */
-    .fq-spread .fq-quran-safha.fq-safha-center {
-      justify-content: center;
-      gap: 0.55em;
-    }
     /* Loading skeleton overlay: mirror the real spread line layout (flex-start +
        uniform --fq-line-gap + 0.2em padding-block above) so the placeholder lines
        sit exactly where the real lines will — no jump when the page font loads. Off
@@ -662,6 +640,67 @@ body,
       justify-content: flex-start !important;
       gap: var(--fq-line-gap);
       padding-block: 0.2em !important;
+    }
+  }
+
+  /* ---- Reader rhythm: leftover height becomes line gaps (Trello #172) -------
+     The reader card is content-height at md+, so on a tall viewport the space the
+     page does not need sat as empty background above and below the book (measured
+     142px at 1440x900) while the lines stayed at the flat --fq-line-gap floor. The
+     card now stretches to the reader's full height band and `space-between` hands
+     that surplus to the inter-line gaps — the same model mobile has used since
+     ADR 0011, and what makes mobile read like a printed mushaf.
+
+     Gated on min-height:800px because that surplus is what pays for it: below that
+     the 15 vh-derived lines already fill the band, so stretching would only push
+     the card under the fixed recitation bar. Short viewports keep the flex-start +
+     floor-gap layout unchanged.
+
+     `gap` stays under `space-between` as the FLOOR: flexbox only ever distributes
+     positive free space, so a page taller than the band degrades to flex-start with
+     the floor intact rather than overlapping lines. */
+  @media (min-width: 768px) and (min-height: 800px) {
+    .fq-reader-outer > .fq-reader-spread-container {
+      flex: 1 1 auto;
+      min-height: 0;
+      align-items: stretch;
+    }
+    /* Stretch, not percentages: `height: 100%` inside a flex-grown box resolves to
+       `auto` (DECISIONS.md — the same trap the earlier fixed-height attempt hit), so
+       the height has to arrive by `align-items: stretch` at every level. Dropping
+       these explicit heights is what lets the stretch pass through; below the page
+       wrapper the box IS definitely sized, so its own `h-full` children resolve. */
+    .fq-reader-spread-container > .fq-spread-col,
+    .fq-spread-col > .fq-spread,
+    .fq-spread > div {
+      height: auto;
+    }
+    /* Reserve the horizontal recitation bar's band. On reader routes that bar is a
+       permanent fixture (RecitationPlayerBar renders even when idle, so its play
+       button can start the current safha) and it is `fixed`, so a stretched spread
+       would run underneath it. 76px = the 57px bar + clearance. The desktop reading
+       group turns the bar into a right-edge rail and gives this band back; the
+       tablet band is full-bleed and already zeroes it. !important beats `pb-4`. */
+    .fq-reader-outer {
+      padding-bottom: 76px !important;
+    }
+    .fq-spread .fq-quran-safha {
+      justify-content: space-between;
+    }
+    /* The skeleton must mirror the real distribution or the lines jump when the
+       page font lands. */
+    .fq-spread .fq-skeleton-lines {
+      justify-content: space-between !important;
+    }
+  }
+
+  /* Small-laptop / portrait-tablet band (768–1023px): same stretch as above, but it
+     needs its own desk margin — the desktop group's lives at ≥1367px and the
+     1024–1366px band is deliberately full-bleed, so without this the stretched card
+     butts against the nav. Kept small (16px): every px here comes out of the gaps. */
+  @media (min-width: 768px) and (max-width: 1023px) and (min-height: 800px) {
+    .fq-reader-outer > .fq-reader-spread-container {
+      padding-block: 16px;
     }
   }
 
@@ -716,6 +755,7 @@ body,
       --fq-dv-word: calc((50vw - 136px) / 14.7);
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
+      --fq-safha-font: min(var(--fq-word-base), var(--fq-dv-word));
       font-size: min(var(--fq-word-base), var(--fq-dv-word));
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
@@ -904,60 +944,69 @@ body,
     }
   }
 
-  /* Reading group: spread above, floating recitation bar below, centred together.
-     Height-gated as well as width-gated. The card is content-sized and the reading
-     font is keyed to the VIEWPORT (max(24px, 2.9vh), ADR 0004), so the card cannot
-     shrink to make room — reserving space for the bar has to come out of the
-     column's spare height, and below ~794px tall there isn't enough (measured:
-     634px card + 104px reservation + 56px nav). Under the gate, desktop keeps the
+  /* Reading group: vertical rail beside the spread. Height-gated as well as
+     width-gated (same gate as before). Below either threshold, desktop keeps the
      full-width bottom-edge bar it has always had. Never close this gap by touching
-     baseScaleViewHeight — that is the reading size (ADR 0004/0005). */
+     baseScaleViewHeight — that is the reading size (ADR 0004/0005).
+     See docs/plans/recitation-bar-vertical-rail.md. */
   @media (min-width: 1367px) and (min-height: 800px) {
+    /* No bottom bar to clear at this size — the player is the right-edge rail — so
+       the band the rhythm block reserves goes back to the page, and the book keeps
+       a thin desk margin instead of touching the nav and the viewport floor. */
     .fq-reader-outer {
-      /* 60px bar + 24px bottom offset + 20px breathing gap. !important beats the
-         JSX `pb-4` utility, same reason as the tablet block below. */
-      padding-bottom: 104px !important;
+      padding-bottom: 0 !important;
     }
-
-    /* Floating bar, matched to the spread. Width and centre are published by
-       QuranSpread's ResizeObserver because the card is content-sized and moves
-       with the font-scale control — no CSS value tracks it. The fallback keeps a
-       sane bar on reader routes that don't mount the pager. The spread's centre is
-       ~8px off the viewport centre (`md:ps-14 md:pe-10`), which is why this is a
-       measured centre and not `left: 50%`. The !important terms beat the JSX
-       `inset-x-0` / `bottom-0` utilities — the utility layer wins over @layer base
-       by source order, same as the tablet block below. */
-    .fq-recitation-bar-reader {
-      right: auto !important;
-      left: var(--fq-spread-center, 50%) !important;
-      transform: translateX(-50%);
-      width: var(--fq-spread-width, min(860px, 100vw - 96px));
-      min-height: 60px;
-      bottom: 24px !important;
-      /* Width/style only — the colour stays the JSX `border-border/50` utility,
-         which wins on source order anyway. Same for the background: light and gold
-         keep the translucent glass that matches Nav (a prior correction round);
-         only dark overrides it below, because translucency over (7,15,23) produces
-         no lift at all. */
-      border-width: 1px;
+    .fq-reader-outer > .fq-reader-spread-container {
+      padding-block: 64px;
+    }
+    /* Wider paper around the same line. The text block cannot be stretched to fill
+       a wider page (a mushaf line is justified by the font's own kashida, never by
+       word spacing — DECISIONS.md), so the extra width goes to the page margin. */
+    .fq-spread .fq-content {
+      padding-inline: 56px;
+    }
+    /* Rail: fixed right edge, vertically centred. !important terms beat the JSX
+       `inset-x-0` / `bottom-0` utilities (utility layer wins over @layer base on
+       source order). border-width !important also beats the JSX `border-t` utility
+       so all four sides get 1px. */
+    .fq-recitation-bar-rail {
+      left: auto !important;
+      bottom: auto !important;
+      right: 24px !important;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 96px;
+      border-width: 1px !important;
       border-style: solid;
       border-radius: calc(var(--radius) + 4px);
       box-shadow: var(--reader-chrome-bar-shadow);
     }
-    /* The bar's BACKGROUND stays theme-scoped, unlike the nav arrows'. This is a
-       real medium difference, not a missed de-duplication: light and gold read as
-       translucent glass over the page, which produces no lift at all over
-       (7,15,23), so dark needs an opaque face. It also cannot be token-driven from
-       the base layer — a plain `background-color` here loses to the JSX utility on
-       source order, and only the `:root.theme-*` form has the specificity to win. */
-    :root.theme-dark .fq-recitation-bar-reader {
+    /* Dark needs an opaque face — translucency over (7,15,23) produces no lift.
+       `:root.theme-dark` specificity (0,2,0) beats the JSX `bg-background/75`
+       utility (0,1,0) without needing !important. */
+    :root.theme-dark .fq-recitation-bar-rail {
       background-color: var(--reader-chrome-face);
       border-color: var(--reader-chrome-rim);
     }
-    /* The bar's inner row is capped at max-w-3xl for the full-width form; inside
-       the floating bar the bar itself is the cap, so let the row fill it. */
-    .fq-recitation-bar-reader > div {
+    /* Rail inner column: vertical stack, centred, overrides the horizontal layout. */
+    .fq-recitation-bar-rail > div {
       max-width: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 0.375rem;
+    }
+    /* Info div: not flex-1 in rail, text centred. */
+    .fq-recitation-bar-rail .fq-recitation-info {
+      display: none;
+    }
+    /* Rail-only reciter trigger: hidden by default (bar form shows the name
+       inline in .fq-recitation-info instead); revealed here, truncated to the
+       96px rail width minus its padding. Trello #183. */
+    .fq-recitation-bar-rail .fq-recitation-rail-reciter {
+      display: flex;
+      width: 100%;
+      max-width: 80px;
     }
   }
 
@@ -1137,18 +1186,6 @@ body,
     .fq-spread .fq-safha-footer {
       color: var(--mushaf-metadata) !important;
     }
-    /* Mute the surah-banner frame gold to the per-theme ornament colour (gold in
-       gold/dark, neutral gray in light). The frame SVG reads --surah-frame-gold. */
-    :root[data-safha-view="double"] .fq-spread {
-      --surah-frame-gold: var(--mushaf-ornament);
-    }
-    /* Light theme's frame line is a warm brown by default — neutralise it in the
-       reader so the modern light theme stays entirely gray (no warm tint). Gold
-       and dark keep their traditional frame line. */
-    :root.theme-light[data-safha-view="double"] .fq-spread {
-      --surah-frame-line: #4a4b4e;
-    }
-
     /* Dark theme — page CHROME (header/footer metadata, the surah-name glyph, the
        inline surah name, and the ◆ separators) takes the off-white text colour so
        the info reads quietly, not gold. Gold is reserved for the surah banner frame;
@@ -1160,12 +1197,6 @@ body,
     :root.theme-dark[data-safha-view="double"] .fq-spread .fq-ornament {
       color: var(--mushaf-text) !important;
     }
-    /* Dark theme — make the WHOLE surah frame gold (its line detail defaults to a
-       near-white, leaving the frame two-tone; force it to the ornament gold too). */
-    :root.theme-dark[data-safha-view="double"] .fq-spread {
-      --surah-frame-line: var(--mushaf-ornament);
-    }
-
     /* Gold theme — the surah name is NOT gold; render it in the ink text colour
        (matching the black safha info). Ornaments and the frame stay gold. */
     :root.theme-gold[data-safha-view="double"] .fq-spread .fq-safha-surah-glyph,
@@ -1219,6 +1250,7 @@ body,
       --fq-t-word: min(calc((50vw - 16px) / 14.7), calc((100dvh - 50px) / 23));
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
+      --fq-safha-font: var(--fq-t-word);
       font-size: var(--fq-t-word);
       /* Grow to fill the card, then distribute the 15 lines evenly across that
          height (space-between) so they span the full page like a printed mushaf
@@ -1228,14 +1260,6 @@ body,
       flex: 1 1 auto;
       min-height: 0;
       justify-content: space-between;
-    }
-    /* Pages 1–2 (fq-safha-center): center the few lines within the full-height card
-       instead of stretching them with space-between. Higher specificity beats the
-       general .fq-quran-safha rule above. Mirrors the desktop spread rule in the
-       @media (min-width:768px) block. */
-    :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-safha-center {
-      justify-content: center;
-      gap: 0.55em;
     }
     :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
       font-size: calc(var(--fq-t-word) * 0.85);
@@ -1250,7 +1274,11 @@ body,
      classList toggling from RecitationContext's timeupdate handler, not React
      state/className, since it fires ~4x/second and re-rendering the word tree
      at that rate is a real perf risk. Plain CSS (not a Tailwind utility
-     string) because there's no JSX call site for Tailwind's JIT to scan. */
+     string) because there's no JSX call site for Tailwind's JIT to scan.
+     The class lands on every element matching the recited word's
+     `[data-fq-word]`, which is normally more than one — the pager mounts the
+     same page in two panels and hides one of them, so only the visible match
+     shows (ADR 0021's 2026-08-03 addendum). */
   .fq-recitation-active-word {
     background-color: hsl(var(--primary) / 0.22);
     border-radius: 0.2em;

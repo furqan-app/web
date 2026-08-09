@@ -12,9 +12,11 @@ import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
 import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
 import { ReaderPageProvider } from "@/app/contexts/ReaderPageContext";
+import { LastReadPageProvider } from "@/app/contexts/LastReadPageContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import { PlansWidget } from "@components/plans/PlansWidget";
+import { LastReadPageSync } from "@components/reader/LastReadPageSync";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -54,11 +56,14 @@ export default async function LocaleLayout({
                     <SidebarProvider>
                       <NavOverlayProvider>
                         <ReaderPageProvider>
-                          <Nav />
-                          {children}
-                          <RecitationPlayerBar />
-                          <RecitationSettingsSheet />
-                          <PlansWidget />
+                          <LastReadPageProvider>
+                            <Nav />
+                            {children}
+                            <RecitationPlayerBar />
+                            <RecitationSettingsSheet />
+                            <PlansWidget />
+                            <LastReadPageSync />
+                          </LastReadPageProvider>
                         </ReaderPageProvider>
                       </NavOverlayProvider>
                     </SidebarProvider>
