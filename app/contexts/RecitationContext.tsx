@@ -106,6 +106,25 @@ async function resolveStopTarget(
   return fetchStopPoint(verseKey, stopPoint, mushafId);
 }
 
+// Toggles the recitation highlight class on EVERY element carrying `location`.
+// Targets are resolved from the DOM here, at apply time, rather than from a
+// registry keyed by location — a `location` identifies content, not a unique
+// node. `getPagePair` makes pair(N) and pair(N±1) overlap, so the pager's
+// three-panel window (ADR 0028) mounts the same page in two panels at once, and
+// QuranSpread mounts both members of every pair with the non-current one hidden
+// by CSS (ADR 0013 Addendum 4). One location therefore has several live
+// elements; a one-element map picks its winner from mount/commit order rather
+// than visibility, which is how the highlight ended up advancing on a
+// display:none copy while a stale one sat frozen on the visible page (Trello
+// #182). Toggling every match needs no winner at all. See ADR 0021's 2026-08-03
+// addendum. Called only when the active word changes (~2-4x/second), never per
+// timeupdate tick.
+function setWordHighlightClass(location: string, on: boolean) {
+  document
+    .querySelectorAll(`[data-fq-word="${location}"]`)
+    .forEach((el) => el.classList.toggle(RECITATION_HIGHLIGHT_CLASS, on));
+}
+
 type RecitationContextType = {
   settings: RecitationSettings;
   updateSettings: (patch: Partial<RecitationSettings>) => void;
@@ -115,7 +134,6 @@ type RecitationContextType = {
   chapters: SurahResult[];
   status: RecitationStatus;
   currentVerseKey: string | null;
-  currentWordLocation: string | null;
   // Mushaf page of the currently recited verse, or null when not playing. The
   // persistent pager (ADR 0028) watches this to keep the recited page on screen —
   // navigation lives in the pager, not here.
@@ -134,7 +152,6 @@ type RecitationContextType = {
   play: (startVerseKey: string, overrides?: PlaybackOverride) => void;
   togglePlayPause: () => void;
   stop: () => void;
-  registerWordRef: (location: string, el: HTMLElement | null) => void;
   isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
@@ -168,7 +185,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [chapters, setChapters] = useState<SurahResult[]>([]);
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
-  const [currentWordLocation, setCurrentWordLocation] = useState<string | null>(null);
   const [recitedPage, setRecitedPage] = useState<number | null>(null);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [currentPageNumber, setCurrentPageNumber] = useState<number | null>(null);
@@ -194,7 +210,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const currentVerseKeyRef = useRef<string | null>(null);
   const currentChapterIdRef = useRef<number | null>(null);
   const loadedReciterIdRef = useRef<number | null>(null);
-  const wordRefRegistry = useRef<Map<string, HTMLElement>>(new Map());
   const activeWordLocationRef = useRef<string | null>(null);
   const pendingSeekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -233,29 +248,15 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearHighlight = useCallback(() => {
-    const prevEl = activeWordLocationRef.current
-      ? wordRefRegistry.current.get(activeWordLocationRef.current)
-      : null;
-    prevEl?.classList.remove(RECITATION_HIGHLIGHT_CLASS);
+    if (activeWordLocationRef.current) setWordHighlightClass(activeWordLocationRef.current, false);
     activeWordLocationRef.current = null;
-    setCurrentWordLocation(null);
   }, []);
 
-  const applyWordHighlight = useCallback((newLocation: string | null) => {
+  const applyWordHighlight = useCallback((newLocation: string) => {
     if (newLocation === activeWordLocationRef.current) return;
-    const prevEl = activeWordLocationRef.current
-      ? wordRefRegistry.current.get(activeWordLocationRef.current)
-      : null;
-    prevEl?.classList.remove(RECITATION_HIGHLIGHT_CLASS);
-    const nextEl = newLocation ? wordRefRegistry.current.get(newLocation) : null;
-    nextEl?.classList.add(RECITATION_HIGHLIGHT_CLASS);
+    if (activeWordLocationRef.current) setWordHighlightClass(activeWordLocationRef.current, false);
+    setWordHighlightClass(newLocation, true);
     activeWordLocationRef.current = newLocation;
-    setCurrentWordLocation(newLocation);
-  }, []);
-
-  const registerWordRef = useCallback((location: string, el: HTMLElement | null) => {
-    if (el) wordRefRegistry.current.set(location, el);
-    else wordRefRegistry.current.delete(location);
   }, []);
 
   const stop = useCallback(() => {
@@ -590,7 +591,16 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       updateRecitedPage(activeTiming.verseKey);
     }
 
-    applyWordHighlight(findActiveWordLocation(activeTiming, currentTimeMs));
+    // A tick matching no segment leaves the current word lit rather than
+    // blanking it. Two real cases produce that: genuine silence between words
+    // (89 such gaps in surah 2 alone for one reciter), and verse-boundary skew —
+    // QDC's segment times cross verse windows (2:2's first segment starts at
+    // 7595ms, below its own timestamp_from of 7650), while findActiveVerseTiming
+    // picks the verse first and the segment search only ever looks inside it, so
+    // ~55ms at every verse transition matches nothing. Clearing there made the
+    // highlight blink on every verse. Only stop()/clearHighlight() clears.
+    const wordLocation = findActiveWordLocation(activeTiming, currentTimeMs);
+    if (wordLocation) applyWordHighlight(wordLocation);
   }, [settings, scheduleSeek, seekToRangeStart, stop, updateRecitedPage, applyWordHighlight]);
 
   useEffect(() => {
@@ -765,7 +775,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         chapters,
         status,
         currentVerseKey,
-        currentWordLocation,
         recitedPage,
         pageFirstVerseKey,
         setPageFirstVerseKey,
@@ -774,7 +783,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         play,
         togglePlayPause,
         stop,
-        registerWordRef,
         isSettingsOpen,
         openSettings,
         closeSettings,

@@ -22,29 +22,70 @@ import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 // worst-case line-width/font-size ratio (p2, 2% margin); locks card minWidth
 // to font scale so it's stable from first render, independent of font metrics
 const QURAN_LINE_WIDTH_RATIO = 14.7;
-// Slots per page, not lines of words: pages 1-2 (fq-safha-center) render their
-// surah banner and bismillah as slots of their own alongside the text lines.
-// These counts are load-bearing now that the bars can BE the card's content —
+// Widest line/font-size ratio actually MEASURED across all 604 pages (range
+// 14.13–14.42; page 580 is the worst). Distinct from QURAN_LINE_WIDTH_RATIO on
+// purpose: that one is a padded FLOOR for the card's width and deliberately
+// exceeds any real line, this one is where the ink genuinely ends. Used to size
+// the surah frame so it matches the text block instead of overhanging it by
+// ~15px. Do not "unify" the two — they answer different questions.
+const QURAN_MAX_LINE_WIDTH_RATIO = 14.42;
+// Slots per page, not lines of words: pages 1-2 render their surah banner,
+// bismillah, and blank slots as slots of their own alongside the text lines.
+// This count is load-bearing now that the bars can BE the card's content —
 // they set its height while the page JSON is in flight, so an undercount makes
-// the card grow when the real page lands. Both were measured against the real
-// layout at desktop spread: 15 x 1em + 14 gaps and 8 x 1em + 7 gaps reproduce the
-// loaded card's height exactly.
+// the card grow when the real page lands. Measured against the real layout at
+// desktop spread: 15 x 1em + 14 gaps reproduces the loaded card's height exactly.
 const SKELETON_LINE_COUNT = 15;
-const SKELETON_LINE_COUNT_SHORT = 8;
 // Stable keys for the bars, so switching between the in-flow and overlay shapes
 // (see the render) doesn't remount them and restart the pulse animation.
 const SKELETON_BARS = Array.from({ length: SKELETON_LINE_COUNT }, (_, i) => i);
 
+// The frame art (KFGQPC glyph U+E000) is natively 8.11:1, far squatter than a
+// line slot, so spanning the text column makes its INK taller than 1em while its
+// LAYOUT slot stays 1em like every other line — the overflow is absolutely
+// positioned into the inter-line gap, leaving the 15-slot budget and the
+// equal-height spread untouched.
+//
+// height MUST stay `auto` so it follows the viewBox ratio and the art is never
+// distorted. Do not substitute a computed em height: the rendered column width is
+// not guaranteed to equal QURAN_LINE_WIDTH_RATIO em (that constant is the card's
+// minWidth floor, and the double-view cap can shrink the reading font under it),
+// so any hardcoded height silently stretches the frame vertically — an earlier
+// revision hardcoded 1.81em and measured 7.87:1 against the true 8.11:1.
+// To buy clearance from neighbouring lines, shrink --fq-surah-frame-w — width and
+// height then scale together and the ratio is preserved.
 const SurahBannerLine = ({ surahId }: { surahId: number }) => (
   <div
-    className="leading-none relative w-full"
-    style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
+    className="fq-surah-frame leading-none relative mx-auto"
+    style={{
+      marginBottom: "var(--fq-line-gap)",
+      height: "1em",
+      color: "var(--mushaf-ornament)",
+      // Match the text block, NOT the card's content box. w-full made the frame
+      // span the whole card, which is only the same thing when the text fills it:
+      // on mobile/tablet the font hits its 28px cap first (ADR 0011), so the lines
+      // sit narrower and centre while a w-full frame kept stretching past them.
+      // Sized to the measured widest line, not the padded card floor — see the
+      // constant. maxWidth keeps it honest if the card is ever narrower still.
+      width: `calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))`,
+      maxWidth: "100%",
+    }}
   >
-    <SurahFrameSVG style={{ display: "block", width: "100%", height: "1em" }} />
+    <SurahFrameSVG
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        display: "block",
+        width: "var(--fq-surah-frame-w, 100%)",
+        height: "auto",
+      }}
+    />
     <span
       className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
       translate="no"
-      style={{ fontFamily: "var(--surah-names)", fontSize: "0.85em", lineHeight: 1 }}
+      style={{ fontFamily: "var(--surah-names)", fontSize: "1.18em", lineHeight: 1 }}
     >
       {`${surahId}`.padStart(3, "0")}
     </span>
@@ -58,6 +99,13 @@ const BismillahLine = () => (
   >
     <BismillahSVG style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "1.2em", width: "auto" }} />
   </div>
+);
+
+// A real, empty line slot — used by the pages 1-2 fixed template (see
+// buildOpeningPageRenderItems) so leftover space renders as actual 1em slots
+// participating in the page's flex layout, not a CSS centering/gap trick.
+const BlankLine = () => (
+  <div className="leading-none" style={{ marginBottom: "var(--fq-line-gap)", height: "1em" }} />
 );
 
 // Stable empty reference for the not-yet-loaded case, so the `lines`-keyed memo
@@ -284,67 +332,101 @@ export const QuranSafha = ({
   type RenderItem =
     | { type: "words"; slot: number; lineKey: string; suppressSurahId?: number }
     | { type: "surahBanner"; slot: number; surahId: number }
-    | { type: "bismillah"; slot: number };
+    | { type: "bismillah"; slot: number }
+    | { type: "blank"; slot: number };
 
-  // Find consecutive runs of slot numbers (1–15) absent from lineKeys — each run
-  // is a banner/bismillah group in the printed mushaf layout.
-  const occupiedSet = new Set(lineKeys.map(Number));
-  const missing = Array.from({ length: 15 }, (_, i) => i + 1).filter(
-    (n) => !occupiedSet.has(n),
-  );
-  const gapGroups: Array<{ start: number; end: number; size: number }> = [];
-  for (const slot of missing) {
-    const last = gapGroups[gapGroups.length - 1];
-    if (last && last.end === slot - 1) {
-      last.end = slot;
-      last.size++;
-    } else {
-      gapGroups.push({ start: slot, end: slot, size: 1 });
+  let renderItems: RenderItem[];
+
+  if (page <= 2 && lineKeys.length > 0) {
+    // Fixed 15-slot template — NOT gap-derived (Addendum 10, Trello #135,
+    // supersedes the "no special-casing" claim for these two pages in
+    // DECISIONS.md). Banner always at slot 4, bismillah always at slot 6 when
+    // the surah has one (page 1's Bismillah is verse 1:1 text, already the
+    // first content line — no separate slot), content re-sequenced to start
+    // right after, blank real 1em slots filling the rest. Fixed regardless of
+    // the real `line_number` gap size (8 on page 1, 9 on page 2) — both pages'
+    // content-line counts happen to fit this same template.
+    const firstSurahId = Number(lines[lineKeys[0]][0].location.split(":")[0]);
+    const hasBismillah = !CHAPTERS_WITHOUT_BISMILLAH.includes(String(firstSurahId));
+    const contentStartSlot = hasBismillah ? 7 : 6;
+    renderItems = [
+      { type: "blank", slot: 1 },
+      { type: "blank", slot: 2 },
+      { type: "blank", slot: 3 },
+      { type: "surahBanner", slot: 4, surahId: firstSurahId },
+      { type: "blank", slot: 5 },
+      ...(hasBismillah ? [{ type: "bismillah" as const, slot: 6 }] : []),
+      ...lineKeys.map((k, i) => ({
+        type: "words" as const,
+        slot: contentStartSlot + i,
+        lineKey: k,
+        ...(i === 0 ? { suppressSurahId: firstSurahId } : {}),
+      })),
+    ];
+    for (let slot = contentStartSlot + lineKeys.length; slot <= 15; slot++) {
+      renderItems.push({ type: "blank", slot });
     }
-  }
-
-  const renderItems: RenderItem[] = lineKeys.map((k) => ({
-    type: "words" as const,
-    slot: Number(k),
-    lineKey: k,
-  }));
-
-  for (const gap of gapGroups) {
-    const lineAfterKey = lineKeys.find((k) => Number(k) > gap.end);
-    const lineBeforeKey = [...lineKeys]
-      .reverse()
-      .find((k) => Number(k) < gap.start);
-
-    if (lineAfterKey) {
-      const firstWord = lines[lineAfterKey][0];
-      const [surahIdStr, verseNumStr, wordNumStr] = firstWord.location.split(":");
-      if (verseNumStr === "1" && wordNumStr === "1") {
-        const surahId = Number(surahIdStr);
-        const hasBismillah = !CHAPTERS_WITHOUT_BISMILLAH.includes(surahIdStr);
-        if (gap.size >= 2 || !hasBismillah) {
-          renderItems.push({ type: "surahBanner", slot: gap.start, surahId });
-        }
-        if (hasBismillah) {
-          renderItems.push({
-            type: "bismillah",
-            slot: gap.size >= 2 ? gap.start + 1 : gap.start,
-          });
-        }
-        const wordItem = renderItems.find(
-          (item) => item.type === "words" && item.lineKey === lineAfterKey,
-        );
-        if (wordItem && wordItem.type === "words") {
-          wordItem.suppressSurahId = surahId;
-        }
+  } else {
+    // Find consecutive runs of slot numbers (1–15) absent from lineKeys — each
+    // run is a banner/bismillah group in the printed mushaf layout.
+    const occupiedSet = new Set(lineKeys.map(Number));
+    const missing = Array.from({ length: 15 }, (_, i) => i + 1).filter(
+      (n) => !occupiedSet.has(n),
+    );
+    const gapGroups: Array<{ start: number; end: number; size: number }> = [];
+    for (const slot of missing) {
+      const last = gapGroups[gapGroups.length - 1];
+      if (last && last.end === slot - 1) {
+        last.end = slot;
+        last.size++;
+      } else {
+        gapGroups.push({ start: slot, end: slot, size: 1 });
       }
-    } else if (lineBeforeKey) {
-      const wordsOnLine = lines[lineBeforeKey];
-      const lastWord = wordsOnLine[wordsOnLine.length - 1];
-      const [surahIdStr, verseNumStr] = lastWord.verse_key.split(":");
-      const surahId = Number(surahIdStr);
-      const versesCount = lastWord.verse.chapter.verses_count;
-      if (Number(verseNumStr) === versesCount && surahId < 114) {
-        renderItems.push({ type: "surahBanner", slot: gap.start, surahId: surahId + 1 });
+    }
+
+    renderItems = lineKeys.map((k) => ({
+      type: "words" as const,
+      slot: Number(k),
+      lineKey: k,
+    }));
+
+    for (const gap of gapGroups) {
+      const lineAfterKey = lineKeys.find((k) => Number(k) > gap.end);
+      const lineBeforeKey = [...lineKeys]
+        .reverse()
+        .find((k) => Number(k) < gap.start);
+
+      if (lineAfterKey) {
+        const firstWord = lines[lineAfterKey][0];
+        const [surahIdStr, verseNumStr, wordNumStr] = firstWord.location.split(":");
+        if (verseNumStr === "1" && wordNumStr === "1") {
+          const surahId = Number(surahIdStr);
+          const hasBismillah = !CHAPTERS_WITHOUT_BISMILLAH.includes(surahIdStr);
+          if (gap.size >= 2 || !hasBismillah) {
+            renderItems.push({ type: "surahBanner", slot: gap.start, surahId });
+          }
+          if (hasBismillah) {
+            renderItems.push({
+              type: "bismillah",
+              slot: gap.size >= 2 ? gap.start + 1 : gap.start,
+            });
+          }
+          const wordItem = renderItems.find(
+            (item) => item.type === "words" && item.lineKey === lineAfterKey,
+          );
+          if (wordItem && wordItem.type === "words") {
+            wordItem.suppressSurahId = surahId;
+          }
+        }
+      } else if (lineBeforeKey) {
+        const wordsOnLine = lines[lineBeforeKey];
+        const lastWord = wordsOnLine[wordsOnLine.length - 1];
+        const [surahIdStr, verseNumStr] = lastWord.verse_key.split(":");
+        const surahId = Number(surahIdStr);
+        const versesCount = lastWord.verse.chapter.verses_count;
+        if (Number(verseNumStr) === versesCount && surahId < 114) {
+          renderItems.push({ type: "surahBanner", slot: gap.start, surahId: surahId + 1 });
+        }
       }
     }
   }
@@ -449,7 +531,7 @@ export const QuranSafha = ({
                   is hidden when there is no text yet; the bars below are then the
                   card's only content and must stay visible. */}
               <div
-                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${edition.usesColorGlyphs ? "fq-tajweed" : ""} ${page <= 2 ? "fq-safha-center" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
+                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${edition.usesColorGlyphs ? "fq-tajweed" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
                 style={{
                   fontFamily: pageFontFamily,
                   ...(hasContent && !fontReady ? { visibility: "hidden" as const } : {}),
@@ -467,15 +549,15 @@ export const QuranSafha = ({
                 {showSkeleton &&
                   (hasContent ? (
                     <div
-                      className={`absolute inset-0 flex flex-col ${page <= 2 ? "justify-center gap-[0.55em]" : "fq-skeleton-lines justify-between"} ${edition.usesColorGlyphs ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
+                      className={`absolute inset-0 flex flex-col fq-skeleton-lines justify-between ${edition.usesColorGlyphs ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
                       style={{ visibility: "visible" }}
                     >
-                      {SKELETON_BARS.slice(0, page <= 2 ? SKELETON_LINE_COUNT_SHORT : SKELETON_LINE_COUNT).map((i) => (
+                      {SKELETON_BARS.map((i) => (
                         <div key={i} className="h-[1em] w-full rounded-sm bg-muted/60 animate-pulse" />
                       ))}
                     </div>
                   ) : (
-                    SKELETON_BARS.slice(0, page <= 2 ? SKELETON_LINE_COUNT_SHORT : SKELETON_LINE_COUNT).map((i) => (
+                    SKELETON_BARS.map((i) => (
                       <div
                         key={i}
                         className="h-[1em] shrink-0 rounded-sm bg-muted/60 animate-pulse"
@@ -509,6 +591,9 @@ export const QuranSafha = ({
                     }
                     if (item.type === "bismillah") {
                       return <BismillahLine key={`bismillah-${item.slot}`} />;
+                    }
+                    if (item.type === "blank") {
+                      return <BlankLine key={`blank-${item.slot}`} />;
                     }
                     return (
                       <QuranLine

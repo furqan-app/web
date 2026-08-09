@@ -529,4 +529,283 @@ Both constraints re-run whenever the reference (current verse/page) changes, so 
 - Initially, number inputs in `CustomRangePicker` clamped on every keystroke (`onChange`), which fought typing mid-entry (e.g. typing "12" with a floor of 5 snapped to "5" after the first digit). Fixed by buffering both the page and ayah inputs as local raw-text state, clamping/committing only on blur (or Enter) — verified live: typing "150" showed the unclamped intermediate value at every keystroke, then committed to `150` (in range) on blur; typing "999" (above Al-Baqarah's 286-verse ceiling) likewise showed unclamped while typing, then clamped to `286` only on blur.
 - **Critical bug found via `/review-fq-work` (Opus) before shipping, fixed same session:** a persisted `rangeTo` can resolve to a chapter *behind* wherever a session actually starts — not just via the already-accepted "residual gap" (gear-icon-configured range vs. a later MarkModal click elsewhere), but via the much more common flow of configuring custom while viewing one page, then later quick-playing from a different, later page (`rangeTo` survives in `localStorage` across navigations; the picker only re-derives its *floor* while the sheet is open, it doesn't invalidate an already-stored value). Without a guard, `decideChapterEnd`'s "chain to next chapter" branch never finds a chapter match (the stop chapter is already behind) and plays straight through to `114:6` instead of ever stopping. **Fix:** `resolveStopTarget`'s `"custom"` branch now compares the resolved target's `chapterId` against the actual start chapter; if the target is behind, it falls back to `"surah"` behavior (end of the start verse's own chapter) — the same fallback already used for an unconfigured `rangeTo`, now shared via one `resolveSurahFallback` helper instead of duplicated. Verified live: seeded `rangeTo: {type: "page", page: 1}` (chapter 1) via `localStorage`, navigated to page 300 (chapter 18, Al-Kahf), pressed quick-play — audio loaded chapter 18 (not chapter 1, and no error/hang), confirming the fallback engaged rather than the stale target being used as-is.
 - Other findings from the same review pass (ayah-ceiling collapsing to floor before `chapters` loads, `fetchChapters` lacking response validation, the corrective effect not capping `rangeTo.page` at `MUSHAF_LAST_PAGE`, missing `try/catch` around the mid-session recompute, `SurahCombobox`/`ReciterCombobox` duplication, and a few naming/placement nits) were reported but **not fixed in this pass** — scoped out as non-critical by the user; left for a follow-up task if picked up later.
-- **`main` landed ADR 0033 (multi-mushaf editions) while this branch was open, requiring re-threading before merging — resolved same session, before opening the PR.** A page number became meaningful only relative to a mushaf edition; `Verse.page_number`/`Word.page_number` survive only as a denormalized default-edition mirror, and the canonical per-edition page/line placement moved to a new `MushafWordLayout(mushaf_id, word_id, page_number, line_number)` table. Concretely: `resolveStopTarget` gained a `mushafId` parameter (from `useQuranMushaf()`) alongside `rangeTo`; `fetchPageBounds`/the `pages/[pageId]/bounds` route both gained a `mushafId`/`?mushaf=` parameter and the route was rewritten to query `quranPrisma.mushafWordLayout` (mirroring the already-updated `stop-point` route's `resolvePageStop`) instead of `quranPrisma.verse.findFirst({where: {page_number}})`, which would have silently resolved against the wrong edition's page boundaries for any non-default mushaf. `RecitationSettingsSheet.tsx`/`CustomRangePicker` needed **no changes** — `mushafId` threading is entirely internal to `RecitationContext`'s resolution, never surfaced to the picker UI, since the picker only ever stores a bare page number/verse reference. Verified against real seeded data (`npm run seed:quran -- --force`, required since the local DB predated the new `mushaf_word_layouts` table): page 120's last verse is `5:76` under the default edition (mushaf 2) but `5:77` under the tajweed edition (mushaf 19) — exactly the divergent-boundary example ADR 0033 documents, confirming the endpoint resolves per-edition correctly rather than always returning the default edition's answer.
+- **`main` landed ADR 0033 (multi-mushaf editions) while this branch was open, requiring re-threading before merging — resolved same session, before opening the PR.**
+
+## Addendum 10: Stop recitation when leaving the reader (Trello #152)
+
+**Date:** 2026-08-02  
+**Status:** implemented
+
+### Problem
+
+When the user plays recitation on a reader page (`/pages/[id]` or `/mushaf/[grant]/pages/[id]`) then navigates to any non-reader route (e.g. `/mushaf` hub), the recitation continues playing and the `RecitationPlayerBar` appears as a fixed bottom bar on the destination page. The bar has no bottom-padding counterpart on non-reader pages, so it overlaps page content.
+
+The original design (ADR 0021) explicitly allowed "background mini-player" behavior — recitation surviving route changes. This addendum supersedes that behavior. **Hard stop on route leave is the new contract.**
+
+### Root Cause
+
+`RecitationPlayerBar` is mounted in the locale layout (above all routes) and renders whenever `status !== "idle"`, regardless of pathname. No stop signal is sent on navigation away from the reader.
+
+### Fix
+
+Add a `useEffect` in `RecitationPlayerBar` **before the early return** (React rules: hooks must not appear after conditional returns). The effect watches `isOnReaderRoute` and calls `stop()` whenever it transitions to `false` while not idle:
+
+```tsx
+useEffect(() => {
+  if (!isOnReaderRoute && !isIdle) stop();
+}, [isOnReaderRoute, isIdle, stop]);
+```
+
+- `isOnReaderRoute` and `isIdle` are already computed just above this line — no new state.
+- `stop()` is stable (memoized via `useCallback` in `RecitationContext`).
+- `isIdle` in the dep array: when `stop()` fires it sets status to "idle", re-running the effect — the `!isIdle` guard makes that re-run a no-op.
+- On initial render when the user lands directly on a non-reader page and recitation is already idle: `isIdle` is true, guard skips the call — no spurious stop.
+
+### Updated Decision Tree Row
+
+| Condition | Action (before) | Action (after) |
+|---|---|---|
+| User navigates away from the reader entirely | Keep playing in background mini-player | **Hard stop** — `stop()` called, bar disappears |
+
+All other rows in the original decision tree are unchanged.
+
+### Files to Change
+
+- `app/components/RecitationPlayerBar.tsx` — add the `useEffect` above the early-return guard (line 41).
+
+### What NOT to Do
+
+- Do not put the stop logic in `RecitationContext` directly (it has no knowledge of routing; route-awareness belongs at the component boundary).
+- Do not patch non-reader pages with bottom padding as an alternative fix — the bar should not appear on those pages at all during an active session.
+- Do not call `togglePlayPause()` (pause) instead of `stop()` — hard stop was confirmed (Trello #152 discussion, 2026-08-02).
+
+### Decisions Made
+
+- Hard stop (not pause) when leaving the reader — confirmed 2026-08-02.
+
+## Addendum 11: Word-level highlight lands on the wrong DOM copy (Trello #182)
+
+**Date:** 2026-08-03
+**Status:** implemented
+
+### Problem
+
+Reported: word tracking "has a lot of issues — sometimes it works, sometimes not; sometimes I open a
+recitation, close it and open it again and I lose the tracking."
+
+Three distinct user-visible symptoms, all reproduced live against the dev server (`reactStrictMode:
+false`, so none of this is a StrictMode artefact):
+
+1. Tracking is simply absent — audio plays, no word lights up.
+2. A word lights up once and then **freezes** there while the recitation moves on.
+3. A stale highlight survives Stop, and is still lit alongside the next session's highlight.
+
+### Root Cause
+
+**The reader mounts the same mushaf page more than once at the same time, and the highlight registry
+can only remember one element per word.**
+
+`getPagePair(N)` returns `(2⌈N/2⌉−1, 2⌈N/2⌉)`, so `pair(N)` and `pair(N±1)` overlap. In the
+single-page layout the pager's three panels (`[next][current][prev]`, ADR 0028) therefore render the
+same page in two of them simultaneously. `QuranSpread` always mounts both members of a pair; the
+non-current member is hidden by `.fq-spread .fq-safha-partner { display: none }` — display is
+CSS-gated rather than JS-gated precisely so it is correct at first paint (ADR 0013 Addendum 4), which
+means the hidden copy is fully mounted and registers its word refs like any other.
+
+`RecitationContext`'s `wordRefRegistry` is a `Map<location, HTMLElement>` — one element per location.
+Every copy registers under the same key, so the last to attach wins, and which one that is depends on
+mount/commit history rather than on which copy is visible.
+
+Two further defects compound it:
+
+- `registerWordRef(location, null)` deletes unconditionally, with no element-identity check. A
+  departing panel wipes entries owned by a *surviving* panel — and survivors are `memo`'d and
+  **moved** by the keyed window (the load-bearing piece of ADR 0028's no-flicker recenter), so they
+  never re-render and never re-register. Those words go dark permanently.
+- Both `applyWordHighlight` and `clearHighlight` remove the class *via the registry*. Once the entry
+  no longer points at the element that was lit, the class is never removed — the orphan survives
+  verse changes, `stop()`, and the next `play()`.
+
+Observed on `/en/pages/3` in the effective single-page layout, mid-playback:
+
+| Panel | Page | State | Highlight |
+|---|---|---|---|
+| 0 (next) | 3 | `display:none` partner | **live highlight, advancing** |
+| 0 (next) | 4 | visible | — |
+| 1 (current) | 3 | **visible** | frozen orphan, never updates or clears |
+| 1 (current) | 4 | `display:none` partner | — |
+| 2 (prev) | 1 | `display:none` partner | — |
+| 2 (prev) | 2 | visible | — |
+
+Sampled 3s apart, the hidden copy advanced ﯤ → ﯣ while the visible copy stayed on ﭰ. After pressing
+Stop the orphan was still lit; after pressing Listen again there were two lit words on screen.
+
+There is no clean "odd pages work, even pages don't" rule — an earlier code-reading predicted one and
+live observation falsified it. The winner is order-dependent, which is exactly why the symptom reads
+as intermittent.
+
+### Fix — address highlight targets by attribute, not by registry
+
+Delete the registry. `QuranWord` renders `data-fq-word={word.location}`; the highlighter resolves
+targets with `document.querySelectorAll` at the moment it applies the class, and toggles the class on
+**every** match. Duplicates and hidden partner copies both receive it, which is harmless — the hidden
+one is `display:none` — and the visible one is always correct by construction. There is no
+bookkeeping left to go stale, so all three symptoms become structurally impossible rather than fixed
+case by case.
+
+Two consequences worth stating: `QuranWord`'s only use of `useRecitation()` was `registerWordRef`, so
+it stops consuming the context entirely — roughly 600 word components no longer subscribe to a
+context that ticks per recited word, which is what the DOM-based approach was always supposed to
+achieve. And the query root is `document`: `RecitationContext` is mounted in the locale layout above
+the reader and holds no reader container ref, and the query runs only when the active word *changes*
+(~2–4×/second), not on every `timeupdate` tick.
+
+### Decision Tree — applying the highlight
+
+`applyWordHighlight(next)`:
+
+| Condition | Action |
+|---|---|
+| `next === activeWordLocationRef.current` | no-op (unchanged early return) |
+| previous location non-null | query `[data-fq-word="<prev>"]`, remove the class from every match |
+| `next` non-null | query `[data-fq-word="<next>"]`, add the class to every match |
+| — | set `activeWordLocationRef.current = next` |
+
+`clearHighlight()` follows the same removal path and sets the ref to `null`. `location` values are
+`\d+:\d+:\d+` produced by our own static page JSON and sit inside a quoted attribute selector, so the
+colons need no escaping.
+
+### Decision Tree — segment resolution
+
+| Layer | Rule | Why there |
+|---|---|---|
+| `qdc-provider.ts` | Type the wire `segments` as `number[][]` and drop any entry that is not exactly three numbers while mapping to `VerseTiming` | Addendum 2 made the provider the single place QDC's shape is normalized. `VerseSegment` then stays an honest 3-tuple downstream instead of lying about the wire data. |
+| `handleTimeUpdate` call site | When `findActiveWordLocation` returns `null`, leave the current highlight in place instead of clearing it | One rule covers both failure modes below. Only `stop()`/`clearHighlight()` clears. |
+
+QDC really does serve malformed segments — confirmed live: reciter 2 surah 2 has 7 two-element
+entries, reciter 7 has `[30, 2466306]` at 2:114 and `[50, 6204868]` at 2:255, reciter 161 has a
+one-element `[610700]` at 18:31. Destructured as `[, startMs, endMs]` the end is `undefined`, every
+comparison is false, and that word silently never lights.
+
+The hold-last rule fixes two things at once: genuine inter-word gaps (89 in surah 2 alone for reciter
+7) and verse-boundary skew. Segment times cross verse windows — 2:2's first segment starts at 7595
+while its own `timestamp_from` is 7650 — and because `findActiveVerseTiming` picks the verse first
+and `findActiveWordLocation` then searches only that verse's segments, roughly 55 ms at every verse
+transition matches nothing and blanks the highlight.
+
+Note that all 14 selectable reciters do ship word segments; an earlier concern that some do not was
+checked and is wrong (reciter 11 lacks them but is not in the app's list).
+
+### Verified Test Cases
+
+Cases 1–3 are observed on the current code; the "after" column is what the fix must produce.
+
+| # | Case | Observed today | Required after |
+|---|---|---|---|
+| 1 | `/en/pages/3`, single-page layout, playing | live highlight on page 3's hidden copy in the next panel; visible copy frozen | highlight on every copy, so the visible one tracks |
+| 2 | Same session, sampled 3s apart | hidden copy ﯤ→ﯣ, visible copy stuck on ﭰ | both advance together |
+| 3 | Press Stop, then Listen again | orphan still lit after Stop; two lit words after replay | Stop clears every copy; replay lights exactly the recited word |
+| 4 | Double-page spread, land directly on it | refs for the spread's pages wiped by the `isLgUp` false→true re-key | unaffected — no registry to wipe |
+| 5 | Follow-navigation crosses a page boundary mid-playback | new page dark until something re-registers | lit on the next word change; no registration timing at all |
+| 6 | Verse boundary 2:1→2:2, reciter 7 | ~55 ms blank at every verse transition | highlight holds through the gap |
+| 7 | Malformed segment (reciter 7, 2:114 word 30) | word never lights, highlight clears | segment dropped at the provider; previous word holds |
+| 8 | Mushaf edition switch mid-playback (2 ↔ 19) | refs point at torn-down DOM | query resolves against whatever is mounted |
+
+### Files to Change
+
+- `app/components/QuranWord.tsx` — render `data-fq-word={word.location}` on the word `div`. Remove
+  `useRecitation()`, `wordRefCallback`, and the `ref` prop; the component keeps `"use client"` for its
+  event handlers and `useSearchParams`.
+- `app/contexts/RecitationContext.tsx` — delete `wordRefRegistry` and `registerWordRef` (and its
+  context-type field). Rewrite `applyWordHighlight`/`clearHighlight` per the table above. Delete the
+  `currentWordLocation` state and its context field, keeping `activeWordLocationRef` as the internal
+  source of truth. In `handleTimeUpdate`, only call `applyWordHighlight` when
+  `findActiveWordLocation` returns a location.
+- `app/lib/recitation/qdc-provider.ts` — widen the wire DTO's `segments` to `number[][]` and filter to
+  three-number tuples when mapping.
+- `app/constants/recitation.ts` — update the comment above `RECITATION_HIGHLIGHT_CLASS` to describe the
+  attribute-query mechanism.
+- `app/globals.css` — update the comment above `.fq-recitation-active-word` for the same reason. No
+  rule changes.
+- `docs/architecture/adr/0021-recitation-playback.md` — Addendum superseding the ref-registry mechanism.
+- `docs/architecture/DECISIONS.md` — rewrite the highlight-mechanism constraint under Recitation
+  Playback; add the duplicate-mount invariant under Reader Navigation — Persistent Client Pager.
+
+`app/utils/recitation.ts` is deliberately **not** changed: with the provider filtering malformed
+segments, `findActiveWordLocation` is already correct and double-guarding it would re-introduce the
+dishonest-type problem the provider fix removes.
+
+### Constraints
+
+- `currentWordLocation` is removed because it has no consumers — verify with a grep before deleting
+  rather than trusting this line, and if one has appeared since, convert it rather than dropping it.
+- Do not reintroduce any per-word React state on the provider. Its `setState` rebuilds the context
+  object ~4×/second, re-rendering every consumer including the whole word tree — the exact cost the
+  DOM-based highlight exists to avoid (ADR 0021 Consequences, and the Recitation Playback constraint
+  in DECISIONS.md).
+- Toggle the class on **every** match, never on "the first" or "the visible" one. Picking a winner is
+  the bug; not needing a winner is the fix.
+- Keep the `next === activeWordLocationRef.current` early return — without it the DOM query would run
+  on every tick instead of only on word changes.
+- The attribute must be `data-fq-word`, carrying `word.location` verbatim, on every `QuranWord`
+  including end-of-verse markers — the previous registry registered all of them and QDC's segment
+  numbering assumes that.
+- Do not change the pager's three-panel window or the CSS partner gating to remove the duplicate
+  mount. The window size is fixed by ADR 0028 ("the mounted panel window stays at three") and the
+  CSS-driven display gate by ADR 0013 Addendum 4 (correct at first paint). Duplicate mounting is a
+  property the highlight must tolerate, not a defect to remove.
+
+### What NOT to Do
+
+- Do not keep the `Map` and store a `Set<HTMLElement>` per location instead. It works, but it keeps a
+  bookkeeping invariant that can drift again, needs `QuranWord` to hold its own element ref (React 18
+  ref callbacks receive `null` on cleanup and cannot return a cleanup function), and leaves the word
+  tree subscribed to the context. Considered and rejected 2026-08-03.
+- Do not dedupe the render so a page mounts once — see the ADR 0028/0013 constraint above.
+- Do not scope the highlight query to a reader container. `RecitationContext` sits above the reader in
+  the locale layout and has no such ref; adding that plumbing buys nothing at 2–4 queries/second.
+- Do not switch the highlight to `requestAnimationFrame` in this task. `timeupdate`'s ~4 Hz does mean
+  late transitions and skipped sub-250 ms words, but it drives verse advance, repeat and stop as well,
+  so splitting the clock needs its own verification pass. Deferred to a follow-up ticket — re-evaluate
+  once this fix is in.
+- Do not treat "some reciters have no word timings" as in scope. It was investigated and is false for
+  all 14 selectable reciters.
+
+### Decisions Made
+
+- Scope is the registry fix, segment robustness, and the `currentWordLocation` deletion; rAF is
+  deferred — confirmed with user 2026-08-03.
+- Mechanism is the `data-fq-word` attribute query rather than a `Set`-valued registry — confirmed with
+  user 2026-08-03, on the grounds that it removes the bug class instead of an instance and drops the
+  word tree's context subscription as a side effect.
+- Root cause confirmed by live observation, not code reading alone — an earlier code-derived
+  prediction that failures follow page parity was falsified in the browser and must not be repeated in
+  the implementation or the tests.
+
+### Implementation Notes (2026-08-03)
+
+- The duplicate mount was confirmed straight from the DOM rather than inferred: on `/en/pages/3`,
+  `document.querySelectorAll('[data-fq-word="2:6:1"]')` returns **2** elements out of 637 tagged
+  words. That is the premise the whole fix rests on, and it is now checkable in one line.
+- `setWordHighlightClass(location, on)` is a module-level function in `RecitationContext.tsx`, not a
+  `useCallback` — it closes over nothing, so keeping it out of the component avoids a needless
+  identity. `applyWordHighlight` narrowed from `(string | null)` to `(string)`, since the caller now
+  guards the null case to implement hold-last.
+- Verified live against the worktree dev server, sampling the DOM ~1×/second during real playback
+  (reciter Mishari al-`Afasy, surah 2, `stopPoint: "surah"`):
+  - **Both copies track in lockstep.** `2:7:7 → 2:7:8 → 2:7:9 → 2:7:10 → 2:7:11 → 2:7:12 → 2:8:1 →
+    2:8:2 → 2:8:3`, with the visible copy lit at every sample. Before the fix the hidden copy
+    advanced alone while the visible one sat frozen.
+  - **No verse-boundary blink.** The `2:7:12 → 2:8:1` transition showed exactly two lit elements at
+    every sample and never zero — the hold-last rule covering the ~55 ms of segment/verse skew.
+  - **Stop clears completely.** Zero elements carry the class after Stop; before, the frozen orphan
+    survived it.
+  - **Replay lights exactly one word.** No accumulation across sessions; before, replay left the old
+    orphan lit alongside the new highlight.
+  - **Page 4 (an even page, structurally dead before) tracks**, confirmed visually as well as in the
+    DOM — the highlight sits on ظُلُمَٰتٍ in verse 2:17.
+- `npx tsc --noEmit` and `npm run lint` both clean.
+- Out-of-scope doc drift fixed in passing, in a sentence already being rewritten:
+  `COMPONENTS.md`'s `RecitationContext` entry still described page auto-advance as `router.push`.
+  Addendum 8 corrected exactly that claim in `DECISIONS.md` but missed this file; it now names
+  `recitedPage` → `RecitationFollow` → `followTo`/`commitTo` per ADR 0028.

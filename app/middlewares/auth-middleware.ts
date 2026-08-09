@@ -13,6 +13,10 @@ const protectedRoutes = [
   new RegExp("^/api/mushaf/"),
   // All plan-engine endpoints are per-user state (ADR 0030).
   new RegExp("^/api/plans"),
+  // Notification feed/read-state/push-subscription endpoints are per-user
+  // state (ADR 0037). Deliberately excludes /api/cron/reminders, which is
+  // machine-called and secret-guarded instead.
+  new RegExp("^/api/notifications"),
 ];
 
 export const withAuth = (middleware: CustomMiddleware) => {
