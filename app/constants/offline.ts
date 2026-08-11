@@ -24,8 +24,7 @@ export const PRECACHE_MUSHAF_ID = 2;
 export const pageFontUrl = (id: number) => `/fonts/v1/woff2/p${id}.woff2`;
 export const pageJsonUrl = (id: number) =>
   `/quran/pages/${PRECACHE_MUSHAF_ID}/${id}.json`;
-export const versePagesUrl = () =>
-  `/quran/verse-pages/${PRECACHE_MUSHAF_ID}.json`;
+export const VERSE_PAGES_URL = `/quran/verse-pages/${PRECACHE_MUSHAF_ID}.json`;
 
 // Synthetic cache entry written only after a fully successful precache run.
 // Living inside the versioned cache name makes it version-scoped for free, and
@@ -61,3 +60,38 @@ export const OFFLINE_DOWNLOAD_MB = 48;
 // active reader's font fetches from a silent background precache, and imposed a
 // hard 604 x 200ms ~= 2 minute floor. See ADR 0014 Addendum 2.
 export const PRECACHE_CONCURRENCY = 6;
+
+// ---------------------------------------------------------------------------
+// Message contract between the page and the service worker.
+//
+// Both sides import these types so the payloads cannot drift silently: the SW
+// posts `SwToClientMessage` and the hook narrows on the same union. A bare
+// `Record<string, unknown>` on the SW side let a renamed field compile fine on
+// one side and read as `undefined` on the other.
+// ---------------------------------------------------------------------------
+
+/** Sent page → service worker. `runId` scopes a cancel to the run that owns it. */
+export type ClientToSwMessage =
+  | { type: "START_PRECACHE" }
+  | { type: "REQUEST_PRECACHE_STATUS" }
+  | { type: "CANCEL_PRECACHE"; runId: number };
+
+/** Sent service worker → every window client. */
+export type SwToClientMessage =
+  | {
+      type: "PRECACHE_PROGRESS";
+      runId: number;
+      cached: number;
+      failed: number;
+      total: number;
+      complete: boolean;
+      done: boolean;
+    }
+  | {
+      type: "PRECACHE_STATUS";
+      runId: number | null;
+      cached: number;
+      total: number;
+      complete: boolean;
+      running: boolean;
+    };

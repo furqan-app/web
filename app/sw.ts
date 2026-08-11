@@ -9,10 +9,11 @@ import {
   PRECACHE_MUSHAF_ID,
   PRECACHE_SENTINEL_URL,
   TOTAL_PAGES,
+  VERSE_PAGES_URL,
   pageFontUrl,
   pageJsonUrl,
-  versePagesUrl,
 } from "@constants/offline";
+import type { ClientToSwMessage, SwToClientMessage } from "@constants/offline";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -75,31 +76,38 @@ serwist.addEventListeners();
 // Addendum 2). The precache set (slim JSON + base fonts) is locale-independent
 // Quran content — the localized app shell is precached via the Serwist build
 // manifest, not here.
-type PrecacheMessage = {
-  type: "START_PRECACHE" | "REQUEST_PRECACHE_STATUS" | "CANCEL_PRECACHE";
-};
+// A service worker is killed and restarted freely, so these live only as long as
+// the worker does. That is correct: a run cannot outlive the worker executing it,
+// and a restarted worker legitimately has no run in flight. `activeRunId`
+// identifies the current run so a CANCEL can only stop the run it names —
+// Chromium shares one worker between the browser tab and the installed PWA
+// (a sharing this feature relies on), so an unscoped cancel let one surface abort
+// a download another surface was actively displaying.
+let activeRunId: number | null = null;
+let cancelledRunId: number | null = null;
+let nextRunId = 1;
 
-let precacheRunning = false;
-let cancelRequested = false;
-
-async function postToClients(message: Record<string, unknown>) {
+async function postToClients(message: SwToClientMessage) {
   const clients = await self.clients.matchAll({ type: "window" });
   for (const client of clients) client.postMessage(message);
 }
 
-const reportProgress = (
-  cached: number,
-  failed: number,
-  complete: boolean,
-  done = false,
-) =>
+/** Named fields — two adjacent booleans were trivially transposable at a call site. */
+const reportProgress = (args: {
+  runId: number;
+  cached: number;
+  failed: number;
+  complete: boolean;
+  done?: boolean;
+}) =>
   postToClients({
     type: "PRECACHE_PROGRESS",
-    cached,
-    failed,
+    runId: args.runId,
+    cached: args.cached,
+    failed: args.failed,
     total: TOTAL_PAGES,
-    complete,
-    done,
+    complete: args.complete,
+    done: args.done ?? false,
   });
 
 /** Fetch + store `url` unless already cached. Returns whether it is now cached. */
@@ -141,7 +149,7 @@ async function cachePage(cache: Cache, id: number) {
  */
 async function isCacheComplete(cache: Cache, knownCount?: number) {
   if (!(await cache.match(PRECACHE_SENTINEL_URL))) return false;
-  if (!(await cache.match(versePagesUrl()))) return false;
+  if (!(await cache.match(VERSE_PAGES_URL))) return false;
   const cached = knownCount ?? (await countCachedPages(cache));
   return cached === TOTAL_PAGES;
 }
@@ -173,9 +181,10 @@ async function countCachedPages(cache: Cache) {
 }
 
 async function precacheAllPages() {
-  if (precacheRunning) return;
-  precacheRunning = true;
-  cancelRequested = false;
+  if (activeRunId !== null) return;
+  const runId = nextRunId++;
+  activeRunId = runId;
+  const isCancelled = () => cancelledRunId === runId;
 
   try {
     const cache = await caches.open(PAGES_CACHE_NAME);
@@ -185,19 +194,26 @@ async function precacheAllPages() {
     // cache deliberately fails this check and falls through to a resuming run,
     // which refetches only what is missing.
     if (await isCacheComplete(cache)) {
-      await reportProgress(TOTAL_PAGES, 0, true, true);
+      activeRunId = null;
+      await reportProgress({
+        runId,
+        cached: TOTAL_PAGES,
+        failed: 0,
+        complete: true,
+        done: true,
+      });
       return;
     }
 
     // The per-edition verse_key → page map. Without it, rub navigation and
     // edition switching fall back to the default edition's page numbers offline.
-    const versePagesOk = await ensureCached(cache, versePagesUrl());
+    const versePagesOk = await ensureCached(cache, VERSE_PAGES_URL);
 
     let cached = 0;
     let failed = 0;
 
     for (let id = 1; id <= TOTAL_PAGES; id += PRECACHE_CONCURRENCY) {
-      if (cancelRequested) break;
+      if (isCancelled()) break;
       const batch: number[] = [];
       for (let n = id; n < id + PRECACHE_CONCURRENCY && n <= TOTAL_PAGES; n++) {
         batch.push(n);
@@ -209,20 +225,25 @@ async function precacheAllPages() {
         if (ok) cached++;
         else failed++;
       }
-      await reportProgress(cached, failed, false);
+      await reportProgress({ runId, cached, failed, complete: false });
     }
 
     const complete =
-      !cancelRequested && versePagesOk && cached === TOTAL_PAGES && failed === 0;
+      !isCancelled() && versePagesOk && cached === TOTAL_PAGES && failed === 0;
     if (complete) {
       await cache.put(
         new Request(PRECACHE_SENTINEL_URL),
         new Response("", { status: 200 }),
       );
     }
-    await reportProgress(cached, failed, complete, true);
+    // Release the run BEFORE the awaited final report: a START arriving while
+    // that postMessage was in flight used to be dropped silently, leaving a
+    // client that had already flipped to `running` with no run behind it
+    // (reachable by tapping Retry the instant `partial` appears).
+    activeRunId = null;
+    await reportProgress({ runId, cached, failed, complete, done: true });
   } finally {
-    precacheRunning = false;
+    if (activeRunId === runId) activeRunId = null;
   }
 }
 
@@ -237,21 +258,23 @@ async function reportStatus() {
   if (!complete) await cache.delete(PRECACHE_SENTINEL_URL);
   await postToClients({
     type: "PRECACHE_STATUS",
+    runId: activeRunId,
     cached,
     total: TOTAL_PAGES,
     complete,
-    running: precacheRunning,
+    running: activeRunId !== null,
   });
 }
 
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
-  const data = event.data as PrecacheMessage;
+  const data = event.data as ClientToSwMessage;
   if (data?.type === "START_PRECACHE") {
     event.waitUntil(precacheAllPages());
   } else if (data?.type === "REQUEST_PRECACHE_STATUS") {
     event.waitUntil(reportStatus());
   } else if (data?.type === "CANCEL_PRECACHE") {
-    cancelRequested = true;
+    // Only the run the client names — never whatever happens to be running now.
+    if (data.runId === activeRunId) cancelledRunId = data.runId;
   }
 });
 

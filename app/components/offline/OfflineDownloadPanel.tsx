@@ -1,17 +1,33 @@
 "use client";
 
 import { useLocale, useTranslations as useIntlTranslations } from "next-intl";
-import { BookOpenCheck, CloudDownload, TriangleAlert, WifiOff } from "lucide-react";
+import {
+  BookOpenCheck,
+  CloudDownload,
+  Loader2,
+  TriangleAlert,
+  WifiOff,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@/app/utils/i18n";
 import { OFFLINE_DOWNLOAD_MB } from "@constants/offline";
 import type { PrecacheState } from "@hooks/use-pwa-precache";
+import { OfflineProgressBar } from "@components/offline/OfflineProgressBar";
+
+/**
+ * Only the states this panel actually renders. `done` never reaches it (nothing
+ * left to ask) and is excluded so the compiler enforces that, rather than the
+ * previous wide `PrecacheState` prop that silently fell through to the Download
+ * button and made both callers repeat the same guard.
+ */
+export type PanelState = Exclude<PrecacheState, "done">;
 
 type Props = {
-  state: PrecacheState;
+  state: PanelState;
   cached: number;
   total: number;
+  failed: number;
   onDownload: () => void;
   onDismiss: () => void;
   /** "Skip for now" on the first-run gate, "Not now" on the in-tab prompt. */
@@ -20,8 +36,8 @@ type Props = {
   title: string;
   /**
    * Optional sentence shown before the size notice. Must contain no `{...}`
-   * placeholders — it is built by the parent, which renders on the server, and
-   * next-intl parses braces as ICU arguments and throws when they are unfilled.
+   * placeholders — it is built by the parent with the project translation
+   * wrapper, which cannot fill ICU arguments (docs/standards/i18n.md).
    */
   leadIn?: string;
 };
@@ -35,6 +51,7 @@ export const OfflineDownloadPanel = ({
   state,
   cached,
   total,
+  failed,
   onDownload,
   onDismiss,
   dismissLabel,
@@ -52,6 +69,21 @@ export const OfflineDownloadPanel = ({
   // Values are pre-converted to strings so ICU substitutes them verbatim and the
   // Eastern Arabic numeral policy is preserved instead of ICU's own formatting.
   const num = (value: number) => toLocaleNumeral(value, locale);
+
+  // The service worker has not answered yet. Surfaces render this rather than
+  // nothing, so an installed user never sees the reader flash behind a gate that
+  // is about to cover it.
+  if (state === "unknown") {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2
+          className="size-6 animate-spin text-muted-foreground motion-reduce:animate-none"
+          strokeWidth={1.6}
+          aria-label={t("offline.checking", "Checking offline availability")}
+        />
+      </div>
+    );
+  }
 
   if (state === "offline") {
     return (
@@ -79,28 +111,15 @@ export const OfflineDownloadPanel = ({
   }
 
   if (state === "running") {
-    const percent = total > 0 ? Math.round((cached / total) * 100) : 0;
     return (
       <div className="space-y-4">
         <div className="space-y-1.5 text-center">
           <h2 className="text-base font-semibold">
             {t("offline.runningTitle", "Downloading the Quran")}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {tp("progress", { cached: num(cached), total: num(total) })}
-          </p>
         </div>
-        <div
-          className="h-2 overflow-hidden rounded-full bg-muted"
-          role="progressbar"
-          aria-valuenow={percent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div
-            className="h-full bg-primary transition-[width] duration-300"
-            style={{ width: `${percent}%` }}
-          />
+        <div className="space-y-2">
+          <OfflineProgressBar cached={cached} total={total} />
         </div>
         <Button variant="ghost" className="w-full" onClick={onDismiss}>
           {dismissLabel}
@@ -121,7 +140,11 @@ export const OfflineDownloadPanel = ({
             {t("offline.partialTitle", "Some pages couldn't be downloaded")}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {tp("partialBody", { cached: num(cached), total: num(total) })}
+            {tp("partialBody", {
+              cached: num(cached),
+              total: num(total),
+              failed: num(failed),
+            })}
           </p>
         </div>
         <div className="space-y-2">

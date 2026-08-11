@@ -55,16 +55,18 @@
     "settingsHint": "You can download it later from Settings.",
     "runningTitle": "Downloading the Quran",
     "progress": "{cached} of {total} pages",
-    "ready": "The Quran is available offline",
-    "notDownloaded": "Not available offline",
+    "ready": "Available offline",
     "partialTitle": "Some pages couldn't be downloaded",
-    "partialBody": "{cached} of {total} pages are ready.",
+    "partialBody": "{cached} of {total} pages are ready — {failed} couldn't be downloaded.",
     "retry": "Try again",
     "continueAnyway": "Continue anyway",
     "offlineTitle": "You're offline",
     "offlineBody": "Connect to the internet to download the Quran for offline reading.",
     "installedTitle": "Furqan is installed",
-    "installedBody": "Download the Quran now so you can read it offline."
+    "installedBody": "Download the Quran now so you can read it offline.",
+    "checking": "Checking offline availability",
+    "gateDescription": "Choose whether to download the Quran for offline reading.",
+    "madaniMushaf": "Madani mushaf"
   },
   "notFound": {
     "title": "404 - Page Not Found",

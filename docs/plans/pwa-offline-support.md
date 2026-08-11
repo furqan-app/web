@@ -186,6 +186,34 @@ Serwist is disabled in `next dev`, so none of this is reachable without `next bu
 
 Not verified here: the `partial` state (attempting to induce it is what exposed the `globPublicPatterns` bug, and a 3 s localhost run outruns a mid-run server kill), and the gate's rendered appearance — it requires `display-mode: standalone`, which a normal tab cannot fake after hydration, so it needs a real install. iOS needs a device either way.
 
+## Review Fixes (2026-08-11, post-PR #200)
+
+An Opus review pass on the branch surfaced one critical defect and a set of robustness/quality gaps. All fixed on the same branch:
+
+| # | Fix |
+|---|---|
+| 1 | **Critical — Arabic rendered as English.** All four parameterized `offline.*` keys went through the project `use-translations` wrapper + `.replace()`. The wrapper calls `t(key)` with no ICU values; client-side that returns the key path, which trips its own missing-key test, so the inline English default was served and every Arabic string was dead. Now uses next-intl's `useTranslations("offline")` with values — the pattern `docs/plans/fix-viewing-chip-intl-interpolation.md` already established and whose constraints this had violated. |
+| 2 | A killed service worker left the client stuck on `running` forever (a run lives in `event.waitUntil`; browsers kill workers). Status is now re-requested on `visibilitychange`/`focus`. |
+| 3 | `CANCEL_PRECACHE` was an unscoped module flag, so one surface could abort a download another surface was displaying — reachable because Chromium shares one worker between the tab and the installed PWA. Runs now carry a `runId` and a cancel must name it. |
+| 4 | `activeRunId` is released *before* the awaited final progress report; a `START` arriving during that window used to be dropped silently while the client already showed `running`. |
+| 5 | `dismissed` was per-hook-instance, so dismissing on one surface left others stale. localStorage is now the source of truth, fanned out in-tab by a custom event (the native `storage` event only fires in other tabs). |
+| 6 | `postToServiceWorker` had no `.catch()` — a rejected `serviceWorker.ready` stranded the surface silently. |
+| 7 | The `offline` state covered only `idle`, so `partial`'s Retry was offered while offline and disagreed with Settings' disabled button. Now covers both. |
+| 8, 16 | The gate declared `aria-modal` with no focus trap, Escape handling, or scroll lock — a keyboard/screen-reader user could Tab into the app it exists to block. Rebuilt on the Radix Dialog primitive with Escape and outside-pointer dismissal suppressed. |
+| 9 | The gate rendered nothing during the SW round-trip, so the reader flashed first. It now renders a wait state for `unknown`. |
+| 10 | The progress bar, its label and a `num()` helper were duplicated across two surfaces, and only one copy carried `role="progressbar"`. Extracted as `OfflineProgressBar`. |
+| 11 | The panel's `state` prop admitted `done`/`unknown` and fell through to the Download button, so both callers repeated the same guard. Narrowed to `Exclude<PrecacheState,"done">`. |
+| 12 | `reportStatus` walked `cache.keys()` twice per request. The count is now passed into `isCacheComplete`. |
+| 13 | `reportProgress`'s two adjacent booleans were transposable at a call site; now a named-field object. |
+| 14 | `failed` was plumbed end-to-end but unread — now surfaced in the `partial` copy. |
+| 15 | `versePagesUrl()` was a zero-arg function returning a constant → `VERSE_PAGES_URL`. |
+| 17 | `postToClients` took `Record<string, unknown>`, letting SW and client payloads drift. Both now share `ClientToSwMessage`/`SwToClientMessage`. |
+| 18 | `z-[100]` was the only z-index above the app's Radix ceiling, floating the prompt over an open Settings sheet; also collided with `RecitationPlayerBar`/`PlansWidget`. Now `z-50` at `bottom-24 start-4`. |
+| 19–22 | Doc corrections: the i18n standard asserted the wrong mechanism, `PAGES_CACHE_VERSION`'s location was stale, a removed `useOfflineSizeNotice` export was still referenced, and a DECISIONS constraint read as absolute where the code has a deliberate carve-out. |
+| 23 | Settings promised a shape where a tajweed row "drops in" but was one hardcoded card. Extracted `OfflineEditionRow`. |
+
+Not fixed, deliberately: the gate's post-SW-round-trip appearance is inherent to reading cache state asynchronously (mitigated by #9's wait state, not eliminated).
+
 ## Files to Change
 
 - `app/sw.ts`
