@@ -1,22 +1,21 @@
-export const FONT_V1 = {
-    baseScaleViewHeight: 2.9,
-    getWordFontSizeByScale: (scale: number) => parseFloat((FONT_V1.baseScaleViewHeight + (scale * .2)).toFixed(1)),
-    // Per-line gap as a fraction of the word font size, so vertical rhythm scales
-    // with the reading font instead of using a fixed px value. See ADR 0004.
-    lineGapRatio: 0.40,
-    getLineGapVh: (scale: number) =>
-        parseFloat((FONT_V1.getWordFontSizeByScale(scale) * FONT_V1.lineGapRatio).toFixed(2)),
-    // A surah heading + Bismillah block occupies exactly 2 line-slots.
-    getHeadingBlockVh: (scale: number) =>
-        parseFloat((2 * FONT_V1.getWordFontSizeByScale(scale) + FONT_V1.getLineGapVh(scale)).toFixed(2)),
-    // Flat readability floor so text/spacing never shrinks below a legible size
-    // on short viewports (e.g. DevTools docked open). Same across all scales
-    // by design — a readability minimum, not a per-scale preference. See ADR 0006.
-    minFontSizePx: 24,
-    minLineGapPx: () =>
-        parseFloat((FONT_V1.minFontSizePx * FONT_V1.lineGapRatio).toFixed(2)),
-    minHeadingBlockPx: () =>
-        parseFloat((2 * FONT_V1.minFontSizePx + FONT_V1.minLineGapPx()).toFixed(2)),
-    getWordFontSizeCss: (scale: number) =>
-        `max(${FONT_V1.minFontSizePx}px,${FONT_V1.getWordFontSizeByScale(scale)}vh)`,
-}
+import { DesktopQuranFontSize } from "@types";
+
+// Desktop is a reading preference, not a viewport-height calculation. Every
+// consumer of this value (ink, card width, banner fallback and rhythm) resolves
+// the same CSS custom property in QuranSafha/globals.css. See ADR 0038.
+export const DESKTOP_QURAN_FONT_SIZES: Record<DesktopQuranFontSize, number> = {
+  small: 26,
+  medium: 28,
+  large: 30,
+};
+
+export const DEFAULT_DESKTOP_QURAN_FONT_SIZE: DesktopQuranFontSize = "small";
+
+// These rhythm values are ratios of the resolved word size, never independent
+// screen-specific measurements. Tajweed's compensated gap is derived so its
+// scaled glyphs retain the same 15-line page height as the regular edition.
+export const QURAN_LINE_GAP_RATIO = 0.4;
+export const QURAN_TAJWEED_FONT_RATIO = 0.85;
+export const QURAN_TAJWEED_LINE_GAP_RATIO =
+  (1 + QURAN_LINE_GAP_RATIO - QURAN_TAJWEED_FONT_RATIO) /
+  QURAN_TAJWEED_FONT_RATIO;
