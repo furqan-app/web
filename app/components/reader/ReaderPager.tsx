@@ -236,6 +236,44 @@ export function ReaderPager({
   // bet on. Only a neighbor-step commit updates it; a jump to an arbitrary page
   // (recitation follow, edition switch) leaves the last known direction alone.
   const lastDirection = useRef<"next" | "prev">("next");
+  // Input that arrives while a commit is in flight (Trello #153, ADR 0028
+  // Addendum 2026-08-11). Exactly ONE step is held, latest-intent-wins: a deeper
+  // queue turns rapid swiping into page overshoot, which is harder to recover
+  // from than coalescing. A step stores a DIRECTION, not a resolved page — the
+  // in-flight commit moves the anchor, so a page captured now names the wrong
+  // one by the time this drains. Only an arbitrary jump stores its target.
+  const pendingNav = useRef<
+    { kind: "step"; goNext: boolean } | { kind: "page"; target: number } | null
+  >(null);
+  // Reassigned every render so draining reads fresh nextAnchor/prevAnchor — the
+  // same pattern navRef uses below.
+  const drainRef = useRef<() => void>(() => {});
+  // A gesture that BEGAN while a commit was in flight stays transform-free for its
+  // whole life, even after that commit lands mid-drag. Without this latch the next
+  // move event after the hand-off writes `translateX(-100% + deltaX)` with the
+  // finger's full accumulated travel — a visible teleport of ≥ COMMIT_THRESHOLD px.
+  const gestureIsQueueOnly = useRef(false);
+
+  // Apply a queued step once the commit that blocked it has landed. Deferred to a
+  // microtask, never inline: `commitTo` runs inside `flushSync`, which flushes
+  // passive effects synchronously, so an inline follow-up would see
+  // `isCommitting` still true, be guarded out, and never retry — the same trap
+  // `followTo` documents below. The microtask runs after that flush unwinds, so
+  // the anchor has settled and the fresh-anchor closure in `drainRef` resolves the
+  // right target.
+  const scheduleDrain = () => {
+    if (pendingNav.current) queueMicrotask(() => drainRef.current());
+  };
+
+  // The single choke point for queueing, so latest-intent-wins (and the one-deep
+  // cap) is enforced in one place rather than emerging from three call sites — the
+  // shape that let this bug diverge across inputs in the first place.
+  const enqueueStep = (goNext: boolean) => {
+    pendingNav.current = { kind: "step", goNext };
+  };
+  const enqueuePage = (target: number) => {
+    pendingNav.current = { kind: "page", target };
+  };
 
   // Swap the anchor and re-center atomically. The panel revealed during the drag
   // (an outer slot) and the panel that must sit at the -100% rest slot are
@@ -253,13 +291,18 @@ export function ReaderPager({
       if (!strip) {
         setAnchor(target);
         isCommitting.current = false;
+        scheduleDrain();
         return;
       }
       strip.style.transition = "none";
       flushSync(() => setAnchor(target));
       strip.style.transform = "translateX(-100%)";
       isCommitting.current = false;
+      scheduleDrain();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduleDrain reads
+    // only refs, so it is safe to omit; including it would churn commitTo's
+    // identity every render, and Panel memo stability depends on it (ADR 0028).
     [basePath],
   );
 
@@ -267,6 +310,9 @@ export function ReaderPager({
   // edition changes and the same verse now lives on a different page.
   const jumpTo = useCallback(
     (target: number) => {
+      // An edition switch relocates the reader by verse, so a queued page step
+      // from before the switch is meaningless — drop it rather than replay it.
+      pendingNav.current = null;
       window.history.replaceState(null, "", `${basePath}/${target}`);
       const strip = stripRef.current;
       if (strip) strip.style.transition = "none";
@@ -322,6 +368,11 @@ export function ReaderPager({
   const followTo = useCallback(
     (target: number) => {
       queueMicrotask(() => {
+        // Clear BEFORE the guards: playback owns the window while following, so a
+        // queued manual step is stale either way. Clearing after the guard missed
+        // the case where a queue is most likely to exist — follow guarded out
+        // mid-commit — leaving the stale turn to drain and be snapped back.
+        pendingNav.current = null;
         if (isDragging.current || isCommitting.current) return;
         commitTo(target);
       });
@@ -334,14 +385,51 @@ export function ReaderPager({
   // no-flicker recenter. A ref holds the latest impl (fresh nextAnchor/prevAnchor).
   const navRef = useRef<(targetPage: number) => void>(() => {});
   navRef.current = (targetPage: number) => {
-    if (isCommitting.current) return;
+    if (isCommitting.current) {
+      // Queue a neighbour step as a DIRECTION (the landing commit moves the
+      // anchor); an arbitrary jump keeps its absolute target.
+      if (targetPage === nextAnchor) enqueueStep(true);
+      else if (targetPage === prevAnchor) enqueueStep(false);
+      else enqueuePage(targetPage);
+      return;
+    }
     // Arrow hrefs are locale-visual; map the destination to the physical next/prev
     // slot. A click never animates (animate=false) — no drag to continue.
     if (targetPage === nextAnchor) animateCommit(true, false);
     else if (targetPage === prevAnchor) animateCommit(false, false);
     else commitTo(targetPage);
   };
+
+  // Drains the one queued step. Reassigned each render so it closes over the
+  // anchors as they are AFTER the commit that queued it. Catch-up turns commit
+  // instantly (`animate=false`): an animated one would reopen a fresh 300ms
+  // window and cap throughput, and `ui-motion` puts repeated high-frequency
+  // actions at no animation at all.
+  drainRef.current = () => {
+    const pending = pendingNav.current;
+    if (!pending) return;
+    // A drag or commit started since this was queued, so now is the wrong moment.
+    // LEAVE it queued rather than clearing first: dropping here would silently
+    // destroy the gesture, which is the very bug #153 is about — a sub-threshold
+    // release by the newer drag is not a supersede, and clearing first made that
+    // sequence yield zero turns. onTouchEnd re-schedules the drain.
+    if (isDragging.current || isCommitting.current) return;
+    pendingNav.current = null;
+    if (pending.kind === "page") commitTo(pending.target);
+    else animateCommit(pending.goNext, false);
+  };
   const onArrowNavigate = useCallback((targetPage: number) => navRef.current(targetPage), []);
+
+  // Drop any queued step on unmount so a microtask already scheduled by a landing
+  // commit cannot commit on a torn-down pager — the drain reads pendingNav first
+  // and returns when it is null. Scoped to the queue only: animateCommit's own
+  // EXIT_MS timer is still uncancelled and can fire post-unmount, a pre-existing
+  // gap this does not address.
+  useEffect(() => {
+    return () => {
+      pendingNav.current = null;
+    };
+  }, []);
 
   // Physical ArrowLeft/ArrowRight keys commit the same page step as the click
   // arrows, instantly (animate=false). Direction is locale-independent: tracing
@@ -369,7 +457,10 @@ export function ReaderPager({
       ) {
         return;
       }
-      if (isCommitting.current) return;
+      if (isCommitting.current) {
+        pendingNav.current = { kind: "step", goNext: e.key === "ArrowLeft" };
+        return;
+      }
       animateCommit(e.key === "ArrowLeft", false);
     };
     window.addEventListener("keydown", onKeyDown);
@@ -377,10 +468,18 @@ export function ReaderPager({
   }, [animateCommit]);
 
   const onTouchStart = (e: React.TouchEvent) => {
-    if (isCommitting.current) return;
+    // Record the start ALWAYS, even mid-commit. Returning before this write was
+    // the #153 bug: with touchStartX left null, onTouchMove and onTouchEnd both
+    // bailed on their own null checks and the whole gesture was discarded.
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isDragging.current = false;
+    // Latch for the whole gesture, not just while isCommitting is true: the commit
+    // can land mid-drag, and without this the next move event writes the finger's
+    // full travel as a transform in one jump.
+    gestureIsQueueOnly.current = isCommitting.current;
+    // Everything below touches the strip, which the in-flight slide owns.
+    if (isCommitting.current) return;
     if (snapClearTimer.current) {
       clearTimeout(snapClearTimer.current);
       snapClearTimer.current = null;
@@ -394,6 +493,10 @@ export function ReaderPager({
     const deltaY = e.touches[0].clientY - touchStartY.current;
     if (!isDragging.current && Math.abs(deltaX) <= Math.abs(deltaY)) return;
     isDragging.current = true;
+    // Track the gesture but leave the transform alone — the in-flight transition
+    // owns it, and a gesture that started during a commit stays transform-free even
+    // after that commit lands. The release still registers via the queue.
+    if (gestureIsQueueOnly.current || isCommitting.current) return;
     if (!stripRef.current) return;
     stripRef.current.style.transition = "none";
     // Anchored to the -100% rest so the neighbor already sitting beside the
@@ -408,6 +511,19 @@ export function ReaderPager({
     touchStartY.current = null;
     if (!isDragging.current) return;
     isDragging.current = false;
+    const wasQueueOnly = gestureIsQueueOnly.current;
+    gestureIsQueueOnly.current = false;
+
+    // This gesture never transformed the strip, so there is nothing to snap back.
+    // Record the intent (one deep, latest wins) and let the landing commit apply
+    // it. A sub-threshold release queues nothing, but must still re-schedule the
+    // drain: an earlier step may be sitting queued because this drag was in
+    // progress when its commit landed, and nothing else would pick it up.
+    if (wasQueueOnly || isCommitting.current) {
+      if (Math.abs(deltaX) >= COMMIT_THRESHOLD) enqueueStep(deltaX > 0);
+      if (!isCommitting.current) scheduleDrain();
+      return;
+    }
 
     const strip = stripRef.current;
     if (!strip) return;
@@ -418,11 +534,36 @@ export function ReaderPager({
       snapClearTimer.current = setTimeout(() => {
         strip.style.transition = "";
       }, SNAP_BACK_MS);
+      // Same reasoning as above — a declined drain may still be waiting.
+      scheduleDrain();
       return;
     }
 
     // Quran is always RTL: swipe right = next page, swipe left = previous.
     animateCommit(deltaX > 0);
+  };
+
+  // A browser-cancelled touch (system back-gesture, scroll takeover, multi-touch)
+  // never reaches onTouchEnd. Without this, isDragging stays stuck true and wedges
+  // three separate guards — the drain, followTo, and the Stage B lookahead — for the
+  // rest of the session. Pre-existing gap, but letting a drag begin mid-commit
+  // widens the window in which it can be entered.
+  const onTouchCancel = () => {
+    touchStartX.current = null;
+    touchStartY.current = null;
+    const wasDragging = isDragging.current;
+    isDragging.current = false;
+    const wasQueueOnly = gestureIsQueueOnly.current;
+    gestureIsQueueOnly.current = false;
+    const strip = stripRef.current;
+    if (wasDragging && !wasQueueOnly && !isCommitting.current && strip) {
+      strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
+      strip.style.transform = "translateX(-100%)";
+      snapClearTimer.current = setTimeout(() => {
+        strip.style.transition = "";
+      }, SNAP_BACK_MS);
+    }
+    if (!isCommitting.current) scheduleDrain();
   };
 
   const currentPageWords = pageNumber === curRightId ? rightData : leftData;
@@ -542,6 +683,7 @@ export function ReaderPager({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
         onClick={(e) => {
           if (!e.currentTarget.contains(e.target as Node)) return;
           toggleOverlay();

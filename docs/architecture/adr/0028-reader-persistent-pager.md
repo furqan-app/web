@@ -112,3 +112,78 @@ away snaps back immediately (you cannot browse mid-playback). To allow free brow
 **Removed code.** `app/components/QuranSwipeNav.tsx` (superseded by `ReaderPager`) was deleted in
 this branch, and its stale comment references in `QuranSafha.tsx`/`QuranWord.tsx` updated. Its dead
 `.fq-carousel-*` CSS in `globals.css` is left in place (marked dead) for a later CSS-only cleanup.
+
+## Addendum (2026-08-11): input arriving during a commit is queued, not dropped
+
+**Incident (Trello #153).** On tablet, roughly every other swipe in a rapid sequence did nothing.
+Reported as lag; it was not a frame-rate problem. `animateCommit` sets `isCommitting` and completes
+the swap on a 300 ms wall-clock timer, and `onTouchStart` returned on that flag *before recording
+`touchStartX`* — so `onTouchMove`/`onTouchEnd` bailed on their own null checks and the whole gesture
+was discarded. Reported measurements were 10/10 commits at 500 ms gaps and 5/10 at both 250 ms and
+120 ms. **Treat those gap-based figures as indicative only** — a background browser tab clamps
+`setTimeout` (a requested 120 ms measured 494–1000 ms) and stretches the pager's own `EXIT_MS` timer
+with it, so nominal gap numbers are not reproducible without a foreground browser. The fix was
+verified instead with swipes fired in a single task, which lands them inside the window by
+construction; see the plan's Verified Test Cases.
+
+**Decision.** Input arriving while a commit is in flight is **captured as intent**, never dropped.
+The pager holds a **one-deep** pending step that is applied the moment the commit lands. Four rules
+make this work, and each exists for a reason that is not obvious from the code:
+
+1. **The pending step stores a direction, not a resolved page.** The in-flight commit moves the
+   anchor, so a `nextAnchor` read at queue time names the wrong page by the time the queue drains.
+   The target is resolved after the anchor settles, through the reassigned-each-render ref that
+   already exists for the arrows.
+2. **It is applied via `queueMicrotask`, never inline.** `commitTo` uses `flushSync`, which flushes
+   passive effects synchronously, so an inline follow-up runs while `isCommitting` is still true, is
+   guarded out, and never retries — the same trap `RecitationFollow` hit, documented above.
+3. **The queue is exactly one deep and latest-intent-wins.** A counter or array would convert rapid
+   swiping into page overshoot, which is harder to recover from than coalescing. The accepted
+   consequence is that swipe count ≠ page count above roughly 3 swipes/sec.
+4. **Queued turns commit instantly (`animate=false`).** An animated catch-up turn would reopen a
+   fresh 300 ms window and cap throughput at ~3 pages/sec. Only the first swipe of a burst gets the
+   book-like reveal.
+
+Three further rules came out of review, each fixing a way the queue could still lose or corrupt a
+gesture:
+
+5. **A gesture that began mid-commit stays transform-free for its whole life.** The commit can land
+   while the finger is still down; without a latch, the next move event writes the finger's full
+   accumulated travel as a transform in one jump — a visible teleport of at least the commit
+   threshold.
+6. **The drain leaves a step queued when it declines it.** If a newer drag is in flight the drain must
+   not clear first: a sub-threshold release by that newer drag is not a supersede, so clearing
+   destroyed the earlier gesture and yielded zero turns — the exact bug class this addendum exists to
+   fix. `onTouchEnd`/`onTouchCancel` re-schedule the drain instead.
+7. **`touchcancel` must reset the drag state.** A browser-cancelled touch (system back-gesture,
+   scroll takeover, multi-touch) never reaches `onTouchEnd`, and a stuck `isDragging` wedges three
+   separate guards — the drain, `followTo`, and the Stage B lookahead. Pre-existing, but letting a
+   drag begin mid-commit widens the window in which it can be entered.
+
+`drainRef` is assigned in the render body, the same ref-mutation-during-render shape the sixth-session
+`FontFaceInjector` follow-up removed. It follows the pre-existing `navRef` precedent and the value
+never feeds JSX, so an abandoned render cannot leave stale output on screen — only a drain closing over
+anchors that were never committed. Accepted as consistent with the file, but worth knowing the tension
+exists.
+
+All three input paths — swipe, physical arrow keys, and in-spread arrow clicks — share the one queue,
+so behaviour does not depend on which source happened to arrive during the window. The keyboard's
+`e.repeat` guard must stay **ahead** of the queue: otherwise a held key enqueues at the OS repeat
+rate, the exact runaway that guard was added to prevent.
+
+**This does not reopen the commit-timing question.** The `transitionend`-based completion in the
+plan's superseded root-cause hypothesis stays unimplemented and out of scope; that section's own
+supersede note records commit timing as "secondary at best", and ADR 0029 (immutable font
+registration) is what actually fixed the flicker it targeted. Its absence from git history is a
+deliberate drop, not an oversight — do not revive it as part of a latency fix.
+
+**Consequences**
+
+- **+** No gesture is silently ignored; a swipe either turns a page or is explicitly superseded by a
+  later one.
+- **+** The stabilised commit/recenter sequence is untouched, so no flicker-regression risk.
+- **−** Above ~3 swipes/sec gestures coalesce, so a spam burst turns fewer pages than it has swipes.
+- **−** There is no drag feedback during the 300 ms window: the gesture is recorded but the strip does
+  not follow the finger, because the in-flight transition owns the transform.
+
+See `docs/plans/reader-persistent-pager.md`, final addendum.

@@ -496,6 +496,16 @@ payload; windowing removes the mass mount.
   synchronously, the keyboard path also needs its own `e.repeat` guard — the slide's duration used to
   be the only thing rate-limiting a held arrow key. See `docs/plans/arrow-controls-desktop.md`
   Addendum 1.
+- **Input arriving during a commit is queued, never dropped** (Trello #153, [ADR 0028](adr/0028-reader-persistent-pager.md)
+  Addendum 2026-08-11). `onTouchStart` must record `touchStartX` even while `isCommitting` — returning
+  before that write left `onTouchMove`/`onTouchEnd` bailing on null and discarded the whole gesture, so
+  roughly every other swipe in a rapid sequence did nothing. The pager holds a **one-deep**,
+  latest-intent-wins pending step, applied instantly (`animate=false`) when the commit lands. It must
+  store a **direction, not a resolved page** (the in-flight commit moves the anchor), and must be
+  applied via `queueMicrotask` — inline inside `commitTo`'s `flushSync` it is guarded out and never
+  retries. All three inputs share the queue, and the keyboard's `e.repeat` guard must stay ahead of it
+  or a held key enqueues at the OS repeat rate. Do not deepen the queue (rapid input becomes overshoot)
+  and do not let a new drag cancel the in-flight commit (rewrites the sequence ADR 0029 stabilised).
 - Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
   spread (ADR 0013) against the pager/window model.
 - **A page turn commits immediately and is never gated on the target's readiness** ([ADR
