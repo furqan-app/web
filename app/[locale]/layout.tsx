@@ -5,7 +5,7 @@ import { routing } from "@/i18n/routing";
 
 import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "@/app/providers/QueryProvider";
-import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
+import { DesktopQuranFontSizeProvider } from "@/app/contexts/DesktopQuranFontSizeContext";
 import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
 import { QuranMushafProvider } from "@/app/contexts/QuranMushafContext";
 import { RecitationProvider } from "@/app/contexts/RecitationContext";
@@ -48,7 +48,7 @@ export default async function LocaleLayout({
     >
       <NextIntlClientProvider messages={messages}>
         <SessionProvider>
-          <QuranFontScaleProvider>
+          <DesktopQuranFontSizeProvider>
             <QuranMushafProvider>
               <QuranSafhaViewProvider>
                 <RecitationProvider>
@@ -71,10 +71,9 @@ export default async function LocaleLayout({
                 </RecitationProvider>
               </QuranSafhaViewProvider>
             </QuranMushafProvider>
-          </QuranFontScaleProvider>
+          </DesktopQuranFontSizeProvider>
         </SessionProvider>
       </NextIntlClientProvider>
     </div>
   );
 }
-

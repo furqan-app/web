@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { QuranSafha } from "@/app/components/QuranSafha";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
+import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { PageWords } from "@/app/hooks/get-page-words";
 
 type NavHrefs = { prevHref: string; nextHref: string };
@@ -89,13 +90,14 @@ export const QuranSpread = ({
 }: QuranSpreadProps) => {
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
+  const isTablet = useIsTablet();
   // useIsLgUp is used ONLY to pick the nav-arrow href (single-step vs pair-step).
   // The double-vs-single *display* is gated entirely by CSS (the pre-paint
   // `html[data-safha-view]` attribute + the `lg` media query on `.fq-spread`),
   // so it's correct at first paint on slow connections — no matchMedia in the
   // display path. See ADR 0013 Addendum 4. The arrow href's pre-hydration
   // staleness is invisible (same icon, only the target differs).
-  const nav = view === "double" && isLgUp ? pairStepNav : singleStepNav;
+  const nav = isTablet || (view === "double" && isLgUp) ? pairStepNav : singleStepNav;
 
   // The non-current pair member is the "partner": CSS hides it unless the spread
   // is actually showing (lg + data-safha-view="double"). Exactly one of the two

@@ -1,7 +1,7 @@
 "use client";
 
 import { LanguageToggle } from "@components/LanguageToggle";
-import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
+import { DesktopQuranFontSizeControls } from "@components/DesktopQuranFontSizeControls";
 import { ThemeToggle } from "@components/ThemeToggle";
 import { getLanguageDirection, toLocaleNumeral } from "../utils/i18n";
 import { useLocale } from "next-intl";
@@ -74,18 +74,20 @@ export const SettingsSidebar = () => {
                 {t("quranFontSize", "Quran Font Size")}
               </h3>
               <div className="p-4 rounded-lg bg-muted">
-                <QuranFontScaleControls />
+                <DesktopQuranFontSizeControls />
               </div>
             </div>
           )}
-          <div className="hidden lg:block">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("pageView", "Page View")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted">
-              <QuranSafhaViewToggle />
+          {!isTablet && (
+            <div className="hidden lg:block">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                {t("pageView", "Page View")}
+              </h3>
+              <div className="p-4 rounded-lg bg-muted">
+                <QuranSafhaViewToggle />
+              </div>
             </div>
-          </div>
+          )}
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
               {t("appearance", "Appearance")}

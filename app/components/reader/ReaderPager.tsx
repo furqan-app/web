@@ -18,6 +18,7 @@ import { ReaderPageSync } from "@/app/components/reader/ReaderPageSync";
 import { MushafSwitchSync } from "@/app/components/reader/MushafSwitchSync";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
+import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
@@ -196,6 +197,7 @@ export function ReaderPager({
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
+  const isTablet = useIsTablet();
   const { toggleOverlay } = useNavOverlay();
   const { mushafId, edition } = useQuranMushaf();
 
@@ -216,7 +218,9 @@ export function ReaderPager({
   const pageNumber = anchor;
   const { rightPage: curRightId, leftPage: curLeftId } = getPagePair(pageNumber);
 
-  const isDouble = view === "double" && isLgUp;
+  // Tablet is intentionally always a facing-page reader; desktop keeps the
+  // stored single/double preference and mobile remains one page at a time.
+  const isDouble = isTablet || (view === "double" && isLgUp);
   const nextAnchor = stepAnchor(pageNumber, true, isDouble);
   const prevAnchor = stepAnchor(pageNumber, false, isDouble);
 
