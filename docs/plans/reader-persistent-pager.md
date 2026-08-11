@@ -887,6 +887,12 @@ oversight. Re-introducing `transitionend` now would re-propose a superseded appr
 regression risk to the one path in this component that took 24 attempts to stabilise — and by the
 card's own admission it does not fix the reported symptom anyway. **Scope here is the queue only.**
 
+> **Superseded 2026-08-11 (same day) — see "Revised approach: takeover, not a queue" at the end of this
+> addendum.** The 11-rule queue below shipped in PR #201 and then was replaced at the user's request. It
+> coalesced rapid input, so swipe count did not equal page count. Rules 1-11, the one-deep cap, the
+> direction-not-page rule, the microtask drain and the transform-free latch are all **dead** — do not
+> reimplement them. The Root Cause and the `transitionend` note above remain current.
+
 ### Decision Tree / Algorithm (verified with user)
 
 | # | Condition | Action |
@@ -1081,3 +1087,54 @@ cancellable commit handle, which touches the timing path this change deliberatel
 One environment note worth carrying: a `useRef` added to this component makes HMR blow up the reader
 into its error boundary (hook order changed under preserved state). A full reload clears it — do not
 chase it as a runtime defect.
+
+### Revised approach: takeover, not a queue (2026-08-11, user decision)
+
+The queue worked but capped throughput: 3 rapid swipes gave 2 turns. Replaced with **takeover** —
+settle the in-flight turn immediately, then handle the new input as if nothing were in flight.
+
+| # | Condition | Action |
+|---|---|---|
+| 1 | Any user input (swipe/keyboard/arrow) arrives with a turn in flight | Clear its `EXIT_MS` timer and `commitTo` its target — **settle, never abort** |
+| 2 | After settling | Re-enter through `navRef`/`stepRef`; do NOT fall through (the closure's anchors are pre-settle) |
+| 3 | Touch, after the settle | Normal drag from the settled page — `onTouchMove`/`onTouchEnd` need no commit-awareness |
+| 4 | Keyboard `e.repeat` | Returns **before** the takeover, so a held key still turns exactly one page |
+| 5 | Edition switch (`jumpTo`) mid-turn | **Cancel** the in-flight turn (do not settle) — the switch relocates by verse, and its timer would otherwise overwrite the re-anchor 300 ms later |
+| 6 | Unmount mid-turn | Cancel the timer, so it cannot fire post-teardown and rewrite the URL |
+| 7 | Recitation follow | Does **not** take over — automatic, and truncating a reader-initiated turn would have playback fight the finger. Keeps its guard; converges |
+| 8 | `touchcancel` | Reset the drag state so a cancelled touch cannot wedge `followTo`/Stage B |
+
+**Measured** (same synthetic-`TouchEvent` harness, single-page stepping, dev server):
+
+| Case | Queue (PR #201 as shipped) | Takeover |
+|---|---|---|
+| 1 / 2 / 3 / 5 swipes in one task | 1 / 2 / 2 / — turns (coalesced) | **1 / 2 / 3 / 5** pages — exact 1:1 |
+| next then prev | 0 net | 0 net |
+| swipe + one `ArrowLeft` | 2 turns | 2 pages |
+| swipe + 5 `repeat` ArrowLefts | 1 turn | 1 page |
+| 3 non-repeat `ArrowLeft`s | — | 3 pages |
+| Drag begins mid-turn, then moves | needed a latch to avoid teleporting | strip `-100%` → `+40px` → `+120px`, tracks the finger |
+| `touchcancel`, then a swipe | turns | turns |
+
+Size: **net 38 lines smaller** than the queue implementation (−122/+84), and `onTouchMove`/`onTouchEnd`
+are byte-identical to their pre-#153 form.
+
+**What this costs.** Fast swiping truncates each reveal mid-flight, so it reads as a series of snaps
+rather than smooth turns — the trade the queue was avoiding. And the settle calls `commitTo` from an
+arbitrary mid-transition transform rather than the animation's end state; ADR 0029's font-face cause is
+untouched and the `flushSync`-then-recenter swap is unchanged, but this is the path that took 24 attempts
+to stabilise, so **a returning flicker under rapid swiping is the specific thing to watch on device**.
+
+**Still unverified:** everything about feel — whether truncated reveals look acceptable at speed, and
+whether any flash returns. Needs a tablet; the synthetic harness measures page counts, not perception.
+
+### What NOT to Do (revised)
+
+- Do not reintroduce a pending-step queue. It coalesced input and needed a latch, a microtask drain and
+  a "leave it queued when declined" rule just to avoid dropping gestures of its own.
+- Do not **abort** the in-flight turn instead of settling it — the user carried it past the threshold, so
+  dropping it loses a page they asked for.
+- Do not fall through after settling. `flushSync` makes the re-render synchronous, so the calling closure
+  is already stale; re-enter through the ref.
+- Do not implement `transitionend` commit completion, and do not change `EXIT_MS` (unchanged from the
+  original addendum — both remain out of scope).

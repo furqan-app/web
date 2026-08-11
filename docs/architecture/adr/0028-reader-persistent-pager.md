@@ -126,6 +126,13 @@ with it, so nominal gap numbers are not reproducible without a foreground browse
 verified instead with swipes fired in a single task, which lands them inside the window by
 construction; see the plan's Verified Test Cases.
 
+> **Superseded 2026-08-11 (same day, user decision) by "Addendum 2: takeover, not a queue" at the end
+> of this file.** The queue described below shipped and worked, but coalesced rapid input so swipe count
+> did not equal page count. It was replaced by settling the in-flight turn and handling the new input
+> immediately. Everything from here to the end of this addendum — the one-deep queue, the
+> direction-not-page rule, the microtask drain, the transform-free latch — is **dead**; do not
+> reimplement it. The problem statement and measurements above remain accurate.
+
 **Decision.** Input arriving while a commit is in flight is **captured as intent**, never dropped.
 The pager holds a **one-deep** pending step that is applied the moment the commit lands. Four rules
 make this work, and each exists for a reason that is not obvious from the code:
@@ -187,3 +194,50 @@ deliberate drop, not an oversight — do not revive it as part of a latency fix.
   not follow the finger, because the in-flight transition owns the transform.
 
 See `docs/plans/reader-persistent-pager.md`, final addendum.
+
+## Addendum 2 (2026-08-11): takeover, not a queue
+
+**Supersedes the queue in the addendum above**, on the same day and after it had shipped in PR #201.
+The queue honoured every gesture but **coalesced** them: three rapid swipes produced two turns, because
+only one step could be held. Swipe count not equalling page count was the one thing the original report
+actually asked for.
+
+**Decision.** Input arriving during a commit **takes over**: the in-flight turn is *settled* — landed
+immediately, never aborted, because the user already carried it past the commit threshold — and the new
+input is then handled as if nothing were in flight. Measured 1:1 afterwards: 1/2/3/5 swipes produce
+1/2/3/5 page turns.
+
+What makes it work, and what is easy to get wrong:
+
+1. **`animateCommit` must store its `EXIT_MS` timer id.** The unstored `setTimeout` was the actual
+   reason input had to be discarded — nothing could cancel the pending turn. Storing `{ timer, target }`
+   makes it settleable, and incidentally fixes two pre-existing bugs: an edition switch landing
+   mid-commit no longer gets overwritten 300 ms later, and the timer no longer fires post-unmount to
+   rewrite the URL of whatever route the user moved to.
+2. **Settle, then RE-ENTER through the ref — do not fall through.** `commitTo` uses `flushSync`, so the
+   re-render and every ref reassignment complete synchronously before `settleInFlight` returns. The
+   calling closure still holds **pre-settle** `nextAnchor`/`prevAnchor` and a stale `animateCommit`, so
+   falling through resolves the page just landed on (a silent no-op turn). `navRef`/`stepRef` re-enter
+   themselves; the fresh closure sees `inFlight` cleared, so it cannot recurse.
+3. **Touch needs no commit-awareness at all.** Settling at `touchstart` leaves the strip at
+   `translateX(-100%)` with `isCommitting` false, so `onTouchMove`/`onTouchEnd` are back to their
+   original pre-#153 shape. This is what removed the queue's transform-free latch: the drag now starts
+   from a settled page and tracks the finger truthfully, instead of having to be suppressed to avoid
+   teleporting by the finger's accumulated travel.
+4. **Recitation follow deliberately does NOT take over.** It is automatic, not user input; truncating a
+   turn the reader started would have playback fighting the finger. It keeps its guard and converges.
+5. **`e.repeat` stays ahead of the takeover.** Otherwise a held arrow key turns a page per OS repeat
+   (~30/s), the runaway that guard exists for.
+
+**Consequences**
+
+- **+** Swipe count equals page count on every input path; no coalescing, no accepted throughput limit.
+- **+** Net 38 lines smaller than the queue, and the touch handlers return to their original shape —
+  no queue object, no microtask drain, no latch.
+- **+** Two pre-existing timer bugs fixed as a by-product (see 1).
+- **−** Rapid input truncates each reveal mid-flight, so fast swiping reads as a series of snaps rather
+  than smooth page turns. This is the trade the queue avoided, and the thing to judge on a device.
+- **−** The settle runs `commitTo` from an arbitrary mid-transition transform rather than from the
+  animation's end state. ADR 0029's flicker cause (font-face resets) is untouched, and the
+  `flushSync`-then-recenter swap is unchanged, but this is the path that took 24 attempts to stabilise —
+  a returning flash under fast swiping is the specific regression to watch for.
