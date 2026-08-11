@@ -507,6 +507,17 @@ payload; windowing removes the mass mount.
   synchronously, the keyboard path also needs its own `e.repeat` guard — the slide's duration used to
   be the only thing rate-limiting a held arrow key. See `docs/plans/arrow-controls-desktop.md`
   Addendum 1.
+- **Input arriving during a commit TAKES OVER, never dropped** (Trello #153, [ADR 0028](adr/0028-reader-persistent-pager.md)
+  Addendum 2026-08-11). The in-flight turn is **settled** — landed immediately, not aborted, since the
+  user already committed to it past the threshold — and the new input is then handled as if nothing
+  were in flight. This requires `animateCommit` to store its `EXIT_MS` timer id (`inFlight`); the
+  unstored `setTimeout` is precisely why input had to be discarded before. Because `commitTo` uses
+  `flushSync`, the re-render completes synchronously, so a caller must **re-enter through its ref**
+  (`navRef`/`stepRef`) after settling rather than falling through — its own closure still holds
+  pre-settle anchors and would resolve the wrong page. `e.repeat` must stay ahead of this or a held key
+  turns a page per repeat. Swipe count equals page count on every path. Do not abort instead of settle
+  (loses a turn the user asked for), and do not reintroduce a pending-step queue: it coalesced rapid
+  input and needed a latch, a microtask and a drain to avoid dropping gestures of its own.
 - Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
   spread (ADR 0013) against the pager/window model.
 - **A page turn commits immediately and is never gated on the target's readiness** ([ADR
