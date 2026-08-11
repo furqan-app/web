@@ -46,7 +46,27 @@
     "gold": "ذهبي"
   },
   "offlineAccess": "الوصول دون اتصال",
-  "offlinePagesReady": "{cached} من {total} صفحة متاحة دون اتصال",
+  "offline": {
+    "gateTitle": "اقرأ القرآن بدون إنترنت",
+    "sizeNotice": "حوالي {size} ميجابايت. يُفضّل عبر Wi-Fi.",
+    "download": "تنزيل",
+    "downloadWithSize": "تنزيل ({size} ميجابايت)",
+    "skip": "تخطٍّ الآن",
+    "notNow": "ليس الآن",
+    "settingsHint": "يمكنك التنزيل لاحقًا من الإعدادات.",
+    "runningTitle": "جارٍ تنزيل القرآن",
+    "progress": "{cached} من {total} صفحة",
+    "ready": "القرآن متاح بدون إنترنت",
+    "notDownloaded": "غير متاح بدون إنترنت",
+    "partialTitle": "تعذّر تنزيل بعض الصفحات",
+    "partialBody": "{cached} من {total} صفحة جاهزة.",
+    "retry": "أعد المحاولة",
+    "continueAnyway": "المتابعة على أي حال",
+    "offlineTitle": "أنت غير متصل بالإنترنت",
+    "offlineBody": "اتصل بالإنترنت لتنزيل القرآن للقراءة بدون إنترنت.",
+    "installedTitle": "تم تثبيت فرقان",
+    "installedBody": "نزّل القرآن الآن لتقرأه بدون إنترنت."
+  },
   "notFound": {
     "title": "404 - الصفحة غير موجودة",
     "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",

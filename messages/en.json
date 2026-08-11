@@ -45,7 +45,27 @@
     "gold": "Gold"
   },
   "offlineAccess": "Offline Access",
-  "offlinePagesReady": "{cached} of {total} pages ready offline",
+  "offline": {
+    "gateTitle": "Read the Quran offline",
+    "sizeNotice": "About {size} MB. Best on Wi-Fi.",
+    "download": "Download",
+    "downloadWithSize": "Download ({size} MB)",
+    "skip": "Skip for now",
+    "notNow": "Not now",
+    "settingsHint": "You can download it later from Settings.",
+    "runningTitle": "Downloading the Quran",
+    "progress": "{cached} of {total} pages",
+    "ready": "The Quran is available offline",
+    "notDownloaded": "Not available offline",
+    "partialTitle": "Some pages couldn't be downloaded",
+    "partialBody": "{cached} of {total} pages are ready.",
+    "retry": "Try again",
+    "continueAnyway": "Continue anyway",
+    "offlineTitle": "You're offline",
+    "offlineBody": "Connect to the internet to download the Quran for offline reading.",
+    "installedTitle": "Furqan is installed",
+    "installedBody": "Download the Quran now so you can read it offline."
+  },
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",

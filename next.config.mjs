@@ -8,6 +8,20 @@ const withSerwist = withSerwistInit({
   swSrc: 'app/sw.ts',
   swDest: 'public/sw.js',
   disable: process.env.NODE_ENV === 'development',
+  // `globPublicPatterns` defaults to ["**/*"], which swept ALL of public/ into
+  // the service worker's install-time precache manifest: 604 base fonts, 604
+  // tajweed COLRv1 fonts and 1208 page JSON files — ~138 MiB downloaded
+  // unconditionally by every production visitor in a plain browser tab, since
+  // install precache ignores display-mode and is all-or-nothing. That directly
+  // contradicted ADR 0014 ("regular web visitors see zero behavior change",
+  // "never unconditionally pre-cache page fonts") and ADR 0023 (tajweed fonts
+  // excluded from precache), and made the consent-gated download in
+  // app/sw.ts pointless because the bytes had already been fetched.
+  //
+  // Keep this list to the app shell only. Page fonts and page JSON are reached
+  // two other ways that both respect consent: the runtime CacheFirst rules in
+  // app/sw.ts (cache-as-visited) and the user-initiated bulk precache.
+  globPublicPatterns: ['icon.svg', 'icons/**/*', 'quran/chapters.json'],
 });
 
 /** @type {import('next').NextConfig} */

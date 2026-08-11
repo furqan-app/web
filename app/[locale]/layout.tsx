@@ -17,6 +17,8 @@ import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import { PlansWidget } from "@components/plans/PlansWidget";
 import { LastReadPageSync } from "@components/reader/LastReadPageSync";
+import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
+import { OfflineInstallPrompt } from "@components/offline/OfflineInstallPrompt";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -63,6 +65,8 @@ export default async function LocaleLayout({
                             <RecitationSettingsSheet />
                             <PlansWidget />
                             <LastReadPageSync />
+                            <OfflineInstallPrompt />
+                            <OfflineSetupGate />
                           </LastReadPageProvider>
                         </ReaderPageProvider>
                       </NavOverlayProvider>
