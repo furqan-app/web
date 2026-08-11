@@ -1,13 +1,13 @@
 "use client";
 
 import { LanguageToggle } from "@components/LanguageToggle";
-import { QuranFontScaleControls } from "@components/QuranFontScaleControls";
+import { DesktopQuranFontSizeControls } from "@components/DesktopQuranFontSizeControls";
 import { ThemeToggle } from "@components/ThemeToggle";
-import { getLanguageDirection, toLocaleNumeral } from "../utils/i18n";
+import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
-import { usePwaPrecache } from "@hooks/use-pwa-precache";
+import { OfflineAccessSection } from "@components/offline/OfflineAccessSection";
 import { useQuranMushaf } from "@contexts/QuranMushafContext";
 import { DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID } from "@utils/mushaf-editions";
 import { useIsTablet } from "@hooks/use-is-tablet";
@@ -28,7 +28,6 @@ export const SettingsSidebar = () => {
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const { isStandalone, cached, total } = usePwaPrecache();
   const { mushafId, setMushafId } = useQuranMushaf();
   // On tablet the safha auto-fits the font to the page, so the manual font-size
   // control does nothing — hide it there (still shown on desktop lg+).
@@ -74,18 +73,20 @@ export const SettingsSidebar = () => {
                 {t("quranFontSize", "Quran Font Size")}
               </h3>
               <div className="p-4 rounded-lg bg-muted">
-                <QuranFontScaleControls />
+                <DesktopQuranFontSizeControls />
               </div>
             </div>
           )}
-          <div className="hidden lg:block">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("pageView", "Page View")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted">
-              <QuranSafhaViewToggle />
+          {!isTablet && (
+            <div className="hidden lg:block">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                {t("pageView", "Page View")}
+              </h3>
+              <div className="p-4 rounded-lg bg-muted">
+                <QuranSafhaViewToggle />
+              </div>
             </div>
-          </div>
+          )}
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
               {t("appearance", "Appearance")}
@@ -120,26 +121,7 @@ export const SettingsSidebar = () => {
             </div>
           </div>
           <EnablePushToggle />
-          {isStandalone ? (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                {t("offlineAccess", "Offline Access")}
-              </h3>
-              <div className="p-4 rounded-lg bg-muted space-y-2">
-                <div className="h-2 rounded-full bg-background overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-[width] duration-300"
-                    style={{ width: `${(cached / total) * 100}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("offlinePagesReady", "{cached} of {total} pages ready offline")
-                    .replace("{cached}", toLocaleNumeral(cached, locale))
-                    .replace("{total}", toLocaleNumeral(total, locale))}
-                </p>
-              </div>
-            </div>
-          ) : null}
+          <OfflineAccessSection />
         </div>
       </SheetContent>
     </Sheet>

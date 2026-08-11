@@ -1,12 +1,13 @@
 # Fix: Surah Banner Placement and Standalone Line Sizing
 
-**Type:** bug  
-**Date:** 2026-07-07  
-**Status:** implemented  
-**Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf  
-**Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread  
-**Trello #133:** https://trello.com/c/eFWXR9ca — surah name frame, full text width (Addendum 8)  
-**Trello #135:** https://trello.com/c/UzotHxvn/135-on-the-first-2-pages-there-should-be-a-space-between-the-surah-frame-and-bismillah-svg (Addendum 10)  
+**Type:** bug
+**Date:** 2026-07-07
+**Status:** implemented
+**Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf
+**Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread
+**Trello #133:** https://trello.com/c/eFWXR9ca — surah name frame, full text width (Addendum 8)
+**Trello #135:** https://trello.com/c/UzotHxvn/135-on-the-first-2-pages-there-should-be-a-space-between-the-surah-frame-and-bismillah-svg (Addendum 10)
+**Trello #188:** https://trello.com/c/4sQ8ybEs/188-fix-surah-frame-collision-with-adjacent-lines-tashkeel (Addendum 11)
 **Trello:** https://trello.com/c/sRC6NhMS/72-surah-name-banners-render-at-end-of-page-madani-layout
 
 ## Summary
@@ -583,3 +584,66 @@ Every page <=2 slot renders as a real flex child (`1em` height, `leading-none`) 
 - Pages 1–2 get a fixed, hardcoded 15-slot template — not derived from `line_number` gap data — because both pages' real content-line counts (7 and 6) happen to fit the same slot assignment regardless of their differing raw gap sizes.
 - The `.fq-safha-center` CSS mechanism (centered block + fixed `0.55em` gap) is removed entirely, not kept as a fallback.
 - The general gap-detection algorithm (Addendum 4) is preserved unmodified for all 112 other surah-opening pages.
+
+---
+
+## Addendum 11 — Measure real line width instead of guessing a ratio; explicit gap margin (Trello #188)
+
+**Date:** 2026-08-10
+**Branch:** `bug/188-surah-frame-tashkeel-overlap`
+**Trello #188:** https://trello.com/c/4sQ8ybEs
+
+### Problem
+
+Three reports, from the same underlying frame:
+1. On desktop/tablet, the surah-name frame's top border visibly overlaps the tashkeel (diacritics) of the last word of the preceding line — e.g. page 106 (Al-Ma'idah opening), the frame's top rule cuts through the tanween of `عَلِيمٌ`.
+2. The frame's width doesn't track a real line's width — it looks wrong relative to the surrounding text, in both editions and both desktop/tablet.
+3. The surah-name glyph inside the frame renders too large.
+
+### Root cause
+
+`SurahFrameSVG` renders at `height: auto` against a fixed 8.1102:1 aspect ratio (Addendum 8), so ink height is directly tied to width. The frame's width was always a **guessed constant** — first `QURAN_MAX_LINE_WIDTH_RATIO` (14.42, the single widest line measured across all 604 pages), which by construction overhangs every other page's real line; a first pass at this addendum tried shrinking that constant by a flat 85%, which fixed the height-driven collision but then undershot real line width on some pages and overshot on others, since real line width genuinely varies **14.13–14.42em** page to page (kashida justification, not a fixed box). No fixed em ratio can equal "the real line" everywhere — only measuring the real line can.
+
+Separately, Addendum 8's clearance math only ever checked ink-to-ink against the line *below* the frame (the bismillah SVG, a fixed asset with its own internal padding, Addendum 7) — never against the line *above*, arbitrary verse text with no such padding. Net clearance there was only ever a few px, live-measured as low as **0.25px** (viewports shorter than 800px — common laptop content heights — get none of the extra gap the `bde5a78` reader-rhythm boost hands to taller viewports).
+
+### Fix
+
+Two independent changes to `SurahBannerLine` (`app/components/QuranSafha.tsx`):
+
+**1. Width is measured from the DOM, not computed from a ratio.** After mount (and on resize, via `ResizeObserver`), the component finds every real `.fq-safha-row` inside its own `.fq-quran-safha` and takes the max rendered width, then sets that exact px value as its own width. This is mode/breakpoint/edition-agnostic by construction — the same code measures correctly whether the page is tajweed or default, single or double, desktop or tablet, because it reads what actually rendered instead of predicting it. `QURAN_MAX_LINE_WIDTH_RATIO` is kept only as the SSR/first-paint fallback until the effect runs once. `--fq-surah-frame-w` and the `app/globals.css` breakpoint override from the first pass at this addendum are removed — no longer needed.
+
+**2. An explicit `marginTop: 0.3em` is added, on top of (not instead of) the standard `--fq-line-gap`.** `marginBottom` stays `var(--fq-line-gap)`, identical to every other row, so it still gets zeroed by the existing `.fq-spread .fq-quran-safha > * { margin-bottom: 0 !important }` rule (mobile has the equivalent) and the container's own `gap`/`space-between` still supplies one `--fq-line-gap` between the frame and its neighbours either way. Nothing zeroes `margin-top` anywhere, so this 0.3em is a real, additional, visible gap above the frame in every mode — independent of width, and independent of the ink-overflow mechanics entirely.
+
+**3. Glyph `fontSize` reduced from `1.18em` to `0.9em`.**
+
+### Verified (Playwright, live measurement + visual)
+
+| Check | Result |
+|---|---|
+| Frame width vs. real line width, page 106, tajweed, 1440×900 | **385px vs 385px — exact match** |
+| Frame width vs. real line width, page 106, default, 1440×900 / 1440×750 / 1024×900 | 401/398, 342/341, 485/468 — matches the page's own widest line (max-of-all-rows, not just the adjacent one, so a short adjacent line doesn't make the frame look undersized) |
+| Worst-case gap (17 mid-page surah-opening pages × 4 viewports × both sides, 122 samples) | **6.84px minimum, all positive** — was 0.25px before this addendum |
+| Page 580's `أَلِيمَا` (heaviest tashkeel in the mushaf) at 1440×750 (shortest tested viewport) | Clean, visually confirmed |
+| Dark theme + tajweed, equal-height spread (page 106) | All 6 `.fq-quran-safha` elements in view still exactly equal height (616px) |
+| Mobile (390×844) | Unaffected, still generously clear |
+
+### Files Changed
+
+- `app/components/QuranSafha.tsx` — `SurahBannerLine`: added `useRef`/`useLayoutEffect`/`ResizeObserver`-based width measurement; `marginTop: "0.3em"` added alongside the existing `marginBottom: "var(--fq-line-gap)"`; glyph `fontSize` `1.18em → 0.9em`; SVG `width` simplified from `var(--fq-surah-frame-w, 100%)` to plain `100%` (now redundant since the outer div's own width is the measured value).
+- `app/globals.css` — the `--fq-surah-frame-w: 85%` override added earlier in this addendum's first pass is removed; no CSS changes remain from this addendum.
+- `docs/architecture/DECISIONS.md` — "Frame art" constraints updated: width is DOM-measured, not ratio-computed; the explicit `marginTop` clearance mechanism is recorded.
+
+No change to: the gap-detection algorithm, `RenderItem[]`, `QuranLine.tsx`, `SurahFrameSVG`'s viewBox/aspect ratio, `BismillahLine`, `QURAN_LINE_WIDTH_RATIO` (still the card's own minWidth floor, unrelated), schema, DB.
+
+### What NOT to Do
+
+- Do not go back to a fixed em ratio (neither `QURAN_MAX_LINE_WIDTH_RATIO` nor any percentage of it) for the frame's width — real line width varies 14.13–14.42em page to page and no constant matches all of them. This was tried twice (Addendum 9's tajweed fix, and this addendum's own first pass) and both times needed a further correction once real per-page/per-mode variation showed up.
+- Do not remove the `marginTop` clearance margin to "simplify" — it is what makes the top gap survive independently of whatever the measured width happens to be on a given page. Width and gap are now two separate, independently-verified concerns; don't collapse them back into one lever.
+- Do not measure only the immediately adjacent line — a page's adjacent line can be short (e.g. the last line of a surah) while a later line is the page's actual widest; measuring the max across the whole `.fq-quran-safha` is what makes the frame look right against the page as a whole, not just its neighbour.
+- Do not skip the `ResizeObserver` — without it the measured width goes stale on font-scale changes and single/double view toggles, silently reintroducing the old over/under-hang bug on the next resize instead of at first paint.
+
+### Decisions Made
+
+- Frame width is measured from real rendered `.fq-safha-row` elements at runtime, not computed from any fixed ratio constant. `QURAN_MAX_LINE_WIDTH_RATIO` survives only as the SSR fallback.
+- Frame clearance (both sides) is bought by an explicit `marginTop`, independent of width — not by shrinking the art, and not by relying on ink overflow eating into the ambient `--fq-line-gap`.
+- The frame's clearance budget must account for the line *above* as well as the line below — the bismillah-only check in Addendum 8 was incomplete, not wrong.

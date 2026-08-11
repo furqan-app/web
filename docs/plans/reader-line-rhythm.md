@@ -85,3 +85,77 @@ Other surfaces checked at 1440×900: single-page view identical to double; surah
 ## Follow-ups
 
 - Visual e2e baselines: the `desktop` Playwright project runs at 1280×800, which is inside the untouched tablet band, and `mobile` at 390×844 is untouched — measurements suggest no baseline churn, but CI's visual-e2e run is the authority.
+
+---
+
+## Addendum — Per-band reader size contracts, desktop presets, and tablet double view (2026-08-11)
+
+**Type:** feature
+**Status:** implemented — verification complete
+**Trello:** [#172](https://trello.com/c/C12euyK1/172-reader-rhythm-claim-the-unused-vertical-space-into-line-gaps-desktop-tablet); the related frame-collision fix is [#188](https://trello.com/c/4sQ8ybEs/188-fix-surah-frame-collision-with-adjacent-lines-tashkeel)
+
+### Summary
+
+Replace the shared 1–10 `FONT_V1` viewport-height scale with clear per-band contracts. Mobile stays byte-for-byte visually unchanged. Tablet remains responsive but is always a double-page spread, sizing its text from the smaller width/height cap multiplied by `0.96`. Desktop gains Small/Medium/Large presets of 26/28/30px, defaulting to Small; each resolved size controls both the Quran ink and the physical page width so smaller text never floats in an old-width card. See ADR 0038.
+
+### Root Cause / Approach
+
+The old model applies one `vh` formula, then each breakpoint overrides a different subset of its consumers. On tall desktop viewports scale 1 grows to about 32px; tablet substitutes its own auto-fit font yet still inherits capped base rhythm variables; and a font-only desktop reduction leaves the card at its old `FONT_V1` width. The legacy `--fq-heading-h` budget no longer describes actual page-level `SurahBannerLine` and `BismillahLine` slots, so it cannot guarantee their clearance.
+
+Use one resolved CSS value per active surface. Desktop preset values drive ink, card width, frame fallback, and floor rhythm together. Tablet derives its value from its existing geometric caps and multiplies the result by `0.96`; the released height feeds `space-between`. The existing separate frame and Bismillah slots retain their 15-slot model; their direct sibling relationship owns an explicit `0.2em` internal clearance, while the existing `0.3em` top clearance against preceding Quran text remains intact.
+
+### Decision Tree / Algorithm
+
+| Condition | Word-size source | View | Result |
+|---|---|---|---|
+| `<768px` | Existing `--fq-mobile-font` | Single | No visual or preference change. |
+| `1024–1366px` | `min(widthCap, heightCap) × 0.96` | Forced double | Both pages show regardless of stored `quranSafhaView`; pair navigation is used; 0.2em internal surah-start clearance is reserved. |
+| `≥1367px`, Small/default | 26px desktop preset, bounded by double-view width fit when applicable | User choice | Ink and page width resolve from the same value. |
+| `≥1367px`, Medium | 28px desktop preset, bounded by double-view width fit when applicable | User choice | Same geometry contract. |
+| `≥1367px`, Large | 30px desktop preset, bounded by double-view width fit when applicable | User choice | Same geometry contract. |
+| Legacy `quranFontScale` stored value | Ignored | — | New `desktopQuranFontSize` defaults to `small`; no numeric migration. |
+
+### Verified Test Cases
+
+| Case | Verified outcome |
+|---|---|
+| Mobile, 390×844 | Existing font and generous `space-between` rhythm remain unchanged. |
+| Desktop page 604, 1782×1030, Small | 26px ink and 526.19px printed-proportion cards confirmed, with generous paper margins around the smaller desktop text. The navigation/reader one-pixel height mismatch is corrected so the page has no document scroll. |
+| Tablet page 604, 1024×768, double | ~30px (`31.2px × 0.96`), zero document scroll, both pair members `display:block`, and explicit frame-to-Bismillah clearance. |
+| Tablet with stored `quranSafhaView: "single"` | Must still display both pair members and advance a pair per navigation action. |
+| Desktop Small/Medium/Large | 26/28/30px respectively; all retain proportional page widths, never horizontally stretch QPC glyphs, and fit without scroll at the documented reference viewports. |
+| Surah-start pages, regular and tajweed | Frame width continues to match the real rendered line; top clearance remains ≥ the existing verified 6.84px; the new internal frame-to-Bismillah clearance is present. |
+
+### Files to Change
+
+- `app/constants/font.ts` — replace the shared numeric `FONT_V1` scale contract with desktop preset metadata and the tablet density constant; remove obsolete numeric-derived helpers only after every consumer is moved.
+- `app/types/index.ts`, `app/utils/storage.ts`, `app/contexts/DesktopQuranFontSizeContext.tsx` — semantic desktop-size type and new `desktopQuranFontSize` storage key; old `quranFontScale` is ignored.
+- `app/components/DesktopQuranFontSizeControls.tsx`, `app/components/SettingsSidebar.tsx` — desktop-only Small/Medium/Large controls, hidden on mobile and tablet.
+- `app/components/QuranSafha.tsx` — resolved desktop/card variables and the frame+Bismillah sibling clearance while preserving skeleton and fixed opening-page slot parity.
+- `app/components/reader/QuranSpread.tsx`, `app/components/reader/ReaderPager.tsx` — forced tablet pair navigation while retaining desktop’s saved view preference and toggle.
+- `app/globals.css` — consolidate responsive size variables, replace stale `0.417`/`2.417` caps with values derived from each active contract, apply tablet’s `0.96` factor, and remove the tablet-visible view-toggle path without changing mobile rules.
+- `docs/architecture/DECISIONS.md`, `docs/architecture/adr/0038-reader-size-contracts-and-tablet-double-view.md` — record the final implementation and superseded constraints.
+
+### Constraints
+
+- Do not change mobile font sizing, mobile spacing, or mobile navigation.
+- Do not stretch Quran glyphs, justify at word boundaries, or use a fixed frame width; `SurahBannerLine` continues measuring actual row width.
+- Keep the frame art at native aspect ratio and retain its existing 0.3em clearance above the frame.
+- Tablet font size must always fit both width and height; ~30px is a reference result at 1024×768, not a global fixed pixel value.
+- Tablet must not show a single-page toggle or honor a persisted single-page preference.
+- The 15-slot page model, opening-page fixed template, equal facing-page height, tajweed visual-density scaling, and font-loading skeleton parity remain load-bearing.
+- Keep the work tied to its existing reader-rhythm ticket (#172); the frame-collision portion is also tracked by #188.
+
+### What NOT to Do
+
+- Do not raise `lineGapRatio` as an isolated fix, lower the 800px reader-rhythm gate, or alter the tablet `/23` divisor alone; all were measured dead ends.
+- Do not leave a smaller desktop font inside a card sized from the old base formula.
+- Do not migrate old numeric preferences into semantic sizes; use the new key and default to Small.
+- Do not force a fixed ~30px tablet font across every tablet viewport.
+- Do not remove the desktop single/double preference; only tablet is forced double.
+
+### Decisions Made
+
+- Desktop presets: Small 26px (default), Medium 28px, Large 30px.
+- Mobile is unchanged and non-adjustable.
+- Tablet is responsive `min(widthCap, heightCap) × 0.96`, always double-page, and gains explicit frame-to-Bismillah clearance.
