@@ -598,8 +598,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_locale_layout",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "[locale]/layout.tsx"
     },
     {
@@ -609,8 +609,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "app_locale_layout_generatestaticparams",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "generatestaticparams()"
     },
     {
@@ -620,8 +620,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_locale_layout_localelayout",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "localelayout()"
     },
     {
@@ -697,8 +697,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_locale_mushaf_grant_pages_id_page",
-      "community": 4,
-      "community_name": "config.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "[grant]/pages/[id]/page.tsx"
     },
     {
@@ -708,8 +708,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_locale_mushaf_grant_pages_id_page_mushafgrantpageprops",
-      "community": 4,
-      "community_name": "config.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "mushafgrantpageprops"
     },
     {
@@ -719,8 +719,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_locale_mushaf_grant_pages_id_page_mushafgrantpage",
-      "community": 4,
-      "community_name": "config.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "mushafgrantpage()"
     },
     {
@@ -730,8 +730,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_locale_mushaf_grant_pages_id_page_tsx_docref_adr_0012",
-      "community": 4,
-      "community_name": "config.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "adr-0012"
     },
     {
@@ -1170,8 +1170,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_mushaf_access",
-      "community": 22,
-      "community_name": "jsonResponse",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "access.ts"
     },
     {
@@ -1192,8 +1192,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_api_mushaf_access_markwithauthor",
-      "community": 22,
-      "community_name": "jsonResponse",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "markwithauthor"
     },
     {
@@ -1214,8 +1214,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "app_api_mushaf_access_markbody",
-      "community": 22,
-      "community_name": "jsonResponse",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "markbody"
     },
     {
@@ -1247,8 +1247,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_mushaf_access_ts_docref_adr_0012",
-      "community": 22,
-      "community_name": "jsonResponse",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "adr-0012"
     },
     {
@@ -1258,8 +1258,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "docref_adr_0008",
-      "community": 22,
-      "community_name": "jsonResponse",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "adr-0008"
     },
     {
@@ -1269,8 +1269,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "app_api_mushaf_access_ts_docref_adr_0025",
-      "community": 22,
-      "community_name": "jsonResponse",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "adr-0025"
     },
     {
@@ -1313,8 +1313,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_mushaf_codes_route",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 22,
+      "community_name": "jsonResponse",
       "norm_label": "codes/route.ts"
     },
     {
@@ -1335,8 +1335,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_api_mushaf_codes_route_post",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 22,
+      "community_name": "jsonResponse",
       "norm_label": "post()"
     },
     {
@@ -1346,8 +1346,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "app_api_mushaf_codes_route_ts_docref_adr_0012",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 22,
+      "community_name": "jsonResponse",
       "norm_label": "adr-0012"
     },
     {
@@ -1357,8 +1357,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "app_api_mushaf_codes_route_ts_docref_adr_0019",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 22,
+      "community_name": "jsonResponse",
       "norm_label": "adr-0019"
     },
     {
@@ -1874,8 +1874,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_quran_pages_pageid_bounds_route",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "bounds/route.ts"
     },
     {
@@ -1885,8 +1885,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_api_quran_pages_pageid_bounds_route_get",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "get()"
     },
     {
@@ -1951,8 +1951,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_quran_recitations_reciterid_chapters_chapterid_route",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 6,
+      "community_name": "getNotificationDeps",
       "norm_label": "[chapterid]/route.ts"
     },
     {
@@ -1962,8 +1962,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_api_quran_recitations_reciterid_chapters_chapterid_route_get",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 6,
+      "community_name": "getNotificationDeps",
       "norm_label": "get()"
     },
     {
@@ -1973,8 +1973,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_quran_recitations_reciters_route",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 6,
+      "community_name": "getNotificationDeps",
       "norm_label": "reciters/route.ts"
     },
     {
@@ -1984,8 +1984,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_quran_recitations_reciters_route_get",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 6,
+      "community_name": "getNotificationDeps",
       "norm_label": "get()"
     },
     {
@@ -2105,8 +2105,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_response",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 6,
+      "community_name": "getNotificationDeps",
       "norm_label": "response.ts"
     },
     {
@@ -2116,8 +2116,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_api_response_apiresponse",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 6,
+      "community_name": "getNotificationDeps",
       "norm_label": "apiresponse"
     },
     {
@@ -2270,8 +2270,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_desktopquranfontsizecontrols",
-      "community": 17,
-      "community_name": "types/index.ts",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "desktopquranfontsizecontrols.tsx"
     },
     {
@@ -2281,8 +2281,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_components_desktopquranfontsizecontrols_sizes",
-      "community": 17,
-      "community_name": "types/index.ts",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "sizes"
     },
     {
@@ -2292,8 +2292,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_components_desktopquranfontsizecontrols_desktopquranfontsizecontrols",
-      "community": 17,
-      "community_name": "types/index.ts",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "desktopquranfontsizecontrols()"
     },
     {
@@ -2325,8 +2325,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_languagetoggle",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "languagetoggle.tsx"
     },
     {
@@ -2336,8 +2336,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_components_languagetoggle_languages",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "languages"
     },
     {
@@ -2347,8 +2347,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_components_languagetoggle_languagetoggle",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "languagetoggle()"
     },
     {
@@ -2380,8 +2380,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "app_components_markmodal_markedbyline",
-      "community": 23,
-      "community_name": "MarkModal.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "markedbyline()"
     },
     {
@@ -2446,8 +2446,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_markercolorpicker",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "markercolorpicker.tsx"
     },
     {
@@ -2457,8 +2457,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_components_markercolorpicker_props",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "props"
     },
     {
@@ -2468,8 +2468,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_components_markercolorpicker_markercolorpicker",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "markercolorpicker()"
     },
     {
@@ -2644,8 +2644,8 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "app_components_quransafha_quransafha",
-      "community": 17,
-      "community_name": "types/index.ts",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "quransafha()"
     },
     {
@@ -2754,8 +2754,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_quranword",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "quranword.tsx"
     },
     {
@@ -2765,8 +2765,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_components_quranword_quranwordprops",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "quranwordprops"
     },
     {
@@ -2787,8 +2787,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_components_quranword_tsx_docref_adr_0025",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0025"
     },
     {
@@ -2798,8 +2798,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "app_components_quranword_tsx_docref_adr_0024",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0024"
     },
     {
@@ -2809,8 +2809,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "app_components_quranword_tsx_docref_adr_0021",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0021"
     },
     {
@@ -2820,8 +2820,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_recitationplayerbar",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 20,
+      "community_name": "PlansWidget.tsx",
       "norm_label": "recitationplayerbar.tsx"
     },
     {
@@ -2831,8 +2831,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_components_recitationplayerbar_recitationplayerbar",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 20,
+      "community_name": "PlansWidget.tsx",
       "norm_label": "recitationplayerbar()"
     },
     {
@@ -2842,8 +2842,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_components_recitationplayerbar_tsx_docref_adr_0021",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 20,
+      "community_name": "PlansWidget.tsx",
       "norm_label": "adr-0021"
     },
     {
@@ -2952,8 +2952,8 @@
       "source_location": "L408",
       "_origin": "ast",
       "id": "app_components_recitationsettingssheet_recitationsettingssheet",
-      "community": 10,
-      "community_name": "ReaderPager.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "recitationsettingssheet()"
     },
     {
@@ -2963,8 +2963,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_rublist",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "rublist.tsx"
     },
     {
@@ -2974,8 +2974,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_components_rublist_props",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "props"
     },
     {
@@ -2985,8 +2985,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "app_components_rublist_juzgroup",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "juzgroup"
     },
     {
@@ -2996,8 +2996,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_components_rublist_buildjuzgroups",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "buildjuzgroups()"
     },
     {
@@ -3007,8 +3007,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "app_components_rublist_rublist",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "rublist()"
     },
     {
@@ -3018,8 +3018,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "app_components_rublist_tsx_docref_adr_0033",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "adr-0033"
     },
     {
@@ -3029,8 +3029,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_settingssidebar",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "settingssidebar.tsx"
     },
     {
@@ -3051,8 +3051,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_surahlist",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "surahlist.tsx"
     },
     {
@@ -3062,8 +3062,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_components_surahlist_props",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "props"
     },
     {
@@ -3084,8 +3084,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_surahlistitem",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "surahlistitem.tsx"
     },
     {
@@ -3095,8 +3095,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_components_surahlistitem_props",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "props"
     },
     {
@@ -3106,8 +3106,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_components_surahlistitem_surahlistitem",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "surahlistitem()"
     },
     {
@@ -3117,8 +3117,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_themetoggle",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "themetoggle.tsx"
     },
     {
@@ -3128,8 +3128,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_components_themetoggle_themes",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "themes"
     },
     {
@@ -3139,8 +3139,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_components_themetoggle_themetoggle",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "themetoggle()"
     },
     {
@@ -3304,8 +3304,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_mushaf_accessremovedbanner",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 4,
+      "community_name": "config.ts",
       "norm_label": "accessremovedbanner.tsx"
     },
     {
@@ -3315,8 +3315,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_components_mushaf_accessremovedbanner_accessremovedbanner",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 4,
+      "community_name": "config.ts",
       "norm_label": "accessremovedbanner()"
     },
     {
@@ -3326,8 +3326,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_components_mushaf_accessremovedbanner_tsx_docref_adr_0012",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 4,
+      "community_name": "config.ts",
       "norm_label": "adr-0012"
     },
     {
@@ -3337,8 +3337,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_mushaf_accessiblemushaflist",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "accessiblemushaflist.tsx"
     },
     {
@@ -3348,8 +3348,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_components_mushaf_accessiblemushaflist_props",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "props"
     },
     {
@@ -3359,8 +3359,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_components_mushaf_accessiblemushaflist_accessiblemushaflist",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "accessiblemushaflist()"
     },
     {
@@ -3480,8 +3480,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_mushaf_redeemcodecard",
-      "community": 97,
-      "community_name": "cn",
+      "community": 0,
+      "community_name": "getQueryClient",
       "norm_label": "redeemcodecard.tsx"
     },
     {
@@ -3491,8 +3491,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_components_mushaf_redeemcodecard_props",
-      "community": 97,
-      "community_name": "cn",
+      "community": 0,
+      "community_name": "getQueryClient",
       "norm_label": "props"
     },
     {
@@ -3513,8 +3513,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_mushaf_sectioncard",
-      "community": 97,
-      "community_name": "cn",
+      "community": 0,
+      "community_name": "getQueryClient",
       "norm_label": "sectioncard.tsx"
     },
     {
@@ -3524,8 +3524,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_components_mushaf_sectioncard_props",
-      "community": 97,
-      "community_name": "cn",
+      "community": 0,
+      "community_name": "getQueryClient",
       "norm_label": "props"
     },
     {
@@ -3535,8 +3535,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_components_mushaf_sectioncard_sectioncard",
-      "community": 97,
-      "community_name": "cn",
+      "community": 0,
+      "community_name": "getQueryClient",
       "norm_label": "sectioncard()"
     },
     {
@@ -3590,8 +3590,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_nav_furqanlogo",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "furqanlogo.tsx"
     },
     {
@@ -3601,8 +3601,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_components_nav_furqanlogo_furqanlogo",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "furqanlogo()"
     },
     {
@@ -3612,8 +3612,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_nav_nav",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "nav.tsx"
     },
     {
@@ -3623,8 +3623,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "app_components_nav_nav_nav",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "nav()"
     },
     {
@@ -3634,8 +3634,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_nav_sharedmushaflink",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "sharedmushaflink.tsx"
     },
     {
@@ -3645,8 +3645,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_components_nav_sharedmushaflink_sharedmushaflink",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "sharedmushaflink()"
     },
     {
@@ -3678,8 +3678,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "app_components_nav_sidebar_sidebar",
-      "community": 77,
-      "community_name": "Sidebar.tsx",
+      "community": 20,
+      "community_name": "PlansWidget.tsx",
       "norm_label": "sidebar()"
     },
     {
@@ -3711,8 +3711,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_notifications_enablepushtoggle",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "enablepushtoggle.tsx"
     },
     {
@@ -3722,8 +3722,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_components_notifications_enablepushtoggle_enablepushtoggle",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "enablepushtoggle()"
     },
     {
@@ -3876,8 +3876,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_offline_offlinedownloadpanel",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "offlinedownloadpanel.tsx"
     },
     {
@@ -3887,8 +3887,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_components_offline_offlinedownloadpanel_panelstate",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "panelstate"
     },
     {
@@ -3898,8 +3898,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "app_components_offline_offlinedownloadpanel_props",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "props"
     },
     {
@@ -3909,8 +3909,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "app_components_offline_offlinedownloadpanel_offlinedownloadpanel",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "offlinedownloadpanel()"
     },
     {
@@ -3920,8 +3920,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_offline_offlineinstallprompt",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "offlineinstallprompt.tsx"
     },
     {
@@ -3931,8 +3931,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "app_components_offline_offlineinstallprompt_offlineinstallprompt",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "offlineinstallprompt()"
     },
     {
@@ -3942,8 +3942,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_components_offline_offlineinstallprompt_tsx_docref_adr_0014",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "adr-0014"
     },
     {
@@ -3986,8 +3986,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_offline_offlinesetupgate",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "offlinesetupgate.tsx"
     },
     {
@@ -3997,8 +3997,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "app_components_offline_offlinesetupgate_offlinesetupgate",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "offlinesetupgate()"
     },
     {
@@ -4008,8 +4008,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_components_offline_offlinesetupgate_tsx_docref_adr_0014",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "adr-0014"
     },
     {
@@ -4019,8 +4019,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_plans_addplanbutton",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "addplanbutton.tsx"
     },
     {
@@ -4030,8 +4030,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_components_plans_addplanbutton_addplanbutton",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "addplanbutton()"
     },
     {
@@ -4074,8 +4074,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "myplanslist.tsx"
     },
     {
@@ -4085,8 +4085,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_status_actions",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "status_actions"
     },
     {
@@ -4096,8 +4096,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_edit_view_for_template",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "edit_view_for_template"
     },
     {
@@ -4107,8 +4107,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_status_label",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "status_label"
     },
     {
@@ -4118,8 +4118,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_planrowskeleton",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "planrowskeleton()"
     },
     {
@@ -4129,8 +4129,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_grouphistorybydate",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "grouphistorybydate()"
     },
     {
@@ -4140,8 +4140,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_planhistorysection",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "planhistorysection()"
     },
     {
@@ -4162,8 +4162,8 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_myplanslist",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "myplanslist()"
     },
     {
@@ -4173,8 +4173,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "app_components_plans_myplanslist_tsx_docref_adr_0030",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "adr-0030"
     },
     {
@@ -4338,8 +4338,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "app_components_plans_plansbrowsedialog_plansbrowsedialog",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "plansbrowsedialog()"
     },
     {
@@ -4382,8 +4382,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "app_components_plans_planstodayhero_weekstrip",
-      "community": 97,
-      "community_name": "cn",
+      "community": 2,
+      "community_name": "MyPlansList.tsx",
       "norm_label": "weekstrip()"
     },
     {
@@ -4962,7 +4962,7 @@
       "label": "ADR-0029",
       "file_type": "concept",
       "source_file": "app/components/reader/ReaderPager.tsx",
-      "source_location": "L599",
+      "source_location": "L603",
       "_origin": "ast",
       "id": "app_components_reader_readerpager_tsx_docref_adr_0029",
       "community": 10,
@@ -5141,8 +5141,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_components_search_searchbar_searchbar",
-      "community": 77,
-      "community_name": "Sidebar.tsx",
+      "community": 40,
+      "community_name": "isSearchQueryValid",
       "norm_label": "searchbar()"
     },
     {
@@ -5152,8 +5152,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_components_search_searchqueryresults",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "searchqueryresults.tsx"
     },
     {
@@ -5163,8 +5163,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_components_search_searchqueryresults_searchqueryresults",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "searchqueryresults()"
     },
     {
@@ -5196,8 +5196,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_constants_font_desktop_quran_font_sizes",
-      "community": 17,
-      "community_name": "types/index.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "desktop_quran_font_sizes"
     },
     {
@@ -5482,8 +5482,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_constants_plan_ui",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "plan-ui.ts"
     },
     {
@@ -5504,8 +5504,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "app_constants_plan_ui_plan_track_ui",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "plan_track_ui"
     },
     {
@@ -5515,8 +5515,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "app_constants_plan_ui_plan_activity_ui",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "plan_activity_ui"
     },
     {
@@ -5526,8 +5526,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "app_constants_plan_ui_ts_docref_adr_0030",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "adr-0030"
     },
     {
@@ -5537,8 +5537,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_constants_plans",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "constants/plans.ts"
     },
     {
@@ -5548,8 +5548,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_constants_plans_plan_activities",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "plan_activities"
     },
     {
@@ -5559,8 +5559,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_constants_plans_planactivity",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "planactivity"
     },
     {
@@ -5570,8 +5570,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "app_constants_plans_planunit",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "planunit"
     },
     {
@@ -5581,8 +5581,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_constants_plans_trackrule",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "trackrule"
     },
     {
@@ -5592,8 +5592,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "app_constants_plans_plantrack",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "plantrack"
     },
     {
@@ -5603,8 +5603,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "app_constants_plans_misseddaypolicy",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "misseddaypolicy"
     },
     {
@@ -5625,8 +5625,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "app_constants_plans_userplanparams",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "userplanparams"
     },
     {
@@ -5680,8 +5680,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "app_constants_plans_ts_docref_adr_0030",
-      "community": 7,
-      "community_name": "constants/plans.ts",
+      "community": 5,
+      "community_name": "engine.ts",
       "norm_label": "adr-0030"
     },
     {
@@ -5845,8 +5845,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "app_contexts_desktopquranfontsizecontext_usedesktopquranfontsize",
-      "community": 17,
-      "community_name": "types/index.ts",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "usedesktopquranfontsize()"
     },
     {
@@ -6010,8 +6010,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "app_contexts_navoverlaycontext_usenavoverlay",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 20,
+      "community_name": "PlansWidget.tsx",
       "norm_label": "usenavoverlay()"
     },
     {
@@ -6021,8 +6021,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_contexts_quranmushafcontext",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 13,
+      "community_name": "useQuranMushaf",
       "norm_label": "quranmushafcontext.tsx"
     },
     {
@@ -6032,8 +6032,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "app_contexts_quranmushafcontext_quranmushafcontexttype",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 13,
+      "community_name": "useQuranMushaf",
       "norm_label": "quranmushafcontexttype"
     },
     {
@@ -6043,8 +6043,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_contexts_quranmushafcontext_quranmushafcontext",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 13,
+      "community_name": "useQuranMushaf",
       "norm_label": "quranmushafcontext"
     },
     {
@@ -6054,8 +6054,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "app_contexts_quranmushafcontext_getinitialmushafid",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 13,
+      "community_name": "useQuranMushaf",
       "norm_label": "getinitialmushafid()"
     },
     {
@@ -6065,8 +6065,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "app_contexts_quranmushafcontext_quranmushafprovider",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 13,
+      "community_name": "useQuranMushaf",
       "norm_label": "quranmushafprovider()"
     },
     {
@@ -6087,8 +6087,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_contexts_quranmushafcontext_tsx_docref_adr_0033",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 13,
+      "community_name": "useQuranMushaf",
       "norm_label": "adr-0033"
     },
     {
@@ -6098,8 +6098,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_contexts_quransafhaviewcontext",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "quransafhaviewcontext.tsx"
     },
     {
@@ -6109,8 +6109,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_contexts_quransafhaviewcontext_quransafhaviewcontexttype",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "quransafhaviewcontexttype"
     },
     {
@@ -6120,8 +6120,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_contexts_quransafhaviewcontext_quransafhaviewcontext",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "quransafhaviewcontext"
     },
     {
@@ -6131,8 +6131,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_contexts_quransafhaviewcontext_getinitialview",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "getinitialview()"
     },
     {
@@ -6142,8 +6142,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_contexts_quransafhaviewcontext_quransafhaviewprovider",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "quransafhaviewprovider()"
     },
     {
@@ -6164,8 +6164,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "app_contexts_quransafhaviewcontext_tsx_docref_adr_0013",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "adr-0013"
     },
     {
@@ -6175,8 +6175,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_contexts_readernavigationcontext",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "readernavigationcontext.tsx"
     },
     {
@@ -6186,8 +6186,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_contexts_readernavigationcontext_jumpto",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "jumpto"
     },
     {
@@ -6197,8 +6197,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_contexts_readernavigationcontext_readernavigationcontexttype",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "readernavigationcontexttype"
     },
     {
@@ -6208,8 +6208,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "app_contexts_readernavigationcontext_readernavigationcontext",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "readernavigationcontext"
     },
     {
@@ -6219,19 +6219,19 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "app_contexts_readernavigationcontext_readernavigationprovider",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "readernavigationprovider()"
     },
     {
       "label": "useReaderNavigation()",
       "file_type": "code",
       "source_file": "app/contexts/ReaderNavigationContext.tsx",
-      "source_location": "L34",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "app_contexts_readernavigationcontext_usereadernavigation",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "usereadernavigation()"
     },
     {
@@ -6241,8 +6241,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_contexts_readernavigationcontext_tsx_docref_adr_0014",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "adr-0014"
     },
     {
@@ -6296,8 +6296,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "app_contexts_readerpagecontext_usereaderpage",
-      "community": 147,
-      "community_name": "LastReadPageContext.tsx",
+      "community": 10,
+      "community_name": "ReaderPager.tsx",
       "norm_label": "usereaderpage()"
     },
     {
@@ -6318,8 +6318,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "app_contexts_recitationcontext_resolvestoptarget",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "resolvestoptarget()"
     },
     {
@@ -6384,8 +6384,8 @@
       "source_location": "L801",
       "_origin": "ast",
       "id": "app_contexts_recitationcontext_userecitation",
-      "community": 10,
-      "community_name": "ReaderPager.tsx",
+      "community": 20,
+      "community_name": "PlansWidget.tsx",
       "norm_label": "userecitation()"
     },
     {
@@ -6538,8 +6538,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_get_page_words",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "get-page-words.ts"
     },
     {
@@ -6549,8 +6549,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_hooks_get_page_words_glyph_field",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "glyph_field"
     },
     {
@@ -6560,8 +6560,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_hooks_get_page_words_pagewords",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "pagewords"
     },
     {
@@ -6582,8 +6582,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_hooks_get_page_words_ts_docref_adr_0033",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "adr-0033"
     },
     {
@@ -6593,8 +6593,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_hooks_get_page_words_ts_docref_adr_0028",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "adr-0028"
     },
     {
@@ -6736,8 +6736,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_app_installed",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "use-app-installed.ts"
     },
     {
@@ -6747,8 +6747,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_hooks_use_app_installed_useappinstalled",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "useappinstalled()"
     },
     {
@@ -6758,8 +6758,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_hooks_use_app_installed_ts_docref_adr_0014",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "adr-0014"
     },
     {
@@ -6769,8 +6769,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_is_desktop_up",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "use-is-desktop-up.ts"
     },
     {
@@ -6780,8 +6780,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_hooks_use_is_desktop_up_useisdesktopup",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 151,
+      "community_name": "dropdown-menu.tsx",
       "norm_label": "useisdesktopup()"
     },
     {
@@ -6857,8 +6857,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_marks",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "use-marks.ts"
     },
     {
@@ -6868,8 +6868,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_hooks_use_marks_usemarks",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "usemarks()"
     },
     {
@@ -6879,8 +6879,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_hooks_use_marks_ts_docref_adr_0033",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0033"
     },
     {
@@ -6934,8 +6934,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_page_verse_bounds",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "use-page-verse-bounds.ts"
     },
     {
@@ -6945,8 +6945,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_hooks_use_page_verse_bounds_usepageversebounds",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "usepageversebounds()"
     },
     {
@@ -6956,8 +6956,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_hooks_use_page_verse_bounds_ts_docref_adr_0033",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "adr-0033"
     },
     {
@@ -6967,8 +6967,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_plan_history",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "use-plan-history.ts"
     },
     {
@@ -6978,8 +6978,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_hooks_use_plan_history_useplanhistory",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "useplanhistory()"
     },
     {
@@ -6989,8 +6989,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_hooks_use_plan_history_ts_docref_adr_0030",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "adr-0030"
     },
     {
@@ -7044,8 +7044,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_push_subscription",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 144,
+      "community_name": "NotificationBell.tsx",
       "norm_label": "use-push-subscription.ts"
     },
     {
@@ -7055,8 +7055,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_hooks_use_push_subscription_urlbase64touint8array",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 144,
+      "community_name": "NotificationBell.tsx",
       "norm_label": "urlbase64touint8array()"
     },
     {
@@ -7066,8 +7066,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "app_hooks_use_push_subscription_usepushsubscription",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 144,
+      "community_name": "NotificationBell.tsx",
       "norm_label": "usepushsubscription()"
     },
     {
@@ -7077,8 +7077,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "use-pwa-precache.ts"
     },
     {
@@ -7088,8 +7088,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache_precachestate",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "precachestate"
     },
     {
@@ -7099,8 +7099,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache_isstandalonedisplaymode",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "isstandalonedisplaymode()"
     },
     {
@@ -7110,8 +7110,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache_posttoserviceworker",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "posttoserviceworker()"
     },
     {
@@ -7121,8 +7121,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache_readdismissed",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "readdismissed()"
     },
     {
@@ -7132,8 +7132,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache_broadcastdismissed",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "broadcastdismissed()"
     },
     {
@@ -7143,8 +7143,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache_usepwaprecache",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "usepwaprecache()"
     },
     {
@@ -7154,8 +7154,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "app_hooks_use_pwa_precache_ts_docref_adr_0014",
-      "community": 26,
-      "community_name": "sw.ts",
+      "community": 16,
+      "community_name": "toLocaleNumeral",
       "norm_label": "adr-0014"
     },
     {
@@ -7242,8 +7242,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_reader_base_path",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "use-reader-base-path.ts"
     },
     {
@@ -7253,8 +7253,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_hooks_use_reader_base_path_usereaderbasepath",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "usereaderbasepath()"
     },
     {
@@ -7264,8 +7264,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_hooks_use_reader_base_path_ts_docref_adr_0012",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "adr-0012"
     },
     {
@@ -7319,8 +7319,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_hooks_use_theme",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "use-theme.ts"
     },
     {
@@ -7330,8 +7330,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_hooks_use_theme_theme",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "theme"
     },
     {
@@ -7341,8 +7341,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_hooks_use_theme_getinitialtheme",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "getinitialtheme()"
     },
     {
@@ -7352,8 +7352,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "app_hooks_use_theme_usetheme",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "usetheme()"
     },
     {
@@ -7473,8 +7473,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_layout",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "app/layout.tsx"
     },
     {
@@ -7484,8 +7484,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_layout_metadata",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "metadata"
     },
     {
@@ -7495,8 +7495,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "app_layout_viewport",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "viewport"
     },
     {
@@ -7506,8 +7506,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "app_layout_tajawal",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "tajawal"
     },
     {
@@ -7517,8 +7517,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "app_layout_uthmanic",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "uthmanic"
     },
     {
@@ -7528,8 +7528,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "app_layout_surahnames",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "surahnames"
     },
     {
@@ -7539,8 +7539,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "app_layout_rootlayout",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "rootlayout()"
     },
     {
@@ -8529,8 +8529,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "app_lib_plans_engine_trackassignment",
-      "community": 5,
-      "community_name": "engine.ts",
+      "community": 20,
+      "community_name": "PlansWidget.tsx",
       "norm_label": "trackassignment"
     },
     {
@@ -8870,8 +8870,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_lib_recitation_provider",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "provider.ts"
     },
     {
@@ -8881,8 +8881,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_lib_recitation_provider_recitationprovidererror",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "recitationprovidererror"
     },
     {
@@ -8892,8 +8892,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_lib_recitation_provider_recitationprovider",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "recitationprovider"
     },
     {
@@ -8903,8 +8903,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_lib_recitation_provider_recitationprovider_getreciters",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": ".getreciters()"
     },
     {
@@ -8914,8 +8914,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_lib_recitation_provider_recitationprovider_getchapteraudio",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": ".getchapteraudio()"
     },
     {
@@ -8925,8 +8925,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_lib_recitation_qdc_provider",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "qdc-provider.ts"
     },
     {
@@ -8936,8 +8936,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_lib_recitation_qdc_provider_qdcreciter",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "qdcreciter"
     },
     {
@@ -8947,8 +8947,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "app_lib_recitation_qdc_provider_qdcversetiming",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "qdcversetiming"
     },
     {
@@ -8958,8 +8958,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "app_lib_recitation_qdc_provider_qdcaudiofile",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "qdcaudiofile"
     },
     {
@@ -8969,8 +8969,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_lib_recitation_qdc_provider_getreciters",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "getreciters()"
     },
     {
@@ -8980,8 +8980,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "app_lib_recitation_qdc_provider_getchapteraudio",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "getchapteraudio()"
     },
     {
@@ -8991,8 +8991,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "app_lib_recitation_qdc_provider_qdcrecitationprovider",
-      "community": 37,
-      "community_name": "response.ts",
+      "community": 6,
+      "community_name": "getNotificationDeps",
       "norm_label": "qdcrecitationprovider"
     },
     {
@@ -9211,8 +9211,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_providers_queryprovider",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 2,
+      "community_name": "MyPlansList.tsx",
       "norm_label": "queryprovider.tsx"
     },
     {
@@ -9222,8 +9222,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_providers_queryprovider_queryprovider",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 2,
+      "community_name": "MyPlansList.tsx",
       "norm_label": "queryprovider()"
     },
     {
@@ -9233,8 +9233,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_providers_sessionprovider",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "sessionprovider.tsx"
     },
     {
@@ -9343,8 +9343,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_server_actions_getpagemarks",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "getpagemarks.ts"
     },
     {
@@ -9354,8 +9354,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_server_actions_getpagemarks_pagemark",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "pagemark"
     },
     {
@@ -9365,8 +9365,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_server_actions_getpagemarks_apimark",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "apimark"
     },
     {
@@ -9376,8 +9376,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "app_server_actions_getpagemarks_getpagemarks",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "getpagemarks()"
     },
     {
@@ -9387,8 +9387,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "app_server_actions_getpagemarks_ts_docref_adr_0025",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0025"
     },
     {
@@ -9552,8 +9552,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "app_server_actions_notifications_registerpushsubscription",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 144,
+      "community_name": "NotificationBell.tsx",
       "norm_label": "registerpushsubscription()"
     },
     {
@@ -9563,8 +9563,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "app_server_actions_notifications_unregisterpushsubscription",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 144,
+      "community_name": "NotificationBell.tsx",
       "norm_label": "unregisterpushsubscription()"
     },
     {
@@ -9673,8 +9673,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "app_server_actions_plans_getplanhistory",
-      "community": 2,
-      "community_name": "MyPlansList.tsx",
+      "community": 38,
+      "community_name": "actions/plans.ts",
       "norm_label": "getplanhistory()"
     },
     {
@@ -10047,8 +10047,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "app_types_index_surahresult",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 77,
+      "community_name": "Sidebar.tsx",
       "norm_label": "surahresult"
     },
     {
@@ -10080,8 +10080,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "app_types_index_quransafhaview",
-      "community": 46,
-      "community_name": "QuranSpread.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "quransafhaview"
     },
     {
@@ -10091,8 +10091,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_types_prisma",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "prisma.ts"
     },
     {
@@ -10102,8 +10102,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_types_prisma_wordbase",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "wordbase"
     },
     {
@@ -10113,8 +10113,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "app_types_prisma_wordwithverse",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "wordwithverse"
     },
     {
@@ -10124,8 +10124,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "app_types_prisma_verseformark",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "verseformark"
     },
     {
@@ -10135,8 +10135,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "app_types_prisma_pagemetadatawithchapter",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "pagemetadatawithchapter"
     },
     {
@@ -10146,8 +10146,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "app_types_prisma_rubwithverses",
-      "community": 11,
-      "community_name": "RubList.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "rubwithverses"
     },
     {
@@ -10157,8 +10157,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_types_prisma_ts_docref_adr_0028",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0028"
     },
     {
@@ -10168,8 +10168,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_types_prisma_ts_docref_adr_0033",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0033"
     },
     {
@@ -10190,8 +10190,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_types_recitation_reciter",
-      "community": 24,
-      "community_name": "RecitationSettingsSheet.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "reciter"
     },
     {
@@ -10201,8 +10201,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_types_recitation_versesegment",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "versesegment"
     },
     {
@@ -10212,8 +10212,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "app_types_recitation_versetiming",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "versetiming"
     },
     {
@@ -10223,8 +10223,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "app_types_recitation_chapteraudio",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 11,
+      "community_name": "RubList.tsx",
       "norm_label": "chapteraudio"
     },
     {
@@ -10234,8 +10234,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "app_types_recitation_stoppoint",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 24,
+      "community_name": "RecitationSettingsSheet.tsx",
       "norm_label": "stoppoint"
     },
     {
@@ -10245,8 +10245,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_types_recitation_rangepoint",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 24,
+      "community_name": "RecitationSettingsSheet.tsx",
       "norm_label": "rangepoint"
     },
     {
@@ -10333,8 +10333,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_db",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "db.ts"
     },
     {
@@ -10344,8 +10344,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_utils_db_globalforprisma",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 30,
+      "community_name": "QuranMushafContext.tsx",
       "norm_label": "globalforprisma"
     },
     {
@@ -10355,8 +10355,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_groupby",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "groupby.ts"
     },
     {
@@ -10366,8 +10366,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_groupby_groupby",
-      "community": 148,
-      "community_name": "get-page-words.ts",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "groupby()"
     },
     {
@@ -10377,8 +10377,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_highlight",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "highlight.ts"
     },
     {
@@ -10388,8 +10388,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_highlight_highlighttype",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "highlighttype"
     },
     {
@@ -10399,8 +10399,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_utils_highlight_highlightoptions",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "highlightoptions"
     },
     {
@@ -10410,8 +10410,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "app_utils_highlight_highlight_colors",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "highlight_colors"
     },
     {
@@ -10421,8 +10421,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_utils_highlight_highlight",
-      "community": 31,
-      "community_name": "QuranWord.tsx",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "highlight"
     },
     {
@@ -10432,8 +10432,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_i18n",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "i18n.ts"
     },
     {
@@ -10443,8 +10443,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_i18n_rtl_languages",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "rtl_languages"
     },
     {
@@ -10454,8 +10454,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_utils_i18n_getlanguagedirection",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "getlanguagedirection()"
     },
     {
@@ -10465,8 +10465,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_utils_i18n_eastern_arabic_digits",
-      "community": 16,
-      "community_name": "toLocaleNumeral",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "eastern_arabic_digits"
     },
     {
@@ -10487,8 +10487,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_marks",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "utils/marks.ts"
     },
     {
@@ -10498,8 +10498,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_utils_marks_getmarkmeta",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "getmarkmeta()"
     },
     {
@@ -10509,8 +10509,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_utils_marks_ts_docref_adr_0025",
-      "community": 47,
-      "community_name": "use-marks.ts",
+      "community": 12,
+      "community_name": "QuranSafha.tsx",
       "norm_label": "adr-0025"
     },
     {
@@ -10520,8 +10520,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_mushaf_editions",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "mushaf-editions.ts"
     },
     {
@@ -10542,8 +10542,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "app_utils_mushaf_editions_mushaf_editions",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "mushaf_editions"
     },
     {
@@ -10564,8 +10564,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "app_utils_mushaf_editions_getmushafedition",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 13,
+      "community_name": "useQuranMushaf",
       "norm_label": "getmushafedition()"
     },
     {
@@ -10575,8 +10575,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "app_utils_mushaf_editions_istajweededition",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "istajweededition()"
     },
     {
@@ -10586,8 +10586,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "app_utils_mushaf_editions_ts_docref_adr_0033",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "adr-0033"
     },
     {
@@ -10597,8 +10597,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_utils_mushaf_editions_ts_docref_adr_0029",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "adr-0029"
     },
     {
@@ -10608,8 +10608,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_utils_mushaf_editions_ts_docref_adr_0023",
-      "community": 30,
-      "community_name": "QuranMushafContext.tsx",
+      "community": 14,
+      "community_name": "ReaderPage.tsx",
       "norm_label": "adr-0023"
     },
     {
@@ -10707,8 +10707,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_queryclient",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 2,
+      "community_name": "MyPlansList.tsx",
       "norm_label": "queryclient.ts"
     },
     {
@@ -10718,8 +10718,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "app_utils_queryclient_makequeryclient",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 2,
+      "community_name": "MyPlansList.tsx",
       "norm_label": "makequeryclient()"
     },
     {
@@ -10729,8 +10729,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_utils_queryclient_getqueryclient",
-      "community": 0,
-      "community_name": "getQueryClient",
+      "community": 2,
+      "community_name": "MyPlansList.tsx",
       "norm_label": "getqueryclient()"
     },
     {
@@ -10773,8 +10773,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_recitation_api",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "recitation-api.ts"
     },
     {
@@ -10784,8 +10784,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_utils_recitation_api_envelope",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "envelope"
     },
     {
@@ -10795,8 +10795,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_utils_recitation_api_unwrap",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "unwrap()"
     },
     {
@@ -10806,8 +10806,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "app_utils_recitation_api_fetchreciters",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "fetchreciters()"
     },
     {
@@ -10817,8 +10817,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "app_utils_recitation_api_fetchchapteraudio",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "fetchchapteraudio()"
     },
     {
@@ -10828,8 +10828,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "app_utils_recitation_api_fetchstoppoint",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "fetchstoppoint()"
     },
     {
@@ -10839,8 +10839,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "app_utils_recitation_api_fetchpagebounds",
-      "community": 20,
-      "community_name": "PlansWidget.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "fetchpagebounds()"
     },
     {
@@ -10861,8 +10861,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "app_utils_recitation_api_ts_docref_adr_0033",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 31,
+      "community_name": "QuranWord.tsx",
       "norm_label": "adr-0033"
     },
     {
@@ -10949,8 +10949,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "app_utils_recitation_getfirstversekeyofpage",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 59,
+      "community_name": "ReaderPager",
       "norm_label": "getfirstversekeyofpage()"
     },
     {
@@ -10960,8 +10960,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_share_code",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 22,
+      "community_name": "jsonResponse",
       "norm_label": "share-code.ts"
     },
     {
@@ -10971,8 +10971,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_utils_share_code_generatesharecode",
-      "community": 76,
-      "community_name": "db.ts",
+      "community": 22,
+      "community_name": "jsonResponse",
       "norm_label": "generatesharecode()"
     },
     {
@@ -10982,8 +10982,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_utils_storage",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "storage.ts"
     },
     {
@@ -10993,8 +10993,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_utils_storage_storagekey",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "storagekey"
     },
     {
@@ -11004,8 +11004,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_utils_storage_storagevaluetype",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "storagevaluetype"
     },
     {
@@ -11015,8 +11015,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_utils_storage_storage",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "storage"
     },
     {
@@ -11026,8 +11026,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_utils_storage_ts_docref_adr_0033",
-      "community": 9,
-      "community_name": "RecitationContext.tsx",
+      "community": 17,
+      "community_name": "types/index.ts",
       "norm_label": "adr-0033"
     },
     {
@@ -11224,8 +11224,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_ui_button",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "button.tsx"
     },
     {
@@ -11235,8 +11235,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "components_ui_button_buttonvariants",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "buttonvariants"
     },
     {
@@ -11246,8 +11246,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "components_ui_button_buttonprops",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "buttonprops"
     },
     {
@@ -11257,8 +11257,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "components_ui_button_button",
-      "community": 18,
-      "community_name": "[locale]/layout.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "button"
     },
     {
@@ -11356,8 +11356,8 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "components_ui_command_commandshortcut",
-      "community": 97,
-      "community_name": "cn",
+      "community": 24,
+      "community_name": "RecitationSettingsSheet.tsx",
       "norm_label": "commandshortcut()"
     },
     {
@@ -11554,8 +11554,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_ui_input",
-      "community": 97,
-      "community_name": "cn",
+      "community": 0,
+      "community_name": "getQueryClient",
       "norm_label": "input.tsx"
     },
     {
@@ -11565,8 +11565,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_ui_input_input",
-      "community": 97,
-      "community_name": "cn",
+      "community": 0,
+      "community_name": "getQueryClient",
       "norm_label": "input"
     },
     {
@@ -11598,8 +11598,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_ui_radio_group",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "radio-group.tsx"
     },
     {
@@ -11609,8 +11609,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "components_ui_radio_group_radiogroup",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "radiogroup"
     },
     {
@@ -11620,8 +11620,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "components_ui_radio_group_radiogroupitem",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "radiogroupitem"
     },
     {
@@ -11730,8 +11730,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_ui_slider",
-      "community": 97,
-      "community_name": "cn",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "slider.tsx"
     },
     {
@@ -11741,8 +11741,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_ui_slider_slider",
-      "community": 97,
-      "community_name": "cn",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "slider"
     },
     {
@@ -11752,8 +11752,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_ui_switch",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "switch.tsx"
     },
     {
@@ -11763,8 +11763,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_ui_switch_switch",
-      "community": 160,
-      "community_name": "EnablePushToggle.tsx",
+      "community": 3,
+      "community_name": "useTranslations",
       "norm_label": "switch"
     },
     {
@@ -12115,8 +12115,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "i18n_request",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "i18n/request.ts"
     },
     {
@@ -12126,8 +12126,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "i18n_routing",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "routing.ts"
     },
     {
@@ -12137,8 +12137,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "i18n_routing_routing",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "routing"
     },
     {
@@ -12148,8 +12148,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "i18n_routing_link_redirect_usepathname_userouter",
-      "community": 3,
-      "community_name": "useTranslations",
+      "community": 147,
+      "community_name": "LastReadPageContext.tsx",
       "norm_label": "{ link, redirect, usepathname, userouter }"
     },
     {
@@ -12511,8 +12511,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_utils",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "utils.ts"
     },
     {
@@ -12522,8 +12522,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_utils_cn",
-      "community": 97,
-      "community_name": "cn",
+      "community": 23,
+      "community_name": "MarkModal.tsx",
       "norm_label": "cn()"
     },
     {
@@ -17419,6 +17419,105 @@
       "id": "docs_plans_fix_nav_icon_overflow_decisions_made",
       "community": 156,
       "community_name": "Fix Navbar Icon Overflow on Mobile/Tablet",
+      "norm_label": "decisions made"
+    },
+    {
+      "label": "fix-reader-nav-infinite-loop.md",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "fix-reader-nav-infinite-loop.md"
+    },
+    {
+      "label": "Fix Reader Navigation Infinite Render Loop",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "fix reader navigation infinite render loop"
+    },
+    {
+      "label": "Summary",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_summary",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "summary"
+    },
+    {
+      "label": "Root Cause",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L26",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_root_cause",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "root cause"
+    },
+    {
+      "label": "Fix",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L56",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_fix",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "fix"
+    },
+    {
+      "label": "Files to Change",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L88",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_files_to_change",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "files to change"
+    },
+    {
+      "label": "Constraints",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L96",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_constraints",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "constraints"
+    },
+    {
+      "label": "What NOT to Do",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L102",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_what_not_to_do",
+      "community": 37,
+      "community_name": "response.ts",
+      "norm_label": "what not to do"
+    },
+    {
+      "label": "Decisions Made",
+      "file_type": "document",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L114",
+      "_origin": "ast",
+      "id": "docs_plans_fix_reader_nav_infinite_loop_decisions_made",
+      "community": 37,
+      "community_name": "response.ts",
       "norm_label": "decisions made"
     },
     {
@@ -45896,7 +45995,7 @@
       "relation": "cites",
       "confidence": "EXTRACTED",
       "source_file": "app/components/reader/ReaderPager.tsx",
-      "source_location": "L599",
+      "source_location": "L603",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_components_reader_readerpager",
@@ -46483,7 +46582,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/components/reader/ReaderPager.tsx",
-      "source_location": "L632",
+      "source_location": "L636",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_components_reader_readerpager_readerpager",
@@ -46531,7 +46630,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/components/reader/ReaderPager.tsx",
-      "source_location": "L665",
+      "source_location": "L669",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_components_reader_readerpager_readerpager",
@@ -46543,7 +46642,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/components/reader/ReaderPager.tsx",
-      "source_location": "L645",
+      "source_location": "L649",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_components_reader_readerpager_readerpager",
@@ -46567,7 +46666,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/components/reader/ReaderPager.tsx",
-      "source_location": "L583",
+      "source_location": "L587",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_components_reader_readerpager_readerpager",
@@ -49558,7 +49657,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/contexts/ReaderNavigationContext.tsx",
-      "source_location": "L34",
+      "source_location": "L42",
       "weight": 1.0,
       "_origin": "ast",
       "source": "app_contexts_readernavigationcontext",
@@ -65813,6 +65912,94 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_constraints",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L114",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_decisions_made",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L88",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_files_to_change",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_fix",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_root_cause",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_summary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/plans/fix-reader-nav-infinite-loop.md",
+      "source_location": "L102",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_plans_fix_reader_nav_infinite_loop_fix_reader_navigation_infinite_render_loop",
+      "target": "docs_plans_fix_reader_nav_infinite_loop_what_not_to_do",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "docs/plans/homepage-surah-name-direction.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -73493,5 +73680,5 @@
       "source_file": "docs/standards/database.md"
     }
   ],
-  "built_at_commit": "5ea685a0902bcfd37c2a4b2cc57b6b7d5e4062b2"
+  "built_at_commit": "b557f6de9714afe1a5728de4988f51add887ad74"
 }
