@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { useLocale } from "next-intl";
-import { Maximize2, Minimize2, PanelLeftOpen } from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
 import { UserMenu } from "./UserMenu";
 import { ContinueReadingLink } from "./ContinueReadingLink";
@@ -12,20 +10,14 @@ import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/app/contexts/SidebarContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
-import { getLanguageDirection } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export const Nav = () => {
-  const pathname = usePathname();
-  const locale = useLocale();
-  const isRTL = getLanguageDirection(locale) === "rtl";
-  const { setOpen } = useSidebar();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
   const isDesktopUp = useIsDesktopUp();
 
@@ -47,8 +39,6 @@ export const Nav = () => {
     }
   };
 
-  const isOnPagesRoute = pathname?.includes("/pages/");
-
   return (
     <nav
       className={cn(
@@ -65,56 +55,33 @@ export const Nav = () => {
         ...(isOverlayMode ? { transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" } : {}),
       }}
     >
-      <div className="h-14 flex items-center">
-        {/* Start: sidebar trigger (mobile, pages route only) + logo */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <FurqanLogo />
-
-          {isOnPagesRoute && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(true)}
-              aria-label="Open navigation"
-            >
-              <PanelLeftOpen
-                className={cn("size-5", isRTL && "rotate-180")}
-                strokeWidth={1.7}
-              />
-            </Button>
-          )}
-        </div>
-
-        {/* Center: SearchBar — desktop shows inline input, mobile shows icon */}
-        <div className="flex-1 flex justify-center px-2 md:px-4">
+      {/* Single flex row: logo · continue · shared · [search] · notifications · account · fullscreen · settings */}
+      <div className="h-14 flex items-center gap-1">
+        <FurqanLogo />
+        <ContinueReadingLink />
+        <SharedMushafLink />
+        <div className="flex-1 flex px-2 md:px-3 min-w-0">
           <SearchBar />
         </div>
-
-        {/* End: continue-reading + shared-mushaf link + notifications + account menu (all always visible) + settings */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <ContinueReadingLink />
-          <SharedMushafLink />
-          <NotificationBell />
-          <UserMenu />
-          {isDesktopUp && fullscreenEnabled && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleFullscreen}
-              aria-label={isFullscreen ? "Exit focus mode" : "Enter focus mode"}
-              aria-pressed={isFullscreen}
-            >
-              {isFullscreen ? (
-                <Minimize2 className="size-5" strokeWidth={1.7} />
-              ) : (
-                <Maximize2 className="size-5" strokeWidth={1.7} />
-              )}
-            </Button>
-          )}
-          <SettingsSidebar />
-        </div>
+        <NotificationBell />
+        <UserMenu />
+        {isDesktopUp && fullscreenEnabled && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? "Exit focus mode" : "Enter focus mode"}
+            aria-pressed={isFullscreen}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="size-5" strokeWidth={1.7} />
+            ) : (
+              <Maximize2 className="size-5" strokeWidth={1.7} />
+            )}
+          </Button>
+        )}
+        <SettingsSidebar />
       </div>
     </nav>
   );
 };
-

@@ -39,6 +39,9 @@
   "tajweedMode": "Tajweed Colors",
   "tajweedModeLabel": "Color-code Tajweed rules",
   "tajweedModeDescription": "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
+  "keepScreenAwake": "Screen",
+  "keepScreenAwakeLabel": "Keep screen awake",
+  "keepScreenAwakeDescription": "Prevent your device screen from sleeping while the app is open",
   "theme": {
     "light": "Light",
     "dark": "Dark",
@@ -66,7 +69,10 @@
     "installedBody": "Download the Quran now so you can read it offline.",
     "checking": "Checking offline availability",
     "gateDescription": "Choose whether to download the Quran for offline reading.",
-    "madaniMushaf": "Madani mushaf"
+    "madaniMushaf": "Madani mushaf",
+    "resumeProgress": "{cached} of {total} pages downloaded",
+    "resume": "Resume download",
+    "notAvailableOffline": "This page hasn't been downloaded yet — connect to the internet to read it."
   },
   "notFound": {
     "title": "404 - Page Not Found",

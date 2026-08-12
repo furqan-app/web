@@ -26,6 +26,23 @@ export const pageJsonUrl = (id: number) =>
   `/quran/pages/${PRECACHE_MUSHAF_ID}/${id}.json`;
 export const VERSE_PAGES_URL = `/quran/verse-pages/${PRECACHE_MUSHAF_ID}.json`;
 
+// Hardcoded rather than imported from i18n/routing.ts — that module pulls in
+// next-intl's routing/navigation code, which has no reason to be bundled into
+// the service worker. isSelfReaderPage below (and its sibling matchers)
+// already hardcode the same two locales; mirrors that convention.
+export const FALLBACK_LOCALES = ["ar", "en"] as const;
+
+// The offline-navigation fallback document (ADR 0014 Addendum 3): page 1's
+// real reader-page HTML, precached at service-worker install for every
+// visitor (both locales) — independent of, and much smaller than, the
+// consent-gated bulk 604-page download, so it works even on a fresh install
+// before that download has ever run. Registered as the setCatchHandler
+// fallback in app/sw.ts for a failed navigation request; ReaderPager then
+// self-corrects to whatever page was actually requested (or the last-read
+// page) once it mounts.
+export const fallbackDocumentUrl = (locale: (typeof FALLBACK_LOCALES)[number]) =>
+  `/${locale}/pages/1`;
+
 // Synthetic cache entry written only after a fully successful precache run.
 // Living inside the versioned cache name makes it version-scoped for free, and
 // reduces a completion check to one cache.match() instead of enumerating ~1200

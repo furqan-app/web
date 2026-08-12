@@ -5,6 +5,7 @@ import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
+import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 
 /**
  * Always-visible navbar entry back to the last-read mushaf page. Reads
@@ -19,11 +20,18 @@ export const ContinueReadingLink = () => {
   const t = useTranslations();
   const locale = useLocale();
   const { lastReadPage } = useLastReadPage();
+  const { jumpTo } = useReaderNavigation();
 
   return (
     <Link
       href={`/pages/${lastReadPage}`}
       locale={locale}
+      onClick={(e) => {
+        // Same client-side handoff as SurahListItem — see there.
+        if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        jumpTo(lastReadPage);
+      }}
       className="flex items-center gap-2 rounded-xl px-2 md:px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50 transition-colors"
     >
       <BookOpen className="size-5 md:size-4 flex-none" strokeWidth={1.7} />

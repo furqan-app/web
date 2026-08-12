@@ -12,11 +12,14 @@ import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
 import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
 import { ReaderPageProvider } from "@/app/contexts/ReaderPageContext";
+import { ReaderNavigationProvider } from "@/app/contexts/ReaderNavigationContext";
 import { LastReadPageProvider } from "@/app/contexts/LastReadPageContext";
+import { KeepScreenAwakeProvider } from "@/app/contexts/KeepScreenAwakeContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import { PlansWidget } from "@components/plans/PlansWidget";
 import { LastReadPageSync } from "@components/reader/LastReadPageSync";
+import { KeepScreenAwakeSync } from "@components/KeepScreenAwakeSync";
 import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
 import { OfflineInstallPrompt } from "@components/offline/OfflineInstallPrompt";
 import "../globals.css";
@@ -58,16 +61,21 @@ export default async function LocaleLayout({
                     <SidebarProvider>
                       <NavOverlayProvider>
                         <ReaderPageProvider>
-                          <LastReadPageProvider>
-                            <Nav />
-                            {children}
-                            <RecitationPlayerBar />
-                            <RecitationSettingsSheet />
-                            <PlansWidget />
-                            <LastReadPageSync />
-                            <OfflineInstallPrompt />
-                            <OfflineSetupGate />
-                          </LastReadPageProvider>
+                          <ReaderNavigationProvider>
+                            <LastReadPageProvider>
+                              <KeepScreenAwakeProvider>
+                                <Nav />
+                                {children}
+                                <RecitationPlayerBar />
+                                <RecitationSettingsSheet />
+                                <PlansWidget />
+                                <LastReadPageSync />
+                                <KeepScreenAwakeSync />
+                                <OfflineInstallPrompt />
+                                <OfflineSetupGate />
+                              </KeepScreenAwakeProvider>
+                            </LastReadPageProvider>
+                          </ReaderNavigationProvider>
                         </ReaderPageProvider>
                       </NavOverlayProvider>
                     </SidebarProvider>

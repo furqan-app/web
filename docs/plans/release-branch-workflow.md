@@ -233,3 +233,73 @@ New step inserted after Trello labeling (existing step 8) and before `gh release
 - Do not attempt to detect generic/non-DB breaking changes (API contract changes, removed routes, etc.) via heuristics or a manual prompt — considered and explicitly ruled out; left to PR review and the release-cutter's own judgment.
 - Do not split Quran DB schema-changes and seed-logic-changes into different categories or wording — they share the same "you may need to re-seed" action, so treat them identically.
 - Do not add this detection to `/release` or any other skill — it lives entirely inside `/cut-release`, since that's what already builds the GitHub Release body and has the version/tag context.
+
+## Addendum 3 — `stg` decoupled from release branches, tracks `main` directly (2026-08-12)
+
+**Type:** feature
+
+### Summary
+
+Reverses part of Addendum 1: `stg` no longer requires a `release/x.y.z` branch. `protect-stg.yml`'s `check-source` gate now accepts PRs into `stg` only from `main` — no `release/*`, no other branch. `prod` is untouched: `protect-prod.yml` still requires `release/*` exclusively (ADR 0015 stands). This lets staging be refreshed at any time by merging `main → stg`, without cutting a release first. See [ADR 0039](../architecture/adr/0039-stg-tracks-main-directly.md).
+
+### Updated Branch Flow
+
+```
+main → PR → stg   (direct, any time, no release cut required)
+main
+  └─ /cut-release <major|minor|patch>
+       → release/x.y.z branched, version bumped, tagged, pushed
+       → Trello: "To Be Released" cards labeled vX.Y.Z, moved to Done
+            └─ /promote-release <version>
+                 → PR: release/x.y.z → prod
+                 → (merge on GitHub → Hostinger prod site auto-deploys)
+                      └─ /sync-main-from-prod
+                           → PR: prod → main
+```
+
+### `.github/workflows/protect-stg.yml` — updated gate
+
+```yaml
+- name: Only allow merges from main
+  run: |
+    if [[ "${{ github.head_ref }}" != "main" ]]; then
+      echo "PRs to stg must come from main. Got: ${{ github.head_ref }}"
+      exit 1
+    fi
+    echo "Source branch is ${{ github.head_ref }} — OK"
+```
+
+### `/promote-to-staging` — updated skill
+
+No longer takes a `<version>` argument. Opens `main → stg` instead of `release/x.y.z → stg`:
+
+1. `git fetch origin`.
+2. `git log origin/stg..origin/main --oneline` for the PR body.
+3. `gh pr create --base stg --head main --title "Staging update"` with that summary.
+4. Report the PR URL. Tell the user: the `check-source` gate on `stg` requires the head branch to be exactly `main` — it will pass automatically. Merge on GitHub; Hostinger auto-deploys `stg` on push.
+
+### `/release` orchestrator — updated Checkpoint 1
+
+Step 2 now runs `/promote-to-staging` with no version argument (opens `main → stg`, not `release/x.y.z → stg`). Checkpoint 1's wording changes from "confirm the staging PR (`release/x.y.z → stg`) merged" to "confirm the staging PR (`main → stg`) merged" — the substance (verify via `gh pr view`, then ask the user to confirm staging looks right) is unchanged.
+
+### Files to Change
+
+- `.github/workflows/protect-stg.yml` — gate `main` exactly, not `release/*`
+- `.claude/skills/promote-to-staging/SKILL.md` — drop the `<version>` argument, target `main → stg`
+- `.claude/skills/release/SKILL.md` — update Checkpoint 1 wording to reference `main → stg`
+- `docs/workflow/release.md` — Promote to Staging section and orchestration step 2 updated to match
+- `docs/architecture/DECISIONS.md` — Release & Deployment Workflow section updated
+- New ADR: `docs/architecture/adr/0039-stg-tracks-main-directly.md`
+
+### Constraints
+
+- `protect-stg.yml` accepts `main` only — not `release/*`, not any other branch. This is a deliberate narrowing, not an opening-up: arbitrary feature branches must still not reach `stg` directly.
+- `protect-prod.yml` is unchanged — `prod` still only accepts `release/*`, no exceptions, including hotfixes (ADR 0015 constraint stands).
+- `/promote-to-staging` only creates the PR — never merges it, consistent with the existing "these skills only create branches/tags/PRs" constraint.
+- A release cut after a `main → stg` staging check is not itself re-verified on `stg` — `release/x.y.z` can no longer be staged directly, since `stg` rejects non-`main` branches.
+
+### What NOT to Do
+
+- Do not also loosen `protect-prod.yml` — this addendum is `stg`-only; `prod` keeps its release-only gate.
+- Do not keep accepting `release/*` into `stg` alongside `main` — the decision is `main`-only, not "`main` in addition to `release/*`".
+- Do not add a version argument back to `/promote-to-staging` — a `main → stg` PR isn't tied to a single release version.

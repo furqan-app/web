@@ -8,28 +8,46 @@ import { toLocaleNumeral, getLanguageDirection } from "@utils/i18n";
 import { Link } from "@/i18n/routing";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
 import { useSidebar } from "@/app/contexts/SidebarContext";
+import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 import { cn } from "@/lib/utils";
 
 type Props = {
   surah: SurahResult;
+  isActive?: boolean;
 };
 
-export const SurahListItem = ({ surah }: Props) => {
+export const SurahListItem = ({ surah, isActive }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
   const { setOpen } = useSidebar();
+  const { jumpTo } = useReaderNavigation();
 
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const surahStartingPage = surah.pages.split("-")[0];
+  const surahStartingPage = Number(surah.pages.split("-")[0]);
   const glyphCode = String(surah.id).padStart(3, "0");
 
   return (
     <Link
       locale={locale}
       href={`${basePath}/${surahStartingPage}`}
-      onClick={() => setOpen(false)}
-      className="flex items-center gap-3 p-4 bg-card border border-border rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+      onClick={(e) => {
+        setOpen(false);
+        // A reader is already mounted (this list is open from within it, e.g.
+        // the nav sidebar) — move it client-side instead of navigating, same
+        // as swipe/arrows. Works offline for any precached page. Plain
+        // left-click only; modified/middle clicks fall through to the href.
+        if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        jumpTo(surahStartingPage);
+      }}
+      data-surah-id={surah.id}
+      className={cn(
+        "flex items-center gap-3 p-4 rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200",
+        isActive
+          ? "bg-primary/10 border border-primary/30"
+          : "bg-card border border-border",
+      )}
     >
       <div className="flex-none w-10 h-10 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground font-bold text-sm">
         {toLocaleNumeral(surah.id, locale)}
@@ -59,4 +77,3 @@ export const SurahListItem = ({ surah }: Props) => {
     </Link>
   );
 };
-

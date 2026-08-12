@@ -13,6 +13,8 @@ import { DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID } from "@utils/mushaf-editions";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
+import { useIsMobile } from "@hooks/use-is-mobile";
+import { useKeepScreenAwake } from "@contexts/KeepScreenAwakeContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -32,6 +34,9 @@ export const SettingsSidebar = () => {
   // On tablet the safha auto-fits the font to the page, so the manual font-size
   // control does nothing — hide it there (still shown on desktop lg+).
   const isTablet = useIsTablet();
+  const isMobile = useIsMobile();
+  const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
+    useKeepScreenAwake();
 
   return (
     <Sheet>
@@ -120,6 +125,34 @@ export const SettingsSidebar = () => {
               />
             </div>
           </div>
+          {(isMobile || isTablet) && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                {t("keepScreenAwake", "Screen")}
+              </h3>
+              <div className="p-4 rounded-lg bg-muted flex items-center justify-between gap-3">
+                <label
+                  htmlFor="keep-screen-awake-switch"
+                  className="cursor-pointer"
+                >
+                  <span className="text-sm font-medium">
+                    {t("keepScreenAwakeLabel", "Keep screen awake")}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t(
+                      "keepScreenAwakeDescription",
+                      "Prevent your device screen from sleeping while the app is open",
+                    )}
+                  </p>
+                </label>
+                <Switch
+                  id="keep-screen-awake-switch"
+                  checked={keepScreenAwake}
+                  onCheckedChange={setKeepScreenAwake}
+                />
+              </div>
+            </div>
+          )}
           <EnablePushToggle />
           <OfflineAccessSection />
         </div>
