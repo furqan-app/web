@@ -1,14 +1,20 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { isStandaloneDisplayMode } from "@/app/utils/platform";
+import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
 
 /**
- * Always-visible navbar entry back to the last-read mushaf page. Reads
+ * Always-visible navbar entry back to the last-read mushaf page — except on
+ * standalone/fullscreen mobile/tablet PWA, where AppLaunchRedirect already
+ * puts the user on that page every cold launch, making this link redundant.
+ * Desktop and browser tabs (no auto-redirect there) always keep it. Reads
  * LastReadPageContext (live state, kept in sync by LastReadPageSync) rather
  * than localStorage directly — Nav never remounts during in-app navigation,
  * so a one-shot localStorage read would go stale the moment the reader saves
@@ -21,6 +27,17 @@ export const ContinueReadingLink = () => {
   const locale = useLocale();
   const { lastReadPage } = useLastReadPage();
   const { jumpTo } = useReaderNavigation();
+  const isDesktopUp = useIsDesktopUp();
+  // Display mode doesn't change mid-session, so a one-time read on mount
+  // (matching usePwaPrecache's isStandalone) is sufficient — no live
+  // subscription needed here.
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    setIsStandalone(isStandaloneDisplayMode());
+  }, []);
+
+  if (isStandalone && !isDesktopUp) return null;
 
   return (
     <Link

@@ -16,6 +16,7 @@ import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { ReaderPageSync } from "@/app/components/reader/ReaderPageSync";
 import { MushafSwitchSync } from "@/app/components/reader/MushafSwitchSync";
+import { AndroidBackExitGuard } from "@/app/components/reader/AndroidBackExitGuard";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
@@ -687,6 +688,7 @@ export function ReaderPager({
         firstVerseKey={firstVerseKey}
         onReanchor={jumpTo}
       />
+      <AndroidBackExitGuard active={!grantId} />
       <link
         rel="preload"
         href={edition.fontUrl(pageNumber)}
