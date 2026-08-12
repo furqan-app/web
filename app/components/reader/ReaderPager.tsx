@@ -446,7 +446,11 @@ export function ReaderPager({
   // Cleared on unmount so those callers fall back to normal navigation once no
   // pager is mounted (ADR 0014 Addendum 3).
   useEffect(() => {
-    setJumpTo(() => jumpTo);
+    // setJumpTo already wraps its argument in the () => fn form required to
+    // store a function in useState (see ReaderNavigationContext) — wrapping
+    // it again here would store a function that RETURNS jumpTo instead of
+    // one that calls it, silently breaking every jumpTo() call site.
+    setJumpTo(jumpTo);
     return () => setJumpTo(null);
   }, [jumpTo, setJumpTo]);
 

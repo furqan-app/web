@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 type JumpTo = (page: number) => void;
 
@@ -21,11 +21,19 @@ const ReaderNavigationContext = createContext<ReaderNavigationContextType | unde
 export function ReaderNavigationProvider({ children }: { children: ReactNode }) {
   const [jumpTo, setJumpToState] = useState<JumpTo | null>(null);
   // A function value passed to useState's setter is treated as an updater, so
-  // storing one requires the () => fn wrapper form on every call site.
-  const setJumpTo = (fn: JumpTo | null) => setJumpToState(() => fn);
+  // storing one requires this () => fn wrapper — done ONCE, here. Callers
+  // pass the raw function straight to setJumpTo (e.g. setJumpTo(jumpTo)); a
+  // caller that wraps it again (setJumpTo(() => jumpTo)) stores a function
+  // that RETURNS jumpTo instead of one that calls it, silently breaking every
+  // jumpTo() call site (see ReaderPager's registration effect). Stable
+  // identity (useCallback) is also required — that same effect depends on
+  // this reference, and an unstable one there re-triggers the effect every
+  // render, which re-triggers this state update, forever.
+  const setJumpTo = useCallback((fn: JumpTo | null) => setJumpToState(() => fn), []);
+  const value = useMemo(() => ({ jumpTo, setJumpTo }), [jumpTo, setJumpTo]);
 
   return (
-    <ReaderNavigationContext.Provider value={{ jumpTo, setJumpTo }}>
+    <ReaderNavigationContext.Provider value={value}>
       {children}
     </ReaderNavigationContext.Provider>
   );
