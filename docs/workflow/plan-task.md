@@ -27,6 +27,8 @@ This check is a literal, mandatory action every time — it has been skipped bef
 
 ### 2. Investigate (bugs) or clarify (features)
 
+**Query the graph first.** If `graphify-out/graph.json` exists, run `graphify query "<question>"` (or `graphify path "A" "B"` for a specific relationship) before reading files manually — it's cheaper than grepping cold. Use its answer as your map to the relevant files. If it has no answer, is stale, or doesn't exist, fall back to manual tracing below without commenting on it.
+
 **For bugs:**
 - Trace the bug through the codebase before asking anything
 - Read all files in the relevant data flow
