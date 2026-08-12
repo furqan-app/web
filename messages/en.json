@@ -115,6 +115,9 @@
   "continueReading": {
     "navLink": "Continue Reading"
   },
+  "exitApp": {
+    "pressBackAgain": "Press back again to exit"
+  },
   "marks": {
     "navLink": "My Marks",
     "pageTitle": "My Marks",
