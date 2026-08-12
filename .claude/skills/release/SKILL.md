@@ -22,7 +22,7 @@ Orchestrates `/cut-release` → `/promote-to-staging` → `/promote-release` →
 
 1. **Run `/cut-release <bump>` in full.** Its own preconditions (clean tree, on main) apply as normal. Do not pause before or after this step.
 
-2. **Run `/promote-to-staging <version>`.** Opens the `release/x.y.z → stg` PR. Proceed straight to Checkpoint 1 — no pause before this step, it's mechanical.
+2. **Run `/promote-to-staging`.** Opens the `main → stg` PR. Proceed straight to Checkpoint 1 — no pause before this step, it's mechanical.
 
 3. **Checkpoint 1 — staging.** Tell the user the PR is open and ask them to merge it on GitHub. Hostinger auto-deploys the staging site on any push to `stg` — no manual redeploy click is needed. Do not trust a bare "done" for the merge: check with `gh pr view <number> --json state -q .state` (or `gh pr view release/<version> --json state -q .state` if the number wasn't captured) and only continue once it reports `MERGED`. Once merged, ask the user to verify the deployed staging site looks right — that judgment call is the user's; wait for their explicit confirmation before continuing.
 
