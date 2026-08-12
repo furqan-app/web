@@ -5,6 +5,7 @@ import { useSearch } from "@hooks/use-search";
 import { isSearchQueryValid } from "@/app/constants/search";
 import SearchQueryResults from "./SearchQueryResults";
 import useTranslations from "@hooks/use-translations";
+import { useSidebar } from "@/app/contexts/SidebarContext";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, ArrowLeft } from "lucide-react";
 import {
@@ -16,6 +17,7 @@ import {
 
 export const SearchBar = () => {
     const t = useTranslations();
+    const { setSearchOpen } = useSidebar();
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const { verses, chapters, isLoading } = useSearch(debouncedQuery);
@@ -49,7 +51,8 @@ export const SearchBar = () => {
 
     const handleQueryChange = (value: string) => {
         setQuery(value);
-        setIsOpen(isSearchQueryValid(value));
+        const valid = isSearchQueryValid(value);
+        setIsOpen(valid);
     };
 
     const closeAll = (open: boolean) => {
@@ -62,7 +65,7 @@ export const SearchBar = () => {
     return (
         <>
             {/* Desktop: inline search bar */}
-            <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto hidden md:block">
+            <div ref={searchContainerRef} className="relative w-full max-w-xl hidden md:block">
                 <div className="relative">
                     <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                     <Input
@@ -91,18 +94,19 @@ export const SearchBar = () => {
             {/* Mobile: search icon trigger */}
             <button
                 className="md:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent/50 transition-colors"
-                onClick={() => setMobileOpen(true)}
+                onClick={() => { setMobileOpen(true); setSearchOpen(true); }}
                 aria-label={t("search.placeholder", "Search the Quran...")}
             >
                 <Search className="size-5 text-muted-foreground" strokeWidth={1.7} />
             </button>
 
             {/* Mobile: full-screen search overlay */}
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <Sheet open={mobileOpen} onOpenChange={(v) => { setMobileOpen(v); if (!v) setSearchOpen(false); }}>
                 <SheetContent
                     side="top"
                     hideDefaultClose
-                    className="h-screen p-0 flex flex-col"
+                    overlayClassName="!z-[52]"
+                    className="!z-[52] h-screen p-0 flex flex-col"
                 >
                     <SheetTitle className="sr-only">
                         {t("search.placeholder", "Search the Quran...")}
