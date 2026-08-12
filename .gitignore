@@ -33,14 +33,13 @@ yarn-error.log*
 /app/generated
 
 # local env files
-.env*.local
-# prod credentials for running prisma migrate resolve/status against prod DB from local machine
-.env.prod
+.env*
 # docker compose runtime env (may hold credentials); templates *.example stay tracked
 .env
 
 # mcp config (contains secrets)
 .mcp.json
+.codex/config.toml
 opencode.json
 .cursor/mcp.json
 .playwright-mcp
