@@ -40,6 +40,9 @@
   "tajweedMode": "ألوان التجويد",
   "tajweedModeLabel": "تلوين أحكام التجويد",
   "tajweedModeDescription": "إبراز أحكام التلاوة مثل الإدغام والإخفاء والقلقلة والمد بالألوان",
+  "keepScreenAwake": "الشاشة",
+  "keepScreenAwakeLabel": "إبقاء الشاشة مضاءة",
+  "keepScreenAwakeDescription": "منع شاشة جهازك من الإغلاق التلقائي أثناء فتح التطبيق",
   "theme": {
     "light": "فاتح",
     "dark": "داكن",

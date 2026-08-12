@@ -39,6 +39,9 @@
   "tajweedMode": "Tajweed Colors",
   "tajweedModeLabel": "Color-code Tajweed rules",
   "tajweedModeDescription": "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
+  "keepScreenAwake": "Screen",
+  "keepScreenAwakeLabel": "Keep screen awake",
+  "keepScreenAwakeDescription": "Prevent your device screen from sleeping while the app is open",
   "theme": {
     "light": "Light",
     "dark": "Dark",
