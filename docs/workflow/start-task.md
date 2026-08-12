@@ -29,6 +29,7 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 
 ### 3. Implement
 
+- **Query the graph first for callers/usages.** If `graphify-out/graph.json` exists, run `graphify query "<question>"` or `graphify path "A" "B"` to find what depends on a file/component before touching it — cheaper than grepping cold. Fall back to manual search if it has no answer, is stale, or doesn't exist.
 - **Before editing, verify the current code matches what the plan/docs describe.** Open the files the plan names and confirm their present state lines up with the plan's assumptions — plans can go stale, and acting on a stale claim ("X is unchanged", "Y still renders here") is how documented behavior gets broken. If reality and the doc disagree, stop and reconcile with the user before changing anything.
 - Follow the plan exactly (the latest addendum's approach). If you discover the plan needs revision, pause and discuss — do not silently deviate.
 - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
