@@ -11,6 +11,7 @@ The workflows in `docs/workflow/` are exposed as Claude Code skills. Trigger the
 |---|---|
 | `/plan-fq-task` | "plan this", "investigate", starting any new task |
 | `/start-fq-task` | "implement", "build", "start the task" |
+| `/check-fq-standards` | run automatically by `/start-fq-task`; or "check standards", "check invariants" |
 | `/ship-fq-task` | "ship it", "I'm done", "commit and push" |
 | `/review-fq-work` | "review my work", "check the branch" |
 | `/retrospect` | end of session |
