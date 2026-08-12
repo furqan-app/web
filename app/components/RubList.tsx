@@ -9,6 +9,7 @@ import { toLocaleNumeral } from "@/app/utils/i18n";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
 import { useVersePages } from "@hooks/use-verse-pages";
 import { useSidebar } from "@/app/contexts/SidebarContext";
+import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 
 type Props = {
   rubs: RubWithVerses[];
@@ -39,6 +40,7 @@ const RubList = ({ rubs, surahs }: Props) => {
   const basePath = useReaderBasePath();
   const { data: versePages } = useVersePages();
   const { setOpen } = useSidebar();
+  const { jumpTo } = useReaderNavigation();
 
   // A rub starts at a verse, and which page that verse sits on depends on the
   // mushaf edition — 56 verses land on a different page between editions, so a
@@ -87,7 +89,13 @@ const RubList = ({ rubs, surahs }: Props) => {
                 href={`${basePath}/${pageOfVerse(rub.startVerse)}`}
                 locale={locale}
                 dir="rtl"
-                onClick={() => setOpen(false)}
+                onClick={(e) => {
+                  setOpen(false);
+                  // Same client-side handoff as SurahListItem — see there.
+                  if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  jumpTo(pageOfVerse(rub.startVerse));
+                }}
                 className="flex items-center gap-3 px-4 py-[13px] border-b border-border bg-background hover:bg-accent transition-colors"
               >
                 <div className="shrink-0 w-11 h-11">

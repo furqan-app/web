@@ -4,12 +4,14 @@ import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { CacheFirst, NetworkFirst, Serwist } from "serwist";
 import {
+  FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
   PRECACHE_MUSHAF_ID,
   PRECACHE_SENTINEL_URL,
   TOTAL_PAGES,
   VERSE_PAGES_URL,
+  fallbackDocumentUrl,
   pageFontUrl,
   pageJsonUrl,
 } from "@constants/offline";
@@ -70,6 +72,44 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// Offline-navigation fallback (ADR 0014 Addendum 3, Trello #194). Fires when
+// any matched route's strategy fails to produce a response — network error
+// with no cache hit — regardless of which specific rule (isSelfReaderPage,
+// defaultCache's rsc/html/others buckets) matched the request. Only
+// navigation requests get the fallback document; any other failed request
+// (an API call, an asset) surfaces as a real network error rather than
+// silently succeeding with a reader page.
+serwist.setCatchHandler(async ({ request, url }) => {
+  if (request.mode !== "navigate") return Response.error();
+  const locale =
+    FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
+    FALLBACK_LOCALES[0];
+  const cache = await caches.open(PAGES_CACHE_NAME);
+  const fallback = await cache.match(fallbackDocumentUrl(locale));
+  return fallback ?? Response.error();
+});
+
+// Precache the fallback document itself — page 1's real reader-page HTML for
+// both locales — at install time, for every visitor. Independent of the
+// consent-gated bulk download (must work before that has ever run) and tiny
+// next to it, so no standalone/consent gate applies here, unlike the page
+// fonts and bulk JSON this same cache also holds. Best-effort: a failure here
+// (installing while offline) just means no fallback exists yet until a later
+// online visit. It shares its cache key with isSelfReaderPage's own
+// NetworkFirst rule, so any ordinary online visit to page 1 refreshes it too
+// — this seed is only for a visitor who is offline before ever reaching
+// page 1 normally.
+self.addEventListener("install", (event: ExtendableEvent) => {
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(PAGES_CACHE_NAME);
+      await Promise.all(
+        FALLBACK_LOCALES.map((locale) => ensureCached(cache, fallbackDocumentUrl(locale))),
+      );
+    })(),
+  );
+});
 
 // Bulk pre-cache of the base mushaf. User-initiated on an explicit tap — the
 // client (use-pwa-precache hook) never auto-starts it, on any surface (ADR 0014

@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { WifiOff } from "lucide-react";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
 import { DESKTOP_QURAN_FONT_SIZES } from "@constants/font";
@@ -197,6 +198,13 @@ type QuranSafhaProps = {
   // reflows the document (docs/plans/fix-panel-placeholder-reflow.md).
   lines: Record<string, Array<WordWithVerse>> | null;
   pageMetadata: PageMetadataWithChapter | null;
+  // True when this page's content query has no data AND is paused (offline,
+  // React Query's default networkMode skips the fetch entirely rather than
+  // erroring) or errored outright. Without this the skeleton above renders
+  // forever — there is no other signal that the page will never arrive
+  // (ADR 0014 Addendum 3). False/undefined is indistinguishable from "still
+  // loading, will resolve shortly", which is correct for every other caller.
+  unavailableOffline?: boolean;
   locale: string;
   // When set, this safha shows/edits another user's mushaf via an access grant
   // (see ADR 0012). Undefined = the viewer's own mushaf.
@@ -236,6 +244,7 @@ export const QuranSafha = ({
   page,
   lines: linesProp,
   pageMetadata,
+  unavailableOffline = false,
   locale,
   grantId,
   viewingOwnerName,
@@ -600,6 +609,21 @@ export const QuranSafha = ({
                     An overlay here instead would contribute zero height and, on the
                     content-sized desktop spread, collapse the whole card to its
                     header and footer — which is what shipped and had to be fixed. */}
+                {/* Layered over the skeleton bars rather than replacing them —
+                    the bars are what gives this no-content state its correct
+                    height (see the comment above); this only adds a message on
+                    top, same technique as the fontReady overlay. */}
+                {!hasContent && unavailableOffline && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground text-center">
+                      <WifiOff className="size-3.5 shrink-0" strokeWidth={1.8} />
+                      {t(
+                        "offline.notAvailableOffline",
+                        "This page hasn't been downloaded yet — connect to the internet to read it.",
+                      )}
+                    </p>
+                  </div>
+                )}
                 {showSkeleton &&
                   (hasContent ? (
                     <div

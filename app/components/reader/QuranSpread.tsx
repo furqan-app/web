@@ -18,6 +18,9 @@ type PagePayload = {
   pageId: number;
   lines: PageWords["lines"] | null;
   pageMetadata: PageWords["pageMetadata"] | null;
+  // See QuranSafhaProps — true when this page will never arrive (offline,
+  // not precached) rather than merely still loading.
+  unavailableOffline?: boolean;
 };
 
 type QuranSpreadProps = {
@@ -122,6 +125,7 @@ export const QuranSpread = ({
             page={rightPage.pageId}
             lines={rightPage.lines}
             pageMetadata={rightPage.pageMetadata}
+            unavailableOffline={rightPage.unavailableOffline}
             locale={locale}
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
@@ -134,6 +138,7 @@ export const QuranSpread = ({
             page={leftPage.pageId}
             lines={leftPage.lines}
             pageMetadata={leftPage.pageMetadata}
+            unavailableOffline={leftPage.unavailableOffline}
             locale={locale}
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}

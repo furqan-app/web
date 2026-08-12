@@ -17,6 +17,7 @@ type RowProps = {
   state: PrecacheState;
   cached: number;
   total: number;
+  failed: number;
   isOnline: boolean;
   onDownload: () => void;
 };
@@ -33,6 +34,7 @@ const OfflineEditionRow = ({
   state,
   cached,
   total,
+  failed,
   isOnline,
   onDownload,
 }: RowProps) => {
@@ -42,6 +44,14 @@ const OfflineEditionRow = ({
   // OfflineDownloadPanel and docs/plans/fix-viewing-chip-intl-interpolation.md.
   const tp = useIntlTranslations("offline");
   const num = (value: number) => toLocaleNumeral(value, locale);
+
+  // A cancelled or interrupted run leaves the cache partway done with the
+  // sentinel unwritten (state stays "idle"/"partial", never "done") — distinct
+  // from a fresh install where nothing has been fetched at all. The resume
+  // mechanics already work (ensureCached skips what's cached); this only
+  // changes what the row displays so a resumed run isn't mistaken for a
+  // restart (ADR 0014 Addendum 3).
+  const hasPartialProgress = cached > 0 && cached < total;
 
   return (
     <div className="p-4 rounded-lg bg-muted space-y-2">
@@ -60,7 +70,15 @@ const OfflineEditionRow = ({
                   "offline.offlineBody",
                   "Connect to the internet to download the Quran for offline reading.",
                 )
-              : tp("sizeNotice", { size: num(sizeMb) })}
+              : failed > 0
+                ? tp("partialBody", {
+                    cached: num(cached),
+                    total: num(total),
+                    failed: num(failed),
+                  })
+                : hasPartialProgress
+                  ? tp("resumeProgress", { cached: num(cached), total: num(total) })
+                  : tp("sizeNotice", { size: num(sizeMb) })}
           </p>
           <Button
             size="sm"
@@ -69,7 +87,9 @@ const OfflineEditionRow = ({
             onClick={onDownload}
           >
             <CloudDownload className="size-4" strokeWidth={1.8} />
-            {tp("downloadWithSize", { size: num(sizeMb) })}
+            {hasPartialProgress
+              ? t("offline.resume", "Resume download")
+              : tp("downloadWithSize", { size: num(sizeMb) })}
           </Button>
         </>
       )}
@@ -88,7 +108,7 @@ const OfflineEditionRow = ({
  */
 export const OfflineAccessSection = () => {
   const t = useTranslations();
-  const { isStandalone, state, cached, total, isOnline, start } =
+  const { isStandalone, state, cached, total, failed, isOnline, start } =
     usePwaPrecache();
 
   if (!isStandalone) return null;
@@ -106,6 +126,7 @@ export const OfflineAccessSection = () => {
           state={state}
           cached={cached}
           total={total}
+          failed={failed}
           isOnline={isOnline}
           onDownload={start}
         />

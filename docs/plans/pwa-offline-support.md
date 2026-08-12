@@ -270,3 +270,108 @@ Not fixed, deliberately: the gate's post-SW-round-trip appearance is inherent to
 - **Tajweed deferred**, keeping ADR 0023's precache exclusion. Settings is shaped so a "Tajweed mushaf (51 MB)" row is additive.
 - User-facing size is the wire figure (48 MB), not the 67 MiB stored footprint.
 - Trello #129 ("PWA pages loads for offline in every reload") is fixed incidentally by the sentinel short-circuit and should be closed with this work.
+
+---
+
+# Addendum 3 (2026-08-12): Fix offline navigation + standalone detection + resume UI
+
+**Type:** bug
+**Status:** implemented (not browser/offline-verified — lint + typecheck only; see Manual Verification below)
+**Trello:** https://trello.com/c/lWMkW1jp/194-download-offline-works-but-when-i-navigate-using-the-sidebar-or-from-the-home-page-it-doesnt-work (#194)
+
+## Manual Verification
+
+Not exercised in a browser this session (skipped by request). Serwist is disabled under `npm run dev`, so none of this is reachable there — verify with `npm run build:local && npm start`, then, per the Verified Test Cases above:
+
+- Install the built app, complete or partially complete the offline download, then go offline and confirm swipe still works (unchanged), a sidebar tap to an unread surah lands correctly (row 2/4), a cold relaunch resumes the last-read page (row 5), and cancelling a download mid-run shows "Resume download" in Settings with the right count.
+- Confirm the Settings offline row and first-run gate now actually render on a device where the earlier `display-mode: fullscreen` bug hid them.
+- Confirm a page whose JSON was never downloaded shows the new inline notice instead of spinning forever (row 6).
+
+## Summary
+
+Three reports bundled under one card, two sharing a root cause:
+
+1. Cold offline app launch shows a blank shell, not the reader.
+2. Offline, swiping between pages works; sidebar/rub taps and home-page surah taps do nothing.
+3. The Settings "Offline Access" row (already built, `OfflineAccessSection`) never appears on an installed Android device, even after a successful download.
+
+## Root Cause
+
+**(1) and (2):** the bulk precache (Addendum 1/2) only ever caches per-page **JSON + fonts**, never page HTML — correct for swipe, which never navigates (`ReaderPager` uses `history.replaceState` + a client fetch of precached JSON). But `SurahListItem`, `RubList`, the home page's surah list, and `ContinueReadingLink` all use next-intl's `<Link>` — a real navigation, fetching that route's document/RSC. `isSelfReaderPage` caches that `NetworkFirst`, but only for pages actually visited online — never part of the bulk precache. Offline + never-visited page = the fetch fails with no cache entry. The same gap exists one level up: `start_url: "/"` needs the home route's document, which is cached only opportunistically (defaultCache's LRU-capped "others"/html buckets), not guaranteed.
+
+**(3):** `app/manifest.ts`'s `display` was changed `"standalone"` → `"fullscreen"` for Android status-bar hiding (`docs/plans/feature-pwa-fullscreen-focus-mode.md`, 2026-07-31) — three weeks after `isStandaloneDisplayMode()` (`app/hooks/use-pwa-precache.ts:27-28`) was written checking only `display-mode: standalone`. On any platform that honors `fullscreen` as the effective mode, `isStandalone` is `false` for the whole session, so every surface gated on it (Settings row, first-run gate) silently never renders. The one download that worked went through the in-tab `appinstalled` prompt, which doesn't check display mode — explaining why it worked once and then the status vanished.
+
+See [ADR 0014 Addendum 3](../architecture/adr/0014-pwa-offline-architecture.md) for the full mechanism.
+
+## Decision Tree / Algorithm
+
+**Offline navigation:**
+
+| # | Trigger | Reader already mounted? | Online? | Result |
+|---|---|---|---|---|
+| 1 | Swipe / in-spread arrow / keyboard | Yes | any | Unchanged |
+| 2 | Sidebar/rub tap, Continue Reading | Yes | any | `ReaderPager.jumpTo` directly — no navigation, no fallback needed |
+| 3 | Sidebar/home tap → new page | No | Yes | Unchanged (normal navigation) |
+| 4 | Sidebar/home tap → new page | No | No | `setCatchHandler` serves the precached `/{locale}/pages/1` fallback document; client reads the requested id from `location.pathname` on mount and calls `jumpTo` to correct to it (or, if that page's JSON isn't cached, to the last-read page, or page 1 if neither is known) |
+| 5 | Cold app launch (`start_url`) | No | No | Same fallback path as #4, correcting to the last-read page or page 1 |
+| 6 | Landed on a page whose JSON/fonts were never downloaded | — | No | Inline "not available offline yet" notice instead of an indefinite loading skeleton |
+
+**Settings offline row (resume/partial state):**
+
+| State | `cached` | Shown |
+|---|---|---|
+| Nothing downloaded | 0 | "Download (48 MB)" |
+| Fully downloaded | 604 | "Available offline" (unchanged) |
+| Cancelled/interrupted | 1–603 | "n/604 downloaded" + "Resume download" |
+| Interrupted with real fetch failures | 1–603, `failed > 0` | same as above + "some pages couldn't be downloaded" |
+| Download in progress | — | Progress bar (unchanged) |
+
+Resume works today at the protocol level with no change: `START_PRECACHE` re-runs `precacheAllPages`, and `ensureCached` skips any font/JSON already in the cache — a cancelled run resumes from where it stopped, it's only the Settings UI that currently can't tell the difference from "nothing downloaded."
+
+## Verified Test Cases
+
+Walked through with the user (2026-08-12):
+
+- Never-visited page tapped from the nav sidebar while offline, reader already open → row 2, instant client-side jump, works regardless of whether that page was ever swiped to.
+- Never-visited page tapped from the home page while offline → row 4, brief page-1 flash then corrects to the tapped page (if its JSON is cached) — accepted trade-off, not eliminated (mirrors the first-run gate's own post-round-trip flash, Addendum 2).
+- Fresh install, never opened online, opened offline → row 5, falls back to page 1 (no last-read page exists yet).
+- User cancels a download at 312/604 → sentinel not written, `failed` stays 0, Settings shows "312/604 downloaded" + "Resume download"; tapping it fetches only the remaining 292 pages.
+- A run has genuine fetch failures (not a cancel) → Settings additionally notes some pages couldn't be downloaded, per the `failed` count already plumbed through `PRECACHE_PROGRESS`.
+- Installed on Android (`display: "fullscreen"` in effect) → Settings row now renders; first-run gate now fires on a fresh install.
+
+## Files to Change
+
+Actual files touched during implementation (supersedes the draft list from planning — `use-quran-page.ts` itself needed no change; the offline-unavailable signal is computed where the query result already lives, in `ReaderPager`'s `Panel`, and threaded down as a prop instead):
+
+- `app/hooks/use-pwa-precache.ts` — `isStandaloneDisplayMode()` also checks `matchMedia("(display-mode: fullscreen)")`.
+- `app/constants/offline.ts` — `FALLBACK_LOCALES`, `fallbackDocumentUrl()`.
+- `app/sw.ts` — `serwist.setCatchHandler(...)` serves the precached fallback document for a failed navigation request; a new `install` listener precaches `/{locale}/pages/1` (both locales) independent of the bulk download.
+- `app/contexts/ReaderNavigationContext.tsx` — new. Exposes `jumpTo`, published by `ReaderPager` while mounted.
+- `app/[locale]/layout.tsx` — mounts `ReaderNavigationProvider`.
+- `app/components/reader/ReaderPager.tsx` — registers `jumpTo` into the new context; on mount only, compares `window.location.pathname` against its SSR-seeded `initialPage` and self-corrects via `jumpTo` to the real requested page (reader-path mismatch) or the last-read page (any other path — the fallback served for a failed `/` or `/{locale}`).
+- `app/components/SurahListItem.tsx`, `app/components/RubList.tsx`, `app/components/nav/ContinueReadingLink.tsx` — read `jumpTo` from `ReaderNavigationContext`; on a plain click (no modifiers), `preventDefault` and call it instead of letting the `<Link>` navigate. Falls back to normal navigation when no pager is mounted.
+- `app/components/reader/QuranSpread.tsx`, `app/components/QuranSafha.tsx` — thread an `unavailableOffline` flag (derived from `usePage`'s `isPaused`/`isError` in `Panel`, since React Query's default `networkMode` pauses rather than errors a query made while offline) down to where the skeleton renders; shows a "not available offline" notice layered over the existing skeleton bars (not replacing them, to preserve their layout-height role) instead of spinning forever.
+- `app/components/offline/OfflineAccessSection.tsx` — `OfflineEditionRow` distinguishes `cached === 0` ("Download") from `0 < cached < total` ("n/total downloaded" + "Resume download"), and surfaces `failed > 0` via the existing `partialBody` copy.
+- `messages/en.json`, `messages/ar.json` — `offline.resumeProgress`, `offline.resume`, `offline.notAvailableOffline`.
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 3 (written during planning).
+- `docs/architecture/DECISIONS.md` — PWA section amended (written during planning).
+- `docs/architecture/COMPONENTS.md` — `ReaderNavigationContext` entry; `ReaderPager`/`OfflineAccessSection` entries updated.
+
+## Constraints
+
+- The fallback document must stay tiny and must not depend on `isCacheComplete`/the bulk download having run — it has to work on a fresh install before any consent-gated download exists.
+- `isStandaloneDisplayMode()` must be the single place every offline surface checks — do not let a component re-derive display-mode detection independently, or this exact drift (manifest changes, gate doesn't) recurs.
+- Sidebar/rub/Continue-Reading navigation must still fall back to a normal `<Link>` when no `ReaderPager` is mounted (home page, marks, settings) — `jumpTo` only exists once the pager is live.
+- Do not bulk-precache all 604 pages' HTML to sidestep the fallback-document design — that reopens the ~1.5 GB cost the original decision rejected.
+
+## What NOT to Do
+
+- Do not make the offline navigation fix depend on completing the 48 MB bulk download first — bugs 1 and 2 must be fixed for a fresh install too.
+- Do not treat the fullscreen-detection bug as "working as designed" — it's a genuine regression from the later fullscreen-mode change, not an intentional gate.
+- Do not silently reinterpret "Resume download" as starting over — the SW's existing `ensureCached` skip-if-cached behavior must be preserved; this task only changes what Settings displays, not the resume mechanics.
+
+## Decisions Made
+
+- Full offline support: any of the 604 precached pages must open offline even if never previously visited/swiped to (not just the last-read page) — user confirmed 2026-08-12.
+- The offline indicator/download button stays in the Settings sidebar (not the nav surah/rub sidebar) — user confirmed 2026-08-12; the existing `OfflineAccessSection` location is correct, its non-appearance was the fullscreen-detection bug, not a placement problem.
+- A brief page-1 flash before `jumpTo` corrects to the requested page is accepted, not solved further — inherent to any fallback-document approach, and consistent with the first-run gate's own accepted round-trip flash (Addendum 2).
