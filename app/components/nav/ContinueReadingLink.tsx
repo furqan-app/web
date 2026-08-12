@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { useLocale } from "next-intl";
-import { Link } from "@/i18n/routing";
+import { NavPillLink } from "./NavPillLink";
 import useTranslations from "@hooks/use-translations";
 import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
@@ -40,7 +40,7 @@ export const ContinueReadingLink = () => {
   if (isStandalone && !isDesktopUp) return null;
 
   return (
-    <Link
+    <NavPillLink
       href={`/pages/${lastReadPage}`}
       locale={locale}
       onClick={(e) => {
@@ -49,12 +49,11 @@ export const ContinueReadingLink = () => {
         e.preventDefault();
         jumpTo(lastReadPage);
       }}
-      className="flex items-center gap-2 rounded-xl px-2 md:px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50 transition-colors"
     >
       <BookOpen className="size-5 md:size-4 flex-none" strokeWidth={1.7} />
       <span className="hidden md:inline">
         {t("continueReading.navLink", "Continue Reading")}
       </span>
-    </Link>
+    </NavPillLink>
   );
 };
