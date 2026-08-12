@@ -81,3 +81,7 @@ settings.local.json
 /graphify-out/cache/
 /graphify-out/cost.json
 /graphify-out/manifest.json
+
+# impeccable machine-local settings + per-run scratch output (keep DESIGN.md, .impeccable/design.json)
+.impeccable/config.local.json
+/.impeccable/critique/
