@@ -26,6 +26,11 @@ export type PrecacheState =
 
 const isStandaloneDisplayMode = () =>
   window.matchMedia("(display-mode: standalone)").matches ||
+  // The manifest's `display` is "fullscreen" (status-bar hiding, see
+  // feature-pwa-fullscreen-focus-mode.md) — platforms that honor it report
+  // this mode instead of "standalone", so both must be checked (ADR 0014
+  // Addendum 3).
+  window.matchMedia("(display-mode: fullscreen)").matches ||
   // iOS Safari has no `display-mode: standalone` media query support.
   (navigator as unknown as { standalone?: boolean }).standalone === true;
 

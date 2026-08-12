@@ -21,6 +21,8 @@ import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
+import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
 import { ensurePageFonts, pageFontsReady } from "@/app/utils/page-font-registry";
 
@@ -119,8 +121,17 @@ const Panel = memo(function Panel({
   onNavigate,
 }: PanelProps) {
   const { rightPage, leftPage } = getPagePair(anchor);
-  const rightData = usePage(rightPage).data;
-  const leftData = usePage(leftPage).data;
+  const rightQuery = usePage(rightPage);
+  const leftQuery = usePage(leftPage);
+  const rightData = rightQuery.data;
+  const leftData = leftQuery.data;
+  // isPaused: React Query's default networkMode skips the fetch entirely
+  // while offline rather than erroring, so isError alone would miss the
+  // common case. isError still covers a genuine failure while online (e.g. a
+  // 404). Either way, with no data and no reason to expect one is coming, the
+  // card shows a notice instead of an indefinite skeleton (ADR 0014 Addendum 3).
+  const rightUnavailable = !rightData && (rightQuery.isPaused || rightQuery.isError);
+  const leftUnavailable = !leftData && (leftQuery.isPaused || leftQuery.isError);
   const { singleStepNav, pairStepNav } = computeSpreadNav(anchor, isRTL, basePath);
 
   return (
@@ -144,11 +155,13 @@ const Panel = memo(function Panel({
               pageId: rightPage,
               lines: rightData?.lines ?? null,
               pageMetadata: rightData?.pageMetadata ?? null,
+              unavailableOffline: rightUnavailable,
             }}
             leftPage={{
               pageId: leftPage,
               lines: leftData?.lines ?? null,
               pageMetadata: leftData?.pageMetadata ?? null,
+              unavailableOffline: leftUnavailable,
             }}
             isRTL={isRTL}
             locale={locale}
@@ -200,6 +213,8 @@ export function ReaderPager({
   const isTablet = useIsTablet();
   const { toggleOverlay } = useNavOverlay();
   const { mushafId, edition } = useQuranMushaf();
+  const { setJumpTo } = useReaderNavigation();
+  const { lastReadPage } = useLastReadPage();
 
   // Seed the SSR pair once, before children (usePage) render, so the initial page
   // paints synchronously from cache with no fetch/skeleton.
@@ -422,6 +437,37 @@ export function ReaderPager({
       inFlight.current = null;
       clearTimeout(pending.timer);
     };
+  }, []);
+
+  // Publishes jumpTo into ReaderNavigationContext so a Link that would
+  // otherwise trigger a full navigation (SurahListItem, RubList,
+  // ContinueReadingLink) can move this already-mounted pager client-side
+  // instead — no network round trip, works offline for any precached page.
+  // Cleared on unmount so those callers fall back to normal navigation once no
+  // pager is mounted (ADR 0014 Addendum 3).
+  useEffect(() => {
+    setJumpTo(() => jumpTo);
+    return () => setJumpTo(null);
+  }, [jumpTo, setJumpTo]);
+
+  // Self-correction for the offline navigation fallback (ADR 0014 Addendum 3):
+  // when the service worker's setCatchHandler serves the precached page-1
+  // document in place of a failed navigation, the SSR props describe page 1
+  // but the address bar still names whatever page (or route) was actually
+  // requested. Reader-path requests (`{basePath}/{id}`) correct to that id;
+  // anything else (a failed `/` or `/{locale}` cold launch) falls back to the
+  // last-read page, which defaults to 1 when nothing is known yet. A real
+  // online navigation already has a matching pathname, so this is a no-op
+  // there — mount-only, so it never fights a normal swipe/commit afterward.
+  useEffect(() => {
+    const { pathname } = window.location;
+    const isReaderPath = pathname.startsWith(`${basePath}/`);
+    const match = isReaderPath ? pathname.slice(basePath.length + 1).match(/^(\d+)$/) : null;
+    const requestedPage = match ? Number(match[1]) : lastReadPage;
+    if (requestedPage !== initialPage && requestedPage >= 1 && requestedPage <= TOTAL_PAGES) {
+      jumpTo(requestedPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Physical ArrowLeft/ArrowRight keys commit the same page step as the click

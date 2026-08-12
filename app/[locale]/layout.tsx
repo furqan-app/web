@@ -12,6 +12,7 @@ import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
 import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
 import { ReaderPageProvider } from "@/app/contexts/ReaderPageContext";
+import { ReaderNavigationProvider } from "@/app/contexts/ReaderNavigationContext";
 import { LastReadPageProvider } from "@/app/contexts/LastReadPageContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
@@ -58,16 +59,18 @@ export default async function LocaleLayout({
                     <SidebarProvider>
                       <NavOverlayProvider>
                         <ReaderPageProvider>
-                          <LastReadPageProvider>
-                            <Nav />
-                            {children}
-                            <RecitationPlayerBar />
-                            <RecitationSettingsSheet />
-                            <PlansWidget />
-                            <LastReadPageSync />
-                            <OfflineInstallPrompt />
-                            <OfflineSetupGate />
-                          </LastReadPageProvider>
+                          <ReaderNavigationProvider>
+                            <LastReadPageProvider>
+                              <Nav />
+                              {children}
+                              <RecitationPlayerBar />
+                              <RecitationSettingsSheet />
+                              <PlansWidget />
+                              <LastReadPageSync />
+                              <OfflineInstallPrompt />
+                              <OfflineSetupGate />
+                            </LastReadPageProvider>
+                          </ReaderNavigationProvider>
                         </ReaderPageProvider>
                       </NavOverlayProvider>
                     </SidebarProvider>
