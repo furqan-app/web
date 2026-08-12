@@ -5,14 +5,14 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-08-04
+Last updated: 2026-08-12
 
 ---
 
 ## Zone: nav
 
 ```
-Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch
+Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch; on pages routes shows a surah indicator button (surah number + name + chevron) instead of a plain panel icon — reads currentSurah from SidebarContext, falls back to PanelLeftOpen icon while SidebarContext.currentSurah is null (Sidebar lazy-load gap)
   FurqanLogo                 — brand mark (SVG, links to home)
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
@@ -29,10 +29,10 @@ Nav                          — top bar, always visible; responsive (mobile/des
     LanguageToggle           — ar ↔ en locale switch
     EnablePushToggle         — Web Push permission/subscribe toggle (ADR 0037); renders nothing when the browser doesn't support Push
     OfflineAccessSection     — installed-PWA-only status row + Download button (usePwaPrecache); the permanent recovery path for anyone who skipped the gate/prompt. Deliberately NOT an ambient progress bar — the bar appears only while a download is actually in flight (ADR 0014 Addendum 2)
-  Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic); controlled via SidebarContext; also rendered by the grant reader layout
+  Sidebar                    — surah/rub navigation panel (Sheet, lazy-loaded via next/dynamic); controlled via SidebarContext; derives current surah/rub from pathname and sets SidebarContext.currentSurah; controlled tabs (persists active tab across open/close); auto-scrolls active item into view on open; also rendered by the grant reader layout
     SurahList                — grid of surah cards [SHARED — also used on home page]
-      SurahListItem          — single surah card; link uses useReaderBasePath (grant-aware)
-    RubList                  — rich rub list: sticky juz headers, SVG hizb-aware circle badge per row, Uthmanic text snippet, surah name + ayah, page number; accepts surahs prop for chapter name lookup; Eastern Arabic numerals in ar locale; links use useReaderBasePath (grant-aware)
+      SurahListItem          — single surah card; link uses useReaderBasePath (grant-aware); data-surah-id attribute for sidebar scroll-to-active
+    RubList                  — rich rub list: sticky juz headers, SVG hizb-aware circle badge per row, Uthmanic text snippet, surah name + ayah, page number; accepts surahs prop for chapter name lookup; Eastern Arabic numerals in ar locale; links use useReaderBasePath (grant-aware); data-rub-id attribute for sidebar scroll-to-active
 ```
 
 ## Zone: home (`app/[locale]/page.tsx`)

@@ -13,9 +13,10 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   surah: SurahResult;
+  isActive?: boolean;
 };
 
-export const SurahListItem = ({ surah }: Props) => {
+export const SurahListItem = ({ surah, isActive }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
@@ -40,7 +41,13 @@ export const SurahListItem = ({ surah }: Props) => {
         e.preventDefault();
         jumpTo(surahStartingPage);
       }}
-      className="flex items-center gap-3 p-4 bg-card border border-border rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+      data-surah-id={surah.id}
+      className={cn(
+        "flex items-center gap-3 p-4 rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200",
+        isActive
+          ? "bg-primary/10 border border-primary/30"
+          : "bg-card border border-border",
+      )}
     >
       <div className="flex-none w-10 h-10 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground font-bold text-sm">
         {toLocaleNumeral(surah.id, locale)}
@@ -70,4 +77,3 @@ export const SurahListItem = ({ surah }: Props) => {
     </Link>
   );
 };
-
