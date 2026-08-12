@@ -1,16 +1,16 @@
-# Graph Report - furqan  (2026-08-12)
+# Graph Report - furqan  (2026-08-13)
 
 ## Corpus Check
-- 1675 files · ~2,630,708 words
+- 1682 files · ~2,635,900 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2276 nodes · 4059 edges · 227 communities (154 shown, 73 thin omitted)
+- 2324 nodes · 4137 edges · 237 communities (164 shown, 73 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 90 edges (avg confidence: 0.72)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b557f6de`
+- Built from commit: `d25a960b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -62,6 +62,7 @@
 - Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette
 - Page Turn Blanks the Reader on Slow Networks
 - QuranSpread.tsx
+- PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit
 - start-task Load context gate
 - Mobile Safha: Full-Screen Sizing
 - Fix: Verse Rendering Outside the Quran Page
@@ -90,6 +91,7 @@
 - ADR 0032: Depth on near-black surfaces from light, not shadow (superseded by flat page decision)
 - docs/architecture/DECISIONS.md
 - /ship-fq-task skill
+- QuranSafhaViewContext.tsx
 - Sidebar.tsx
 - MyPlansList
 - fq-logger: Structured Logging & Observability
@@ -110,6 +112,7 @@
 - Fix dead tailwindcss-animate classes in dialog.tsx (plugin not installed)
 - Fix: Hamza-Alif Mismatch in Verse Search
 - i18n Setup (next-intl, ar/en locales)
+- getQueryClient
 - furqan_app Prisma migrations workflow
 - ADR 0030: Plan engine - code-defined templates, typed scheduling rules, derived daily assignments
 - Theme system (named CSS classes on html)
@@ -159,6 +162,7 @@
 - mujaz-stats.js
 - AGENTS.md
 - LastReadPageContext.tsx
+- axios
 - Sidebar Surah Indicator & Active Scroll
 - visual.spec.ts
 - dropdown-menu.tsx
@@ -170,6 +174,7 @@
 - Homepage Surah Card: Direction-Based Name Display
 - Keep Mobile/Tablet Screen Active While App Is Open
 - Save Last Read Page + Navbar Link to Resume
+- PlanEnrollForm.tsx
 - dependencies
 - /plan-fq-task
 - Steps
@@ -193,7 +198,7 @@
 - mujaz
 - reader-shot.mjs
 - @babel/parser
-- class-variance-authority
+- types/recitation.ts
 - mujaz-statusline.sh
 - commit-staged/SKILL.md
 - cli-progress
@@ -240,11 +245,16 @@
 - POST
 - Bismillah calligraphy SVG (decorative Arabic glyph: "Bismillah ir-Rahman ir-Raheem")
 - Decorative surah banner frame graphic (surah-frame.svg)
+- recitation-api.ts
+- QuranPage.tsx
+- useRecitation
+- CLAUDE.md
+- ViewingChip.tsx
 
 ## God Nodes (most connected - your core abstractions)
-1. `useTranslations()` - 94 edges
+1. `useTranslations()` - 96 edges
 2. `jsonResponse()` - 58 edges
-3. `cn()` - 54 edges
+3. `cn()` - 56 edges
 4. `extractUser()` - 44 edges
 5. `toLocaleNumeral()` - 30 edges
 6. `scripts` - 26 edges
@@ -258,12 +268,12 @@
   app/components/marks/MyMarksList.tsx → lib/utils.ts
 - `WeekStrip()` --calls--> `cn()`  [EXTRACTED]
   app/components/plans/PlansTodayHero.tsx → lib/utils.ts
-- `CommandShortcut()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/command.tsx → lib/utils.ts
-- `DropdownMenuShortcut()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/dropdown-menu.tsx → lib/utils.ts
-- `SheetFooter()` --calls--> `cn()`  [EXTRACTED]
-  components/ui/sheet.tsx → lib/utils.ts
+- `DialogFooter()` --calls--> `cn()`  [EXTRACTED]
+  components/ui/dialog.tsx → lib/utils.ts
+- `Future Two-Page Book Layout (Recto/Verso)` --semantically_similar_to--> `Mushaf Double-Page Spread (Pairing, Data-Fetch, Decoration)`  [INFERRED] [semantically similar]
+  docs/architecture/APP_PURPOSE.md → docs/architecture/adr/0013-mushaf-double-page-spread.md
+- `Fix Homepage CDN Cache Poisoning (Hostinger Edge)` --semantically_similar_to--> `Fix RSC Cache Poisoning on Hostinger`  [INFERRED] [semantically similar]
+  docs/plans/fix-homepage-cdn-cache-poisoning.md → docs/plans/fix-rsc-cache-poisoning.md
 
 ## Import Cycles
 - None detected.
@@ -291,35 +301,35 @@
 - **Furqan full release orchestration pipeline** — docs_workflow_release_cut_release, docs_workflow_release_promote_to_staging, docs_workflow_release_promote_release, docs_workflow_release_sync_main_from_prod [EXTRACTED 1.00]
 - **Furqan two-database split (Quran content vs App data)** — docs_standards_database_furqan_quran_db, docs_standards_database_furqan_app_db, docs_standards_database_no_cross_domain_fk [EXTRACTED 1.00]
 
-## Communities (227 total, 73 thin omitted)
+## Communities (237 total, 73 thin omitted)
 
 ### Community 0 - "getQueryClient"
-Cohesion: 0.12
-Nodes (21): GenerateCodeCard(), GrantedViewersList(), Props, MushafHub(), PersonAvatar(), Props, Props, RedeemCodeCard() (+13 more)
+Cohesion: 0.13
+Nodes (22): AccessibleMushafList(), Props, GenerateCodeCard(), GrantedViewersList(), Props, MushafHub(), PersonAvatar(), Props (+14 more)
 
 ### Community 1 - "ADR 0028: Reader uses a persistent client pager over slim static content"
 Cohesion: 0.05
 Nodes (41): QuranSwipeNav component (mobile swipe reader), ADR 0019: sessionStorage key for cross-page swipe direction, ADR 0020: Client Component required for inline <style> injection, FontFaceInjector.tsx (Client Component), ReaderPage Server Component, Cross-chapter stop-point chaining (Juz/Hizb/Rub stop points), data-fq-word attribute highlight mechanism (supersedes DOM ref registry), QDC runtime proxy (app/api/quran/recitations) (+33 more)
 
 ### Community 2 - "MyPlansList.tsx"
-Cohesion: 0.19
-Nodes (15): PlanCard(), PlansTodayHero(), WeekStrip(), useOnlineStatus(), usePlanStreak(), ADR-0030, useTodayAssignments(), QueryProvider() (+7 more)
+Cohesion: 0.12
+Nodes (25): EDIT_VIEW_FOR_TEMPLATE, groupHistoryByDate(), PlanCard(), PlanHistorySection(), STATUS_ACTIONS, STATUS_LABEL, ADR-0030, formatRange() (+17 more)
 
 ### Community 3 - "useTranslations"
 Cohesion: 0.13
-Nodes (19): DesktopQuranFontSizeControls(), sizes, MarkedByLine(), EnablePushToggle(), JuzRangeSlider(), Props, QuranSafha(), themes (+11 more)
+Nodes (17): MarksSignedOutPrompt(), SharedMushafLink(), OfflineDownloadPanel(), PanelState, Props, OfflineInstallPrompt(), ADR-0014, AddPlanButton() (+9 more)
 
 ### Community 4 - "config.ts"
-Cohesion: 0.10
-Nodes (20): handler, authOptions, MarksSignedOutPrompt(), AccessRemovedBanner(), ADR-0012, SignedOutPrompt(), PlansSignedOutPrompt(), getRubs() (+12 more)
+Cohesion: 0.09
+Nodes (23): handler, authOptions, AccessRemovedBanner(), ADR-0012, SignedOutPrompt(), Props, SurahList(), getRubs() (+15 more)
 
 ### Community 5 - "engine.ts"
 Cohesion: 0.10
-Nodes (35): GET(), toDateString(), GET(), TodayPlanAssignments, ADR-0030, MissedDayPolicy, PLAN_ACTIVITIES, PLAN_TEMPLATES (+27 more)
+Nodes (33): GET(), toDateString(), GET(), ADR-0030, MissedDayPolicy, PLAN_ACTIVITIES, PlanTemplate, PlanTrack (+25 more)
 
 ### Community 6 - "getNotificationDeps"
-Cohesion: 0.15
-Nodes (16): handle(), isAuthorized(), ALLOWED_PUSH_HOSTS, DELETE(), hashEndpoint(), isValidPushEndpoint(), POST(), GET() (+8 more)
+Cohesion: 0.12
+Nodes (23): handle(), isAuthorized(), POST(), ALLOWED_PUSH_HOSTS, DELETE(), hashEndpoint(), isValidPushEndpoint(), POST() (+15 more)
 
 ### Community 7 - "constants/plans.ts"
 Cohesion: 0.14
@@ -330,68 +340,68 @@ Cohesion: 0.07
 Nodes (31): Seeder guard+reset+fetch+insert algorithm, scripts/quran-seed/seed.js orchestrator, ADR 0027 — tablet swipe carousel, 3-panel tablet swipe carousel, Tablet Nav Overlay Effect, Mobile reader UX addendum (nav overlay, long-press), --mushaf-* printed-mushaf CSS tokens, NavOverlayContext (+23 more)
 
 ### Community 9 - "RecitationContext.tsx"
-Cohesion: 0.14
-Nodes (23): DEFAULT_RECITATION_SETTINGS, ADR-0021, getInitialSettings(), RecitationContext, RecitationContextType, RecitationProvider(), setWordHighlightClass(), ADR-0013 (+15 more)
+Cohesion: 0.18
+Nodes (18): getInitialSettings(), RecitationContext, RecitationContextType, RecitationProvider(), resolveStopTarget(), setWordHighlightClass(), ADR-0013, ADR-0021 (+10 more)
 
 ### Community 10 - "ReaderPager.tsx"
-Cohesion: 0.12
-Nodes (21): computeSpreadNav(), NavHrefs, Panel, PanelProps, Props, stepAnchor(), ADR-0014, ADR-0028 (+13 more)
+Cohesion: 0.13
+Nodes (19): computeSpreadNav(), NavHrefs, Panel, PanelProps, Props, stepAnchor(), ADR-0014, ADR-0028 (+11 more)
 
 ### Community 11 - "RubList.tsx"
-Cohesion: 0.19
-Nodes (9): RecitationProvider, RecitationProviderError, QdcAudioFile, QdcReciter, QdcVerseTiming, ChapterAudio, Reciter, VerseSegment (+1 more)
+Cohesion: 0.12
+Nodes (20): GET(), GET(), Props, SearchBar(), isSearchQueryValid(), searchChapters(), searchVerses(), useSearch() (+12 more)
 
 ### Community 12 - "QuranSafha.tsx"
-Cohesion: 0.05
-Nodes (43): LineProps, QuranLine(), ADR-0025, NO_LINES, QuranSafhaProps, SKELETON_BARS, tailwindFontUtility, ADR-0012 (+35 more)
+Cohesion: 0.09
+Nodes (23): LineProps, QuranLine(), ADR-0025, NO_LINES, QuranSafhaProps, SKELETON_BARS, tailwindFontUtility, ADR-0012 (+15 more)
 
 ### Community 13 - "useQuranMushaf"
 Cohesion: 0.18
 Nodes (15): MushafSwitchSync(), Props, ADR-0021, ADR-0033, getInitialMushafId(), QuranMushafContext, QuranMushafContextType, QuranMushafProvider() (+7 more)
 
 ### Community 14 - "ReaderPage.tsx"
-Cohesion: 0.09
-Nodes (21): ReaderPage(), ReaderPageProps, ADR-0012, ADR-0013, ADR-0028, getPageWords(), GLYPH_FIELD, PageWords (+13 more)
+Cohesion: 0.13
+Nodes (15): ReaderPage(), ReaderPageProps, ADR-0012, ADR-0013, ADR-0028, getPageWords(), GLYPH_FIELD, PageWords (+7 more)
 
 ### Community 15 - "Shared Mushaf Access"
 Cohesion: 0.08
 Nodes (27): ADR 0009 — reproducible Quran seeder, Reproducible Quran Database Seeder, ADR 0012 — shared mushaf access, Shared Mushaf Access, Mark author attribution (Marked by X), MushafAccessGrant model, MushafShareCode model, ViewingChip component (+19 more)
 
 ### Community 16 - "toLocaleNumeral"
-Cohesion: 0.13
-Nodes (22): OfflineAccessSection(), OfflineEditionRow(), RowProps, ADR-0014, ADR-0023, OfflineDownloadPanel(), PanelState, Props (+14 more)
+Cohesion: 0.15
+Nodes (15): OfflineAccessSection(), OfflineEditionRow(), RowProps, ADR-0014, ADR-0023, OfflineProgressBar(), Props, broadcastDismissed() (+7 more)
 
 ### Community 17 - "types/index.ts"
-Cohesion: 0.10
-Nodes (23): DesktopQuranFontSizeContext, DesktopQuranFontSizeContextType, DesktopQuranFontSizeProvider(), getInitialDesktopQuranFontSize(), getInitialView(), QuranSafhaViewContext, QuranSafhaViewContextType, QuranSafhaViewProvider() (+15 more)
+Cohesion: 0.09
+Nodes (25): sizes, DESKTOP_QURAN_FONT_SIZES, DesktopQuranFontSizeContext, DesktopQuranFontSizeContextType, DesktopQuranFontSizeProvider(), getInitialDesktopQuranFontSize(), KeepScreenAwakeContext, KeepScreenAwakeContextType (+17 more)
 
 ### Community 18 - "[locale]/layout.tsx"
-Cohesion: 0.23
-Nodes (11): KeepScreenAwakeSync(), SettingsSidebar(), KeepScreenAwakeContext, KeepScreenAwakeContextType, KeepScreenAwakeProvider(), useKeepScreenAwake(), NavOverlayContext, NavOverlayContextValue (+3 more)
+Cohesion: 0.27
+Nodes (10): KeepScreenAwakeSync(), EnablePushToggle(), SettingsSidebar(), useKeepScreenAwake(), NavOverlayContext, NavOverlayContextValue, NavOverlayProvider(), useIsMobile() (+2 more)
 
 ### Community 19 - "registry.ts"
-Cohesion: 0.15
-Nodes (14): createEmailChannel(), fallbackEmail(), baseInput, fakeLogger, createInAppChannel(), createPushChannel(), baseInput, fakeLogger (+6 more)
+Cohesion: 0.20
+Nodes (14): ContinueReadingLink(), FurqanLogo(), Nav(), AndroidBackExitGuard(), GUARD_STATE, Props, ADR-0040, AppLaunchRedirect() (+6 more)
 
 ### Community 20 - "PlansWidget.tsx"
-Cohesion: 0.24
-Nodes (13): Sidebar(), formatRange(), PlanAssignmentRow(), Props, inRange(), PlansWidget(), RecitationPlayerBar(), ADR-0021 (+5 more)
+Cohesion: 0.20
+Nodes (10): MarkerColorPicker(), Sidebar(), metadata, RootLayout(), surahNames, tajawal, uthmanic, viewport (+2 more)
 
 ### Community 21 - "MyMarksList.tsx"
-Cohesion: 0.14
-Nodes (20): buildVerseSnippet(), GET(), getSortKey(), MarkListItem, MarksPage, ADR-0025, VALID_CATEGORIES, chipByCategory (+12 more)
+Cohesion: 0.15
+Nodes (18): buildVerseSnippet(), GET(), getSortKey(), MarkListItem, MarksPage, ADR-0025, VALID_CATEGORIES, chipByCategory (+10 more)
 
 ### Community 22 - "jsonResponse"
-Cohesion: 0.15
-Nodes (29): deleteMark(), getGrantForViewer(), upsertMark(), withAuthorNames(), POST(), ADR-0012, GET(), POST() (+21 more)
+Cohesion: 0.12
+Nodes (34): deleteMark(), getGrantForViewer(), MarkBody, MarkWithAuthor, ADR-0012, ADR-0025, upsertMark(), withAuthorNames() (+26 more)
 
 ### Community 23 - "MarkModal.tsx"
-Cohesion: 0.10
-Nodes (27): LANGUAGES, LanguageToggle(), MarkerColorPicker(), Props, getTitle(), MarkModal(), ModalProps, ADR-0012 (+19 more)
+Cohesion: 0.16
+Nodes (13): getTitle(), MarkedByLine(), MarkModal(), ModalProps, ADR-0012, ADR-0025, ADR-0028, getWordAudioUrl() (+5 more)
 
 ### Community 24 - "RecitationSettingsSheet.tsx"
-Cohesion: 0.14
-Nodes (20): Props, ReciterCombobox(), CustomRangePicker(), nextRepeatCount(), RANGE_TYPE_OPTIONS, ReciterTrigger(), RepeatStepper(), STOP_POINT_OPTIONS (+12 more)
+Cohesion: 0.17
+Nodes (17): Props, ReciterCombobox(), CustomRangePicker(), nextRepeatCount(), RANGE_TYPE_OPTIONS, ReciterTrigger(), RepeatStepper(), STOP_POINT_OPTIONS (+9 more)
 
 ### Community 25 - "seed.js"
 Cohesion: 0.05
@@ -415,24 +425,24 @@ Cohesion: 0.12
 Nodes (20): ADR 0017 — App DB uses migrations, not db push, ADR 0022 — verse/word comments as mark type (superseded), ADR 0024 — color marks encode category (amended), ADR 0025 — a mark is one row: category plus optional comment, Unify Marks: Category + Optional Comment, MarkModal.tsx (single picker+comment flow), Mark Prisma model (category + comment), MyMarksList.tsx (category tabs, follow-on responsive filter) (+12 more)
 
 ### Community 28 - "auth-middleware.ts"
-Cohesion: 0.17
-Nodes (14): isJSONRequest(), protectedRoutes, ADR-0012, ADR-0030, ADR-0037, withAuth(), withIntl(), CustomMiddleware (+6 more)
+Cohesion: 0.10
+Nodes (27): isJSONRequest(), protectedRoutes, ADR-0012, ADR-0030, ADR-0037, withAuth(), withIntl(), CustomMiddleware (+19 more)
 
 ### Community 29 - "FontFaceInjector.tsx"
 Cohesion: 0.17
 Nodes (15): FontFaceInjector(), nextKept(), Props, ADR-0023, ADR-0028, ADR-0029, useLruIds(), MushafEdition (+7 more)
 
 ### Community 30 - "QuranMushafContext.tsx"
-Cohesion: 0.13
-Nodes (13): MarkBody, MarkWithAuthor, ADR-0012, ADR-0025, GET(), GET(), isTextScope(), resolvePageStop() (+5 more)
+Cohesion: 0.19
+Nodes (10): GET(), isTextScope(), resolvePageStop(), Scope, SCOPE_FIELD, ADR-0033, MUSHAF_EDITIONS, ADR-0023 (+2 more)
 
 ### Community 31 - "QuranWord.tsx"
-Cohesion: 0.27
-Nodes (10): resolveStopTarget(), ADR-0033, usePageVerseBounds(), Envelope, fetchChapterAudio(), fetchPageBounds(), fetchReciters(), fetchStopPoint() (+2 more)
+Cohesion: 0.24
+Nodes (8): QuranWordProps, ADR-0021, ADR-0024, ADR-0025, highlight, HIGHLIGHT_COLORS, HighlightOptions, HighlightType
 
 ### Community 32 - "notifications/types.ts"
-Cohesion: 0.12
-Nodes (28): getNotificationType(), NOTIFICATION_TYPES, NotificationChannelKey, NotificationContent, NotificationEmailContent, NotificationTypeDef, PlanDailyReminderPayload, SystemTestPayload (+20 more)
+Cohesion: 0.05
+Nodes (60): getNotificationType(), NOTIFICATION_TYPES, NotificationChannelKey, NotificationContent, NotificationEmailContent, NotificationTypeDef, PlanDailyReminderPayload, RenderContext (+52 more)
 
 ### Community 33 - "QuranSafha"
 Cohesion: 0.13
@@ -447,24 +457,24 @@ Cohesion: 0.13
 Nodes (16): Design Principles, Manuscript-inspired reading app character, Circular navigation button style (52px, thin lucide icons), Ornamental elements (corner star ornaments, diamond separators), ADR 0008 no cross-domain FK (referenced), ADR 0014 offline write-queueing (referenced), ADR 0030 Plan engine derived assignments (referenced), Daily Awrad & Learning Plans Engine (Foundation) (+8 more)
 
 ### Community 36 - "reminders.ts"
-Cohesion: 0.39
-Nodes (7): advanceOneDay(), getTimezoneOffsetMs(), isDue(), nextOccurrence(), scheduleReminder(), toSafeTimeZone(), NotificationStore
+Cohesion: 0.12
+Nodes (15): /check-fq-standards, Claude-specific additions, API / auth / i18n, Check Furqan Standards, Database / schema, General Engineering Bar, Mushaf layout, Navigation / nav chrome (+7 more)
 
 ### Community 37 - "response.ts"
 Cohesion: 0.22
 Nodes (8): Constraints, Decisions Made, Files to Change, Fix, Fix Reader Navigation Infinite Render Loop, Root Cause, Summary, What NOT to Do
 
 ### Community 38 - "actions/plans.ts"
-Cohesion: 0.08
-Nodes (34): PlanProgressHistoryEntry, UserPlanListItem, AddPlanButton(), EDIT_VIEW_FOR_TEMPLATE, groupHistoryByDate(), MyPlansList(), PlanHistorySection(), STATUS_ACTIONS (+26 more)
+Cohesion: 0.15
+Nodes (13): OfflineSetupGate(), ADR-0014, PlanEnrollForm(), PlansBrowseView, Props, View, PLAN_TEMPLATES, DialogContent (+5 more)
 
 ### Community 39 - "Column-Font Contract"
 Cohesion: 0.14
 Nodes (15): ADR 0002 — Non-page Quran text rendering, ADR 0012 — Mark from_user/to_user ownership, ADR 0025 — Mark granularity, Mark model (verse/word granularity), No FK/relation across Quran/App domains rule, getDirection() helper (app/utils/i18n.ts), Column-Font Contract, Common Rendering Mistakes table (+7 more)
 
 ### Community 40 - "isSearchQueryValid"
-Cohesion: 0.26
-Nodes (9): GET(), GET(), SearchBar(), isSearchQueryValid(), searchChapters(), searchVerses(), useSearch(), VerseResult (+1 more)
+Cohesion: 0.15
+Nodes (21): PlanProgressHistoryEntry, UserPlanListItem, TodayPlanAssignments, PlansTodayHero(), WeekStrip(), usePlanStreak(), usePlans(), ADR-0030 (+13 more)
 
 ### Community 41 - "Split Quran Content and Application Data into Two Databases"
 Cohesion: 0.21
@@ -490,6 +500,10 @@ Nodes (11): ADR 0028: Persistent pager, ADR 0029: Immutable font registry, ADR 0
 Cohesion: 0.19
 Nodes (10): QuranSafhaViewToggle(), NavHrefs, PagePayload, QuranSpread(), QuranSpreadProps, ADR-0013, ADR-0028, ADR-0034 (+2 more)
 
+### Community 47 - "PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit"
+Cohesion: 0.12
+Nodes (14): ADR 0040: Double-push history guard for Android PWA back-to-exit, Consequences, Context, Decision, Options Considered, Approach, Constraints, Decision Tree / Algorithm (+6 more)
+
 ### Community 48 - "start-task Load context gate"
 Cohesion: 0.18
 Nodes (11): docs/architecture/APP_PURPOSE.md, docs/architecture/COMPONENTS.md, docs/design/design-principles.md, API Input Validation rule (422 on failure), jsonResponse(), Legacy page words route (raw NextResponse.json), API Response Envelope, API Route Structure (+3 more)
@@ -511,12 +525,12 @@ Cohesion: 0.22
 Nodes (10): ADR 0013: Mushaf double-page spread (partner font not preloaded), ADR 0014: PWA offline architecture, ADR 0027: QuranSwipeNav remount on navigation, QuranWord.tsx, app/hooks/use-is-tablet.ts, app/hooks/use-pwa-precache.ts, app/sw.ts, Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle (+2 more)
 
 ### Community 53 - "FqLogger"
-Cohesion: 0.20
-Nodes (4): createNotificationStore(), toNotificationRow(), toReminderRow(), FqLogger
+Cohesion: 0.53
+Nodes (4): urlBase64ToUint8Array(), usePushSubscription(), registerPushSubscription(), unregisterPushSubscription()
 
 ### Community 54 - "deps.ts"
-Cohesion: 0.36
-Nodes (7): createLogEmailTransport(), createSmtpEmailTransport(), EmailMessage, EmailTransport, getEmailTransport(), hasSmtpConfig(), logger
+Cohesion: 0.43
+Nodes (5): themes, ThemeToggle(), getInitialTheme(), Theme, useTheme()
 
 ### Community 55 - "Font System (Immutable FontFace Registry)"
 Cohesion: 0.22
@@ -535,8 +549,8 @@ Cohesion: 0.08
 Nodes (26): scripts, app-generate, app-migrate-dev, app-studio, build, build:local, dev, e2e:build (+18 more)
 
 ### Community 59 - "ReaderPager"
-Cohesion: 0.17
-Nodes (12): Props, QuranPage, ReaderPager(), VerticalQuranPages(), fetchPageAPI(), PageData, pageQueryKey(), ADR-0028 (+4 more)
+Cohesion: 0.33
+Nodes (8): ReaderPager(), fetchPageAPI(), PageData, pageQueryKey(), ADR-0028, ADR-0033, usePage(), getFirstVerseKeyOfPage()
 
 ### Community 60 - "SettingsSidebar"
 Cohesion: 0.22
@@ -579,8 +593,8 @@ Cohesion: 0.29
 Nodes (8): MarkModal.tsx, Sidebar.tsx, QuranSafha.tsx, SearchBar.tsx, SettingsSidebar.tsx, SignInModal.tsx, Fix Dialog Missing Title/Description A11y Warnings, Fix MarkModal Auth Gate — Allow Recitation Without Sign-in
 
 ### Community 70 - "render-context.ts"
-Cohesion: 0.39
-Nodes (7): RenderContext, buildRenderContext(), interpolate(), loadMessages(), lookup(), messagesCache, toSafeLocale()
+Cohesion: 0.20
+Nodes (11): DesktopQuranFontSizeControls(), QuranSafha(), useDesktopQuranFontSize(), ADR-0033, useMarks(), ApiMark, getPageMarks(), PageMark (+3 more)
 
 ### Community 71 - "Tailwind Safelist for Dynamic Quran Font-Size Classes"
 Cohesion: 0.39
@@ -602,9 +616,13 @@ Nodes (7): docs/architecture/DECISIONS.md, docs/plans/release-branch-workflow.md
 Cohesion: 0.29
 Nodes (8): ~/.claude/hooks/block-dangerous-git.sh (removed global hook), commit-staged skill, /confirm-dangerous-git skill, Git Workflow Skills (commit/push gating), /ship-fq-task skill, ~/.claude/furqan-worktrees.json state file, Git Worktrees Workflow Integration, /start-fq-task skill (worktree creation)
 
+### Community 76 - "QuranSafhaViewContext.tsx"
+Cohesion: 0.21
+Nodes (8): RecitationProvider, RecitationProviderError, QdcAudioFile, QdcReciter, QdcVerseTiming, ChapterAudio, Reciter, VerseSegment
+
 ### Community 77 - "Sidebar.tsx"
-Cohesion: 0.09
-Nodes (30): Props, buildJuzGroups(), JuzGroup, Props, RubList(), ADR-0033, SearchQueryResults(), Props (+22 more)
+Cohesion: 0.11
+Nodes (23): buildJuzGroups(), JuzGroup, Props, RubList(), ADR-0033, SearchQueryResults(), Props, SurahListItem() (+15 more)
 
 ### Community 78 - "MyPlansList"
 Cohesion: 0.33
@@ -681,6 +699,10 @@ Nodes (5): ADR 0007 Arabic search query normalization (referenced), Fix: Hamza-A
 ### Community 96 - "i18n Setup (next-intl, ar/en locales)"
 Cohesion: 0.40
 Nodes (5): npm run extract-translations, Translation Key Naming convention, i18n/routing.ts locale-aware navigation, i18n Setup (next-intl, ar/en locales), messages/ar.json + messages/en.json
+
+### Community 97 - "getQueryClient"
+Cohesion: 0.46
+Nodes (5): useAllMarks(), QueryProvider(), getAllMarks(), getQueryClient(), makeQueryClient()
 
 ### Community 98 - "furqan_app Prisma migrations workflow"
 Cohesion: 0.50
@@ -759,8 +781,8 @@ Cohesion: 0.09
 Nodes (21): Files to Change, Finding 10 (note) — `endResult` is an unclear name, Finding 11 (note) — play button ignores the row's `disabled` prop, Finding 12 (note) — override shape spelled out twice, Finding 13 (note) — DECISIONS.md:606 omits `label`, Finding 14 (warning) — docs claim editing "Repeat" clears the override, Finding 15 (note) — untracked `app/generated` symlink, Finding 16 — otherwise clean (+13 more)
 
 ### Community 141 - "fq-logger/index.ts"
-Cohesion: 0.22
-Nodes (14): build(), CONSOLE_FOR_LEVEL, Level, LEVEL_VALUE, write(), nodeLogger, wrap(), redact() (+6 more)
+Cohesion: 0.40
+Nodes (3): GET(), GET(), qdcRecitationProvider
 
 ### Community 142 - "devDependencies"
 Cohesion: 0.11
@@ -772,19 +794,19 @@ Nodes (16): aliases, components, hooks, lib, ui, utils, rsc, $schema (+8 more)
 
 ### Community 144 - "NotificationBell.tsx"
 Cohesion: 0.19
-Nodes (15): NotificationListResponse, NotificationBell(), NotificationFeed(), NotificationItem(), Props, useNotifications(), urlBase64ToUint8Array(), usePushSubscription() (+7 more)
+Nodes (14): NotificationListResponse, NotificationBell(), NotificationFeed(), NotificationItem(), Props, useNotifications(), getNotifications(), JSON_HEADERS (+6 more)
 
 ### Community 145 - "mujaz-stats.js"
 Cohesion: 0.12
 Nodes (9): path, ROOT, { FLAG_PATH }, fs, { FLAG_PATH, STATS_PATH }, fs, { FLAG_PATH }, fs (+1 more)
 
 ### Community 146 - "AGENTS.md"
-Cohesion: 0.13
-Nodes (10): Commands, Documentation, graphify, MANDATORY WORKFLOW — NO EXCEPTIONS, MCP Setup (Trello), Project, Claude Skills, Hooks (+2 more)
+Cohesion: 0.20
+Nodes (7): Commands, Documentation, graphify, MANDATORY WORKFLOW — NO EXCEPTIONS, MCP Setup (Trello), Project, GitHub Copilot Instructions
 
 ### Community 147 - "LastReadPageContext.tsx"
-Cohesion: 0.07
-Nodes (30): AccessibleMushafList(), Props, ContinueReadingLink(), LastReadPageSync(), RecitationSettingsSheet(), LastReadPageContext, LastReadPageContextType, LastReadPageProvider() (+22 more)
+Cohesion: 0.17
+Nodes (11): LastReadPageSync(), RecitationPlayerBar(), ADR-0021, LastReadPageContext, LastReadPageContextType, LastReadPageProvider(), useLastReadPage(), useNavOverlay() (+3 more)
 
 ### Community 149 - "Sidebar Surah Indicator & Active Scroll"
 Cohesion: 0.15
@@ -795,8 +817,8 @@ Cohesion: 0.15
 Nodes (10): Locale, LOCALES, SEARCH_PLACEHOLDER, SEARCH_QUERY, SEARCH_RESULTS_HEADING, SETTINGS_LABEL, Theme, THEMES (+2 more)
 
 ### Community 151 - "dropdown-menu.tsx"
-Cohesion: 0.14
-Nodes (14): FurqanLogo(), Nav(), SharedMushafLink(), UserMenu(), useIsDesktopUp(), DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem (+6 more)
+Cohesion: 0.11
+Nodes (20): LANGUAGES, LanguageToggle(), Props, UserMenu(), ExitToast(), Props, CommandShortcut(), DropdownMenuCheckboxItem (+12 more)
 
 ### Community 152 - "extract-translations.js"
 Cohesion: 0.23
@@ -830,9 +852,13 @@ Nodes (9): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Fil
 Cohesion: 0.20
 Nodes (9): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Save Last Read Page + Navbar Link to Resume, Summary, Verified Test Cases (+1 more)
 
+### Community 160 - "PlanEnrollForm.tsx"
+Cohesion: 0.24
+Nodes (7): JuzRangeSlider(), Props, EDITABLE_QUANTITY_TRACKS, Props, Props, QuantityStepper(), Slider
+
 ### Community 161 - "dependencies"
 Cohesion: 0.22
-Nodes (9): axios, dependencies, axios, pino, @radix-ui/react-dialog, @radix-ui/react-dropdown-menu, pino, @radix-ui/react-dialog (+1 more)
+Nodes (9): class-variance-authority, dependencies, class-variance-authority, pino, @radix-ui/react-dialog, @radix-ui/react-dropdown-menu, pino, @radix-ui/react-dialog (+1 more)
 
 ### Community 162 - "/plan-fq-task"
 Cohesion: 0.22
@@ -910,6 +936,30 @@ Nodes (3): Steps, /sync-main-from-prod, What NOT to do
 Cohesion: 0.50
 Nodes (3): name, private, version
 
+### Community 184 - "types/recitation.ts"
+Cohesion: 0.20
+Nodes (9): DEFAULT_RECITATION_SETTINGS, ADR-0021, ActiveOverride, PlaybackOverride, RangePoint, RecitationSettings, RecitationStatus, RepeatCount (+1 more)
+
+### Community 232 - "recitation-api.ts"
+Cohesion: 0.29
+Nodes (9): ADR-0033, usePageVerseBounds(), Envelope, fetchChapterAudio(), fetchPageBounds(), fetchReciters(), fetchStopPoint(), ADR-0033 (+1 more)
+
+### Community 233 - "QuranPage.tsx"
+Cohesion: 0.32
+Nodes (4): Props, QuranPage, VerticalQuranPages(), ADR-0035
+
+### Community 234 - "useRecitation"
+Cohesion: 0.50
+Nodes (4): Props, RecitationPageSync(), RecitationSettingsSheet(), useRecitation()
+
+### Community 235 - "CLAUDE.md"
+Cohesion: 0.40
+Nodes (3): Claude Skills, Hooks, MCP Server Setup (Trello)
+
+### Community 236 - "ViewingChip.tsx"
+Cohesion: 0.50
+Nodes (3): Props, ADR-0012, ViewingChip()
+
 ## Ambiguous Edges - Review These
 - `Static Generation Strategy (604 Quran Pages)` → `Release-Branch Deployment Workflow (main -> release/x.y.z -> prod -> main)`  [AMBIGUOUS]
   docs/architecture/adr/0015-release-branch-workflow.md · relation: conceptually_related_to
@@ -919,7 +969,7 @@ Nodes (3): name, private, version
   docs/workflow/review-work.md · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **931 isolated node(s):** `path`, `ROOT`, `fs`, `{ FLAG_PATH }`, `fs` (+926 more)
+- **962 isolated node(s):** `Claude-specific additions`, `Claude Skills`, `MCP Server Setup (Trello)`, `Hooks`, `Pre-check (before writing code)` (+957 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **73 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -932,11 +982,11 @@ _Questions this graph is uniquely positioned to answer:_
   _Edge tagged AMBIGUOUS (relation: references) - confidence is low._
 - **What is the exact relationship between `docs/plans/release-branch-workflow.md` and `Review dimensions (Bugs, Quality, Plan Consistency)`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `useTranslations()` connect `useTranslations` to `getQueryClient`, `MyPlansList.tsx`, `config.ts`, `actions/plans.ts`, `isSearchQueryValid`, `QuranSafha.tsx`, `Sidebar.tsx`, `QuranSpread.tsx`, `NotificationBell.tsx`, `toLocaleNumeral`, `[locale]/layout.tsx`, `LastReadPageContext.tsx`, `PlansWidget.tsx`, `MyMarksList.tsx`, `MarkModal.tsx`, `dropdown-menu.tsx`, `RecitationSettingsSheet.tsx`?**
+- **Why does `useTranslations()` connect `useTranslations` to `getQueryClient`, `MyPlansList.tsx`, `config.ts`, `RubList.tsx`, `QuranSafha.tsx`, `NotificationBell.tsx`, `toLocaleNumeral`, `[locale]/layout.tsx`, `registry.ts`, `PlansWidget.tsx`, `MyMarksList.tsx`, `LastReadPageContext.tsx`, `MarkModal.tsx`, `dropdown-menu.tsx`, `RecitationSettingsSheet.tsx`, `PlanEnrollForm.tsx`, `actions/plans.ts`, `isSearchQueryValid`, `QuranSpread.tsx`, `deps.ts`, `render-context.ts`, `Sidebar.tsx`, `useRecitation`?**
   _High betweenness centrality (0.034) - this node is a cross-community bridge._
-- **Why does `jsonResponse()` connect `jsonResponse` to `sentry/route.ts`, `engine.ts`, `getNotificationDeps`, `constants/plans.ts`, `MyMarksList.tsx`, `auth-middleware.ts`, `QuranMushafContext.tsx`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `cn()` connect `MarkModal.tsx` to `getQueryClient`, `MyPlansList.tsx`, `useTranslations`, `actions/plans.ts`, `Sidebar.tsx`, `NotificationBell.tsx`, `PlansWidget.tsx`, `MyMarksList.tsx`, `dropdown-menu.tsx`, `RecitationSettingsSheet.tsx`?**
+- **Why does `jsonResponse()` connect `jsonResponse` to `sentry/route.ts`, `engine.ts`, `getNotificationDeps`, `constants/plans.ts`, `fq-logger/index.ts`, `MyMarksList.tsx`, `auth-middleware.ts`, `QuranMushafContext.tsx`?**
   _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **What connects `path`, `ROOT`, `fs` to the rest of the system?**
-  _931 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `cn()` connect `dropdown-menu.tsx` to `getQueryClient`, `PlanEnrollForm.tsx`, `MyPlansList.tsx`, `config.ts`, `actions/plans.ts`, `isSearchQueryValid`, `RubList.tsx`, `Sidebar.tsx`, `NotificationBell.tsx`, `[locale]/layout.tsx`, `registry.ts`, `PlansWidget.tsx`, `MyMarksList.tsx`, `LastReadPageContext.tsx`, `MarkModal.tsx`, `RecitationSettingsSheet.tsx`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **What connects `Claude-specific additions`, `Claude Skills`, `MCP Server Setup (Trello)` to the rest of the system?**
+  _962 weakly-connected nodes found - possible documentation gaps or missing edges._
