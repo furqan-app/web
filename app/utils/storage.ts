@@ -1,7 +1,7 @@
 import { DesktopQuranFontSize, QuranSafhaView } from "@types";
 import { RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage';
+export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'keepScreenAwake';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -16,6 +16,9 @@ type StorageValueType = {
   // active at the time — same convention as any deep link, see
   // MushafSwitchSync). Never written for the shared-mushaf grant reader.
   lastReadPage: number;
+  // Whether the mobile/tablet Wake Lock toggle is on. Default true, applied
+  // when this key is absent (never written yet) — see KeepScreenAwakeContext.
+  keepScreenAwake: boolean;
 };
 
 export const storage = {
