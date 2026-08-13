@@ -62,7 +62,7 @@ Branches a new `release/x.y.z` off `main`, bumps and tags the version, stamps th
 5. Edit `package.json`'s `"version"` field to `<new-version>`. Run `npm install --package-lock-only` so `package-lock.json`'s top-level `version` field stays in sync (do not run a full `npm install`). Stage both files and commit: `chore(release): bump version to <new-version>`. No AI signature.
 6. `git tag v<new-version>`.
 7. `git push -u origin release/<new-version>` then `git push origin v<new-version>`.
-8. **Update your release tracking system** — mark all tasks included in this release as released (labeled with `v<new-version>` and moved to Done). If your system has an equivalent of Trello's "To Be Released" list, pull tasks from there. If the list is empty, continue anyway — an empty release is still valid.
+8. **Update your release tracking system** — mark all tasks included in this release as released (milestoned `v<new-version>` and closed). Pull tasks from your system's release-queue equivalent (here: GitHub issues labeled `status:to-be-released`). If the queue is empty, continue anyway — an empty release is still valid.
 9. **Detect DB changes needing manual action** (non-blocking — this only builds content for steps 10 and 11, never pauses):
    - Find the previous release tag: `git tag --list 'v*' --sort=-v:refname` on `origin`, take the first entry that isn't `v<new-version>`. Sort by semver. If no prior tag exists (first release), skip this step.
    - `git diff --name-only <previous-tag>..release/<new-version>` and check against:

@@ -49,16 +49,6 @@ Load these before starting any task:
 - **Task plans**: `docs/plans/`
 - **All AI workflows**: [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md)
 
-## MCP Setup (Trello)
+## Task tracking
 
-The workflow integrates with Trello to track tasks. Each agent reads its own config file:
-
-| Agent | Config file | Setup |
-|---|---|---|
-| Claude Code | `.mcp.json` | Copy `.mcp.json.example` → `.mcp.json`, fill in keys |
-| VS Code / Copilot | `.vscode/mcp.json` | Already committed — VS Code prompts for keys on first use |
-| OpenCode | `opencode.json` | Copy `opencode.json.example` → `opencode.json`, fill in keys |
-| Cursor | `.cursor/mcp.json` | Copy `.cursor/mcp.json.example` → `.cursor/mcp.json`, fill in keys |
-
-Get your API key: https://trello.com/power-ups/admin
-Get your token: `https://trello.com/1/authorize?expiration=never&name=furqan&scope=read,write&response_type=token&key=YOUR_API_KEY`
+The workflow tracks tasks as GitHub Issues on `furqan-app/web` — no MCP setup needed, agents use the `gh` CLI (or `gh-axi`) directly. Status is a `status:*` label (`backlog` → `todo` → `in-progress` → `in-review` → `to-be-released` → closed); type is the native GitHub Issue Type (Task/Bug/Feature), not a label.
