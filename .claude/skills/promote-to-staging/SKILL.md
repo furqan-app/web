@@ -1,32 +1,26 @@
 ---
 name: promote-to-staging
-description: Open the PR that promotes a cut release branch into stg for staging verification. Trigger via /promote-to-staging <version>.
+description: Open the PR that promotes main into stg for staging verification. Trigger via /promote-to-staging.
 ---
 
-# /promote-to-staging <version>
+# /promote-to-staging
 
-Read and follow the **Promote to Staging** section in [`docs/workflow/release.md`](../../../docs/workflow/release.md).
-
----
-<!-- original content preserved below this line for reference only -->
-
-Opens the `release/<version>` → `stg` PR, so the release can be verified on Hostinger's staging site before going to prod. See `docs/plans/release-branch-workflow.md` (Addendum 1) and [ADR 0026](../../../docs/architecture/adr/0026-staging-environment.md).
+Opens the `main` → `stg` PR, so whatever's on `main` can be verified on Hostinger's staging site. Not tied to a release version — `stg` is decoupled from the release-branch flow. See `docs/plans/release-branch-workflow.md` (Addendum 3) and [ADR 0039](../../../docs/architecture/adr/0039-stg-tracks-main-directly.md).
 
 ## Precondition
 
-- A version must be given (e.g. `1.3.0`). If missing, ask for it.
-- `release/<version>` must exist on `origin`. If not, stop and say so — the user needs to run `/cut-release` first.
+None — `main` always exists. No version argument needed.
 
 ## Steps
 
-1. `git fetch origin`; confirm `origin/release/<version>` exists.
-2. Best-effort: `gh issue list --repo furqan-app/web --milestone "v<version>" --state closed --json number,title,url` to reference in the PR body.
-3. `gh pr create --base stg --head release/<version> --title "Staging v<version>"` with a body summarizing the release (linking the issues found above, if any).
+1. `git fetch origin`.
+2. `git log origin/stg..origin/main --oneline` to summarize what's new since `stg`'s last merge, for the PR body.
+3. `gh pr create --base stg --head main --title "Staging update"` with a body listing the commits/PRs found above.
 4. Report the PR URL. Tell the user plainly:
-   - The `check-source` gate on `stg` requires this PR's head branch to start with `release/` — it will pass automatically.
+   - The `check-source` gate on `stg` requires this PR's head branch to be exactly `main` — it will pass automatically.
    - Merge the PR on GitHub. Hostinger auto-deploys the staging site on any push to `stg` — no manual redeploy click is needed.
 
 ## What NOT to do
 
 - Do not merge the PR — only open it.
-- Do not touch the GitHub issues — milestoning/closing already happened in `/cut-release`.
+- Do not ask for or use a version argument — this skill no longer takes one.

@@ -10,24 +10,27 @@
     --card-foreground: 209 36% 14%;
     --popover: 0 0% 100%;
     --popover-foreground: 209 36% 14%;
-    --primary: 163 86% 35%;
+    /* EXPERIMENTAL — retinted to match the app logo mark's emerald (#087F69,
+       docs/plans/brand-mark-icons.md). Was 163 86% 35%. Revert to that value if
+       this doesn't hold up. */
+    --primary: 169 88% 26%;
     --primary-foreground: 0 0% 100%;
     --secondary: 200 37% 97%;
     --secondary-foreground: 209 36% 14%;
     --muted: 208 30% 92%;
     --muted-foreground: 208 18% 40%;
     --accent: 165 53% 93%;
-    --accent-foreground: 163 86% 35%;
+    --accent-foreground: 169 88% 26%;
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 31% 90%;
     --input: 210 31% 90%;
-    --ring: 163 86% 35%;
+    --ring: 169 88% 26%;
     --radius: 0.5rem;
     /* Aliased to this theme's own accent — light theme is deliberately NOT gold
        (see the paper comment below), so the badge that consumes --gold must not
        gain one here. */
-    --gold: 163 86% 35%;
+    --gold: 169 88% 26%;
     --gold-muted: 165 53% 93%;
     --overlay: 0 0% 0%;
     /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
@@ -141,22 +144,25 @@
     --card-foreground: 45 18% 91%;
     --popover: 210 41% 13%;
     --popover-foreground: 45 18% 91%;
-    /* Emerald reverted to its exact pre-unification-pass value (Correction Round 1) —
-       the muted 166/170-hue version read "dirty and lifeless" against a reference
-       review. This vibrant teal-emerald is the app's original interactive identity. */
-    --primary: 162 88% 41%;
-    --primary-foreground: 210 42% 9%;
+    /* EXPERIMENTAL — retinted to match the app logo mark's emerald (#087F69,
+       docs/plans/brand-mark-icons.md), 2026-08-13. Was 162 88% 41%, the vibrant
+       teal-emerald reverted to on purpose after a muted 166/170-hue version read
+       "dirty and lifeless" here (Correction Round 1). This value sits in that
+       same rejected hue range (169°) — watch closely against (7,15,23); revert
+       to 162 88% 41% if it repeats the problem. */
+    --primary: 169 88% 26%;
+    --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - was 210 42% 9%, switched to white for contrast against the darker retinted primary (5.09:1 vs 3.55:1) */
     --secondary: 211 38% 16%;
     --secondary-foreground: 45 18% 91%;
     --muted: 211 38% 16%;
     --muted-foreground: 206 9% 50%;
     --accent: 161 58% 15%;
-    --accent-foreground: 162 88% 41%;
+    --accent-foreground: 169 88% 26%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 26% 19%;
     --input: 210 26% 19%;
-    --ring: 162 88% 41%;
+    --ring: 169 88% 26%;
     --radius: 0.5rem;
     /* Mushaf-identity gold — reserved strictly for the reader page (ornaments below);
        no chrome exceptions, not even the surah-list badge (ADR 0031, revised). */
@@ -233,19 +239,20 @@
     --card-foreground: 45 18% 91%;
     --popover: 210 41% 13%;
     --popover-foreground: 45 18% 91%;
-    --primary: 162 88% 41%;
-    --primary-foreground: 210 42% 9%;
+    /* EXPERIMENTAL — see the matching comment in .theme-dark above. */
+    --primary: 169 88% 26%;
+    --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - see .theme-dark above */
     --secondary: 211 38% 16%;
     --secondary-foreground: 45 18% 91%;
     --muted: 211 38% 16%;
     --muted-foreground: 206 9% 50%;
     --accent: 161 58% 15%;
-    --accent-foreground: 162 88% 41%;
+    --accent-foreground: 169 88% 26%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 26% 19%;
     --input: 210 26% 19%;
-    --ring: 162 88% 41%;
+    --ring: 169 88% 26%;
     --radius: 0.5rem;
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;
@@ -390,8 +397,10 @@ body,
 
 @layer base {
   .fq-content {
-    --fq-line-gap: var(--fq-line-gap-base);
-    --fq-heading-h: var(--fq-heading-base);
+    --fq-resolved-word: var(--fq-card-word, var(--fq-desktop-word));
+    --fq-line-gap: calc(var(--fq-resolved-word) * 0.4);
+    --fq-heading-h: calc(var(--fq-resolved-word) * 2.4);
+    --fq-surah-start-clearance: 0px;
   }
 
   @media (max-width: 767px) {
@@ -594,14 +603,27 @@ body,
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
      Mirrors the `@media (max-width: 767px)` mobile block above. */
   @media (min-width: 768px) {
+    /* The frame measures the widest real Quran row. On desktop/tablet a page
+       deliberately has inner paper margin, so the quran-safha content column is
+       narrower than that row. Do not clamp the frame to that column; it still
+       fits safely inside the physical page card. Mobile retains the inline 100%
+       clamp for its genuinely narrow viewport. */
+    .fq-surah-frame {
+      max-width: none !important;
+    }
     .fq-quran-safha {
-      --fq-safha-font: var(--fq-word-base);
+      --fq-safha-font: var(--fq-resolved-word);
+      font-size: var(--fq-resolved-word);
     }
     .fq-quran-safha.fq-tajweed {
-      font-size: calc(var(--fq-word-base) * 0.85);
+      --fq-safha-font: calc(var(--fq-resolved-word) * 0.85);
+      font-size: calc(var(--fq-resolved-word) * 0.85);
     }
     .fq-content:has(.fq-tajweed) {
-      --fq-line-gap: calc(var(--fq-word-base) * 0.5607);
+      --fq-line-gap: calc(var(--fq-resolved-word) * 0.5608);
+    }
+    .fq-surah-frame + .fq-bismillah {
+      --fq-surah-start-clearance: 0.2em;
     }
     .fq-spread .fq-quran-safha {
       flex: 1 1 0%;
@@ -640,6 +662,20 @@ body,
       justify-content: flex-start !important;
       gap: var(--fq-line-gap);
       padding-block: 0.2em !important;
+    }
+  }
+
+  /* The desktop card is the physical counterpart to the chosen reading size:
+     26px -> 526px, 28px -> 556px, 30px -> 585px (before a width cap). The
+     generous fixed paper allowance restores a printed-mushaf page proportion
+     around the deliberately smaller 26px desktop ink. Using
+     `width`, not only `min-width`, prevents intrinsic font metrics from quietly
+     stretching the page after the text itself has been made smaller. Tablet has
+     its own full-height, half-spread geometry and is intentionally excluded. */
+  @media (min-width: 768px) and (max-width: 1023px), (min-width: 1367px) {
+    .fq-spread .fq-safha-card {
+      width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
+      min-width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
     }
   }
 
@@ -704,6 +740,15 @@ body,
     }
   }
 
+  /* The fixed navigation paints at 57px (its 56px utility height plus the bottom
+     border). The reader's JSX minimum uses 3.5rem/56px, which otherwise leaves a
+     one-pixel document overflow and an unnecessary desktop scrollbar. */
+  @media (min-width: 1367px) {
+    .fq-reader-outer {
+      min-height: calc(100dvh - 57px) !important;
+    }
+  }
+
   /* Double-page display gating — see ADR 0013 Addendum 4.
      The single-vs-double *display* is driven by CSS, not JS, so it's correct at
      first paint on slow connections (the old JS `useIsLgUp` gate rendered single
@@ -733,40 +778,18 @@ body,
     }
   }
 
-  /* Double-view width cap — see ADR 0013 Addendum 3.
-     In single-page view a card is sized purely by the vh-driven reading font
-     (ADR 0004), so its width tracks viewport *height* (~14.42× the font size,
-     ADR 0011's justified-line ratio). Two such cards can overflow the viewport
-     width on some lg screens, clipping the outer page. In *double* view only,
-     cap the reading font (and its dependent rhythm vars) by a from-width budget
-     — half the row minus per-card chrome, over ADR 0011's 14.7 never-wrap
-     divisor — so both facing pages always fit and shrink together.
-     `--fq-dv-word` is defined only under the attribute+lg gate, so single view
-     falls through to `--fq-word-base` untouched. The rhythm vars use `!important`
-     to beat QuranSafha's inline `--fq-line-gap`/`--fq-heading-h`; `-base` vars are
-     independent literals so the min() never self-references. Chrome constant
-     (136px) = half of (ps-14 + pe-10 + two nav arrows) + the card's px-7 padding;
-     calibrated by browser measurement, same spirit as ADR 0011's constants. */
-  @media (min-width: 1024px) {
+  /* Double desktop: cap the selected 26/28/30px preference by available spread
+     width. The same resolved value drives card width, ink, banner fallback and
+     rhythm, so a smaller preference never leaves a stretched, empty page. */
+  @media (min-width: 1367px) {
     :root[data-safha-view="double"] .fq-spread .fq-safha-partner {
       display: block;
     }
     :root[data-safha-view="double"] .fq-spread {
-      --fq-dv-word: calc((50vw - 136px) / 14.7);
-    }
-    :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
-      --fq-safha-font: min(var(--fq-word-base), var(--fq-dv-word));
-      font-size: min(var(--fq-word-base), var(--fq-dv-word));
-    }
-    :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
-      font-size: calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.85);
-    }
-    :root[data-safha-view="double"] .fq-spread .fq-content:has(.fq-tajweed) {
-      --fq-line-gap: min(calc(var(--fq-word-base) * 0.5607), calc(var(--fq-dv-word) * 0.5777)) !important;
-    }
-    :root[data-safha-view="double"] .fq-spread .fq-content {
-      --fq-line-gap: min(var(--fq-line-gap-base), calc(var(--fq-dv-word) * 0.417)) !important;
-      --fq-heading-h: min(var(--fq-heading-base), calc(var(--fq-dv-word) * 2.417)) !important;
+      /* 224px keeps the two-card width budget correct after restoring the
+         printed-page side margin (64px more per card than the earlier formula). */
+      --fq-dv-word: calc((50vw - 224px) / 14.7);
+      --fq-card-word: min(var(--fq-desktop-word), var(--fq-dv-word));
     }
     /* Both pages showing → symmetric, so drop the single-display compensate margin. */
     :root[data-safha-view="double"] .fq-spread .fq-compensate-r,
@@ -948,7 +971,9 @@ body,
      width-gated (same gate as before). Below either threshold, desktop keeps the
      full-width bottom-edge bar it has always had. Never close this gap by touching
      baseScaleViewHeight — that is the reading size (ADR 0004/0005).
-     See docs/plans/recitation-bar-vertical-rail.md. */
+     See docs/plans/recitation-bar-vertical-rail.md. Deliberately still gated at
+     800px, not 700 — this is the rail's own trigger (a different concern from the
+     line-gap stretch below), left untouched. */
   @media (min-width: 1367px) and (min-height: 800px) {
     /* No bottom bar to clear at this size — the player is the right-edge rail — so
        the band the rhythm block reserves goes back to the page, and the book keeps
@@ -963,7 +988,7 @@ body,
        a wider page (a mushaf line is justified by the font's own kashida, never by
        word spacing — DECISIONS.md), so the extra width goes to the page margin. */
     .fq-spread .fq-content {
-      padding-inline: 56px;
+      padding-inline: 68px;
     }
     /* Rail: fixed right edge, vertically centred. !important terms beat the JSX
        `inset-x-0` / `bottom-0` utilities (utility layer wins over @layer base on
@@ -1012,8 +1037,14 @@ body,
 
   /* Tablet landscape full-screen (1024px–1366px): nav is a fixed overlay so the
      reader claims 100dvh; safha cards fill edge-to-edge with a small binding gap.
-     Placed after the lg block so these rules win on any overlap. */
+     It independently forces the partner card visible, so a stored desktop
+     single-page preference can never affect tablet before hydration. */
   @media (min-width: 1024px) and (max-width: 1366px) {
+    /* Tablet is permanently an open two-page mushaf. This deliberately ignores
+       the desktop-only stored view preference, including before hydration. */
+    .fq-spread .fq-safha-partner {
+      display: block;
+    }
     /* Swipe carousel (tablet double-view only). Reveal the neighbor spreads and
        rest the 3-panel strip at translateX(-100%) so the CURRENT (middle) panel is
        centered; the two neighbors sit just off-screen on either side, ready to slide
@@ -1138,7 +1169,7 @@ body,
        incidental — see docs/plans/theme-depth-unification.md for the before/after
        pixel table. */
 
-    :root[data-safha-view="double"] .fq-spread::after {
+    .fq-spread::after {
       content: "";
       position: absolute;
       inset-block: 0;
@@ -1190,17 +1221,17 @@ body,
        inline surah name, and the ◆ separators) takes the off-white text colour so
        the info reads quietly, not gold. Gold is reserved for the surah banner frame;
        ayah-end markers now follow the general tablet rule (--mushaf-text). */
-    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-meta,
-    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-footer,
-    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-safha-surah-glyph,
-    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-quran-safha .fq-inline-surah,
-    :root.theme-dark[data-safha-view="double"] .fq-spread .fq-ornament {
+    :root.theme-dark .fq-spread .fq-safha-meta,
+    :root.theme-dark .fq-spread .fq-safha-footer,
+    :root.theme-dark .fq-spread .fq-safha-surah-glyph,
+    :root.theme-dark .fq-spread .fq-quran-safha .fq-inline-surah,
+    :root.theme-dark .fq-spread .fq-ornament {
       color: var(--mushaf-text) !important;
     }
     /* Gold theme — the surah name is NOT gold; render it in the ink text colour
        (matching the black safha info). Ornaments and the frame stay gold. */
-    :root.theme-gold[data-safha-view="double"] .fq-spread .fq-safha-surah-glyph,
-    :root.theme-gold[data-safha-view="double"] .fq-spread .fq-quran-safha .fq-inline-surah {
+    :root.theme-gold .fq-spread .fq-safha-surah-glyph,
+    :root.theme-gold .fq-spread .fq-quran-safha .fq-inline-surah {
       color: var(--mushaf-text) !important;
     }
 
@@ -1246,12 +1277,13 @@ body,
        edge-to-edge, and the footer pins to the bottom. On wide-short viewports the
        height cap keeps the font from overflowing. space-between distributes any
        residual between the lines (matches the reference app). */
-    :root[data-safha-view="double"] .fq-spread {
-      --fq-t-word: min(calc((50vw - 16px) / 14.7), calc((100dvh - 50px) / 23));
+    .fq-spread {
+      --fq-tablet-word: calc(min(calc((50vw - 16px) / 14.7), calc((100dvh - 50px) / 23)) * 0.96);
+      --fq-card-word: var(--fq-tablet-word);
     }
-    :root[data-safha-view="double"] .fq-spread .fq-quran-safha {
-      --fq-safha-font: var(--fq-t-word);
-      font-size: var(--fq-t-word);
+    .fq-spread .fq-quran-safha {
+      --fq-safha-font: var(--fq-tablet-word);
+      font-size: var(--fq-tablet-word);
       /* Grow to fill the card, then distribute the 15 lines evenly across that
          height (space-between) so they span the full page like a printed mushaf
          instead of top-packing with the flat 9.6px line-gap floor (which leaves a
@@ -1261,12 +1293,9 @@ body,
       min-height: 0;
       justify-content: space-between;
     }
-    :root[data-safha-view="double"] .fq-spread .fq-quran-safha.fq-tajweed {
-      font-size: calc(var(--fq-t-word) * 0.85);
-    }
-    :root[data-safha-view="double"] .fq-spread .fq-content {
-      --fq-line-gap: min(var(--fq-line-gap-base), calc(var(--fq-t-word) * 0.417)) !important;
-      --fq-heading-h: min(var(--fq-heading-base), calc(var(--fq-t-word) * 2.417)) !important;
+    .fq-spread .fq-quran-safha.fq-tajweed {
+      --fq-safha-font: calc(var(--fq-tablet-word) * 0.85);
+      font-size: calc(var(--fq-tablet-word) * 0.85);
     }
   }
 

@@ -2,6 +2,8 @@
 
 Aesthetic direction and UI sensibility for Furqan. Load this alongside `docs/standards/styling.md` for any UI or component task.
 
+This is the canonical source. `DESIGN.md` at repo root is a generated token extraction for the impeccable skill — regenerate it via `/impeccable document` after changing this file, don't hand-edit it.
+
 ---
 
 ## Character

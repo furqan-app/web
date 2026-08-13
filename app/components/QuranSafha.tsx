@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { WifiOff } from "lucide-react";
 import { QuranLine } from "@components/QuranLine";
 import { useMarks } from "@hooks/use-marks";
-import { FONT_V1 } from "@constants/font";
-import { useQuranFontScale } from "@contexts/QuranFontScaleContext";
+import { DESKTOP_QURAN_FONT_SIZES } from "@constants/font";
+import { useDesktopQuranFontSize } from "@contexts/DesktopQuranFontSizeContext";
 import { useQuranMushaf } from "@contexts/QuranMushafContext";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
@@ -47,55 +48,118 @@ const SKELETON_BARS = Array.from({ length: SKELETON_LINE_COUNT }, (_, i) => i);
 // equal-height spread untouched.
 //
 // height MUST stay `auto` so it follows the viewBox ratio and the art is never
-// distorted. Do not substitute a computed em height: the rendered column width is
-// not guaranteed to equal QURAN_LINE_WIDTH_RATIO em (that constant is the card's
-// minWidth floor, and the double-view cap can shrink the reading font under it),
-// so any hardcoded height silently stretches the frame vertically — an earlier
-// revision hardcoded 1.81em and measured 7.87:1 against the true 8.11:1.
-// To buy clearance from neighbouring lines, shrink --fq-surah-frame-w — width and
-// height then scale together and the ratio is preserved.
-const SurahBannerLine = ({ surahId }: { surahId: number }) => (
-  <div
-    className="fq-surah-frame leading-none relative mx-auto"
-    style={{
-      marginBottom: "var(--fq-line-gap)",
-      height: "1em",
-      color: "var(--mushaf-ornament)",
-      // Match the text block, NOT the card's content box. w-full made the frame
-      // span the whole card, which is only the same thing when the text fills it:
-      // on mobile/tablet the font hits its 28px cap first (ADR 0011), so the lines
-      // sit narrower and centre while a w-full frame kept stretching past them.
-      // Sized to the measured widest line, not the padded card floor — see the
-      // constant. maxWidth keeps it honest if the card is ever narrower still.
-      width: `calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))`,
-      maxWidth: "100%",
-    }}
-  >
-    <SurahFrameSVG
+// distorted.
+//
+// WIDTH is measured from the real rendered `.fq-safha-row` lines on this same
+// page, not a fixed em ratio — the two fixed-ratio attempts before this one
+// (QURAN_MAX_LINE_WIDTH_RATIO, then a percentage shrink of it) each got the
+// relationship between the frame and the actual line width wrong in opposite
+// directions (overhanging real lines, or under/over-clearing depending on that
+// page's real line width, which varies 14.13–14.42em across the mushaf) because
+// neither could see what a real line on THIS page actually rendered at, in THIS
+// mode/breakpoint/edition. Measuring it directly is the only way the frame is
+// guaranteed to look "like any other line" everywhere. Falls back to the old
+// worst-case ratio only for SSR/first paint, before the effect can measure.
+// See Addendum 11.
+const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: boolean }) => {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const [lineWidth, setLineWidth] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const safha = outerRef.current?.closest(".fq-quran-safha");
+    if (!safha) return;
+    const measure = () => {
+      let max = 0;
+      safha.querySelectorAll<HTMLElement>(".fq-safha-row").forEach((row) => {
+        max = Math.max(max, row.getBoundingClientRect().width);
+      });
+      if (max > 0) setLineWidth(max);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(safha);
+    // The container's width is fixed by the page card, but its individual rows
+    // widen when the QPC font replaces fallback glyphs. Observe those boxes too;
+    // observing only `safha` cannot see that metric change.
+    safha.querySelectorAll<HTMLElement>(".fq-safha-row").forEach((row) => {
+      ro.observe(row);
+    });
+    // A page's QPC font commonly finishes after this component mounts. The
+    // safha box itself does not resize when its glyph metrics settle, so the
+    // ResizeObserver alone preserves a stale system-font measurement and makes
+    // the frame visibly narrower than the Quran rows. Re-measure on font-ready
+    // events as well as physical safha resizes.
+    const onFontsDone = () => measure();
+    document.fonts.ready.then(onFontsDone).catch(() => {});
+    document.fonts.addEventListener("loadingdone", onFontsDone);
+    // `document.fonts` resolves before a browser necessarily commits the new
+    // glyph metrics to layout. Two frames later is the first reliable point to
+    // read the final row boxes on Chromium and WebKit.
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(measure);
+    });
+    const delayedMeasure = window.setTimeout(measure, 150);
+    return () => {
+      ro.disconnect();
+      document.fonts.removeEventListener("loadingdone", onFontsDone);
+      cancelAnimationFrame(raf);
+      window.clearTimeout(delayedMeasure);
+    };
+  }, [fontReady]);
+
+  return (
+    <div
+      ref={outerRef}
+      className="fq-surah-frame leading-none relative mx-auto"
       style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        display: "block",
-        width: "var(--fq-surah-frame-w, 100%)",
-        height: "auto",
+        // marginBottom matches every other row (`.fq-safha-row`'s own inline
+        // margin) so spacing below stays identical to the normal rhythm — in
+        // `.fq-spread`/mobile it's zeroed by the `> * { margin-bottom: 0
+        // !important }` rule same as every other row, and the container's own
+        // `gap`/`space-between` takes over from there, contributing one
+        // --fq-line-gap between the frame and its neighbours either way.
+        // marginTop ADDS a further 0.3em on top of that — nothing zeroes
+        // margin-top, in any mode — because the frame's ink overflows its 1em
+        // slot on both sides (below), which ate almost all of the single
+        // --fq-line-gap and left the frame touching the tashkeel of the line
+        // above it (Addendum 11).
+        marginTop: "0.3em",
+        marginBottom: "var(--fq-line-gap)",
+        height: "1em",
+        color: "var(--mushaf-ornament)",
+        width:
+          lineWidth != null
+            ? `${lineWidth}px`
+            : `calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))`,
+        maxWidth: "100%",
       }}
-    />
-    <span
-      className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
-      translate="no"
-      style={{ fontFamily: "var(--surah-names)", fontSize: "1.18em", lineHeight: 1 }}
     >
-      {`${surahId}`.padStart(3, "0")}
-    </span>
-  </div>
-);
+      <SurahFrameSVG
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          display: "block",
+          width: "100%",
+          height: "auto",
+        }}
+      />
+      <span
+        className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
+        translate="no"
+        style={{ fontFamily: "var(--surah-names)", fontSize: "0.9em", lineHeight: 1 }}
+      >
+        {`${surahId}`.padStart(3, "0")}
+      </span>
+    </div>
+  );
+};
 
 const BismillahLine = () => (
   <div
     className="fq-bismillah leading-none relative flex justify-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)", height: "1em" }}
+    style={{ marginTop: "var(--fq-surah-start-clearance)", marginBottom: "var(--fq-line-gap)", height: "1em" }}
   >
     <BismillahSVG style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "1.2em", width: "auto" }} />
   </div>
@@ -134,6 +198,13 @@ type QuranSafhaProps = {
   // reflows the document (docs/plans/fix-panel-placeholder-reflow.md).
   lines: Record<string, Array<WordWithVerse>> | null;
   pageMetadata: PageMetadataWithChapter | null;
+  // True when this page's content query has no data AND is paused (offline,
+  // React Query's default networkMode skips the fetch entirely rather than
+  // erroring) or errored outright. Without this the skeleton above renders
+  // forever — there is no other signal that the page will never arrive
+  // (ADR 0014 Addendum 3). False/undefined is indistinguishable from "still
+  // loading, will resolve shortly", which is correct for every other caller.
+  unavailableOffline?: boolean;
   locale: string;
   // When set, this safha shows/edits another user's mushaf via an access grant
   // (see ADR 0012). Undefined = the viewer's own mushaf.
@@ -173,6 +244,7 @@ export const QuranSafha = ({
   page,
   lines: linesProp,
   pageMetadata,
+  unavailableOffline = false,
   locale,
   grantId,
   viewingOwnerName,
@@ -193,7 +265,7 @@ export const QuranSafha = ({
     [lines],
   );
   const { data: marks } = useMarks(markPages, grantId);
-  const { quranFontScale } = useQuranFontScale();
+  const { desktopQuranFontSize } = useDesktopQuranFontSize();
   const { edition } = useQuranMushaf();
   const isTablet = useIsTablet();
   const { isOverlayMode } = useNavOverlay();
@@ -476,25 +548,16 @@ export const QuranSafha = ({
           <div
             className={`fq-stack-layer absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
           />
-          {/* min(100vw,...) caps the formula on narrow viewports so the card never
-              overflows on mobile; on desktop it locks the width to the font-scale
-              formula (font-size * worst-case-ratio + md:px-7 padding) so the card
-              is stable from first render — not driven by font metrics. */}
+          {/* On desktop the card width and word ink share --fq-card-word. That keeps
+              a 26/28/30px preference proportional rather than shrinking the text
+              inside an old, oversized card. Tablet/mobile rules own their widths. */}
           <div
             className={`fq-safha-card relative rounded-none overflow-hidden w-full h-full ${isTablet ? "bg-card" : "md:bg-card md:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] md:w-auto md:h-full"}`}
-            style={isTablet ? undefined : { minWidth: `min(100vw, calc(${FONT_V1.getWordFontSizeCss(quranFontScale)} * ${QURAN_LINE_WIDTH_RATIO} + 3.5rem))` }}
+            style={{ "--fq-desktop-word": `${DESKTOP_QURAN_FONT_SIZES[desktopQuranFontSize]}px` } as React.CSSProperties}
           >
-            {/* Content. The three `--fq-*-base` vars mirror the single-view vh
-                sizing so the double-view width cap (the `[data-safha-view="double"]
-                .fq-spread` rule in globals.css, ADR 0013 Addenda 3 & 4) can `min()`
-                against them without a var self-reference. Single view ignores them. */}
+            {/* All desktop metrics derive from this same resolved word size. */}
             <div
               className={`fq-content relative z-0 py-1 flex flex-col h-full ${isTablet ? "" : "md:px-7 md:py-5"}`}
-              style={{
-                "--fq-word-base": FONT_V1.getWordFontSizeCss(quranFontScale),
-                "--fq-line-gap-base": `max(${FONT_V1.minLineGapPx()}px,${FONT_V1.getLineGapVh(quranFontScale)}vh)`,
-                "--fq-heading-base": `max(${FONT_V1.minHeadingBlockPx()}px,${FONT_V1.getHeadingBlockVh(quranFontScale)}vh)`,
-              } as React.CSSProperties}
             >
               {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
               <div
@@ -531,7 +594,7 @@ export const QuranSafha = ({
                   is hidden when there is no text yet; the bars below are then the
                   card's only content and must stay visible. */}
               <div
-                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${edition.usesColorGlyphs ? "fq-tajweed" : ""} md:text-[${FONT_V1.getWordFontSizeCss(quranFontScale)}]`}
+                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${edition.usesColorGlyphs ? "fq-tajweed" : ""}`}
                 style={{
                   fontFamily: pageFontFamily,
                   ...(hasContent && !fontReady ? { visibility: "hidden" as const } : {}),
@@ -546,6 +609,21 @@ export const QuranSafha = ({
                     An overlay here instead would contribute zero height and, on the
                     content-sized desktop spread, collapse the whole card to its
                     header and footer — which is what shipped and had to be fixed. */}
+                {/* Layered over the skeleton bars rather than replacing them —
+                    the bars are what gives this no-content state its correct
+                    height (see the comment above); this only adds a message on
+                    top, same technique as the fontReady overlay. */}
+                {!hasContent && unavailableOffline && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground text-center">
+                      <WifiOff className="size-3.5 shrink-0" strokeWidth={1.8} />
+                      {t(
+                        "offline.notAvailableOffline",
+                        "This page hasn't been downloaded yet — connect to the internet to read it.",
+                      )}
+                    </p>
+                  </div>
+                )}
                 {showSkeleton &&
                   (hasContent ? (
                     <div
@@ -586,6 +664,7 @@ export const QuranSafha = ({
                         <SurahBannerLine
                           key={`banner-${item.slot}`}
                           surahId={item.surahId}
+                          fontReady={fontReady}
                         />
                       );
                     }

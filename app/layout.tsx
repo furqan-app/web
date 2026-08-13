@@ -10,8 +10,12 @@ export const metadata: Metadata = {
   description: "The word focused Quran app",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
+    icon: [
+      { url: "/icons/favicon.ico", sizes: "any" },
+      { url: "/icons/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/icons/favicon-32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/icons/icon-apple-180.png", sizes: "180x180" }],
   },
   appleWebApp: {
     capable: true,

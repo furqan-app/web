@@ -41,6 +41,8 @@ git diff
 
 Also list `docs/plans/` to identify any plans associated with this branch's work.
 
+If `graphify-out/graph.json` exists, run `graphify query "<question>"` for each changed file/component to check for existing similar utilities (Dimension 2) and ripple effects on dependents (Dimension 1/3) before reading the wider codebase manually. Fall back to manual search if it has no answer, is stale, or doesn't exist.
+
 ### 2 — Run the review
 
 Run the following review prompt against the full diff using the chosen model. Report findings directly in the chat — no separate file needed.

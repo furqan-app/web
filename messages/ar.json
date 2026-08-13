@@ -40,13 +40,41 @@
   "tajweedMode": "ألوان التجويد",
   "tajweedModeLabel": "تلوين أحكام التجويد",
   "tajweedModeDescription": "إبراز أحكام التلاوة مثل الإدغام والإخفاء والقلقلة والمد بالألوان",
+  "keepScreenAwake": "الشاشة",
+  "keepScreenAwakeLabel": "إبقاء الشاشة مضاءة",
+  "keepScreenAwakeDescription": "منع شاشة جهازك من الإغلاق التلقائي أثناء فتح التطبيق",
   "theme": {
     "light": "فاتح",
     "dark": "داكن",
     "gold": "ذهبي"
   },
   "offlineAccess": "الوصول دون اتصال",
-  "offlinePagesReady": "{cached} من {total} صفحة متاحة دون اتصال",
+  "offline": {
+    "gateTitle": "اقرأ القرآن بدون إنترنت",
+    "sizeNotice": "حوالي {size} ميجابايت. يُفضّل عبر Wi-Fi.",
+    "download": "تنزيل",
+    "downloadWithSize": "تنزيل ({size} ميجابايت)",
+    "skip": "تخطٍّ الآن",
+    "notNow": "ليس الآن",
+    "settingsHint": "يمكنك التنزيل لاحقًا من الإعدادات.",
+    "runningTitle": "جارٍ تنزيل القرآن",
+    "progress": "{cached} من {total} صفحة",
+    "ready": "متاح بدون إنترنت",
+    "partialTitle": "تعذّر تنزيل بعض الصفحات",
+    "partialBody": "{cached} من {total} صفحة جاهزة — تعذّر تنزيل {failed}.",
+    "retry": "أعد المحاولة",
+    "continueAnyway": "المتابعة على أي حال",
+    "offlineTitle": "أنت غير متصل بالإنترنت",
+    "offlineBody": "اتصل بالإنترنت لتنزيل القرآن للقراءة بدون إنترنت.",
+    "installedTitle": "تم تثبيت فرقان",
+    "installedBody": "نزّل القرآن الآن لتقرأه بدون إنترنت.",
+    "checking": "جارٍ التحقق من التوفّر بدون إنترنت",
+    "gateDescription": "اختر ما إذا كنت تريد تنزيل القرآن للقراءة بدون إنترنت.",
+    "madaniMushaf": "المصحف المدني",
+    "resumeProgress": "تم تنزيل {cached} من {total} صفحة",
+    "resume": "استئناف التنزيل",
+    "notAvailableOffline": "لم يتم تنزيل هذه الصفحة بعد — اتصل بالإنترنت لقراءتها."
+  },
   "notFound": {
     "title": "404 - الصفحة غير موجودة",
     "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",
@@ -85,6 +113,12 @@
   "page": "صفحة",
   "signOut": "تسجيل الخروج",
   "signIn": "تسجيل الدخول",
+  "continueReading": {
+    "navLink": "متابعة القراءة"
+  },
+  "exitApp": {
+    "pressBackAgain": "اضغط رجوع مرة أخرى للخروج"
+  },
   "marks": {
     "navLink": "علاماتي",
     "pageTitle": "علاماتي",

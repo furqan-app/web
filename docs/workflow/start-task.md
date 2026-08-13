@@ -27,24 +27,34 @@ Context-aware implementation of a planned task. Loads the right context (decisio
   - Read `docs/design/design-principles.md` for aesthetic direction and component conventions
   - If the task involves animation, transitions, or interactive states (press/hover/enter/exit), load `docs/workflow/ui-motion.md` for motion and polish guidance
 
-### 3. Implement
+### 3. Pre-implementation guardrail check
 
+- Invoke the `check-fq-standards` skill in **pre-check** mode: list the files/components this task touches, then cross-reference `docs/architecture/DECISIONS.md`'s constraints and the general engineering bar for anything load-bearing. Do this before writing any code.
+
+### 4. Implement
+
+- **Query the graph first for callers/usages.** If `graphify-out/graph.json` exists, run `graphify query "<question>"` or `graphify path "A" "B"` to find what depends on a file/component before touching it — cheaper than grepping cold. Fall back to manual search if it has no answer, is stale, or doesn't exist.
 - **Before editing, verify the current code matches what the plan/docs describe.** Open the files the plan names and confirm their present state lines up with the plan's assumptions — plans can go stale, and acting on a stale claim ("X is unchanged", "Y still renders here") is how documented behavior gets broken. If reality and the doc disagree, stop and reconcile with the user before changing anything.
 - Follow the plan exactly (the latest addendum's approach). If you discover the plan needs revision, pause and discuss — do not silently deviate.
 - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
 - Apply decisions from `DECISIONS.md` — do not re-litigate them.
 - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
 
-### 4. Record decisions
+### 5. Post-implementation guardrail check
+
+- Invoke the `check-fq-standards` skill in **post-check** mode against the diff: walk its Regression Classes and General Engineering Bar checklists, and re-grep `DECISIONS.md` for constraints on every changed file. Fix any failing item before continuing — do not proceed to Report with a known open violation.
+
+### 6. Record decisions
 
 - If the task added, removed, or reorganised any components: update `docs/architecture/COMPONENTS.md` to reflect the new state.
 - After implementation, check: were any new architectural decisions made during implementation?
 - If yes, update `docs/architecture/DECISIONS.md`.
 - Mark the plan status as `implemented`.
 
-### 5. Report
+### 7. Report
 
 - Summary of what changed (files modified, decisions made).
+- Which `check-fq-standards` checklist items were relevant and confirmed OK (not a bare "all good").
 - Anything the user should verify manually.
 
 ---
@@ -57,6 +67,7 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 - Do not act on a stale doc claim without checking the code first — verify current state before editing.
 - Do not undo or contradict an ADR, a `Constraints` item, or a `What NOT to Do` item as a side effect of the change.
 - Do not skip the decisions check at the end.
+- Do not skip the pre- or post-implementation `check-fq-standards` guardrail — a plan that looks straightforward can still touch a load-bearing invariant it didn't call out.
 - Do not add features beyond what the plan specifies.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

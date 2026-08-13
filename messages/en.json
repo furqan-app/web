@@ -39,13 +39,41 @@
   "tajweedMode": "Tajweed Colors",
   "tajweedModeLabel": "Color-code Tajweed rules",
   "tajweedModeDescription": "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
+  "keepScreenAwake": "Screen",
+  "keepScreenAwakeLabel": "Keep screen awake",
+  "keepScreenAwakeDescription": "Prevent your device screen from sleeping while the app is open",
   "theme": {
     "light": "Light",
     "dark": "Dark",
     "gold": "Gold"
   },
   "offlineAccess": "Offline Access",
-  "offlinePagesReady": "{cached} of {total} pages ready offline",
+  "offline": {
+    "gateTitle": "Read the Quran offline",
+    "sizeNotice": "About {size} MB. Best on Wi-Fi.",
+    "download": "Download",
+    "downloadWithSize": "Download ({size} MB)",
+    "skip": "Skip for now",
+    "notNow": "Not now",
+    "settingsHint": "You can download it later from Settings.",
+    "runningTitle": "Downloading the Quran",
+    "progress": "{cached} of {total} pages",
+    "ready": "Available offline",
+    "partialTitle": "Some pages couldn't be downloaded",
+    "partialBody": "{cached} of {total} pages are ready — {failed} couldn't be downloaded.",
+    "retry": "Try again",
+    "continueAnyway": "Continue anyway",
+    "offlineTitle": "You're offline",
+    "offlineBody": "Connect to the internet to download the Quran for offline reading.",
+    "installedTitle": "Furqan is installed",
+    "installedBody": "Download the Quran now so you can read it offline.",
+    "checking": "Checking offline availability",
+    "gateDescription": "Choose whether to download the Quran for offline reading.",
+    "madaniMushaf": "Madani mushaf",
+    "resumeProgress": "{cached} of {total} pages downloaded",
+    "resume": "Resume download",
+    "notAvailableOffline": "This page hasn't been downloaded yet — connect to the internet to read it."
+  },
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",
@@ -84,6 +112,12 @@
   "page": "Page",
   "signOut": "Sign out",
   "signIn": "Sign in",
+  "continueReading": {
+    "navLink": "Continue Reading"
+  },
+  "exitApp": {
+    "pressBackAgain": "Press back again to exit"
+  },
   "marks": {
     "navLink": "My Marks",
     "pageTitle": "My Marks",

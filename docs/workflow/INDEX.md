@@ -24,6 +24,7 @@ Plan → Implement → Review → Ship → Retrospect
 |---|---|---|
 | `/plan-fq-task` | [plan-task.md](plan-task.md) | Socratic planning → `docs/plans/<slug>.md` |
 | `/start-fq-task` | [start-task.md](start-task.md) | Implement from a plan, load all context |
+| `/check-fq-standards` | [check-fq-standards.md](check-fq-standards.md) | Pre/post-implementation guardrail vs DECISIONS.md + engineering bar |
 | `/review-fq-work` | [review-work.md](review-work.md) | Code review on current branch diff |
 | `/ship-fq-task` | [ship-task.md](ship-task.md) | Commit → push → PR → ticket update |
 | `/retrospect` | [retrospect.md](retrospect.md) | End-of-session retrospective |

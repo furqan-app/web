@@ -1,17 +1,24 @@
-import { QuranFontScale, QuranSafhaView } from "@types";
+import { DesktopQuranFontSize, QuranSafhaView } from "@types";
 import { RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode';
+export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'keepScreenAwake';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
-  quranFontScale: QuranFontScale;
+  desktopQuranFontSize: DesktopQuranFontSize;
   quranSafhaView: QuranSafhaView;
   recitationSettings: RecitationSettings;
   // Active mushaf edition (ADR 0033). `quranTajweedMode` is the superseded
   // boolean, still read once to migrate an existing reader's choice.
   quranMushafId: number;
   quranTajweedMode: boolean;
+  // Last self-reader page visited (plain page number of whatever edition was
+  // active at the time — same convention as any deep link, see
+  // MushafSwitchSync). Never written for the shared-mushaf grant reader.
+  lastReadPage: number;
+  // Whether the mobile/tablet Wake Lock toggle is on. Default true, applied
+  // when this key is absent (never written yet) — see KeepScreenAwakeContext.
+  keepScreenAwake: boolean;
 };
 
 export const storage = {

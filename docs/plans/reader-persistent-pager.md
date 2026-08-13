@@ -2,7 +2,7 @@
 
 **Type:** feature (performance re-architecture)
 **Date:** 2026-07-23
-**Status:** implemented (swipe-commit flicker, base-font over-fetch, and `FontFaceInjector` ref-mutation-during-render all fixed and verified)
+**Status:** implemented (rapid-swipe drop, Trello #153, 2026-08-11 — see the final addendum for what is and is not verified; earlier scopes implemented, and the sixth session's live browser check is still recorded as pending below)
 **Trello:** #137 https://trello.com/c/sEA3hgtz
 **ADR:** [0028](../architecture/adr/0028-reader-persistent-pager.md)
 
@@ -836,3 +836,305 @@ name `useLruIds` instead of the old `updateLru` ref helper.
 
 `npm run lint` and `npx tsc --noEmit` both pass clean. Live browser verification (tajweed toggle +
 swipe, confirming no flash/regression) not yet run — pending.
+
+---
+
+## Rapid Swipes Silently Dropped (2026-08-11) — Trello #153
+
+**Type:** bug
+**Status:** implemented
+**Trello:** #153 https://trello.com/c/qkKb5UFn
+
+### Summary
+
+On tablet, swiping several pages in a row drops roughly every other swipe. Reported as "lag", but it
+is not a frame-rate problem: the gesture is discarded outright. Any swipe that *begins* inside the
+300 ms commit window is swallowed — not queued, not deferred, no feedback. Fix: capture the gesture's
+intent while a commit is in flight and apply one queued page step the moment that commit lands.
+
+### Root Cause (confirmed by code reading, 2026-08-11)
+
+`app/components/reader/ReaderPager.tsx`:
+
+- `animateCommit` sets `isCommitting.current = true` and schedules the anchor swap on a wall-clock
+  `window.setTimeout(() => commitTo(target), EXIT_MS)` — 300 ms.
+- `commitTo` is the only thing that clears the flag.
+- `onTouchStart` opens with `if (isCommitting.current) return;` and returns **before recording
+  `touchStartX`**. With `touchStartX` left null, `onTouchMove` and `onTouchEnd` both bail on their
+  own null checks, so the entire following gesture is dead.
+
+Measured previously (headless Chrome, 1280x800, `/ar/pages/51`, synthetic +180px drags past the 80px
+`COMMIT_THRESHOLD`): 500 ms gaps → 10/10 committed; 250 ms gaps → 5/10; 120 ms gaps → 5/10.
+
+The same early-return swallow exists on two other paths — the keyboard handler and `navRef` (arrow
+clicks). Neither opens a window of its own, because both pass `animate=false`, which reaches
+`commitTo` synchronously and clears the flag in the same task. But input from *any* source that
+arrives during a swipe's 300 ms window is dropped, so all three paths feed the same queue.
+
+### The `transitionend` row is a superseded approach — do not implement it
+
+Trello #153 notes that this plan contains a "Decision Tree / Algorithm (**verified**)" row requiring
+commit completion on the strip's `transitionend` with a guarded fallback timer, and that
+`git log -S transitionend` returns zero commits — concluding it was "labelled verified but never
+implemented."
+
+That row sits inside the section headed **"Root Cause Hypothesis — SUPERSEDED"**, whose own note
+reads: *"Commit timing and font warm-up were secondary at best; the 'Files to Change (this residual
+bug)' list under this hypothesis is dead — do not implement it."* The flicker it was aimed at was
+actually fixed by ADR 0029 (immutable font registration), after 24 attempts that all wrongly treated
+font readiness as the lever. Its absence from git history is therefore a deliberate drop, not an
+oversight. Re-introducing `transitionend` now would re-propose a superseded approach and add
+regression risk to the one path in this component that took 24 attempts to stabilise — and by the
+card's own admission it does not fix the reported symptom anyway. **Scope here is the queue only.**
+
+> **Superseded 2026-08-11 (same day) — see "Revised approach: takeover, not a queue" at the end of this
+> addendum.** The 11-rule queue below shipped in PR #201 and then was replaced at the user's request. It
+> coalesced rapid input, so swipe count did not equal page count. Rules 1-11, the one-deep cap, the
+> direction-not-page rule, the microtask drain and the transform-free latch are all **dead** — do not
+> reimplement them. The Root Cause and the `transitionend` note above remain current.
+
+### Decision Tree / Algorithm (verified with user)
+
+| # | Condition | Action |
+|---|---|---|
+| 1 | Touch starts, not committing | Record `touchStartX/Y`, drag normally (unchanged) |
+| 2 | Touch starts **while committing** | Record `touchStartX/Y`; do **not** touch the strip's transition |
+| 3 | Touch moves while committing | Set `isDragging`, but do **not** transform the strip — never fight the in-flight slide |
+| 4 | Touch ends while committing, `<` `COMMIT_THRESHOLD` | Discard; no queue and no snap-back (nothing was dragged) |
+| 5 | Touch ends while committing, `>=` threshold | Queue **one** pending step `{ goNext }` |
+| 6 | Queue already holds a step | Latest intent wins — overwrite, never stack |
+| 7 | Queued step is the opposite direction | Honour it; a net-zero page change is what the user asked for |
+| 8 | Commit lands with a step queued | Clear the queue, then apply it **instantly** (`animate=false`), deferred via `queueMicrotask` |
+| 9 | Keyboard / arrow click arrives mid-commit | Same queue (currently dropped) |
+| 10 | Non-neighbour jump queued | Queue the absolute target page, not a direction |
+| 11 | Pager unmounts, edition switch, or recitation follow fires | Discard the queue — never replay a stale turn |
+
+Two invariants this depends on:
+
+- **A queued step must hold a direction, not a resolved page.** The in-flight commit moves the
+  anchor, so a `nextAnchor` captured at queue time points at the wrong page by the time the queue is
+  applied. Resolve the target after the anchor settles, via the existing reassigned-each-render ref
+  pattern (`navRef`) so the applying code reads fresh `nextAnchor`/`prevAnchor`.
+- **The queued step must be applied via `queueMicrotask`, never inline.** `commitTo` uses
+  `flushSync`, which flushes passive effects synchronously; an inline follow-up commit runs while
+  `isCommitting` is still true, is guarded out, and never retries. This is exactly the trap
+  `RecitationFollow` hit (see Decisions Made → "Recitation follow"), and the same mitigation applies.
+
+Queued turns commit **instantly** rather than replaying the 300 ms reveal: `animate=false` reaches
+`commitTo` synchronously, so the window closes immediately and the next gesture is free. The first
+swipe of a burst still gets its full book-like reveal; only catch-up turns are instant, which reads
+as the app keeping up rather than animating at the user.
+
+### Verified Test Cases (measured 2026-08-11, dev server, tablet double-view at `/ar/pages/51`)
+
+**Wall-clock gap testing was not achievable in the available browser pane.** The pane runs as a
+background tab (`document.hidden === true`, and fronting it via the MCP tab API does not change
+that), so `setTimeout` is clamped: a requested 120 ms gap measured 494–1000 ms, and the pager's own
+`setTimeout(commitTo, 300)` is stretched by the same clamp. Runs at nominal 250 ms / 120 ms therefore
+executed at ~1000 ms spacing and never opened an overlapping window at all — they returned a
+meaningless 10/10 on both the fixed and unfixed code. **Do not cite gap-based numbers from this
+environment.**
+
+Verified instead with a timing-independent harness: fire N swipes as synthetic `TouchEvent`s in a
+**single task**, so every swipe after the first lands inside the commit window by construction. Turn
+count is derived from the page delta (double view steps 2 pages per turn). Before/after measured on
+the same harness by stashing only `ReaderPager.tsx`.
+
+| Burst, all in one task | Before | After | Rule |
+|---|---|---|---|
+| 1 swipe (control) | 1 turn | 1 turn | — |
+| 2 swipes | **1 turn** — 2nd swallowed | **2 turns** | the bug / rule 5 |
+| 3 swipes | **1 turn** — 2nd and 3rd swallowed | **2 turns** — coalesced | rule 6 |
+| next then prev | prev swallowed → 1 turn | **0 net turns** | rule 7 |
+| swipe + sub-threshold release | 1 turn | 1 turn — nothing queued | rule 4 |
+| swipe + one `ArrowLeft` | ArrowLeft dropped → 1 turn | **2 turns** | rule 9 |
+| swipe + 5 `repeat` ArrowLefts | 1 turn | **1 turn** — repeats never enqueue | `e.repeat` constraint |
+
+Tap-with-no-movement during a commit remains a no-op: `onTouchEnd` requires `isDragging`, which only
+a horizontal move sets, so the strip's tap-to-toggle nav overlay is untouched.
+
+Three further cases were added after review found the first implementation still lost or corrupted a
+gesture in each of them (measured the same way):
+
+| Case | First implementation | After review fixes |
+|---|---|---|
+| Drag begins mid-commit, commit lands mid-drag, finger keeps moving | strip **teleports** to `translateX(-100% + 140px)` | stays `translateX(-100%)` — the gesture is latched transform-free for its whole life |
+| Step queued, a drag is held across the commit landing, then released **sub-threshold** | queued step **destroyed** by the declining drain → 1 turn | **2 turns** — the drain leaves it queued and the release re-schedules it |
+| Swipe, then a `touchcancel` (no `touchend`), then another swipe | `isDragging` stuck true → drain, `followTo` and Stage B lookahead all wedged | later swipe still turns (1 turn) — `onTouchCancel` resets the drag state |
+
+**Accepted limit:** with a 1-deep queue, swipe count ≠ page count when swiping faster than the commit
+window allows — gestures coalesce into the latest intent (3 swipes → 2 turns, measured). The card's
+original "10/10 at 120 ms" framing is therefore **not** a target this fix meets, by design. Nothing is
+silently dead any more: every gesture either commits or is explicitly superseded by a later one, and a
+human swiping 8 times in a second does not plausibly intend 8 distinct pages. A deeper queue was
+rejected — it turns spam into overshoot, which is harder to recover from than coalescing.
+
+**Still unverified:** real-device behaviour at true sub-300 ms gaps, and the *feel* of an instant
+catch-up turn following an animated one. Both need a foreground browser or a tablet; neither is
+reachable from this pane.
+
+### Files to Change
+
+- `app/components/reader/ReaderPager.tsx`
+  - `onTouchStart` — drop the `isCommitting` early return; always record `touchStartX/Y`. Guard only
+    the strip-transition reset and the snap-timer clear behind `!isCommitting.current`.
+  - `onTouchMove` — skip the `style.transform` write while committing (keep the `isDragging`
+    bookkeeping) so a new drag never fights the in-flight slide.
+  - `onTouchEnd` — when committing and past threshold, queue `{ goNext: deltaX > 0 }` instead of
+    calling `animateCommit`; skip the snap-back branch entirely (nothing was transformed).
+  - New `pendingNav` ref holding `{ kind: "step"; goNext: boolean } | { kind: "page"; target: number } | null`,
+    written only through the `enqueueStep`/`enqueuePage` choke point.
+  - `commitTo` — after clearing `isCommitting`, `queueMicrotask` the drain through `drainRef` (which is
+    reassigned each render so it reads fresh anchors). The drain clears the queue **at dispatch**, not
+    before its guards: clearing first destroyed a step it merely declined to run.
+  - Keyboard handler and `navRef` — replace their `isCommitting` early returns with the same queue.
+  - Clear `pendingStepRef` on unmount, on edition switch (`jumpTo`), and when recitation follow
+    commits, so a stale turn is never replayed.
+- `docs/architecture/adr/0028-reader-persistent-pager.md` — addendum recording the input-during-commit
+  contract (queue one, coalesce, direction-not-page, microtask-deferred).
+- `docs/architecture/DECISIONS.md` — constraint under the reader/pager entry.
+- `docs/architecture/COMPONENTS.md` — `ReaderPager` entry gains the queue behaviour.
+
+### Constraints
+
+- Do not transform the strip while a commit is in flight — the in-flight `transition` owns the
+  transform until `commitTo` resets it.
+- Keep the queue exactly one deep. A counter or array turns rapid input into page overshoot.
+- Resolve the queued target only after the anchor settles; never store a pre-commit `nextAnchor`.
+- Apply the queued step via `queueMicrotask`, never inline inside `commitTo`'s `flushSync`.
+- Preserve the `e.repeat` guard in the keyboard handler. It must return **before** the queue, or a
+  held key would enqueue at the OS repeat rate (~30/s) — the exact runaway that guard exists for.
+- Do not regress the tap-to-toggle nav overlay on the strip, recitation follow, edition switching, or
+  the double-page window unit.
+
+### What NOT to Do
+
+- Do not implement the `transitionend` commit completion from the superseded hypothesis section — see
+  the dedicated note above. It is a dropped approach, not an outstanding requirement.
+- Do not change `EXIT_MS`. Shortening the window narrows the symptom without fixing it and is a
+  deliberate change to the page-turn feel; out of scope here.
+- Do not let a new drag cancel or take over the in-flight commit. Considered and rejected: it rewrites
+  the commit/recenter sequence that ADR 0029 and the flicker work stabilised, for a gain the queue
+  already delivers.
+- Do not make queued turns animate. Considered and rejected: each animated turn reopens a 300 ms
+  window, capping throughput at ~3 pages/sec and putting the 250 ms target out of reach.
+- Do not deepen the queue to guarantee one turn per swipe (see Accepted limit).
+
+### Decisions Made
+
+- Queue one pending step, latest-intent-wins, applied instantly on commit completion (user-confirmed).
+- Coalescing at very high swipe rates is accepted behaviour, not a shortfall (user-confirmed).
+- Scope is the queue only — no `transitionend`, no `EXIT_MS` change (user-confirmed).
+- All three input paths (swipe, keyboard, arrows) share one queue, so behaviour does not depend on
+  which input happened to arrive during the window.
+- No new ADR: this is a behavioural refinement inside ADR 0028's existing "navigation ownership lives
+  in the pager" decision, recorded as an addendum there.
+
+### Implementation Notes (2026-08-11)
+
+Implemented as specified, in `app/components/reader/ReaderPager.tsx` only:
+
+- `pendingNav` ref holds `{ kind: "step"; goNext } | { kind: "page"; target } | null`.
+  `drainPendingRef` is reassigned every render so the drain closes over post-commit anchors.
+- `drainPending` (stable `useCallback`) is called at both `commitTo` exits and defers to
+  `queueMicrotask`; the drain clears the queue first, then bails if a newer drag or commit has taken
+  over — same guard shape as `followTo`.
+- `onTouchStart` records `touchStartX/Y` before its `isCommitting` return; everything below that
+  return touches the strip, which the in-flight transition owns.
+- `onTouchMove` keeps its `isDragging` bookkeeping but skips the transform write while committing.
+- `onTouchEnd` queues instead of committing while `isCommitting`, and skips the snap-back branch
+  entirely (nothing was transformed, so there is nothing to snap).
+- The keyboard handler and `navRef` queue instead of returning. `e.repeat` still returns **before**
+  the queue — verified: 5 repeat events during a commit produce one turn, not five.
+- `jumpTo` (edition switch) and `followTo` (recitation) both clear the queue, and an unmount effect
+  nulls it so an already-scheduled microtask cannot commit on a torn-down pager.
+
+`npx tsc --noEmit` clean, `npm run lint` clean, `npm test` 75 passed / 7 files.
+
+**No unit test added.** `vitest.config.ts` is deliberately scoped to pure-function tests
+(`app/**/*.test.ts`, node environment, no jsdom or React Testing Library), so covering a touch-gesture
+state machine would mean adding DOM test infrastructure — a larger change than this fix and outside
+its scope. The synthetic-`TouchEvent` harness above is what actually exercised it; if DOM tests are
+introduced later, the seven bursts in the table are the cases to encode.
+
+#### Review fixes (2026-08-11, Opus pass before shipping)
+
+The first implementation passed all seven original bursts but review found three ways it could still
+lose or corrupt a gesture, all now fixed and re-measured (table above):
+
+- **Teleport after a mid-drag hand-off.** `onTouchMove` skipped the transform only while
+  `isCommitting`; once the commit landed the same still-active gesture fell through and wrote the
+  finger's whole accumulated travel in one jump. A `gestureIsQueueOnly` latch, set at `touchstart`,
+  keeps that gesture transform-free until it ends.
+- **Declined drain destroyed the step.** The drain cleared `pendingNav` before its
+  `isDragging`/`isCommitting` guards, so a step it merely declined was gone — and a sub-threshold
+  release by the newer drag then produced zero turns. It now clears at dispatch, and
+  `onTouchEnd`/`onTouchCancel` re-schedule a declined drain.
+- **No `touchcancel` handler.** A cancelled touch left `isDragging` stuck true, wedging the drain,
+  `followTo` and the Stage B lookahead. Added `onTouchCancel`; pre-existing, but this change widened
+  the window for entering it.
+
+Also from review: queueing moved behind one `enqueueStep`/`enqueuePage` choke point (three call sites
+each writing the literal is what let the original bug diverge per input); `drainPending` collapsed into
+`scheduleDrain`, removing a dependency edge from `commitTo` — whose identity Panel memo stability
+depends on; `drainPendingRef` renamed `drainRef`.
+
+Deliberately **not** fixed here, as pre-existing and outside this scope: `animateCommit`'s `EXIT_MS`
+timer is never cancelled, so an edition switch mid-commit can be overwritten 300 ms later, and the
+timer can fire post-unmount and rewrite the URL of whatever route the user moved to. Both want a
+cancellable commit handle, which touches the timing path this change deliberately leaves alone.
+
+One environment note worth carrying: a `useRef` added to this component makes HMR blow up the reader
+into its error boundary (hook order changed under preserved state). A full reload clears it — do not
+chase it as a runtime defect.
+
+### Revised approach: takeover, not a queue (2026-08-11, user decision)
+
+The queue worked but capped throughput: 3 rapid swipes gave 2 turns. Replaced with **takeover** —
+settle the in-flight turn immediately, then handle the new input as if nothing were in flight.
+
+| # | Condition | Action |
+|---|---|---|
+| 1 | Any user input (swipe/keyboard/arrow) arrives with a turn in flight | Clear its `EXIT_MS` timer and `commitTo` its target — **settle, never abort** |
+| 2 | After settling | Re-enter through `navRef`/`stepRef`; do NOT fall through (the closure's anchors are pre-settle) |
+| 3 | Touch, after the settle | Normal drag from the settled page — `onTouchMove`/`onTouchEnd` need no commit-awareness |
+| 4 | Keyboard `e.repeat` | Returns **before** the takeover, so a held key still turns exactly one page |
+| 5 | Edition switch (`jumpTo`) mid-turn | **Cancel** the in-flight turn (do not settle) — the switch relocates by verse, and its timer would otherwise overwrite the re-anchor 300 ms later |
+| 6 | Unmount mid-turn | Cancel the timer, so it cannot fire post-teardown and rewrite the URL |
+| 7 | Recitation follow | Does **not** take over — automatic, and truncating a reader-initiated turn would have playback fight the finger. Keeps its guard; converges |
+| 8 | `touchcancel` | Reset the drag state so a cancelled touch cannot wedge `followTo`/Stage B |
+
+**Measured** (same synthetic-`TouchEvent` harness, single-page stepping, dev server):
+
+| Case | Queue (PR #201 as shipped) | Takeover |
+|---|---|---|
+| 1 / 2 / 3 / 5 swipes in one task | 1 / 2 / 2 / — turns (coalesced) | **1 / 2 / 3 / 5** pages — exact 1:1 |
+| next then prev | 0 net | 0 net |
+| swipe + one `ArrowLeft` | 2 turns | 2 pages |
+| swipe + 5 `repeat` ArrowLefts | 1 turn | 1 page |
+| 3 non-repeat `ArrowLeft`s | — | 3 pages |
+| Drag begins mid-turn, then moves | needed a latch to avoid teleporting | strip `-100%` → `+40px` → `+120px`, tracks the finger |
+| `touchcancel`, then a swipe | turns | turns |
+
+Size: **net 38 lines smaller** than the queue implementation (−122/+84), and `onTouchMove`/`onTouchEnd`
+are byte-identical to their pre-#153 form.
+
+**What this costs.** Fast swiping truncates each reveal mid-flight, so it reads as a series of snaps
+rather than smooth turns — the trade the queue was avoiding. And the settle calls `commitTo` from an
+arbitrary mid-transition transform rather than the animation's end state; ADR 0029's font-face cause is
+untouched and the `flushSync`-then-recenter swap is unchanged, but this is the path that took 24 attempts
+to stabilise, so **a returning flicker under rapid swiping is the specific thing to watch on device**.
+
+**Still unverified:** everything about feel — whether truncated reveals look acceptable at speed, and
+whether any flash returns. Needs a tablet; the synthetic harness measures page counts, not perception.
+
+### What NOT to Do (revised)
+
+- Do not reintroduce a pending-step queue. It coalesced input and needed a latch, a microtask drain and
+  a "leave it queued when declined" rule just to avoid dropping gestures of its own.
+- Do not **abort** the in-flight turn instead of settling it — the user carried it past the threshold, so
+  dropping it loses a page they asked for.
+- Do not fall through after settling. `flushSync` makes the re-render synchronous, so the calling closure
+  is already stale; re-enter through the ref.
+- Do not implement `transitionend` commit completion, and do not change `EXIT_MS` (unchanged from the
+  original addendum — both remain out of scope).
