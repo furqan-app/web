@@ -12,9 +12,19 @@ import { Link } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import useTranslations from "@hooks/use-translations";
 import { cn } from "@/lib/utils";
-import { navPillClassName } from "./NavPillLink";
+import { navPillClassName, menuRowClassName } from "./NavPillLink";
 
-export const UserMenu = () => {
+type Props = {
+  // Renders as a full-width menu row (NavOverflowMenu's shared row template,
+  // label always visible) instead of the compact desktop pill.
+  menuRow?: boolean;
+  // Portal target for DropdownMenuContent — pass NavOverflowMenu's SheetContent
+  // node when menuRow is true, so the dropdown isn't a DOM sibling of the
+  // enclosing Sheet's modal FocusScope (see DropdownMenuContent's own comment).
+  container?: HTMLElement | null;
+};
+
+export const UserMenu = ({ menuRow, container }: Props = {}) => {
   const { data: session } = useSession();
   const t = useTranslations();
   const locale = useLocale();
@@ -24,15 +34,17 @@ export const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t("account", "Account")}
-          className={cn(navPillClassName, "md:border md:border-border")}
+          className={cn(menuRow ? menuRowClassName : navPillClassName, !menuRow && "md:border md:border-border")}
         >
           <span className="w-7 h-7 rounded-lg bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none">
             <User className="size-3.5" />
           </span>
-          <span className="hidden md:inline">{t("account", "Account")}</span>
+          <span className={cn(!menuRow && "hidden md:inline")}>
+            {t("account", "Account")}
+          </span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" container={container}>
         {session ? (
           <DropdownMenuItem className="font-medium">
             {session.user?.name}

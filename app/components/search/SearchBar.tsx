@@ -93,7 +93,7 @@ export const SearchBar = () => {
 
             {/* Mobile: search icon trigger */}
             <button
-                className="md:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent/50 transition-colors"
+                className="md:hidden flex items-center justify-center w-10 h-10 rounded-md hover:bg-accent/50 transition-colors"
                 onClick={() => { setMobileOpen(true); setSearchOpen(true); }}
                 aria-label={t("search.placeholder", "Search the Quran...")}
             >

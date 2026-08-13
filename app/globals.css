@@ -155,9 +155,23 @@
     --secondary: 211 38% 16%;
     --secondary-foreground: 45 18% 91%;
     --muted: 211 38% 16%;
-    --muted-foreground: 206 9% 50%;
+    /* Bumped 50% -> 56% (2026-08-13, docs/plans/home-page-design-fixes.md):
+       50% measured 4.1:1 against --card, below WCAG AA 4.5:1. 56% measures 5.0:1. */
+    --muted-foreground: 206 9% 56%;
     --accent: 161 58% 15%;
-    --accent-foreground: 169 88% 26%;
+    /* Deliberately NOT --primary here, unlike every other theme (2026-08-13,
+       docs/plans/home-page-design-fixes.md). --primary stayed at 26% lightness
+       today's brand retint (see EXPERIMENTAL comment above) for the sake of
+       --primary-foreground's white-on-primary button contrast (5.09:1) — but
+       that same 26% only measures 2.4:1 against --accent's 15%-lightness
+       background, below WCAG AA 4.5:1. Bumping --primary itself to fix that
+       drops the button contrast to ~2.7:1 instead (checked: no single lightness
+       satisfies both). 39% is the lowest value that clears 4.5:1 against
+       --accent (measures 5.0:1) without touching --primary or its button
+       contrast. Keep this decoupled from --primary in dark theme; do not
+       "simplify" it back to mirroring --primary without re-deriving both
+       contrast pairs. */
+    --accent-foreground: 169 88% 39%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 26% 19%;
@@ -245,9 +259,11 @@
     --secondary: 211 38% 16%;
     --secondary-foreground: 45 18% 91%;
     --muted: 211 38% 16%;
-    --muted-foreground: 206 9% 50%;
+    /* See matching comment in .theme-dark above. */
+    --muted-foreground: 206 9% 56%;
     --accent: 161 58% 15%;
-    --accent-foreground: 169 88% 26%;
+    /* See matching comment in .theme-dark above — deliberately not --primary. */
+    --accent-foreground: 169 88% 39%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 26% 19%;
