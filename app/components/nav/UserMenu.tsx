@@ -11,6 +11,8 @@ import {
 import { Link } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import useTranslations from "@hooks/use-translations";
+import { cn } from "@/lib/utils";
+import { navPillClassName } from "./NavPillLink";
 
 export const UserMenu = () => {
   const { data: session } = useSession();
@@ -22,7 +24,7 @@ export const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t("account", "Account")}
-          className="flex items-center gap-2 rounded-xl px-2 md:px-3 py-1.5 md:border md:border-border text-muted-foreground text-sm font-semibold hover:bg-accent/50 transition-colors"
+          className={cn(navPillClassName, "md:border md:border-border")}
         >
           <span className="w-7 h-7 rounded-lg bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none">
             <User className="size-3.5" />
