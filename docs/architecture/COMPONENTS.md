@@ -13,7 +13,7 @@ Last updated: 2026-08-12
 
 ```
 Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch; on pages routes shows a surah indicator button (surah number + name + chevron) instead of a plain panel icon — reads currentSurah from SidebarContext, falls back to PanelLeftOpen icon while SidebarContext.currentSurah is null (Sidebar lazy-load gap)
-  FurqanLogo                 — brand mark (SVG, links to home)
+  FurqanLogo                 — brand mark (PNG, next/image, links to home); two stacked images (logo-navbar-green.png default, logo-navbar-gold.png in gold theme), CSS-selected via `.theme-gold` on `<html>` — not client-side theme state, since useTheme() is per-component local state and won't stay in sync across components
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
   ContinueReadingLink        — link to /pages/{lastReadPage} (defaults to page 1); icon+label on desktop, icon-only on mobile; reads LastReadPageContext (live, not a one-shot localStorage read — Nav never remounts during in-app nav, so a one-shot read goes stale the moment LastReadPageSync writes again); hidden when standalone/fullscreen + mobile/tablet (isStandaloneDisplayMode + !useIsDesktopUp) — AppLaunchRedirect already puts the user there on cold launch, so the link is redundant exactly there; kept for desktop and browser tabs, which get no auto-redirect
