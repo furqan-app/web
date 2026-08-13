@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
 
 export const FurqanLogo = () => (
   <Link
@@ -7,6 +7,6 @@ export const FurqanLogo = () => (
     aria-label="Home"
     className="flex-none size-[34px] rounded-[10px] bg-primary flex items-center justify-center hover:opacity-90 transition-opacity"
   >
-    <BookOpen className="size-[15px] text-primary-foreground" strokeWidth={2.2} />
+    <Image src="/icons/logo-navbar-white.png" alt="" width={32} height={32} priority />
   </Link>
 );
