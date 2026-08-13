@@ -1,6 +1,6 @@
 # Review Work
 
-Spawns a reviewer to check code changes across three dimensions. Accepts an optional scope argument:
+Spawns a reviewer to check code changes across three dimensions, plus a fourth design/UX dimension when the diff touches UI files. Accepts an optional scope argument:
 
 - _(no arg)_ — committed changes on this branch vs main (default)
 - `--staged` — staged but uncommitted changes
@@ -41,6 +41,8 @@ git diff
 
 Also list `docs/plans/` to identify any plans associated with this branch's work.
 
+Check whether the changed-files list includes any UI-relevant files (components, pages, `.css`/`.scss`). If so, this review gets a 4th dimension (Design & UX) — see step 3.
+
 If `graphify-out/graph.json` exists, run `graphify query "<question>"` for each changed file/component to check for existing similar utilities (Dimension 2) and ripple effects on dependents (Dimension 1/3) before reading the wider codebase manually. Fall back to manual search if it has no answer, is stale, or doesn't exist.
 
 ### 2 — Run the review
@@ -72,3 +74,7 @@ You are a senior code reviewer. Review the following branch diff across three di
 - Does anything contradict `docs/architecture/DECISIONS.md`?
 
 If a dimension has no findings, say "No issues found." Do not pad with filler observations. Number findings within each dimension (1., 2., 3., ...), continuing the count across dimensions rather than restarting at 1 for each one, so every finding has a stable reference number for follow-up discussion.
+
+### 3 — Design & UX dimension (UI-touching diffs only)
+
+If step 1 found UI-relevant files in the diff, run `/impeccable critique` directly (not via the review subagent — a direct Skill call, same mechanism as `/start-fq-task`'s Design Remediation step, ADR 0041) against those changed files. Fold its findings in as **Dimension 4 — Design & UX**, renumbered to continue sequentially after the review subagent's last finding number (e.g. if the subagent's 3 dimensions ended at finding 7, Dimension 4 starts at 8). No UI files in the diff: omit Dimension 4 entirely — don't print an empty "No issues found" for a dimension that doesn't apply.

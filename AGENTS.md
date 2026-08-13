@@ -65,4 +65,15 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
->>>>>>> origin/main
+
+## impeccable
+
+`/impeccable` is this project's standing authority for UI/UX design work — nobody on the team is a designer, so lean on it rather than freehand design judgment.
+
+Use it for:
+- Implementing new design or UI
+- Any back-and-forth on design or UX, including casual questions ("should this be bigger?", "does this color work?") — not just explicit `/impeccable` invocations
+- Critiquing an existing design or surface
+- Reviewing work that includes UI/UX (see `/review-fq-work`'s Design & UX dimension)
+
+Inside the plan/implement/review workflow it's wired in at three points (ADR 0041): `/plan-fq-task` runs `/impeccable critique` during UI-mode investigation and records findings as a plan's `## Design Remediation` section; `/start-fq-task` executes those entries during implementation; `/review-fq-work` runs `/impeccable critique` as a 4th dimension when a diff touches UI files. Outside that workflow — a standalone design question, a critique request, an ad hoc "what do you think of this" — invoke `/impeccable` directly; its own skill description already routes these automatically, this note just makes the expectation explicit.
