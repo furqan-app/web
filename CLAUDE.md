@@ -24,14 +24,6 @@ The workflows in `docs/workflow/` are exposed as Claude Code skills. Trigger the
 | `/compress-fq-docs` | compress verbose docs |
 | `/confirm-dangerous-git` | gate before destructive git commands |
 
-## MCP Server Setup (Trello)
-
-Copy `.mcp.json.example` → `.mcp.json` and fill in your Trello API key and token.
-Get key: https://trello.com/power-ups/admin
-Get token: `https://trello.com/1/authorize?expiration=never&name=furqan&scope=read,write&response_type=token&key=YOUR_API_KEY`
-
-If `npx` isn't found, use the absolute path from `which npx`. nvm users: set `"command"` to the full node path and pass npx as the first arg.
-
 ## Hooks
 
 The mujaz (موجز, "concise") system injects terse-response rules each turn when active.

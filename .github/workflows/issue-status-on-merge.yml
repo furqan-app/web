@@ -1,0 +1,32 @@
+name: Move referenced issues to to-be-released on merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  advance-issue-status:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move Refs'd issues from status:in-review to status:to-be-released
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          REPO: ${{ github.repository }}
+        run: |
+          issue_numbers=$(echo "$PR_BODY" | grep -oiE 'refs #[0-9]+' | grep -oE '[0-9]+' | sort -u)
+          if [[ -z "$issue_numbers" ]]; then
+            echo "No 'Refs #N' references found in PR body — nothing to do."
+            exit 0
+          fi
+          for n in $issue_numbers; do
+            echo "Advancing issue #$n"
+            gh issue edit "$n" --repo "$REPO" --remove-label "status:in-review" --add-label "status:to-be-released" || \
+              echo "Warning: failed to relabel #$n (label may not exist on it) — skipping."
+          done
