@@ -3,12 +3,17 @@
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { useLocale } from "next-intl";
-import { NavPillLink } from "./NavPillLink";
+import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 import { isStandaloneDisplayMode } from "@/app/utils/platform";
 import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
+import { cn } from "@/lib/utils";
+
+type Props = {
+  className?: string;
+};
 
 /**
  * Always-visible navbar entry back to the last-read mushaf page — except on
@@ -22,7 +27,7 @@ import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
  * as the context's own initial value. Icon + label on desktop, icon-only on
  * mobile, mirrors MarksLink/PlansLink.
  */
-export const ContinueReadingLink = () => {
+export const ContinueReadingLink = ({ className }: Props = {}) => {
   const t = useTranslations();
   const locale = useLocale();
   const { lastReadPage } = useLastReadPage();
@@ -40,7 +45,7 @@ export const ContinueReadingLink = () => {
   if (isStandalone && !isDesktopUp) return null;
 
   return (
-    <NavPillLink
+    <Link
       href={`/pages/${lastReadPage}`}
       locale={locale}
       onClick={(e) => {
@@ -49,11 +54,20 @@ export const ContinueReadingLink = () => {
         e.preventDefault();
         jumpTo(lastReadPage);
       }}
+      // Bespoke (not NavPillLink's shared navPillClassName) so mobile can be
+      // a true size-10 square icon button matching the other mobile-visible
+      // nav triggers' footprint (search, overflow menu — both h-10 w-10);
+      // md+ replicates navPillClassName exactly, unchanged from before
+      // (2026-08-13, docs/plans/home-page-design-fixes.md).
+      className={cn(
+        "flex-none flex items-center justify-center size-10 rounded-md hover:bg-accent/50 transition-colors md:w-auto md:h-auto md:justify-start md:gap-2 md:rounded-xl md:px-3 md:py-1.5 md:text-sm md:font-semibold md:text-muted-foreground",
+        className,
+      )}
     >
       <BookOpen className="size-5 md:size-4 flex-none" strokeWidth={1.7} />
       <span className="hidden md:inline">
         {t("continueReading.navLink", "Continue Reading")}
       </span>
-    </NavPillLink>
+    </Link>
   );
 };

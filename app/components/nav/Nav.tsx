@@ -8,6 +8,7 @@ import { ContinueReadingLink } from "./ContinueReadingLink";
 import { SharedMushafLink } from "./SharedMushafLink";
 import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
+import { NavOverflowMenu } from "./NavOverflowMenu";
 import { FurqanLogo } from "./FurqanLogo";
 import { Button } from "@/components/ui/button";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
@@ -55,16 +56,38 @@ export const Nav = () => {
         ...(isOverlayMode ? { transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" } : {}),
       }}
     >
-      {/* Single flex row: logo · continue · shared · [search] · notifications · account · fullscreen · settings */}
+      {/* Single flex row: logo · continue · [shared · search · notifications ·
+          account]-desktop-only · fullscreen · settings-desktop-only · overflow-mobile-only.
+          Below md, SharedMushafLink/NotificationBell/UserMenu/SettingsSidebar
+          collapse into NavOverflowMenu — only search + Continue Reading stay
+          directly tappable in the row (2026-08-13, docs/plans/home-page-design-fixes.md).
+
+          Mobile-only visual reorder via `order-*` (DOM order — and therefore
+          desktop layout — is untouched; `md:order-none` resets every item to
+          its natural DOM position at md+): Logo stays alone at the near edge,
+          Search/ContinueReadingLink/NavOverflowMenu cluster at the far edge,
+          so there's one clean gap in the row instead of items scattered
+          across it. */}
       <div className="h-14 flex items-center gap-1">
-        <FurqanLogo />
-        <ContinueReadingLink />
-        <SharedMushafLink />
-        <div className="flex-1 flex px-2 md:px-3 min-w-0">
+        <FurqanLogo className="order-1 md:order-none" />
+        <ContinueReadingLink className="order-3 md:order-none" />
+        <div className="hidden md:block">
+          <SharedMushafLink />
+        </div>
+        {/* justify-end: below md, SearchBar renders as a single small icon
+            button (not a growing input) — anchoring it to this box's end
+            keeps it flush against ContinueReadingLink/NavOverflowMenu (its
+            flex-1 grow space then falls between Logo and this cluster). No
+            effect on desktop, where the inline input already fills the full
+            flex-1 width regardless of justify
+            (2026-08-13, docs/plans/home-page-design-fixes.md). */}
+        <div className="flex-1 flex justify-end md:px-3 min-w-0 order-2 md:order-none">
           <SearchBar />
         </div>
-        <NotificationBell />
-        <UserMenu />
+        <div className="hidden md:flex items-center gap-1">
+          <NotificationBell />
+          <UserMenu />
+        </div>
         {isDesktopUp && fullscreenEnabled && (
           <Button
             variant="ghost"
@@ -80,7 +103,10 @@ export const Nav = () => {
             )}
           </Button>
         )}
-        <SettingsSidebar />
+        <div className="hidden md:block">
+          <SettingsSidebar />
+        </div>
+        <NavOverflowMenu className="order-4 md:order-none" />
       </div>
     </nav>
   );

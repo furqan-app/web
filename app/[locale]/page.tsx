@@ -3,6 +3,8 @@ import { SurahList } from "../components/SurahList";
 import { getSurahs } from "../hooks/get-surahs";
 import { Locale } from "../types/config";
 import { AppLaunchRedirect } from "../components/reader/AppLaunchRedirect";
+import { getLanguageDirection } from "../utils/i18n";
+import { cn } from "@/lib/utils";
 
 // Bounds Hostinger CDN edge-cache poisoning to a 5-minute window instead of
 // Next's default 1-year s-maxage (see ADR 0035).
@@ -16,18 +18,21 @@ export default async function Home({
   setRequestLocale(locale);
 
   const [surahs, t] = await Promise.all([getSurahs(), getTranslations()]);
+  const isRTL = getLanguageDirection(locale) === "rtl";
 
   return (
     <main className="container mx-auto px-4 py-8 min-h-screen max-w-6xl">
       <AppLaunchRedirect />
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent text-accent-foreground text-xs font-bold uppercase tracking-wider mb-4">
-          {t("home.badge")}
-        </div>
         <h1 className="font-tajawal font-extrabold text-6xl leading-none text-foreground mb-3">
           {t("home.title")}
         </h1>
-        <p className="max-w-2xl mx-auto text-muted-foreground text-base leading-relaxed">
+        <p
+          className={cn(
+            "mx-auto text-muted-foreground text-base leading-relaxed",
+            isRTL ? "max-w-3xl" : "max-w-2xl",
+          )}
+        >
           {t("home.tagline")}
         </p>
       </div>
