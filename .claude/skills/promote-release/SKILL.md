@@ -20,8 +20,8 @@ Opens the `release/<version>` → `prod` PR once staging verification has passed
 ## Steps
 
 1. `git fetch origin`; confirm `origin/release/<version>` exists.
-2. Best-effort: look up Trello cards carrying the `v<version>` label (via the board's cards) to reference in the PR body.
-3. `gh pr create --base prod --head release/<version> --title "Release v<version>"` with a body summarizing the release (linking the Trello cards found above, if any).
+2. Best-effort: `gh issue list --repo furqan-app/web --milestone "v<version>" --state closed --json number,title,url` to reference in the PR body.
+3. `gh pr create --base prod --head release/<version> --title "Release v<version>"` with a body summarizing the release (linking the issues found above, if any).
 4. Report the PR URL. Tell the user plainly:
    - The `check-source` gate on `prod` requires this PR's head branch to start with `release/` — it will pass automatically.
    - Merge the PR on GitHub. Hostinger auto-deploys on any push to `prod` — no manual redeploy click is needed.
@@ -29,4 +29,4 @@ Opens the `release/<version>` → `prod` PR once staging verification has passed
 ## What NOT to do
 
 - Do not merge the PR — only open it.
-- Do not touch Trello — labeling/moving cards already happened in `/cut-release`.
+- Do not touch the GitHub issues — milestoning/closing already happened in `/cut-release`.
