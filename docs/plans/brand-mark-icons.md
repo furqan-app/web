@@ -19,7 +19,7 @@ Trello card #204 ("Nav: fix logo/Continue Reading icon collision") already antic
 3. **`app/manifest.ts`**: no code change needed — it already points at `/icons/icon-192.png`, `/icons/icon-512.png`, `/icons/icon-maskable-512.png` by filename; only the file contents change.
 4. **`scripts/generate-pwa-icons.js`**: retire it (or leave as dead/unused — see Decisions Made) since icons are no longer generated from an SVG source at build/dev time.
 5. **`public/icon.svg`**: delete — no longer referenced once step 2 lands.
-6. **`app/components/nav/FurqanLogo.tsx`**: swap the lucide `BookOpen` icon for `furqan-logo-512.png` (the transparent-background hero export) rendered inside the existing `bg-primary` rounded-square container via `next/image`, keeping the container's theme-adaptive background so the mark still sits correctly across light/gold/dark themes.
+6. **`app/components/nav/FurqanLogo.tsx`**: swap the lucide `BookOpen` icon for a flat white mark (`public/icons/logo-navbar-white.png`) rendered inside the existing `bg-primary` rounded-square container via `next/image`, same across all themes. (An earlier per-theme green/gold version — CSS-selected via `.theme-gold` — was built and tested, then dropped in favor of this simpler single-mark version after live comparison.)
 
 ## Decision Tree — asset placement
 
@@ -48,7 +48,7 @@ Trello card #204 ("Nav: fix logo/Continue Reading icon collision") already antic
 - `public/icon.svg` — delete
 - `scripts/generate-pwa-icons.js` — delete (no longer has a source SVG to generate from)
 - `app/layout.tsx` — update `metadata.icons` block: drop the `/icon.svg` entry, add favicon.ico + 16/32 PNG entries, keep the `apple` entry pointed at (the new) `/icons/icon-192.png`
-- `app/components/nav/FurqanLogo.tsx` — replace `BookOpen` import/usage with `next/image` rendering `/icons/icon-512.png` (or a locally-copied nav-sized export — implementer's call) sized to fit inside the existing 34px container
+- `app/components/nav/FurqanLogo.tsx` — replace `BookOpen` import/usage with `next/image` rendering `/icons/logo-navbar-white.png`, a flat white mark, sized to fit inside the existing 34px `bg-primary` container
 - `docs/architecture/DECISIONS.md` — append a short note (see Decisions Made) recording the `icons/`-directory placement choice, since it directly applies (and is worth cross-referencing from) the existing matcher/glob invariant at DECISIONS.md:118
 
 ## Constraints
@@ -79,4 +79,6 @@ Trello card #204 ("Nav: fix logo/Continue Reading icon collision") already antic
 
 **Resolved at implementation time.** User supplied a corrected maskable source (`pwa.png`, 1254×1254) — re-measured, all four corners inside the safe-zone circle (closest margin ~1px). Resized to 512×512 via Lanczos and re-verified: three corners comfortably inside, one corner 0.2px outside (sub-pixel resize rounding, not a design defect) — accepted.
 
-**One deviation from the Files-to-Change table**: the `apple` icon entry in `app/layout.tsx` uses `/icons/apple-touch-icon-180.png` (the dedicated 180×180 export, Apple's actual spec size) instead of reusing `/icons/icon-192.png` as originally scoped — the source asset suite included a purpose-built apple-touch-icon export not available when the plan was written, and it's strictly more correct than the reuse. Flagged here since it wasn't in the original Files to Change table.
+**One deviation from the Files-to-Change table**: the `apple` icon entry in `app/layout.tsx` uses `/icons/icon-apple-180.png` (the dedicated 180×180 export, Apple's actual spec size, renamed from `apple-touch-icon-180.png` — the original name collided with an unrelated `app*` pattern in `.gitignore`) instead of reusing `/icons/icon-192.png` as originally scoped — the source asset suite included a purpose-built apple-touch-icon export not available when the plan was written, and it's strictly more correct than the reuse. Flagged here since it wasn't in the original Files to Change table.
+
+**Nav mark superseded again post-ship.** After merging the theme-aware green/gold version, further live A/B testing (black/gold/white monochrome outline variants, a flat filled tile, and a maskable-source crop) led to settling on a single flat white mark (`logo-navbar-white.png`) inside the existing `bg-primary` tile, same across all themes — simpler than the per-theme CSS-selected approach, and avoids that approach's dependence on getting the `.theme-gold` selector right. The green/gold assets and the CSS-selection logic were removed.

@@ -13,7 +13,7 @@ Last updated: 2026-08-12
 
 ```
 Nav                          — top bar, always visible; responsive (mobile/desktop layouts); desktop (≥1367px) shows Fullscreen API toggle (Maximize2/Minimize2, hidden when fullscreenEnabled is false); safe-area-inset-top padding handles iOS notch; on pages routes shows a surah indicator button (surah number + name + chevron) instead of a plain panel icon — reads currentSurah from SidebarContext, falls back to PanelLeftOpen icon while SidebarContext.currentSurah is null (Sidebar lazy-load gap)
-  FurqanLogo                 — brand mark (PNG, next/image, links to home); two stacked images (logo-navbar-green.png default, logo-navbar-gold.png in gold theme), CSS-selected via `.theme-gold` on `<html>` — not client-side theme state, since useTheme() is per-component local state and won't stay in sync across components
+  FurqanLogo                 — brand mark (PNG, next/image, links to home); single white mark (public/icons/logo-navbar-white.png) inside the bg-primary tile, same across all themes — simpler than an earlier per-theme (green/gold) version, dropped after visual testing
   SearchBar                  — desktop: inline search input + dropdown; mobile: icon → full-screen Sheet overlay
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
   NavPillLink                — shared pill-style nav <Link> wrapper (icon+label); exports `navPillClassName` so non-Link consumers (UserMenu's dropdown trigger <button>) can compose the same style via cn(); used by ContinueReadingLink, SharedMushafLink
