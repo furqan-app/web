@@ -649,12 +649,24 @@ payload; windowing removes the mass mount.
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:
-- `/plan-fq-task` — Socratic planning → `docs/plans/<slug>.md`
-- `/start-fq-task` — load context → implement
+- `/plan-fq-task` — Socratic planning → `docs/plans/<slug>.md`; UI-mode tasks also run `/impeccable critique` and may add a `## Design Remediation` section (ADR 0041)
+- `/start-fq-task` — load context → implement → run any `## Design Remediation` entries via direct `/impeccable` Skill call (ADR 0041)
 - `/retrospect` — end-of-session feedback loop; proposes DECISIONS.md updates, skill edits, memory saves review-before-write; saves `docs/retrospectives/YYYY-MM-DD.md`
-- `/review-fq-work` — Opus subagent quality gate on branch diff vs main (bugs, quality, plan consistency)
+- `/review-fq-work` — Opus subagent quality gate on branch diff vs main across 4 dimensions: bugs, quality, plan consistency, and (when the diff touches UI files) design/UX via `/impeccable critique` (ADR 0041)
 
 Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
+
+---
+
+## Impeccable Design Workflow Integration
+
+**Decision:** `/impeccable`'s design/UX remediation commands are wired into the Furqan plan → implement → review cycle, invoked via direct Skill call (command + explicit target, never a subprocess or sub-agent) and always plan-driven — `/start-fq-task` never runs a design command the plan didn't name. See [ADR 0041](adr/0041-wire-impeccable-into-fq-workflow.md) for the full mechanism, the eligible command set, and rejected alternatives (CLI shell-out, sub-agent delegation).
+
+**Constraints:**
+- `/start-fq-task` only invokes impeccable commands listed in the plan's `## Design Remediation` section — it must not decide mid-implementation to run one that wasn't planned.
+- Eligible commands are every Evaluate/Refine/Enhance/Fix command (`critique`, `audit`, `polish`, `bolder`, `quieter`, `distill`, `harden`, `onboard`, `animate`, `colorize`, `typeset`, `layout`, `delight`, `overdrive`, `clarify`, `adapt`, `optimize`) — never Build/Iterate (`craft`, `shape`, `init`, `document`, `extract`, `live`).
+- `check-fq-standards` stays unchanged — its checklist doesn't overlap impeccable's (invariants vs. a11y/aesthetic/UX), so no dedup step is needed between them.
+- `/review-fq-work`'s Dimension 4 only runs when the diff touches UI-relevant files (components, pages, `.css`/`.scss`) — skip it entirely for backend-only diffs.
 
 **Constraints:**
 - Never put architecture detail, standards, or decisions back into CLAUDE.md.
