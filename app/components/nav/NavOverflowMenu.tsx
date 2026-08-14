@@ -17,6 +17,7 @@ import { NotificationBell } from "@components/notifications/NotificationBell";
 import { UserMenu } from "./UserMenu";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { menuRowClassName } from "./NavPillLink";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 type Props = {
   className?: string;
@@ -64,6 +65,7 @@ export const NavOverflowMenu = ({ className }: Props = {}) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
   const closeMenu = () => setOpen(false);
+  useCloseOnBackGesture(open, closeMenu);
 
   return (
     <>

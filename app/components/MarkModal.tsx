@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 const COMMENT_MAX_LENGTH = 500;
 
@@ -89,6 +90,7 @@ export function MarkModal({
   const isOnline = useOnlineStatus();
   const isOffline = !isOnline;
   const { play, status: recitationStatus, togglePlayPause } = useRecitation();
+  useCloseOnBackGesture(isOpen, close);
   const wordAudioRef = useRef<HTMLAudioElement>(null);
 
   const isWord = "location" in markFor;

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { isAndroid, isStandaloneDisplayMode } from "@/app/utils/platform";
-import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
+import { isAndroid } from "@/app/utils/platform";
+import { useIsStandaloneMobileOrTablet } from "@/app/hooks/use-is-standalone-mobile-or-tablet";
+import { isOverlayBackGuardArmed } from "@/app/utils/overlay-back-guard";
 import { ExitToast } from "./ExitToast";
 
 const ARM_WINDOW_MS = 2000;
@@ -31,17 +32,16 @@ type Props = {
  * See the ADR for why a single pushed entry isn't sufficient.
  */
 export const AndroidBackExitGuard = ({ active }: Props) => {
-  const isDesktopUp = useIsDesktopUp();
+  const isStandaloneMobileOrTablet = useIsStandaloneMobileOrTablet();
   const [armed, setArmed] = useState(false);
   const armedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const enabled =
     active &&
-    !isDesktopUp &&
     typeof window !== "undefined" &&
     isAndroid() &&
-    isStandaloneDisplayMode();
+    isStandaloneMobileOrTablet;
 
   useEffect(() => {
     if (!enabled) return;
@@ -61,6 +61,12 @@ export const AndroidBackExitGuard = ({ active }: Props) => {
     };
 
     const onPopState = () => {
+      // An overlay's own close-on-back guard (ADR 0043) is currently armed —
+      // defer to it entirely. Its listener was registered after this one
+      // (it only mounts once the user opens something on top of the already-
+      // mounted reader), so it runs next for this same event.
+      if (isOverlayBackGuardArmed()) return;
+
       if (!armedRef.current) {
         history.pushState(guardState(), "");
         armedRef.current = true;

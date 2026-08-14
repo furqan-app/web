@@ -55,6 +55,7 @@ import {
 import { RangePoint, RepeatCount, Reciter, StopPoint } from "@/app/types/recitation";
 import { SurahResult } from "@/app/types";
 import { MUSHAF_LAST_PAGE } from "@/app/constants/plans";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 const nextRepeatCount = (value: RepeatCount, direction: 1 | -1): RepeatCount => {
   if (direction === 1) {
@@ -436,6 +437,7 @@ export const RecitationSettingsSheet = () => {
   const referenceSurah = referenceSurahRaw || 1;
   const referenceAyah = referenceAyahRaw || 1;
   const referencePage = recitedPage ?? currentPageNumber ?? 1;
+  useCloseOnBackGesture(isSettingsOpen, closeSettings);
 
   return (
     <Sheet open={isSettingsOpen} onOpenChange={(open) => !open && closeSettings()}>

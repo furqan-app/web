@@ -184,6 +184,14 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Sheet `top` Overrides Must Also Set `height`
+
+**Decision:** `SheetContent`'s left/right variant (`components/ui/sheet.tsx`) sets both `inset-y-0` (top:0, bottom:0) and `h-full` (height:100%). Any consumer that overrides `top` inline (e.g. `Sidebar` clearing the nav bar) must also set an explicit `height` in the same inline style — never leave `h-full` to compute height on its own once `top` is overridden.
+
+**Rationale:** With `top`, `height`, and `bottom` all non-auto on a `position: fixed` box, the box is CSS-over-constrained; browsers keep `top` + `height` and silently recompute `bottom`. The panel keeps its full 100vh height but starts lower, so its bottom edge extends below the actual viewport by the `top` offset — clipping content near the bottom of the panel (e.g. the last item in a scrollable list) with no way to scroll it into view, since the panel itself is `position: fixed`, not the page. Found via `Sidebar`'s surah/rub list clipping the last item on short viewports (`docs/plans/fix-sidebar-bottom-clip.md`). Use `dvh` (not `vh`) in the replacement `height` calc — see "Quran Safha Viewport Fit" below for why mixing them breaks on mobile browsers with collapsible chrome.
+
+---
+
 ## Nav Z-Index Invariant
 
 **Decision:** The `<nav>` element must carry `relative z-10` in its base `className` (non-overlay mode). `backdrop-blur-md` creates a CSS stacking context with `z-index: auto`, and reader content (specifically `.fq-reader-pager-strip` with `transform: translateX(-100%)`) creates its own `z-index: auto` stacking context later in the DOM — painting over the nav and hiding the search dropdown. `relative` makes z-index apply to the nav; `z-10` ensures the nav's stacking context ranks above reader content (z:auto = 0) without competing with RecitationPlayerBar (z-40) or Radix portals. In overlay mode (`fixed top-0 inset-x-0 z-50`) this is already satisfied and unchanged.
@@ -440,6 +448,25 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 - The manifest's `id` must stay `"/"` and must never be derived from `start_url` again. With no `id`, app identity comes from `start_url`, so changing that field orphans every existing install and duplicates the icon on reinstall.
 - `lastReadPath` and `lastReadPage` must keep being written together from `LastReadPageContext.setLastReadPage`. Two write sites would let the launch script and `ContinueReadingLink` disagree about where the user left off.
 - `ReaderPager`'s offline fallback self-correction must stay an isomorphic **layout** effect (the `useIsomorphicLayoutEffect` pattern in `app/hooks/use-is-desktop-up.ts`, which exists to suppress React's server-side `useLayoutEffect` warning). Reverting it to `useEffect` reintroduces the page-1 flash ADR 0014 Addendum 3 had accepted.
+
+**Overlay close-on-back-gesture (2026-08-15, [ADR 0043](adr/0043-overlay-close-on-back-gesture.md)):** on mobile/tablet installed PWA (Android **and** iOS, not desktop — `useIsStandaloneMobileOrTablet()`, no `isAndroid()` gate), every modal overlay (`MarkModal`, `SettingsSidebar`, the surah `Sidebar`, `NavOverflowMenu`, `RecitationSettingsSheet`) closes on the first back-gesture instead of letting it navigate the underlying page. All five use one shared hook, `useCloseOnBackGesture(open, onClose)` (`app/hooks/use-close-on-back-gesture.ts`), which pushes a fresh, uniquely-id'd guard history entry on open and closes the overlay on the next real back press. A shared module-level flag (`app/utils/overlay-back-guard.ts`) marks whether an overlay guard is currently armed; `AndroidBackExitGuard`'s `popstate` handler checks it first and defers entirely when set, relying on mount order (the reader's exit-guard always mounts before a user can open anything on top of it) rather than event-timing tricks. At most one overlay is ever open at a time — every one of the five is a modal Radix `Dialog`/`Sheet` that blocks interaction with whatever is behind it, so no stack is needed, just the one flag. `useIsStandaloneMobileOrTablet()` (`app/hooks/use-is-standalone-mobile-or-tablet.ts`) factors out the `!isDesktopUp && isStandaloneDisplayMode()` half shared with `AndroidBackExitGuard`'s own gate.
+
+**Constraints:**
+- Any new overlay that should close on back-gesture must use `useCloseOnBackGesture` — do not write a second independent `popstate` listener; it would race with `AndroidBackExitGuard` and any other armed overlay guard with no defined precedence.
+- Any new code that adds its own global `popstate` listener on a route that can have a reader-mounted `AndroidBackExitGuard` underneath it must check the shared "overlay armed" flag first, the same way the guard now does.
+- Reuse ADR 0040's "fresh state object per `history.pushState` call" rule here too — never hoist the guard's pushed state to a module-level constant.
+- The cleanup's "is my entry still on top" check must be **deferred to a microtask** and must compare by the pushed entry's unique **`fqOverlayGuardId`**, not just the shared `fqOverlayGuard` shape. Two overlays can transition in the same React commit (e.g. `NavOverflowMenu`'s Settings row calling `closeMenu()` and `setSettingsOpen(true)` together) — React runs every cleanup before any new setup, so a synchronous, shape-only check sees its own entry as "still on top" even though a sibling's `pushState` is about to land over it moments later in the same commit. Calling `history.back()` on a stale synchronous read pops whatever is *actually* on top when the (asynchronous) traversal resolves — the sibling's freshly-pushed entry, not this guard's own — and the sibling's own `popstate` listener has no way to attribute that echo to someone else's cleanup, so it reads it as a real back press and closes itself immediately. See ADR 0043's 2026-08-15 addendum; found in review before merge, reproduced via exactly this Settings-tap path.
+- When the overlay's pushed guard entry (by id) is no longer the top of history at check time, do not call `history.back()` — it would remove the wrong entry. Leave it as a harmless orphan; the cost is one future back press being a no-op instead of a broken navigation or a wrongly-closed sibling.
+
+---
+
+## First-Paint-Critical Positioning Must Be CSS-Gated, Not JS-Hook-Gated
+
+**Decision:** `useIsMobile`/`useIsTablet`/`useIsDesktopUp` (and any other `matchMedia`-backed hook) may only drive UI that's allowed to be wrong for one frame after mount. They must never decide `position`/`display` that has to be correct on the very first paint — SSR always renders their `false` default, and the browser paints that raw HTML before hydration's `useIsomorphicLayoutEffect` ever runs, so even a layout effect can't undo it. Breakpoint-dependent positioning that must be right immediately goes in a CSS `@media` rule instead, using the same width the JS hook encodes; route/state gating that CSS can't express (e.g. `usePathname()`) stays as a class hook, since `usePathname()` — unlike viewport width — resolves correctly on the very first server render. See [ADR 0043](adr/0043-breakpoint-positioning-must-be-css-gated.md); the reader `Nav`'s overlay positioning (`docs/plans/tablet-nav-overlay.md`, "CSS-gate nav overlay positioning" addendum) was migrated to this pattern after the JS-hook version caused a first-paint flash (nav in flow → briefly scrollable page → nav snaps to fixed, content jumps up). The tablet 3-panel carousel offset ([ADR 0027](adr/0027-tablet-swipe-carousel.md)) already used this technique before it was generalized here.
+
+**Constraints:**
+- Do not add a pre-hydration inline `<script>` as a substitute — that path already exists for theme/safha-view (`app/layout.tsx`) and is reserved for state that genuinely can't be expressed in CSS (e.g. reading `localStorage`). Breakpoint width can always be expressed in CSS; prefer that.
+- Keep the CSS `@media` width and the JS hook's query string numerically identical when either changes — there are now two representations of each breakpoint and no shared constant between them.
 
 ---
 
