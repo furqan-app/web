@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLocale } from "next-intl";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { useSidebar } from "@/app/contexts/SidebarContext";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 type Props = {
   surahs: SurahResult[];
@@ -32,6 +33,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { open, setOpen, setCurrentSurah } = useSidebar();
   const pathname = usePathname();
+  useCloseOnBackGesture(open, () => setOpen(false));
   const [activeTab, setActiveTab] = useState("surahs");
   const surahsScrollRef = useRef<HTMLDivElement>(null);
   const rubsScrollRef = useRef<HTMLDivElement>(null);
