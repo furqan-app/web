@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useState } from "react";
+import { useIsomorphicLayoutEffect } from "./use-isomorphic-layout-effect";
 
 const TABLET_QUERY = "(min-width: 1024px) and (max-width: 1366px)";
-
-// useLayoutEffect runs synchronously before the browser paints, eliminating the
-// false→true layout shift on swipe navigation. Falls back to useEffect on the
-// server (where window/document are unavailable).
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export function useIsTablet() {
   const [isTablet, setIsTablet] = useState(false);
