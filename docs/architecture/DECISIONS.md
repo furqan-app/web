@@ -184,6 +184,14 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Sheet `top` Overrides Must Also Set `height`
+
+**Decision:** `SheetContent`'s left/right variant (`components/ui/sheet.tsx`) sets both `inset-y-0` (top:0, bottom:0) and `h-full` (height:100%). Any consumer that overrides `top` inline (e.g. `Sidebar` clearing the nav bar) must also set an explicit `height` in the same inline style — never leave `h-full` to compute height on its own once `top` is overridden.
+
+**Rationale:** With `top`, `height`, and `bottom` all non-auto on a `position: fixed` box, the box is CSS-over-constrained; browsers keep `top` + `height` and silently recompute `bottom`. The panel keeps its full 100vh height but starts lower, so its bottom edge extends below the actual viewport by the `top` offset — clipping content near the bottom of the panel (e.g. the last item in a scrollable list) with no way to scroll it into view, since the panel itself is `position: fixed`, not the page. Found via `Sidebar`'s surah/rub list clipping the last item on short viewports (`docs/plans/fix-sidebar-bottom-clip.md`). Use `dvh` (not `vh`) in the replacement `height` calc — see "Quran Safha Viewport Fit" below for why mixing them breaks on mobile browsers with collapsible chrome.
+
+---
+
 ## Nav Z-Index Invariant
 
 **Decision:** The `<nav>` element must carry `relative z-10` in its base `className` (non-overlay mode). `backdrop-blur-md` creates a CSS stacking context with `z-index: auto`, and reader content (specifically `.fq-reader-pager-strip` with `transform: translateX(-100%)`) creates its own `z-index: auto` stacking context later in the DOM — painting over the nav and hiding the search dropdown. `relative` makes z-index apply to the nav; `z-10` ensures the nav's stacking context ranks above reader content (z:auto = 0) without competing with RecitationPlayerBar (z-40) or Radix portals. In overlay mode (`fixed top-0 inset-x-0 z-50`) this is already satisfied and unchanged.
