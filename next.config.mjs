@@ -21,7 +21,10 @@ const withSerwist = withSerwistInit({
   // Keep this list to the app shell only. Page fonts and page JSON are reached
   // two other ways that both respect consent: the runtime CacheFirst rules in
   // app/sw.ts (cache-as-visited) and the user-initiated bulk precache.
-  globPublicPatterns: ['icon.svg', 'icons/**/*', 'quran/chapters.json'],
+  // `launch.html` is the PWA's start_url (ADR 0042) — precaching it here is what
+  // makes an offline cold launch redirect instead of falling through to the
+  // service worker's catch handler. ~1 KB, so it fits the app-shell pin above.
+  globPublicPatterns: ['icon.svg', 'icons/**/*', 'quran/chapters.json', 'launch.html'],
 });
 
 /** @type {import('next').NextConfig} */

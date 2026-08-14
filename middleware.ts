@@ -12,7 +12,7 @@ export default pipeMiddlewares([withInit, withRequestId, withIntl, withAuth]);
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|icon\\.svg|sitemap.xml|robots.txt|fonts/*|icons/*|quran/*|manifest\\.webmanifest|sw\\.js).*)",
+    "/((?!_next/static|_next/image|icon\\.svg|sitemap.xml|robots.txt|fonts/*|icons/*|quran/*|manifest\\.webmanifest|sw\\.js|launch\\.html).*)",
   ],
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
 import { Maximize2, Minimize2, PanelLeftOpen, ChevronDown, ChevronUp } from "lucide-react";
@@ -13,11 +13,9 @@ import { Button } from "@/components/ui/button";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useSidebar } from "@/app/contexts/SidebarContext";
 import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
+import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
 import { getLanguageDirection, toLocaleNumeral } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
-
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export const Nav = () => {
   const { isOverlayMode, overlayVisible } = useNavOverlay();

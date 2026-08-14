@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Furqan</title>
+    <!--
+      The installed PWA's start_url (ADR 0042). This document deliberately renders
+      nothing: the script below is synchronous and lives in <head>, so the redirect
+      is issued while the parser is still in the head and this page never paints —
+      the OS splash screen stays up until the reader itself paints. That is the whole
+      point. A React effect cannot do this, because effects run AFTER paint, which is
+      why the previous AppLaunchRedirect showed the full home surah list first.
+
+      Hand-written and outside the TypeScript build: no types, no bundler, no imports.
+      Keep it small enough to verify by reading, and keep its scope at "decide a URL
+      and navigate". The display-mode list is the one thing duplicated from
+      app/utils/platform.ts — re-check it whenever the manifest's `display` changes.
+    -->
+    <script>
+      (function () {
+        var HOME = "/";
+        var TOTAL_PAGES = 604;
+        var target = HOME;
+        // A corrupt value must fall through to the page-1 default like any other
+        // failed validation — not escape to the outer catch and send the user
+        // home, which is reserved for "something is wrong with the platform".
+        function readJSON(key) {
+          try {
+            return JSON.parse(localStorage.getItem(key));
+          } catch (e) {
+            return null;
+          }
+        }
+        try {
+          var standalone =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            window.matchMedia("(display-mode: fullscreen)").matches ||
+            navigator.standalone === true;
+          // Mirrors useIsDesktopUp's breakpoint — desktop standalone keeps
+          // opening the surah list, same as before this change.
+          var isDesktopUp = window.matchMedia("(min-width: 1367px)").matches;
+          if (standalone && !isDesktopUp) {
+            // Written by LastReadPageContext as a full path, so no locale
+            // detection is needed here at all. Validated against a whitelist
+            // before use: this navigates to a string read from localStorage,
+            // and an unvalidated read is an open redirect.
+            var stored = readJSON("lastReadPath");
+            var match =
+              typeof stored === "string"
+                ? stored.match(/^\/(?:ar|en)\/pages\/([1-9][0-9]{0,2})$/)
+                : null;
+            var page = match ? Number(match[1]) : 0;
+            if (page >= 1 && page <= TOTAL_PAGES) {
+              target = stored;
+            } else {
+              // Anyone who installed before lastReadPath existed has only the
+              // legacy numeric key. Without this they would be sent to page 1 on
+              // the first launch after this ships — the whole install base, on
+              // exactly the launch this is supposed to make seamless. No locale
+              // is recoverable from a bare number, so go unprefixed and let
+              // intl-middleware resolve it, same as the fresh-install path.
+              var legacy = readJSON("lastReadPage");
+              var n = typeof legacy === "number" && isFinite(legacy) ? Math.floor(legacy) : 0;
+              target = n >= 1 && n <= TOTAL_PAGES ? "/pages/" + n : "/pages/1";
+            }
+          }
+        } catch (e) {
+          target = HOME;
+        }
+        // replace, never assign — the launch document must not become a history
+        // entry, or the Android back-exit guard's history math changes (ADR 0040).
+        location.replace(target);
+      })();
+    </script>
+  </head>
+  <!-- Matches the manifest's background_color. Only ever visible if the script
+       above throws before navigating. -->
+  <body style="margin: 0; background: #16232f"></body>
+</html>

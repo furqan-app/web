@@ -1,7 +1,7 @@
 import { DesktopQuranFontSize, QuranSafhaView } from "@types";
 import { RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'keepScreenAwake';
+export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'lastReadPath' | 'keepScreenAwake';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -16,6 +16,13 @@ type StorageValueType = {
   // active at the time — same convention as any deep link, see
   // MushafSwitchSync). Never written for the shared-mushaf grant reader.
   lastReadPage: number;
+  // The same position as a full locale-prefixed path ("/ar/pages/300"), written
+  // together with lastReadPage from the one site in LastReadPageContext. It
+  // exists for public/launch.html, which runs before React and therefore has no
+  // way to resolve a locale — storing the path means that script needs no
+  // locale detection at all (ADR 0042). Two write sites would let the launch
+  // redirect and ContinueReadingLink disagree about where the user left off.
+  lastReadPath: string;
   // Whether the mobile/tablet Wake Lock toggle is on. Default true, applied
   // when this key is absent (never written yet) — see KeepScreenAwakeContext.
   keepScreenAwake: boolean;

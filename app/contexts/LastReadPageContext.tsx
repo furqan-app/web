@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useLocale } from "next-intl";
 import { storage } from "@/app/utils/storage";
 
 type LastReadPageContextType = {
@@ -22,15 +23,23 @@ const LastReadPageContext = createContext<LastReadPageContextType | undefined>(
 // docs/plans/save-last-read-page.md.
 export function LastReadPageProvider({ children }: { children: ReactNode }) {
   const [lastReadPage, setLastReadPageState] = useState(1);
+  const locale = useLocale();
 
   useEffect(() => {
     const stored = storage.get("lastReadPage");
     if (typeof stored === "number") setLastReadPageState(stored);
   }, []);
 
+  // The single write site for BOTH keys. `lastReadPath` is the same position as
+  // a full locale-prefixed path, for public/launch.html — that script runs
+  // before React and cannot resolve a locale, so storing the path is what keeps
+  // locale detection out of it entirely (ADR 0042). Writing the two from
+  // separate places would let the launch redirect and ContinueReadingLink
+  // disagree about where the user left off.
   const setLastReadPage = (page: number) => {
     setLastReadPageState(page);
     storage.set("lastReadPage", page);
+    storage.set("lastReadPath", `/${locale}/pages/${page}`);
   };
 
   return (

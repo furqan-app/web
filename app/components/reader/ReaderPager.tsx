@@ -19,11 +19,12 @@ import { MushafSwitchSync } from "@/app/components/reader/MushafSwitchSync";
 import { AndroidBackExitGuard } from "@/app/components/reader/AndroidBackExitGuard";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
+import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
-import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
+import { storage } from "@/app/utils/storage";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
 import { ensurePageFonts, pageFontsReady } from "@/app/utils/page-font-registry";
 
@@ -215,7 +216,6 @@ export function ReaderPager({
   const { toggleOverlay } = useNavOverlay();
   const { mushafId, edition } = useQuranMushaf();
   const { setJumpTo } = useReaderNavigation();
-  const { lastReadPage } = useLastReadPage();
 
   // Seed the SSR pair once, before children (usePage) render, so the initial page
   // paints synchronously from cache with no fetch/skeleton.
@@ -464,11 +464,35 @@ export function ReaderPager({
   // last-read page, which defaults to 1 when nothing is known yet. A real
   // online navigation already has a matching pathname, so this is a no-op
   // there — mount-only, so it never fights a normal swipe/commit afterward.
-  useEffect(() => {
-    const { pathname } = window.location;
-    const isReaderPath = pathname.startsWith(`${basePath}/`);
-    const match = isReaderPath ? pathname.slice(basePath.length + 1).match(/^(\d+)$/) : null;
-    const requestedPage = match ? Number(match[1]) : lastReadPage;
+  //
+  // The locale prefix is stripped from BOTH sides before matching: this effect
+  // also runs on a remount triggered by a locale change, where the URL still
+  // names the old locale while `basePath` already names the new one. Comparing
+  // them raw discarded a perfectly good page id and fell through to the
+  // last-read branch (#288). Everything after the locale is compared exactly,
+  // so the grant reader's longer `/mushaf/{grant}/pages` base still matches
+  // only itself.
+  //
+  // `lastReadPage` is read from storage rather than LastReadPageContext: a
+  // locale change remounts the provider, so the context reads back its
+  // hydration default of 1 at exactly this moment. Safe as a one-shot read
+  // because this runs once on mount and needs the value now, not live (unlike
+  // the always-mounted nav link).
+  //
+  // A LAYOUT effect, deliberately (ADR 0042). As a plain useEffect this ran
+  // after paint, so page 1's words were on screen before the jump — the
+  // "brief page-1 flash" ADR 0014 Addendum 3 had accepted as a trade-off.
+  // jumpTo is fully synchronous (it calls setAnchor directly), so re-anchoring
+  // here lands in the same frame and page 1 never reaches the screen; the
+  // requested page shows the loading spread ADR 0034 already requires for an
+  // uncached page. Do not revert this to useEffect.
+  useIsomorphicLayoutEffect(() => {
+    const stripLocale = (p: string) => p.replace(/^\/[a-z]{2}(?=\/|$)/, "");
+    const pathname = stripLocale(window.location.pathname);
+    const base = stripLocale(basePath);
+    const isReaderPath = pathname.startsWith(`${base}/`);
+    const match = isReaderPath ? pathname.slice(base.length + 1).match(/^(\d+)$/) : null;
+    const requestedPage = match ? Number(match[1]) : (storage.get("lastReadPage") ?? 1);
     if (requestedPage !== initialPage && requestedPage >= 1 && requestedPage <= TOTAL_PAGES) {
       jumpTo(requestedPage);
     }
