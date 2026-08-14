@@ -13,7 +13,7 @@ export const navPillClassName =
 // docs/plans/home-page-design-fixes.md — the "unprofessional" critique's
 // root cause was exactly this: no shared row shape).
 export const menuRowClassName =
-  "flex items-center gap-3 w-full h-11 px-3 rounded-lg text-sm font-semibold text-foreground hover:bg-accent/50 transition-colors";
+  "flex items-center gap-3 w-full h-11 px-3 rounded-lg text-sm font-semibold text-foreground hover:bg-accent/50 transition-colors cursor-pointer";
 
 type Props = {
   href: string;

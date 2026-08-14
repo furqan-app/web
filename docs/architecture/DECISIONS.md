@@ -198,9 +198,12 @@ const user = extractUser(request); // { id, email, ... }
 
 **Rationale:** Replaces an earlier design where `Sidebar` rendered its own always-visible floating-pill `SheetTrigger`.
 
+**Drift note (found 2026-08-13):** commit `e231f77` (`docs/plans/sidebar-surah-indicator.md`) silently reintroduced the floating-pill trigger in `Sidebar.tsx` — carrying that plan's surah-name/chevron content — without updating this decision or restoring the `Nav`-owned trigger. The code and this decision were inconsistent from that commit until `docs/plans/home-page-design-fixes.md` (Addendum — Universal nav menu) restored the `Nav`-owned trigger, now carrying the surah/chevron content rather than the original `PanelLeftOpen` icon.
+
 **Constraints:**
 - Do not add a second/duplicate trigger — one trigger, in `Nav`, on pages routes only.
 - If relocating or removing this trigger in future work, verify every breakpoint retains equivalent access before assuming "unchanged" — an earlier revision of this pattern silently removed desktop's only way to open the sidebar by adding `md:hidden` to the replacement trigger without noticing the original floating pill had no such guard. See `docs/plans/mobile-nav-ux.md` (Addendum 3) for the incident.
+- Any future change to this trigger's location must update this decision in the same commit — do not let code and doc drift apart again (see Drift note above).
 
 ---
 
