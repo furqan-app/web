@@ -23,7 +23,7 @@ import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
-import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
+import { storage } from "@/app/utils/storage";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
 import { ensurePageFonts, pageFontsReady } from "@/app/utils/page-font-registry";
 
@@ -215,7 +215,6 @@ export function ReaderPager({
   const { toggleOverlay } = useNavOverlay();
   const { mushafId, edition } = useQuranMushaf();
   const { setJumpTo } = useReaderNavigation();
-  const { lastReadPage } = useLastReadPage();
 
   // Seed the SSR pair once, before children (usePage) render, so the initial page
   // paints synchronously from cache with no fetch/skeleton.
@@ -464,11 +463,27 @@ export function ReaderPager({
   // last-read page, which defaults to 1 when nothing is known yet. A real
   // online navigation already has a matching pathname, so this is a no-op
   // there — mount-only, so it never fights a normal swipe/commit afterward.
+  //
+  // The locale prefix is stripped from BOTH sides before matching: this effect
+  // also runs on a remount triggered by a locale change, where the URL still
+  // names the old locale while `basePath` already names the new one. Comparing
+  // them raw discarded a perfectly good page id and fell through to the
+  // last-read branch (#288). Everything after the locale is compared exactly,
+  // so the grant reader's longer `/mushaf/{grant}/pages` base still matches
+  // only itself.
+  //
+  // `lastReadPage` is read from storage rather than LastReadPageContext: a
+  // locale change remounts the provider, so the context reads back its
+  // hydration default of 1 at exactly this moment. Safe as a one-shot read for
+  // the same reason it is in AppLaunchRedirect — this runs once on mount and
+  // needs the value now, not live (unlike the always-mounted nav link).
   useEffect(() => {
-    const { pathname } = window.location;
-    const isReaderPath = pathname.startsWith(`${basePath}/`);
-    const match = isReaderPath ? pathname.slice(basePath.length + 1).match(/^(\d+)$/) : null;
-    const requestedPage = match ? Number(match[1]) : lastReadPage;
+    const stripLocale = (p: string) => p.replace(/^\/[a-z]{2}(?=\/|$)/, "");
+    const pathname = stripLocale(window.location.pathname);
+    const base = stripLocale(basePath);
+    const isReaderPath = pathname.startsWith(`${base}/`);
+    const match = isReaderPath ? pathname.slice(base.length + 1).match(/^(\d+)$/) : null;
+    const requestedPage = match ? Number(match[1]) : (storage.get("lastReadPage") ?? 1);
     if (requestedPage !== initialPage && requestedPage >= 1 && requestedPage <= TOTAL_PAGES) {
       jumpTo(requestedPage);
     }

@@ -48,3 +48,37 @@ mounted); the only two outcomes of a back press are "stay + show toast" or "atte
   out of scope for this affordance) — those platforms are excluded by the same
   `isStandaloneDisplayMode()` + platform check the guard mounts behind, not by this history
   mechanism.
+
+## Addendum — 2026-08-14: the pushed state object must be freshly allocated
+
+**Status:** Accepted. Amends the implementation of Option B; the double-push decision itself stands.
+
+The original implementation pushed a single module-level constant, `const GUARD_STATE = {
+fqExitGuard: true }`, on both the mount push and every re-push. That is unsafe under the Next.js App
+Router, and produced a locale/page corruption bug (issue #288).
+
+Next patches `window.history.pushState`/`replaceState` so external calls stay in sync with the
+router. The patch calls `copyNextJsInternalHistoryState(data)`, which **mutates its argument in
+place**, stamping `__NA: true` and the current `__PRIVATE_NEXTJS_INTERNALS_TREE` (the router's
+`FlightRouterState`) onto the object it was handed. Two consequences follow for any object reused
+across calls:
+
+1. It permanently carries the router tree captured at the *first* push. Later pushes write that
+   frozen tree into the current history entry, overwriting the correct one.
+2. Because it now carries `__NA`, the patch's `if (data?.__NA) return originalPushState(...)`
+   early-out fires, so subsequent pushes bypass the sync entirely.
+
+The reader amplifies this: the pager navigates by `history.replaceState` (ADR 0028), which Next
+converts into an `ACTION_RESTORE` whose tree is read back out of `window.history.state`.
+`restoreReducer` then swaps the router's whole tree to it, reusing the existing cache — a
+synchronous, network-free re-render of whatever locale and page that stale tree describes. After a
+locale switch the frozen tree names the *previous* locale, so the next swipe reverts the app's
+language and page in one paint.
+
+**Constraint:** allocate a new state object on every `history.pushState` call in the guard
+(`history.pushState({ fqExitGuard: true }, "")`). Never hoist it to a module-level constant, and
+never reuse an object that has been passed to `pushState`/`replaceState` once. This applies to any
+future code in this codebase that writes history state directly, not only the guard.
+
+Keep omitting the third (`url`) argument. The patch only dispatches `ACTION_RESTORE` when a `url` is
+supplied, so an omitted one is what keeps the guard's push from disturbing the pager's anchor.
