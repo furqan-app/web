@@ -451,6 +451,16 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 
 ---
 
+## First-Paint-Critical Positioning Must Be CSS-Gated, Not JS-Hook-Gated
+
+**Decision:** `useIsMobile`/`useIsTablet`/`useIsDesktopUp` (and any other `matchMedia`-backed hook) may only drive UI that's allowed to be wrong for one frame after mount. They must never decide `position`/`display` that has to be correct on the very first paint — SSR always renders their `false` default, and the browser paints that raw HTML before hydration's `useIsomorphicLayoutEffect` ever runs, so even a layout effect can't undo it. Breakpoint-dependent positioning that must be right immediately goes in a CSS `@media` rule instead, using the same width the JS hook encodes; route/state gating that CSS can't express (e.g. `usePathname()`) stays as a class hook, since `usePathname()` — unlike viewport width — resolves correctly on the very first server render. See [ADR 0043](adr/0043-breakpoint-positioning-must-be-css-gated.md); the reader `Nav`'s overlay positioning (`docs/plans/tablet-nav-overlay.md`, "CSS-gate nav overlay positioning" addendum) was migrated to this pattern after the JS-hook version caused a first-paint flash (nav in flow → briefly scrollable page → nav snaps to fixed, content jumps up). The tablet 3-panel carousel offset ([ADR 0027](adr/0027-tablet-swipe-carousel.md)) already used this technique before it was generalized here.
+
+**Constraints:**
+- Do not add a pre-hydration inline `<script>` as a substitute — that path already exists for theme/safha-view (`app/layout.tsx`) and is reserved for state that genuinely can't be expressed in CSS (e.g. reading `localStorage`). Breakpoint width can always be expressed in CSS; prefer that.
+- Keep the CSS `@media` width and the JS hook's query string numerically identical when either changes — there are now two representations of each breakpoint and no shared constant between them.
+
+---
+
 ## Release & Deployment Workflow
 
 **Decision:** Prod deploys go through a required `release/x.y.z` stabilization branch, not directly from `main`. Staging (`stg`) is decoupled from the release flow and tracks `main` directly. See [ADR 0015](adr/0015-release-branch-workflow.md), [ADR 0026](adr/0026-staging-environment.md), and [ADR 0039](adr/0039-stg-tracks-main-directly.md).

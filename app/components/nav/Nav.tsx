@@ -18,7 +18,7 @@ import { getLanguageDirection, toLocaleNumeral } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
 
 export const Nav = () => {
-  const { isOverlayMode, overlayVisible } = useNavOverlay();
+  const { overlayVisible } = useNavOverlay();
   const isDesktopUp = useIsDesktopUp();
   const { open, setOpen, currentSurah } = useSidebar();
   const pathname = usePathname();
@@ -54,13 +54,14 @@ export const Nav = () => {
         // two bars read as one consistent floating-chrome style, both letting the
         // Mushaf show through underneath).
         "relative z-10 text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50",
-        isOverlayMode && "fixed top-0 inset-x-0 z-50 transition-transform duration-300",
-        isOverlayMode && !overlayVisible && "-translate-y-full",
+        // Breakpoint half of the overlay switch is CSS-gated (globals.css,
+        // .fq-nav-overlay-page) so it's correct on the very first paint — see
+        // ADR 0043. Route gating stays here since usePathname() resolves
+        // correctly on the first server render too, unlike viewport width.
+        isOnPagesRoute && "fq-nav-overlay-page",
+        isOnPagesRoute && overlayVisible && "fq-nav-visible",
       )}
-      style={{
-        paddingTop: "env(safe-area-inset-top, 0px)",
-        ...(isOverlayMode ? { transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" } : {}),
-      }}
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       {/* Single flat flex row — every item is a direct child, positioned via
           `order` (+ `md:order-*` override), so the two breakpoints can group
