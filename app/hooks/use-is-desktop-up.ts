@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useState } from "react";
+import { useIsomorphicLayoutEffect } from "./use-isomorphic-layout-effect";
 
+// Duplicated verbatim in public/launch.html, which runs before React and cannot
+// import — keep the two in sync (ADR 0042).
 const DESKTOP_UP_QUERY = "(min-width: 1367px)";
-
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export function useIsDesktopUp() {
   const [isDesktopUp, setIsDesktopUp] = useState(false);

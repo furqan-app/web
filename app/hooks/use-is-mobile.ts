@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useState } from "react";
+import { useIsomorphicLayoutEffect } from "./use-isomorphic-layout-effect";
 
 const MOBILE_QUERY = "(max-width: 767px)";
-
-// useLayoutEffect runs synchronously before the browser paints, eliminating the
-// false→true layout shift on swipe navigation. Falls back to useEffect on the
-// server (where window/document are unavailable).
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);

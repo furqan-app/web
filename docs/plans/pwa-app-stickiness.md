@@ -4,6 +4,7 @@
 **Date:** 2026-08-12
 **Status:** implemented
 **Trello:** #201 https://trello.com/c/yxgElmek
+**GitHub:** [#288](https://github.com/furqan-app/web/issues/288), [#290](https://github.com/furqan-app/web/issues/290) (see addenda)
 
 ## Summary
 
@@ -327,3 +328,212 @@ Walked through with the user (2026-08-14):
   deferred — the current device-language behavior is the intended behavior (user-confirmed).
 - Extends this plan rather than opening a new one: same component, same ADR (0040), and this is a
   defect in what this plan shipped.
+
+---
+
+## Addendum — 2026-08-14: cold launch flashes the home page before redirecting
+
+**Type:** bug
+**Date:** 2026-08-14
+**Status:** implemented
+**GitHub:** [#290](https://github.com/furqan-app/web/issues/290)
+**ADR:** [0042](../architecture/adr/0042-pwa-launch-resolves-before-first-paint.md)
+
+### Summary
+
+The auto-open-last-page feature works, but the user watches it work: cold launch renders the full
+home surah list, then swaps to the reader. The body of this plan claimed "no page-1 flash" (Verified
+Test Case 2) — accurate as far as it went, but it removed the page-1 flash by introducing a *home*
+flash. This addendum removes the whole class of defect, in both the online and offline paths.
+
+### Root Cause
+
+`AppLaunchRedirect` decides in a `useEffect`. React effects run **after** paint, by definition — so
+by the time the redirect is issued, the home document has already been fetched, parsed, styled,
+painted and hydrated. No amount of tuning that component fixes it; the decision has to move earlier
+than React.
+
+The offline path has the identical defect from a different direction: the service worker's
+`setCatchHandler` serves the precached page-1 document, and `ReaderPager`'s self-correction
+(`ReaderPager.tsx`, the ADR 0014 Addendum 3 mount effect) calls `jumpTo` in a `useEffect` — again
+after page 1's words have painted. ADR 0014 Addendum 3 accepted this as a trade-off; ADR 0042
+withdraws that acceptance, because `jumpTo` turns out to be fully synchronous (`setAnchor(target)`
+directly), so a layout effect re-anchors in the same frame at essentially no cost.
+
+### Approach
+
+**Launch into a document that renders nothing.** `start_url` becomes `/launch.html` — a static
+hand-written file in `public/`, not a Next route. Its whole body is a synchronous `<head>` script
+that reads the persisted position and calls `location.replace()` during HTML parsing, so it never
+paints and the OS splash stays up until the reader does. As a plain public asset it carries no React
+runtime, no locale segment, no `revalidate` export, and no exposure to the CDN document-caching
+hazard ADR 0035 bounds; it is byte-identical for every user, so it cannot be poisoned with per-user
+content. Adding it to `globPublicPatterns` precaches it for every visitor at service-worker install,
+so offline cold launch works with **no `app/sw.ts` change at all**.
+
+**Persist the path, not the page number.** `lastReadPath` (`/ar/pages/300`) is written alongside the
+existing numeric `lastReadPage` from the single site in `LastReadPageContext.setLastReadPage`. This
+removes locale detection from the launch script entirely — no `NEXT_LOCALE` cookie parse, no
+`navigator.language` heuristic, no second copy of the locale list. With nothing stored yet, the
+script redirects to the unprefixed `/pages/1` and lets `intl-middleware` resolve the locale like it
+does for any other unprefixed URL.
+
+**Pin the manifest `id`.** A manifest with no `id` derives app identity from `start_url`, so changing
+`start_url` re-identifies the app: existing installs stop updating and a reinstall duplicates the
+icon. `id: "/"` (what today's `start_url` already implies) preserves every existing install and
+decouples identity from `start_url` permanently. This must ship in the same change as the
+`start_url` edit, not after.
+
+**Fix the offline flash with a layout effect.** `ReaderPager`'s self-correction moves from
+`useEffect` to the `useIsomorphicLayoutEffect` pattern already in `app/hooks/use-is-desktop-up.ts`
+(which exists precisely to suppress React's server-side `useLayoutEffect` warning). The page-1
+fallback's words never paint; the requested page shows the loading spread ADR 0034 already mandates
+for an uncached page, then fills in.
+
+**Delete `AppLaunchRedirect`.** Its once-per-session `hasCheckedColdLaunch` module flag existed only
+to stop the home page bouncing the user every time it mounted. Home is no longer the launch target,
+so the flag guards nothing.
+
+### Decision Tree / Algorithm
+
+`public/launch.html`, evaluated synchronously in `<head>`, first match wins:
+
+| Condition | Action |
+|---|---|
+| Any exception thrown anywhere in the script | `location.replace('/')` |
+| Not standalone / fullscreen / iOS `navigator.standalone` | `location.replace('/')` — browser tab or a shared link |
+| Desktop (`min-width: 1367px`) | `location.replace('/')` — desktop standalone stays out of scope |
+| `lastReadPath` matches `^/(ar\|en)/pages/(\d{1,3})$` **and** page is 1–604 | `location.replace(lastReadPath)` |
+| No usable `lastReadPath`, but legacy numeric `lastReadPage` is 1–604 | `location.replace('/pages/' + n)` — unprefixed; `intl-middleware` resolves the locale |
+| Neither key usable | `location.replace('/pages/1')` — unprefixed, same resolution |
+
+Added in review: without the legacy row, every install predating this change (which has
+`lastReadPage` but has never had `lastReadPath` written) would land on page 1 on the first launch
+after this ships — the whole existing user base, on exactly the launch this is meant to fix. A
+corrupt value in either key is caught per-read and falls through to the next row rather than
+escaping to the outer catch, so only a genuine platform failure reaches the "go home" branch.
+
+The regex whitelist is load-bearing, not defensive padding: the script navigates to a string read
+from `localStorage`, so an unvalidated read is an open redirect.
+
+### Verified Test Cases
+
+Walked through with the user (2026-08-14):
+
+1. Fresh install, never read → splash → `/pages/1` → middleware → `/ar/pages/1`. Home never renders.
+2. Read to page 300, close, reopen → splash → `/ar/pages/300` directly. No home frame, no page-1
+   frame.
+3. Nav Home icon tapped mid-session → client-side navigation to `/{locale}`; `launch.html` is a
+   document load and is never involved. Surah list renders normally.
+4. **Hard refresh while on home in standalone → stays on home** (user-confirmed). A deliberate
+   behavior change: today the module flag resets on every document load and bounces the user to the
+   reader.
+5. Mobile browser tab opens `/launch.html` (someone shared the link) → home.
+6. Desktop standalone → home, unchanged from the body of this plan.
+7. Offline cold launch, last-read page's HTML cached → `launch.html` served from the install
+   precache → redirect → `/ar/pages/300` served from `PAGES_CACHE_NAME`.
+8. Offline cold launch, last-read page's HTML **not** cached → catch handler serves the page-1
+   fallback → layout-effect self-correction re-anchors to 300 before paint → loading spread for
+   page 300, then content. Page 1 never appears (this is the case ADR 0014 Addendum 3 had conceded).
+9. Back-exit guard (ADR 0040) unaffected: `location.replace` leaves the reader as the first history
+   entry, exactly as today's `router.replace` did.
+10. Corrupt `lastReadPath` in localStorage (`//evil.example/x`, `/ar/pages/9999`, a non-string) →
+    fails the regex or the 1–604 bound → `/pages/1`.
+11. **Upgrading install** (added in review): `lastReadPage` is 300, `lastReadPath` was never written
+    → legacy fallback → `/pages/300` → middleware → `/ar/pages/300`. Without this the user would
+    have been sent to page 1.
+12. Both keys corrupt or unparseable → `/pages/1`, not home — a bad stored value is a failed
+    validation, not a platform failure.
+13. Relaunching the icon while the app is open on Settings → `focus-existing` focuses the window and
+    leaves it on Settings. (`navigate-existing`, used in the first cut of this change, would have
+    navigated it to the reader — corrected in review.)
+
+### Files to Change
+
+- `public/launch.html` — **new**. Static, ~20 lines, no build step. Synchronous `<head>` script
+  implementing the decision tree above. Body empty; `background:#16232F` (matching the manifest's
+  `background_color`) purely as a safety net for the case where the script throws before navigating.
+- `app/manifest.ts` — `start_url` → `/launch.html`; add `id: "/"`; add
+  `launch_handler: { client_mode: "navigate-existing" }` so relaunching an already-running PWA
+  resumes the current page instead of re-running `start_url` (Chromium/Android; iOS ignores it).
+  `MetadataRoute.Manifest` may not type `id`/`launch_handler` — cast rather than dropping them.
+- `middleware.ts` — add `launch\.html` to the `config.matcher` exclusion list, alongside
+  `manifest\.webmanifest` and `sw\.js`.
+- `next.config.mjs` — add `launch.html` to `globPublicPatterns` (currently `icon.svg`,
+  `icons/**/*`, `quran/chapters.json`). This is what makes offline cold launch work; it fits the
+  "app shell only" pin, ~1 KB.
+- `app/utils/storage.ts` — add `lastReadPath: string` to `StorageKey` and `StorageValueType`.
+- `app/contexts/LastReadPageContext.tsx` — `setLastReadPage` writes `lastReadPath` alongside
+  `lastReadPage`, from this one site. Needs the locale (`useLocale()`).
+- `app/components/reader/ReaderPager.tsx` — self-correction effect (the ADR 0014 Addendum 3 mount
+  effect) becomes an isomorphic layout effect.
+- `app/hooks/use-is-desktop-up.ts` — extract `useIsomorphicLayoutEffect` into a shared hook module
+  so `ReaderPager` imports it rather than redefining the same three lines.
+- `app/components/reader/AppLaunchRedirect.tsx` — **deleted**.
+- `app/[locale]/page.tsx` — drop the `<AppLaunchRedirect />` render and its import.
+- `app/components/nav/ContinueReadingLink.tsx` — doc comment references `AppLaunchRedirect` by name;
+  update it. Behavior unchanged.
+- `docs/architecture/adr/0042-pwa-launch-resolves-before-first-paint.md` — new (written during
+  planning).
+- `docs/architecture/DECISIONS.md` — amended "App Launch & Back Navigation (Android PWA)" and the
+  ADR 0014 Addendum 3 flash trade-off (written during planning).
+
+### Constraints
+
+- `id: "/"` must ship in the same commit as the `start_url` change. Shipping `start_url` alone
+  re-identifies the installed app: existing installs stop receiving updates and a reinstall leaves
+  the user with two icons. There is no way to repair this after the fact for users who already
+  updated.
+- `public/launch.html` must be added to **both** the `middleware.ts` matcher exclusion and
+  `globPublicPatterns`. Missing the first 404s it (the trap that broke the PWA icons — see
+  `pwa-offline-support.md` Addendum 1); missing the second breaks offline cold launch silently,
+  which no test that runs online will catch.
+- The launch script must validate `lastReadPath` against the regex **and** the 1–604 bound before
+  navigating. It is a `localStorage` read feeding a navigation.
+- The launch script is plain hand-written JS outside the TypeScript build — no types, no bundler, no
+  imports. Keep it small enough to verify by reading, and cap its scope at "decide a URL and
+  navigate." It necessarily inlines the `display-mode` list from `app/utils/platform.ts`; that is the
+  one duplication ADR 0042 accepts, and it must be re-checked whenever the manifest's `display`
+  changes.
+- `lastReadPath` and `lastReadPage` must be written together from `LastReadPageContext`. A second
+  write site lets the launch script and `ContinueReadingLink` disagree.
+- The self-correction must be an **isomorphic** layout effect. A bare `useLayoutEffect` in an
+  SSR-rendered client component triggers React's server-side warning on every reader page.
+- Serwist is disabled in dev, so none of the launch or offline behavior is testable with `npm run
+  dev`. Verify with `npm run build:local && npm start` (not `build` — that runs
+  `prisma migrate deploy` and fails locally), with any dev server stopped first.
+
+### What NOT to Do
+
+- Do not move the redirect into `app/layout.tsx`'s existing theme head script and keep
+  `start_url: "/"`. Rejected in ADR 0042: that script cannot tell an OS launch from a hard refresh or
+  a deep link to home — same URL, same document load — and it would re-inline
+  `isStandaloneDisplayMode()` into a second place.
+- Do not implement this as a cookie plus a middleware redirect on `/`. Rejected in ADR 0042 on
+  hosting grounds: Hostinger's CDN strips query params from cache keys and ignores `Vary`, so a
+  per-user redirect served from `/` is exactly the shape that gets cached and replayed to everyone
+  (`fix-rsc-cache-poisoning.md`, `fix-homepage-cdn-cache-poisoning.md`).
+- Do not add a service-worker `fetch` handler or an IndexedDB mirror of the last-read page. This was
+  the original proposal for the offline flash and it does not work: page 1's document is the only
+  reader HTML precached, so a worker that knows the last-read page still has nothing better to
+  serve. It would also affect ordinary browser tabs, since Serwist registers the worker for every
+  production visitor.
+- Do not add a `correcting` render gate to `ReaderPager`. Unnecessary once `jumpTo` is confirmed
+  synchronous, and it would put a new gate on a render path ADR 0028 and ADR 0034 constrain tightly.
+- Do not make `/launch` a Next route under `app/[locale]/`. It would need a locale segment, a
+  `revalidate` export per ADR 0035, an explicit `sw.ts` install-precache entry per locale, and it
+  would render behind the locale layout's `<Nav />` — which paints before `{children}`.
+- Do not restore the once-per-session `hasCheckedColdLaunch` flag. It guarded home against
+  self-bouncing; home is no longer the launch target.
+- Do not extend this to desktop standalone. Out of scope here exactly as in the body of this plan.
+
+### Decisions Made
+
+- Hard refresh on home in standalone stays on home — the behavior change is intended, not a
+  regression (user-confirmed).
+- The offline page-1 flash is fixed in this task rather than deferred (user-confirmed), via the
+  layout effect rather than the service-worker mechanism originally proposed.
+- `/launch.html` reached by a non-standalone visitor (browser tab, desktop standalone, shared link)
+  redirects to home rather than 404ing or rendering anything.
+- `ContinueReadingLink`'s existing standalone-hiding rule is unchanged — the auto-redirect still
+  covers exactly the same population.

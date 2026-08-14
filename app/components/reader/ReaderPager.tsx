@@ -19,6 +19,7 @@ import { MushafSwitchSync } from "@/app/components/reader/MushafSwitchSync";
 import { AndroidBackExitGuard } from "@/app/components/reader/AndroidBackExitGuard";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
+import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
 import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
@@ -474,10 +475,18 @@ export function ReaderPager({
   //
   // `lastReadPage` is read from storage rather than LastReadPageContext: a
   // locale change remounts the provider, so the context reads back its
-  // hydration default of 1 at exactly this moment. Safe as a one-shot read for
-  // the same reason it is in AppLaunchRedirect — this runs once on mount and
-  // needs the value now, not live (unlike the always-mounted nav link).
-  useEffect(() => {
+  // hydration default of 1 at exactly this moment. Safe as a one-shot read
+  // because this runs once on mount and needs the value now, not live (unlike
+  // the always-mounted nav link).
+  //
+  // A LAYOUT effect, deliberately (ADR 0042). As a plain useEffect this ran
+  // after paint, so page 1's words were on screen before the jump — the
+  // "brief page-1 flash" ADR 0014 Addendum 3 had accepted as a trade-off.
+  // jumpTo is fully synchronous (it calls setAnchor directly), so re-anchoring
+  // here lands in the same frame and page 1 never reaches the screen; the
+  // requested page shows the loading spread ADR 0034 already requires for an
+  // uncached page. Do not revert this to useEffect.
+  useIsomorphicLayoutEffect(() => {
     const stripLocale = (p: string) => p.replace(/^\/[a-z]{2}(?=\/|$)/, "");
     const pathname = stripLocale(window.location.pathname);
     const base = stripLocale(basePath);

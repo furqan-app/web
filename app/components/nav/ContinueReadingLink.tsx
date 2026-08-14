@@ -17,8 +17,9 @@ type Props = {
 
 /**
  * Always-visible navbar entry back to the last-read mushaf page — except on
- * standalone/fullscreen mobile/tablet PWA, where AppLaunchRedirect already
- * puts the user on that page every cold launch, making this link redundant.
+ * standalone/fullscreen mobile/tablet PWA, where the launch redirect
+ * (public/launch.html, ADR 0042) already puts the user on that page every cold
+ * launch, making this link redundant.
  * Desktop and browser tabs (no auto-redirect there) always keep it. Reads
  * LastReadPageContext (live state, kept in sync by LastReadPageSync) rather
  * than localStorage directly — Nav never remounts during in-app navigation,
