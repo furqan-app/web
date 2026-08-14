@@ -43,7 +43,7 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
       }}
       data-surah-id={surah.id}
       className={cn(
-        "flex items-center gap-3 p-4 rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200",
+        "flex items-center gap-3 p-4 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08),0_20px_56px_-16px_rgba(0,0,0,0.18)] transition-all duration-200",
         isActive
           ? "bg-primary/10 border border-primary/30"
           : "bg-card border border-border",

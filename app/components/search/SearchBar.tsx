@@ -5,7 +5,6 @@ import { useSearch } from "@hooks/use-search";
 import { isSearchQueryValid } from "@/app/constants/search";
 import SearchQueryResults from "./SearchQueryResults";
 import useTranslations from "@hooks/use-translations";
-import { useSidebar } from "@/app/contexts/SidebarContext";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, ArrowLeft } from "lucide-react";
 import {
@@ -17,7 +16,6 @@ import {
 
 export const SearchBar = () => {
     const t = useTranslations();
-    const { setSearchOpen } = useSidebar();
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const { verses, chapters, isLoading } = useSearch(debouncedQuery);
@@ -93,15 +91,15 @@ export const SearchBar = () => {
 
             {/* Mobile: search icon trigger */}
             <button
-                className="md:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent/50 transition-colors"
-                onClick={() => { setMobileOpen(true); setSearchOpen(true); }}
+                className="md:hidden flex items-center justify-center w-10 h-10 rounded-md hover:bg-accent/50 transition-colors"
+                onClick={() => setMobileOpen(true)}
                 aria-label={t("search.placeholder", "Search the Quran...")}
             >
                 <Search className="size-5 text-muted-foreground" strokeWidth={1.7} />
             </button>
 
             {/* Mobile: full-screen search overlay */}
-            <Sheet open={mobileOpen} onOpenChange={(v) => { setMobileOpen(v); if (!v) setSearchOpen(false); }}>
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetContent
                     side="top"
                     hideDefaultClose

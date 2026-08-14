@@ -117,6 +117,7 @@ Schemas live at `prisma/quran/schema.prisma` and `prisma/app/schema.prisma`; cli
 - The middleware chain uses the `pipeMiddlewares` utility in `app/middlewares/pipe.ts`.
 - Any new top-level static asset directory served from `public/` (or a new Next metadata-route file) must be added to the root `middleware.ts` `config.matcher` exclusion list, alongside `_next/static`, `fonts/*`, `manifest.webmanifest`, `sw.js`, etc. Without it, `intl-middleware` treats the request as a page route and redirects it into a locale prefix (e.g. `/icons/icon-512.png` → `/en/icons/icon-512.png`), 404ing the asset. This bit the PWA icons (`public/icons/`) — see `docs/plans/pwa-offline-support.md` Addendum 1 — because the matcher was updated for `fonts/*`/`manifest.webmanifest`/`sw.js` but not the new `icons/` directory added in the same feature.
 - RSC flight responses (Next.js App Router client-side navigation fetches, identified by the `?_rsc=<hash>` query parameter) must carry `Cache-Control: no-store`. This is set in `next.config.mjs` via `headers()` + `has: [{ type: "query", key: "_rsc" }]`. Hostinger's reverse proxy cache strips query parameters from cache keys and ignores the `Vary: RSC` header, so without `no-store`, RSC wire format gets cached under the bare page URL (e.g. `/ar`) and served to subsequent plain navigation requests — users see raw JSON instead of HTML. Do not remove this header rule. See `docs/plans/fix-rsc-cache-poisoning.md`.
+- Favicon files (`favicon.ico`, `favicon-16.png`, `favicon-32.png`) live under `public/icons/`, not `public/` root — placing them in the already-whitelisted `icons/*` directory avoids editing the `middleware.ts` matcher or `next.config.mjs`'s `globPublicPatterns` (see the point above). A root-level favicon would need both updated first. See `docs/plans/brand-mark-icons.md`.
 
 ---
 
@@ -197,9 +198,12 @@ const user = extractUser(request); // { id, email, ... }
 
 **Rationale:** Replaces an earlier design where `Sidebar` rendered its own always-visible floating-pill `SheetTrigger`.
 
+**Drift note (found 2026-08-13):** commit `e231f77` (`docs/plans/sidebar-surah-indicator.md`) silently reintroduced the floating-pill trigger in `Sidebar.tsx` — carrying that plan's surah-name/chevron content — without updating this decision or restoring the `Nav`-owned trigger. The code and this decision were inconsistent from that commit until `docs/plans/home-page-design-fixes.md` (Addendum — Universal nav menu) restored the `Nav`-owned trigger, now carrying the surah/chevron content rather than the original `PanelLeftOpen` icon.
+
 **Constraints:**
 - Do not add a second/duplicate trigger — one trigger, in `Nav`, on pages routes only.
 - If relocating or removing this trigger in future work, verify every breakpoint retains equivalent access before assuming "unchanged" — an earlier revision of this pattern silently removed desktop's only way to open the sidebar by adding `md:hidden` to the replacement trigger without noticing the original floating pill had no such guard. See `docs/plans/mobile-nav-ux.md` (Addendum 3) for the incident.
+- Any future change to this trigger's location must update this decision in the same commit — do not let code and doc drift apart again (see Drift note above).
 
 ---
 
@@ -389,7 +393,7 @@ const user = extractUser(request); // { id, email, ... }
 **Amended (Addendum 3, Trello #194):** the "installed PWA" check must test **both** `display-mode: standalone` and `display-mode: fullscreen` — the manifest's `display` was later changed to `"fullscreen"` (status-bar hiding) and every offline surface's gate is a single shared `isStandaloneDisplayMode()`, so missing either mode silently disables the whole feature on platforms that honor it. Offline navigation to a page not already visited/swiped-to now works via a `setCatchHandler`-based fallback (a small always-precached `/{locale}/pages/1` document, independent of the consent-gated bulk download) that self-corrects to the requested page or the last-read page via `ReaderPager.jumpTo` once the client mounts — see ADR 0014 Addendum 3 for the full mechanism and its "brief page-1 flash" trade-off. Sidebar/rub/Continue-Reading links use `jumpTo` directly (no navigation at all) whenever a reader is already mounted.
 
 **Constraints:**
-- `isStandaloneDisplayMode()` (`app/hooks/use-pwa-precache.ts`) must check every `display-mode` value the manifest can produce — currently `standalone` and `fullscreen` — plus iOS's `navigator.standalone`. A manifest `display` change that isn't mirrored here silently disables the Settings row, the first-run gate, and (Chromium in-tab prompt aside) the entire consent flow, with no error surfaced anywhere.
+- `isStandaloneDisplayMode()` lives in `app/utils/platform.ts` (moved from `use-pwa-precache.ts` when the app-launch-redirect and Android back-exit-guard features needed the same check — see "App Launch & Back Navigation (Android PWA)" below) and must check every `display-mode` value the manifest can produce — currently `standalone` and `fullscreen` — plus iOS's `navigator.standalone`. A manifest `display` change that isn't mirrored here silently disables the Settings row, the first-run gate, the app-launch redirect, the back-exit guard, and (Chromium in-tab prompt aside) the entire consent flow, with no error surfaced anywhere. Every consumer must import this one function — do not re-derive display-mode detection locally.
 - The offline navigation fallback document must stay tiny and independent of the bulk 604-page download — it has to work before that download has ever run. Do not make it depend on `isCacheComplete`.
 - Serwist registers the service worker for **every** production visitor (`register: true` is `@serwist/next`'s default) — not just installed-PWA users. The `display-mode: standalone` gate only controls the *bulk 604-page pre-cache* (`use-pwa-precache.ts`); it does not scope which visitors the service worker's runtime-caching rules apply to. Any runtime `CacheFirst` rule in `app/sw.ts` therefore affects regular browser tabs too.
 - The reader-page HTML response (`/{locale}/pages/{id}`) is **not** immutable content — only the Quran words/verse text and fonts are. That HTML also carries the app shell (nav, layout, any feature UI), which changes on ordinary deploys. It is cached with `NetworkFirst`, not `CacheFirst`, specifically so it revalidates against the network whenever the visitor is online; the cached copy is used only as an offline fallback. Do not change this back to `CacheFirst` as a "consistency" cleanup — that reintroduces indefinitely-stale app shells for both regular and installed visitors (Trello #122). Page **fonts** (`isPageFont`) remain `CacheFirst` — those genuinely never change.
@@ -409,6 +413,22 @@ const user = extractUser(request); // { id, email, ... }
 - iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; the page cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS. (The JSON+font set is far smaller than the old full-HTML precache, easing this.)
 - The manual `pages-v{N}` version constant lives in `app/constants/offline.ts` (`PAGES_CACHE_VERSION`) — bump it there when reader markup/font logic changes. It must stay in that one module: `app/sw.ts` and `app/hooks/use-pwa-precache.ts` both import it, and the client's dismissed-flag key is derived from it, so a duplicated literal would let the cache and the flag drift onto different versions.
 - Serwist is disabled in development (`disable: process.env.NODE_ENV === "development"` in `next.config.mjs`) — `npm run dev` never registers a service worker. To test install/offline behavior, use `npm run build:local && npm start`. Use **`build:local`**, not `build`: the latter is the CI/production script and runs `prisma migrate deploy` with no env file, so it fails locally on a missing `APP_DATABASE_URL` before Next even starts. Also stop any dev server first — a dev server and a production build sharing `.next` corrupts the output, which surfaces as prerendered routes 500ing with nothing logged.
+
+---
+
+## App Launch & Back Navigation (Android PWA)
+
+**Decision:** On standalone/fullscreen mobile/tablet PWA (`isStandaloneDisplayMode()`, `app/utils/platform.ts`, excluding desktop via `useIsDesktopUp`), a cold app launch (OS opening `start_url`) redirects once per session from the home surah list straight to `/pages/{lastReadPage}` — online cold launch was the one gap; offline cold launch was already covered by the ADR 0014 Addendum 3 fallback-document mechanism. The redirect fires exactly once per browser session (a module-level flag, reset only by a real page load) so a manual tap on the nav's Home icon later in the session still opens the surah list normally. See [ADR 0040](adr/0040-android-pwa-back-exit-guard.md) for the related back-button mechanism.
+
+On **Android** standalone/fullscreen mobile/tablet only (not iOS — no back button/gesture to trap there), pressing the hardware/gesture back button while anywhere on the user's own reader (`/pages/...`, excluding the shared-mushaf grant reader `/mushaf/[grant]/pages/...`, per the same exclusion `LastReadPageSync` already uses) shows a "press back again to exit" toast on the first press instead of navigating away; a second press within 2s calls `window.close()`. Back navigation is completely unchanged everywhere else (Settings, Marks, Home, the grant reader) — it only intercepts on the reader route, and always attempts exit on the second press rather than falling back to a real prior history entry (e.g. Home), even when one exists. See ADR 0040 for why this requires a double-push history guard rather than a single dummy history entry.
+
+Because reader page-swipes use `history.replaceState`, not `pushState` (Reader Navigation — Persistent Client Pager, below), swiping through any number of pages never grows browser history — back-button behavior after swiping is identical to back-button behavior before swiping. No special-casing was needed for that scenario.
+
+**Constraints:**
+- Do not let the back-exit guard re-derive display-mode or Android detection independently — it must import `isStandaloneDisplayMode()` from `app/utils/platform.ts`, same as every other offline/PWA surface.
+- Never collapse the double-push history guard to a single pushed entry — see ADR 0040. That silently reintroduces "second back press falls through to home" whenever the reader was reached via real in-app navigation.
+- The cold-launch redirect must use a **live read** of `lastReadPage` from storage at redirect time (a one-time synchronous read is fine here, unlike `ContinueReadingLink` — this component mounts once and immediately navigates away, it never needs to stay current across a session the way the always-mounted nav link does).
+- The nav's `ContinueReadingLink` is hidden specifically when `isStandaloneDisplayMode() && !isDesktopUp` — i.e. exactly where the auto-redirect already covers the user. A mobile/tablet **browser tab** (not installed) gets no auto-redirect, so it keeps the link, same as desktop.
 
 ---
 
@@ -632,12 +652,24 @@ payload; windowing removes the mass mount.
 ## Documentation & Workflow System
 
 **Decision:** AI-first docs system adopted 2026-06-28. CLAUDE.md is a slim pointer file. Heavy context lives in `docs/`. Skills load context on demand:
-- `/plan-fq-task` — Socratic planning → `docs/plans/<slug>.md`
-- `/start-fq-task` — load context → implement
+- `/plan-fq-task` — Socratic planning → `docs/plans/<slug>.md`; UI-mode tasks also run `/impeccable critique` and may add a `## Design Remediation` section (ADR 0041)
+- `/start-fq-task` — load context → implement → run any `## Design Remediation` entries via direct `/impeccable` Skill call (ADR 0041)
 - `/retrospect` — end-of-session feedback loop; proposes DECISIONS.md updates, skill edits, memory saves review-before-write; saves `docs/retrospectives/YYYY-MM-DD.md`
-- `/review-fq-work` — Opus subagent quality gate on branch diff vs main (bugs, quality, plan consistency)
+- `/review-fq-work` — Opus subagent quality gate on branch diff vs main across 4 dimensions: bugs, quality, plan consistency, and (when the diff touches UI files) design/UX via `/impeccable critique` (ADR 0041)
 
 Decisions are tracked in this file; ADR history is in `docs/architecture/adr/`.
+
+---
+
+## Impeccable Design Workflow Integration
+
+**Decision:** `/impeccable`'s design/UX remediation commands are wired into the Furqan plan → implement → review cycle, invoked via direct Skill call (command + explicit target, never a subprocess or sub-agent) and always plan-driven — `/start-fq-task` never runs a design command the plan didn't name. See [ADR 0041](adr/0041-wire-impeccable-into-fq-workflow.md) for the full mechanism, the eligible command set, and rejected alternatives (CLI shell-out, sub-agent delegation).
+
+**Constraints:**
+- `/start-fq-task` only invokes impeccable commands listed in the plan's `## Design Remediation` section — it must not decide mid-implementation to run one that wasn't planned.
+- Eligible commands are every Evaluate/Refine/Enhance/Fix command (`critique`, `audit`, `polish`, `bolder`, `quieter`, `distill`, `harden`, `onboard`, `animate`, `colorize`, `typeset`, `layout`, `delight`, `overdrive`, `clarify`, `adapt`, `optimize`) — never Build/Iterate (`craft`, `shape`, `init`, `document`, `extract`, `live`).
+- `check-fq-standards` stays unchanged — its checklist doesn't overlap impeccable's (invariants vs. a11y/aesthetic/UX), so no dedup step is needed between them.
+- `/review-fq-work`'s Dimension 4 only runs when the diff touches UI-relevant files (components, pages, `.css`/`.scss`) — skip it entirely for backend-only diffs.
 
 **Constraints:**
 - Never put architecture detail, standards, or decisions back into CLAUDE.md.
@@ -848,3 +880,4 @@ amends ADR 0024).
 - Before adding gold anywhere, the test is literal: is this element on the reader page itself? If not, it's emerald — no judgment call about how "Mushaf-identity-bearing" something feels.
 - `--mushaf-paper` (the reader page background) is deliberately **not** the lightest step of the new 4-step background ramp — it sits one step above `--background` (app shell), not at the top. `--card`/`--popover` (drawers, dialogs, player) and a 4th "elevated" step for raised in-drawer chips sit above it. Do not "fix" the page to be the brightest surface — that was verified against the design reference and inverted on purpose (a real page under dim light is only slightly lighter than its surroundings, not glowing).
 - Light and gold themes are unaffected by this pass — this decision and its token values apply to `.theme-dark`/`.theme-dark.dark` only.
+- **`.theme-dark`'s `--accent-foreground` is deliberately NOT `--primary`, unlike every other theme** (2026-08-13, `docs/plans/home-page-design-fixes.md`). Same-day brand retint (`docs/plans/brand-mark-icons.md`) moved `--primary` to `169 88% 26%`, kept there specifically so `--primary-foreground`'s white-on-primary button text clears WCAG AA (5.09:1). That same 26% only measures 2.4:1 against `--accent`'s `161 58% 15%` background (the surah-list badge) — below the 4.5:1 floor, and no single `--primary` lightness satisfies both pairings (raising it enough to fix the badge drops the button-text contrast to ~2.7:1; darkening `--accent` toward black still can't clear 4.5:1 against a 26%-lightness foreground, max achievable is 4.12:1). `--accent-foreground` is `169 88% 39%` in dark theme only (measures 5.0:1 against `--accent`) — same hue, independent lightness. Do not "simplify" this back to mirroring `--primary` without re-deriving both contrast pairs; that regresses whichever one you didn't just check.

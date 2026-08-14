@@ -10,24 +10,27 @@
     --card-foreground: 209 36% 14%;
     --popover: 0 0% 100%;
     --popover-foreground: 209 36% 14%;
-    --primary: 163 86% 35%;
+    /* EXPERIMENTAL — retinted to match the app logo mark's emerald (#087F69,
+       docs/plans/brand-mark-icons.md). Was 163 86% 35%. Revert to that value if
+       this doesn't hold up. */
+    --primary: 169 88% 26%;
     --primary-foreground: 0 0% 100%;
     --secondary: 200 37% 97%;
     --secondary-foreground: 209 36% 14%;
     --muted: 208 30% 92%;
     --muted-foreground: 208 18% 40%;
     --accent: 165 53% 93%;
-    --accent-foreground: 163 86% 35%;
+    --accent-foreground: 169 88% 26%;
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 31% 90%;
     --input: 210 31% 90%;
-    --ring: 163 86% 35%;
+    --ring: 169 88% 26%;
     --radius: 0.5rem;
     /* Aliased to this theme's own accent — light theme is deliberately NOT gold
        (see the paper comment below), so the badge that consumes --gold must not
        gain one here. */
-    --gold: 163 86% 35%;
+    --gold: 169 88% 26%;
     --gold-muted: 165 53% 93%;
     --overlay: 0 0% 0%;
     /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
@@ -141,22 +144,39 @@
     --card-foreground: 45 18% 91%;
     --popover: 210 41% 13%;
     --popover-foreground: 45 18% 91%;
-    /* Emerald reverted to its exact pre-unification-pass value (Correction Round 1) —
-       the muted 166/170-hue version read "dirty and lifeless" against a reference
-       review. This vibrant teal-emerald is the app's original interactive identity. */
-    --primary: 162 88% 41%;
-    --primary-foreground: 210 42% 9%;
+    /* EXPERIMENTAL — retinted to match the app logo mark's emerald (#087F69,
+       docs/plans/brand-mark-icons.md), 2026-08-13. Was 162 88% 41%, the vibrant
+       teal-emerald reverted to on purpose after a muted 166/170-hue version read
+       "dirty and lifeless" here (Correction Round 1). This value sits in that
+       same rejected hue range (169°) — watch closely against (7,15,23); revert
+       to 162 88% 41% if it repeats the problem. */
+    --primary: 169 88% 26%;
+    --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - was 210 42% 9%, switched to white for contrast against the darker retinted primary (5.09:1 vs 3.55:1) */
     --secondary: 211 38% 16%;
     --secondary-foreground: 45 18% 91%;
     --muted: 211 38% 16%;
-    --muted-foreground: 206 9% 50%;
+    /* Bumped 50% -> 56% (2026-08-13, docs/plans/home-page-design-fixes.md):
+       50% measured 4.1:1 against --card, below WCAG AA 4.5:1. 56% measures 5.0:1. */
+    --muted-foreground: 206 9% 56%;
     --accent: 161 58% 15%;
-    --accent-foreground: 162 88% 41%;
+    /* Deliberately NOT --primary here, unlike every other theme (2026-08-13,
+       docs/plans/home-page-design-fixes.md). --primary stayed at 26% lightness
+       today's brand retint (see EXPERIMENTAL comment above) for the sake of
+       --primary-foreground's white-on-primary button contrast (5.09:1) — but
+       that same 26% only measures 2.4:1 against --accent's 15%-lightness
+       background, below WCAG AA 4.5:1. Bumping --primary itself to fix that
+       drops the button contrast to ~2.7:1 instead (checked: no single lightness
+       satisfies both). 39% is the lowest value that clears 4.5:1 against
+       --accent (measures 5.0:1) without touching --primary or its button
+       contrast. Keep this decoupled from --primary in dark theme; do not
+       "simplify" it back to mirroring --primary without re-deriving both
+       contrast pairs. */
+    --accent-foreground: 169 88% 39%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 26% 19%;
     --input: 210 26% 19%;
-    --ring: 162 88% 41%;
+    --ring: 169 88% 26%;
     --radius: 0.5rem;
     /* Mushaf-identity gold — reserved strictly for the reader page (ornaments below);
        no chrome exceptions, not even the surah-list badge (ADR 0031, revised). */
@@ -233,19 +253,22 @@
     --card-foreground: 45 18% 91%;
     --popover: 210 41% 13%;
     --popover-foreground: 45 18% 91%;
-    --primary: 162 88% 41%;
-    --primary-foreground: 210 42% 9%;
+    /* EXPERIMENTAL — see the matching comment in .theme-dark above. */
+    --primary: 169 88% 26%;
+    --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - see .theme-dark above */
     --secondary: 211 38% 16%;
     --secondary-foreground: 45 18% 91%;
     --muted: 211 38% 16%;
-    --muted-foreground: 206 9% 50%;
+    /* See matching comment in .theme-dark above. */
+    --muted-foreground: 206 9% 56%;
     --accent: 161 58% 15%;
-    --accent-foreground: 162 88% 41%;
+    /* See matching comment in .theme-dark above — deliberately not --primary. */
+    --accent-foreground: 169 88% 39%;
     --destructive: 0 76% 63%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 26% 19%;
     --input: 210 26% 19%;
-    --ring: 162 88% 41%;
+    --ring: 169 88% 26%;
     --radius: 0.5rem;
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;

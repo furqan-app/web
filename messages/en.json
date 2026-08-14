@@ -1,6 +1,5 @@
 {
   "home": {
-    "badge": "Memorize the Quran",
     "title": "Furqan",
     "tagline": "Every word is a trust, every verse a journey — annotate, reflect, and perfect your memorization of the Noble Quran, guided step by step alongside your teacher.",
     "description": "Read and Listen to Quran"
@@ -114,6 +113,12 @@
   "signIn": "Sign in",
   "continueReading": {
     "navLink": "Continue Reading"
+  },
+  "nav": {
+    "more": "More"
+  },
+  "exitApp": {
+    "pressBackAgain": "Press back again to exit"
   },
   "marks": {
     "navLink": "My Marks",

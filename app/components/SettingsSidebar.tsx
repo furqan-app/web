@@ -26,7 +26,20 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-export const SettingsSidebar = () => {
+type Props = {
+  // Controlled mode — used by NavOverflowMenu, which renders its own trigger
+  // row and toggles this Sheet from outside. Required for that case: this
+  // component's Sheet must NOT be nested inside NavOverflowMenu's own
+  // SheetContent, because closing that outer Sheet unmounts everything in
+  // it — including a nested Sheet that was just told to open on the same
+  // click, wiping its state before it can render. So when controlled, this
+  // component renders ONLY <Sheet><SheetContent> (no trigger at all); the
+  // caller owns open state and where/how the trigger appears.
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -37,19 +50,22 @@ export const SettingsSidebar = () => {
   const isMobile = useIsMobile();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
     useKeepScreenAwake();
+  const controlled = onOpenChange !== undefined;
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("settings", "Settings")}
-          className={"hover:bg-accent " + (isRTL ? "mr-4" : "ml-4")}
-        >
-          <Settings className="size-5" />
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {!controlled && (
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("settings", "Settings")}
+            className={"hover:bg-accent " + (isRTL ? "mr-4" : "ml-4")}
+          >
+            <Settings className="size-5" />
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
