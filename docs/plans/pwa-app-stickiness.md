@@ -4,7 +4,7 @@
 **Date:** 2026-08-12
 **Status:** implemented
 **Trello:** #201 https://trello.com/c/yxgElmek
-**GitHub:** [#290](https://github.com/furqan-app/web/issues/290) (Addendum 1)
+**GitHub:** [#288](https://github.com/furqan-app/web/issues/288), [#290](https://github.com/furqan-app/web/issues/290) (see addenda)
 
 ## Summary
 
@@ -197,7 +197,141 @@ Walked through with the user (2026-08-12):
 
 ---
 
-# Addendum 1 — Launch Resolves Before First Paint
+## Addendum — 2026-08-14: swipe after a language switch reverts to Arabic page 1
+
+**Type:** bug
+**Status:** implemented
+**Issue:** [#288](https://github.com/furqan-app/web/issues/288)
+
+### Summary
+
+In the installed **Android** PWA, switching the app language leaves the reader on the correct page,
+but the **first swipe afterwards** snaps the app back to the previous language *and* to page 1
+(Al-Fatihah) — instantly, with no loading state. Reproduces only in the installed PWA; a browser tab
+is unaffected. Reported and confirmed by the user on Android.
+
+### Root Cause
+
+Three defects compound. The first is the actual cause; the other two decide where the user lands.
+
+**1. `AndroidBackExitGuard` reuses one state object across pushes.**
+`const GUARD_STATE = { fqExitGuard: true }` is module-level and pushed on both mount and every
+re-push. Next's history patch calls `copyNextJsInternalHistoryState(data)`, which **mutates its
+argument in place** — so the first push permanently stamps `__NA: true` and that moment's
+`__PRIVATE_NEXTJS_INTERNALS_TREE` onto the shared object. Every later push then hits the patch's
+`if (data?.__NA) return originalPushState(...)` early-out and writes the **frozen** tree into the
+current history entry. After a locale switch the guard remounts, pushes again, and stamps the
+*previous* locale's tree over the correct one. Full mechanism in ADR 0040's 2026-08-14 addendum.
+
+**2. The pager's `replaceState` reads that poisoned entry back.**
+`ReaderPager.commitTo` calls `window.history.replaceState(null, "", ...)`. Next converts external
+`replaceState` calls into an `ACTION_RESTORE` whose `tree` comes from
+`window.history.state.__PRIVATE_NEXTJS_INTERNALS_TREE`; `restoreReducer` swaps the router's entire
+tree to it while reusing the existing cache. So the swipe re-renders the stale locale and page
+synchronously, from cache.
+
+**3. The pager's mount self-correction then lands on page 1 rather than the current page.**
+The restore flips the `[locale]` segment, so the whole locale subtree remounts: `basePath` becomes
+`/ar/pages` while the URL still reads `/en/pages/{n}`, and `LastReadPageProvider` resets to its
+hydration default of `1`. The mount effect's `pathname.startsWith(`${basePath}/`)` test fails, so
+`requestedPage` falls back to that `1` and it calls `jumpTo(1)`.
+
+Why it hides everywhere else: the guard is gated on `isAndroid() && isStandaloneDisplayMode()`, so
+it never mounts in a browser tab; and **within a single locale** the same stale-tree restore is
+invisible, because only the page-id segment changes, the pathname check in defect 3 succeeds, and
+the pager self-corrects to the right page.
+
+### Decision Tree / Algorithm
+
+Guard push, after the fix:
+
+| Call site | State argument | `url` argument | Effect |
+|---|---|---|---|
+| Mount | freshly allocated `{ fqExitGuard: true }` | omitted | Next copies the **current** tree; no `ACTION_RESTORE` (patch only dispatches when a `url` is given) |
+| Re-push on intercepted back press | freshly allocated | omitted | same |
+
+Pager mount self-correction, after the fix:
+
+| `window.location.pathname` at mount | `basePath` | Resolves to |
+|---|---|---|
+| `/en/pages/51` | `/en/pages` | 51 (unchanged) |
+| `/en/pages/51` | `/ar/pages` (locale mismatch) | 51 — locale prefix stripped from both before matching (was: `lastReadPage`) |
+| `/` or `/ar` (SW offline fallback document) | `/ar/pages` | `storage.get("lastReadPage") ?? 1` — read from storage, not the context's hydration default |
+| `/ar/mushaf/{grant}/pages/51` | `/ar/mushaf/{grant}/pages` | 51 (unchanged) |
+
+### Verified Test Cases
+
+Walked through with the user (2026-08-14):
+
+1. Android PWA, Arabic, page 50 → switch to English → swipe. **Before:** Arabic page 1. **After:**
+   English page 51.
+2. Android PWA, back press → toast; second press within 2s → exit attempt. Unchanged — the
+   double-push shape and the omitted `url` argument are both preserved.
+3. Android PWA offline cold launch: `/` fails, the service worker serves the `/ar/pages/1` fallback
+   document. **Before:** the pathname isn't a reader path, so the fallback lands on the context's
+   default of 1. **After:** lands on the real last-read page from storage.
+4. Swipe with no language switch (single locale). Unchanged — already self-heals.
+5. Desktop, iOS, or any browser tab. Unchanged — the guard never mounts.
+6. Shared-mushaf grant reader. Unchanged — the guard is excluded there (`grantId` present), and the
+   locale-stripping change preserves the longer `mushaf/{grant}/pages` base path.
+
+### Files to Change
+
+- `app/components/reader/AndroidBackExitGuard.tsx` — replace the module-level `GUARD_STATE` constant
+  with a factory (`const guardState = () => ({ fqExitGuard: true })`) and call it at both
+  `history.pushState` sites. Keep omitting the `url` argument.
+- `app/components/reader/ReaderPager.tsx` — in the mount self-correction effect, strip a leading
+  `/xx` locale segment from **both** `window.location.pathname` and `basePath` before the
+  `startsWith`/slice, so a locale mismatch still yields the requested page; and replace the
+  `lastReadPage` context read with `storage.get("lastReadPage") ?? 1`. Drop the now-unused
+  `useLastReadPage` import if nothing else in the component needs it.
+- `docs/architecture/adr/0040-android-pwa-back-exit-guard.md` — addendum (written during planning).
+- `docs/architecture/DECISIONS.md` — new constraint under "App Launch & Back Navigation (Android
+  PWA)" (written during planning).
+
+### Constraints
+
+- Preserve ADR 0040's double-push shape exactly — this fix changes only how the state object is
+  allocated, never the state machine.
+- Keep omitting `pushState`'s third (`url`) argument in the guard. Supplying one makes Next dispatch
+  an `ACTION_RESTORE`, which would move the pager's anchor on every back press.
+- The locale-stripping regex must be anchored and bounded (`/^\/[a-z]{2}(?=\/|$)/`) so it cannot eat
+  a real path segment, and must be applied to `basePath` as well as the pathname — the grant reader's
+  base path is `/{locale}/mushaf/{grant}/pages`, not `/{locale}/pages`.
+- `LastReadPageContext` keeps its initial value of `1`; it is correct for SSR/hydration agreement
+  (see "Nav-level state must be live, not a one-shot localStorage read" in DECISIONS.md). Only the
+  pager's mount-time read moves to storage — the always-mounted `ContinueReadingLink` must keep
+  reading the live context.
+
+### What NOT to Do
+
+- Do not "fix" this by removing the back-exit guard, by dropping its history push, or by collapsing
+  it to a single entry — all three break ADR 0040's confirmed behavior.
+- Do not switch the pager from `history.replaceState` to `router.push`/`replace` — ADR 0028 exists
+  precisely to keep swipes off the router.
+- Do not have the guard write the router tree itself, or read/patch
+  `__PRIVATE_NEXTJS_INTERNALS_TREE` directly. Passing a fresh object lets Next's own patch do it.
+- Locale defaulting is **out of scope**. The current behavior (URL prefix → `NEXT_LOCALE` cookie →
+  `Accept-Language` → `defaultLocale: 'ar'`) is intentional and confirmed by the user on 2026-08-14:
+  a first-time visitor gets their device language, and a switch persists via the cookie the
+  middleware writes. Do not add `localeDetection: false` or otherwise force Arabic on launch.
+- `LanguageToggle` using `next/navigation` plus a `pathname.replace(/^\/[a-z]{2}/, ...)` regex
+  instead of `@/i18n/routing` diverges from `docs/standards/i18n.md`, but it is **not** part of this
+  bug and is out of scope — it resolves the right page and the middleware still writes the cookie.
+
+### Decisions Made
+
+- Fix the root cause (fresh state object) **and** both downstream fallbacks, rather than the root
+  cause alone — defects 2 and 3 are a latent "remount lands on page 1" class that any future
+  route/locale remount could hit (user-confirmed).
+- Bug 2 from the same investigation (locale default / `LanguageToggle`) is explicitly dropped, not
+  deferred — the current device-language behavior is the intended behavior (user-confirmed).
+- Extends this plan rather than opening a new one: same component, same ADR (0040), and this is a
+  defect in what this plan shipped.
+
+---
+
+## Addendum — 2026-08-14: cold launch flashes the home page before redirecting
 
 **Type:** bug
 **Date:** 2026-08-14
@@ -205,14 +339,14 @@ Walked through with the user (2026-08-12):
 **GitHub:** [#290](https://github.com/furqan-app/web/issues/290)
 **ADR:** [0042](../architecture/adr/0042-pwa-launch-resolves-before-first-paint.md)
 
-## Summary
+### Summary
 
 The auto-open-last-page feature works, but the user watches it work: cold launch renders the full
 home surah list, then swaps to the reader. The body of this plan claimed "no page-1 flash" (Verified
 Test Case 2) — accurate as far as it went, but it removed the page-1 flash by introducing a *home*
 flash. This addendum removes the whole class of defect, in both the online and offline paths.
 
-## Root Cause
+### Root Cause
 
 `AppLaunchRedirect` decides in a `useEffect`. React effects run **after** paint, by definition — so
 by the time the redirect is issued, the home document has already been fetched, parsed, styled,
@@ -226,7 +360,7 @@ after page 1's words have painted. ADR 0014 Addendum 3 accepted this as a trade-
 withdraws that acceptance, because `jumpTo` turns out to be fully synchronous (`setAnchor(target)`
 directly), so a layout effect re-anchors in the same frame at essentially no cost.
 
-## Approach
+### Approach
 
 **Launch into a document that renders nothing.** `start_url` becomes `/launch.html` — a static
 hand-written file in `public/`, not a Next route. Its whole body is a synchronous `<head>` script
@@ -260,7 +394,7 @@ for an uncached page, then fills in.
 to stop the home page bouncing the user every time it mounted. Home is no longer the launch target,
 so the flag guards nothing.
 
-## Decision Tree / Algorithm
+### Decision Tree / Algorithm
 
 `public/launch.html`, evaluated synchronously in `<head>`, first match wins:
 
@@ -282,7 +416,7 @@ escaping to the outer catch, so only a genuine platform failure reaches the "go 
 The regex whitelist is load-bearing, not defensive padding: the script navigates to a string read
 from `localStorage`, so an unvalidated read is an open redirect.
 
-## Verified Test Cases
+### Verified Test Cases
 
 Walked through with the user (2026-08-14):
 
@@ -314,7 +448,7 @@ Walked through with the user (2026-08-14):
     leaves it on Settings. (`navigate-existing`, used in the first cut of this change, would have
     navigated it to the reader — corrected in review.)
 
-## Files to Change
+### Files to Change
 
 - `public/launch.html` — **new**. Static, ~20 lines, no build step. Synchronous `<head>` script
   implementing the decision tree above. Body empty; `background:#16232F` (matching the manifest's
@@ -344,7 +478,7 @@ Walked through with the user (2026-08-14):
 - `docs/architecture/DECISIONS.md` — amended "App Launch & Back Navigation (Android PWA)" and the
   ADR 0014 Addendum 3 flash trade-off (written during planning).
 
-## Constraints
+### Constraints
 
 - `id: "/"` must ship in the same commit as the `start_url` change. Shipping `start_url` alone
   re-identifies the installed app: existing installs stop receiving updates and a reinstall leaves
@@ -369,7 +503,7 @@ Walked through with the user (2026-08-14):
   dev`. Verify with `npm run build:local && npm start` (not `build` — that runs
   `prisma migrate deploy` and fails locally), with any dev server stopped first.
 
-## What NOT to Do
+### What NOT to Do
 
 - Do not move the redirect into `app/layout.tsx`'s existing theme head script and keep
   `start_url: "/"`. Rejected in ADR 0042: that script cannot tell an OS launch from a hard refresh or
@@ -393,7 +527,7 @@ Walked through with the user (2026-08-14):
   self-bouncing; home is no longer the launch target.
 - Do not extend this to desktop standalone. Out of scope here exactly as in the body of this plan.
 
-## Decisions Made
+### Decisions Made
 
 - Hard refresh on home in standalone stays on home — the behavior change is intended, not a
   regression (user-confirmed).

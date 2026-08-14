@@ -2,15 +2,6 @@
 
 import { ReactNode, useState } from "react";
 import { Check } from "lucide-react";
-import useTranslations from "@/app/hooks/use-translations";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Reciter } from "@/app/types/recitation";
 
@@ -35,7 +26,6 @@ export const ReciterCombobox = ({
   align = "start",
   side,
 }: Props) => {
-  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const selected = reciters.find((r) => r.id === value) ?? null;
 
@@ -48,37 +38,29 @@ export const ReciterCombobox = ({
         side={side}
         container={portalContainer}
       >
-        <Command>
-          <CommandInput
-            placeholder={t("recitation.reciterSearchPlaceholder", "Search reciters…")}
-          />
-          <CommandList>
-            <CommandEmpty>{t("recitation.reciterEmpty", "No reciter found.")}</CommandEmpty>
-            <CommandGroup>
-              {reciters.map((reciter) => (
-                <CommandItem
-                  key={reciter.id}
-                  value={`${reciter.translatedName} ${reciter.style ?? ""}`}
-                  onSelect={() => {
-                    onChange(reciter.id);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={`me-2 size-4 ${reciter.id === value ? "opacity-100 text-primary" : "opacity-0"}`}
-                  />
-                  <span className="flex flex-col">
-                    <span className="text-foreground">{reciter.translatedName}</span>
-                    {reciter.style ? (
-                      <span className="text-xs text-muted-foreground">{reciter.style}</span>
-                    ) : null}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+        <div className="max-h-[300px] overflow-y-auto p-1">
+          {reciters.map((reciter) => (
+            <button
+              key={reciter.id}
+              type="button"
+              onClick={() => {
+                onChange(reciter.id);
+                setOpen(false);
+              }}
+              className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+            >
+              <Check
+                className={`me-2 size-4 shrink-0 ${reciter.id === value ? "opacity-100 text-primary" : "opacity-0"}`}
+              />
+              <span className="flex flex-col items-start text-start">
+                <span className="text-foreground">{reciter.translatedName}</span>
+                {reciter.style ? (
+                  <span className="text-xs text-muted-foreground">{reciter.style}</span>
+                ) : null}
+              </span>
+            </button>
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   );
