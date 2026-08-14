@@ -6,7 +6,15 @@ import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
 import { ExitToast } from "./ExitToast";
 
 const ARM_WINDOW_MS = 2000;
-const GUARD_STATE = { fqExitGuard: true };
+
+// A FRESH object per push, never a shared constant. Next's history patch
+// mutates whatever object it is handed, stamping `__NA` and the current router
+// tree onto it — so a reused one both freezes the tree captured at the first
+// push and, via the patch's `__NA` early-out, bypasses the router sync on every
+// push after that. The pager navigates by `replaceState`, which Next turns into
+// an `ACTION_RESTORE` that reads that tree back, so a stale one re-renders the
+// app at the wrong locale and page from cache (#288, ADR 0040 addendum).
+const guardState = () => ({ fqExitGuard: true });
 
 type Props = {
   // false for the shared-mushaf grant reader — mirrors LastReadPageSync's
@@ -38,7 +46,10 @@ export const AndroidBackExitGuard = ({ active }: Props) => {
   useEffect(() => {
     if (!enabled) return;
 
-    history.pushState(GUARD_STATE, "");
+    // No `url` argument, deliberately: Next only dispatches ACTION_RESTORE when
+    // one is supplied, so omitting it keeps the guard's push from moving the
+    // pager's anchor.
+    history.pushState(guardState(), "");
 
     const disarm = () => {
       armedRef.current = false;
@@ -51,7 +62,7 @@ export const AndroidBackExitGuard = ({ active }: Props) => {
 
     const onPopState = () => {
       if (!armedRef.current) {
-        history.pushState(GUARD_STATE, "");
+        history.pushState(guardState(), "");
         armedRef.current = true;
         setArmed(true);
         timerRef.current = setTimeout(disarm, ARM_WINDOW_MS);
