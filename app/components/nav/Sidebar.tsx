@@ -96,7 +96,10 @@ const Sidebar = ({ surahs, rubs }: Props) => {
         dir={getLanguageDirection(locale)}
         hideDefaultClose
         overlayStyle={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
-        style={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
+        style={{
+          top: "calc(3.5rem + env(safe-area-inset-top, 0px))",
+          height: "calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px))",
+        }}
         className="w-64 p-0 flex flex-col overflow-hidden"
       >
         <SheetTitle className="sr-only">
@@ -129,14 +132,14 @@ const Sidebar = ({ surahs, rubs }: Props) => {
           <TabsContent
             value="surahs"
             ref={surahsScrollRef}
-            className="flex-1 overflow-y-auto p-4 mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
+            className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
           >
             <SurahList surahs={surahs} activeSurahId={activeSurah?.id} className="sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-2" />
           </TabsContent>
           <TabsContent
             value="rubs"
             ref={rubsScrollRef}
-            className="flex-1 overflow-y-auto mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
+            className="flex-1 overflow-y-auto pb-[calc(1rem+env(safe-area-inset-bottom,0px))] mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
           >
             <RubList rubs={rubs} surahs={surahs} currentRubId={currentRub?.id} />
           </TabsContent>

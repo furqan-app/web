@@ -2,7 +2,7 @@
 
 **Type:** feature  
 **Date:** 2026-07-20  
-**Status:** implemented
+**Status:** implemented (see latest addendum below)
 
 ## Summary
 
@@ -867,3 +867,143 @@ Three corrections to the voice panel (`RecitationPlayerBar`, the fixed bottom ba
 **What NOT to do:**
 - Do not touch `handleChapterEnded` or any other event handler — this fix is scoped to the confirmed `timeupdate`-after-`pause()` race, not a general defensive sweep.
 - Do not add a `status` check instead of `audio.paused` — the ref-based `status` check would need an extra ref (status is state, not a ref, so it'd be stale inside the `useCallback` without adding one); `audio.paused` is already correct and available with no new state.
+
+## Addendum — CSS-gate nav overlay positioning (kill the pre-hydration flash)
+
+**Date:** 2026-08-15 · **Status:** implemented · GitHub: [#294](https://github.com/furqan-app/web/issues/294)
+
+### Bug
+
+On the reader page at mobile (≤767px) and tablet (1024–1366px) widths, on every fresh load the nav
+renders in document flow for one paint, then jumps to a fixed overlay: the Quran display area gets
+shorter/taller and the whole page briefly gains a scrollbar before snapping back. Reported as "the
+navbar appears, affects the space we display Quran in, then disappears," with a visible scroll.
+
+### Root Cause
+
+`isOverlayMode` (`NavOverlayContext.tsx`) comes from `useIsMobile()`/`useIsTablet()` —
+`matchMedia`-backed hooks that `useState(false)` initially and only resolve the real value inside
+`useIsomorphicLayoutEffect`. That hook is `useLayoutEffect` on the client: synchronous and before
+the *next* paint, which is enough to avoid a flash on remounts that happen after the app is already
+hydrated. It cannot fix the **first** paint — SSR has no `window`, so it always renders the `false`
+branch, and the browser paints that raw HTML before hydration (and the layout effect) ever runs.
+
+Confirmed by fetching the raw SSR HTML for `/en/pages/1`:
+```
+<nav class="relative z-10 text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50" style="padding-top:env(safe-area-inset-top, 0px)">
+```
+No `fixed`, no `-translate-y-full` — `Nav.tsx` ships in-flow (`position: relative`) regardless of
+viewport. The reader wrapper below it independently reserves `min-h-[calc(100dvh-3.5rem)]`
+(`ReaderPager.tsx:141`) regardless of nav mode, so combined first-paint height exceeds one viewport
+→ page is briefly scrollable. Post-hydration, the layout effect resolves the real breakpoint, `Nav`
+flips to `position: fixed`, is pulled out of flow, and the wrapper (which starts at `y=0` once the
+nav is out of flow) reclaims the space → scrollbar disappears, content visibly jumps up. Confirmed
+post-hydration steady state via the same session: `hasVScroll: false`, `navPosition: "fixed"`.
+
+This is the same class of bug [ADR 0027](../architecture/adr/0027-tablet-swipe-carousel.md) already
+solved for the tablet carousel's `-100%` rest offset ("CSS-gated so there is no pre-hydration
+flash") — that fix was never applied to `Nav`'s own position switch. Generalized as
+[ADR 0043](../architecture/adr/0043-breakpoint-positioning-must-be-css-gated.md): breakpoint-
+dependent positioning that must be correct on the very first paint belongs in CSS `@media`, never in
+a `matchMedia` hook, however it's timed (even a layout effect can't undo a paint that already
+happened).
+
+### Approach
+
+Move the breakpoint half of `isOverlayMode` (mobile-or-tablet) into a CSS `@media` rule using the
+exact same breakpoint widths the JS hooks already encode. The route half (`isOnPagesRoute`) stays a
+class hook driven by `usePathname()` — unlike viewport width, pathname resolves identically on the
+server and the first client render, so it carries no flash risk. `overlayVisible` stays a React
+`useState(false)` toggle — its initial value already matches SSR (`false` both sides), so it's safe
+to keep JS-driven; it now only ever adds a class on top of the CSS base state.
+
+### Decision Tree
+
+| Condition | Nav CSS state |
+|---|---|
+| `@media` doesn't match (desktop ≥1367px, or the 768–1023px gap) | Base class only → `position: relative`, always visible — unchanged |
+| `@media` matches (≤767px or 1024–1366px), not `/pages/` route | Base class only (no `.fq-nav-overlay-page`) → `position: relative`, always visible — unchanged |
+| `@media` matches, `/pages/` route, `overlayVisible=false` | `.fq-nav-overlay-page` → `position: fixed`, `translateY(-100%)` (hidden) |
+| `@media` matches, `/pages/` route, `overlayVisible=true` | `.fq-nav-overlay-page.fq-nav-visible` → `position: fixed`, `translateY(0)` |
+
+Identical outcomes to today's JS-driven decision tree — only the timing changes (resolved at first
+paint, not after hydration).
+
+### Verified Test Cases
+
+| Scenario | Expected |
+|---|---|
+| Load `/pages/1` on mobile (375px) | Raw SSR HTML already carries `fq-nav-overlay-page` (no `fq-nav-visible`) → nav hidden above viewport from the very first paint, no in-flow frame, no scrollbar |
+| Load `/pages/1` on tablet (1280px) | Same — hidden from first paint |
+| Load `/pages/1` on desktop (1440px) | Nav renders `relative`, always visible — unchanged (media query doesn't match) |
+| Load a non-`/pages/` route on mobile/tablet (e.g. Settings) | Nav renders `relative`, always visible — unchanged (`isOnPagesRoute` false, `.fq-nav-overlay-page` never added) |
+| Tap background to reveal nav (mobile/tablet, `/pages/`) | `fq-nav-visible` added, `translateY(0)`, existing 300ms cubic-bezier transition — unchanged from today |
+| 768–1023px viewport (the gap between mobile and tablet ranges) | Nav renders `relative`, always visible — unchanged (matches today; neither media query covers this range) |
+
+### Files to Change
+
+- `app/components/nav/Nav.tsx` — drop `isOverlayMode` from the `useNavOverlay()` destructure (keep
+  `overlayVisible`); replace the two conditional Tailwind classes and the conditional inline
+  `transitionTimingFunction` style with:
+  ```
+  isOnPagesRoute && "fq-nav-overlay-page",
+  isOnPagesRoute && overlayVisible && "fq-nav-visible",
+  ```
+  The `paddingTop: env(safe-area-inset-top, 0px)` inline style stays (unrelated, unconditional).
+  `useIsDesktopUp` stays (used for the fullscreen button, untouched).
+- `app/globals.css` — new block, placed beside the existing tablet
+  `@media (min-width: 1024px) and (max-width: 1366px)` block (same file, same breakpoint strings
+  already used at lines 422/472/1058):
+  ```css
+  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+    .fq-nav-overlay-page {
+      position: fixed !important;
+      top: 0 !important;
+      inset-inline: 0 !important;
+      z-index: 50 !important;
+      transform: translateY(-100%);
+      transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .fq-nav-overlay-page.fq-nav-visible {
+      transform: translateY(0);
+    }
+  }
+  ```
+  **`!important` is required** (discovered during implementation, not in the original draft above):
+  `globals.css` is one big `@layer base` block, which loses to Tailwind's utility layer at equal
+  specificity by source order — confirmed elsewhere in this codebase (Desktop Reading Group's rail,
+  Mushaf Double-Page Spread's tablet block). Without it, `Nav`'s always-present `relative`/`z-10`
+  utility classes would win and the fixed positioning would silently never apply. `transform` itself
+  does not need `!important` — `.fq-nav-overlay-page.fq-nav-visible`'s higher selector specificity
+  (two classes vs one) is sufficient there. See [ADR 0043](../architecture/adr/0043-breakpoint-positioning-must-be-css-gated.md).
+- `app/contexts/NavOverlayContext.tsx` — no change. `isOverlayMode` is still exported and still used
+  by `toggleOverlay`'s guard (`if (!isOverlayMode) return;`) and by `QuranSafha`/`QuranWord`/
+  `QuranLine`'s tap-vs-long-press branching — none of that is first-paint-critical (it only runs on
+  a user interaction, which can't happen before hydration anyway), so it's out of scope here.
+
+### Constraints
+
+- Do not change `min-h-[calc(100dvh-3.5rem)]` on the reader wrapper (`ReaderPager.tsx:141`) — it is
+  already correct for the fixed/out-of-flow case; only the *timing* of when the nav becomes
+  out-of-flow is changing, not the layout math.
+- Keep the CSS `@media` widths numerically identical to `MOBILE_QUERY`/`TABLET_QUERY` in
+  `use-is-mobile.ts`/`use-is-tablet.ts` — there are now two representations of each breakpoint (ADR
+  0043's accepted trade-off) and no shared constant between them.
+- Do not remove `useIsMobile`/`useIsTablet`/`isOverlayMode` from `NavOverlayContext` — they're still
+  correct and needed for the non-positioning consumers listed above.
+
+### What NOT to Do
+
+- Do not touch `RecitationPlayerBar.tsx` or `PlansWidget.tsx` in this change, even though both share
+  the same `isOverlayMode`/`overlayVisible` conditional-transform pattern (explicitly called out as
+  "same toggle, same transform pattern" in `RecitationPlayerBar.tsx`'s own comment). Both are
+  **always** `position: fixed` — only their `transform`/`opacity` toggles on `isOverlayMode`, so
+  neither affects document flow or the Quran display area the way `Nav`'s `relative→fixed` switch
+  does. They have a smaller, different-shaped version of the same flash (visible-then-hidden, not a
+  layout reflow) and are tracked separately, not folded into this fix.
+- Do not add a pre-hydration inline `<script>` (mirroring the theme/safha-view flash-preventers) —
+  breakpoint width is fully expressible in CSS `@media`, so the script escape hatch (reserved for
+  state CSS can't see, e.g. `localStorage`) isn't needed here.
+- Do not fold the mobile and tablet breakpoints into the JS hooks' shared constant — Tailwind/CSS and
+  the JS hooks stay two separate representations per ADR 0043; do not attempt to unify them in this
+  change.
