@@ -10,5 +10,7 @@ import { isStandaloneDisplayMode } from "@/app/utils/platform";
 // inline expressions this replaces.
 export const useIsStandaloneMobileOrTablet = () => {
   const isDesktopUp = useIsDesktopUp();
-  return !isDesktopUp && isStandaloneDisplayMode();
+  return (
+    typeof window !== "undefined" && !isDesktopUp && isStandaloneDisplayMode()
+  );
 };
