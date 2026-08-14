@@ -17,18 +17,19 @@ import { NotificationBell } from "@components/notifications/NotificationBell";
 import { UserMenu } from "./UserMenu";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { menuRowClassName } from "./NavPillLink";
-import { cn } from "@/lib/utils";
 
 type Props = {
   className?: string;
 };
 
 /**
- * Mobile-only (`md:hidden`) overflow trigger — collapses SharedMushafLink,
- * NotificationBell, UserMenu, and SettingsSidebar into one full-width bottom
- * sheet below `md`, keeping search + ContinueReadingLink directly tappable
- * in the nav row. Rebuilt from an earlier Popover version that read as "four
- * components pasted together" — critiqued and rejected (2026-08-13,
+ * Universal overflow trigger — collapses SharedMushafLink, NotificationBell,
+ * UserMenu, and SettingsSidebar into one full-width bottom sheet at every
+ * breakpoint, keeping search + ContinueReadingLink + the sidebar toggle
+ * directly tappable in the nav row (docs/plans/home-page-design-fixes.md,
+ * Addendum — Universal nav menu; shipped mobile-only in the base plan).
+ * Rebuilt from an earlier Popover version that read as "four components
+ * pasted together" — critiqued and rejected (2026-08-13,
  * docs/plans/home-page-design-fixes.md, .impeccable critique
  * 2026-08-13T13-56-56Z). Every item renders through `menuRowClassName`
  * (NavPillLink.tsx) so the menu reads as one surface, not four different
@@ -72,7 +73,7 @@ export const NavOverflowMenu = ({ className }: Props = {}) => {
             variant="ghost"
             size="icon"
             aria-label={t("nav.more", "More")}
-            className={cn("md:hidden", className)}
+            className={className}
           >
             <Menu className="size-5" strokeWidth={1.7} />
           </Button>
@@ -85,7 +86,12 @@ export const NavOverflowMenu = ({ className }: Props = {}) => {
           <div className="flex flex-col gap-1 pb-[env(safe-area-inset-bottom,0px)]">
             <SharedMushafLink menuRow onNavigate={closeMenu} />
             <NotificationBell menuRow container={sheetContentEl} />
-            <UserMenu menuRow container={sheetContentEl} />
+            {/* md+ has a direct Account dropdown in Nav's row (one-click
+                access to My Marks/My Plans) — this row would be redundant
+                there. Mobile keeps it, where nav space is tight. */}
+            <div className="md:hidden">
+              <UserMenu menuRow container={sheetContentEl} onNavigate={closeMenu} />
+            </div>
             <button
               aria-label={t("settings", "Settings")}
               className={menuRowClassName}

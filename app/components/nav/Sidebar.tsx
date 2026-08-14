@@ -7,7 +7,7 @@ import useTranslations from "@/app/hooks/use-translations";
 import RubList from "../RubList";
 import { SurahResult } from "@types";
 import { RubWithVerses } from "@/app/types/prisma";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -20,8 +20,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLocale } from "next-intl";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { useSidebar } from "@/app/contexts/SidebarContext";
-import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
-import { toLocaleNumeral } from "@/app/utils/i18n";
 
 type Props = {
   surahs: SurahResult[];
@@ -32,8 +30,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const { open, setOpen, setCurrentSurah, searchOpen } = useSidebar();
-  const { isOverlayMode, overlayVisible } = useNavOverlay();
+  const { open, setOpen, setCurrentSurah } = useSidebar();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("surahs");
   const surahsScrollRef = useRef<HTMLDivElement>(null);
@@ -89,47 +86,8 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     return () => cancelAnimationFrame(frame);
   }, [open, activeTab]);
 
-  const navBottom = "calc(3.5rem + env(safe-area-inset-top, 0px))";
-
   return (
     <>
-      {/* Floating trigger anchored just below the navbar; follows navbar show/hide in overlay mode */}
-      <Button
-        variant="outline"
-        onClick={() => setOpen(!open)}
-        aria-label={open ? "Close navigation" : "Open navigation"}
-        aria-expanded={open}
-        style={{
-          top: navBottom,
-          ...(searchOpen ? { opacity: 0, pointerEvents: "none" } : {}),
-          ...(isOverlayMode ? {
-            transform: overlayVisible ? "translateY(0)" : "translateY(calc(-3.5rem - env(safe-area-inset-top, 0px) - 100% - 0.5rem))",
-            opacity: overlayVisible ? 1 : 0,
-            pointerEvents: overlayVisible ? undefined : "none",
-            transition: "transform 300ms cubic-bezier(0.23,1,0.32,1), opacity 300ms cubic-bezier(0.23,1,0.32,1)",
-          } : {}),
-        }}
-        className="fixed start-4 z-[51] mt-2 h-8 gap-1.5 px-2.5 rounded-full shadow-md bg-background/90 backdrop-blur-sm border-border/60 max-w-[9rem]"
-      >
-        {activeSurah ? (
-          <>
-            <span className="text-xs font-medium text-muted-foreground shrink-0">
-              {toLocaleNumeral(activeSurah.id, locale)}
-            </span>
-            <span className="text-sm font-medium truncate leading-none">
-              {isRTL ? activeSurah.name_arabic : activeSurah.name_simple}
-            </span>
-            {open ? (
-              <ChevronUp className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
-            ) : (
-              <ChevronDown className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
-            )}
-          </>
-        ) : (
-          <span className="text-xs text-muted-foreground">···</span>
-        )}
-      </Button>
-
       <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent
         side={isRTL ? "right" : "left"}

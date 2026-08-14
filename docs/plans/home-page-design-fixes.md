@@ -134,3 +134,102 @@
 - Hamburger icon (`Menu`, not `MoreHorizontal`), 40×40 icon-button standardization, and the Continue-Reading/search/menu visual clustering via `order-*` were all direct, explicit user requests during live iteration — not judgment calls.
 - User confirmed this nav is a checkpoint, not the final design ("we will work on it later but I like what we have now") — shipped as-is on that basis.
 - E2E settings-sheet test fix (post-ship, same PR): added the missing `mobile`-project branch to open `NavOverflowMenu` before clicking Settings, mirroring the search test's existing pattern. Baseline PNGs are out of scope for this fix — regenerated only via the `workflow_dispatch` CI job per DECISIONS.md, triggered by the user after this fix merges, not by this task.
+
+## Addendum — Universal nav menu; sidebar toggle moves into Nav
+
+**Date:** 2026-08-13 · **Status:** implemented · GitHub: [#279](https://github.com/furqan-app/web/issues/279) · Branch: `feature/279-universal-nav-menu`
+
+### Summary
+
+This is the "work on it later" follow-on flagged when `NavOverflowMenu` shipped mobile-only. Two changes: (1) `NavOverflowMenu` becomes universal — same hamburger, same 4 rows, at every breakpoint, not just `<md` — freeing horizontal space everywhere; (2) the surah sidebar toggler moves from its current floating pill (`app/components/nav/Sidebar.tsx`, `fixed start-4`, all breakpoints) into `Nav.tsx`'s row, left cluster, right after the logo.
+
+### Root Cause / Approach
+
+**Nav menu:** the mobile/desktop split (`hidden md:flex` around SharedMushafLink/NotificationBell+UserMenu/SettingsSidebar, `md:hidden` on the `NavOverflowMenu` trigger) is the only thing keeping the desktop/tablet row wide. Dropping both gates makes one code path serve every breakpoint — simpler than a second tablet-specific menu, and the /impeccable-recommended direction (Operate mode: consistency over expression for app chrome).
+
+**Sidebar toggle:** `docs/architecture/DECISIONS.md`'s "Sidebar Trigger Architecture" entry already documents the intended design — trigger owned by `Nav`, visible at all breakpoints, gated by `pathname.includes("/pages/")` — replacing "an earlier design where Sidebar rendered its own always-visible floating-pill `SheetTrigger`". Commit `e231f77` (2026-08-12, `sidebar-surah-indicator.md`) silently reintroduced that exact floating pill (with the surah-name/chevron content from that plan) without updating the decision doc. This addendum restores the documented architecture — trigger content (current surah name/number + chevron, from `sidebar-surah-indicator.md`) moves into `Nav.tsx`, `Sidebar.tsx` drops the floating `Button` entirely.
+
+### Decision Tree / Algorithm
+
+**Nav row composition, all breakpoints (was: mobile-only collapse):**
+
+| Item | Every breakpoint |
+|---|---|
+| Logo | visible |
+| Sidebar toggle (new position) | visible only on pages routes (see gating table) |
+| ContinueReadingLink | visible |
+| SearchBar | visible |
+| Fullscreen toggle | visible only when `isDesktopUp` (≥1367px) — unchanged, already gated |
+| SharedMushafLink, NotificationBell, UserMenu, SettingsSidebar | **in `NavOverflowMenu` (hamburger)** — was desktop-direct, now menu-only everywhere |
+
+**Sidebar toggle route gating (unchanged from today's floating pill / `sidebar-surah-indicator.md`):**
+
+| Route | Toggle renders? |
+|---|---|
+| `/[locale]/pages/[id]` | Yes |
+| `/[locale]/mushaf/[grant]/pages/[id]` | Yes |
+| Any other route (home, marks, plans, mushaf hub, non-pages) | No |
+
+Gate: `pathname?.includes("/pages/")` (trailing slash required — existing convention, avoids false-positive on a hypothetical `/pages-list`).
+
+**Toggle content (unchanged from `sidebar-surah-indicator.md`, relocated only):**
+
+| Condition | Trigger shows |
+|---|---|
+| `currentSurah` null (Sidebar not yet mounted/hydrated) | `PanelLeftOpen` icon fallback |
+| `currentSurah` set, sidebar closed | `[number · name · ChevronDown]` |
+| `currentSurah` set, sidebar open | `[number · name · ChevronUp]` |
+
+**Search-overlay interaction (dropped, not carried over):** today's floating pill hides itself (`opacity:0`) while the mobile search Sheet (`z-[52]`, `h-screen`) is open, because it's a separate fixed element the full-screen sheet would otherwise render under/beside. Once the toggle is inline in `Nav`'s own DOM (`z-10`/`z-50` overlay), the full-screen search sheet (`z-[52]`) naturally paints over the whole nav row including the toggle — no manual hide needed. **Correction during implementation:** the plan assumed `searchOpen` "stays, still used elsewhere" — grepping the codebase at implementation time showed the floating trigger was its *only* consumer, so `SidebarContext.searchOpen`/`setSearchOpen` and their two `SearchBar.tsx` call sites were removed entirely as dead state, not kept.
+
+**Nav-overlay sync (dropped, not carried over):** today's floating pill has its own `translateY`/opacity sync so it tracks the nav's tablet/mobile overlay show/hide independently (it's a sibling fixed element, not a Nav child). Once the toggle lives inside `Nav.tsx`'s row, it moves with the nav automatically as part of the same element — the standalone sync logic in `Sidebar.tsx` is dead code once removed from there.
+
+### Files to Change
+
+- `app/components/nav/Nav.tsx` — remove `hidden md:block`/`hidden md:flex` wrappers around SharedMushafLink/NotificationBell+UserMenu/SettingsSidebar (they no longer render directly in the row at any breakpoint — only inside the menu); remove `md:hidden` from `NavOverflowMenu`'s trigger (and its mobile-only `order-*` reorder, since the row is now breakpoint-uniform — confirm in-browser whether `order-*` is still needed for the search/continue-reading/menu clustering or can be dropped along with the mobile/desktop split). Add the sidebar-toggle trigger button (moved from `Sidebar.tsx`) in the left cluster, right after `FurqanLogo`: reads `open`, `setOpen`, `currentSurah` from `useSidebar()`; gated by `pathname?.includes("/pages/")`.
+- `app/components/nav/Sidebar.tsx` — remove the floating `Button` (`fixed start-4 z-[51] mt-2 …`) entirely, including its `navBottom`/overlay-sync/`searchOpen`-hide logic. `Sheet`/`SheetContent` (the actual sliding panel) stays exactly as-is — only the trigger moves out.
+- `app/components/nav/NavOverflowMenu.tsx` — drop `md:hidden` from the trigger `Button`'s className; drop the `order-*`/`md:order-none` passthrough if Nav.tsx's audit above finds it's no longer needed.
+- `docs/architecture/DECISIONS.md` — "Sidebar Trigger Architecture": update the constraint bullet to note the trigger is restored to `Nav` after the `e231f77` drift, and that it now carries the surah/chevron content from `sidebar-surah-indicator.md` rather than the original `PanelLeftOpen` icon.
+- `app/contexts/SidebarContext.tsx` — drop `searchOpen`/`setSearchOpen` (dead once the floating trigger's `searchOpen` read is removed — its only consumer).
+- `app/components/search/SearchBar.tsx` — drop the two `setSearchOpen(...)` calls (writer of the now-removed context field).
+- `e2e/tests/visual.spec.ts` — settings-sheet test opens the `NavOverflowMenu` trigger unconditionally (both `mobile` and `desktop` Playwright projects now), not gated by `testInfo.project.name === "mobile"`.
+- `docs/architecture/COMPONENTS.md` — `Nav`/`NavOverflowMenu`/`Sidebar` entries updated to reflect the universal menu and the relocated trigger; `SharedMushafLink`/`NotificationBell`/`UserMenu`/`SettingsSidebar` re-nested as `NavOverflowMenu`'s children in the tree (they only render there now, at any breakpoint).
+
+### Constraints
+
+- Sidebar toggle route gating and content states are unchanged from `sidebar-surah-indicator.md` — only its DOM location moves (`Sidebar.tsx` → `Nav.tsx`).
+- `Sidebar`'s `Sheet`/`SheetContent` (the actual panel, tabs, scroll-to-active logic) is untouched — this addendum only relocates the trigger button.
+- Every item placed in `NavOverflowMenu` must keep rendering through `menuRowClassName` (existing constraint from the base plan, unchanged).
+- Do not add a second/duplicate sidebar trigger — one trigger, in `Nav`, per the existing `DECISIONS.md` constraint.
+- RTL: sidebar toggle sits in DOM/flex order right after the logo in both locales (mirrors how `FurqanLogo` already renders first in both LTR and RTL, per `mobile-nav-ux.md`); no `left`/`right`, only logical `start`/`end`.
+- Fullscreen toggle keeps its existing `isDesktopUp` gate — not pulled into the menu, not made universal.
+
+### What NOT to Do
+
+- Do not build a second, tablet-specific overflow menu — one universal `NavOverflowMenu`, no breakpoint variants.
+- Do not keep the floating-pill trigger in `Sidebar.tsx` as a fallback for any breakpoint — it is fully replaced by the in-`Nav` trigger.
+- Do not change which routes the sidebar toggle is gated on — same `pathname.includes("/pages/")` convention as today.
+- Do not touch `Sidebar.tsx`'s `Sheet` panel content (tabs, surah/rub lists, auto-scroll-to-active) — out of scope.
+- Do not carry over the floating pill's standalone nav-overlay-sync transform or `searchOpen`-hide logic into `Nav.tsx` — both become redundant once the toggle is a `Nav` child (see Decision Tree).
+- Do not move `SharedMushafLink`/`NotificationBell`/`UserMenu`/`SettingsSidebar` out of `NavOverflowMenu` for desktop — they stay menu-only at every breakpoint (that's the point of "universal").
+
+### Decisions Made
+
+- Direction chosen via `/impeccable` design consult (Operate mode: consistency/space-efficiency over per-breakpoint variation) — one universal menu, not a separate tablet/desktop menu. User confirmed.
+- Sidebar toggle placement: left cluster, right after the logo (not next to the hamburger on the right) — it's primary wayfinding, not a secondary account/settings action. User confirmed.
+- This addendum restores the `Nav`-owned trigger architecture `DECISIONS.md` already documents; the current floating-pill code is drift from `e231f77`, not an intentional divergence — treated as a bug being fixed, not a design being reversed.
+
+### Post-ship polish (same branch, user live-review)
+
+Four refinements after the user reviewed the shipped layout live — edited in place per this branch still being open, not stacked as a new addendum.
+
+1. **Search centered on the row, not just visually offset.** `Nav.tsx`'s row is a single flat flex container (not the nested-cluster-div shape originally planned) — every top-level item (`FurqanLogo`, the sidebar toggle, `ContinueReadingLink`, two `flex-1` spacer divs, the search wrapper, the fullscreen button, `NavOverflowMenu`) is a direct child, positioned via `order`/`md:order-*`. Two equal `flex-1` spacer divs flank the search wrapper; because the leftover space splits evenly between them regardless of how wide the leading/trailing clusters are, the whitespace immediately flanking search stays equal on both sides — centering search purely on the full row's midpoint (the first attempt, a 3-column CSS grid) left a much bigger gap on whichever side had the narrower cluster.
+2. **Mobile groups differently than desktop, same DOM/components.** Below `md`: logo alone on one side; sidebar toggle, continue reading, search, and the overflow menu grouped on the other side with equal gaps (the row's single `gap-2` applies uniformly since these are now flat siblings, not nested cluster divs). At `md`+: logo · toggle · continue reading · spacerA · search · spacerB · fullscreen · menu (item 1 above). No component renders twice — `order`/`md:order-*` per item reflows the same instances instead of duplicating stateful components (`SearchBar`, `NavOverflowMenu`) across two conditionally-rendered rows, which would have doubled their internal state/Sheets.
+3. **`ContinueReadingLink`'s own padding was breaking the "equal gap" perception.** Even with (1)'s box-to-box CSS gap literally equal everywhere, the *visible* gap between the sidebar-toggle pill and `ContinueReadingLink`'s icon read wider (20px) than between the logo and the toggle (8px), because `ContinueReadingLink` carries its own `md:px-3` padding on top of the row's `gap-2` while the logo/toggle have no such inset. Fixed with `md:-ms-3` (logical, so it targets the correct physical side in both locales) — cancels only the *start*-side padding's layout footprint (padding still paints the hover background; the negative start margin stops that inset from also pushing the toggle away). The end side (facing the search spacer) is untouched — nothing to cancel there. Verified: icon-to-icon gap now 8px on both sides, in both locales.
+4. **`UserMenu`'s dropdown, opened from inside `NavOverflowMenu`'s Sheet, was landing detached from its trigger** — floating near the sheet's own close button instead of under "Account" (Radix Popper positioning quirk against a trigger inside a still-animating bottom Sheet). Per the user's suggestion, replaced with an inline expand/collapse disclosure for the `menuRow` case only (My Marks / My Plans / Sign in-out render directly below the "Account" row, indented, when expanded) — no Popper, no portal, no `container` prop needed for this path. The non-`menuRow` dropdown-pill rendering is unchanged (currently unreachable — `UserMenu` is only ever invoked with `menuRow` — kept for API shape, not dead-code cleanup scope creep). Every submenu row (`My Marks`, `My Plans`, `Sign in`/`Sign out`) now takes an `onNavigate` callback wired to `NavOverflowMenu`'s `closeMenu`, mirroring `SharedMushafLink`'s existing pattern, so clicking any of them closes the sheet. `menuRowClassName` (shared by every row in the menu, not just `UserMenu`'s) gained `cursor-pointer` — Tailwind's preflight resets `<button>` cursor, so the plain-`<button>` rows (Settings, Sign in/out) had no hand cursor on hover even though the `<Link>` rows did by UA default.
+
+**What NOT to do (added by this polish pass):** do not render `SearchBar`/`NavOverflowMenu`/other stateful nav children twice (once per breakpoint) to achieve different mobile/desktop grouping — use `order`/`md:order-*` on single instances, per (2) above. Do not reintroduce `UserMenu`'s `menuRow` case as a `DropdownMenu` — the Popper-in-an-animating-Sheet detachment bug is what (4) fixes; if this needs revisiting, stay on the inline-disclosure shape.
+
+5. **Account back in the row on desktop, for one-click My Marks/My Plans access.** User's rationale: Marks and Plans are core product features (word-level marking, awrad habit tracking — PRODUCT.md), so burying them a menu-open-then-tap-Account-then-tap deep on desktop, where there's room, costs more than it saves. `Nav.tsx` now renders `UserMenu` bare (no `menuRow` — its original icon+"Account" dropdown-pill rendering) directly in the row, `hidden md:block`, `md:order-7` (between the search spacerB and the fullscreen toggle). Mobile is unchanged — `UserMenu` still renders only inside `NavOverflowMenu`, wrapped in a new `md:hidden` div there so it doesn't duplicate the row's copy at md+. This makes `UserMenu`'s non-`menuRow` `DropdownMenu` rendering live again (it had gone unreachable after item 4 above); `align="end"` positions correctly here because, unlike the `menuRow` case, this trigger isn't nested inside another modal's `Sheet` — no Popper-detachment risk, no `container` needed. Order renumbered: UserMenu(7) sits before fullscreen(8) and NavOverflowMenu(9) (was 8).
+
+**What NOT to do (added by item 5):** do not add `container` to this `Nav`-row `UserMenu` instance's `DropdownMenuContent` — it isn't nested inside a `Sheet`/`Dialog`, so the default `document.body` portal is correct; adding one would be a no-op at best and risks re-triggering the FocusScope conflict this pattern exists to avoid elsewhere. Do not remove the mobile `menuRow` copy inside `NavOverflowMenu` — mobile still needs it, only md+ has the direct row alternative.

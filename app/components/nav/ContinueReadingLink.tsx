@@ -57,10 +57,19 @@ export const ContinueReadingLink = ({ className }: Props = {}) => {
       // Bespoke (not NavPillLink's shared navPillClassName) so mobile can be
       // a true size-10 square icon button matching the other mobile-visible
       // nav triggers' footprint (search, overflow menu — both h-10 w-10);
-      // md+ replicates navPillClassName exactly, unchanged from before
-      // (2026-08-13, docs/plans/home-page-design-fixes.md).
+      // md+ replicates navPillClassName's padded-pill look, but `md:-ms-3`
+      // cancels the `md:px-3` start-side layout footprint (padding still
+      // paints the hover background around the icon; the negative start
+      // margin just stops that inset from also pushing the sidebar-toggle
+      // pill further away) — otherwise this link's own invisible inset added
+      // 12px on top of the row's `gap-2`, making the visible gap to the
+      // toggle (20px) read wider than the gap between the logo and the
+      // toggle (8px, neither has padding facing the other). The end side
+      // (facing the search spacer) keeps its normal padding — nothing to
+      // cancel there. See docs/plans/home-page-design-fixes.md, Addendum —
+      // Universal nav menu.
       className={cn(
-        "flex-none flex items-center justify-center size-10 rounded-md hover:bg-accent/50 transition-colors md:w-auto md:h-auto md:justify-start md:gap-2 md:rounded-xl md:px-3 md:py-1.5 md:text-sm md:font-semibold md:text-muted-foreground",
+        "flex-none flex items-center justify-center size-10 rounded-md hover:bg-accent/50 transition-colors md:w-auto md:h-auto md:justify-start md:gap-2 md:rounded-xl md:px-3 md:py-1.5 md:-ms-3 md:text-sm md:font-semibold md:text-muted-foreground",
         className,
       )}
     >
