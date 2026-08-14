@@ -25,6 +25,7 @@ import {
   SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 type Props = {
   // Controlled mode — used by NavOverflowMenu, which renders its own trigger
@@ -51,6 +52,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
     useKeepScreenAwake();
   const controlled = onOpenChange !== undefined;
+  useCloseOnBackGesture(open ?? false, () => onOpenChange?.(false));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
