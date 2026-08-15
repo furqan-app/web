@@ -52,6 +52,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
   const isStandaloneMobileOrTablet = useIsStandaloneMobileOrTablet();
   const armedRef = useRef(false);
   const selfClosingRef = useRef(false);
+  const navigatingRef = useRef(false);
   const pushedIdRef = useRef(0);
   const pushedKeyRef = useRef<string | null>(null);
   const onCloseRef = useRef(onClose);
@@ -62,6 +63,8 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
 
   useEffect(() => {
     if (!enabled) return;
+
+    navigatingRef.current = false;
 
     // No `url` argument, deliberately — Next only dispatches ACTION_RESTORE
     // when one is supplied (same reasoning as AndroidBackExitGuard).
@@ -161,6 +164,17 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
         queueMicrotask(() => {
           if (!armedRef.current) return;
 
+          if (navigatingRef.current) {
+            // Same reasoning as the popstate branch's identical check below
+            // (ADR 0043's 2026-08-16 addendum) — a `<Link>` navigated us
+            // closed, so don't infer from `nav.currentEntry` at all; Next's
+            // own history write for the target route isn't guaranteed to
+            // land before this microtask runs.
+            nav.removeEventListener("navigate", onNavigate);
+            disarm();
+            return;
+          }
+
           if (nav.currentEntry?.key === pushedKeyRef.current) {
             selfClosingRef.current = true;
             window.history.back(); // triggers a `traverse` navigate event, handled above
@@ -201,6 +215,22 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
       queueMicrotask(() => {
         if (!armedRef.current) return; // consumed by a real back press meanwhile
 
+        if (navigatingRef.current) {
+          // A `<Link>` inside the overlay navigated and its onClick told us
+          // so via notifyNavigating() — don't infer from history.state at
+          // all. Next's own pushState for the target route isn't guaranteed
+          // to land before this microtask runs, so the shape/id check below
+          // can't be trusted to distinguish "a navigation is landing shortly"
+          // from "closed via backdrop/Escape/a non-navigating button" (ADR
+          // 0043, 2026-08-16 addendum). Disarm and leave our entry as a
+          // harmless orphan unconditionally, same outcome as the "entry no
+          // longer on top" branch below.
+          window.removeEventListener("popstate", onPopState);
+          armedRef.current = false;
+          disarmOverlayBackGuard();
+          return;
+        }
+
         // Compare by id, not just the `fqOverlayGuard` shape: every guarded
         // overlay pushes that same shape, so a shape-only check can't tell
         // "my own entry is on top" from "a sibling overlay's entry — pushed
@@ -234,4 +264,14 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
       });
     };
   }, [enabled]);
+
+  return {
+    // Call synchronously, before the state update that closes the overlay,
+    // when the close is caused by a `<Link>` navigating inside it — see the
+    // cleanup effect above for why this must be a caller-supplied signal
+    // rather than something inferred from history.state timing.
+    notifyNavigating: () => {
+      navigatingRef.current = true;
+    },
+  };
 };

@@ -43,6 +43,15 @@ export const FALLBACK_LOCALES = ["ar", "en"] as const;
 export const fallbackDocumentUrl = (locale: (typeof FALLBACK_LOCALES)[number]) =>
   `/${locale}/pages/1`;
 
+// Offline fallback for every OTHER failed navigation (ADR 0014 Addendum 4) — a
+// failed nav to a non-reader route (e.g. /plans, /settings) used to also get
+// fallbackDocumentUrl's Quran page-1 document, which left the user stuck
+// looking at the wrong app with no self-correction (unlike the reader route,
+// there is no jumpTo-equivalent for these routes). Static file, same
+// no-React-runtime shape as launch.html — see public/offline-{ar,en}.html.
+export const offlineFallbackUrl = (locale: (typeof FALLBACK_LOCALES)[number]) =>
+  `/offline-${locale}.html`;
+
 // Synthetic cache entry written only after a fully successful precache run.
 // Living inside the versioned cache name makes it version-scoped for free, and
 // reduces a completion check to one cache.match() instead of enumerating ~1200
