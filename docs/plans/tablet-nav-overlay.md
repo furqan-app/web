@@ -1190,10 +1190,33 @@ The root cause and the mechanism behind the fix were both measured on the real d
 state, `position: fixed; inset: 0` read the correct 832.364px while `100dvh` read 888.364px on the
 same page in the same frame. That is the evidence the approach works.
 
-**The end-to-end fix has not been observed surviving a losing launch**, because the installed PWA
-points at `furqan-stg.taha7.com` and cannot be pointed at a local dev server — the WebAPK is bound to
-its origin. Confirming it needs a deploy to stg, then relaunching the installed app repeatedly (the
-race hits roughly one launch in three) with the watcher from the reproduction rig attached.
+**Confirmed end-to-end on real hardware, 2026-08-15**, once the fix reached staging (PR #305 → #306).
+Twelve force-stop/relaunch cycles were driven over adb against the installed PWA on the repro device,
+measuring the visible centre panel after each launch:
+
+```
+scrollable=0   ih=832   card=832.36 (computed 832.364px)   rows=15
+footerBottom=828.4      lastRow=795.8      visibilityState=visible
+```
+
+12/12 clean. The card now matches the viewport exactly (832.36 vs 832) and the footer sits at 828.4,
+inside the fold — it was at 876.7 against an 832px screen before. At the old ~1-in-3 failure rate,
+twelve consecutive clean launches is a ~0.8% coincidence, so the race is genuinely closed. A device
+screenshot of page 141 confirms all 15 lines and the page number render.
+
+**Two measurement traps worth remembering**, both of which produced a false PASS on the first attempt
+at this verification:
+
+- `scrollable === 0` alone is a worthless assertion — a collapsed or hidden reader satisfies it
+  trivially. The check must require a non-zero card within ~2px of `innerHeight`, all 15 rows, and
+  both the footer and last row above the fold.
+- `document.querySelector('.fq-full-safha > div')` returns the **spread partner in the off-screen
+  next-anchor panel**, which is `display: none` on mobile and therefore reports a zero rect and
+  `computed: auto`. Select the strip's centre child and filter to elements with `offsetParent !== null`
+  and a non-zero rect.
+
+Still unverified: the tablet `100cqh` font cap, which has never run on real tablet hardware in the
+installed PWA.
 
 ### Reproduction Rig
 
@@ -1212,3 +1235,10 @@ reading were all wrong).
   three.
 - `adb shell dumpsys window displays | grep "InsetsSource id"` gives the real status-bar, cutout and
   navigation-bar insets to check CSS values against.
+- To verify a *fix* rather than catch the bug, drive the launch cycle instead of polling: `adb shell am
+  force-stop` both the WebAPK (`org.chromium.webapk.<hash>`) and `com.android.chrome`, relaunch with
+  `adb shell monkey -p <webapk> -c android.intent.category.LAUNCHER 1`, wait ~3.5s for the fullscreen
+  transition to settle, then measure. Twelve cycles is enough to put a ~1-in-3 race beyond doubt.
+- Take an `adb exec-out screencap -p` alongside the numbers. It is the cheapest guard against a probe
+  that is measuring the wrong element — the screenshot is what revealed the `display: none` partner
+  problem above.

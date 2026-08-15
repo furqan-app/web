@@ -530,8 +530,12 @@ export const QuranSafha = ({
         <div
           // No height utility below `md`: the card is a stretched flex item of
           // `.fq-full-safha`, whose height chains up to the ICB-anchored reader
-          // wrapper (ADR 0044). This carried `h-[calc(100dvh-5.5rem)]`, a viewport
-          // unit that goes stale across the installed PWA's fullscreen transition.
+          // wrapper (ADR 0044). This used to carry an arbitrary height utility of
+          // calc(100dvh - 5.5rem) — a viewport unit that goes stale across the
+          // installed PWA's fullscreen transition. Deliberately spelled out rather
+          // than written as a class token: Tailwind's extractor scans comments too,
+          // so quoting the original token here re-emitted the unused utility into
+          // the production bundle.
           className={`relative w-full md:w-auto md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
           {/* Stacked paper layers are hidden on mobile and paint behind the active
