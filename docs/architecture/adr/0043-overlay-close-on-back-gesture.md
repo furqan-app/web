@@ -88,3 +88,45 @@ Two changes, both required:
 
 Deferring alone is insufficient without the id: a deferred-but-shape-only check would correctly see
 *some* guard's entry on top and still wrongly conclude it was safe to pop.
+
+## Addendum — 2026-08-16: microtask defer is not enough for a Link's own navigation
+
+**Status:** Accepted. Amends the implementation of Option B; the shared-hook decision and the prior
+addendum both stand.
+
+Found via user report ([#313](https://github.com/furqan-app/web/issues/313)): tapping **My Marks**, **My Plans**, or **Shared mushaf**
+inside `NavOverflowMenu` on Android standalone/fullscreen silently did nothing — the sheet closed, but
+navigation never happened. Root cause is the same "check is my entry still on top" logic the prior
+addendum fixed, hitting a second, different race that microtask-deferral doesn't cover.
+
+The prior addendum deferred the check to survive a *sibling overlay's* `pushState`, which lands within
+the same React commit and therefore within the same microtask flush. A `<Link>`'s own client-side
+navigation is not bound by that guarantee: Next's App Router can defer the actual `history.pushState`
+for the target route past the current microtask queue (transition scheduling, RSC payload fetch), so
+`queueMicrotask`'s check can still run *before* the Link's own entry lands — sees the guard's entry
+untouched, concludes "closed via backdrop/Escape/button," and calls `history.back()`, cancelling the
+navigation that was already in flight.
+
+This is not the "harmless orphan" trade-off the base decision accepted — that trade-off covers the
+guard's entry being left behind when a navigation *wins* the race. This is the guard's entry actively
+**winning** a race it should never have been entered into, because the caller already knows a
+navigation is happening and the hook has no way to be told.
+
+**Fix:** stop inferring "was I closed because of a navigation" from timing. `useCloseOnBackGesture`
+now returns a `notifyNavigating()` escape hatch; callers that close the overlay *because* a `<Link>`
+inside it navigated call it synchronously before triggering the close. The cleanup effect checks a ref
+set by that call first — if set, it skips the `history.state`/id check and `history.back()` entirely,
+going straight to disarm-and-leave-orphan (the same outcome the timing check already produces when it
+happens to win), with no dependency on how fast the router's own `pushState` lands.
+
+Non-navigating closes (backdrop, Escape, the sheet's own close button, and buttons like Settings/Sign
+in/Sign out that don't compete with a `pushState`) never call `notifyNavigating()` and are unaffected —
+still resolved by the existing deferred, id-compared check.
+
+**Note (merged 2026-08-16 alongside [ADR 0045](0045-navigation-api-for-overlay-close-guard.md)):** ADR
+0045 added a second, Navigation-API-based cleanup branch to this hook that has the identical race —
+comparing `nav.currentEntry?.key` against the guard's pushed entry with no way to know a `<Link>`
+navigation is already in flight. Since ADR 0045's branch is now the primary path on the exact platform
+(Android, modern Chrome) this addendum's bug was reported on, the `notifyNavigating()` check was applied
+to both branches, not just the `popstate` one described above — the fix is incomplete on Android
+otherwise.
