@@ -471,9 +471,11 @@ body,
   /* ---- Mobile reader: nav overlay + mushaf paper + book stack ------------ */
   @media (max-width: 767px) {
     /* Feature 1 — Nav overlay: reader fills full viewport (nav is fixed, out of flow).
-       !important beats the JSX min-h-[…]/pb-4 Tailwind utilities. */
+       !important beats the JSX min-h-[…]/pb-4 Tailwind utilities. The height itself
+       is NOT set here — it comes from the ICB-anchored `.fq-reader-pager-viewport`
+       block below (ADR 0044); `min-height: 100dvh` used to live here and is exactly
+       the declaration that went stale in the installed PWA. */
     .fq-reader-outer {
-      min-height: 100dvh !important;
       padding-bottom: 0 !important;
       background-color: var(--mushaf-paper) !important;
     }
@@ -487,10 +489,6 @@ body,
       min-width: 100vw !important;
       max-width: 100vw !important;
     }
-    .fq-full-safha > div {
-      height: 100dvh !important;
-    }
-
     /* Mobile carousel: single-step neighbor panels visible during swipe peek.
        fq-carousel-side (pair-step tablet neighbors) stay hidden — they have the
        wrong page content for single-step mobile navigation. */
@@ -1080,6 +1078,80 @@ body,
     }
   }
 
+  /* Reader height, anchored to the initial containing block (ADR 0044).
+
+     In the installed PWA (`display: "fullscreen"`) Android launches non-immersive
+     and Chrome enters immersive fullscreen a moment later. A document that lays
+     out during that transition gets its viewport units pinned to the transitional
+     viewport and Chrome never re-resolves them: measured on-device, `100dvh` read
+     888.364px on the elements that already existed while `window.innerHeight` was
+     832 and a freshly-created element read the correct 832.364px in the same
+     frame. No resize event is delivered, so nothing in the page can react. The
+     reader ended up 56px taller than the screen and the last mushaf line plus the
+     footer fell below the fold (#304).
+
+     The fix is to stop reading the viewport at all: this box is `position: fixed;
+     inset: 0`, which resolves against the ICB — verified correct in the broken
+     state, alongside `height: 100%`, while `dvh`/`svh`/`lvh`/`vh` were all wrong.
+     Everything below it is plain containment.
+
+     Same breakpoints as the nav overlay block above, and for the same reason: at
+     desktop widths there is no immersive transition and no race, so those keep the
+     existing `min-h-[calc(100dvh-3.5rem)]` flow layout untouched. */
+  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+    /* `!important` throughout for the same reason the nav overlay block needs it:
+       this file is one `@layer base` block and loses to Tailwind's utility layer at
+       equal specificity by source order. */
+    .fq-reader-pager-viewport {
+      position: fixed !important;
+      inset: 0 !important;
+      /* Size containment is safe here (a fixed inset-0 box cannot be sized by its
+         contents) and is what makes `cqh` available to the tablet font cap below,
+         so that cap can also stop reading the viewport. */
+      container-type: size;
+    }
+    /* The strip and its three panels sit under a definitely-sized parent, so plain
+       percentages resolve. Below `.fq-reader-outer` they do NOT — see the stretch
+       chain underneath. */
+    .fq-reader-pager-strip,
+    .fq-reader-panel {
+      height: 100% !important;
+    }
+    .fq-reader-outer {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+
+    /* Height travels the rest of the way by `align-items: stretch`, never by `%` —
+       `height: 100%` inside a flex-grown box resolves to `auto` and collapses the
+       card (ADR 0036 records the same trap for the desktop spread; re-measured
+       here, the card fell 812px → 469px). Below `md` the chain centres rather than
+       stretches (`items-start` on the spread container, `items-center` on
+       `.fq-spread-col`), so each link needs its cross-axis alignment corrected.
+       This is a no-op visually: the card previously filled the viewport via
+       `height: 100dvh`, so there was never any free space to centre within. */
+    .fq-reader-outer > .fq-reader-spread-container {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      align-items: stretch !important;
+    }
+    .fq-reader-spread-container > .fq-spread-col {
+      align-items: stretch !important;
+    }
+    /* `.fq-spread` already carries `items-stretch` statically, so its child (the
+       QuranSafha root) stretches. That root is a plain block, though, so
+       `.fq-full-safha` inherits no height from it and needs an explicit one —
+       this is the link that broke the first attempt at this fix. */
+    .fq-full-safha {
+      height: 100% !important;
+    }
+    /* Now a stretched flex item of `.fq-full-safha`; an explicit height here would
+       opt it back out of stretching. */
+    .fq-full-safha > div {
+      height: auto !important;
+    }
+  }
+
   /* Tablet landscape full-screen (1024px–1366px): nav is a fixed overlay so the
      reader claims 100dvh; safha cards fill edge-to-edge with a small binding gap.
      It independently forces the partner card visible, so a stored desktop
@@ -1110,8 +1182,9 @@ body,
        trailing padding — otherwise pb-4 adds 16px and the page scrolls.
        The warm viewer background makes the paper read as resting on a surface
        rather than floating on the app's cool background. */
+    /* Height comes from the ICB-anchored `.fq-reader-pager-viewport` block (ADR
+       0044), not from a viewport unit — `min-height: 100dvh` used to live here. */
     .fq-reader-outer {
-      min-height: 100dvh !important;
       padding-bottom: 0 !important;
       background-color: var(--viewer-background) !important;
     }
@@ -1144,9 +1217,9 @@ body,
       flex: 1;
     }
 
-    /* Card height: full viewport (nav overlay). */
+    /* Card height comes from the stretch chain in the ICB-anchored block below
+       (ADR 0044); this used to be `height: 100dvh`. Width is unrelated, kept. */
     .fq-full-safha > div {
-      height: 100dvh;
       width: 100%;
     }
 
@@ -1299,8 +1372,9 @@ body,
            the 16px outer paper-stack clearance on the container (the inter-page gap
            is now 0 — pages meet at the spine — and the content carries no px-3 on
            tablet, so there is no half-gap or inner-padding term).
-         • height cap: (100dvh − 50px) / 23 — the largest font before the tallest
-           page overflows 100dvh. Two calibration terms:
+         • height cap: (100cqh − 50px) / 23 — the largest font before the tallest
+           page overflows the card. `cqh` (the ICB-anchored reader wrapper's own
+           height), not `dvh`, per ADR 0044. Two calibration terms:
              − 23 divisor = per-font content factor. The binding case is a
                surah-START page: ~13 word rows + a 2.417f surah banner (glyph +
                Bismillah, see QuranLine.tsx / --fq-heading-h) + 14 line-gaps (0.417f
@@ -1323,7 +1397,13 @@ body,
        height cap keeps the font from overflowing. space-between distributes any
        residual between the lines (matches the reference app). */
     .fq-spread {
-      --fq-tablet-word: calc(min(calc((50vw - 16px) / 14.7), calc((100dvh - 50px) / 23)) * 0.96);
+      /* `cqh`, not `dvh`: this cap derives a FONT SIZE from the viewport height, so
+         unlike every other box in the reader it cannot inherit its height from the
+         ICB-anchored wrapper — a stale launch here yields an oversized font rather
+         than a scroll (ADR 0044). `.fq-reader-pager-viewport` is the size container
+         (`container-type: size`, set in the ICB block above), so `100cqh` is that
+         box's own height: ICB-derived, and immune to the stale-unit bug. */
+      --fq-tablet-word: calc(min(calc((50vw - 16px) / 14.7), calc((100cqh - 50px) / 23)) * 0.96);
       --fq-card-word: var(--fq-tablet-word);
     }
     .fq-spread .fq-quran-safha {
