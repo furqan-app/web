@@ -22,6 +22,7 @@ import { LastReadPageSync } from "@components/reader/LastReadPageSync";
 import { KeepScreenAwakeSync } from "@components/KeepScreenAwakeSync";
 import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
 import { OfflineInstallPrompt } from "@components/offline/OfflineInstallPrompt";
+import { SwUpdateBanner } from "@components/offline/SwUpdateBanner";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -64,6 +65,7 @@ export default async function LocaleLayout({
                           <ReaderNavigationProvider>
                             <LastReadPageProvider>
                               <KeepScreenAwakeProvider>
+                                <SwUpdateBanner />
                                 <Nav />
                                 {children}
                                 <RecitationPlayerBar />
