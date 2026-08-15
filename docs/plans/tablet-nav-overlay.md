@@ -1007,3 +1007,208 @@ paint, not after hydration).
 - Do not fold the mobile and tablet breakpoints into the JS hooks' shared constant — Tailwind/CSS and
   the JS hooks stay two separate representations per ADR 0043; do not attempt to unify them in this
   change.
+
+## Addendum — Reader still scrolls in the installed PWA: viewport units go stale across the fullscreen transition
+
+**Date:** 2026-08-15 · **Status:** implemented · GitHub: [#304](https://github.com/furqan-app/web/issues/304)
+
+### Bug
+
+In the installed PWA on Android, the mushaf page scrolls: the last line is cut off at the screen edge
+and the page footer is not visible at all. Reported as "I open the app and close it and then open it
+again I see scrolling", with first launch appearing fine.
+
+The framing turned out to be wrong — it is a **race**, not a first-launch-vs-relaunch rule. A watcher
+polling the live PWA caught two clean launches and one broken launch through the same `/launch.html`
+path. Cold launch is not inherently safe; it usually just wins the race.
+
+This is a follow-on to the #294 addendum above, and a **different cause**. The nav overlay gate that
+addendum added is confirmed working in the broken state (`position: fixed`, `top: -56.7`), so the nav
+is out of flow and contributes nothing.
+
+### Root Cause
+
+The manifest declares `display: "fullscreen"`. Android launches the PWA **non-immersive** — the OS
+splash paints with the status bar and gesture pill visible — and Chrome enters immersive fullscreen a
+moment later. `public/launch.html` (ADR 0042) redirects into the reader during that window, so the
+reader document's first layout lands on either side of the transition. When it lands *during* it,
+Chrome pins the document's viewport units to the transitional viewport and never re-resolves them.
+
+Measured on-device (vivo V2530, 393×870 CSS px, 37.5 CSS px cutout) over the Chrome DevTools protocol,
+in the broken state:
+
+| Reading | Value |
+|---|---|
+| `window.innerHeight` / `visualViewport.height` | 832 / 832.364 |
+| `getComputedStyle('.fq-reader-outer').minHeight` (declared `100dvh !important`) | **888.364px** |
+| `getComputedStyle('.fq-full-safha > div').height` (declared `100dvh !important`) | **888.364px** |
+| `100dvh` on a **freshly created** element, same document, same frame | **832.364px** |
+| `100svh` / `100lvh` / `100vh` on a fresh element | 832.364px (identical) |
+| `html` / `body` computed height (declared `height: 100%`) | 832.364px |
+| `position: fixed; inset: 0` probe | 832.364px |
+| `height: 100%` chained from `body` probe | 832.364px |
+| `document.scrollHeight` vs `clientHeight` | 888 vs 832 → **56px of scroll** |
+
+888.364 × 2.75 = 2443 physical px ≈ full display (2392) + navigation bar (49) — the layout viewport
+mid-transition. 832.364 × 2.75 = 2289 = display − cutout (103) — the settled immersive viewport. So
+the reader is sized against a viewport that no longer exists.
+
+Two further findings that constrain the fix:
+
+- **No `resize` or `visualViewport.resize` event is delivered**, so nothing in the page can observe
+  the change. Dispatching a synthetic `resize` changes nothing.
+- Writing **any** custom property on `:root` (or on the element itself) forces re-resolution, and the
+  correction persists. This is what makes a JS guard technically possible — and is rejected below.
+
+Nothing in our CSS is wrong. The mobile font formula is fine: rows sum to 376.5px against a 832px
+viewport, nowhere near overflowing. The `.fq-safha-card` `overflow: hidden` clip and the 768–1023px
+breakpoint gap were both investigated and ruled out (device is 392px wide).
+
+### Approach
+
+Anchor the reader's height to the **initial containing block** and use no viewport units below it —
+see [ADR 0044](../architecture/adr/0044-viewport-units-are-unreliable-in-the-installed-pwa.md).
+
+A new `.fq-reader-pager-viewport` class on `ReaderPager`'s existing `w-full overflow-hidden` wrapper
+becomes `position: fixed; inset: 0` on the same breakpoints the nav overlay is gated to. That box is
+ICB-anchored, so it tracks the settled viewport correctly even in the broken state (measured). The
+strip and the three panels take `height: 100%` from it, and below `.fq-reader-outer` the height
+travels by `align-items: stretch` exactly as ADR 0036 already mandates for the desktop spread.
+
+Gate breakpoints stay numerically identical to the nav overlay block:
+`@media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px)`.
+
+### Decision Tree
+
+| Condition | Reader height source |
+|---|---|
+| `@media` matches (≤767px or 1024–1366px) | `.fq-reader-pager-viewport` is `position: fixed; inset: 0` → ICB-anchored; no viewport unit anywhere below it |
+| `@media` doesn't match (desktop ≥1367px, or the 768–1023px gap) | Unchanged — existing `min-h-[calc(100dvh-3.5rem)]` flow layout; no immersive transition at these sizes, so no race |
+| Height propagation below the fixed box | `height: 100%` on strip + panels (parent is definitely sized), then `align-items: stretch` from `.fq-reader-outer` down — never `%` below a flex-grown box |
+| Tablet font cap `--fq-tablet-word` | Still derives a font size from `100dvh`; needs its own fix (see Open Question) |
+
+### Verified Test Cases
+
+Measured live on the device, on the actual broken instance, over CDP:
+
+| Case | Result |
+|---|---|
+| `position: fixed; inset: 0` in the broken state | 832.364px — correct, while `100dvh` on the same page read 888.364px |
+| `height: 100%` from `body` in the broken state | 832.364px — correct |
+| Synthetic `resize` event | No effect; still 888.364px |
+| Custom property write on `:root` | Corrects every affected element to 832.364px, `scrollable: 0`, persists after the property is removed |
+| Candidate CSS, `.fq-reader-outer` under the fixed wrapper | 812px, `scrollable: 0` — the top of the chain works |
+| Candidate CSS, `%` all the way down to `.fq-full-safha > div` | **Card collapsed 812px → 469.4px** — `%` inside a flex-grown box resolves to `auto` (ADR 0036's trap). Do not use `%` below `.fq-reader-outer`. |
+| First `align-items: stretch` attempt on `.fq-reader-spread-container` | Card still 469.4px — the stretch did not travel the whole chain. **Resolved during implementation, see below.** |
+
+**Why the stretch chain broke (resolved).** Three links, not one. Below `md` the reader chain
+*centres* rather than stretches: `.fq-reader-spread-container` is `items-start` and `.fq-spread-col`
+is `items-center` (both flip to stretch only at `md:`), so neither passed a height down. `.fq-spread`
+already carries `items-stretch` statically and was fine. The third link is not an alignment problem
+at all: the QuranSafha root between `.fq-spread` and `.fq-full-safha` is a plain **block**, so
+`.fq-full-safha` inherits no height from it and needs an explicit `height: 100%` — that is the link
+the first attempt missed entirely. With all three corrected the card stretches and
+`.fq-full-safha > div` only needs its own height removed (`height: auto`) so it stops opting out of
+stretching. Correcting the alignment is visually a no-op: the card previously filled the viewport via
+`height: 100dvh`, so there was never free space to centre within.
+
+**Verified locally after implementation** (dev server, system Chrome at each viewport):
+
+| Viewport | Result |
+|---|---|
+| 392×832 (the repro device) | `scrollable: 0`, card 832, footer bottom 828 ✅ |
+| 360×640, 430×932 | `scrollable: 0`, footer inside the viewport ✅ |
+| 1280×800, 1024×1366 (tablet band) | `scrollable: 0`, card fills the viewport ✅ |
+| 1440×900 (desktop, ungated) | unchanged — `position: static`, nav in flow at 57px ✅ |
+| 800×1200 (768–1023 gap band) | 1px of scroll — **pre-existing**, confirmed identical with the change stashed; it is the known 57px-nav vs `3.5rem` mismatch whose fix is gated at ≥1367px. Out of scope. |
+| Resize 832 → 700 after load | card follows to 700, `scrollable: 0` ✅ |
+| `Sidebar` on mobile | `top: 56`, `bottom: 832`, overflows viewport by 0, inner list still scrolls ✅ |
+
+### Files to Change
+
+- `app/components/reader/ReaderPager.tsx` — add `fq-reader-pager-viewport` to the existing
+  `w-full overflow-hidden` wrapper (line ~724) and a `fq-reader-panel` marker class to `Panel`'s
+  outer `w-full shrink-0` div (line ~140). Marker classes only; no positioning in JSX (ADR 0043).
+- `app/globals.css` — new block beside the nav-overlay `@media`, same breakpoint string: fixed
+  ICB-anchored viewport, `height: 100%` on strip and panels, and the stretch chain below
+  `.fq-reader-outer`. Remove the mobile `min-height: 100dvh !important` (line ~476) and
+  `.fq-full-safha > div { height: 100dvh !important }` (line ~491), plus the tablet equivalents
+  (lines ~1114, ~1149), since those are the declarations that go stale.
+- `app/components/QuranSafha.tsx` — the card wrapper's `h-[calc(100dvh-5.5rem)]` (line 531) is the
+  Tailwind default the CSS overrides; it must stop being a viewport unit on the gated breakpoints.
+- `app/components/nav/Sidebar.tsx` — `height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px))`
+  (line 101) has the same failure mode: a stale launch makes the sheet 56px too tall and clips its
+  last item, which is exactly the bug `docs/plans/fix-sidebar-bottom-clip.md` already fixed once for
+  a different reason.
+- `docs/architecture/DECISIONS.md`, `docs/architecture/adr/0044-*.md` — added.
+
+### Constraints
+
+- Keep the `@media` breakpoints numerically identical to the nav overlay block and to
+  `MOBILE_QUERY`/`TABLET_QUERY` — a third representation of the same breakpoints (ADR 0043's
+  accepted trade-off).
+- Height must travel below `.fq-reader-outer` by `align-items: stretch`, never by `%`. Measured to
+  collapse the card otherwise.
+- Do not touch the mobile font formula (`min(calc((100vw - 24px) / 14.7), 28px)`) — it is
+  width-derived, was measured correct, and is not implicated. ADR 0011 holds.
+- Do not change `display: "fullscreen"` in the manifest — fullscreen reading is a deliberate feature
+  (`docs/plans/feature-pwa-fullscreen-focus-mode.md`).
+- Verify on the real device, not in DevTools emulation. The race needs a real immersive-fullscreen
+  transition and does not reproduce in emulation, nor via `adb`-driven cold launch, home/resume, or
+  `am kill` + bfcache restore — all three came back clean.
+
+### What NOT to Do
+
+- **Do not add a JS invalidation guard** — detecting the mismatch and writing a custom property on
+  `documentElement`. It is verified to work on the live broken instance, but it can only run after
+  paint, so a losing launch paints the wrong size and then visibly jumps between two sizes. Rejected
+  by the user on that ground, and recorded in ADR 0044 Option A.
+- Do not use `100svh`/`100lvh` as a "safer" viewport unit — all four units were measured and they go
+  stale identically.
+- Do not rely on a `resize` listener as the fix trigger. No resize event is delivered in the failing
+  case; this was measured, not assumed.
+- Do not re-open the #294 nav-overlay work. That gate is confirmed correct in the broken state and is
+  not the cause here.
+- Do not chase safe-area insets. `env(safe-area-inset-top/bottom)` both measured `0` in the broken
+  state; the cutout is excluded from the viewport by Chrome, not exposed as an inset.
+
+### Open Question — resolved during implementation
+
+`--fq-tablet-word` derives a **font size** from `min(…, calc((100dvh - 50px) / 23))`, so unlike every
+other box it cannot inherit a height from the ICB-anchored wrapper. Resolved with the container-query
+option: `.fq-reader-pager-viewport` gets `container-type: size` (safe — a `fixed; inset: 0` box cannot
+be sized by its contents) and the cap reads `100cqh` instead of `100dvh`. That makes the cap
+ICB-derived like everything else, with no JS and no second mechanism.
+
+Verified at 1280×800 and 1024×1366 locally (`scrollable: 0`, card fills the viewport, font 31.3px /
+32.4px). **Not yet verified on real tablet hardware in the installed PWA** — nobody has a tablet
+attached, and the stale-unit race only occurs there.
+
+### Status of Device Verification
+
+The root cause and the mechanism behind the fix were both measured on the real device: in the broken
+state, `position: fixed; inset: 0` read the correct 832.364px while `100dvh` read 888.364px on the
+same page in the same frame. That is the evidence the approach works.
+
+**The end-to-end fix has not been observed surviving a losing launch**, because the installed PWA
+points at `furqan-stg.taha7.com` and cannot be pointed at a local dev server — the WebAPK is bound to
+its origin. Confirming it needs a deploy to stg, then relaunching the installed app repeatedly (the
+race hits roughly one launch in three) with the watcher from the reproduction rig attached.
+
+### Reproduction Rig
+
+Root cause was found over the Chrome DevTools protocol against the installed PWA on a USB-attached
+device; reproduce the same way rather than by code reading (the first three hypotheses from static
+reading were all wrong).
+
+- `adb forward tcp:9222 localabstract:chrome_devtools_remote`, then `http://localhost:9222/json` for
+  the page target's `webSocketDebuggerUrl`.
+- Drive `Runtime.evaluate` over that socket with `websocket-client` and `suppress_origin=True` —
+  Chrome rejects the handshake with 403 otherwise.
+- **Read passively before probing.** Creating a probe element re-resolves the units and silently
+  repairs the page, which made the first capture look like a stale *layout* rather than stale
+  *style*. Read `getComputedStyle` on the existing elements first.
+- Poll for the broken state rather than trying to catch it by hand — it is roughly one launch in
+  three.
+- `adb shell dumpsys window displays | grep "InsetsSource id"` gives the real status-bar, cutout and
+  navigation-bar insets to check CSS values against.

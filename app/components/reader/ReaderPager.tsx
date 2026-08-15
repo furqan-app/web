@@ -137,7 +137,7 @@ const Panel = memo(function Panel({
   const { singleStepNav, pairStepNav } = computeSpreadNav(anchor, isRTL, basePath);
 
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="w-full shrink-0">
+    <div dir={isRTL ? "rtl" : "ltr"} className="fq-reader-panel w-full shrink-0">
       <div className="fq-reader-outer bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0">
         <div className="fq-reader-spread-container w-full flex justify-center items-start md:items-center px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
           {/* Rendered whether or not the data has landed: the spread shows its
@@ -720,8 +720,13 @@ export function ReaderPager({
         type="font/woff2"
         crossOrigin="anonymous"
       />
+      {/* fq-reader-pager-viewport: marker only. On the mobile/tablet breakpoints
+          globals.css makes this box `position: fixed; inset: 0`, so the reader's
+          height comes from the initial containing block and never from a viewport
+          unit — in the installed PWA those units go stale across the fullscreen
+          transition and leave the reader taller than the screen (ADR 0044). */}
       <div
-        className="w-full overflow-hidden"
+        className="fq-reader-pager-viewport w-full overflow-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
