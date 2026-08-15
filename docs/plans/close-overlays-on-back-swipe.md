@@ -2,9 +2,10 @@
 
 **Type:** bug
 **Date:** 2026-08-15
-**Status:** implemented
-**GitHub:** [#297](https://github.com/furqan-app/web/issues/297)
-**ADR:** [0043](../architecture/adr/0043-overlay-close-on-back-gesture.md)
+**Status:** implemented (code + lint + tests verified; on-device confirmation of the Navigation-API
+branch pending — needs a staging deploy, see the addendum's Constraints)
+**GitHub:** [#297](https://github.com/furqan-app/web/issues/297), Addendum: [#309](https://github.com/furqan-app/web/issues/309)
+**ADR:** [0043](../architecture/adr/0043-overlay-close-on-back-gesture.md), Addendum: [0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md)
 
 ## Summary
 
@@ -202,3 +203,177 @@ Walked through with the user (2026-08-15):
   no-op back press) rather than risk undoing the real navigation (user-confirmed).
 - The pre-existing `AndroidBackExitGuard` flicker/skipped-toast bug is split into its own GitHub issue
   and explicitly out of scope here (user-confirmed).
+
+## Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available
+
+**Status:** implemented. GitHub: [#309](https://github.com/furqan-app/web/issues/309). ADR:
+[0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md).
+
+### What was reported
+
+After this plan shipped (PR #299, merged), the user reported that swiping back to close an overlay
+shows a "loading app logo" flash and the reader visibly rerenders — even though the overlay does
+close correctly. The same flash was suspected (but not confirmed) to also affect the plain exit-toast
+swipe (`AndroidBackExitGuard`, tracked separately as
+[#296](https://github.com/furqan-app/web/issues/296)).
+
+### Investigation
+
+Confirmed via on-device Chrome remote debugging (`chrome://inspect` over `adb`, real physical
+back-swipes on an installed Android PWA — not desktop simulation):
+
+- A single, isolated swipe-back to close an open overlay (`NavOverflowMenu`) produces a genuine
+  top-level document `GET` request for the current URL, **0.03s before** this plan's own `popstate`
+  handler even runs — confirmed by timestamped console markers and a `Page.frameNavigated` CDP event.
+  It's followed by a full cold-reload waterfall: every JS chunk, font, CSS file, the manifest,
+  favicon, Sentry init, and every data API refetched from scratch. That full reload is the "loading
+  app logo" flash — not a React rerender, an actual fresh page load.
+- The same swipe, repeated across two earlier (less isolated) test sessions, twice landed on a real
+  hard reload — once of the current reader URL, once of the home route (`/ar`) — confirming this
+  isn't a one-off.
+- A single, isolated swipe-back with **nothing open** (`AndroidBackExitGuard`'s exit-toast path, ADR
+  0040) was clean: `popstate` fires, the toast shows, and it auto-dismisses ~2s later exactly matching
+  `ARM_WINDOW_MS`. No reload. **This narrows the bug to `useCloseOnBackGesture` (ADR 0043) specifically
+  — `AndroidBackExitGuard` does not reproduce it.** [#296](https://github.com/furqan-app/web/issues/296)
+  may need its own re-verification; it is not the same bug as this one.
+
+### Root cause
+
+Confirmed precisely via a second on-device round, instrumented directly through the Navigation API's
+own `navigate`/`currententrychange` event log (ground truth, not inference — a fully isolated
+single-swipe test, opening `NavOverflowMenu` then one swipe-back). **Two separate `navigate` events
+fire ~6ms apart:**
+
+1. `navigationType: "traverse"`, same-document, same URL (index 3→2) — the overlay's guard entry
+   popping correctly. **This part was never broken** — it lands on whatever entry sits beneath the
+   overlay's, which in practice is `AndroidBackExitGuard`'s own pushed guard entry (confirmed: the
+   `popstate` fired with `historyState: {"fqExitGuard": true}`).
+2. A **second, separate** `navigate` event: `navigationType: "reload"`, `userInitiated: false`,
+   `destination.sameDocument: false` — a genuine, programmatically-triggered hard reload. This is what
+   produces the cold-reload network waterfall (every chunk/font/CSS/manifest/API refetched) and the
+   "loading app logo" flash — not the traversal, not Chrome's gesture handling racing ahead of the
+   JS as first suspected. The `reload` event's exact trigger isn't fully explained (candidate: something
+   reacting to landing back on `AndroidBackExitGuard`'s stacked entry, possibly Next.js's own router
+   failing to reconcile it) — intercepting it is sufficient to fix the symptom regardless of source.
+
+`popstate` cannot prevent either event: it only fires after the browser has already dispatched the
+traversal (confirmed: it fired *after* the `reload` event in this capture, not before), so no
+`popstate`/`pushState`-based code can act before either commits. The Navigation API's `navigate`
+event, via `event.intercept()`, runs *before* the browser commits to a given navigation's default
+action and is documented to prevent it — and it applies per-event, so it can intercept the `reload`
+event too, not just the `traverse`. Reached Baseline support in January 2026; Safari on iOS starts at
+**26.2 specifically** (older iOS has no support at all). Confirmed present (`"navigation" in window`)
+on the Android device used for this investigation.
+
+### Decision Tree
+
+| Condition | Mechanism |
+|---|---|
+| `window.navigation` + `intercept` supported | `navigate` event listener: intercept the closing `traverse` (matched by `navigationType === "traverse"` + `navigation.currentEntry.key`, read at fire time — see identity-matching note below), **and** intercept any `navigationType === "reload"` event that follows within `RELOAD_WATCH_MS` — that second event is what actually causes the flash |
+| Not supported (iOS < 26.2, older Android WebView, desktop) | Unchanged: today's `popstate`/`pushState` guard, exactly as implemented in this plan's original body |
+
+**Identity-matching correction (found during implementation, 2026-08-15):** the original plan assumed
+matching by the pushed `fqOverlayGuardId` via `NavigationHistoryEntry.getState()`, mirroring the
+popstate branch's `fqOverlayGuardId`. On-device capture showed `getState()` did not reliably return
+the object passed to `history.pushState` — even in the same capture where the legacy `history.state`
+correctly carried it. The implementation matches by `NavigationHistoryEntry.key` instead (a
+platform-guaranteed-unique identifier not dependent on custom state round-tripping): captured via
+`navigation.currentEntry.key` immediately after the guard's `history.pushState` call (synchronously
+the just-pushed entry), then compared against `navigation.currentEntry.key` read again inside the
+`navigate` handler — which at fire time for a `traverse` is still the entry being LEFT, not the
+`destination` (confirmed on-device: `destination.index` was the target, `currentEntry`/fire-time index
+was still the guard's own entry).
+
+Everything else — pushing a fresh, uniquely-id'd guard entry on open, the microtask-deferred
+"is my entry still on top" cleanup check, coordination with `AndroidBackExitGuard` via the shared
+armed-count — stays as specified above. Only the detection/interception mechanism for "a real back
+gesture landed on my entry" changes, and only on the feature-detected branch. `AndroidBackExitGuard`
+itself is unmodified — it does not exhibit this bug.
+
+### Verified Test Cases (new)
+
+Confirmed on-device, 2026-08-15 (Android, installed PWA, `chrome://inspect` over `adb`):
+
+11. Single isolated swipe-back closing `NavOverflowMenu`: real `GET` to current URL fires, followed by
+    a full cold-reload waterfall. Reproduces the reported flash. This is the case the Navigation API
+    branch must fix.
+12. Single isolated swipe-back with nothing open (exit-toast path): clean — `popstate` fires, toast
+    shows, auto-dismisses at ~2s, no reload. Confirms `AndroidBackExitGuard` is unaffected and must
+    stay untouched.
+13. Same isolated swipe as case 11, this time instrumented through `window.navigation` directly (not
+    just `popstate`/network): shows the `traverse` completing cleanly (same-document, same URL) followed
+    ~6ms later by a distinct `navigationType: "reload"` event (`userInitiated: false`,
+    `sameDocument: false`) that is the actual source of the reload — not the traversal itself. Pinpoints
+    exactly what the Navigation-API branch must intercept.
+
+### Files to Change
+
+- `app/hooks/use-close-on-back-gesture.ts` — Navigation API feature detection (`supportsNavigationApi`);
+  branches to a `navigate` event listener when supported, keeps the existing `popstate`/`pushState`
+  implementation as the fallback (both live in the same effect, mutually exclusive). No change to the
+  hook's public signature (`useCloseOnBackGesture(open, onClose)`).
+- `package.json` — added `@types/dom-navigation` (devDependency) — this repo's `lib.dom.d.ts` (TS
+  5.6.3) has no `Navigation`/`NavigateEvent`/`Window.navigation` types.
+- No other runtime files change — `AndroidBackExitGuard.tsx` and `overlay-back-guard.ts` are untouched,
+  though the Navigation-API branch's interaction with the shared armed-count needs care (see
+  Constraints) even without editing those files.
+
+### Constraints
+
+- Do not drop the `popstate`/`pushState` fallback — Navigation API support is not universal (notably
+  iOS < 26.2), and this hook must not regress below what shipped in this plan's original body for
+  those browsers.
+- The `navigate` listener fires for *every* navigation, including this hook's own opening `pushState`
+  call, any sibling overlay's push, and `AndroidBackExitGuard`'s re-push. It must filter to
+  `navigationType === "traverse"` with a matching `navigation.currentEntry.key` (for the close case,
+  read at fire time — see the identity-matching correction above) or `navigationType === "reload"`
+  occurring within `RELOAD_WATCH_MS` of this guard's own traverse (for the flash case) — without this
+  filter the overlay would close itself the instant it opens.
+- The reload-watch timer/listener started when a real gesture closes the overlay must survive the
+  effect's own cleanup — React runs that cleanup essentially immediately once `onCloseRef.current()`
+  flips `open` to `false`, well inside the watch window. The implementation guards this explicitly
+  (an `awaitingReload` check as the cleanup's first line) rather than letting the normal
+  microtask-deferred "is my entry still on top" cleanup path run in that case — found and fixed during
+  implementation; an earlier draft let the cleanup unconditionally clear the reload-watch timer,
+  silently defeating the whole fix.
+- Use `event.intercept()`, never `event.preventDefault()` — `preventDefault()` leaves the guard entry
+  in place, which would make the existing microtask cleanup's `history.back()` pop it a second time.
+- `navigate` fires *before* `popstate` (confirmed on-device: `popstate` for the traversal landed after
+  the `reload` event in the capture, not before). `AndroidBackExitGuard`'s coordination via
+  `isOverlayBackGuardArmed()` assumes its own `popstate` listener runs after the overlay's listener has
+  already disarmed — on the Navigation-API branch, disarming inside the `navigate` handler risks the
+  exit guard seeing `armed === 0` if `popstate` still fires for the same gesture, wrongly showing "press
+  back again to exit" on an overlay close. Disarm must be idempotent and deferred past the current event
+  dispatch (not inside the synchronous `navigate` handler) so the exit guard reliably sees the guard as
+  armed for that traversal either way.
+- The non-back close paths (X button, Escape, in-overlay link) still call `history.back()` from the
+  existing microtask cleanup, which fires a `navigate` event on the Navigation-API branch too. Needs an
+  equivalent to the `popstate` branch's `selfClosingRef` echo-swallow so that programmatic close doesn't
+  get misread as a real back gesture — or, worse, trip the exit-toast.
+- Keep pushing the guard entry via `history.pushState` (patched by Next, per ADR 0040) — do not switch
+  to `navigation.navigate()` to create it; that would bypass Next's router-tree patching entirely
+  (the exact failure class behind issue #288).
+- Whether calling `intercept()` on the `traverse` event specifically suppresses the `popstate` that
+  otherwise follows it is still unconfirmed — the implementation does not assume either way (the
+  `AndroidBackExitGuard` coordination above is written to be correct regardless), but this still needs
+  an on-device pass once deployed, since the Navigation API branch cannot be exercised against the
+  installed PWA from a local dev server (Serwist/service-worker behavior — and the installed PWA's
+  origin generally — differ from `npm run dev`; see `docs/standards/pwa-testing.md`).
+- Do not touch `AndroidBackExitGuard.tsx` or `overlay-back-guard.ts` — isolated on-device testing
+  confirmed they don't exhibit this bug; keep the fix scoped to `useCloseOnBackGesture`.
+
+### What NOT to Do (new)
+
+- Do not attempt to fix this by changing timing/ordering within the existing `popstate` handler (e.g.
+  running it earlier, `stopImmediatePropagation`) — the browser's default navigation is already
+  underway by the time any `popstate` listener runs; no listener-ordering trick can prevent it.
+- Do not switch to the Navigation API unconditionally without the `popstate` fallback — this would
+  regress overlay-close-on-back-swipe entirely for iOS < 26.2, a functional regression versus what
+  shipped in PR #299.
+- Do not extend this fix to `AndroidBackExitGuard` — it does not reproduce the bug; leave ADR 0040's
+  mechanism as-is.
+
+### Decisions Made (new)
+
+- Accept the current, imperfect `popstate`-based behavior for iOS < 26.2 users on the overlay-close
+  case rather than delaying the fix until usage data is available (user-confirmed 2026-08-15).
