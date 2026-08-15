@@ -122,3 +122,11 @@ happens to win), with no dependency on how fast the router's own `pushState` lan
 Non-navigating closes (backdrop, Escape, the sheet's own close button, and buttons like Settings/Sign
 in/Sign out that don't compete with a `pushState`) never call `notifyNavigating()` and are unaffected —
 still resolved by the existing deferred, id-compared check.
+
+**Note (merged 2026-08-16 alongside [ADR 0045](0045-navigation-api-for-overlay-close-guard.md)):** ADR
+0045 added a second, Navigation-API-based cleanup branch to this hook that has the identical race —
+comparing `nav.currentEntry?.key` against the guard's pushed entry with no way to know a `<Link>`
+navigation is already in flight. Since ADR 0045's branch is now the primary path on the exact platform
+(Android, modern Chrome) this addendum's bug was reported on, the `notifyNavigating()` check was applied
+to both branches, not just the `popstate` one described above — the fix is incomplete on Android
+otherwise.
