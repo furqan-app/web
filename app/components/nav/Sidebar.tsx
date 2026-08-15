@@ -96,9 +96,18 @@ const Sidebar = ({ surahs, rubs }: Props) => {
         dir={getLanguageDirection(locale)}
         hideDefaultClose
         overlayStyle={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
+        // top + bottom, never top + height: the height is left to resolve from the
+        // initial containing block (ADR 0044). `calc(100dvh - …)` here went stale
+        // across the installed PWA's fullscreen transition exactly as the reader's
+        // did, making the sheet taller than the screen and clipping its last item —
+        // the same symptom docs/plans/fix-sidebar-bottom-clip.md already fixed once
+        // for a different reason. `height: auto` is required to defeat the `h-full`
+        // in SheetContent's own side variant; with all three of top/height/bottom
+        // set the box is over-constrained and the browser drops `bottom`.
         style={{
           top: "calc(3.5rem + env(safe-area-inset-top, 0px))",
-          height: "calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px))",
+          bottom: 0,
+          height: "auto",
         }}
         className="w-64 p-0 flex flex-col overflow-hidden"
       >

@@ -184,11 +184,11 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
-## Sheet `top` Overrides Must Also Set `height`
+## Sheet `top` Overrides Must Also Neutralize `h-full`
 
-**Decision:** `SheetContent`'s left/right variant (`components/ui/sheet.tsx`) sets both `inset-y-0` (top:0, bottom:0) and `h-full` (height:100%). Any consumer that overrides `top` inline (e.g. `Sidebar` clearing the nav bar) must also set an explicit `height` in the same inline style — never leave `h-full` to compute height on its own once `top` is overridden.
+**Decision:** `SheetContent`'s left/right variant (`components/ui/sheet.tsx`) sets both `inset-y-0` (top:0, bottom:0) and `h-full` (height:100%). Any consumer that overrides `top` inline (e.g. `Sidebar` clearing the nav bar) must neutralize that `h-full` in the same inline style — never leave it to compute height on its own once `top` is overridden. **Set `height: auto` and let `top` + `bottom` size the box** (updated 2026-08-15, #304). This entry previously required an explicit `height: calc(100dvh - …)` instead; that form is now forbidden here, because a viewport unit goes stale across the installed PWA's fullscreen transition and reproduces the very clipping this decision exists to prevent — see [ADR 0044](adr/0044-viewport-units-are-unreliable-in-the-installed-pwa.md). The rationale below is unchanged and is still what makes `height: auto` mandatory rather than optional: leaving all three of `top`/`height`/`bottom` non-auto is the failure case.
 
-**Rationale:** With `top`, `height`, and `bottom` all non-auto on a `position: fixed` box, the box is CSS-over-constrained; browsers keep `top` + `height` and silently recompute `bottom`. The panel keeps its full 100vh height but starts lower, so its bottom edge extends below the actual viewport by the `top` offset — clipping content near the bottom of the panel (e.g. the last item in a scrollable list) with no way to scroll it into view, since the panel itself is `position: fixed`, not the page. Found via `Sidebar`'s surah/rub list clipping the last item on short viewports (`docs/plans/fix-sidebar-bottom-clip.md`). Use `dvh` (not `vh`) in the replacement `height` calc — see "Quran Safha Viewport Fit" below for why mixing them breaks on mobile browsers with collapsible chrome.
+**Rationale:** With `top`, `height`, and `bottom` all non-auto on a `position: fixed` box, the box is CSS-over-constrained; browsers keep `top` + `height` and silently recompute `bottom`. The panel keeps its full 100vh height but starts lower, so its bottom edge extends below the actual viewport by the `top` offset — clipping content near the bottom of the panel (e.g. the last item in a scrollable list) with no way to scroll it into view, since the panel itself is `position: fixed`, not the page. Found via `Sidebar`'s surah/rub list clipping the last item on short viewports (`docs/plans/fix-sidebar-bottom-clip.md`). With `height: auto` there are only two non-auto values, so the box is not over-constrained and its bottom edge lands exactly on the viewport floor without any unit being named at all.
 
 ---
 
@@ -467,6 +467,18 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 **Constraints:**
 - Do not add a pre-hydration inline `<script>` as a substitute — that path already exists for theme/safha-view (`app/layout.tsx`) and is reserved for state that genuinely can't be expressed in CSS (e.g. reading `localStorage`). Breakpoint width can always be expressed in CSS; prefer that.
 - Keep the CSS `@media` width and the JS hook's query string numerically identical when either changes — there are now two representations of each breakpoint and no shared constant between them.
+
+---
+
+## Full-Viewport Heights Anchor to the Initial Containing Block, Not to Viewport Units
+
+**Decision:** Any box whose height must equal the visible viewport resolves that height from the initial containing block — `position: fixed` with `inset: 0`, with containment below it — never from `100dvh`/`100svh`/`100lvh`/`100vh`. In the installed PWA (`display: "fullscreen"`) Android launches non-immersive and Chrome enters immersive fullscreen a moment later; a document that lays out during that transition gets its viewport units pinned to the transitional viewport and Chrome never re-resolves them. Measured on-device: `100dvh` read `888.364px` on elements that existed at transition time while `window.innerHeight` was `832` and a *newly created* element read the correct `832.364px` in the same frame — and **no `resize` event is delivered at all**, so nothing in the page can observe or react to it. See [ADR 0044](adr/0044-viewport-units-are-unreliable-in-the-installed-pwa.md). This **supersedes the "use `dvh`, not `vh`" rule below for full-viewport heights only** (the mobile safha entry and the `Sidebar` bottom-clip entry): that rule remains correct about `vh` vs `dvh` on browsers with collapsible chrome, but in the installed PWA both are unreliable, so full-viewport heights leave the viewport-unit family entirely. `dvh` stays the right choice wherever a viewport unit is still appropriate.
+
+**Constraints:**
+- Height travels below the ICB-anchored box by `align-items: stretch`, never by percentage heights — `height: 100%` inside a flex-grown box resolves to `auto` and collapses the card (the same trap [ADR 0036](adr/0036-reader-fills-height-band.md) records for the desktop spread; re-measured here, the card fell 812px → 469px).
+- Viewport units are still fine where the value is not a full-viewport height *contract* and can be off without breaking a layout guarantee (e.g. `max-h-[70dvh]` on a bottom sheet).
+- A viewport unit that feeds a **font size** rather than a box height (the tablet `--fq-tablet-word` cap) cannot inherit a box height and needs its own treatment — a stale launch there yields an oversized font, not a scroll.
+- Do not "fix" this by detecting the mismatch in JS and poking a custom property on `:root`. It works (verified live) but can only run after paint, so a losing launch paints the wrong size and then visibly jumps.
 
 ---
 

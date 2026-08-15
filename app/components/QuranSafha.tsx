@@ -528,7 +528,11 @@ export const QuranSafha = ({
       ) : null}
       <div className="fq-full-safha flex justify-center w-full md:w-auto md:h-full">
         <div
-          className={`relative w-full md:w-auto h-[calc(100dvh-5.5rem)] md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
+          // No height utility below `md`: the card is a stretched flex item of
+          // `.fq-full-safha`, whose height chains up to the ICB-anchored reader
+          // wrapper (ADR 0044). This carried `h-[calc(100dvh-5.5rem)]`, a viewport
+          // unit that goes stale across the installed PWA's fullscreen transition.
+          className={`relative w-full md:w-auto md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
           {/* Stacked paper layers are hidden on mobile and paint behind the active
               card only at md+. They peek toward stackPeekSide (the outer edge).
