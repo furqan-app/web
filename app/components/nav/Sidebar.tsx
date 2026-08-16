@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SurahList } from "../SurahList";
 import useTranslations from "@/app/hooks/use-translations";
@@ -31,16 +31,50 @@ const Sidebar = ({ surahs, rubs }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const { open, setOpen, setCurrentSurah } = useSidebar();
+  const {
+    open,
+    setOpen,
+    setCurrentSurah,
+    pinnedSurahId,
+    setPinnedSurahId,
+    setNotifyNavigating,
+  } = useSidebar();
   const pathname = usePathname();
-  useCloseOnBackGesture(open, () => setOpen(false));
+  const { notifyNavigating } = useCloseOnBackGesture(open, () => setOpen(false));
+  // notifyNavigating is a fresh closure every render (not useCallback'd in the
+  // hook) — hold the latest in a ref and publish a stable wrapper into
+  // SidebarContext, so SurahListItem always calls the current implementation
+  // without this effect re-firing every render (same navRef-style pattern
+  // ReaderPager.tsx uses for onArrowNavigate; unstable identity through a
+  // context setter caused a real infinite loop once — see
+  // docs/plans/fix-reader-nav-infinite-loop.md).
+  const notifyNavigatingRef = useRef(notifyNavigating);
+  notifyNavigatingRef.current = notifyNavigating;
+  const stableNotifyNavigating = useCallback(() => notifyNavigatingRef.current(), []);
+  useEffect(() => {
+    setNotifyNavigating(stableNotifyNavigating);
+    return () => setNotifyNavigating(null);
+  }, [stableNotifyNavigating, setNotifyNavigating]);
   const [activeTab, setActiveTab] = useState("surahs");
   const surahsScrollRef = useRef<HTMLDivElement>(null);
   const rubsScrollRef = useRef<HTMLDivElement>(null);
 
   const pageNumber = parseInt(pathname?.match(/\/pages\/(\d+)/)?.[1] ?? "0", 10);
 
+  // A page can host more than one surah (e.g. page 604 hosts 112/113/114), so
+  // "last surah starting on/before this page" can't tell which one the reader
+  // actually navigated to. SurahListItem pins the tapped surah's id; it's
+  // trusted only while pageNumber still falls inside that surah's own range —
+  // once the reader leaves it (swipe, arrow, another jump), the pin is
+  // invalidated below and page-derivation takes back over.
+  const pinnedSurah = pinnedSurahId ? (surahs.find((s) => s.id === pinnedSurahId) ?? null) : null;
+  const pinnedSurahValid =
+    pinnedSurah != null &&
+    parseInt(pinnedSurah.pages.split("-")[0], 10) <= pageNumber &&
+    pageNumber <= parseInt(pinnedSurah.pages.split("-")[1], 10);
+
   const activeSurah =
+    (pinnedSurahValid ? pinnedSurah : null) ??
     surahs.findLast((s) => parseInt(s.pages.split("-")[0], 10) <= pageNumber) ??
     surahs[0] ??
     null;
@@ -49,6 +83,22 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     rubs.findLast((r) => r.startVerse.page_number <= pageNumber) ??
     rubs[0] ??
     null;
+
+  // Keyed on pageNumber alone, deliberately: the pin is set in the same event
+  // handler as jumpTo's history.replaceState, but Next's app router syncs
+  // usePathname() to that URL change on a LATER render, not the same one — so
+  // right after pinning, this component can still render once with the OLD
+  // pageNumber while pinnedSurahId already points at the NEW surah. Keying on
+  // [pinnedSurahId, pinnedSurahValid] would re-run on that stale render and
+  // clear the pin before pathname ever catches up (pinnedSurahValid reads
+  // false against the old page), silently reproducing the bug this pin
+  // exists to fix. Keying on pageNumber only defers the validity check to the
+  // render where pageNumber has actually changed — either to a page still
+  // inside the pinned surah's range (kept) or outside it (cleared).
+  useEffect(() => {
+    if (pinnedSurahId && !pinnedSurahValid) setPinnedSurahId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageNumber]);
 
   useEffect(() => {
     setCurrentSurah(
