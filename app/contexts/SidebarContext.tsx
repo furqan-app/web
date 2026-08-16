@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 export type SurahSlim = { id: number; name_arabic: string; name_simple: string };
 
@@ -9,6 +9,23 @@ type SidebarContextValue = {
   setOpen: (open: boolean) => void;
   currentSurah: SurahSlim | null;
   setCurrentSurah: (surah: SurahSlim | null) => void;
+  // Set by SurahListItem on an explicit tap, so Sidebar can show the surah the
+  // reader actually picked instead of re-deriving one from the page number —
+  // page-derivation alone can't disambiguate a page that hosts more than one
+  // surah (see docs/plans/sidebar-surah-indicator.md, Addendum). Sidebar
+  // clears it once the current page leaves the pinned surah's own range.
+  pinnedSurahId: number | null;
+  setPinnedSurahId: (id: number | null) => void;
+  // Published by Sidebar while its Sheet is open, mirroring how
+  // ReaderNavigationContext exposes jumpTo from ReaderPager. Callers that
+  // close the sidebar and navigate in the same click (SurahListItem) must
+  // call this synchronously, before setOpen(false) — it tells
+  // useCloseOnBackGesture's cleanup a competing navigation is already
+  // underway, so it skips its timing-based history check instead of racing
+  // it (see docs/plans/close-overlays-on-back-swipe.md, Addendum — surah
+  // Sidebar was missed by the notifyNavigating fix).
+  notifyNavigating: (() => void) | null;
+  setNotifyNavigating: (fn: (() => void) | null) => void;
 };
 
 const SidebarContext = createContext<SidebarContextValue>({
@@ -16,13 +33,40 @@ const SidebarContext = createContext<SidebarContextValue>({
   setOpen: () => {},
   currentSurah: null,
   setCurrentSurah: () => {},
+  pinnedSurahId: null,
+  setPinnedSurahId: () => {},
+  notifyNavigating: null,
+  setNotifyNavigating: () => {},
 });
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [currentSurah, setCurrentSurah] = useState<SurahSlim | null>(null);
+  const [pinnedSurahId, setPinnedSurahId] = useState<number | null>(null);
+  const [notifyNavigating, setNotifyNavigatingState] = useState<(() => void) | null>(null);
+  // A function value passed to useState's setter is treated as an updater, so
+  // storing one requires this () => fn wrapper — done ONCE, here. Callers pass
+  // the raw function straight to setNotifyNavigating; wrapping it again at the
+  // call site would store a function that RETURNS it instead of one that
+  // calls it (see ReaderNavigationContext's identical setJumpTo for the bug
+  // this exact shape caused once — docs/plans/fix-reader-nav-infinite-loop.md).
+  const setNotifyNavigating = useCallback(
+    (fn: (() => void) | null) => setNotifyNavigatingState(() => fn),
+    [],
+  );
   return (
-    <SidebarContext.Provider value={{ open, setOpen, currentSurah, setCurrentSurah }}>
+    <SidebarContext.Provider
+      value={{
+        open,
+        setOpen,
+        currentSurah,
+        setCurrentSurah,
+        pinnedSurahId,
+        setPinnedSurahId,
+        notifyNavigating,
+        setNotifyNavigating,
+      }}
+    >
       {children}
     </SidebarContext.Provider>
   );

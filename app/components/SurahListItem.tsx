@@ -20,7 +20,7 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
-  const { setOpen } = useSidebar();
+  const { setOpen, setPinnedSurahId, notifyNavigating } = useSidebar();
   const { jumpTo } = useReaderNavigation();
 
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -32,6 +32,14 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
       locale={locale}
       href={`${basePath}/${surahStartingPage}`}
       onClick={(e) => {
+        // Must fire before setOpen(false), synchronously: tells
+        // useCloseOnBackGesture's cleanup (armed by the sidebar being open on
+        // standalone mobile/tablet) that a competing navigation is already
+        // underway, so it skips its timing-based history.state check instead
+        // of racing jumpTo's own replaceState for the guard's history entry —
+        // same fix as #313 (NavOverflowMenu's <Link> rows), applied here too.
+        // See docs/plans/close-overlays-on-back-swipe.md, Addendum.
+        notifyNavigating?.();
         setOpen(false);
         // A reader is already mounted (this list is open from within it, e.g.
         // the nav sidebar) — move it client-side instead of navigating, same
@@ -39,6 +47,9 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
         // left-click only; modified/middle clicks fall through to the href.
         if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
+        // Tell Sidebar exactly which surah this was — page number alone can't
+        // disambiguate a page that hosts more than one surah (see Sidebar.tsx).
+        setPinnedSurahId(surah.id);
         jumpTo(surahStartingPage);
       }}
       data-surah-id={surah.id}
