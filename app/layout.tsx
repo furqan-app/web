@@ -19,10 +19,13 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    // black-translucent makes the iOS status bar transparent, overlaying app
-    // content. viewportFit:cover below + env(safe-area-inset-top) on the navbar
-    // prevents nav content being hidden behind the notch on notched devices.
-    statusBarStyle: "black-translucent",
+    // "default": opaque status bar, always visible, never overlays content.
+    // Was "black-translucent" (Android's fullscreen counterpart had the same
+    // always-visible-status-bar goal); reverted (#317) — see
+    // docs/plans/feature-pwa-fullscreen-focus-mode.md Addendum. viewportFit:
+    // cover + env(safe-area-inset-top) on the navbar are left in place; they
+    // resolve to 0px with no translucent bar to clear, per spec.
+    statusBarStyle: "default",
     title: "Furqan",
   },
 };

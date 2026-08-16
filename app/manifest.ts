@@ -17,7 +17,12 @@ export default function manifest(): MetadataRoute.Manifest {
     // It must stay excluded in middleware.ts's matcher and listed in
     // next.config.mjs's globPublicPatterns, or it 404s / stops working offline.
     start_url: "/launch.html",
-    display: "fullscreen",
+    // "standalone", not "fullscreen": fullscreen's Android immersive mode
+    // surfaces the OS status bar on any ordinary tap (not just an edge swipe),
+    // which isn't controllable from a web PWA — so every tap that toggled the
+    // app's own nav also flickered the status bar. Reverted (#317); see
+    // docs/plans/feature-pwa-fullscreen-focus-mode.md Addendum.
+    display: "standalone",
     // Relaunching an already-running PWA focuses it and leaves it on whatever
     // page it was showing, instead of re-running start_url. Must be
     // "focus-existing", NOT "navigate-existing" — the latter focuses AND
