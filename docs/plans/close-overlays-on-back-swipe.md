@@ -2,9 +2,10 @@
 
 **Type:** bug
 **Date:** 2026-08-15
-**Status:** implemented
-**GitHub:** [#297](https://github.com/furqan-app/web/issues/297)
-**ADR:** [0043](../architecture/adr/0043-overlay-close-on-back-gesture.md)
+**Status:** implemented (code + lint + tests verified; on-device confirmation of the Navigation-API
+branch pending — needs a staging deploy, see the addendum's Constraints)
+**GitHub:** [#297](https://github.com/furqan-app/web/issues/297), Addendum: [#309](https://github.com/furqan-app/web/issues/309)
+**ADR:** [0043](../architecture/adr/0043-overlay-close-on-back-gesture.md), Addendum: [0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md)
 
 ## Summary
 
@@ -203,83 +204,257 @@ Walked through with the user (2026-08-15):
 - The pre-existing `AndroidBackExitGuard` flicker/skipped-toast bug is split into its own GitHub issue
   and explicitly out of scope here (user-confirmed).
 
-## Addendum — jumpTo overwrites the surah-sidebar's guard entry before it can pop (2026-08-16)
+## Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available
 
-**Type:** bug (speculative fix, unconfirmed root cause)
-**Issue:** [#321](https://github.com/furqan-app/web/issues/321)
+**Status:** implemented. GitHub: [#309](https://github.com/furqan-app/web/issues/309). ADR:
+[0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md).
 
-### Bug
+### What was reported
 
-Android standalone PWA only (not a browser tab, not reproducible via simulated clicks in a desktop
-browser — confirmed by testing). Tapping a surah in the sidebar (`SurahListItem`) sometimes leaves the
-reader's visible content on the old page; it only shows the target page after a subsequent swipe.
-Distinct from #320 (the surah-name badge bug fixed earlier in this same branch) — here the actual
-rendered Quran text is wrong, not just the label.
+After this plan shipped (PR #299, merged), the user reported that swiping back to close an overlay
+shows a "loading app logo" flash and the reader visibly rerenders — even though the overlay does
+close correctly. The same flash was suspected (but not confirmed) to also affect the plain exit-toast
+swipe (`AndroidBackExitGuard`, tracked separately as
+[#296](https://github.com/furqan-app/web/issues/296)).
 
-### Suspected mechanism
+### Investigation
 
-`SurahListItem`'s `onClick` calls `setOpen(false)` (closing the sidebar) then, for a plain click,
-`jumpTo(surahStartingPage)` — which calls `window.history.replaceState(null, "", newUrl)` synchronously,
-in the same tick, **before** React has processed the `setOpen(false)` state update or run any effect
-cleanup. On standalone mobile/tablet, `Sidebar` is wired to `useCloseOnBackGesture(open, () =>
-setOpen(false))` (this same plan, above) — while the sidebar was open it pushed a guard history entry.
-That entry is still the current top of the history stack at the moment `jumpTo` fires, so
-`replaceState`'s target is the guard's own entry, not the pre-sidebar page-N entry beneath it.
+Confirmed via on-device Chrome remote debugging (`chrome://inspect` over `adb`, real physical
+back-swipes on an installed Android PWA — not desktop simulation):
 
-This does **not** structurally match the `NavOverflowMenu`/`SettingsSidebar` sibling-guard collision
-this plan already fixed (both sides of that one were React effects racing each other; here, `jumpTo`'s
-`replaceState` is an imperative call that always wins the race, running before the guard's own
-microtask-deferred cleanup gets a chance to check anything). Tracing `useCloseOnBackGesture`'s cleanup
-against this ordering, it actually degrades gracefully on its own terms — by the time its deferred check
-runs, `window.history.state` no longer matches its `fqOverlayGuardId`, so it takes the safe "entry no
-longer on top, leave it as a harmless orphan" branch (same file, same behavior already accepted for the
-link-tapped-inside-an-overlay case above) — it does not call `history.back()` and does not appear to
-corrupt anything by itself.
+- A single, isolated swipe-back to close an open overlay (`NavOverflowMenu`) produces a genuine
+  top-level document `GET` request for the current URL, **0.03s before** this plan's own `popstate`
+  handler even runs — confirmed by timestamped console markers and a `Page.frameNavigated` CDP event.
+  It's followed by a full cold-reload waterfall: every JS chunk, font, CSS file, the manifest,
+  favicon, Sentry init, and every data API refetched from scratch. That full reload is the "loading
+  app logo" flash — not a React rerender, an actual fresh page load.
+- The same swipe, repeated across two earlier (less isolated) test sessions, twice landed on a real
+  hard reload — once of the current reader URL, once of the home route (`/ar`) — confirming this
+  isn't a one-off.
+- A single, isolated swipe-back with **nothing open** (`AndroidBackExitGuard`'s exit-toast path, ADR
+  0040) was clean: `popstate` fires, the toast shows, and it auto-dismisses ~2s later exactly matching
+  `ARM_WINDOW_MS`. No reload. **This narrows the bug to `useCloseOnBackGesture` (ADR 0043) specifically
+  — `AndroidBackExitGuard` does not reproduce it.** [#296](https://github.com/furqan-app/web/issues/296)
+  may need its own re-verification; it is not the same bug as this one.
 
-**Confidence note:** the deeper mechanism this project has hit before (ADR 0040's addendum, `#288`) —
-Next's history patch stamping the router's current tree onto whatever object `replaceState` is handed,
-then a later `ACTION_RESTORE` restoring a stale one — requires the **same state object** to be reused
-across calls to bite. `jumpTo` passes a literal `null` each call, which Next's patch should treat as
-fresh every time, not a reused reference. So this addendum's fix is a **speculative, testable** attempt
-based on the one concrete structural gap found (`jumpTo`'s `replaceState` unconditionally firing before
-the guard's cleanup settles), not a confirmed root cause — the standalone PWA environment could not be
-reproduced or instrumented directly (no on-device console access in this session). If this fix does not
-resolve it, the next step is on-device remote debugging (Android `chrome://inspect`) to capture the
-actual `ACTION_RESTORE`/history state at the moment of failure.
+### Root cause
 
-### Approach
+Confirmed precisely via a second on-device round, instrumented directly through the Navigation API's
+own `navigate`/`currententrychange` event log (ground truth, not inference — a fully isolated
+single-swipe test, opening `NavOverflowMenu` then one swipe-back). **Two separate `navigate` events
+fire ~6ms apart:**
 
-Defer `jumpTo`'s call by one tick (`setTimeout(fn, 0)`) so it runs after React has committed the
-`setOpen(false)` update and run `useCloseOnBackGesture`'s effect cleanup (which itself defers its own
-check to a microtask — a `setTimeout(0)` task is comfortably after both). This restores the intended
-ordering: the guard's entry is settled (popped, if still on top) before `jumpTo` touches history, so
-`jumpTo` always operates on the real page-N entry, never the guard's. `requestAnimationFrame` was tried
-first and rejected — it depends on the document actively compositing frames, so it is throttled or never
-fires while the tab/PWA is backgrounded or occluded, which a navigation must not silently depend on;
-`setTimeout` has no such dependency. Scoped to `SurahListItem` only — `RubList`/`ContinueReadingLink`
-call the same `jumpTo`, but the reported bug is specific to the surah sidebar's
-guarded-overlay-close-then-jump sequence; deferring elsewhere without a matching report would be
-unmotivated scope creep.
+1. `navigationType: "traverse"`, same-document, same URL (index 3→2) — the overlay's guard entry
+   popping correctly. **This part was never broken** — it lands on whatever entry sits beneath the
+   overlay's, which in practice is `AndroidBackExitGuard`'s own pushed guard entry (confirmed: the
+   `popstate` fired with `historyState: {"fqExitGuard": true}`).
+2. A **second, separate** `navigate` event: `navigationType: "reload"`, `userInitiated: false`,
+   `destination.sameDocument: false` — a genuine, programmatically-triggered hard reload. This is what
+   produces the cold-reload network waterfall (every chunk/font/CSS/manifest/API refetched) and the
+   "loading app logo" flash — not the traversal, not Chrome's gesture handling racing ahead of the
+   JS as first suspected. The `reload` event's exact trigger isn't fully explained (candidate: something
+   reacting to landing back on `AndroidBackExitGuard`'s stacked entry, possibly Next.js's own router
+   failing to reconcile it) — intercepting it is sufficient to fix the symptom regardless of source.
+
+`popstate` cannot prevent either event: it only fires after the browser has already dispatched the
+traversal (confirmed: it fired *after* the `reload` event in this capture, not before), so no
+`popstate`/`pushState`-based code can act before either commits. The Navigation API's `navigate`
+event, via `event.intercept()`, runs *before* the browser commits to a given navigation's default
+action and is documented to prevent it — and it applies per-event, so it can intercept the `reload`
+event too, not just the `traverse`. Reached Baseline support in January 2026; Safari on iOS starts at
+**26.2 specifically** (older iOS has no support at all). Confirmed present (`"navigation" in window`)
+on the Android device used for this investigation.
+
+### Decision Tree
+
+| Condition | Mechanism |
+|---|---|
+| `window.navigation` + `intercept` supported | `navigate` event listener: intercept the closing `traverse` (matched by `navigationType === "traverse"` + `navigation.currentEntry.key`, read at fire time — see identity-matching note below), **and** intercept any `navigationType === "reload"` event that follows within `RELOAD_WATCH_MS` — that second event is what actually causes the flash |
+| Not supported (iOS < 26.2, older Android WebView, desktop) | Unchanged: today's `popstate`/`pushState` guard, exactly as implemented in this plan's original body |
+
+**Identity-matching correction (found during implementation, 2026-08-15):** the original plan assumed
+matching by the pushed `fqOverlayGuardId` via `NavigationHistoryEntry.getState()`, mirroring the
+popstate branch's `fqOverlayGuardId`. On-device capture showed `getState()` did not reliably return
+the object passed to `history.pushState` — even in the same capture where the legacy `history.state`
+correctly carried it. The implementation matches by `NavigationHistoryEntry.key` instead (a
+platform-guaranteed-unique identifier not dependent on custom state round-tripping): captured via
+`navigation.currentEntry.key` immediately after the guard's `history.pushState` call (synchronously
+the just-pushed entry), then compared against `navigation.currentEntry.key` read again inside the
+`navigate` handler — which at fire time for a `traverse` is still the entry being LEFT, not the
+`destination` (confirmed on-device: `destination.index` was the target, `currentEntry`/fire-time index
+was still the guard's own entry).
+
+Everything else — pushing a fresh, uniquely-id'd guard entry on open, the microtask-deferred
+"is my entry still on top" cleanup check, coordination with `AndroidBackExitGuard` via the shared
+armed-count — stays as specified above. Only the detection/interception mechanism for "a real back
+gesture landed on my entry" changes, and only on the feature-detected branch. `AndroidBackExitGuard`
+itself is unmodified — it does not exhibit this bug.
+
+### Verified Test Cases (new)
+
+Confirmed on-device, 2026-08-15 (Android, installed PWA, `chrome://inspect` over `adb`):
+
+11. Single isolated swipe-back closing `NavOverflowMenu`: real `GET` to current URL fires, followed by
+    a full cold-reload waterfall. Reproduces the reported flash. This is the case the Navigation API
+    branch must fix.
+12. Single isolated swipe-back with nothing open (exit-toast path): clean — `popstate` fires, toast
+    shows, auto-dismisses at ~2s, no reload. Confirms `AndroidBackExitGuard` is unaffected and must
+    stay untouched.
+13. Same isolated swipe as case 11, this time instrumented through `window.navigation` directly (not
+    just `popstate`/network): shows the `traverse` completing cleanly (same-document, same URL) followed
+    ~6ms later by a distinct `navigationType: "reload"` event (`userInitiated: false`,
+    `sameDocument: false`) that is the actual source of the reload — not the traversal itself. Pinpoints
+    exactly what the Navigation-API branch must intercept.
 
 ### Files to Change
 
-- `app/components/SurahListItem.tsx` — wrap the `jumpTo(surahStartingPage)` call in
-  `setTimeout(() => jumpTo(surahStartingPage), 0)`. `setPinnedSurahId` (issue #320's fix) stays
-  synchronous — it only needs to land before `jumpTo`'s eventual `setAnchor`, not before the guard
-  settles.
+- `app/hooks/use-close-on-back-gesture.ts` — Navigation API feature detection (`supportsNavigationApi`);
+  branches to a `navigate` event listener when supported, keeps the existing `popstate`/`pushState`
+  implementation as the fallback (both live in the same effect, mutually exclusive). No change to the
+  hook's public signature (`useCloseOnBackGesture(open, onClose)`).
+- `package.json` — added `@types/dom-navigation` (devDependency) — this repo's `lib.dom.d.ts` (TS
+  5.6.3) has no `Navigation`/`NavigateEvent`/`Window.navigation` types.
+- No other runtime files change — `AndroidBackExitGuard.tsx` and `overlay-back-guard.ts` are untouched,
+  though the Navigation-API branch's interaction with the shared armed-count needs care (see
+  Constraints) even without editing those files.
 
 ### Constraints
 
-- Do not touch `jumpTo`/`commitTo`'s core `history.replaceState`-based navigation — deliberate
-  architecture (ADR 0028, `DECISIONS.md` "Reader Navigation — Persistent Client Pager"), not the bug.
-- Do not revert to `router.push` for sidebar navigation — the whole point of `replaceState` here is to
-  bypass Next's router/RSC remount for in-reader page changes; reverting would reintroduce the
-  performance regression ADR 0028 exists to fix.
+- Do not drop the `popstate`/`pushState` fallback — Navigation API support is not universal (notably
+  iOS < 26.2), and this hook must not regress below what shipped in this plan's original body for
+  those browsers.
+- The `navigate` listener fires for *every* navigation, including this hook's own opening `pushState`
+  call, any sibling overlay's push, and `AndroidBackExitGuard`'s re-push. It must filter to
+  `navigationType === "traverse"` with a matching `navigation.currentEntry.key` (for the close case,
+  read at fire time — see the identity-matching correction above) or `navigationType === "reload"`
+  occurring within `RELOAD_WATCH_MS` of this guard's own traverse (for the flash case) — without this
+  filter the overlay would close itself the instant it opens.
+- The reload-watch timer/listener started when a real gesture closes the overlay must survive the
+  effect's own cleanup — React runs that cleanup essentially immediately once `onCloseRef.current()`
+  flips `open` to `false`, well inside the watch window. The implementation guards this explicitly
+  (an `awaitingReload` check as the cleanup's first line) rather than letting the normal
+  microtask-deferred "is my entry still on top" cleanup path run in that case — found and fixed during
+  implementation; an earlier draft let the cleanup unconditionally clear the reload-watch timer,
+  silently defeating the whole fix.
+- Use `event.intercept()`, never `event.preventDefault()` — `preventDefault()` leaves the guard entry
+  in place, which would make the existing microtask cleanup's `history.back()` pop it a second time.
+- `navigate` fires *before* `popstate` (confirmed on-device: `popstate` for the traversal landed after
+  the `reload` event in the capture, not before). `AndroidBackExitGuard`'s coordination via
+  `isOverlayBackGuardArmed()` assumes its own `popstate` listener runs after the overlay's listener has
+  already disarmed — on the Navigation-API branch, disarming inside the `navigate` handler risks the
+  exit guard seeing `armed === 0` if `popstate` still fires for the same gesture, wrongly showing "press
+  back again to exit" on an overlay close. Disarm must be idempotent and deferred past the current event
+  dispatch (not inside the synchronous `navigate` handler) so the exit guard reliably sees the guard as
+  armed for that traversal either way.
+- The non-back close paths (X button, Escape, in-overlay link) still call `history.back()` from the
+  existing microtask cleanup, which fires a `navigate` event on the Navigation-API branch too. Needs an
+  equivalent to the `popstate` branch's `selfClosingRef` echo-swallow so that programmatic close doesn't
+  get misread as a real back gesture — or, worse, trip the exit-toast.
+- Keep pushing the guard entry via `history.pushState` (patched by Next, per ADR 0040) — do not switch
+  to `navigation.navigate()` to create it; that would bypass Next's router-tree patching entirely
+  (the exact failure class behind issue #288).
+- Whether calling `intercept()` on the `traverse` event specifically suppresses the `popstate` that
+  otherwise follows it is still unconfirmed — the implementation does not assume either way (the
+  `AndroidBackExitGuard` coordination above is written to be correct regardless), but this still needs
+  an on-device pass once deployed, since the Navigation API branch cannot be exercised against the
+  installed PWA from a local dev server (Serwist/service-worker behavior — and the installed PWA's
+  origin generally — differ from `npm run dev`; see `docs/standards/pwa-testing.md`).
+- Do not touch `AndroidBackExitGuard.tsx` or `overlay-back-guard.ts` — isolated on-device testing
+  confirmed they don't exhibit this bug; keep the fix scoped to `useCloseOnBackGesture`.
+
+### What NOT to Do (new)
+
+- Do not attempt to fix this by changing timing/ordering within the existing `popstate` handler (e.g.
+  running it earlier, `stopImmediatePropagation`) — the browser's default navigation is already
+  underway by the time any `popstate` listener runs; no listener-ordering trick can prevent it.
+- Do not switch to the Navigation API unconditionally without the `popstate` fallback — this would
+  regress overlay-close-on-back-swipe entirely for iOS < 26.2, a functional regression versus what
+  shipped in PR #299.
+- Do not extend this fix to `AndroidBackExitGuard` — it does not reproduce the bug; leave ADR 0040's
+  mechanism as-is.
+
+### Decisions Made (new)
+
+- Accept the current, imperfect `popstate`-based behavior for iOS < 26.2 users on the overlay-close
+  case rather than delaying the fix until usage data is available (user-confirmed 2026-08-15).
+
+## Addendum — surah Sidebar was missed by the notifyNavigating fix (2026-08-16)
+
+**Type:** bug
+**Issue:** [#321](https://github.com/furqan-app/web/issues/321)
+**Related:** [#313](https://github.com/furqan-app/web/issues/313) /
+`docs/plans/fix-nav-overlay-link-navigation-race.md` (same root cause, different call site)
+
+### Bug
+
+Android standalone PWA only. Tapping a surah in the sidebar (`SurahListItem`) sometimes leaves the
+reader's visible content on the old page; it only shows the target page after a subsequent swipe.
+Distinct from #320 (the surah-name badge bug, same branch) — here the actual rendered Quran text is
+wrong, not just the label.
+
+### Root cause
+
+Exactly the bug `#313` already fixed for `NavOverflowMenu`'s `<Link>` rows (My Marks / My Plans /
+Shared mushaf), just at a call site that fix didn't cover. `useCloseOnBackGesture`'s cleanup effect
+decides whether to pop its own guard entry via a `queueMicrotask`-deferred check of
+`window.history.state`. That check is correct for a sibling overlay's `pushState` (guaranteed to land
+within the same commit's effects, and therefore the same microtask flush — ADR 0043's 2026-08-15
+addendum), but not for a competing navigation whose own history write isn't guaranteed to land before
+that microtask runs.
+
+`SurahListItem`'s click is exactly that shape: `setOpen(false)` (arms the cleanup) and, in the same
+handler, `jumpTo(surahStartingPage)` — which calls `window.history.replaceState` for the target page.
+`Sidebar` is wired to `useCloseOnBackGesture(open, () => setOpen(false))` the same way `NavOverflowMenu`
+is; `#313`'s fix added a `notifyNavigating()` escape hatch to the hook and wired it into
+`NavOverflowMenu`'s `<Link>` rows, but `Sidebar`/`SurahListItem` — a different consumer of the same
+hook, not audited as part of that investigation — never got it. This resolves the "speculative,
+unconfirmed" hypothesis from this addendum's first draft (a `setTimeout` defer, since reverted): the
+real mechanism is the same race `#313` already root-caused and fixed elsewhere, not a novel one.
+
+### Approach
+
+Wire the existing `notifyNavigating()` (returned by `useCloseOnBackGesture`, already shipped) from
+`Sidebar` through `SidebarContext` to `SurahListItem`, mirroring how `ReaderNavigationContext` exposes
+`jumpTo` from `ReaderPager` to the same caller. `SurahListItem` calls it synchronously, immediately
+before `setOpen(false)` — the cleanup effect then skips its timing-based `history.state` check
+entirely and disarms unconditionally, exactly as it already does for `NavOverflowMenu`'s links.
+
+### Files to Change
+
+- `app/contexts/SidebarContext.tsx` — add `notifyNavigating: (() => void) | null` and
+  `setNotifyNavigating`, mirroring `ReaderNavigationContext`'s `jumpTo`/`setJumpTo` shape (including the
+  same double-wrap pitfall documented there: `setNotifyNavigating` must be called with the raw function,
+  never wrapped again at the call site).
+- `app/components/nav/Sidebar.tsx` — capture `{ notifyNavigating }` from the existing
+  `useCloseOnBackGesture(open, () => setOpen(false))` call. Since the hook returns a fresh closure every
+  render (not `useCallback`-memoized), hold it in a ref and register a stable wrapper into
+  `SidebarContext` via `useEffect`/cleanup — the same `navRef`-style stable-wrapper pattern
+  `ReaderPager.tsx` already uses for `onArrowNavigate`, not a second copy of the infinite-loop bug
+  `docs/plans/fix-reader-nav-infinite-loop.md` fixed once.
+- `app/components/SurahListItem.tsx` — revert the `setTimeout` defer from this addendum's first draft;
+  call `notifyNavigating?.()` synchronously immediately before `setOpen(false)`, then call `jumpTo`
+  synchronously as before (no artificial delay).
+
+### Constraints
+
+- `notifyNavigating()` must be called before `setOpen(false)`, synchronously — same constraint `#313`
+  already documented; the ref it sets must be `true` by the time the cleanup effect's check runs.
+- Do not modify `use-close-on-back-gesture.ts` itself — `notifyNavigating` already exists and is
+  correct (shipped for `#313`); this addendum only wires an existing, unrelated consumer to it.
+- Do not reintroduce the `setTimeout`/`requestAnimationFrame` defer — `notifyNavigating` makes it
+  unnecessary, and the prior draft's own reasoning (rAF stalls when not compositing) is moot once the
+  guard is told explicitly rather than timed around.
 
 ### What NOT to Do
 
-- Do not assume this fix is confirmed correct — it addresses the one structural gap found via static
-  tracing, not a live-instrumented root cause. Report back after on-device testing; if unresolved, escalate
-  to remote-debugging the actual device rather than iterating on more speculative timing changes blind.
-- Do not extend the `requestAnimationFrame` defer to `RubList`/`ContinueReadingLink` without a matching
-  reported symptom there.
+- Do not extend this specific wiring to `RubList`/`ContinueReadingLink` without a matching reported
+  symptom — same scoping call as this addendum's first draft, unchanged rationale.
+- Do not re-litigate `#313`'s own fix (`use-close-on-back-gesture.ts`, `NavOverflowMenu.tsx`) — this
+  addendum only adds a second, independent consumer of the same already-shipped API.
+
+### Decisions Made
+
+- Superseded this addendum's own first-draft fix (`setTimeout(fn, 0)` defer in `SurahListItem`),
+  written before `#313`'s `notifyNavigating` mechanism was discovered on `main` mid-task. The
+  `setTimeout` version was never confirmed on-device; `notifyNavigating` is the established, root-caused
+  fix for this exact race shape.

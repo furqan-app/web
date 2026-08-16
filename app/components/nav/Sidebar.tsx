@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SurahList } from "../SurahList";
 import useTranslations from "@/app/hooks/use-translations";
@@ -31,9 +31,30 @@ const Sidebar = ({ surahs, rubs }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const { open, setOpen, setCurrentSurah, pinnedSurahId, setPinnedSurahId } = useSidebar();
+  const {
+    open,
+    setOpen,
+    setCurrentSurah,
+    pinnedSurahId,
+    setPinnedSurahId,
+    setNotifyNavigating,
+  } = useSidebar();
   const pathname = usePathname();
-  useCloseOnBackGesture(open, () => setOpen(false));
+  const { notifyNavigating } = useCloseOnBackGesture(open, () => setOpen(false));
+  // notifyNavigating is a fresh closure every render (not useCallback'd in the
+  // hook) — hold the latest in a ref and publish a stable wrapper into
+  // SidebarContext, so SurahListItem always calls the current implementation
+  // without this effect re-firing every render (same navRef-style pattern
+  // ReaderPager.tsx uses for onArrowNavigate; unstable identity through a
+  // context setter caused a real infinite loop once — see
+  // docs/plans/fix-reader-nav-infinite-loop.md).
+  const notifyNavigatingRef = useRef(notifyNavigating);
+  notifyNavigatingRef.current = notifyNavigating;
+  const stableNotifyNavigating = useCallback(() => notifyNavigatingRef.current(), []);
+  useEffect(() => {
+    setNotifyNavigating(stableNotifyNavigating);
+    return () => setNotifyNavigating(null);
+  }, [stableNotifyNavigating, setNotifyNavigating]);
   const [activeTab, setActiveTab] = useState("surahs");
   const surahsScrollRef = useRef<HTMLDivElement>(null);
   const rubsScrollRef = useRef<HTMLDivElement>(null);

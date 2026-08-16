@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Furqan — You're offline</title>
+    <!--
+      Offline fallback for non-reader routes (ADR 0014 Addendum 4). Served by
+      app/sw.ts's setCatchHandler for a failed navigation to any route that
+      isn't a reader page — those keep the existing page-1 Quran fallback +
+      jumpTo self-correction (Addendum 3), which this document does not
+      attempt to replicate: there is nothing route-specific to correct to for
+      e.g. /plans or /settings, so this is a terminal state, not a
+      flash-then-corrects one.
+
+      Hand-written and outside the TypeScript build, same as launch.html
+      (ADR 0042): no types, no bundler, no imports, precached via
+      globPublicPatterns so it works offline before any bulk download exists.
+    -->
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0 1.5rem;
+        text-align: center;
+        background: #16232f;
+        color: #f5f5f5;
+        font-family: system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      p {
+        max-width: 24rem;
+        font-size: 0.875rem;
+        opacity: 0.75;
+        line-height: 1.5;
+        margin: 0;
+      }
+      button {
+        margin-top: 1rem;
+        border: 1px solid currentColor;
+        background: transparent;
+        color: inherit;
+        border-radius: 0.75rem;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>You're offline</h1>
+    <p>This page isn't available offline. Reconnect to the internet and try again.</p>
+    <button onclick="location.reload()">Try again</button>
+  </body>
+</html>

@@ -2,7 +2,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, NetworkFirst, Serwist } from "serwist";
+import { CacheFirst, Serwist } from "serwist";
 import {
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
@@ -12,6 +12,7 @@ import {
   TOTAL_PAGES,
   VERSE_PAGES_URL,
   fallbackDocumentUrl,
+  offlineFallbackUrl,
   pageFontUrl,
   pageJsonUrl,
 } from "@constants/offline";
@@ -24,6 +25,47 @@ declare global {
 }
 
 declare const self: ServiceWorkerGlobalScope;
+
+/**
+ * Cheap non-cryptographic string hash (the classic Java String.hashCode
+ * polynomial rolling hash, 31*hash+charCode) — a per-deploy fingerprint, not
+ * a security boundary, so collision resistance beyond "changes whenever the
+ * input changes" is not a requirement here.
+ */
+const hashString = (input: string) => {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (Math.imul(31, hash) + input.charCodeAt(i)) | 0;
+  }
+  return (hash >>> 0).toString(36);
+};
+
+// Captured once: InjectManifest string-injects the real manifest at exactly
+// one `self.__SW_MANIFEST` reference in the source and fails the build
+// ("Multiple instances... found") on a second one, so every other use below
+// (both here and in the Serwist config) reads this local instead of
+// re-referencing the global.
+const precacheManifest = self.__SW_MANIFEST;
+
+// Auto-versioned per deploy, derived from the precache manifest above (every
+// entry's `revision` is a content hash, so this changes whenever ANY
+// precached asset changes — true on effectively every real deploy).
+// Deliberately NOT a webpack DefinePlugin custom value: a
+// `process.env.X`/`self.__X__` DefinePlugin target added via
+// `webpackCompilationPlugins` was tried first and silently never fired —
+// verified by inspecting the built public/sw.js, which showed a genuine
+// runtime property read instead of an inlined literal (the worker-target
+// child compilation resolves bare `process` through its own polyfill, and the
+// exact reason a `self.__*__` global missed too was not conclusively
+// isolated). Reusing the manifest sidesteps that whole failure mode by
+// depending only on a mechanism already proven correct in this build (its
+// entries' real per-deploy content hashes are directly visible in the
+// output). Deliberately NOT PAGES_CACHE_VERSION either, which stays manually
+// bumped and scoped to font/JSON data-shape changes only (ADR 0014 Addendum
+// 4) — a deploy must always bust this cache, but must never
+// force-invalidate the 48 MB user download or re-trigger its consent gate.
+const READER_HTML_CACHE_PREFIX = "reader-html-";
+const READER_HTML_CACHE_NAME = `${READER_HTML_CACHE_PREFIX}${hashString(JSON.stringify(precacheManifest ?? []))}`;
 
 const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
@@ -44,18 +86,27 @@ const isVersePagesJson = (url: URL) =>
   /^\/quran\/verse-pages\/[0-9]+\.json$/.test(url.pathname);
 
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  precacheEntries: precacheManifest,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
-    // Reader-page HTML also carries the app shell (nav, layout, feature
-    // code), which is NOT immutable — NetworkFirst so online visits always
-    // get the current deploy; the cache here only backstops offline reads
-    // (see ADR 0014 Addendum 1).
+    // Reader-page HTML also carries the app shell (nav, layout, feature code),
+    // which is NOT immutable — CacheFirst is only safe here because the cache
+    // name is auto-versioned per deploy (READER_HTML_CACHE_NAME above), so a
+    // fresh deploy always starts from an empty cache rather than ever serving
+    // a genuinely stale response (ADR 0014 Addendum 4, superseding Addendum 1's
+    // NetworkFirst fix for the same incident). `request.mode === "navigate"`
+    // is load-bearing, not defensive: without it this matcher (registered
+    // ahead of `...defaultCache` below) also wins for RSC soft-nav fetches to
+    // the same pathname, which would let RSC flight-data get cached here and
+    // later served back for a plain document request — the same failure shape
+    // fix-rsc-cache-poisoning.md fixed at the CDN layer, relocated to this
+    // layer (found in review before this shipped).
     {
-      matcher: ({ url }) => isSelfReaderPage(url),
-      handler: new NetworkFirst({ cacheName: PAGES_CACHE_NAME }),
+      matcher: ({ url, request }) =>
+        isSelfReaderPage(url) && request.mode === "navigate",
+      handler: new CacheFirst({ cacheName: READER_HTML_CACHE_NAME }),
     },
     // Page fonts are genuinely immutable (Static Generation Strategy
     // decision) — once cached, never re-validated against the network.
@@ -73,37 +124,81 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
-// Offline-navigation fallback (ADR 0014 Addendum 3, Trello #194). Fires when
-// any matched route's strategy fails to produce a response — network error
-// with no cache hit — regardless of which specific rule (isSelfReaderPage,
-// defaultCache's rsc/html/others buckets) matched the request. Only
-// navigation requests get the fallback document; any other failed request
-// (an API call, an asset) surfaces as a real network error rather than
-// silently succeeding with a reader page.
+// Deletes stale reader-html-* caches from a previous deploy on activate — the
+// counterpart to READER_HTML_CACHE_NAME's auto-versioning (ADR 0014 Addendum
+// 4). Without this, every deploy leaves the previous version's cached HTML
+// orphaned in Cache Storage forever. Matches on the prefix only — must never
+// touch PAGES_CACHE_NAME (the 48 MB user download) or any Serwist-managed
+// precache cache, neither of which share this prefix.
+self.addEventListener("activate", (event: ExtendableEvent) => {
+  event.waitUntil(
+    (async () => {
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter(
+            (name) =>
+              name.startsWith(READER_HTML_CACHE_PREFIX) &&
+              name !== READER_HTML_CACHE_NAME,
+          )
+          .map((name) => caches.delete(name)),
+      );
+    })(),
+  );
+});
+
+// Offline-navigation fallback. Fires when any matched route's strategy fails
+// to produce a response — network error with no cache hit — regardless of
+// which specific rule (isSelfReaderPage, defaultCache's rsc/html/others
+// buckets) matched the request. Only navigation requests get a fallback
+// document; any other failed request (an API call, an asset) surfaces as a
+// real network error rather than silently succeeding with the wrong content.
+//
+// Route-aware (ADR 0014 Addendum 4): a reader-page URL keeps the original
+// Quran page-1 fallback (ADR 0014 Addendum 3) — ReaderPager's jumpTo
+// self-corrects to the actually-requested page once it mounts (ADR 0042).
+// Every OTHER route (home, /plans, /settings, ...) used to get that same
+// Quran fallback too, leaving the user stuck looking at Quran page 1's
+// content at the wrong URL with no way to self-correct — there is no
+// jumpTo-equivalent for a non-reader route. Those now get a small dedicated
+// offline document instead (terminal state, not flash-then-corrects).
 serwist.setCatchHandler(async ({ request, url }) => {
   if (request.mode !== "navigate") return Response.error();
   const locale =
     FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
     FALLBACK_LOCALES[0];
-  const cache = await caches.open(PAGES_CACHE_NAME);
-  const fallback = await cache.match(fallbackDocumentUrl(locale));
+
+  if (isSelfReaderPage(url)) {
+    const cache = await caches.open(READER_HTML_CACHE_NAME);
+    const fallback = await cache.match(fallbackDocumentUrl(locale));
+    return fallback ?? Response.error();
+  }
+
+  // Precached via globPublicPatterns (next.config.mjs), same as launch.html —
+  // matchPrecache resolves it regardless of which cache Serwist's own
+  // versioning happens to store the precache manifest under.
+  const fallback = await serwist.matchPrecache(offlineFallbackUrl(locale));
   return fallback ?? Response.error();
 });
 
-// Precache the fallback document itself — page 1's real reader-page HTML for
-// both locales — at install time, for every visitor. Independent of the
-// consent-gated bulk download (must work before that has ever run) and tiny
-// next to it, so no standalone/consent gate applies here, unlike the page
-// fonts and bulk JSON this same cache also holds. Best-effort: a failure here
-// (installing while offline) just means no fallback exists yet until a later
-// online visit. It shares its cache key with isSelfReaderPage's own
-// NetworkFirst rule, so any ordinary online visit to page 1 refreshes it too
-// — this seed is only for a visitor who is offline before ever reaching
-// page 1 normally.
+// Precache the reader fallback document itself — page 1's real reader-page
+// HTML for both locales — at install time, for every visitor. Independent of
+// the consent-gated bulk download (must work before that has ever run) and
+// tiny next to it, so no standalone/consent gate applies here, unlike the
+// page fonts and bulk JSON PAGES_CACHE_NAME holds. Best-effort: a failure
+// here (installing while offline) just means no fallback exists yet until a
+// later online visit. Lives in READER_HTML_CACHE_NAME, not PAGES_CACHE_NAME
+// (ADR 0014 Addendum 4) — it's reader HTML like any other, so it needs the
+// same per-deploy auto-refresh; the old shared cache location meant this one
+// document was fetched once at first install and never revalidated again,
+// its own smaller instance of the staleness class the rest of this addendum
+// fixes. It shares its cache key with isSelfReaderPage's own CacheFirst rule,
+// so any ordinary online visit to page 1 populates it too — this seed is only
+// for a visitor who is offline before ever reaching page 1 normally.
 self.addEventListener("install", (event: ExtendableEvent) => {
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(PAGES_CACHE_NAME);
+      const cache = await caches.open(READER_HTML_CACHE_NAME);
       await Promise.all(
         FALLBACK_LOCALES.map((locale) => ensureCached(cache, fallbackDocumentUrl(locale))),
       );

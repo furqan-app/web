@@ -112,4 +112,99 @@ It silently assumed every *other* way of reaching a page was equivalent. It is n
 
 **Constraint:** `SurahListItem`/`RubList`/`ContinueReadingLink` route through `ReaderPager.jumpTo` instead of `<Link>` navigation whenever a pager instance is already mounted (i.e., the sidebar was opened from within the reader) — this needs no fallback shell at all, the same as swipe. The fallback document is the path only for navigations that start *outside* a mounted reader (home page, cold launch).
 
+## Addendum 4 (2026-08-15): Reader-page HTML returns to `CacheFirst`, made safe this time
+
+**Supersedes (in part):** Addendum 1's blanket "must not be `CacheFirst`" — replaced with a specific
+mechanism that avoids that incident's actual failure mode, not a reopening of the original mistake.
+
+**Context (Trello #312).** `NetworkFirst` (Addendum 1) has no `networkTimeoutSeconds`, so a slow-but-
+working connection waits indefinitely for the full response instead of falling back. Reported concretely:
+a user with the full 48 MB offline download already in place still saw slow/broken reader loads on 3G,
+because the JSON+font content being local doesn't help when the *document* itself is still gated on a
+slow network round-trip. Timeout-tuning `NetworkFirst` was considered and rejected in favor of getting
+`CacheFirst`'s actual speed back — instant regardless of connection quality — once it can be done without
+reintroducing Addendum 1's incident.
+
+**What makes it safe this time — four independent pieces, not a strategy swap alone:**
+
+1. **Cache name is auto-versioned per deploy**, not manually bumped — `reader-html-{hash}`, decoupled
+   from `PAGES_CACHE_VERSION` (which stays reserved for font/JSON data-shape changes only — unchanged
+   scope). Every deploy gets a clean, empty cache namespace for this route; there is no version to
+   forget to bump. The hash is a cheap non-cryptographic checksum of the precache manifest Serwist
+   itself injects into `self.__SW_MANIFEST` at build time — every entry's `revision` is a content hash,
+   so this changes whenever any precached asset changes, true on effectively every real deploy. A
+   webpack `DefinePlugin` custom value (`webpackCompilationPlugins`, injecting a build timestamp) was
+   tried first, as planned, and silently never fired — see Implementation Notes below.
+2. **`activate` deletes stale `reader-html-*` caches**, leaving `pages-v{N}` (the 48 MB user-downloaded
+   font/JSON cache, plus the offline-navigation fallback document — see point 5) untouched. Without
+   this, every deploy leaves the previous version's cached HTML orphaned in Cache Storage indefinitely.
+3. **`skipWaiting`/`clientsClaim` stay `true`, unchanged.** No app-wide update-consent gate. A prior
+   draft of this addendum considered flipping `skipWaiting` to require user consent before any new SW
+   activates at all — rejected: SW updates are all-or-nothing for the whole app, so that would have
+   gated every future fix (offline-download logic, marks, push notifications) behind a manual tap, not
+   just reader HTML.
+4. **A `controllerchange`-driven banner**, not silent reload. `clientsClaim` alone does not force a new
+   document request from an already-open tab — most in-app navigation is client-side, so the reader-HTML
+   document handler may not fire again for the rest of a long session (an independent review surfaced
+   this: a backgrounded-not-relaunched installed PWA, common on iOS/Android, can sit on stale app-shell
+   code indefinitely without ever making a new request). Once a new SW has taken control in the
+   background (`controllerchange` fires), a lightweight "new version available" banner prompts a reload
+   rather than forcing one — a silent reload would drop the user's reading scroll position mid-session.
+
+**Matcher precision (found by an independent Codex review of this addendum before it shipped):**
+`isSelfReaderPage` matches on `url.pathname` alone, with no request-mode check, and is registered ahead
+of `...defaultCache` in the `runtimeCaching` array — so it currently wins over Serwist's own dedicated
+RSC matcher for the *same URL*. A soft-nav to an unmounted reader page (`SurahListItem`/`RubList`/
+`ContinueReadingLink`, Addendum 3) issues an `RSC: 1` fetch to that exact path. Under `NetworkFirst` this
+was latent but harmless (both paths hit network regardless); under `CacheFirst` it is not — an RSC
+flight-data payload could get cached in `reader-html-{hash}` and later served back for a plain
+document request expecting real HTML, the same failure shape as `docs/plans/fix-rsc-cache-poisoning.md`,
+relocated to the service-worker layer. **Fix:** `isSelfReaderPage`'s matcher gains a `request.mode ===
+"navigate"` guard, so RSC-flagged fetches fall through to `defaultCache`'s own RSC rule instead.
+
+**Known, accepted residual risk — CDN staleness can get pinned for a whole deploy.** [ADR 0035](0035-bounded-revalidate-on-static-document-routes.md)
+already bounds Hostinger's edge cache to 5 minutes for these routes. Under `NetworkFirst`, that window
+self-heals on every request. Under `CacheFirst`, the *first* fetch that populates a fresh deploy's new
+cache name — if it happens to land inside that 5-minute post-deploy window — can pin a stale-but-recent
+response for the entire deployment's lifetime, not just 5 minutes. This project's own prior incident
+(`fix-rsc-cache-poisoning.md`) established that Hostinger strips query params from its cache key, so a
+cache-busting query param on the SW's populate-fetch will not reliably defeat this. **Accepted knowingly**
+(2026-08-15): the exposure is rare (must land in a 5-minute window) and no client-side fix reliably
+closes it against this specific CDN's behavior; the failure shape, if it ever hits, matches Addendum 1's
+original incident. Revisit if it is ever actually observed — a deploy-time cache-warm/purge step against
+Hostinger's edge would be the real fix, out of scope here.
+
+**Fallback document reconciliation.** Addendum 3's offline-navigation fallback document (`/{locale}/pages/1`)
+was precached into `pages-v{N}` at `install`, sharing that cache with the font/JSON precache. It moves to
+`reader-html-{hash}` alongside the rest of the reader-HTML cache, so it also auto-refreshes per deploy
+instead of being fetched once at first install and never revalidated (a smaller instance of the same
+staleness class this addendum otherwise fixes).
+
+**Implementation note (2026-08-16): the planned `webpackCompilationPlugins` mechanism doesn't work —
+found and fixed during the build, not left in.** The plan called for a webpack `DefinePlugin` injecting a
+build timestamp via `@serwist/next`'s `webpackCompilationPlugins` option, targeting
+`process.env.READER_HTML_BUILD_STAMP`. It builds cleanly with no error or warning, but the value is
+silently unset at runtime — confirmed by inspecting the built `public/sw.js`, which showed a genuine
+`require("process")`-shaped runtime property read instead of an inlined string literal. The worker-target
+child compilation resolves bare `process` through its own polyfill; that appears to resolve before
+DefinePlugin's matcher can fire on the `process.env.X` expression, though the exact precedence was not
+conclusively isolated. Retargeting the define at a `self.__READER_HTML_BUILD_STAMP__` global instead
+(matching this file's own `self.__SW_MANIFEST` precedent) hit the identical failure — inspected the same
+way, same result. Given the failure mode is silent (no build error, `?? "dev"` just quietly wins every
+time) rather than loud, and would have reintroduced this Addendum's whole reason for existing — every
+deploy producing the same cache name, never busting — it was not left as a "probably fine" guess.
+
+**Shipped instead:** the cache-name hash is derived from the precache manifest Serwist already injects
+into `self.__SW_MANIFEST` at build time (`app/sw.ts`'s `hashString(JSON.stringify(precacheManifest))`,
+where `precacheManifest` is `self.__SW_MANIFEST` captured once — InjectManifest requires that exact
+global be referenced exactly once in the source and fails the build otherwise). This reuses a mechanism
+already proven correct in this exact build (verified: the injected manifest's real per-deploy content
+hashes and build-ID-scoped asset URLs are directly visible in `public/sw.js`) rather than a second,
+unverified build-time injection path. Verified end to end: a full `npm run build:local` production build
+succeeds, `offline-ar.html`/`offline-en.html` are present in the precache manifest, and the reader-HTML
+cache name resolves to a real computed hash rather than the `"dev"` fallback.
+
+See `docs/plans/pwa-offline-support.md` Addendum 4 for the full file-level implementation and the
+route-aware `setCatchHandler` fix shipped alongside it.
+
 **What NOT to do:** do not precache all 604 pages' HTML to solve this — that reopens the exact ~1.5 GB problem the original decision rejected. Do not make the fallback document depend on the bulk download being complete — it must work as the very first thing a fresh install can serve offline, before any consent-gated download has run.
