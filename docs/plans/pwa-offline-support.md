@@ -375,3 +375,215 @@ Actual files touched during implementation (supersedes the draft list from plann
 - Full offline support: any of the 604 precached pages must open offline even if never previously visited/swiped to (not just the last-read page) — user confirmed 2026-08-12.
 - The offline indicator/download button stays in the Settings sidebar (not the nav surah/rub sidebar) — user confirmed 2026-08-12; the existing `OfflineAccessSection` location is correct, its non-appearance was the fullscreen-detection bug, not a placement problem.
 - A brief page-1 flash before `jumpTo` corrects to the requested page is accepted, not solved further — inherent to any fallback-document approach, and consistent with the first-run gate's own accepted round-trip flash (Addendum 2).
+
+---
+
+# Addendum 4 (2026-08-15): CacheFirst reader HTML + route-aware offline fallback
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + full `build:local` production build verified; not yet
+browser/offline-verified — see Manual Verification below)
+**Trello:** https://github.com/furqan-app/web/issues/312 (#312)
+**ADR:** [0014 Addendum 4](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Manual Verification
+
+Not exercised in a browser this session. `npx tsc --noEmit`, `npm run lint`, and
+`npm run build:local && next build` all pass clean, and the built `public/sw.js` was directly inspected
+to confirm: `offline-ar.html`/`offline-en.html` are in the precache manifest; the reader-HTML cache name
+resolves to a real computed hash (not the `"dev"` fallback); `CacheFirst` with the `request.mode ===
+"navigate"` guard is in place. Per `docs/standards/pwa-testing.md`, none of this is reachable via
+`npm run dev` (Serwist is disabled there) — verify with `npm run build:local && npm start`:
+
+- Load a reader page while online, go offline, reload it → served instantly from
+  `reader-html-{hash}` (`CacheFirst`), no network wait.
+- Deploy again (or force a manifest change) and confirm the reader page's HTML actually updates on the
+  next online load rather than staying pinned to the old cached response.
+- Trigger a `controllerchange` (e.g. update `public/sw.js` and reload) and confirm the banner appears,
+  "Refresh" reloads onto the new version, and "Later" dismisses without reloading.
+- Go offline and navigate to a non-reader route with no prior cache entry (e.g. `/plans` cold) →
+  confirm the new `offline-{locale}.html` renders, not Quran page 1.
+- Confirm the existing reader offline-navigation fallback (Addendum 3: page-1 fallback + pre-paint
+  `jumpTo` self-correction, ADR 0042) still works unchanged.
+
+## Summary
+
+Two reports bundled under one card:
+
+1. A user with the full 48 MB offline download already in place still saw slow/broken reader loads on
+   3G — the JSON+font content being local doesn't help when the reader-page *document* itself
+   (`isSelfReaderPage`) is `NetworkFirst` with no timeout, so a slow-but-working connection just hangs
+   instead of falling back.
+2. `setCatchHandler` is global and always serves the Quran page-1 fallback document for *any* failed
+   navigation, including non-reader routes. Offline, a failed nav to `/plans` (or any other DB-backed
+   route) shows Quran page 1's content at that URL with no way to self-correct — unlike the reader
+   route, there is no `jumpTo`-equivalent for these routes, so the user is stuck looking at the wrong
+   app entirely.
+
+## Root Cause / Approach
+
+**(1)** Timeout-tuning `NetworkFirst` was considered first and rejected: it still leaves every reader
+load waiting up to the timeout on a real 3G connection, and a timeout short enough to feel fast (2-3s)
+would fire on almost every 3G load of a reader page, since that route's SSR HTML is ~2.6 MB — at the Fast
+3G throughput already measured for this app (~195 KB/s, `fix-page-turn-blank-slow-network.md`), that's
+~13s of pure transfer. The chosen approach instead restores `CacheFirst`'s actual speed — instant
+regardless of connection quality — while specifically avoiding Addendum 1's original failure mode. Full
+mechanism and the risks found while designing it (independently, by two separate reviews — a fresh
+Sonnet agent and a Codex CLI review) are recorded in ADR 0014 Addendum 4; summarized in the decision
+tree below.
+
+**(2)** `serwist.setCatchHandler` never distinguished which route the failed navigation was for. Made
+route-aware: reader-page paths keep the existing Quran page-1 fallback + `jumpTo` self-correction
+(Addendum 3, unaffected); every other path gets a new, small, dedicated offline-fallback document.
+
+## Decision Tree / Algorithm
+
+### Reader-page HTML caching
+
+| Piece | Before | After |
+|---|---|---|
+| Strategy | `NetworkFirst`, no timeout | `CacheFirst` |
+| Cache name | `pages-v{N}` (`PAGES_CACHE_VERSION`, manually bumped) | `reader-html-{hash}` (auto — a checksum of Serwist's own `self.__SW_MANIFEST` precache manifest, which changes on every real deploy; a webpack `DefinePlugin` build-stamp was tried first per the original plan and silently didn't work, see ADR 0014 Addendum 4's Implementation Note) |
+| Matcher | `url.pathname` only | adds `request.mode === "navigate"` guard, so RSC-flagged fetches to the same path fall through to `defaultCache`'s own RSC rule instead of being swallowed here |
+| `activate` | none | new listener deletes stale `reader-html-*` caches; must not touch `pages-v{N}` |
+| `skipWaiting`/`clientsClaim` | `true`/`true` | unchanged |
+| Update visibility | none | `controllerchange` listener → "new version available" banner → tap → reload (prompt, not silent — avoids losing reading scroll position) |
+| Offline-nav fallback doc (`/{locale}/pages/1`) | precached into `pages-v{N}` at `install` | moves to `reader-html-{hash}`, so it also auto-refreshes per deploy instead of being cached once and never revalidated |
+
+### `setCatchHandler` routing
+
+| Failed navigate request | Today | After |
+|---|---|---|
+| `/{locale}/pages/{id}` (reader) | Quran page-1 fallback, `jumpTo` self-corrects pre-paint (ADR 0042) | unchanged |
+| `/`, `/{locale}` (home) | Quran page-1 fallback shown, stuck | new dedicated offline-fallback document |
+| any other route (`/plans`, `/settings`, …) | Quran page-1 fallback shown, stuck | new dedicated offline-fallback document |
+
+New fallback document: static files (`public/offline-ar.html` / `public/offline-en.html`), same pattern
+as `launch.html` (ADR 0042) — no React runtime, no CDN-poisoning exposure, byte-identical per locale,
+trivially precached via `globPublicPatterns`. Locale picked the same way `fallbackDocumentUrl()` already
+resolves it. No self-correction is possible for these routes (no `jumpTo`-equivalent for `/plans`, etc.)
+— this is a terminal "can't load this page, check your connection" state, not a flash-then-corrects one.
+
+## Verified Test Cases
+
+Walked through across two independent reviews (fresh Sonnet agent, then a Codex CLI review with direct
+read access to `app/sw.ts`/ADR 0014/DECISIONS.md) before this was locked in:
+
+- **Repeat visit to a previously-cached reader page, any connection speed** → instant from
+  `reader-html-{hash}`, no network round-trip.
+- **First visit to a reader page after a fresh deploy** → cache miss on the new build stamp → network
+  fetch (same speed characteristics as today's `NetworkFirst`) → cached for every subsequent load until
+  the next deploy.
+- **Soft-nav (sidebar/rub tap) to an unmounted reader page** → `RSC: 1` header present → `request.mode
+  !== "navigate"` → falls through to `defaultCache`'s RSC rule, not `isSelfReaderPage` → no risk of RSC
+  flight-data getting cached as if it were a document response (the bug Codex's review caught).
+- **A user reopens/backgrounds-then-foregrounds the installed PWA for a long session without a fresh
+  navigation** → `clientsClaim` alone doesn't force a new request, so the reader-HTML document handler
+  may not fire again all session → the `controllerchange` banner is what actually bounds this, not the
+  versioning alone (the gap the Sonnet review caught) — user sees the banner once the new SW has taken
+  control, taps to refresh.
+- **A deploy lands and the very first cache-populating fetch for a page happens to hit Hostinger's CDN
+  inside its 5-minute post-deploy staleness window (ADR 0035)** → that stale-but-recent response gets
+  pinned in `reader-html-{hash}` for the rest of the deployment's lifetime, not just 5 minutes —
+  accepted residual risk, not fixed further here (see ADR 0014 Addendum 4).
+- **Offline nav to `/plans` from a never-visited state** → today: Quran page 1 shown, stuck. After: the
+  new offline-fallback document, no wrong-app content shown.
+- **Offline nav to a reader page** → unchanged from Addendum 3 — Quran fallback + pre-paint `jumpTo`
+  self-correction (ADR 0042), not touched by this addendum.
+- **Marks** → untouched. `/api/*` routes are a separate matcher (`defaultCache`'s `apis` rule, already
+  timed at 10s) and marks are online-only by explicit design (Constraints, above) — nothing in this
+  addendum changes that.
+
+## Files to Change
+
+Actual files touched during implementation (supersedes the draft list from planning — the cache-name
+mechanism changed from the planned webpack `DefinePlugin` build-stamp to a hash of Serwist's own precache
+manifest; see ADR 0014 Addendum 4's Implementation Note for why):
+
+- `app/sw.ts`
+  - `isSelfReaderPage`'s rule: `NetworkFirst` → `CacheFirst`; cache name `READER_HTML_CACHE_NAME`
+    (`reader-html-{hash}`, derived locally from `self.__SW_MANIFEST`, captured once as `precacheManifest`
+    since InjectManifest requires that exact global be referenced exactly once in the source); matcher
+    gains `request.mode === "navigate"`.
+  - New `hashString` helper — cheap non-cryptographic checksum, no new dependency.
+  - New `activate` listener: deletes cache names matching the `reader-html-` prefix other than the
+    current `READER_HTML_CACHE_NAME`. Does not touch `PAGES_CACHE_NAME`.
+  - `install` listener: fallback-document precache (`fallbackDocumentUrl`) moves from `PAGES_CACHE_NAME`
+    to `READER_HTML_CACHE_NAME`.
+  - `setCatchHandler`: branches on `isSelfReaderPage(url)` — reader paths keep the existing fallback
+    (now read from `READER_HTML_CACHE_NAME`); everything else serves the new `offlineFallbackUrl(locale)`
+    document via `serwist.matchPrecache`.
+- `app/constants/offline.ts` — `offlineFallbackUrl(locale)` alongside the existing
+  `fallbackDocumentUrl(locale)`. (`READER_HTML_CACHE_NAME` ended up SW-only — nothing client-side needs
+  it, so it's declared directly in `app/sw.ts` rather than re-exported here.)
+- `next.config.mjs` — `offline-ar.html`/`offline-en.html` added to `globPublicPatterns` alongside the
+  existing app-shell entries. (The planned `webpackCompilationPlugins`/`DefinePlugin` addition was tried,
+  found not to work, and removed rather than left in — see ADR 0014 Addendum 4.)
+- `middleware.ts` — `offline-ar.html`/`offline-en.html` added to the `intl-middleware` matcher exclusion
+  list, the same trap `launch.html` and the PWA icons hit before (ADR 0042; `pwa-offline-support.md`
+  Addendum 1).
+- `public/offline-ar.html`, `public/offline-en.html` — new. Static, no build step, same pattern as
+  `public/launch.html` (ADR 0042).
+- `app/hooks/use-sw-update.ts` — new. Listens for `controllerchange`, ignoring the first one for a given
+  page load (that fires on a tab's initial SW activation too, not just an update); exposes
+  `{ updateAvailable, reload }`.
+- `app/components/offline/SwUpdateBanner.tsx` — new. Full-width top bar (every other fixed PWA surface
+  anchors a bottom corner, so this needed no offset coordination with them); "Refresh" reloads, "Later"
+  dismisses for the session without reloading.
+- `app/[locale]/layout.tsx` — mounts `<SwUpdateBanner />` alongside the existing offline surfaces.
+- `messages/en.json`, `messages/ar.json` — new `swUpdate.*` namespace (no ICU placeholders, so the
+  project's `use-translations` wrapper is safe to use here per `docs/standards/i18n.md`).
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 4, plus an Implementation Note
+  added post-build.
+- `docs/architecture/DECISIONS.md` — PWA section amended.
+
+## Constraints
+
+- `PAGES_CACHE_VERSION`/`PAGES_CACHE_NAME` stay scoped to font/JSON data-shape changes only — do not
+  fold the reader-HTML cache into it, and do not let `BUILD_STAMP` influence it either. The two must
+  bump independently: a deploy always changes `BUILD_STAMP`, but must not force-invalidate the 48 MB
+  user download or re-trigger its consent gate.
+- The `activate` cleanup must match on the `reader-html-` prefix only — it must never delete
+  `PAGES_CACHE_NAME`, any Serwist-managed precache cache, or a cache it doesn't recognize.
+- The update banner must prompt, never silently reload — a silent reload mid-reading loses scroll
+  position (Decisions Made, ADR 0014 Addendum 4).
+- The new offline-fallback documents must stay static (no React runtime), matching `launch.html`'s
+  rationale: no CDN-poisoning exposure, byte-identical per user, trivially precached.
+- Marks (`/api/*`) are untouched by this addendum — do not add a `networkTimeoutSeconds` or strategy
+  change to the `apis` matcher as part of this work; out of scope.
+
+## What NOT to Do
+
+- Do not manually bump a version number for the reader-HTML cache — that's exactly the mistake
+  Addendum 1's incident traces back to (a version string that's easy to forget to bump). `BUILD_STAMP`
+  must be automatic.
+- Do not flip `skipWaiting`/`clientsClaim` to gate SW activation behind user consent. Considered and
+  rejected — SW updates are all-or-nothing for the whole app, so that would gate every future fix (not
+  just reader HTML) behind a manual tap. See ADR 0014 Addendum 4.
+- Do not attempt to defeat the Hostinger CDN-staleness residual risk with a cache-busting query
+  parameter on the SW's populate-fetch — already proven not to work against this CDN specifically
+  (`fix-rsc-cache-poisoning.md`: Hostinger strips query params from its cache key).
+- Do not widen the timeout-tuning approach for `isSelfReaderPage`/RSC/RSC-prefetch that was explored
+  earlier in this task's investigation — superseded by the `CacheFirst` direction above. (RSC-prefetch's
+  own missing timeout in `defaultCache` remains a real, separate gap, but is out of scope here — it
+  isn't on the reader's critical path the way `isSelfReaderPage` was.)
+- Do not give the new non-reader offline-fallback document any self-correction/`jumpTo`-equivalent
+  logic — there is nothing route-specific to correct *to* for `/plans` or `/settings`; it is a terminal
+  state, not a flash-then-corrects one.
+
+## Decisions Made
+
+- **`CacheFirst` + auto-versioned cache + update banner, over timeout-tuned `NetworkFirst`** — user
+  confirmed 2026-08-15, after two independent second opinions (fresh Sonnet agent, then Codex CLI)
+  weighed both directions.
+- **`skipWaiting`/`clientsClaim` stay unchanged, no app-wide consent gate** — user confirmed 2026-08-15,
+  after the app-wide-gating alternative was raised and found unnecessary given the `controllerchange`-
+  banner approach achieves the same freshness guarantee without it.
+- **The Hostinger CDN-staleness residual risk is accepted, not further mitigated** — user confirmed
+  2026-08-15, after it was found by an independent Codex review and weighed explicitly against reverting
+  to timeout-tuned `NetworkFirst`.
+- **Route-aware `setCatchHandler`, not proactive `navigator.onLine` detection, as the primary fix for
+  non-reader routes** — the independent Sonnet review recommended this specifically: `navigator.onLine`
+  is unreliable (false positives on captive portals) and doesn't cover slow-but-connected cases, which
+  the catch handler already covers regardless of cause. A proactive online/offline banner remains
+  possible future polish, not attempted here.

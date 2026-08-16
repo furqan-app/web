@@ -24,7 +24,17 @@ const withSerwist = withSerwistInit({
   // `launch.html` is the PWA's start_url (ADR 0042) — precaching it here is what
   // makes an offline cold launch redirect instead of falling through to the
   // service worker's catch handler. ~1 KB, so it fits the app-shell pin above.
-  globPublicPatterns: ['icon.svg', 'icons/**/*', 'quran/chapters.json', 'launch.html'],
+  // `offline-{ar,en}.html` (ADR 0014 Addendum 4) are the non-reader-route
+  // offline fallback documents `setCatchHandler` serves in app/sw.ts — same
+  // static, no-React-runtime shape as launch.html, same reason to precache here.
+  globPublicPatterns: [
+    'icon.svg',
+    'icons/**/*',
+    'quran/chapters.json',
+    'launch.html',
+    'offline-ar.html',
+    'offline-en.html',
+  ],
 });
 
 /** @type {import('next').NextConfig} */

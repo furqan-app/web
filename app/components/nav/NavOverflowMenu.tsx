@@ -65,7 +65,15 @@ export const NavOverflowMenu = ({ className }: Props = {}) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
   const closeMenu = () => setOpen(false);
-  useCloseOnBackGesture(open, closeMenu);
+  const { notifyNavigating } = useCloseOnBackGesture(open, closeMenu);
+  // Rows that navigate via a `<Link>` (SharedMushafLink, UserMenu's My
+  // Marks/My Plans) must use this instead of `closeMenu` directly — see
+  // ADR 0043's 2026-08-16 addendum for why the guard can't infer "closed
+  // because of a navigation" from timing alone.
+  const closeMenuAndNotify = () => {
+    notifyNavigating();
+    closeMenu();
+  };
 
   return (
     <>
@@ -86,13 +94,13 @@ export const NavOverflowMenu = ({ className }: Props = {}) => {
             <SheetDescription className="sr-only">{t("nav.more", "More")}</SheetDescription>
           </SheetHeader>
           <div className="flex flex-col gap-1 pb-[env(safe-area-inset-bottom,0px)]">
-            <SharedMushafLink menuRow onNavigate={closeMenu} />
+            <SharedMushafLink menuRow onNavigate={closeMenuAndNotify} />
             <NotificationBell menuRow container={sheetContentEl} />
             {/* md+ has a direct Account dropdown in Nav's row (one-click
                 access to My Marks/My Plans) — this row would be redundant
                 there. Mobile keeps it, where nav space is tight. */}
             <div className="md:hidden">
-              <UserMenu menuRow container={sheetContentEl} onNavigate={closeMenu} />
+              <UserMenu menuRow container={sheetContentEl} onNavigate={closeMenuAndNotify} />
             </div>
             <button
               aria-label={t("settings", "Settings")}
