@@ -202,3 +202,84 @@ Walked through with the user (2026-08-15):
   no-op back press) rather than risk undoing the real navigation (user-confirmed).
 - The pre-existing `AndroidBackExitGuard` flicker/skipped-toast bug is split into its own GitHub issue
   and explicitly out of scope here (user-confirmed).
+
+## Addendum — jumpTo overwrites the surah-sidebar's guard entry before it can pop (2026-08-16)
+
+**Type:** bug (speculative fix, unconfirmed root cause)
+**Issue:** [#321](https://github.com/furqan-app/web/issues/321)
+
+### Bug
+
+Android standalone PWA only (not a browser tab, not reproducible via simulated clicks in a desktop
+browser — confirmed by testing). Tapping a surah in the sidebar (`SurahListItem`) sometimes leaves the
+reader's visible content on the old page; it only shows the target page after a subsequent swipe.
+Distinct from #320 (the surah-name badge bug fixed earlier in this same branch) — here the actual
+rendered Quran text is wrong, not just the label.
+
+### Suspected mechanism
+
+`SurahListItem`'s `onClick` calls `setOpen(false)` (closing the sidebar) then, for a plain click,
+`jumpTo(surahStartingPage)` — which calls `window.history.replaceState(null, "", newUrl)` synchronously,
+in the same tick, **before** React has processed the `setOpen(false)` state update or run any effect
+cleanup. On standalone mobile/tablet, `Sidebar` is wired to `useCloseOnBackGesture(open, () =>
+setOpen(false))` (this same plan, above) — while the sidebar was open it pushed a guard history entry.
+That entry is still the current top of the history stack at the moment `jumpTo` fires, so
+`replaceState`'s target is the guard's own entry, not the pre-sidebar page-N entry beneath it.
+
+This does **not** structurally match the `NavOverflowMenu`/`SettingsSidebar` sibling-guard collision
+this plan already fixed (both sides of that one were React effects racing each other; here, `jumpTo`'s
+`replaceState` is an imperative call that always wins the race, running before the guard's own
+microtask-deferred cleanup gets a chance to check anything). Tracing `useCloseOnBackGesture`'s cleanup
+against this ordering, it actually degrades gracefully on its own terms — by the time its deferred check
+runs, `window.history.state` no longer matches its `fqOverlayGuardId`, so it takes the safe "entry no
+longer on top, leave it as a harmless orphan" branch (same file, same behavior already accepted for the
+link-tapped-inside-an-overlay case above) — it does not call `history.back()` and does not appear to
+corrupt anything by itself.
+
+**Confidence note:** the deeper mechanism this project has hit before (ADR 0040's addendum, `#288`) —
+Next's history patch stamping the router's current tree onto whatever object `replaceState` is handed,
+then a later `ACTION_RESTORE` restoring a stale one — requires the **same state object** to be reused
+across calls to bite. `jumpTo` passes a literal `null` each call, which Next's patch should treat as
+fresh every time, not a reused reference. So this addendum's fix is a **speculative, testable** attempt
+based on the one concrete structural gap found (`jumpTo`'s `replaceState` unconditionally firing before
+the guard's cleanup settles), not a confirmed root cause — the standalone PWA environment could not be
+reproduced or instrumented directly (no on-device console access in this session). If this fix does not
+resolve it, the next step is on-device remote debugging (Android `chrome://inspect`) to capture the
+actual `ACTION_RESTORE`/history state at the moment of failure.
+
+### Approach
+
+Defer `jumpTo`'s call by one tick (`setTimeout(fn, 0)`) so it runs after React has committed the
+`setOpen(false)` update and run `useCloseOnBackGesture`'s effect cleanup (which itself defers its own
+check to a microtask — a `setTimeout(0)` task is comfortably after both). This restores the intended
+ordering: the guard's entry is settled (popped, if still on top) before `jumpTo` touches history, so
+`jumpTo` always operates on the real page-N entry, never the guard's. `requestAnimationFrame` was tried
+first and rejected — it depends on the document actively compositing frames, so it is throttled or never
+fires while the tab/PWA is backgrounded or occluded, which a navigation must not silently depend on;
+`setTimeout` has no such dependency. Scoped to `SurahListItem` only — `RubList`/`ContinueReadingLink`
+call the same `jumpTo`, but the reported bug is specific to the surah sidebar's
+guarded-overlay-close-then-jump sequence; deferring elsewhere without a matching report would be
+unmotivated scope creep.
+
+### Files to Change
+
+- `app/components/SurahListItem.tsx` — wrap the `jumpTo(surahStartingPage)` call in
+  `setTimeout(() => jumpTo(surahStartingPage), 0)`. `setPinnedSurahId` (issue #320's fix) stays
+  synchronous — it only needs to land before `jumpTo`'s eventual `setAnchor`, not before the guard
+  settles.
+
+### Constraints
+
+- Do not touch `jumpTo`/`commitTo`'s core `history.replaceState`-based navigation — deliberate
+  architecture (ADR 0028, `DECISIONS.md` "Reader Navigation — Persistent Client Pager"), not the bug.
+- Do not revert to `router.push` for sidebar navigation — the whole point of `replaceState` here is to
+  bypass Next's router/RSC remount for in-reader page changes; reverting would reintroduce the
+  performance regression ADR 0028 exists to fix.
+
+### What NOT to Do
+
+- Do not assume this fix is confirmed correct — it addresses the one structural gap found via static
+  tracing, not a live-instrumented root cause. Report back after on-device testing; if unresolved, escalate
+  to remote-debugging the actual device rather than iterating on more speculative timing changes blind.
+- Do not extend the `requestAnimationFrame` defer to `RubList`/`ContinueReadingLink` without a matching
+  reported symptom there.

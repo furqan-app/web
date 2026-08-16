@@ -31,7 +31,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const { open, setOpen, setCurrentSurah } = useSidebar();
+  const { open, setOpen, setCurrentSurah, pinnedSurahId, setPinnedSurahId } = useSidebar();
   const pathname = usePathname();
   useCloseOnBackGesture(open, () => setOpen(false));
   const [activeTab, setActiveTab] = useState("surahs");
@@ -40,7 +40,20 @@ const Sidebar = ({ surahs, rubs }: Props) => {
 
   const pageNumber = parseInt(pathname?.match(/\/pages\/(\d+)/)?.[1] ?? "0", 10);
 
+  // A page can host more than one surah (e.g. page 604 hosts 112/113/114), so
+  // "last surah starting on/before this page" can't tell which one the reader
+  // actually navigated to. SurahListItem pins the tapped surah's id; it's
+  // trusted only while pageNumber still falls inside that surah's own range —
+  // once the reader leaves it (swipe, arrow, another jump), the pin is
+  // invalidated below and page-derivation takes back over.
+  const pinnedSurah = pinnedSurahId ? (surahs.find((s) => s.id === pinnedSurahId) ?? null) : null;
+  const pinnedSurahValid =
+    pinnedSurah != null &&
+    parseInt(pinnedSurah.pages.split("-")[0], 10) <= pageNumber &&
+    pageNumber <= parseInt(pinnedSurah.pages.split("-")[1], 10);
+
   const activeSurah =
+    (pinnedSurahValid ? pinnedSurah : null) ??
     surahs.findLast((s) => parseInt(s.pages.split("-")[0], 10) <= pageNumber) ??
     surahs[0] ??
     null;
@@ -49,6 +62,22 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     rubs.findLast((r) => r.startVerse.page_number <= pageNumber) ??
     rubs[0] ??
     null;
+
+  // Keyed on pageNumber alone, deliberately: the pin is set in the same event
+  // handler as jumpTo's history.replaceState, but Next's app router syncs
+  // usePathname() to that URL change on a LATER render, not the same one — so
+  // right after pinning, this component can still render once with the OLD
+  // pageNumber while pinnedSurahId already points at the NEW surah. Keying on
+  // [pinnedSurahId, pinnedSurahValid] would re-run on that stale render and
+  // clear the pin before pathname ever catches up (pinnedSurahValid reads
+  // false against the old page), silently reproducing the bug this pin
+  // exists to fix. Keying on pageNumber only defers the validity check to the
+  // render where pageNumber has actually changed — either to a page still
+  // inside the pinned surah's range (kept) or outside it (cleared).
+  useEffect(() => {
+    if (pinnedSurahId && !pinnedSurahValid) setPinnedSurahId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageNumber]);
 
   useEffect(() => {
     setCurrentSurah(

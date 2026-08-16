@@ -20,7 +20,7 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
-  const { setOpen } = useSidebar();
+  const { setOpen, setPinnedSurahId } = useSidebar();
   const { jumpTo } = useReaderNavigation();
 
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -39,7 +39,21 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
         // left-click only; modified/middle clicks fall through to the href.
         if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
-        jumpTo(surahStartingPage);
+        // Tell Sidebar exactly which surah this was — page number alone can't
+        // disambiguate a page that hosts more than one surah (see Sidebar.tsx).
+        setPinnedSurahId(surah.id);
+        // Deferred a tick (issue #321): on standalone mobile/tablet,
+        // useCloseOnBackGesture (armed by setOpen(false) above) still owns the
+        // top-of-history entry at this exact tick — jumpTo's replaceState runs
+        // synchronously, before React has even processed setOpen(false), let
+        // alone run that hook's cleanup. setTimeout(0) lands after both the
+        // commit and the cleanup's own microtask-deferred check, so jumpTo
+        // always touches the real page-N entry instead of racing the guard
+        // for it. Deliberately setTimeout, not requestAnimationFrame — rAF is
+        // throttled/never fires while the document isn't actively compositing
+        // (backgrounded/occluded), which a deferred navigation must not
+        // depend on. See docs/plans/close-overlays-on-back-swipe.md, Addendum.
+        setTimeout(() => jumpTo(surahStartingPage), 0);
       }}
       data-surah-id={surah.id}
       className={cn(
