@@ -36,9 +36,6 @@
   "quranFontSize": "حجم الخط",
   "pageView": "عرض الصفحة",
   "appearance": "المظهر",
-  "tajweedMode": "ألوان التجويد",
-  "tajweedModeLabel": "تلوين أحكام التجويد",
-  "tajweedModeDescription": "إبراز أحكام التلاوة مثل الإدغام والإخفاء والقلقلة والمد بالألوان",
   "keepScreenAwake": "الشاشة",
   "keepScreenAwakeLabel": "إبقاء الشاشة مضاءة",
   "keepScreenAwakeDescription": "منع شاشة جهازك من الإغلاق التلقائي أثناء فتح التطبيق",
@@ -47,7 +44,20 @@
     "dark": "داكن",
     "gold": "ذهبي"
   },
-  "offlineAccess": "الوصول دون اتصال",
+  "mushafLayout": {
+    "title": "تخطيط المصحف",
+    "switchAction": "التبديل إلى هذا المصحف",
+    "active": "نشط",
+    "downloaded": "تم التنزيل",
+    "editions": {
+      "2": {
+        "name": "مصحف مجمع الملك فهد (طبعة ١٤٠٥هـ)"
+      },
+      "19": {
+        "name": "مصحف التجويد"
+      }
+    }
+  },
   "offline": {
     "gateTitle": "اقرأ القرآن بدون إنترنت",
     "sizeNotice": "حوالي {size} ميجابايت. يُفضّل عبر Wi-Fi.",
@@ -69,7 +79,6 @@
     "installedBody": "نزّل القرآن الآن لتقرأه بدون إنترنت.",
     "checking": "جارٍ التحقق من التوفّر بدون إنترنت",
     "gateDescription": "اختر ما إذا كنت تريد تنزيل القرآن للقراءة بدون إنترنت.",
-    "madaniMushaf": "المصحف المدني",
     "resumeProgress": "تم تنزيل {cached} من {total} صفحة",
     "resume": "استئناف التنزيل",
     "notAvailableOffline": "لم يتم تنزيل هذه الصفحة بعد — اتصل بالإنترنت لقراءتها."

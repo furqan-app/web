@@ -105,3 +105,18 @@ Planning the schema change deferred since the Addendum above (`line_number` is m
 
 **Verified — the existing surah-banner gap-detection algorithm needs no logic changes.** `QuranSafha`'s banner/bismillah placement infers position generically from gaps in whichever line-number sequence it receives. Spot-checked against a real mid-page surah transition (page 106, An-Nisa → Al-Ma'idah): the gap sits at lines 6-7 under both `mushaf=2` and `mushaf=19` groupings, even though 6 other words on the page shift line by ±1 between the two. The algorithm just needs to run against the active grouping (`activeLines`) — not be rewritten. See Addendum 10 of `docs/plans/tajweed-mushaf-mode.md` for the full design.
 
+
+## Addendum 7: Tajweed precache exclusion narrowed to opt-in, not removed
+
+**Date:** 2026-08-17
+**Issue:** [#256 Unify Tajweed toggle + offline downloads into one Mushaf Layout setting](https://github.com/furqan-app/web/issues/256)
+
+The main body above (and `DECISIONS.md`'s Tajweed Mushaf Mode section) states tajweed fonts are excluded from the PWA precache outright, "since bulk-caching both editions would nearly triple the installed cache against a fragile iOS quota." That exclusion was written when the only precache trigger was install-time/first-run — automatic, or as close to it as ADR 0014 Addendum 2's explicit-tap model gets for a *single* edition offered once.
+
+**This addendum narrows, not reverses, that constraint.** The tajweed edition becomes downloadable from the Settings "Mushaf Layout" list, exactly like the default edition already is: a dedicated row, its own explicit tap, its own independent progress state (ADR 0014 Addendum 5). What remains true and unchanged:
+
+- The first-run gate and post-install prompt still offer the default edition only — a user who never opens Settings never downloads the ~51 MB tajweed font set.
+- Nothing downloads tajweed fonts automatically, in the background, or as a side effect of enabling Tajweed mode in the reader — switching the active edition (rendering) and downloading it for offline use remain fully independent actions.
+- The iOS quota risk this constraint exists to manage is real and unchanged (~138 MiB stored if a user downloads both) — it is now an informed user choice per edition, not a platform-wide default.
+
+**What NOT to do:** do not add tajweed fonts to any install-time or first-run bulk operation — the exclusion from *automatic* precache stands. Do not read this addendum as license to make Tajweed's Settings row auto-start a download, or to bundle it into the default edition's download.

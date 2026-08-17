@@ -3,6 +3,7 @@
 import useTranslations from "@hooks/use-translations";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
 import { OfflineDownloadPanel } from "@components/offline/OfflineDownloadPanel";
+import { DEFAULT_MUSHAF_ID } from "@utils/mushaf-editions";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +41,7 @@ export const OfflineSetupGate = () => {
     start,
     cancel,
     dismiss,
-  } = usePwaPrecache();
+  } = usePwaPrecache(DEFAULT_MUSHAF_ID);
 
   if (!isStandalone) return null;
   if (dismissed) return null;
