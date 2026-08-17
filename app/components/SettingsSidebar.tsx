@@ -8,6 +8,7 @@ import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { OfflineAccessSection } from "@components/offline/OfflineAccessSection";
+import { OfflineRecitationSection } from "@components/offline/OfflineRecitationSection";
 import { useQuranMushaf } from "@contexts/QuranMushafContext";
 import { DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID } from "@utils/mushaf-editions";
 import { useIsTablet } from "@hooks/use-is-tablet";
@@ -173,6 +174,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
           )}
           <EnablePushToggle />
           <OfflineAccessSection />
+          <OfflineRecitationSection />
         </div>
       </SheetContent>
     </Sheet>

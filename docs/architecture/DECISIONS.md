@@ -834,6 +834,20 @@ amends ADR 0024).
 
 ---
 
+## Offline Recitation Audio
+
+**Decision:** Users can download a surah's or a whole juz's recitation audio (for a chosen reciter) on the installed PWA, for playback without a connection. Settings gains an "Offline Recitation" row opening a dedicated sheet (reciter picker + by-surah/by-juz lists + a downloaded-items manager), gated the same way as the bulk page cache (`isStandaloneDisplayMode()` + online). Each download is **self-contained**: it caches that chapter's audio MP3 + its verse-timing metadata into a new `recitation-download-v{N}` cache, and its reader pages (JSON + font) plus the shared per-edition verse→page map into the **existing** `PAGES_CACHE_NAME` — the same cache the bulk 604-page download uses, so nothing is duplicated if a user does both. A new service-worker `CacheFirst` + `RangeRequestsPlugin` rule matches the QDC audio CDN host (`download.quranicaudio.com`, confirmed to send `access-control-allow-origin: *` and `accept-ranges: bytes`), so `<audio src>` — unchanged, still the live QDC URL — transparently resolves from cache offline with real seek support; `RecitationContext`'s playback code is untouched. Playing a downloaded item reuses the existing `PlaybackOverride` mechanism (start/stop verse bounds computed once at download time, no live stop-point DB lookup needed at play time) and, for a juz, the existing cross-chapter chaining logic. See [ADR 0046](adr/0046-offline-recitation-audio.md), and [ADR 0014](adr/0014-pwa-offline-architecture.md)/[ADR 0021](adr/0021-recitation-playback.md) for the systems it reuses.
+
+**Constraints:**
+- A juz's bounds (first/last verse, chapter list) are resolved from the `Rub` table (`(N-1)*8+1..N*8`), not a new static file — a juz is 8 consecutive rubs, and `RubVerseMapping` already gives each rub's chapters.
+- Whole chapters only — a juz download fetches every full chapter it touches, never a sliced/partial audio file. No audio-clipping pipeline exists or is planned.
+- A `localStorage` registry (`{reciterId, chapters: {chapterId, audioUrl}[], pages[], sizeBytes, downloadedAt}` per item — each chapter's `audioUrl` travels with it so deletion never needs a network call to know which cache key to remove) tracks what's deliberately downloaded — `cache.keys()` alone can't distinguish an intentional download from page assets merely shared with the bulk cache.
+- Deleting a download must reference-count its page assets against every other still-downloaded item, and must never evict a page if the full 604-page bulk cache is already complete (sentinel present) — that guarantee belongs to the bulk-download feature and must not regress because a recitation download was removed.
+- Playing a downloaded item first syncs `settings.reciterId` to that item's reciter if it differs (`play()` always reads `settings.reciterId`, it does not take one as an argument) before calling `play()`.
+- The download action itself does not go through service-worker message-passing (unlike the 604-page bulk walk) — it's a short enough, foreground-only client `fetch`+`cache.put()` sequence that doesn't need to survive tab backgrounding.
+
+---
+
 ## Mushaf Editions & Word Placement
 
 **Decision:** A mushaf is a typeset book, not a rendering of the text — a committee fixes the position of every word for that specific print edition. Each edition therefore owns its **complete** word placement, and page number, line number, glyph field and per-page font file form one inseparable unit per edition. There is no base edition with overrides. `MushafWordLayout(mushaf_id, word_id, page_number, line_number)` holds rows for mushaf 2 (QCF V1, default) and mushaf 19 (QCF V4 Tajweed) as equals; page-level summary data is per-edition too. See [ADR 0033](adr/0033-mushaf-edition-owns-word-placement.md).

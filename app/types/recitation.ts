@@ -65,3 +65,33 @@ export type PlaybackOverride = {
 
 // The publicly observable part of an active PlaybackOverride.
 export type ActiveOverride = Pick<PlaybackOverride, "id" | "label">;
+
+// One deliberately-downloaded recitation item (a surah or a whole juz), for a
+// specific reciter — audio differs per reciter, so the same surah under two
+// reciters is two separate entries. Persisted as a list in localStorage
+// (RECITATION_DOWNLOADS_KEY) — the source of truth for what's downloaded,
+// since Cache Storage's key list alone can't distinguish a deliberate
+// download from a page asset merely shared with the bulk PWA cache. See
+// docs/architecture/adr/0046-offline-recitation-audio.md.
+export type RecitationDownloadItem = {
+  kind: "surah" | "juz";
+  // chapterId for kind "surah", juz number (1-30) for kind "juz".
+  key: number;
+  reciterId: number;
+  label: string;
+  // The bounds a play(verseKey, overrides) call needs — resolved once at
+  // download time so playback never needs a live stop-point DB lookup.
+  startVerseKey: string;
+  stopVerseKey: string;
+  stopChapterId: number;
+  // Every chapter whose audio+metadata this download cached — its own
+  // resolved audioUrl travels with it so deletion never needs a network call
+  // to know which cache key to remove (one chapter for "surah", every
+  // chapter the juz touches for "juz").
+  chapters: { chapterId: number; audioUrl: string }[];
+  // Every default-edition mushaf page this download's reader pages span —
+  // used for reference-counted page-asset cleanup on deletion.
+  pages: number[];
+  sizeBytes: number;
+  downloadedAt: number;
+};

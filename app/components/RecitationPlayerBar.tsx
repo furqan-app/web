@@ -33,6 +33,7 @@ export const RecitationPlayerBar = () => {
     togglePlayPause,
     stop,
     openSettings,
+    playbackError,
   } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
   const pathname = usePathname();
@@ -125,7 +126,13 @@ export const RecitationPlayerBar = () => {
               </button>
             )}
           />
-          <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
+          {isIdle && playbackError === "offline-unavailable" ? (
+            <p className="truncate text-xs text-destructive">
+              {t("recitation.offlineUnavailable", "Not available offline")}
+            </p>
+          ) : (
+            <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
+          )}
         </div>
 
         {isOnReaderRoute ? (

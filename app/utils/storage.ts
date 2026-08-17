@@ -1,7 +1,7 @@
 import { DesktopQuranFontSize, QuranSafhaView } from "@types";
-import { RecitationSettings } from "@/app/types/recitation";
+import { RecitationDownloadItem, RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'lastReadPath' | 'keepScreenAwake';
+export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'lastReadPath' | 'keepScreenAwake' | 'recitationDownloads';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -26,6 +26,11 @@ type StorageValueType = {
   // Whether the mobile/tablet Wake Lock toggle is on. Default true, applied
   // when this key is absent (never written yet) — see KeepScreenAwakeContext.
   keepScreenAwake: boolean;
+  // Deliberately-downloaded offline recitation items (ADR 0046) — the source
+  // of truth for what's downloaded; Cache Storage alone can't tell a
+  // deliberate download apart from a page asset merely shared with the bulk
+  // PWA cache.
+  recitationDownloads: RecitationDownloadItem[];
 };
 
 export const storage = {

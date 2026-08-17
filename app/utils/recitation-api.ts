@@ -51,6 +51,15 @@ export const fetchPageBounds = async (
   return unwrap<{ firstVerseKey: string; lastVerseKey: string; lastChapterId: number }>(res);
 };
 
+// Juz N's exact verse/chapter bounds (ADR 0046) — rub/hizb/juz are divisions
+// of the text, identical in every mushaf edition, so no mushafId param.
+export const fetchJuzBounds = async (
+  juzNumber: number,
+): Promise<{ firstVerseKey: string; lastVerseKey: string; lastChapterId: number; chapterIds: number[] }> => {
+  const res = await fetch(`/api/quran/juz/${juzNumber}/bounds`);
+  return unwrap(res);
+};
+
 // Static committed file (Static Generation Strategy decision), not an API
 // route — fetched directly, no jsonResponse envelope to unwrap. Used by the
 // "custom" stopPoint's verse-type "to" picker for surah names + verses_count
