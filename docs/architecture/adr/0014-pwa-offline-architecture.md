@@ -208,3 +208,22 @@ See `docs/plans/pwa-offline-support.md` Addendum 4 for the full file-level imple
 route-aware `setCatchHandler` fix shipped alongside it.
 
 **What NOT to do:** do not precache all 604 pages' HTML to solve this — that reopens the exact ~1.5 GB problem the original decision rejected. Do not make the fallback document depend on the bulk download being complete — it must work as the very first thing a fresh install can serve offline, before any consent-gated download has run.
+
+## Addendum 5 (2026-08-17): Edition-aware bulk precache
+
+**Trello/Issue:** [#256 Unify Tajweed toggle + offline downloads into one Mushaf Layout setting](https://github.com/furqan-app/web/issues/256)
+
+**Context.** Addendum 2 made the bulk precache explicit-consent, but scoped it to a single hardcoded `PRECACHE_MUSHAF_ID = 2` — the default edition only. The Settings "Mushaf Layout" redesign lets a user independently download any registered edition (today: the default 1405H-print mushaf and the Tajweed mushaf) for offline use, with both kept simultaneously if the user chooses — no eviction.
+
+**Decision.** The precache mechanism becomes edition-parameterized rather than edition-fixed, without changing its consent model: still never automatic, still only on an explicit tap, per row, per edition.
+
+- `app/constants/offline.ts`: `PRECACHE_MUSHAF_ID` (a single constant) is replaced by iterating `MUSHAF_EDITION_IDS` (`app/utils/mushaf-editions.ts`). `pageFontUrl`/`pageJsonUrl`/`VERSE_PAGES_URL` become functions of `mushafId` as well as page.
+- The completion sentinel (`PRECACHE_SENTINEL_URL`) becomes per-edition (`/__fq-precache-complete-{mushafId}`) inside the same versioned `pages-v{N}` cache — a single shared sentinel would report "ready" once any one edition finished, silently misreporting the others.
+- `countCachedPages`'s path regex must extract and group by the `{mushafId}` segment of `/quran/pages/{mushafId}/{page}.json`, not assume a single fixed prefix.
+- `ClientToSwMessage`/`SwToClientMessage` gain a `mushafId` field alongside `runId`, so one edition's progress cannot drive another row's UI — `runId` alone was sufficient when only one download could ever be in flight; two independently-triggerable downloads need both.
+- `PRECACHE_DISMISSED_KEY` becomes per-edition for the same reason the sentinel does.
+- First-run gate and install-prompt behavior are **unchanged** — they still offer the default edition only (Addendum 2's decision stands); this addendum only extends the permanent Settings surface to every registered edition.
+
+**Consequence.** This narrows, but does not remove, ADR 0023's precache exclusion for the tajweed edition — see that ADR's Addendum 7. The `~99 MB` combined download if a user downloads both editions is accepted (product decision, not re-litigated here); no warning gate is added when a second edition is downloaded.
+
+**What NOT to do:** do not make the two editions share a completion sentinel, dismissed-flag, or `runId`/progress channel — each of those was sized for exactly one downloadable edition and silently cross-reports otherwise. Do not change the first-run gate or install-prompt to offer edition choice — they stay single-edition (the default), per Addendum 2.
