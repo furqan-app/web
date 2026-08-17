@@ -4,6 +4,7 @@ import useTranslations from "@hooks/use-translations";
 import { useAppInstalled } from "@hooks/use-app-installed";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
 import { OfflineDownloadPanel } from "@components/offline/OfflineDownloadPanel";
+import { DEFAULT_MUSHAF_ID } from "@utils/mushaf-editions";
 
 /**
  * In-tab offer to download the Quran immediately after install, so the transfer
@@ -36,7 +37,7 @@ export const OfflineInstallPrompt = () => {
     start,
     cancel,
     dismiss,
-  } = usePwaPrecache();
+  } = usePwaPrecache(DEFAULT_MUSHAF_ID);
 
   // The installed app has the gate; this surface is for the browser tab only.
   if (isStandalone) return null;

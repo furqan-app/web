@@ -35,9 +35,6 @@
   "quranFontSize": "Quran Font Size",
   "pageView": "Page View",
   "appearance": "Appearance",
-  "tajweedMode": "Tajweed Colors",
-  "tajweedModeLabel": "Color-code Tajweed rules",
-  "tajweedModeDescription": "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
   "keepScreenAwake": "Screen",
   "keepScreenAwakeLabel": "Keep screen awake",
   "keepScreenAwakeDescription": "Prevent your device screen from sleeping while the app is open",
@@ -46,7 +43,20 @@
     "dark": "Dark",
     "gold": "Gold"
   },
-  "offlineAccess": "Offline Access",
+  "mushafLayout": {
+    "title": "Mushaf Layout",
+    "switchAction": "Switch to this layout",
+    "active": "Active",
+    "downloaded": "Downloaded",
+    "editions": {
+      "2": {
+        "name": "King Fahd Complex Mushaf (1405H print)"
+      },
+      "19": {
+        "name": "Tajweed mushaf"
+      }
+    }
+  },
   "offline": {
     "gateTitle": "Read the Quran offline",
     "sizeNotice": "About {size} MB. Best on Wi-Fi.",
@@ -68,7 +78,6 @@
     "installedBody": "Download the Quran now so you can read it offline.",
     "checking": "Checking offline availability",
     "gateDescription": "Choose whether to download the Quran for offline reading.",
-    "madaniMushaf": "Madani mushaf",
     "resumeProgress": "{cached} of {total} pages downloaded",
     "resume": "Resume download",
     "notAvailableOffline": "This page hasn't been downloaded yet — connect to the internet to read it."

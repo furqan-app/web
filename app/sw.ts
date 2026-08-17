@@ -7,16 +7,15 @@ import {
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
-  PRECACHE_MUSHAF_ID,
-  PRECACHE_SENTINEL_URL,
-  TOTAL_PAGES,
-  VERSE_PAGES_URL,
   fallbackDocumentUrl,
   offlineFallbackUrl,
   pageFontUrl,
   pageJsonUrl,
+  precacheSentinelUrl,
+  versePagesUrl,
 } from "@constants/offline";
 import type { ClientToSwMessage, SwToClientMessage } from "@constants/offline";
+import { getMushafEdition } from "@utils/mushaf-editions";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -206,20 +205,24 @@ self.addEventListener("install", (event: ExtendableEvent) => {
   );
 });
 
-// Bulk pre-cache of the base mushaf. User-initiated on an explicit tap — the
-// client (use-pwa-precache hook) never auto-starts it, on any surface (ADR 0014
-// Addendum 2). The precache set (slim JSON + base fonts) is locale-independent
-// Quran content — the localized app shell is precached via the Serwist build
-// manifest, not here.
+// Bulk pre-cache, edition-parameterized (ADR 0014 Addendum 5) — any registered
+// mushaf edition can be independently downloaded from the Settings "Mushaf
+// Layout" list. User-initiated on an explicit tap — the client (use-pwa-precache
+// hook) never auto-starts it, on any surface, for any edition (ADR 0014
+// Addendum 2). The precache set (slim JSON + per-edition font) is
+// locale-independent Quran content — the localized app shell is precached via
+// the Serwist build manifest, not here.
 // A service worker is killed and restarted freely, so these live only as long as
 // the worker does. That is correct: a run cannot outlive the worker executing it,
-// and a restarted worker legitimately has no run in flight. `activeRunId`
-// identifies the current run so a CANCEL can only stop the run it names —
-// Chromium shares one worker between the browser tab and the installed PWA
-// (a sharing this feature relies on), so an unscoped cancel let one surface abort
-// a download another surface was actively displaying.
-let activeRunId: number | null = null;
-let cancelledRunId: number | null = null;
+// and a restarted worker legitimately has no run in flight. Keyed by mushafId so
+// two editions can download concurrently and independently — each edition's
+// `activeRunId` identifies its own current run, so a CANCEL can only stop the run
+// it names, for the edition it names. Chromium shares one worker between the
+// browser tab and the installed PWA (a sharing this feature relies on), so an
+// unscoped cancel let one surface abort a download another surface was actively
+// displaying.
+const activeRunIdByMushaf = new Map<number, number>();
+const cancelledRunIdByMushaf = new Map<number, number>();
 let nextRunId = 1;
 
 async function postToClients(message: SwToClientMessage) {
@@ -229,18 +232,21 @@ async function postToClients(message: SwToClientMessage) {
 
 /** Named fields — two adjacent booleans were trivially transposable at a call site. */
 const reportProgress = (args: {
+  mushafId: number;
   runId: number;
   cached: number;
   failed: number;
+  total: number;
   complete: boolean;
   done?: boolean;
 }) =>
   postToClients({
     type: "PRECACHE_PROGRESS",
+    mushafId: args.mushafId,
     runId: args.runId,
     cached: args.cached,
     failed: args.failed,
-    total: TOTAL_PAGES,
+    total: args.total,
     complete: args.complete,
     done: args.done ?? false,
   });
@@ -261,15 +267,16 @@ async function ensureCached(cache: Cache, url: string) {
   }
 }
 
-// Precache the slim content JSON + base font per page — NOT the ~2.6 MB SSR
-// HTML (ADR 0028). The persistent pager renders any page client-side from this
-// JSON + font once the app shell is loaded, so bulk-caching per-page HTML
-// (~1.5 GB for 604 pages) is unnecessary. Visited page HTML is still
-// runtime-cached (isSelfReaderPage, NetworkFirst) for offline cold-entry.
-async function cachePage(cache: Cache, id: number) {
+// Precache the slim content JSON + that edition's font per page — NOT the
+// ~2.6 MB SSR HTML (ADR 0028). The persistent pager renders any page
+// client-side from this JSON + font once the app shell is loaded, so
+// bulk-caching per-page HTML (~1.5 GB for 604 pages) is unnecessary. Visited
+// page HTML is still runtime-cached (isSelfReaderPage, NetworkFirst) for
+// offline cold-entry.
+async function cachePage(cache: Cache, mushafId: number, id: number) {
   const results = await Promise.all([
-    ensureCached(cache, pageFontUrl(id)),
-    ensureCached(cache, pageJsonUrl(id)),
+    ensureCached(cache, pageFontUrl(mushafId, id)),
+    ensureCached(cache, pageJsonUrl(mushafId, id)),
   ]);
   // A page counts only when BOTH its font and its JSON are present — either one
   // missing means the pager cannot render it offline.
@@ -282,24 +289,23 @@ async function cachePage(cache: Cache, id: number) {
  * run; ADR 0014). Costs one cache.keys() and no per-entry reads, so it still
  * avoids the 604-page re-walk this replaced (Trello #129).
  */
-async function isCacheComplete(cache: Cache, knownCount?: number) {
-  if (!(await cache.match(PRECACHE_SENTINEL_URL))) return false;
-  if (!(await cache.match(VERSE_PAGES_URL))) return false;
-  const cached = knownCount ?? (await countCachedPages(cache));
-  return cached === TOTAL_PAGES;
+async function isCacheComplete(cache: Cache, mushafId: number, knownCount?: number) {
+  if (!(await cache.match(precacheSentinelUrl(mushafId)))) return false;
+  if (!(await cache.match(versePagesUrl(mushafId)))) return false;
+  const cached = knownCount ?? (await countCachedPages(cache, mushafId));
+  return cached === getMushafEdition(mushafId).pagesCount;
 }
 
-/** A page is cached only when both its font and its JSON are present. */
-async function countCachedPages(cache: Cache) {
+/** A page is cached only when both its font and its JSON are present, for the given edition. */
+async function countCachedPages(cache: Cache, mushafId: number) {
   const fontIds = new Set<string>();
   const jsonIds = new Set<string>();
-  const jsonPattern = new RegExp(
-    `^/quran/pages/${PRECACHE_MUSHAF_ID}/([0-9]+)\\.json$`,
-  );
+  const fontPattern = getMushafEdition(mushafId).fontIdPattern;
+  const jsonPattern = new RegExp(`^/quran/pages/${mushafId}/([0-9]+)\\.json$`);
 
   for (const request of await cache.keys()) {
     const { pathname } = new URL(request.url);
-    const font = /^\/fonts\/v1\/woff2\/p([0-9]+)\.woff2$/.exec(pathname);
+    const font = fontPattern.exec(pathname);
     if (font) {
       fontIds.add(font[1]);
       continue;
@@ -315,59 +321,63 @@ async function countCachedPages(cache: Cache) {
   return cached;
 }
 
-async function precacheAllPages() {
-  if (activeRunId !== null) return;
+async function precacheAllPages(mushafId: number) {
+  if (activeRunIdByMushaf.has(mushafId)) return;
   const runId = nextRunId++;
-  activeRunId = runId;
-  const isCancelled = () => cancelledRunId === runId;
+  activeRunIdByMushaf.set(mushafId, runId);
+  const isCancelled = () => cancelledRunIdByMushaf.get(mushafId) === runId;
+  const totalPages = getMushafEdition(mushafId).pagesCount;
 
   try {
     const cache = await caches.open(PAGES_CACHE_NAME);
 
-    // Short-circuit a complete cache instead of re-walking all 604 pages on
-    // every launch, which is what Trello #129 reported. A partially-evicted
-    // cache deliberately fails this check and falls through to a resuming run,
-    // which refetches only what is missing.
-    if (await isCacheComplete(cache)) {
-      activeRunId = null;
+    // Short-circuit a complete cache instead of re-walking all of this
+    // edition's pages on every launch, which is what Trello #129 reported for
+    // the (then-only) default edition. A partially-evicted cache deliberately
+    // fails this check and falls through to a resuming run, which refetches
+    // only what is missing.
+    if (await isCacheComplete(cache, mushafId)) {
+      activeRunIdByMushaf.delete(mushafId);
       await reportProgress({
+        mushafId,
         runId,
-        cached: TOTAL_PAGES,
+        cached: totalPages,
         failed: 0,
+        total: totalPages,
         complete: true,
         done: true,
       });
       return;
     }
 
-    // The per-edition verse_key → page map. Without it, rub navigation and
+    // This edition's verse_key → page map. Without it, rub navigation and
     // edition switching fall back to the default edition's page numbers offline.
-    const versePagesOk = await ensureCached(cache, VERSE_PAGES_URL);
+    const versePagesOk = await ensureCached(cache, versePagesUrl(mushafId));
 
     let cached = 0;
     let failed = 0;
 
-    for (let id = 1; id <= TOTAL_PAGES; id += PRECACHE_CONCURRENCY) {
+    for (let id = 1; id <= totalPages; id += PRECACHE_CONCURRENCY) {
       if (isCancelled()) break;
       const batch: number[] = [];
-      for (let n = id; n < id + PRECACHE_CONCURRENCY && n <= TOTAL_PAGES; n++) {
+      for (let n = id; n < id + PRECACHE_CONCURRENCY && n <= totalPages; n++) {
         batch.push(n);
       }
       const results = await Promise.all(
-        batch.map((page) => cachePage(cache, page)),
+        batch.map((page) => cachePage(cache, mushafId, page)),
       );
       for (const ok of results) {
         if (ok) cached++;
         else failed++;
       }
-      await reportProgress({ runId, cached, failed, complete: false });
+      await reportProgress({ mushafId, runId, cached, failed, total: totalPages, complete: false });
     }
 
     const complete =
-      !isCancelled() && versePagesOk && cached === TOTAL_PAGES && failed === 0;
+      !isCancelled() && versePagesOk && cached === totalPages && failed === 0;
     if (complete) {
       await cache.put(
-        new Request(PRECACHE_SENTINEL_URL),
+        new Request(precacheSentinelUrl(mushafId)),
         new Response("", { status: 200 }),
       );
     }
@@ -375,27 +385,29 @@ async function precacheAllPages() {
     // that postMessage was in flight used to be dropped silently, leaving a
     // client that had already flipped to `running` with no run behind it
     // (reachable by tapping Retry the instant `partial` appears).
-    activeRunId = null;
-    await reportProgress({ runId, cached, failed, complete, done: true });
+    activeRunIdByMushaf.delete(mushafId);
+    await reportProgress({ mushafId, runId, cached, failed, total: totalPages, complete, done: true });
   } finally {
-    if (activeRunId === runId) activeRunId = null;
+    if (activeRunIdByMushaf.get(mushafId) === runId) activeRunIdByMushaf.delete(mushafId);
   }
 }
 
-async function reportStatus() {
+async function reportStatus(mushafId: number) {
   const cache = await caches.open(PAGES_CACHE_NAME);
-  const cached = await countCachedPages(cache);
+  const cached = await countCachedPages(cache, mushafId);
   // Reuse the count — isCacheComplete would otherwise walk cache.keys() a second
   // time, once per mounted hook instance.
-  const complete = await isCacheComplete(cache, cached);
+  const complete = await isCacheComplete(cache, mushafId, cached);
   // Drop a sentinel the cache can no longer back up, so the next run rewrites it
   // only once the missing pages are actually refetched.
-  if (!complete) await cache.delete(PRECACHE_SENTINEL_URL);
+  if (!complete) await cache.delete(precacheSentinelUrl(mushafId));
+  const activeRunId = activeRunIdByMushaf.get(mushafId) ?? null;
   await postToClients({
     type: "PRECACHE_STATUS",
+    mushafId,
     runId: activeRunId,
     cached,
-    total: TOTAL_PAGES,
+    total: getMushafEdition(mushafId).pagesCount,
     complete,
     running: activeRunId !== null,
   });
@@ -404,12 +416,15 @@ async function reportStatus() {
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   const data = event.data as ClientToSwMessage;
   if (data?.type === "START_PRECACHE") {
-    event.waitUntil(precacheAllPages());
+    event.waitUntil(precacheAllPages(data.mushafId));
   } else if (data?.type === "REQUEST_PRECACHE_STATUS") {
-    event.waitUntil(reportStatus());
+    event.waitUntil(reportStatus(data.mushafId));
   } else if (data?.type === "CANCEL_PRECACHE") {
-    // Only the run the client names — never whatever happens to be running now.
-    if (data.runId === activeRunId) cancelledRunId = data.runId;
+    // Only the run the client names, for the edition it names — never whatever
+    // happens to be running now for some other edition.
+    if (data.runId === activeRunIdByMushaf.get(data.mushafId)) {
+      cancelledRunIdByMushaf.set(data.mushafId, data.runId);
+    }
   }
 });
 

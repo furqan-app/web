@@ -7,9 +7,7 @@ import { getLanguageDirection } from "../utils/i18n";
 import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
-import { OfflineAccessSection } from "@components/offline/OfflineAccessSection";
-import { useQuranMushaf } from "@contexts/QuranMushafContext";
-import { DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID } from "@utils/mushaf-editions";
+import { MushafLayoutSection } from "@components/mushaf/MushafLayoutSection";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
@@ -44,7 +42,6 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  const { mushafId, setMushafId } = useQuranMushaf();
   // On tablet the safha auto-fits the font to the page, so the manual font-size
   // control does nothing — hide it there (still shown on desktop lg+).
   const isTablet = useIsTablet();
@@ -118,31 +115,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
               <ThemeToggle />
             </div>
           </div>
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("tajweedMode", "Tajweed Colors")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted flex items-center justify-between gap-3">
-              <label htmlFor="tajweed-mode-switch" className="cursor-pointer">
-                <span className="text-sm font-medium">
-                  {t("tajweedModeLabel", "Color-code Tajweed rules")}
-                </span>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t(
-                    "tajweedModeDescription",
-                    "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
-                  )}
-                </p>
-              </label>
-              <Switch
-                id="tajweed-mode-switch"
-                checked={mushafId === TAJWEED_MUSHAF_ID}
-                onCheckedChange={(on) =>
-                  setMushafId(on ? TAJWEED_MUSHAF_ID : DEFAULT_MUSHAF_ID)
-                }
-              />
-            </div>
-          </div>
+          <MushafLayoutSection />
           {(isMobile || isTablet) && (
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-2">
@@ -172,7 +145,6 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
             </div>
           )}
           <EnablePushToggle />
-          <OfflineAccessSection />
         </div>
       </SheetContent>
     </Sheet>
