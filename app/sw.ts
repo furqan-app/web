@@ -2,11 +2,13 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, Serwist } from "serwist";
+import { CacheFirst, RangeRequestsPlugin, Serwist } from "serwist";
 import {
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
+  RECITATION_AUDIO_HOST,
+  RECITATION_DOWNLOAD_CACHE_NAME,
   fallbackDocumentUrl,
   offlineFallbackUrl,
   pageFontUrl,
@@ -84,6 +86,19 @@ const isPageJson = (url: URL) =>
 const isVersePagesJson = (url: URL) =>
   /^\/quran\/verse-pages\/[0-9]+\.json$/.test(url.pathname);
 
+// Offline Recitation Audio (ADR 0046). The chapter-audio metadata route
+// RecitationContext.play() already calls — caching its exact response is what
+// lets a downloaded item's play() call resolve fully offline with zero
+// changes to that function. Immutable per reciter+chapter.
+const isRecitationChapterApi = (url: URL) =>
+  /^\/api\/quran\/recitations\/[0-9]+\/chapters\/[0-9]+$/.test(url.pathname);
+
+// QDC's audio CDN — cross-origin, confirmed to send
+// access-control-allow-origin: * and accept-ranges: bytes (ADR 0046). audio.src
+// keeps pointing at this live URL always; this rule is what makes it resolve
+// from cache when a download has populated RECITATION_DOWNLOAD_CACHE_NAME.
+const isRecitationAudio = (url: URL) => url.hostname === RECITATION_AUDIO_HOST;
+
 const serwist = new Serwist({
   precacheEntries: precacheManifest,
   skipWaiting: true,
@@ -116,6 +131,21 @@ const serwist = new Serwist({
     {
       matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
+    },
+    // Offline Recitation Audio (ADR 0046) — both immutable per reciter+chapter
+    // once cached. The audio rule carries RangeRequestsPlugin so a fully-cached
+    // response can still serve real byte-range <audio> seeks offline; without
+    // it CacheFirst would only ever return the whole file for every request.
+    {
+      matcher: ({ url }) => isRecitationChapterApi(url),
+      handler: new CacheFirst({ cacheName: RECITATION_DOWNLOAD_CACHE_NAME }),
+    },
+    {
+      matcher: ({ url }) => isRecitationAudio(url),
+      handler: new CacheFirst({
+        cacheName: RECITATION_DOWNLOAD_CACHE_NAME,
+        plugins: [new RangeRequestsPlugin()],
+      }),
     },
     ...defaultCache,
   ],

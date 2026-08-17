@@ -312,7 +312,20 @@
     "rangeTypeVerse": "آية",
     "surahPlaceholder": "اختر سورة",
     "surahSearchPlaceholder": "ابحث عن سورة…",
-    "surahEmpty": "لم يتم العثور على سورة."
+    "surahEmpty": "لم يتم العثور على سورة.",
+    "offlineUnavailable": "غير متاح دون اتصال"
+  },
+  "offlineRecitation": {
+    "title": "التلاوة دون اتصال",
+    "description": "نزّل سورة أو جزءًا للاستماع دون اتصال بالإنترنت.",
+    "bySurah": "حسب السورة",
+    "byJuz": "حسب الجزء",
+    "download": "تنزيل",
+    "downloaded": "تم تنزيله",
+    "noneDownloaded": "لم يتم تنزيل أي شيء بعد.",
+    "delete": "حذف",
+    "mb": "ميجابايت",
+    "offlineNotice": "اتصل بالإنترنت للتنزيل."
   },
   "notifications": {
     "bellLabel": "الإشعارات",

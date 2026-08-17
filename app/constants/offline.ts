@@ -116,6 +116,33 @@ export type ClientToSwMessage =
   | { type: "REQUEST_PRECACHE_STATUS"; mushafId: number }
   | { type: "CANCEL_PRECACHE"; mushafId: number; runId: number };
 
+// ---------------------------------------------------------------------------
+// Offline Recitation Audio (ADR 0046) — per-surah/juz downloads, reciter-
+// scoped. Shared between app/sw.ts (the CacheFirst+RangeRequestsPlugin
+// runtime rule) and app/hooks/use-recitation-download.ts (the client-side
+// fetch+cache.put download step). Unlike the bulk page/font precache above,
+// the download action itself does not go through service-worker
+// message-passing — a single chapter's download is short enough to not need
+// to survive tab backgrounding — so there is no message contract here, only
+// the shared cache name and audio-CDN host.
+// ---------------------------------------------------------------------------
+
+// Bumped manually when the cached audio/metadata shape changes.
+export const RECITATION_DOWNLOAD_CACHE_VERSION = 1;
+export const RECITATION_DOWNLOAD_CACHE_NAME = `recitation-download-v${RECITATION_DOWNLOAD_CACHE_VERSION}`;
+
+// QDC's audio CDN — confirmed live (2026-08-17) to be stable across every
+// reciter tested (only the path varies), and to send
+// `access-control-allow-origin: *` + `accept-ranges: bytes` — the CORS and
+// Range-request support RangeRequestsPlugin needs to serve real `<audio>`
+// seeks from a fully-cached cross-origin response.
+export const RECITATION_AUDIO_HOST = "download.quranicaudio.com";
+
+// The registry of what's deliberately downloaded lives in localStorage under
+// the "recitationDownloads" key via app/utils/storage.ts's typed helper — no
+// separate constant needed here, since a service worker has no synchronous
+// localStorage access and this key is never read from app/sw.ts.
+
 /** Sent service worker → every window client; each hook instance filters by `mushafId`. */
 export type SwToClientMessage =
   | {

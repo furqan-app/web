@@ -311,7 +311,20 @@
     "rangeTypeVerse": "Verse",
     "surahPlaceholder": "Choose a surah",
     "surahSearchPlaceholder": "Search surahs…",
-    "surahEmpty": "No surah found."
+    "surahEmpty": "No surah found.",
+    "offlineUnavailable": "Not available offline"
+  },
+  "offlineRecitation": {
+    "title": "Offline Recitation",
+    "description": "Download a surah or juz' for offline listening.",
+    "bySurah": "By Surah",
+    "byJuz": "By Juz",
+    "download": "Download",
+    "downloaded": "Downloaded",
+    "noneDownloaded": "Nothing downloaded yet.",
+    "delete": "Delete",
+    "mb": "MB",
+    "offlineNotice": "Connect to the internet to download."
   },
   "notifications": {
     "bellLabel": "Notifications",
