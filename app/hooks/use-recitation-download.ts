@@ -5,12 +5,13 @@ import { storage } from "@/app/utils/storage";
 import { fetchJuzBounds } from "@/app/utils/recitation-api";
 import {
   PAGES_CACHE_NAME,
-  PRECACHE_SENTINEL_URL,
   RECITATION_DOWNLOAD_CACHE_NAME,
-  VERSE_PAGES_URL,
   pageFontUrl,
   pageJsonUrl,
+  precacheSentinelUrl,
+  versePagesUrl,
 } from "@constants/offline";
+import { DEFAULT_MUSHAF_ID } from "@utils/mushaf-editions";
 import { ChapterAudio, RecitationDownloadItem } from "@/app/types/recitation";
 import { SurahResult } from "@/app/types";
 
@@ -87,8 +88,8 @@ async function downloadChapter(
   const pages = parsePageRange(surah.pages);
   const pageByteSizes = await Promise.all(
     pages.flatMap((p) => [
-      ensureCachedBytes(pagesCache, pageJsonUrl(p)),
-      ensureCachedBytes(pagesCache, pageFontUrl(p)),
+      ensureCachedBytes(pagesCache, pageJsonUrl(DEFAULT_MUSHAF_ID, p)),
+      ensureCachedBytes(pagesCache, pageFontUrl(DEFAULT_MUSHAF_ID, p)),
     ]),
   );
 
@@ -108,7 +109,7 @@ async function performDownloadSurah(
 ): Promise<RecitationDownloadItem> {
   const downloadCache = await caches.open(RECITATION_DOWNLOAD_CACHE_NAME);
   const pagesCache = await caches.open(PAGES_CACHE_NAME);
-  const versePagesBytes = await ensureCachedBytes(pagesCache, VERSE_PAGES_URL);
+  const versePagesBytes = await ensureCachedBytes(pagesCache, versePagesUrl(DEFAULT_MUSHAF_ID));
 
   const chapter = await downloadChapter(downloadCache, pagesCache, reciterId, surah);
   const startVerseKey = chapter.verseTimings[0]?.verseKey;
@@ -139,7 +140,7 @@ async function performDownloadJuz(
   const bounds = await fetchJuzBounds(juzNumber);
   const downloadCache = await caches.open(RECITATION_DOWNLOAD_CACHE_NAME);
   const pagesCache = await caches.open(PAGES_CACHE_NAME);
-  const versePagesBytes = await ensureCachedBytes(pagesCache, VERSE_PAGES_URL);
+  const versePagesBytes = await ensureCachedBytes(pagesCache, versePagesUrl(DEFAULT_MUSHAF_ID));
 
   const downloaded = await Promise.all(
     bounds.chapterIds.map((chapterId) => {
@@ -263,13 +264,13 @@ export const useRecitationDownload = () => {
       );
 
       const pagesCache = await caches.open(PAGES_CACHE_NAME);
-      const bulkComplete = Boolean(await pagesCache.match(PRECACHE_SENTINEL_URL));
+      const bulkComplete = Boolean(await pagesCache.match(precacheSentinelUrl(DEFAULT_MUSHAF_ID)));
       if (!bulkComplete) {
         const pagesStillNeeded = new Set(remaining.flatMap((d) => d.pages));
         await Promise.all(
           item.pages
             .filter((p) => !pagesStillNeeded.has(p))
-            .flatMap((p) => [pagesCache.delete(pageJsonUrl(p)), pagesCache.delete(pageFontUrl(p))]),
+            .flatMap((p) => [pagesCache.delete(pageJsonUrl(DEFAULT_MUSHAF_ID, p)), pagesCache.delete(pageFontUrl(DEFAULT_MUSHAF_ID, p))]),
         );
       }
 

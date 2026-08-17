@@ -33,6 +33,17 @@ export type MushafEdition = {
    * instead of the immutable FontFace registry. See ADR 0029 and ADR 0023.
    */
   usesColorGlyphs: boolean;
+  /**
+   * Matches this edition's per-page font URL, capturing the page number.
+   * Needed by the offline precache to count already-cached pages per edition
+   * (app/sw.ts's countCachedPages) — kept here, next to fontUrl, so the two
+   * can never drift apart the way two independently-authored regexes could.
+   */
+  fontIdPattern: RegExp;
+  /** Approximate wire size of a full bulk download for this edition, in MB. */
+  downloadSizeMb: number;
+  /** Static pre-rendered preview snippet (see scripts/generate-mushaf-thumbnails.js). */
+  thumbnailUrl: string;
 };
 
 export const DEFAULT_MUSHAF_ID = 2;
@@ -48,6 +59,11 @@ export const MUSHAF_EDITIONS: Record<number, MushafEdition> = {
     pagesCount: 604,
     linesPerPage: 15,
     usesColorGlyphs: false,
+    fontIdPattern: /^\/fonts\/v1\/woff2\/p([0-9]+)\.woff2$/,
+    // Measured 2026-08-10: 45.7 MiB WOFF2 + ~2.0 MiB gzipped JSON. See
+    // docs/plans/pwa-offline-support.md Addendum 1.
+    downloadSizeMb: 48,
+    thumbnailUrl: `/mushaf-previews/${DEFAULT_MUSHAF_ID}.png`,
   },
   [TAJWEED_MUSHAF_ID]: {
     id: TAJWEED_MUSHAF_ID,
@@ -58,6 +74,11 @@ export const MUSHAF_EDITIONS: Record<number, MushafEdition> = {
     pagesCount: 604,
     linesPerPage: 15,
     usesColorGlyphs: true,
+    fontIdPattern: /^\/fonts\/v4\/colrv1\/woff2\/p([0-9]+)\.woff2$/,
+    // Measured 2026-08-10: 49.4 MiB WOFF2 + ~2.0 MiB gzipped JSON. See
+    // GitHub issue #256.
+    downloadSizeMb: 51,
+    thumbnailUrl: `/mushaf-previews/${TAJWEED_MUSHAF_ID}.png`,
   },
 };
 
