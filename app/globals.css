@@ -1078,6 +1078,28 @@ body,
     }
   }
 
+  /* Suppress the word `:hover` cue while a swipe drag is in progress (ADR 0023
+     Addendum 8, docs/plans/fix-tajweed-swipe-flicker.md). `ReaderPager` toggles
+     `.fq-dragging` on the strip imperatively (same touch handlers that already
+     set `strip.style.transform` directly, for the same performance reason —
+     no React re-render per drag tick). The `:hover` filter/transform themselves
+     (`hover:scale-[1.06] hover:[filter:drop-shadow(...)]` in QuranWord.tsx) are
+     unchanged and identical for every edition — this only neutralizes them for
+     the duration of an active drag, when the pointer/finger passing over many
+     words would otherwise trigger the filter repeatedly. Cheap to compute on
+     madani's single-layer glyphs; measurably expensive on tajweed's multi-layer
+     COLRv1 glyphs (~44x more `pointerover`-attributed cost, measured) — the
+     confirmed root cause of the tajweed-only swipe flicker. `!important` for the
+     same reason every other override in this file needs it: this is one `@layer
+     base` block, which loses to Tailwind's utility layer at equal specificity by
+     source order. Applies at every breakpoint — the touch handlers are wired
+     unconditionally, not gated by viewport. */
+  .fq-reader-pager-strip.fq-dragging .fq-qword:hover,
+  .fq-reader-pager-strip.fq-dragging .fq-ayah-end:hover {
+    filter: none !important;
+    transform: none !important;
+  }
+
   /* Reader height, anchored to the initial containing block (ADR 0044).
 
      In the installed PWA (`display: "fullscreen"`) Android launches non-immersive
