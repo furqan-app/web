@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useLocale } from "next-intl";
 import { storage } from "@/app/utils/storage";
+import { useOnlineStatus } from "@hooks/use-online-status";
 import {
   fetchChapterAudio,
   fetchChapters,
@@ -163,6 +164,10 @@ type RecitationContextType = {
   // by RecitationSettingsSheet as a read-only banner — see
   // docs/plans/listening-wird-inline-playback.md.
   activeOverride: ActiveOverride | null;
+  // Set when a play() attempt fails while offline (no cached audio for that
+  // reciter+chapter) — RecitationPlayerBar shows a brief inline notice.
+  // Cleared at the start of every play() call. See ADR 0046.
+  playbackError: "offline-unavailable" | null;
 };
 
 const RecitationContext = createContext<RecitationContextType | undefined>(undefined);
@@ -190,6 +195,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [currentPageNumber, setCurrentPageNumber] = useState<number | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeOverride, setActiveOverride] = useState<ActiveOverride | null>(null);
+  const [playbackError, setPlaybackError] = useState<"offline-unavailable" | null>(null);
+  const isOnline = useOnlineStatus();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const verseTimingsRef = useRef<VerseTiming[]>([]);
@@ -296,6 +303,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       const chapterId = parseChapterIdFromVerseKey(verseKey);
       setStatus("loading");
+      setPlaybackError(null);
       // Published before the awaits below so a UI row can recognise "this
       // session is mine" while it's still loading (re-entry guard) — cleared
       // again on every failure path below.
@@ -359,9 +367,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         setStatus("idle");
         rangeRepeatOverrideRef.current = null;
         setActiveOverride(null);
+        // Only a real "not downloaded" case, not e.g. an autoplay-policy
+        // rejection while online.
+        if (!isOnline) setPlaybackError("offline-unavailable");
       }
     },
-    [settings, reciters, getVersePages, clearHighlight, mushafId],
+    [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline],
   );
 
   const togglePlayPause = useCallback(() => {
@@ -787,6 +798,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         openSettings,
         closeSettings,
         activeOverride,
+        playbackError,
       }}
     >
       {/* Mounted once above the reader's route tree so playback survives both
