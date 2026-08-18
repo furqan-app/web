@@ -138,3 +138,17 @@ gate to a path ADR 0028 and ADR 0034 constrain tightly.
   restoring a home-page redirect without re-opening the decision.
 - Desktop standalone is deliberately still excluded and lands on home, matching the behavior the
   app-stickiness feature established.
+
+## Addendum — 2026-08-18: un-hide ContinueReadingLink on standalone mobile/tablet
+
+The Consequences bullet above rejected un-hiding `ContinueReadingLink` on standalone mobile as
+"reintroduc[ing] a coupling this ADR removed," on the assumption that home is reachable only via a
+redirect-covered cold launch. That assumption doesn't hold: home is now a legitimate mid-session
+screen (this ADR's own point above), reachable anytime a standalone mobile/tablet user taps the logo
+or otherwise navigates there — and once there, they had no navbar path back to their last-read page.
+
+This does not reopen the core decision (launch-time navigation resolves before paint via
+`launch.html`) or restore any redirect mechanism — both stay exactly as decided. It only supersedes
+the one consequence that `ContinueReadingLink` must stay hidden on standalone mobile/tablet. The link
+now renders unconditionally on every breakpoint and display mode, matching desktop/browser-tab
+behavior. See `docs/plans/restore-continue-reading-pwa-icon.md`.
