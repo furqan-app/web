@@ -799,6 +799,15 @@ body,
     :root[data-safha-view="double"] .fq-spread .fq-safha-partner {
       display: block;
     }
+    /* Safha ribbon (docs/plans/safha-ribbon-indicator.md) — same reasoning as the
+       tablet block above: one ribbon centred on the seam, not two meeting halves. */
+    :root[data-safha-view="double"] .fq-spread .fq-compensate-r .fq-safha-ribbon {
+      right: auto !important;
+      left: -4px !important;
+    }
+    :root[data-safha-view="double"] .fq-spread .fq-compensate-l .fq-safha-ribbon {
+      display: none !important;
+    }
     :root[data-safha-view="double"] .fq-spread {
       /* 224px keeps the two-card width budget correct after restoring the
          printed-page side margin (64px more per card than the earlier formula). */
@@ -1161,6 +1170,22 @@ body,
        the desktop-only stored view preference, including before hydration. */
     .fq-spread .fq-safha-partner {
       display: block;
+    }
+    /* Safha ribbon (docs/plans/safha-ribbon-indicator.md): both pages show, so
+       one ribbon centred on the seam reads as the book's single ribbon rather
+       than two halves meeting. The right/odd card's ribbon (default at its own
+       right edge) moves to its left edge, offset by half its own width so it
+       sits exactly on the `gap-0` seam; the left/even card's ribbon is hidden
+       rather than doubling up. `!important`: this file is one `@layer base`
+       block and loses to the Tailwind utility layer (`right-2`) at equal
+       specificity by source order — same reason every other rule in this block
+       needs it. */
+    .fq-spread .fq-compensate-r .fq-safha-ribbon {
+      right: auto !important;
+      left: -4px !important;
+    }
+    .fq-spread .fq-compensate-l .fq-safha-ribbon {
+      display: none !important;
     }
     /* Swipe carousel (tablet double-view only). Reveal the neighbor spreads and
        rest the 3-panel strip at translateX(-100%) so the CURRENT (middle) panel is
