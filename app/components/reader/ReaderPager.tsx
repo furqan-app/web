@@ -558,6 +558,9 @@ export function ReaderPager({
     if (!isDragging.current && Math.abs(deltaX) <= Math.abs(deltaY)) return;
     isDragging.current = true;
     if (!stripRef.current) return;
+    // See globals.css's `.fq-dragging` rule (ADR 0023 Addendum 8) — suppresses
+    // the word hover filter/transform for the duration of the drag.
+    stripRef.current.classList.add("fq-dragging");
     stripRef.current.style.transition = "none";
     // Anchored to the -100% rest so the neighbor already sitting beside the
     // current panel is revealed as the finger moves.
@@ -574,6 +577,7 @@ export function ReaderPager({
 
     const strip = stripRef.current;
     if (!strip) return;
+    strip.classList.remove("fq-dragging");
 
     if (Math.abs(deltaX) < COMMIT_THRESHOLD) {
       strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
@@ -598,6 +602,7 @@ export function ReaderPager({
     const wasDragging = isDragging.current;
     isDragging.current = false;
     const strip = stripRef.current;
+    if (strip) strip.classList.remove("fq-dragging");
     if (wasDragging && !isCommitting.current && strip) {
       strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
       strip.style.transform = "translateX(-100%)";

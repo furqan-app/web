@@ -156,6 +156,33 @@ const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: b
   );
 };
 
+// Purely decorative bookmark-ribbon shape (docs/plans/safha-ribbon-indicator.md) —
+// unrelated to the printed `◆ {page} ◆` footer below. Positioned via `stackPeekSide`
+// (already odd=right/even=left per pair, same signal the stack-layer decorations
+// use) so no new prop or JS breakpoint check is needed. Double-view repositions/hides
+// this via globals.css media queries mirroring the existing CSS-gated single/double
+// display switch (ADR 0043) — never via useIsTablet/useIsLgUp.
+const SafhaRibbon = ({ side }: { side: "left" | "right" }) => (
+  <div
+    aria-hidden="true"
+    className={`fq-safha-ribbon absolute z-10 top-0 h-[8%] w-[8px] bg-primary border border-foreground/20 shadow-md pointer-events-none ${
+      // Flush to the card edge below md: mobile's `.fq-content` carries no
+      // horizontal padding (only `md:px-7`), so an 8px inset there sits over
+      // the text itself rather than in a margin. md+ has that padding, so the
+      // ribbon can sit 8px in without overlapping ink.
+      side === "right" ? "right-0 md:right-2" : "left-0 md:left-2"
+    }`}
+    style={{
+      clipPath:
+        "polygon(0% 0%, 100% 0%, 100% calc(100% - 10px), 50% 100%, 0% calc(100% - 10px))",
+    }}
+  >
+    {/* Fold where the ribbon wraps the page's top edge — same hue, darkened via
+        brightness rather than a second colour (single-accent rule, design-principles.md). */}
+    <div className="absolute inset-x-0 top-0 h-[8px] bg-primary brightness-75" />
+  </div>
+);
+
 const BismillahLine = () => (
   <div
     className="fq-bismillah leading-none relative flex justify-center text-black dark:text-white"
@@ -556,6 +583,7 @@ export const QuranSafha = ({
           <div
             className={`fq-stack-layer absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
           />
+          {compensateStackGap ? <SafhaRibbon side={stackPeekSide} /> : null}
           {/* On desktop the card width and word ink share --fq-card-word. That keeps
               a 26/28/30px preference proportional rather than shrinking the text
               inside an old, oversized card. Tablet/mobile rules own their widths. */}
