@@ -23,13 +23,10 @@ const SETTINGS_LABEL: Record<Locale, string> = {
   ar: "الإعدادات",
   en: "Settings",
 };
-// NavOverflowMenu's hamburger trigger — Settings/SharedMushafLink/
-// NotificationBell/UserMenu all collapse behind this at every breakpoint
-// instead of rendering directly in the nav row
-// (docs/plans/home-page-design-fixes.md, Addendum — Universal nav menu).
-const MORE_LABEL: Record<Locale, string> = {
-  ar: "المزيد",
-  en: "More",
+// UserMenu trigger
+const ACCOUNT_LABEL: Record<Locale, string> = {
+  ar: "حسابي",
+  en: "Account",
 };
 // The results dropdown's surah heading, which SearchQueryResults renders only
 // once `chapters.length > 0` — so it cannot match before results exist. Matched
@@ -131,18 +128,15 @@ for (const locale of LOCALES) {
     });
 
     test.describe(`settings sheet (${suffix})`, () => {
-      test("open settings sheet", async ({ page }) => {
+      test("open settings sheet", async ({ page, isMobile }) => {
         await withTheme(page, theme);
         await page.goto(`/${locale}`);
-        // Settings is behind NavOverflowMenu's hamburger trigger at every
-        // breakpoint, not a direct nav-row button
-        // (docs/plans/home-page-design-fixes.md, Addendum — Universal nav
-        // menu) — open that first, then click Settings inside the revealed
-        // sheet.
-        await page.getByRole("button", { name: MORE_LABEL[locale] }).click();
+        // Settings is in the nav row on desktop, but behind the UserMenu on mobile.
+        if (isMobile) {
+          await page.getByRole("button", { name: ACCOUNT_LABEL[locale] }).click();
+        }
         await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
-        // Sheet slide-in animation (and, on mobile, the overflow sheet's
-        // slide-out happening at the same time).
+        // Sheet slide-in animation.
         await page.waitForTimeout(600);
         await expect(page).toHaveScreenshot(`settings-${suffix}.png`);
       });
