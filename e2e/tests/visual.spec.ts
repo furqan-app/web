@@ -128,11 +128,11 @@ for (const locale of LOCALES) {
     });
 
     test.describe(`settings sheet (${suffix})`, () => {
-      test("open settings sheet", async ({ page, isMobile }) => {
+      test("open settings sheet", async ({ page }, testInfo) => {
         await withTheme(page, theme);
         await page.goto(`/${locale}`);
         // Settings is in the nav row on desktop (as a button), but behind the UserMenu on mobile (as a menuitem).
-        if (isMobile) {
+        if (testInfo.project.name === "mobile") {
           await page.getByRole("button", { name: ACCOUNT_LABEL[locale] }).click();
           await page.getByRole("menuitem", { name: SETTINGS_LABEL[locale] }).click();
         } else {
