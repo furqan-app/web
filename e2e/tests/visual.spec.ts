@@ -131,11 +131,13 @@ for (const locale of LOCALES) {
       test("open settings sheet", async ({ page, isMobile }) => {
         await withTheme(page, theme);
         await page.goto(`/${locale}`);
-        // Settings is in the nav row on desktop, but behind the UserMenu on mobile.
+        // Settings is in the nav row on desktop (as a button), but behind the UserMenu on mobile (as a menuitem).
         if (isMobile) {
           await page.getByRole("button", { name: ACCOUNT_LABEL[locale] }).click();
+          await page.getByRole("menuitem", { name: SETTINGS_LABEL[locale] }).click();
+        } else {
+          await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
         }
-        await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
         // Sheet slide-in animation.
         await page.waitForTimeout(600);
         await expect(page).toHaveScreenshot(`settings-${suffix}.png`);
