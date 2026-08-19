@@ -28,10 +28,6 @@
        to near-invisible against light/gold's pale background, so those two
        get a solid fill instead (same reasoning as --nav-tab-bg above). */
     --nav-icon-chip-bg: hsl(var(--primary));
-    /* Surah-toggle ornament color (fq-surah-toggle::before/after) — light/gold
-       alias straight to --mushaf-ornament (no ADR 0031 conflict: light's is a
-       neutral gray, gold's is the theme's own native gold). */
-    --nav-ornament: var(--mushaf-ornament);
     --accent: 165 53% 93%;
     --accent-foreground: 169 88% 26%;
     --destructive: 0 72% 56%;
@@ -101,8 +97,6 @@
     --nav-tab-bg: hsl(var(--muted) / 0.5);
     /* See matching comment in .theme-light above. */
     --nav-icon-chip-bg: hsl(var(--primary));
-    /* See matching comment in .theme-light above. */
-    --nav-ornament: var(--mushaf-ornament);
     --accent: 46 55% 86%;
     --accent-foreground: 41 57% 43%;
     --destructive: 3 66% 55%;
@@ -180,10 +174,6 @@
     --nav-tab-bg: #151A20;
     /* Translucent here — dark's near-black nav gives it enough contrast, unlike light/gold. */
     --nav-icon-chip-bg: hsl(var(--primary) / 23%);
-    /* NOT --mushaf-ornament — ADR 0031 confines gold to the reader page in
-       dark theme with "no exceptions in chrome"; the surah-toggle pill is
-       nav chrome, so its ornament gets the emerald primary instead. */
-    --nav-ornament: hsl(var(--primary));
     /* Bumped 50% -> 56% (2026-08-13, docs/plans/home-page-design-fixes.md):
        50% measured 4.1:1 against --card, below WCAG AA 4.5:1. 56% measures 5.0:1. */
     --muted-foreground: 206 9% 56%;
@@ -299,10 +289,6 @@
     --nav-tab-bg: #151A20;
     /* Translucent here — dark's near-black nav gives it enough contrast, unlike light/gold. */
     --nav-icon-chip-bg: hsl(var(--primary) / 23%);
-    /* NOT --mushaf-ornament — ADR 0031 confines gold to the reader page in
-       dark theme with "no exceptions in chrome"; the surah-toggle pill is
-       nav chrome, so its ornament gets the emerald primary instead. */
-    --nav-ornament: hsl(var(--primary));
     /* See matching comment in .theme-dark above. */
     --muted-foreground: 206 9% 56%;
     --accent: 161 58% 15%;
@@ -498,11 +484,11 @@
       pointer-events: none;
       /* Color-agnostic: the PNG is a plain white silhouette (alpha channel
          only carries the shape), so the actual color comes from
-         background-color below via --nav-ornament. This is nav chrome, not
-         the reader page, so it aliases to --mushaf-ornament on light/gold
-         (matching the reader's ornament glyphs) but NOT on dark, where
-         ADR 0031 confines gold to the reader page with no chrome exceptions
-         — --nav-ornament resolves to the emerald primary there instead. */
+         background-color below via --mushaf-ornament — the same token the
+         other mushaf ornament glyphs use, so this automatically matches
+         light/gold/dark instead of needing a separately-baked PNG per theme.
+         Explicit ADR 0031 exception, user-requested (2026-08-19): dark
+         theme's chrome is otherwise gold-free, but this control keeps gold. */
       -webkit-mask-image: url("/icons/surah-ornament-mask.png");
       mask-image: url("/icons/surah-ornament-mask.png");
       -webkit-mask-repeat: no-repeat;
@@ -511,7 +497,7 @@
       mask-size: contain;
       -webkit-mask-position: center;
       mask-position: center;
-      background-color: var(--nav-ornament);
+      background-color: var(--mushaf-ornament);
     }
 
     .fq-surah-toggle::before {

@@ -30,15 +30,17 @@ nav gives enough contrast already). Implemented as:
   baked in light/dark's shared `--primary` value as a constant and broke on gold theme; fixed by
   deriving from the CSS variables instead).
 
-### Surah-selector ornament: dark-theme ADR compliance
+### Surah-selector ornament: explicit ADR 0031 exception
 
 The surah-toggle pill (`Nav.tsx`, `.fq-surah-toggle`) grew ornament flourishes either side on desktop,
-using the mushaf's decorative mask PNG. Initially colored via `--mushaf-ornament` directly — caught in
-review: [ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md) confines gold to the
-reader page in dark theme with "no exceptions in chrome," and this pill lives in the nav bar (chrome).
-Fixed with a new `--nav-ornament` token: aliases straight to `--mushaf-ornament` on light/gold (light's
-value is neutral gray, gold's is the theme's own native gold — no conflict either way), but resolves to
-`hsl(var(--primary))` (emerald) on dark instead of gold.
+using the mushaf's decorative mask PNG, colored via `--mushaf-ornament` (the same token the reader
+page's own ornament glyphs use). [ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md)
+confines gold to the reader page in dark theme with "no exceptions in chrome," and this pill lives in
+the nav bar (chrome) — flagged in review. A `--nav-ornament` token that resolved to emerald on dark
+(gold unchanged on light/gold) was implemented to comply, then explicitly reverted by the user back to
+gold on all four themes, including dark — a deliberate, user-requested exception to ADR 0031 for this
+one control (recorded in `DECISIONS.md`). Do not reintroduce the emerald-on-dark variant without a new
+request.
 
 ### Mobile nav spacing fix
 
@@ -107,8 +109,9 @@ targeting).
 
 ## Files Changed
 
-- `app/globals.css` — `.fq-icon-chip`, `--nav-icon-chip-bg` (×4 themes), `--nav-ornament` (×4 themes),
-  `.fq-surah-toggle` ornament rules (desktop-gated), `.fq-recitation-active-word` opacity.
+- `app/globals.css` — `.fq-icon-chip`, `--nav-icon-chip-bg` (×4 themes), `.fq-surah-toggle` ornament
+  rules (desktop-gated, `--mushaf-ornament` — gold on all four themes, see Decisions Made below),
+  `.fq-recitation-active-word` opacity.
 - `app/components/nav/Nav.tsx` — shadow, surah-toggle two-line layout + a11y (raw `<button>` needed
   `cursor-pointer`/`focus-visible:*`/`transition-colors` added back by hand since it no longer routes
   through `Button`), search relocation, fullscreen hover cleanup.
@@ -122,11 +125,15 @@ targeting).
 
 ## Decisions Made
 
-- Per-theme CSS custom properties (`--nav-icon-chip-bg`, `--nav-ornament`) are the established pattern
-  for any chrome surface that can't use one fixed color/opacity across all four themes — light/gold need
-  solid or theme-native colors where dark can get away with a translucent primary tint, and dark
-  specifically cannot use gold at all in chrome (ADR 0031). Extend this pattern, don't reach for inline
-  styles or per-component theme branching, the next time a chrome control needs per-theme tuning.
+- Per-theme CSS custom properties (`--nav-icon-chip-bg`) are the established pattern for any chrome
+  surface that can't use one fixed color/opacity across all four themes — light/gold need solid or
+  theme-native colors where dark can get away with a translucent primary tint. Extend this pattern,
+  don't reach for inline styles or per-component theme branching, the next time a chrome control needs
+  per-theme tuning.
+- Surah-toggle ornament color is a **deliberate, user-requested exception to ADR 0031**: gold on all
+  four themes, including dark, via `--mushaf-ornament` directly (see the ornament section above and
+  `DECISIONS.md`). An emerald-on-dark `--nav-ornament` token was implemented first to comply with the
+  ADR, then explicitly reverted — do not reintroduce it without a new request.
 - A decorative bottom-right animated smoke/ambient element was explored (extracted from a GIF, rebuilt
   as an alpha-transparent animated WebP, scoped to reader routes only) and then explicitly rejected by
   the user ("doesn't look good") — removed entirely, including the middleware matcher exclusion added
@@ -134,9 +141,8 @@ targeting).
 
 ## What NOT to Do
 
-- Do not reintroduce `--mushaf-ornament` directly on any nav-chrome element in dark theme — route
-  through a dedicated per-theme token (`--nav-ornament` or a new one) that resolves to emerald there,
-  per ADR 0031.
+- Do not reintroduce an emerald-on-dark `--nav-ornament` token for the surah-toggle pill — the user
+  explicitly reverted that in favor of gold on all themes; see Decisions Made above.
 - Do not add hover-state removals to a shared class (`menuRowClassName`, `navPillClassName`, button
   variants) without checking every consumer gets a replacement — the `menuRowClassName` regression above
   happened exactly this way.
