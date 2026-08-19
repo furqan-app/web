@@ -7,6 +7,7 @@ import {
   MUSHAF_LAST_PAGE,
   PLAN_DATE_RE,
   getPlanTemplate,
+  resolveTrackUnit,
   type PlanUnit,
   type UserPlanParams,
 } from "@/app/constants/plans";
@@ -112,9 +113,14 @@ export async function POST(
     return jsonResponse({ code: 422, message: "Unknown track for this plan" });
   }
 
-  // The valid bound depends on the enrollment's own unit (ADR 0038) — a
-  // verse-unit plan's ranges legitimately exceed MUSHAF_LAST_PAGE.
-  const unit: PlanUnit = (plan.params as UserPlanParams | null)?.unit ?? "page";
+  // The valid bound depends on this track's own resolved unit (ADR 0038,
+  // per-track) — a verse-unit track's ranges legitimately exceed
+  // MUSHAF_LAST_PAGE, and two tracks in the same plan can disagree.
+  const unit: PlanUnit = resolveTrackUnit(
+    template,
+    (plan.params as UserPlanParams | null) ?? {},
+    track_key
+  );
   const rangeMin = unit === "page" ? MUSHAF_FIRST_PAGE : MUSHAF_FIRST_VERSE;
   const rangeMax = unit === "page" ? MUSHAF_LAST_PAGE : MUSHAF_LAST_VERSE;
   if (start < rangeMin || end > rangeMax) {

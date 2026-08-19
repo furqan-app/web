@@ -151,6 +151,9 @@
     },
     "pagesPerDay": "pages/day",
     "versesPerDay": "verses/day",
+    "pages": "pages",
+    "verses": "verses",
+    "repetitions": "repetitions",
     "quantityMode": {
       "pages": "Pages",
       "verses": "Verses",

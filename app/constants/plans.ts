@@ -94,13 +94,19 @@ export type PlanQuantity = number | { unit: "pages"; amount: number };
 
 /**
  * Per-enrollment configuration stored in UserPlan.params (JSON).
- * quantities override a track rule's defaultUnitsPerDay by track key.
+ * quantities override a track rule's defaultUnitsPerDay (or, for `tahdeer`'s
+ * repetitions / `qareeb`'s windowSize, the rule's fixed constant) by track key.
  * targetStart/targetEnd bound cursor_advance tracks (e.g. "memorize Juz Amma"),
- * in the enrollment's unit (pages or verse ordinals).
+ * in that track's own unit (pages or verse ordinals).
  * endDate ("YYYY-MM-DD") is required by the "calendar" missed-day policy.
- * unit (ADR 0038): the enrollment's working unit for every track's range math
- * — chosen once at enroll time, fixed for the enrollment's lifetime, never
- * migrated. Absent means "page", matching every pre-widening enrollment.
+ * trackUnits (ADR 0038, widened): unit is chosen **per independent track**
+ * (a `fixed_cycle`/`cursor_advance` track), not enrollment-wide — keyed by
+ * track key, e.g. `{ tilawa: "page", hifz: "verse" }`. A dependent track
+ * (`trailing_window`/`completed_cycle`/`lookahead`) never gets its own entry:
+ * its range math slices its `sourceTrack`'s own logged numbers directly, so
+ * it always inherits that source track's resolved unit (see
+ * `resolveTrackUnit`). A track absent from `trackUnits` defaults to "page".
+ * Fixed for the life of the enrollment; never migrated or switched mid-plan.
  */
 export type UserPlanParams = {
   quantities?: Record<string, PlanQuantity>;
@@ -108,7 +114,7 @@ export type UserPlanParams = {
   targetStart?: number;
   targetEnd?: number;
   endDate?: string;
-  unit?: PlanUnit;
+  trackUnits?: Record<string, PlanUnit>;
 };
 
 /**
@@ -235,3 +241,40 @@ export const PLAN_TEMPLATES: Record<string, PlanTemplate> = {
 
 export const getPlanTemplate = (key: string): PlanTemplate | null =>
   PLAN_TEMPLATES[key] ?? null;
+
+/**
+ * The unit an independent (`fixed_cycle`/`cursor_advance`) track's own range
+ * math runs in — chosen per-enrollment via `params.trackUnits`, "page" if
+ * absent. Only source-free tracks can be looked up this way.
+ */
+export const independentTrackUnit = (
+  params: UserPlanParams,
+  trackKey: string
+): PlanUnit => params.trackUnits?.[trackKey] ?? "page";
+
+/**
+ * The unit `trackKey`'s range math actually runs in. Independent tracks
+ * (`fixed_cycle`/`cursor_advance`) resolve from `params.trackUnits`; a
+ * dependent track (`trailing_window`/`completed_cycle`/`lookahead`) always
+ * inherits its `sourceTrack`'s resolved unit — it slices that track's own
+ * logged numbers directly, so it can never disagree with them (ADR 0038).
+ * Falls back to "page" for an unknown track key.
+ */
+export const resolveTrackUnit = (
+  template: PlanTemplate,
+  params: UserPlanParams,
+  trackKey: string
+): PlanUnit => {
+  const track = template.tracks.find((t) => t.key === trackKey);
+  if (!track) return "page";
+  if (track.rule.kind === "fixed_cycle" || track.rule.kind === "cursor_advance") {
+    return independentTrackUnit(params, trackKey);
+  }
+  return resolveTrackUnit(template, params, track.rule.sourceTrack);
+};
+
+/** Every track in `template` whose unit is independently choosable. */
+export const independentTrackKeys = (template: PlanTemplate): string[] =>
+  template.tracks
+    .filter((t) => t.rule.kind === "fixed_cycle" || t.rule.kind === "cursor_advance")
+    .map((t) => t.key);

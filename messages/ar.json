@@ -152,6 +152,9 @@
     },
     "pagesPerDay": "صفحة/يوم",
     "versesPerDay": "آية/يوم",
+    "pages": "صفحات",
+    "verses": "آيات",
+    "repetitions": "تكرارات",
     "quantityMode": {
       "pages": "صفحات",
       "verses": "آيات",

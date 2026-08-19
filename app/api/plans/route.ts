@@ -5,6 +5,7 @@ import { appPrisma } from "@/app/utils/db";
 import {
   PLAN_DATE_RE,
   getPlanTemplate,
+  independentTrackUnit,
   type UserPlanParams,
   type UserPlanStatus,
 } from "@/app/constants/plans";
@@ -46,10 +47,15 @@ const serializePlan = (plan: {
 const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> => {
   const { targetStart, targetEnd } = item.params;
   if (targetStart === undefined || targetEnd === undefined) return item;
-  // targetStart/targetEnd are verse ordinals for a verse-unit enrollment
-  // (ADR 0038) — convert to the page they fall on before the page-based juz
-  // lookup, same as resolvePlanParams does in reverse at enroll/edit time.
-  const isVerseUnit = item.params.unit === "verse";
+  // targetStart/targetEnd are verse ordinals when the cursor_advance track
+  // they belong to is verse-unit (ADR 0038, per-track) — convert to the page
+  // they fall on before the page-based juz lookup, same as resolvePlanParams
+  // does in reverse at enroll/edit time.
+  const template = getPlanTemplate(item.template_key);
+  const cursorAdvanceTrackKey = template?.tracks.find((t) => t.rule.kind === "cursor_advance")?.key;
+  const isVerseUnit =
+    cursorAdvanceTrackKey !== undefined &&
+    independentTrackUnit(item.params, cursorAdvanceTrackKey) === "verse";
   const startPage = isVerseUnit ? pageOfVerse(targetStart) : targetStart;
   const endPage = isVerseUnit ? pageOfVerse(targetEnd) : targetEnd;
   const [juzStart, juzEnd] = await Promise.all([
@@ -107,7 +113,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const resolved = await resolvePlanParams(body);
+  const resolved = await resolvePlanParams(body, template);
   if ("error" in resolved) {
     return jsonResponse({ code: 422, message: resolved.error });
   }
