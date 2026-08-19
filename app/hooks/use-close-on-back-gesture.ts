@@ -7,19 +7,10 @@ import {
   disarmOverlayBackGuard,
 } from "@/app/utils/overlay-back-guard";
 
-declare global {
-  interface Window {
-    navigation?: {
-      addEventListener: (type: string, listener: (e: NavigateEvent) => void) => void;
-      removeEventListener: (type: string, listener: (e: NavigateEvent) => void) => void;
-      currentEntry?: { key: string };
-    };
-  }
-  interface NavigateEvent extends Event {
-    navigationType: "push" | "replace" | "reload" | "traverse";
-    userInitiated: boolean;
-    intercept: () => void;
-  }
+interface FQNavigateEvent extends Event {
+  navigationType: "push" | "replace" | "reload" | "traverse";
+  userInitiated: boolean;
+  intercept: () => void;
 }
 
 // A FRESH object per push, never a shared constant — same reasoning as
@@ -39,7 +30,7 @@ const overlayGuardState = () => ({
 const supportsNavigationApi = () =>
   typeof window !== "undefined" &&
   "navigation" in window &&
-  typeof window.navigation?.addEventListener === "function";
+  typeof (window as any).navigation?.addEventListener === "function";
 
 // How long to keep listening, after intercepting the closing `traverse`, for
 // a follow-up `reload` navigation the same gesture can trigger (observed
@@ -103,7 +94,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
     };
 
     if (supportsNavigationApi()) {
-      const nav = window.navigation!;
+      const nav = (window as any).navigation;
       // Read immediately after the push above — at this point
       // `nav.currentEntry` is synchronously the entry we just pushed. Used
       // instead of `fqOverlayGuardId`/`getState()` because on-device testing
@@ -116,7 +107,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
       let awaitingReload = false;
       let reloadWatchTimer: ReturnType<typeof setTimeout> | null = null;
 
-      const onNavigate = (e: NavigateEvent) => {
+      const onNavigate = (e: FQNavigateEvent) => {
         if (e.navigationType === "traverse") {
           // `currentEntry` at fire time is still the entry being LEFT (the
           // destination is where the traversal is going, not this entry) —
