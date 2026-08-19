@@ -16,20 +16,20 @@ type Props = {
   // remounts across in-app navigation, so an uncontrolled Sheet wouldn't
   // close itself).
   onNavigate?: () => void;
+  className?: string;
 };
 
 /**
  * Link to the shared-mushaf hub. Shown signed in *or* out — the /mushaf page
  * renders the sign-in prompt for signed-out users. Icon + label on desktop;
- * on mobile it moves into NavOverflowMenu instead of rendering directly in
- * the nav row.
+ * icon-only on mobile.
  */
-export const SharedMushafLink = ({ menuRow, onNavigate }: Props = {}) => {
+export const SharedMushafLink = ({ menuRow, onNavigate, className }: Props = {}) => {
   const t = useTranslations();
   const locale = useLocale();
 
   return (
-    <NavPillLink href="/mushaf" locale={locale} menuRow={menuRow} onClick={onNavigate}>
+    <NavPillLink href="/mushaf" locale={locale} menuRow={menuRow} onClick={onNavigate} className={className}>
       <Users className={cn("flex-none", menuRow ? "size-5" : "size-5 md:size-4")} strokeWidth={1.7} />
       <span className={cn(!menuRow && "hidden md:inline")}>
         {t("mushaf.navLink", "Shared mushaf")}

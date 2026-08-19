@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/routing";
+import { cn } from "@/lib/utils";
 
 export const navPillClassName =
   "fq-nav-tab flex items-center gap-2 px-2 md:px-3 py-1.5 text-xs text-muted-foreground";
@@ -21,10 +22,11 @@ type Props = {
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
   menuRow?: boolean;
+  className?: string;
 };
 
-export const NavPillLink = ({ href, locale, onClick, children, menuRow }: Props) => (
-  <Link href={href} locale={locale} onClick={onClick} className={menuRow ? menuRowClassName : navPillClassName}>
+export const NavPillLink = ({ href, locale, onClick, children, menuRow, className }: Props) => (
+  <Link href={href} locale={locale} onClick={onClick} className={cn(menuRow ? menuRowClassName : navPillClassName, className)}>
     {children}
   </Link>
 );

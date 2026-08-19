@@ -7,6 +7,12 @@ import {
   disarmOverlayBackGuard,
 } from "@/app/utils/overlay-back-guard";
 
+interface FQNavigateEvent extends Event {
+  navigationType: "push" | "replace" | "reload" | "traverse";
+  userInitiated: boolean;
+  intercept: () => void;
+}
+
 // A FRESH object per push, never a shared constant — same reasoning as
 // AndroidBackExitGuard's guardState() (ADR 0040's 2026-08-14 addendum). Also
 // carries a unique `id`: every guarded overlay pushes the same `fqOverlayGuard`
@@ -24,7 +30,7 @@ const overlayGuardState = () => ({
 const supportsNavigationApi = () =>
   typeof window !== "undefined" &&
   "navigation" in window &&
-  typeof window.navigation?.addEventListener === "function";
+  typeof (window as any).navigation?.addEventListener === "function";
 
 // How long to keep listening, after intercepting the closing `traverse`, for
 // a follow-up `reload` navigation the same gesture can trigger (observed
@@ -88,7 +94,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
     };
 
     if (supportsNavigationApi()) {
-      const nav = window.navigation;
+      const nav = (window as any).navigation;
       // Read immediately after the push above — at this point
       // `nav.currentEntry` is synchronously the entry we just pushed. Used
       // instead of `fqOverlayGuardId`/`getState()` because on-device testing
@@ -101,7 +107,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
       let awaitingReload = false;
       let reloadWatchTimer: ReturnType<typeof setTimeout> | null = null;
 
-      const onNavigate = (e: NavigateEvent) => {
+      const onNavigate = (e: FQNavigateEvent) => {
         if (e.navigationType === "traverse") {
           // `currentEntry` at fire time is still the entry being LEFT (the
           // destination is where the traversal is going, not this entry) —
