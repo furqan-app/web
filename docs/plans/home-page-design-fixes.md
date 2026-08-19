@@ -233,3 +233,40 @@ Four refinements after the user reviewed the shipped layout live — edited in p
 5. **Account back in the row on desktop, for one-click My Marks/My Plans access.** User's rationale: Marks and Plans are core product features (word-level marking, awrad habit tracking — PRODUCT.md), so burying them a menu-open-then-tap-Account-then-tap deep on desktop, where there's room, costs more than it saves. `Nav.tsx` now renders `UserMenu` bare (no `menuRow` — its original icon+"Account" dropdown-pill rendering) directly in the row, `hidden md:block`, `md:order-7` (between the search spacerB and the fullscreen toggle). Mobile is unchanged — `UserMenu` still renders only inside `NavOverflowMenu`, wrapped in a new `md:hidden` div there so it doesn't duplicate the row's copy at md+. This makes `UserMenu`'s non-`menuRow` `DropdownMenu` rendering live again (it had gone unreachable after item 4 above); `align="end"` positions correctly here because, unlike the `menuRow` case, this trigger isn't nested inside another modal's `Sheet` — no Popper-detachment risk, no `container` needed. Order renumbered: UserMenu(7) sits before fullscreen(8) and NavOverflowMenu(9) (was 8).
 
 **What NOT to do (added by item 5):** do not add `container` to this `Nav`-row `UserMenu` instance's `DropdownMenuContent` — it isn't nested inside a `Sheet`/`Dialog`, so the default `document.body` portal is correct; adding one would be a no-op at best and risks re-triggering the FocusScope conflict this pattern exists to avoid elsewhere. Do not remove the mobile `menuRow` copy inside `NavOverflowMenu` — mobile still needs it, only md+ has the direct row alternative.
+
+## Addendum — Restructure Navigation & Direct Settings Access
+
+**Date:** 2026-08-19 · **Status:** implemented
+
+### Summary
+
+Restructures the top navigation header to provide direct, 1-click access to Settings, Notifications, Shared Mushaf, and Account options right in the top header bar, completely eliminating the confusing hamburger menu (`NavOverflowMenu`).
+
+### Root Cause / Approach
+
+1. **Direct Settings Access**: Render `<SettingsSidebar />`'s gear icon button directly in `Nav.tsx` at all breakpoints. Clicking the gear button opens `SettingsSidebar` directly in **1 click** without unmounting or opening intermediate sheets.
+2. **Direct Notifications Access**: Render `<NotificationBell />` directly in `Nav.tsx` as a header action at all breakpoints.
+3. **Direct Shared Mushaf Access**: Render `<SharedMushafLink />` directly in `Nav.tsx` header row at all breakpoints (icon-only on mobile, icon+label pill on desktop).
+4. **Direct User Account Access**: Render `<UserMenu />` directly in `Nav.tsx` header row at all breakpoints (icon button on mobile, icon+label pill on desktop) opening account dropdown.
+5. **Eliminate `NavOverflowMenu`**: Delete `NavOverflowMenu.tsx`. With all core links and tools directly accessible in the header row, no secondary hamburger bottom sheet is needed.
+
+### Files to Change
+
+- `app/components/nav/Nav.tsx` — Add direct `<SettingsSidebar />`, `<NotificationBell />`, `<SharedMushafLink />`, and `<UserMenu />` controls to the header row; remove `NavOverflowMenu`.
+- `app/components/nav/SharedMushafLink.tsx` — Add `className` prop support for direct header placement.
+- `app/components/notifications/NotificationBell.tsx` — Add `className` prop support for direct header placement.
+- `app/components/nav/NavOverflowMenu.tsx` — Deleted (unneeded after direct header consolidation).
+
+### Constraints
+
+- Every navigation item and tool must be accessible in **1 click** directly from the top header bar or user menu dropdown at all breakpoints.
+- Do not leave hidden or orphaned hamburger menus.
+- All icon buttons must maintain logical start/end margins (`ms-*`, `me-*`) for RTL/LTR compatibility.
+- Accessibility: Ensure proper `aria-label`s for screen readers on all direct header triggers.
+
+### What NOT to Do
+
+- Do not leave any link buried in a secondary overflow sheet.
+- Do not hardcode physical `ml-*` / `mr-*` left/right margin classes — use logical properties only.
+- Do not break `pathname.includes("/pages/")` gating for the Surah sidebar toggle.
+

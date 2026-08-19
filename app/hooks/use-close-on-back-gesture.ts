@@ -7,6 +7,21 @@ import {
   disarmOverlayBackGuard,
 } from "@/app/utils/overlay-back-guard";
 
+declare global {
+  interface Window {
+    navigation?: {
+      addEventListener: (type: string, listener: (e: NavigateEvent) => void) => void;
+      removeEventListener: (type: string, listener: (e: NavigateEvent) => void) => void;
+      currentEntry?: { key: string };
+    };
+  }
+  interface NavigateEvent extends Event {
+    navigationType: "push" | "replace" | "reload" | "traverse";
+    userInitiated: boolean;
+    intercept: () => void;
+  }
+}
+
 // A FRESH object per push, never a shared constant — same reasoning as
 // AndroidBackExitGuard's guardState() (ADR 0040's 2026-08-14 addendum). Also
 // carries a unique `id`: every guarded overlay pushes the same `fqOverlayGuard`
@@ -88,7 +103,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
     };
 
     if (supportsNavigationApi()) {
-      const nav = window.navigation;
+      const nav = window.navigation!;
       // Read immediately after the push above — at this point
       // `nav.currentEntry` is synchronously the entry we just pushed. Used
       // instead of `fqOverlayGuardId`/`getState()` because on-device testing
