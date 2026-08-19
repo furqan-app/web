@@ -49,16 +49,31 @@ Load these before starting any task:
 - **Task plans**: `docs/plans/`
 - **All AI workflows**: [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md)
 
-## MCP Setup (Trello)
+## Task tracking
 
-The workflow integrates with Trello to track tasks. Each agent reads its own config file:
+The workflow tracks tasks as GitHub Issues on `furqan-app/web` — no MCP setup needed, agents use the `gh` CLI (or `gh-axi`) directly. Status is a `status:*` label (`backlog` → `todo` → `in-progress` → `in-review` → `to-be-released` → closed); type is the native GitHub Issue Type (Task/Bug/Feature), not a label.
 
-| Agent | Config file | Setup |
-|---|---|---|
-| Claude Code | `.mcp.json` | Copy `.mcp.json.example` → `.mcp.json`, fill in keys |
-| VS Code / Copilot | `.vscode/mcp.json` | Already committed — VS Code prompts for keys on first use |
-| OpenCode | `opencode.json` | Copy `opencode.json.example` → `opencode.json`, fill in keys |
-| Cursor | `.cursor/mcp.json` | Copy `.cursor/mcp.json.example` → `.cursor/mcp.json`, fill in keys |
+## graphify
 
-Get your API key: https://trello.com/power-ups/admin
-Get your token: `https://trello.com/1/authorize?expiration=never&name=furqan&scope=read,write&response_type=token&key=YOUR_API_KEY`
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## impeccable
+
+`/impeccable` is this project's standing authority for UI/UX design work — nobody on the team is a designer, so lean on it rather than freehand design judgment.
+
+Use it for:
+- Implementing new design or UI
+- Any back-and-forth on design or UX, including casual questions ("should this be bigger?", "does this color work?") — not just explicit `/impeccable` invocations
+- Critiquing an existing design or surface
+- Reviewing work that includes UI/UX (see `/review-fq-work`'s Design & UX dimension)
+
+Inside the plan/implement/review workflow it's wired in at three points (ADR 0041): `/plan-fq-task` runs `/impeccable critique` during UI-mode investigation and records findings as a plan's `## Design Remediation` section; `/start-fq-task` executes those entries during implementation; `/review-fq-work` runs `/impeccable critique` as a 4th dimension when a diff touches UI files. Outside that workflow — a standalone design question, a critique request, an ad hoc "what do you think of this" — invoke `/impeccable` directly; its own skill description already routes these automatically, this note just makes the expectation explicit.

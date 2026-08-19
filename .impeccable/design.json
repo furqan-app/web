@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-13T00:00:00Z",
+  "title": "Design System: Furqan",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Reading Emerald",
+        "canonical": "hsl(163 86% 35%)",
+        "tonalRamp": ["#054735", "#0a8562", "#0fc290", "#25efb5", "#62f3ca", "#a0f8df", "#d0fbef", "#e7fdf7"]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Cool Paper (light theme)",
+        "canonical": "hsl(210 36% 95%)",
+        "tonalRamp": ["#1f262e", "#394756", "#54697d", "#728aa1", "#9aabbc", "#c2ccd6", "#e0e6eb", "#f0f2f5"]
+      },
+      "gold": {
+        "role": "tertiary",
+        "displayName": "Antique Gold (mushaf identity)",
+        "canonical": "hsl(38 32% 46%)",
+        "tonalRamp": ["#3c2e10", "#70561f", "#a47e2d", "#cda247", "#dbbc7b", "#e9d7af", "#f4ebd7", "#faf5eb"]
+      },
+      "destructive": {
+        "role": "error",
+        "displayName": "Alert Red",
+        "canonical": "hsl(0 72% 56%)",
+        "tonalRamp": ["#4a0a0a", "#8a1414", "#c81e1e", "#e34c4c", "#ea7a7a", "#f1a8a8", "#f8d3d3", "#fbe9e9"]
+      }
+    },
+    "typographyMeta": {
+      "ui": { "displayName": "Tajawal (UI)", "purpose": "All interface chrome — nav, dialogs, forms, labels." },
+      "quran-standalone": { "displayName": "Uthmanic Hafs", "purpose": "Quran verse/word display outside the mushaf page route (search, marks, tooltips)." },
+      "quran-word-on-page": { "displayName": "Per-page Quran glyph font", "purpose": "Print-accurate mushaf page rendering only — one font per physical page." },
+      "surah-name": { "displayName": "Surah Names glyph font", "purpose": "Calligraphic surah-name display; keyed by zero-padded surah number, not Arabic text." }
+    },
+    "shadows": [
+      { "name": "reader-chrome-bar-shadow", "value": "0 2px 8px rgba(0,0,0,0.06), 0 16px 48px -16px rgba(0,0,0,0.14)", "purpose": "Floating reader chrome (nav arrows, recitation bar) in light/gold; none in dark, where a raised face + warm rim carry the lift instead." },
+      { "name": "mushaf-page-cast", "value": "0 20px 44px -20px rgba(30,41,59,0.4), 0 5px 14px -7px rgba(30,41,59,0.2)", "purpose": "Cast shadow seating the mushaf page on its desk (light/gold only; transparent in dark)." }
+    ],
+    "motion": [],
+    "breakpoints": [
+      { "name": "mobile", "value": "0-767px" },
+      { "name": "tablet-landscape", "value": "1024-1366px" },
+      { "name": "portrait-tablet-small-laptop", "value": "768-1023px" },
+      { "name": "desktop", "value": "1367px+" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default call-to-action button used across app chrome (save, confirm, submit).",
+      "html": "<button class=\"ds-btn-primary\">Save changes</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; border-radius: 6px; font-size: 14px; font-weight: 500; height: 40px; padding: 0 16px; background: hsl(163 86% 35%); color: #ffffff; border: none; transition: background-color 0.15s; } .ds-btn-primary:hover { background: hsl(163 86% 35% / 0.9); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(163 86% 35%), 0 0 0 4px #ffffff; }"
+    },
+    {
+      "name": "Reader Nav Arrow",
+      "kind": "custom",
+      "refersTo": "nav-arrow",
+      "description": "Circular navigation control flanking the mushaf reader spread — signature component, never an icon-as-button.",
+      "html": "<button class=\"ds-nav-arrow\" aria-label=\"Next page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 18l6-6-6-6\"/></svg></button>",
+      "css": ".ds-nav-arrow { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 9999px; background: #ffffff; border: 1px solid hsl(210 31% 90%); color: hsl(209 36% 14%); transition: background-color 0.15s, color 0.15s; } .ds-nav-arrow:hover { background: hsl(165 53% 93%); color: hsl(163 86% 35%); }"
+    },
+    {
+      "name": "Mushaf Page Card",
+      "kind": "card",
+      "refersTo": null,
+      "description": "The print-accurate mushaf reading surface — flat paper fill, depth carried entirely by edge tokens (rim, sheet stack, cast shadow), never a lit face.",
+      "html": "<div class=\"ds-mushaf-card\"><span class=\"ds-mushaf-corner ds-corner-tl\">&#10022;</span><div class=\"ds-mushaf-content\">Mushaf page content</div></div>",
+      "css": ".ds-mushaf-card { position: relative; border-radius: 20px; background: #fdfdfc; box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), inset 1px 0 0 rgba(40,50,62,0.07), inset -1px 0 0 rgba(40,50,62,0.07), inset 0 -1px 0 rgba(40,50,62,0.11), 0 20px 44px -20px rgba(30,41,59,0.4), 0 5px 14px -7px rgba(30,41,59,0.2); padding: 32px; } .ds-mushaf-corner { position: absolute; font-size: 14px; color: hsl(163 86% 35% / 0.6); pointer-events: none; } .ds-corner-tl { top: 10px; left: 10px; }"
+    },
+    {
+      "name": "Corner Star Ornament",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Four-point star ornament marking each corner of the mushaf page card — reading-surface identity, not general UI chrome.",
+      "html": "<svg class=\"ds-corner-star\" viewBox=\"0 0 18 18\" width=\"18\" height=\"18\"><path d=\"M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z\"/></svg>",
+      "css": ".ds-corner-star { color: hsl(163 86% 35%); opacity: 0.6; pointer-events: none; fill: currentColor; }"
+    },
+    {
+      "name": "Section Header Band",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Three-column RTL header used above reading-surface content: metadata / centered diamond-flanked title / secondary metadata.",
+      "html": "<div class=\"ds-header-band\" dir=\"rtl\"><span class=\"ds-header-meta\">Juz 1</span><span class=\"ds-header-title\"><span class=\"ds-diamond\"></span> Al-Fatihah <span class=\"ds-diamond\"></span></span><span class=\"ds-header-meta ds-header-meta-end\">Hizb 1</span></div>",
+      "css": ".ds-header-band { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; border-bottom: 1px solid hsl(210 31% 90%); padding-bottom: 8px; margin-bottom: 16px; } .ds-header-meta { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: hsl(208 18% 40%); } .ds-header-meta-end { text-align: end; } .ds-header-title { text-align: center; font-size: 14px; font-weight: 700; color: hsl(209 36% 14%); display: flex; align-items: center; justify-content: center; gap: 8px; } .ds-diamond { display: inline-block; width: 6px; height: 6px; transform: rotate(45deg); background: hsl(163 86% 35%); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Reading Desk",
+    "overview": "Furqan is built to feel like sitting down with a real, physical mushaf — not a generic SaaS reading pane. Every surface commits to that: pages are print-accurate rather than reflowed, cards carry paper-like depth (rim light, sheet stack, binding crease) instead of a flat drop shadow, and the single accent color is used the way ink or gold leaf would be used on a real page — sparingly, deliberately, never as decoration for its own sake. Chrome (nav, dialogs, settings) is quieter and more conventional; the mushaf reader itself is where the craft concentrates. The system runs three parallel themes — light, gold, dark — each a complete, independently tuned palette rather than a light/dark pair with a tint swapped in. Light is deliberately a modern, cool-neutral reading surface so gold can own the traditional illuminated-manuscript register on its own; dark carries page depth from light rather than shadow, since shadows are structurally invisible on its near-black background.",
+    "keyCharacteristics": [
+      "One accent color used sparingly across all chrome",
+      "Print-accurate mushaf pages — never a reflowed text stream",
+      "Paper-like depth via rim/sheet/crease tokens, not conventional box-shadow, wherever a shadow would be structurally invisible",
+      "Three complete, independently-tuned theme palettes (light / gold / dark)",
+      "Manuscript ornamentation reserved for reading surfaces, not general UI chrome"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "--primary (aliased to --gold/--gold-muted where no separate gold identity exists) is the only interactive/ornamental accent color in the system. Never introduce a second hue for emphasis.", "section": "colors" },
+      { "name": "The Gold-Is-Identity Rule", "body": "--gold/--gold-muted mark mushaf-identity elements only — never interactive controls; --primary/--accent cover interaction.", "section": "colors" },
+      { "name": "The Semantic Token Rule", "body": "Never hardcode a hex/RGB value or a raw Tailwind color utility — always the semantic token (bg-background, text-foreground, etc.).", "section": "colors" },
+      { "name": "The Column–Font Contract Rule", "body": "Every Quran-text rendering context has exactly one correct source column and one correct font — never mix across rows.", "section": "typography" },
+      { "name": "The Flat Face Rule", "body": "The mushaf page face never carries a lighting gradient or radial highlight — depth is edge-only, in every theme, at every breakpoint.", "section": "elevation" },
+      { "name": "The Light-Not-Shadow Rule", "body": "Where light/gold reach for a box-shadow to seat a surface, dark reaches for a flat lightness step and a warm rim instead.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use only semantic Tailwind color tokens — never a raw hex, RGB, or bg-gray-*/bg-white/text-black utility.",
+      "Do use hsl(var(--token)) / HSL triplets as the canonical color format when adding a new token.",
+      "Do carry the mushaf reading page's depth through rim/sheet/crease tokens matching the active theme's Elevation strategy.",
+      "Do use start/end logical Tailwind variants, not left/right, for anything that must mirror correctly in RTL.",
+      "Do follow the Column–Font Contract exactly when rendering any Quran text."
+    ],
+    "donts": [
+      "Don't add a second accent color anywhere in the system.",
+      "Don't put a lighting gradient or radial highlight on the mushaf page face in any theme.",
+      "Don't reach for box-shadow to lift the dark-theme reader page or its chrome.",
+      "Don't use a filled/circle-wrapped icon variant for reader navigation.",
+      "Don't feed a surah's Arabic name text to the surah-name font."
+    ]
+  }
+}

@@ -10,15 +10,22 @@ export const metadata: Metadata = {
   description: "The word focused Quran app",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
+    icon: [
+      { url: "/icons/favicon.ico", sizes: "any" },
+      { url: "/icons/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/icons/favicon-32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/icons/icon-apple-180.png", sizes: "180x180" }],
   },
   appleWebApp: {
     capable: true,
-    // black-translucent makes the iOS status bar transparent, overlaying app
-    // content. viewportFit:cover below + env(safe-area-inset-top) on the navbar
-    // prevents nav content being hidden behind the notch on notched devices.
-    statusBarStyle: "black-translucent",
+    // "default": opaque status bar, always visible, never overlays content.
+    // Was "black-translucent" (Android's fullscreen counterpart had the same
+    // always-visible-status-bar goal); reverted (#317) — see
+    // docs/plans/feature-pwa-fullscreen-focus-mode.md Addendum. viewportFit:
+    // cover + env(safe-area-inset-top) on the navbar are left in place; they
+    // resolve to 0px with no translucent bar to clear, per spec.
+    statusBarStyle: "default",
     title: "Furqan",
   },
 };

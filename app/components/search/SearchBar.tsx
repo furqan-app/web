@@ -49,7 +49,8 @@ export const SearchBar = () => {
 
     const handleQueryChange = (value: string) => {
         setQuery(value);
-        setIsOpen(isSearchQueryValid(value));
+        const valid = isSearchQueryValid(value);
+        setIsOpen(valid);
     };
 
     const closeAll = (open: boolean) => {
@@ -62,7 +63,7 @@ export const SearchBar = () => {
     return (
         <>
             {/* Desktop: inline search bar */}
-            <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto hidden md:block">
+            <div ref={searchContainerRef} className="relative w-full max-w-xl hidden md:block">
                 <div className="relative">
                     <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                     <Input
@@ -90,7 +91,7 @@ export const SearchBar = () => {
 
             {/* Mobile: search icon trigger */}
             <button
-                className="md:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent/50 transition-colors"
+                className="md:hidden flex items-center justify-center w-10 h-10 rounded-md hover:bg-accent/50 transition-colors"
                 onClick={() => setMobileOpen(true)}
                 aria-label={t("search.placeholder", "Search the Quran...")}
             >
@@ -102,7 +103,8 @@ export const SearchBar = () => {
                 <SheetContent
                     side="top"
                     hideDefaultClose
-                    className="h-screen p-0 flex flex-col"
+                    overlayClassName="!z-[52]"
+                    className="!z-[52] h-screen p-0 flex flex-col"
                 >
                     <SheetTitle className="sr-only">
                         {t("search.placeholder", "Search the Quran...")}

@@ -18,7 +18,7 @@ A bump type (`major`, `minor`, or `patch`) must be given. If missing, ask for it
 
 1. **Run Cut Release in full** (see below). Its own preconditions (clean tree, on main) apply as normal. Do not pause before or after this step.
 
-2. **Run Promote to Staging** (see below). Opens the `release/x.y.z → stg` PR. Proceed straight to Checkpoint 1 — no pause before this step.
+2. **Run Promote to Staging** (see below). Opens the `main → stg` PR. Proceed straight to Checkpoint 1 — no pause before this step.
 
 3. **Checkpoint 1 — staging.** Tell the user the PR is open and ask them to merge it on GitHub. Hostinger auto-deploys the staging site on any push to `stg` — no manual redeploy click is needed. Do not trust a bare "done": verify via `gh pr view <number> --json state -q .state` and only continue once it reports `MERGED`. Once merged, ask the user to verify the deployed staging site looks right — wait for their explicit confirmation before continuing.
 
@@ -62,7 +62,7 @@ Branches a new `release/x.y.z` off `main`, bumps and tags the version, stamps th
 5. Edit `package.json`'s `"version"` field to `<new-version>`. Run `npm install --package-lock-only` so `package-lock.json`'s top-level `version` field stays in sync (do not run a full `npm install`). Stage both files and commit: `chore(release): bump version to <new-version>`. No AI signature.
 6. `git tag v<new-version>`.
 7. `git push -u origin release/<new-version>` then `git push origin v<new-version>`.
-8. **Update your release tracking system** — mark all tasks included in this release as released (labeled with `v<new-version>` and moved to Done). If your system has an equivalent of Trello's "To Be Released" list, pull tasks from there. If the list is empty, continue anyway — an empty release is still valid.
+8. **Update your release tracking system** — mark all tasks included in this release as released (milestoned `v<new-version>` and closed). Pull tasks from your system's release-queue equivalent (here: GitHub issues labeled `status:to-be-released`). If the queue is empty, continue anyway — an empty release is still valid.
 9. **Detect DB changes needing manual action** (non-blocking — this only builds content for steps 10 and 11, never pauses):
    - Find the previous release tag: `git tag --list 'v*' --sort=-v:refname` on `origin`, take the first entry that isn't `v<new-version>`. Sort by semver. If no prior tag exists (first release), skip this step.
    - `git diff --name-only <previous-tag>..release/<new-version>` and check against:
@@ -87,28 +87,27 @@ Branches a new `release/x.y.z` off `main`, bumps and tags the version, stamps th
 
 ---
 
-## Promote to Staging (`/promote-to-staging <version>`)
+## Promote to Staging (`/promote-to-staging`)
 
-Opens the `release/<version>` → `stg` PR for staging verification.
+Opens the `main → stg` PR so whatever's currently on `main` can be verified on staging. Not tied to a release version — `stg` tracks `main` directly and no longer accepts `release/*` branches (ADR 0039).
 
 ### Precondition
 
-- A version must be given (e.g. `1.3.0`). If missing, ask for it.
-- `release/<version>` must exist on `origin`. If not, stop — run Cut Release first.
+None — `main` always exists, no version argument needed.
 
 ### Steps
 
-1. `git fetch origin`; confirm `origin/release/<version>` exists.
-2. Best-effort: look up tasks carrying the `v<version>` label in your tracking system to reference in the PR body.
-3. `gh pr create --base stg --head release/<version> --title "Staging v<version>"` with a body summarizing the release (linking tasks found above, if any).
+1. `git fetch origin`.
+2. `git log origin/stg..origin/main --oneline` to summarize what's new since `stg`'s last merge, for the PR body.
+3. `gh pr create --base stg --head main --title "Staging update"` with a body listing the commits/PRs found above.
 4. Report the PR URL. Tell the user:
-   - The `check-source` gate on `stg` requires this PR's head branch to start with `release/` — it will pass automatically.
+   - The `check-source` gate on `stg` requires this PR's head branch to be exactly `main` — it will pass automatically.
    - Merge the PR on GitHub. Hostinger auto-deploys on any push to `stg` — no manual redeploy needed.
 
 ### What NOT to do
 
 - Do not merge the PR — only open it.
-- Do not touch the release tracking system — that already happened in Cut Release.
+- Do not ask for or use a version argument — this skill no longer takes one.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: review-fq-work
-description: Quality gate for the current branch. Spawns a review subagent (model of your choice — Opus by default) to review the branch diff vs main across three dimensions: bugs & correctness, code quality & duplication, and plan consistency (stale docs/plans).
+description: Quality gate for the current branch. Spawns a review subagent (model of your choice — Opus by default) to review the branch diff vs main across three dimensions: bugs & correctness, code quality & duplication, and plan consistency (stale docs/plans). Adds a 4th dimension, design & UX via /impeccable critique, when the diff touches UI files.
 ---
 
 # /review-fq-work
@@ -15,6 +15,10 @@ Spawn the review using `runSubagent` with `model` set to the chosen value:
 - Haiku → `Claude Haiku 3.5 (Anthropic)`
 
 Default: Opus.
+
+## Claude-specific: Dimension 4 (Design & UX)
+
+When the diff touches UI files (per `docs/workflow/review-work.md` step 3), invoke the `impeccable` Skill directly with `critique` and the changed UI file(s) as target — do not fold this into the subagent prompt above; it runs as a separate direct Skill call (ADR 0041).
 
 ---
 <!-- original content preserved below this line for reference only -->

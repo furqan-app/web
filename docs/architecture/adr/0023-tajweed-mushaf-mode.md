@@ -105,3 +105,68 @@ Planning the schema change deferred since the Addendum above (`line_number` is m
 
 **Verified — the existing surah-banner gap-detection algorithm needs no logic changes.** `QuranSafha`'s banner/bismillah placement infers position generically from gaps in whichever line-number sequence it receives. Spot-checked against a real mid-page surah transition (page 106, An-Nisa → Al-Ma'idah): the gap sits at lines 6-7 under both `mushaf=2` and `mushaf=19` groupings, even though 6 other words on the page shift line by ±1 between the two. The algorithm just needs to run against the active grouping (`activeLines`) — not be rewritten. See Addendum 10 of `docs/plans/tajweed-mushaf-mode.md` for the full design.
 
+
+## Addendum 7: Tajweed precache exclusion narrowed to opt-in, not removed
+
+**Date:** 2026-08-17
+**Issue:** [#256 Unify Tajweed toggle + offline downloads into one Mushaf Layout setting](https://github.com/furqan-app/web/issues/256)
+
+The main body above (and `DECISIONS.md`'s Tajweed Mushaf Mode section) states tajweed fonts are excluded from the PWA precache outright, "since bulk-caching both editions would nearly triple the installed cache against a fragile iOS quota." That exclusion was written when the only precache trigger was install-time/first-run — automatic, or as close to it as ADR 0014 Addendum 2's explicit-tap model gets for a *single* edition offered once.
+
+**This addendum narrows, not reverses, that constraint.** The tajweed edition becomes downloadable from the Settings "Mushaf Layout" list, exactly like the default edition already is: a dedicated row, its own explicit tap, its own independent progress state (ADR 0014 Addendum 5). What remains true and unchanged:
+
+- The first-run gate and post-install prompt still offer the default edition only — a user who never opens Settings never downloads the ~51 MB tajweed font set.
+- Nothing downloads tajweed fonts automatically, in the background, or as a side effect of enabling Tajweed mode in the reader — switching the active edition (rendering) and downloading it for offline use remain fully independent actions.
+- The iOS quota risk this constraint exists to manage is real and unchanged (~138 MiB stored if a user downloads both) — it is now an informed user choice per edition, not a platform-wide default.
+
+**What NOT to do:** do not add tajweed fonts to any install-time or first-run bulk operation — the exclusion from *automatic* precache stands. Do not read this addendum as license to make Tajweed's Settings row auto-start a download, or to bundle it into the default edition's download.
+
+## Addendum 8: Swipe flicker root cause — `:hover` filter/transform cost on multi-layer COLRv1 glyphs
+
+**Date:** 2026-08-18
+**Issue:** [#332 tajweed mushaf flickers on swipe](https://github.com/furqan-app/web/issues/332)
+
+Tajweed flickered on every swipe (online and offline-downloaded, every page including revisits) while
+madani never did. Two earlier hypotheses this session were investigated and disproven — recorded here
+so neither is re-attempted:
+
+- **Not a font-prefetch lookahead gap.** Madani's font warms 2 spreads ahead via the FontFace-API
+  registry (`ensurePageFonts`, ADR 0034's Stage B); tajweed's colour-glyph font only ever warms 1
+  spread ahead (its CSS `@font-palette-values` path has no registry equivalent). Real, but it does not
+  exist at all in single/mobile view (both editions warm an identical page set there — traced through
+  `ReaderPager.tsx`'s `allPageIds`/`baseFontIds`), and cannot explain a revisited page flickering again
+  (the persistent pager, ADR 0028, moves panels rather than remounting them — `fontReady` cannot un-set
+  itself once true without a real remount).
+- **Not CSS `<style>`-insertion recalc cost.** Live-instrumented (`PerformanceObserver('longtask')` +
+  `MutationObserver` on new `<style>` insertions) swiping to fresh pages in both editions: tajweed
+  showed ~75-79ms longtasks correlated with 4 new `@font-palette-values` insertions per swipe; madani
+  showed equal-magnitude ~75-105ms longtasks with **zero** style insertions. Equal main-thread cost with
+  or without the CSSOM mutation means the mutation itself isn't the driver.
+- **Not font decode/parse time.** Raw `FontFace.load()` timing (bypassing the app, isolating
+  download+decode) on 5 fresh pages per edition: tajweed avg 272.7ms, madani avg 265.3ms, ranges
+  overlapping. No meaningful difference — COLRv1 decode is not measurably slower than the monochrome
+  font at a similar file size (also: file sizes are ~5-8% apart, not the ~9-10x DECISIONS.md previously
+  stated — that figure was stale and has been corrected there).
+
+**Actual root cause, confirmed via two independent real-Chrome DevTools Performance traces (staging +
+local dev, CPU-throttled to simulate mobile) comparing identical swipe gestures per edition:**
+`QuranWord.tsx`'s hover rule — `hover:scale-[1.06] hover:[filter:drop-shadow(1px_1px_0px_hsl(var(--foreground)/0.4))]`
+— is **identical code for both editions**, no `tajweedMode` branch. During a swipe, the pointer/finger
+drags across many word elements in sequence, transiently triggering `:hover` on each one it passes. A
+`filter: drop-shadow` (plus the `scale` transform, which promotes a compositing layer) is cheap to
+rasterize over a single-layer monochrome glyph; tajweed's COLRv1 glyphs are composed of multiple
+stacked colour sub-glyphs per word (Addendum 4 above) — rasterizing a drop-shadow over a multi-layer
+composite is measurably more expensive, with no code difference to account for it, only content
+complexity. The trace comparison quantified this: `Event: pointerover` total time was **~44x** larger
+for tajweed (2,719.6ms / 17.4% of trace vs. madani's 61.7ms / 0.6%); the main React work-loop function's
+total time was ~2.5x larger as a share of the trace (33.5% vs 13.6%); Layout ~2.7x larger; Recalculate
+style ~3x larger. All four independently point the same direction.
+
+**Decision.** The hover cue must not run its expensive filter/transform path while a swipe/drag is in
+progress — `ReaderPager`'s existing `isDragging` ref (already tracked for the strip-transform mechanism)
+gates it off during an active drag, where it adds no real UX value (nobody is deliberately hovering
+mid-swipe). See `docs/plans/fix-tajweed-swipe-flicker.md` for the implementation and decision tree.
+
+**What NOT to do:** do not re-investigate the font-prefetch-lookahead or CSS-insertion-recalc theories
+above — both were live-tested and disproven this session, not just reasoned about. Do not "fix" this by
+changing font-loading/prefetch code; the font is not the mechanism.

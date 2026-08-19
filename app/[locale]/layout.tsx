@@ -5,16 +5,24 @@ import { routing } from "@/i18n/routing";
 
 import { Nav } from "@components/nav/Nav";
 import { QueryProvider } from "@/app/providers/QueryProvider";
-import { QuranFontScaleProvider } from "@/app/contexts/QuranFontScaleContext";
+import { DesktopQuranFontSizeProvider } from "@/app/contexts/DesktopQuranFontSizeContext";
 import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
 import { QuranMushafProvider } from "@/app/contexts/QuranMushafContext";
 import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
 import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
 import { ReaderPageProvider } from "@/app/contexts/ReaderPageContext";
+import { ReaderNavigationProvider } from "@/app/contexts/ReaderNavigationContext";
+import { LastReadPageProvider } from "@/app/contexts/LastReadPageContext";
+import { KeepScreenAwakeProvider } from "@/app/contexts/KeepScreenAwakeContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import { PlansWidget } from "@components/plans/PlansWidget";
+import { LastReadPageSync } from "@components/reader/LastReadPageSync";
+import { KeepScreenAwakeSync } from "@components/KeepScreenAwakeSync";
+import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
+import { OfflineInstallPrompt } from "@components/offline/OfflineInstallPrompt";
+import { SwUpdateBanner } from "@components/offline/SwUpdateBanner";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -46,7 +54,7 @@ export default async function LocaleLayout({
     >
       <NextIntlClientProvider messages={messages}>
         <SessionProvider>
-          <QuranFontScaleProvider>
+          <DesktopQuranFontSizeProvider>
             <QuranMushafProvider>
               <QuranSafhaViewProvider>
                 <RecitationProvider>
@@ -54,11 +62,22 @@ export default async function LocaleLayout({
                     <SidebarProvider>
                       <NavOverlayProvider>
                         <ReaderPageProvider>
-                          <Nav />
-                          {children}
-                          <RecitationPlayerBar />
-                          <RecitationSettingsSheet />
-                          <PlansWidget />
+                          <ReaderNavigationProvider>
+                            <LastReadPageProvider>
+                              <KeepScreenAwakeProvider>
+                                <SwUpdateBanner />
+                                <Nav />
+                                {children}
+                                <RecitationPlayerBar />
+                                <RecitationSettingsSheet />
+                                <PlansWidget />
+                                <LastReadPageSync />
+                                <KeepScreenAwakeSync />
+                                <OfflineInstallPrompt />
+                                <OfflineSetupGate />
+                              </KeepScreenAwakeProvider>
+                            </LastReadPageProvider>
+                          </ReaderNavigationProvider>
                         </ReaderPageProvider>
                       </NavOverlayProvider>
                     </SidebarProvider>
@@ -66,10 +85,9 @@ export default async function LocaleLayout({
                 </RecitationProvider>
               </QuranSafhaViewProvider>
             </QuranMushafProvider>
-          </QuranFontScaleProvider>
+          </DesktopQuranFontSizeProvider>
         </SessionProvider>
       </NextIntlClientProvider>
     </div>
   );
 }
-

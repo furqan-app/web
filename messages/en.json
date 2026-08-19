@@ -1,6 +1,5 @@
 {
   "home": {
-    "badge": "Memorize the Quran",
     "title": "Furqan",
     "tagline": "Every word is a trust, every verse a journey — annotate, reflect, and perfect your memorization of the Noble Quran, guided step by step alongside your teacher.",
     "description": "Read and Listen to Quran"
@@ -36,16 +35,58 @@
   "quranFontSize": "Quran Font Size",
   "pageView": "Page View",
   "appearance": "Appearance",
-  "tajweedMode": "Tajweed Colors",
-  "tajweedModeLabel": "Color-code Tajweed rules",
-  "tajweedModeDescription": "Highlight recitation rules like idgham, ikhfa, qalqalah, and madd with color",
+  "keepScreenAwake": "Screen",
+  "keepScreenAwakeLabel": "Keep screen awake",
+  "keepScreenAwakeDescription": "Prevent your device screen from sleeping while the app is open",
   "theme": {
     "light": "Light",
     "dark": "Dark",
     "gold": "Gold"
   },
-  "offlineAccess": "Offline Access",
-  "offlinePagesReady": "{cached} of {total} pages ready offline",
+  "mushafLayout": {
+    "title": "Mushaf Layout",
+    "switchAction": "Switch to this layout",
+    "active": "Active",
+    "downloaded": "Downloaded",
+    "editions": {
+      "2": {
+        "name": "King Fahd Complex Mushaf (1405H print)"
+      },
+      "19": {
+        "name": "Tajweed mushaf"
+      }
+    }
+  },
+  "offline": {
+    "gateTitle": "Read the Quran offline",
+    "sizeNotice": "About {size} MB. Best on Wi-Fi.",
+    "download": "Download",
+    "downloadWithSize": "Download ({size} MB)",
+    "skip": "Skip for now",
+    "notNow": "Not now",
+    "settingsHint": "You can download it later from Settings.",
+    "runningTitle": "Downloading the Quran",
+    "progress": "{cached} of {total} pages",
+    "ready": "Available offline",
+    "partialTitle": "Some pages couldn't be downloaded",
+    "partialBody": "{cached} of {total} pages are ready — {failed} couldn't be downloaded.",
+    "retry": "Try again",
+    "continueAnyway": "Continue anyway",
+    "offlineTitle": "You're offline",
+    "offlineBody": "Connect to the internet to download the Quran for offline reading.",
+    "installedTitle": "Furqan is installed",
+    "installedBody": "Download the Quran now so you can read it offline.",
+    "checking": "Checking offline availability",
+    "gateDescription": "Choose whether to download the Quran for offline reading.",
+    "resumeProgress": "{cached} of {total} pages downloaded",
+    "resume": "Resume download",
+    "notAvailableOffline": "This page hasn't been downloaded yet — connect to the internet to read it."
+  },
+  "swUpdate": {
+    "title": "New version available",
+    "refresh": "Refresh",
+    "dismiss": "Later"
+  },
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",
@@ -84,6 +125,15 @@
   "page": "Page",
   "signOut": "Sign out",
   "signIn": "Sign in",
+  "continueReading": {
+    "navLink": "Continue Reading"
+  },
+  "nav": {
+    "more": "More"
+  },
+  "exitApp": {
+    "pressBackAgain": "Press back again to exit"
+  },
   "marks": {
     "navLink": "My Marks",
     "pageTitle": "My Marks",
@@ -270,7 +320,20 @@
     "rangeTypeVerse": "Verse",
     "surahPlaceholder": "Choose a surah",
     "surahSearchPlaceholder": "Search surahs…",
-    "surahEmpty": "No surah found."
+    "surahEmpty": "No surah found.",
+    "offlineUnavailable": "Not available offline"
+  },
+  "offlineRecitation": {
+    "title": "Offline Recitation",
+    "description": "Download a surah or juz' for offline listening.",
+    "bySurah": "By Surah",
+    "byJuz": "By Juz",
+    "download": "Download",
+    "downloaded": "Downloaded",
+    "noneDownloaded": "Nothing downloaded yet.",
+    "delete": "Delete",
+    "mb": "MB",
+    "offlineNotice": "Connect to the internet to download."
   },
   "notifications": {
     "bellLabel": "Notifications",
