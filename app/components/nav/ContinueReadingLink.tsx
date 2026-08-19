@@ -42,20 +42,14 @@ export const ContinueReadingLink = ({ className }: Props = {}) => {
       }}
       // Bespoke (not NavPillLink's shared navPillClassName) so mobile can be
       // a true size-10 square icon button matching the other mobile-visible
-      // nav triggers' footprint (search, overflow menu — both h-10 w-10);
-      // md+ replicates navPillClassName's padded-pill look, but `md:-ms-3`
-      // cancels the `md:px-3` start-side layout footprint (padding still
-      // paints the hover background around the icon; the negative start
-      // margin just stops that inset from also pushing the sidebar-toggle
-      // pill further away) — otherwise this link's own invisible inset added
-      // 12px on top of the row's `gap-2`, making the visible gap to the
-      // toggle (20px) read wider than the gap between the logo and the
-      // toggle (8px, neither has padding facing the other). The end side
-      // (facing the search spacer) keeps its normal padding — nothing to
-      // cancel there. See docs/plans/home-page-design-fixes.md, Addendum —
-      // Universal nav menu.
+      // nav triggers' footprint (search, overflow menu — both h-10 w-10).
+      // Plain icon control, no fq-nav-tab background — only the surah
+      // selector and user menu ("my account") keep a resting background.
+      // flex-row-reverse (user request): visually swaps icon/label sides
+      // without touching DOM order (icon is still the first child, so
+      // screen readers hit it before "Continue Reading" either way).
       className={cn(
-        "flex-none flex items-center justify-center size-10 rounded-md hover:bg-accent/50 transition-colors md:w-auto md:h-auto md:justify-start md:gap-2 md:rounded-xl md:px-3 md:py-1.5 md:-ms-3 md:text-sm md:font-semibold md:text-muted-foreground",
+        "flex-none flex flex-row-reverse items-center justify-center size-10 md:w-auto md:h-auto md:justify-start md:gap-2 md:px-3 md:py-1.5 md:text-xs md:text-muted-foreground",
         className,
       )}
     >

@@ -60,7 +60,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
             variant="ghost"
             size="icon"
             aria-label={t("settings", "Settings")}
-            className={"hover:bg-accent " + (isRTL ? "mr-4" : "ml-4")}
+            className={isRTL ? "mr-4" : "ml-4"}
           >
             <Settings className="size-5" />
           </Button>
