@@ -19,6 +19,15 @@
     --secondary-foreground: 209 36% 14%;
     --muted: 208 30% 92%;
     --muted-foreground: 208 18% 40%;
+    /* Nav bar control resting background (fq-nav-tab, globals.css) — light/gold
+       keep the original translucent-muted look; dark gets an explicit opaque
+       hex per user request instead (see the dark blocks below). */
+    --nav-tab-bg: hsl(var(--muted) / 0.5);
+    /* Icon-chip background (logo, recitation play button) — a translucent
+       primary tint reads fine against dark's near-black nav but washes out
+       to near-invisible against light/gold's pale background, so those two
+       get a solid fill instead (same reasoning as --nav-tab-bg above). */
+    --nav-icon-chip-bg: hsl(var(--primary));
     --accent: 165 53% 93%;
     --accent-foreground: 169 88% 26%;
     --destructive: 0 72% 56%;
@@ -68,6 +77,8 @@
       0 16px 48px -16px rgba(0, 0, 0, 0.14);
     --mushaf-page-cast: 0 20px 44px -20px rgba(30, 41, 59, 0.4),
       0 5px 14px -7px rgba(30, 41, 59, 0.2);
+    /* Search bar: reads as recessed into the nav via an inset shadow, no border. */
+    --search-input-shadow: inset 0 1px 3px rgba(36, 48, 60, 0.08);
   }
 
   .theme-gold {
@@ -83,6 +94,9 @@
     --secondary-foreground: 39 25% 13%;
     --muted: 43 38% 84%;
     --muted-foreground: 39 18% 31%;
+    --nav-tab-bg: hsl(var(--muted) / 0.5);
+    /* See matching comment in .theme-light above. */
+    --nav-icon-chip-bg: hsl(var(--primary));
     --accent: 46 55% 86%;
     --accent-foreground: 41 57% 43%;
     --destructive: 3 66% 55%;
@@ -130,6 +144,8 @@
       0 16px 48px -16px rgba(0, 0, 0, 0.14);
     --mushaf-page-cast: 0 20px 44px -20px rgba(70, 52, 24, 0.44),
       0 5px 14px -7px rgba(70, 52, 24, 0.24);
+    /* Search bar: reads as recessed into the nav via an inset shadow, no border. */
+    --search-input-shadow: inset 0 1px 3px rgba(70, 52, 24, 0.1);
   }
 
   .theme-dark {
@@ -138,11 +154,11 @@
        --background (app shell) < --mushaf-paper (reader page) < --card (drawers/
        dialogs/player) < --secondary/--muted (raised nested chips). The Mushaf page
        is deliberately NOT the brightest surface — see ADR 0031. */
-    --background: 212 52% 6%;
+    --background: 213 31% 7%;
     --foreground: 45 18% 91%;
-    --card: 210 41% 13%;
+    --card: 213 21% 10%; /* #151A20 — unified with --nav-tab-bg so sidebars/dialogs/popovers match nav items */
     --card-foreground: 45 18% 91%;
-    --popover: 210 41% 13%;
+    --popover: 213 21% 10%; /* #151A20 — see --card */
     --popover-foreground: 45 18% 91%;
     /* EXPERIMENTAL — retinted to match the app logo mark's emerald (#087F69,
        docs/plans/brand-mark-icons.md), 2026-08-13. Was 162 88% 41%, the vibrant
@@ -152,9 +168,12 @@
        to 162 88% 41% if it repeats the problem. */
     --primary: 169 88% 26%;
     --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - was 210 42% 9%, switched to white for contrast against the darker retinted primary (5.09:1 vs 3.55:1) */
-    --secondary: 211 38% 16%;
+    --secondary: 213 21% 10%; /* #151A20 — see --card */
     --secondary-foreground: 45 18% 91%;
-    --muted: 211 38% 16%;
+    --muted: 213 21% 10%; /* #151A20 — see --card */
+    --nav-tab-bg: #151A20;
+    /* Translucent here — dark's near-black nav gives it enough contrast, unlike light/gold. */
+    --nav-icon-chip-bg: hsl(var(--primary) / 23%);
     /* Bumped 50% -> 56% (2026-08-13, docs/plans/home-page-design-fixes.md):
        50% measured 4.1:1 against --card, below WCAG AA 4.5:1. 56% measures 5.0:1. */
     --muted-foreground: 206 9% 56%;
@@ -182,12 +201,12 @@
        no chrome exceptions, not even the surah-list badge (ADR 0031, revised). */
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;
-    --overlay: 212 52% 6%;
+    --overlay: 213 31% 7%;
     /* Printed-mushaf reader palette — deep warm blue-black paper, antique gold,
        off-white text. Consumed inside the tablet reader scope AND (as of the
        dark-theme unification pass) the desktop/portrait-tablet scope below
        768px-and-up — see the widened .fq-safha-card paper rule further down. */
-    --mushaf-paper: #141d27;
+    --mushaf-paper: #0C1117;
     /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
        change): repurposed from a light top-catch highlight to fully opaque BLACK —
        used as a dark accent leg in the gutter shadow below, not as a light source.
@@ -211,7 +230,7 @@
     --mushaf-text: #f2efe7;
     --mushaf-ornament: #9a8256;
     --mushaf-metadata: #8a784e;
-    --viewer-background: #081019;
+    --viewer-background: #0D1217;
     /* Desktop reading-desk depth (>=1367px, dark only) — ADR 0032. These carry the
        page's lit face, its edge rim, the sheet stack and the binding crease. Defined
        in the dark blocks only, unlike the rest of the --mushaf-* family: on a
@@ -227,12 +246,12 @@
     --mushaf-rim-side: rgba(205, 173, 128, 0.13);
     --mushaf-rim-foot: rgba(205, 173, 128, 0.05);
     --mushaf-sheet-edge: rgba(205, 173, 128, 0.38);
-    --mushaf-sheet-face: #141d27;
+    --mushaf-sheet-face: #0C1117;
     --mushaf-crease: rgba(2, 5, 8, 0.95);
     --mushaf-crease-soft: rgba(0, 0, 0, 0.4);
     /* Floating reader chrome (recitation bar, nav arrows) at >=1367px. Same
        ADR 0032 rule as the page: a raised face plus a warm rim, never a shadow. */
-    --reader-chrome-face: #141d27;
+    --reader-chrome-face: #0C1117;
     --reader-chrome-rim: rgba(205, 173, 128, 0.16);
     /* Dark carries chrome lift with a raised face and warm rim, never a shadow:
        black has ~7 points of headroom on (7,15,23) and measures ~1 point beside
@@ -244,21 +263,32 @@
        page by sitting brighter than its desk instead. The slot is still declared so
        the shared rule resolves in every theme (ADR 0032 supersede). */
     --mushaf-page-cast: 0 0 0 0 transparent;
+    /* Search bar recess: a black inset shadow measures ~1 point on (7,15,23)
+       (ADR 0032). A single faint top line wasn't enough contrast either
+       (Correction Round 1, user-flagged as undetectable) — this is a full
+       recessed frame instead, graded like --mushaf-rim-* (bright top, dim
+       sides, dark foot), strong enough to read against the near-black nav. */
+    --search-input-shadow: inset 0 1px 0 rgba(205, 173, 128, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.6), inset 1px 0 0 rgba(205, 173, 128, 0.14),
+      inset -1px 0 0 rgba(205, 173, 128, 0.14);
   }
 
   .theme-dark.dark {
-    --background: 212 52% 6%;
+    --background: 213 31% 7%;
     --foreground: 45 18% 91%;
-    --card: 210 41% 13%;
+    --card: 213 21% 10%; /* #151A20 — unified with --nav-tab-bg so sidebars/dialogs/popovers match nav items */
     --card-foreground: 45 18% 91%;
-    --popover: 210 41% 13%;
+    --popover: 213 21% 10%; /* #151A20 — see --card */
     --popover-foreground: 45 18% 91%;
     /* EXPERIMENTAL — see the matching comment in .theme-dark above. */
     --primary: 169 88% 26%;
     --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - see .theme-dark above */
-    --secondary: 211 38% 16%;
+    --secondary: 213 21% 10%; /* #151A20 — see --card */
     --secondary-foreground: 45 18% 91%;
-    --muted: 211 38% 16%;
+    --muted: 213 21% 10%; /* #151A20 — see --card */
+    --nav-tab-bg: #151A20;
+    /* Translucent here — dark's near-black nav gives it enough contrast, unlike light/gold. */
+    --nav-icon-chip-bg: hsl(var(--primary) / 23%);
     /* See matching comment in .theme-dark above. */
     --muted-foreground: 206 9% 56%;
     --accent: 161 58% 15%;
@@ -272,8 +302,8 @@
     --radius: 0.5rem;
     --gold: 38 32% 46%;
     --gold-muted: 38 27% 34%;
-    --overlay: 212 52% 6%;
-    --mushaf-paper: #141d27;
+    --overlay: 213 31% 7%;
+    --mushaf-paper: #0C1117;
     /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
        change): repurposed from a light top-catch highlight to fully opaque BLACK —
        used as a dark accent leg in the gutter shadow below, not as a light source.
@@ -297,7 +327,7 @@
     --mushaf-text: #f2efe7;
     --mushaf-ornament: #9a8256;
     --mushaf-metadata: #8a784e;
-    --viewer-background: #081019;
+    --viewer-background: #0D1217;
     /* Desktop reading-desk depth (>=1367px, dark only) — ADR 0032. These carry the
        page's lit face, its edge rim, the sheet stack and the binding crease. Defined
        in the dark blocks only, unlike the rest of the --mushaf-* family: on a
@@ -313,12 +343,12 @@
     --mushaf-rim-side: rgba(205, 173, 128, 0.13);
     --mushaf-rim-foot: rgba(205, 173, 128, 0.05);
     --mushaf-sheet-edge: rgba(205, 173, 128, 0.38);
-    --mushaf-sheet-face: #141d27;
+    --mushaf-sheet-face: #0C1117;
     --mushaf-crease: rgba(2, 5, 8, 0.95);
     --mushaf-crease-soft: rgba(0, 0, 0, 0.4);
     /* Floating reader chrome (recitation bar, nav arrows) at >=1367px. Same
        ADR 0032 rule as the page: a raised face plus a warm rim, never a shadow. */
-    --reader-chrome-face: #141d27;
+    --reader-chrome-face: #0C1117;
     --reader-chrome-rim: rgba(205, 173, 128, 0.16);
     /* Dark carries chrome lift with a raised face and warm rim, never a shadow:
        black has ~7 points of headroom on (7,15,23) and measures ~1 point beside
@@ -330,6 +360,14 @@
        page by sitting brighter than its desk instead. The slot is still declared so
        the shared rule resolves in every theme (ADR 0032 supersede). */
     --mushaf-page-cast: 0 0 0 0 transparent;
+    /* Search bar recess: a black inset shadow measures ~1 point on (7,15,23)
+       (ADR 0032). A single faint top line wasn't enough contrast either
+       (Correction Round 1, user-flagged as undetectable) — this is a full
+       recessed frame instead, graded like --mushaf-rim-* (bright top, dim
+       sides, dark foot), strong enough to read against the near-black nav. */
+    --search-input-shadow: inset 0 1px 0 rgba(205, 173, 128, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.6), inset 1px 0 0 rgba(205, 173, 128, 0.14),
+      inset -1px 0 0 rgba(205, 173, 128, 0.14);
   }
 }
 
@@ -397,6 +435,85 @@
     width: 0px;
   }
 
+  /* Marks the desktop nav search input as recessed into the bar, without a
+     border. Value comes from --search-input-shadow (theme-scoped above). */
+  .fq-search-input-recessed {
+    box-shadow: var(--search-input-shadow);
+  }
+
+  /* "Tab" background treatment — user narrowed this from every nav control
+     down to just the two that should read as persistent surfaces (surah
+     selector, user menu/"my account"); continue-reading/search/fullscreen/
+     menu went back to plain icon buttons with no resting background. Also
+     dropped the hover state entirely (it was hsl(var(--accent)/0.8), which
+     reads green in dark theme via --accent's hue — user asked for it gone,
+     not just recolored). Background comes from --nav-tab-bg (theme-scoped
+     above) — light/gold keep the original translucent-muted look, dark uses
+     an explicit opaque hex (user-supplied) instead of the usual --muted
+     token. Had elevation (--nav-tab-depth: a drop shadow in light/gold, a
+     raised warm rim in dark) for one round — user asked for it removed. */
+  .fq-nav-tab {
+    border-radius: 0.5rem; /* rounded-lg, one shape for every control */
+    background-color: var(--nav-tab-bg);
+  }
+
+  /* Shared "icon chip" look (logo, recitation play button) — solid primary
+     fill on light/gold, translucent on dark; see --nav-icon-chip-bg. */
+  .fq-icon-chip {
+    border: 1px solid hsl(var(--primary));
+    background: var(--nav-icon-chip-bg);
+    color: hsl(var(--primary-foreground));
+  }
+
+  .fq-surah-toggle {
+    position: relative;
+  }
+
+  /* Desktop-only: the ornament box is sized for the md:px-10 (40px) padded
+     pill. Mobile keeps the original compact single-line pill (px-2.5), which
+     has no room for a 45px-wide absolutely-positioned ornament — left
+     unconditional, it overflowed into the neighboring nav icons. */
+  @media (min-width: 768px) {
+    .fq-surah-toggle::before,
+    .fq-surah-toggle::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 45px;
+      height: 45px;
+      pointer-events: none;
+      /* Color-agnostic: the PNG is a plain white silhouette (alpha channel
+         only carries the shape), so the actual color comes from
+         background-color below via --mushaf-ornament — the same token the
+         other mushaf ornament glyphs use, so this automatically matches
+         light/gold/dark instead of needing a separately-baked PNG per theme.
+         Explicit ADR 0031 exception, user-requested (2026-08-19): dark
+         theme's chrome is otherwise gold-free, but this control keeps gold. */
+      -webkit-mask-image: url("/icons/surah-ornament-mask.png");
+      mask-image: url("/icons/surah-ornament-mask.png");
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-position: center;
+      mask-position: center;
+      background-color: var(--mushaf-ornament);
+    }
+
+    .fq-surah-toggle::before {
+      /* Box width matches the button's own md:px-10 (40px) padding exactly,
+         so flush left lands the ornament's spine right at the text edge. */
+      left: -30px;
+      transform: translateY(-50%);
+    }
+
+    .fq-surah-toggle::after {
+      right: -30px;
+      /* Mirror of the open ornament — same asset, flipped, so both sides
+         share one file instead of a second low-quality close PNG. */
+      transform: translateY(-50%) scaleX(-1);
+    }
+  }
 }
 
 html,
@@ -874,13 +991,16 @@ body,
        all: once the desk sits below --background, the nav's own glass reads lighter
        than what is under it. Measured light: nav-to-desk separation 0 -> 9.7 points.
 
-       Dark re-declares the desk to its existing --background value rather than the
-       #081019 it uses at tablet, because dark's desktop surround is signed off at
-       (7,15,23) and must not move. Rule shared, values per theme — same pattern as
-       the tablet ramp below. */
+       Dark re-declared the desk to its own value here (once #070f17, matching the
+       old --background) rather than the tablet band's --viewer-background,
+       because the desktop surround had its own sign-off, separate from tablet.
+       Both are now #0D1217 (user-supplied) — same value, kept as an explicit
+       per-breakpoint override rather than folded away, in case the two bands
+       need to diverge again later. Rule shared, values per theme — same pattern
+       as the tablet ramp below. */
     :root.theme-light { --viewer-background: #e3e8ef; }
     :root.theme-gold { --viewer-background: #e8ddc0; }
-    :root.theme-dark { --viewer-background: #070f17; }
+    :root.theme-dark { --viewer-background: #0D1217; }
     .fq-reader-outer {
       background-color: var(--viewer-background) !important;
     }
@@ -981,7 +1101,6 @@ body,
       box-shadow: var(--reader-chrome-shadow);
     }
     .fq-nav-arrow:hover {
-      background-color: hsl(var(--accent));
       border-color: var(--reader-chrome-rim-hover);
     }
     .fq-nav-arrow svg {
@@ -1481,7 +1600,7 @@ body,
      same page in two panels and hides one of them, so only the visible match
      shows (ADR 0021's 2026-08-03 addendum). */
   .fq-recitation-active-word {
-    background-color: hsl(var(--primary) / 0.22);
+    background-color: hsl(var(--primary) / 0.4);
     border-radius: 0.2em;
     transition: background-color 150ms ease-out;
   }

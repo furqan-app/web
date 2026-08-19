@@ -14,13 +14,15 @@ import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useSidebar } from "@/app/contexts/SidebarContext";
 import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
 import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
+import useTranslations from "@hooks/use-translations";
 import { getLanguageDirection, toLocaleNumeral } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
 
 export const Nav = () => {
   const { overlayVisible } = useNavOverlay();
   const isDesktopUp = useIsDesktopUp();
-  const { open, setOpen, currentSurah } = useSidebar();
+  const { open, setOpen, currentSurah, currentJuzHizb } = useSidebar();
+  const t = useTranslations();
   const pathname = usePathname();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -53,7 +55,7 @@ export const Nav = () => {
         // just the toggle-hide overlay; matches RecitationPlayerBar exactly so the
         // two bars read as one consistent floating-chrome style, both letting the
         // Mushaf show through underneath).
-        "relative z-10 text-foreground px-4 shadow bg-background/75 backdrop-blur-md border-b border-border/50",
+        "relative z-10 text-foreground px-4 bg-background/75 backdrop-blur-md shadow-[0_8px_30px_-4px_rgba(0,0,0,0.25),0_2px_8px_rgba(0,0,0,0.08)]",
         // Breakpoint half of the overlay switch is CSS-gated (globals.css,
         // .fq-nav-overlay-page) so it's correct on the very first paint — see
         // ADR 0043. Route gating stays here since usePathname() resolves
@@ -71,11 +73,13 @@ export const Nav = () => {
             One shared `gap-2` on the row gives every adjacent pair in that
             group the same spacing — no per-item margin needed.
           - Desktop/tablet (md+): logo · sidebar toggle · continue reading ·
-            spacerA · search · spacerB · fullscreen · menu — spacerA/spacerB
-            are equal `flex-1` items so the whitespace immediately flanking
-            search stays equal regardless of how wide either cluster is
-            (centering search on the spacers, not the full row, avoids a
-            lopsided gap when the clusters differ in width).
+            spacer · user menu · fullscreen · search · menu — ONE `flex-1`
+            spacer pushes everything after it into a single end cluster.
+            Search used to sit alone between two spacers (built for the old
+            wide inline field); now that it's icon-only, isolating it in its
+            own dead-space gap read as broken, so it moved into the same
+            tight cluster as fullscreen/menu, mirroring how mobile already
+            groups toggle/continue-reading/search/menu together.
           SharedMushafLink/NotificationBell/SettingsSidebar never render
           directly in this row — they live inside NavOverflowMenu's hamburger
           sheet at every breakpoint. UserMenu is the one exception: shown
@@ -83,42 +87,84 @@ export const Nav = () => {
           one-click access to My Marks/My Plans; still inside the menu on
           mobile, where space is tight (docs/plans/home-page-design-fixes.md,
           Addendum — Universal nav menu). */}
-      <div className="h-14 flex items-center gap-2">
+      <div className="relative h-14 flex items-center gap-2">
         <FurqanLogo className="order-1 shrink-0" />
         {isOnPagesRoute && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
             onClick={() => setOpen(!open)}
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
-            className="order-3 md:order-2 h-9 shrink-0 gap-1.5 px-2.5 rounded-full max-w-[8rem]"
+            // fq-nav-tab background — one of only two nav controls that
+            // keep one (with the user menu/"my account"); the rest went
+            // back to plain icon buttons. A centered surah name, Juz/Hizb
+            // below it, on md+.
+            // True bar-center, not flex-flow center: the parent row is
+            // `relative`, so `md:absolute` + `md:top-1/2 md:left-1/2
+            // md:-translate-x-1/2 md:-translate-y-1/2` centers on the bar's
+            // own midpoint, sized to its own content (not stretched to the
+            // row's full height). Deliberately `left-1/2`, not the logical
+            // `start-1/2` — RTL remaps `start` to measure from the right
+            // while `-translate-x-1/2` stays physical either way, so pairing
+            // a logical inset with a physical transform breaks the
+            // symmetry the centering trick depends on (measured ~160px off
+            // in RTL, exactly the button's own width). `left`/`translate-x`
+            // are both physical, so the pair cancels correctly regardless
+            // of direction. Mobile keeps the original compact single-line
+            // pill (name + number + chevron), in normal flow, since the
+            // two-line layout doesn't fit that width budget.
+            className="fq-nav-tab fq-surah-toggle order-3 md:order-2 shrink-0 flex items-center justify-center gap-1.5 h-9 px-2.5 max-w-[8rem] md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:z-10 md:h-auto md:max-w-none md:gap-2 md:px-10 md:py-[0.3rem] cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {currentSurah ? (
               <>
-                <span className="text-xs font-medium text-muted-foreground shrink-0">
-                  {toLocaleNumeral(currentSurah.id, locale)}
+                {/* Mobile: compact single line */}
+                <span className="md:hidden flex items-center gap-1.5 min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground shrink-0">
+                    {toLocaleNumeral(currentSurah.id, locale)}
+                  </span>
+                  <span className="text-xs font-medium truncate leading-none">
+                    {isRTL ? currentSurah.name_arabic : currentSurah.name_simple}
+                  </span>
+                  {open ? (
+                    <ChevronUp className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
+                  ) : (
+                    <ChevronDown className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
+                  )}
                 </span>
-                <span className="text-sm font-medium truncate leading-none">
-                  {isRTL ? currentSurah.name_arabic : currentSurah.name_simple}
+                {/* Desktop: text block (ornament-flanked name over Juz/Hizb)
+                    beside the chevron, not stacked under it — the chevron is
+                    the LAST child, so it lands on the end side (left in RTL)
+                    and `items-center` on this row centers it against the
+                    full two-line block's height, not just one line. */}
+                <span className="hidden md:flex md:items-center md:gap-2">
+                  <span className="flex flex-col items-center gap-0.5">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-xs leading-none whitespace-nowrap">
+                        {isRTL ? currentSurah.name_arabic : currentSurah.name_simple}
+                      </span>
+                    </span>
+                    {currentJuzHizb && (
+                      <span className="flex items-center gap-1 text-[10px] font-medium text-foreground/70 whitespace-nowrap">
+                        {t("juz", "Juz")} {toLocaleNumeral(currentJuzHizb.juz, locale)}
+                        <span className="text-primary" aria-hidden="true">•</span>
+                        {t("hizb", "Hizb")} {toLocaleNumeral(currentJuzHizb.hizb, locale)}
+                      </span>
+                    )}
+                  </span>
+                  {open ? (
+                    <ChevronUp className="size-2.5 shrink-0" strokeWidth={2} />
+                  ) : (
+                    <ChevronDown className="size-2.5 shrink-0" strokeWidth={2} />
+                  )}
                 </span>
-                {open ? (
-                  <ChevronUp className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
-                ) : (
-                  <ChevronDown className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
-                )}
               </>
             ) : (
               <PanelLeftOpen className={cn("size-5", isRTL && "rotate-180")} strokeWidth={1.7} />
             )}
-          </Button>
+          </button>
         )}
         <ContinueReadingLink className="order-4 md:order-3 shrink-0" />
         <div className="order-2 md:order-4 flex-1 min-w-0" aria-hidden="true" />
-        <div className="order-5 min-w-0 shrink md:basis-[36rem] flex justify-center">
-          <SearchBar />
-        </div>
-        <div className="hidden md:block md:order-6 md:flex-1 min-w-0" aria-hidden="true" />
         <div className="hidden md:block md:order-7 shrink-0">
           <UserMenu />
         </div>
@@ -138,7 +184,10 @@ export const Nav = () => {
             )}
           </Button>
         )}
-        <NavOverflowMenu className="order-6 md:order-9 shrink-0" />
+        <div className="order-5 md:order-9 shrink-0">
+          <SearchBar />
+        </div>
+        <NavOverflowMenu className="order-6 md:order-10 shrink-0" />
       </div>
     </nav>
   );

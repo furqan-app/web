@@ -12,7 +12,6 @@ import {
 import { Link } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import useTranslations from "@hooks/use-translations";
-import { cn } from "@/lib/utils";
 import { navPillClassName, menuRowClassName } from "./NavPillLink";
 
 type Props = {
@@ -113,7 +112,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t("account", "Account")}
-          className={cn(navPillClassName, "md:border md:border-border")}
+          className={navPillClassName}
         >
           <span className="w-7 h-7 rounded-lg bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none">
             <User className="size-3.5" />
