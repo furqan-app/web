@@ -1,0 +1,32 @@
+name: Sync main from prod
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  sync-main-from-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          git fetch origin refs/tags/*:refs/tags/* 'refs/heads/prod:refs/remotes/origin/prod'
+          version=$(git describe --tags origin/prod)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Open prod → main PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_url=$(gh pr create --repo "${{ github.repository }}" --base main --head prod --title "Sync main with prod (${{ steps.version.outputs.version }})" --body "Brings release-stabilization fixes from prod back into main. Merge manually and resolve any conflicts.")
+          echo "### Sync main from prod" >> "$GITHUB_STEP_SUMMARY"
+          echo "PR: $pr_url" >> "$GITHUB_STEP_SUMMARY"
+          echo "This PR is not auto-merged — merge manually after resolving any conflicts." >> "$GITHUB_STEP_SUMMARY"
