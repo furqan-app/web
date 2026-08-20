@@ -1,0 +1,144 @@
+name: Cut release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options: [major, minor, patch]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  cut-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Compute new version
+        id: version
+        run: |
+          current=$(node -p "require('./package.json').version")
+          IFS='.' read -r major minor patch <<< "$current"
+          case "${{ inputs.bump }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+          new_version="$major.$minor.$patch"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+
+      - name: Create release branch
+        run: git checkout -b "release/${{ steps.version.outputs.new_version }}"
+
+      - name: Bump package.json and lockfile version
+        run: |
+          npm pkg set version="${{ steps.version.outputs.new_version }}"
+          npm install --package-lock-only
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(release): bump version to ${{ steps.version.outputs.new_version }}"
+
+      - name: Tag and push
+        run: |
+          git tag "v${{ steps.version.outputs.new_version }}"
+          git push -u origin "release/${{ steps.version.outputs.new_version }}"
+          git push origin "v${{ steps.version.outputs.new_version }}"
+
+      - name: Detect DB changes needing manual action
+        id: db_flags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          prev_tag=$(git tag --list 'v*' --sort=-v:refname | grep -v "^v${{ steps.version.outputs.new_version }}$" | head -n1)
+          notes=""
+          if [[ -n "$prev_tag" ]]; then
+            changed=$(git diff --name-only "$prev_tag"..HEAD)
+            if echo "$changed" | grep -q '^prisma/quran/schema\.prisma$'; then
+              notes+="- Quran DB schema changed — re-seed prod manually (\`npm run seed:quran -- --force\`) if this release should reflect it.\n"
+            fi
+            if echo "$changed" | grep -q '^scripts/quran-seed/'; then
+              notes+="- Quran seed logic/data changed — re-seed prod manually if you want this release's data live.\n"
+            fi
+            if echo "$changed" | grep -q '^prisma/app/migrations/'; then
+              notes+="- New Prisma migration(s) — will auto-apply via \`prisma migrate deploy\` on deploy. No action needed; consider backing up the App DB first.\n"
+            fi
+          fi
+          {
+            echo "notes<<EOF"
+            echo -e "$notes"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Milestone and close queued issues
+        id: issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="v${{ steps.version.outputs.new_version }}"
+          gh api "repos/${{ github.repository }}/milestones" -f title="$version" >/dev/null 2>&1 || true
+          mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --label "status:to-be-released" --state open --json number,title,url -q '.[] | "\(.number)|\(.title)|\(.url)"')
+          body=""
+          if [[ ${#issues[@]} -eq 0 ]]; then
+            body="No tracked changes — infra/release-process only."
+          else
+            for entry in "${issues[@]}"; do
+              n="${entry%%|*}"
+              rest="${entry#*|}"
+              title="${rest%%|*}"
+              url="${rest##*|}"
+              gh issue edit "$n" --repo "${{ github.repository }}" --milestone "$version"
+              gh issue edit "$n" --repo "${{ github.repository }}" --remove-label "status:to-be-released"
+              gh issue close "$n" --repo "${{ github.repository }}"
+              body+="- $title ($url)\n"
+            done
+          fi
+          {
+            echo "body<<EOF"
+            echo -e "$body"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="v${{ steps.version.outputs.new_version }}"
+          notes="## What's included in $version"$'\n'"${{ steps.issues.outputs.body }}"
+          if [[ -n "${{ steps.db_flags.outputs.notes }}" ]]; then
+            notes+=$'\n'"## Manual Action Required"$'\n'"${{ steps.db_flags.outputs.notes }}"
+          fi
+          gh release create "$version" --title "$version" --notes "$notes"
+
+      - name: Open and auto-merge main → stg PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_url=$(gh pr create --repo "${{ github.repository }}" --base stg --head main --title "Staging update" --body "Promoting main to stg as part of cutting v${{ steps.version.outputs.new_version }}.")
+          gh pr merge "$pr_url" --repo "${{ github.repository }}" --squash --auto
+
+      - name: Summary
+        run: |
+          {
+            echo "### Release v${{ steps.version.outputs.new_version }} cut"
+            echo "- Branch: \`release/${{ steps.version.outputs.new_version }}\`"
+            echo "- Tag: \`v${{ steps.version.outputs.new_version }}\`"
+            echo "- GitHub Release: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}"
+            echo ""
+            echo "### Manual action required"
+            if [[ -n "${{ steps.db_flags.outputs.notes }}" ]]; then
+              echo -e "${{ steps.db_flags.outputs.notes }}"
+            else
+              echo "None."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
