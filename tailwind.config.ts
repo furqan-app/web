@@ -75,6 +75,7 @@ const config: Config = {
         flicker: "flicker 3s ease-in-out infinite",
       },
       fontFamily: {
+        sans: ["var(--tajawal)", "system-ui", "sans-serif"],
         tajawal: ["var(--tajawal)", "system-ui", "sans-serif"],
         uthmanic: ["var(--uthmanic)"],
         surahnames: ["var(--surah-names)"],
