@@ -2,7 +2,12 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
-import { USER_PLAN_STATUSES, type UserPlanStatus } from "@/app/constants/plans";
+import {
+  USER_PLAN_STATUSES,
+  getPlanTemplate,
+  type PlanUnit,
+  type UserPlanStatus,
+} from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
 
 /**
@@ -49,7 +54,13 @@ export async function PATCH(
   if (status !== undefined) data.status = status;
 
   if (hasParamsEdit) {
-    const resolved = await resolvePlanParams(body ?? {});
+    const template = getPlanTemplate(plan.template_key);
+    if (!template) {
+      return jsonResponse({ code: 422, message: "Unknown template_key" });
+    }
+    const existingTrackUnits =
+      (plan.params as { trackUnits?: Record<string, PlanUnit> } | null)?.trackUnits ?? {};
+    const resolved = await resolvePlanParams(body ?? {}, template, existingTrackUnits);
     if ("error" in resolved) {
       return jsonResponse({ code: 422, message: resolved.error });
     }
