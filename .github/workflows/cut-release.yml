@@ -43,7 +43,7 @@ jobs:
       - name: Bump package.json and lockfile version
         run: |
           npm pkg set version="${{ steps.version.outputs.new_version }}"
-          npm install --package-lock-only
+          npm install --package-lock-only --ignore-scripts
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json
