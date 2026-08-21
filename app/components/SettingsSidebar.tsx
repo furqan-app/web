@@ -12,6 +12,7 @@ import { MushafLayoutSection } from "@components/mushaf/MushafLayoutSection";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
+import { SettingsSection } from "@components/settings/SettingsSection";
 import { useIsMobile } from "@hooks/use-is-mobile";
 import { useKeepScreenAwake } from "@contexts/KeepScreenAwakeContext";
 import { Button } from "@/components/ui/button";
@@ -79,50 +80,43 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
             )}
           </SheetDescription>
         </SheetHeader>
+        {/* Grouped sections with identity overlines and hairline rows — the
+            lab's settings panel is the structural reference. Each setting used
+            to be its own floating `bg-muted` slab under a muted heading, which
+            made a seven-item inventory read as seven competing objects. */}
         <div className="p-4 space-y-6 mt-2">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("language", "Language")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted">
+          <SettingsSection title={t("language", "Language")}>
+            <div className="fq-section-row">
               <LanguageToggle />
             </div>
-          </div>
+          </SettingsSection>
           {!isTablet && (
             <div className="hidden lg:block">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                {t("quranFontSize", "Quran Font Size")}
-              </h3>
-              <div className="p-4 rounded-lg bg-muted">
-                <DesktopQuranFontSizeControls />
-              </div>
+              <SettingsSection title={t("quranFontSize", "Quran Font Size")}>
+                <div className="fq-section-row">
+                  <DesktopQuranFontSizeControls />
+                </div>
+              </SettingsSection>
             </div>
           )}
           {!isTablet && (
             <div className="hidden lg:block">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                {t("pageView", "Page View")}
-              </h3>
-              <div className="p-4 rounded-lg bg-muted">
-                <QuranSafhaViewToggle />
-              </div>
+              <SettingsSection title={t("pageView", "Page View")}>
+                <div className="fq-section-row">
+                  <QuranSafhaViewToggle />
+                </div>
+              </SettingsSection>
             </div>
           )}
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("appearance", "Appearance")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted">
+          <SettingsSection title={t("appearance", "Appearance")}>
+            <div className="fq-section-row">
               <ThemeToggle />
             </div>
-          </div>
+          </SettingsSection>
           <MushafLayoutSection />
           {(isMobile || isTablet) && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                {t("keepScreenAwake", "Screen")}
-              </h3>
-              <div className="p-4 rounded-lg bg-muted flex items-center justify-between gap-3">
+            <SettingsSection title={t("keepScreenAwake", "Screen")}>
+              <div className="fq-section-row">
                 <label
                   htmlFor="keep-screen-awake-switch"
                   className="cursor-pointer"
@@ -143,7 +137,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
                   onCheckedChange={setKeepScreenAwake}
                 />
               </div>
-            </div>
+            </SettingsSection>
           )}
           <EnablePushToggle />
           <OfflineRecitationSection />

@@ -59,7 +59,7 @@ const RowIcon = ({
       aria-label={label}
       onClick={onDownload}
       disabled={disabled}
-      className="flex items-center justify-center size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 disabled:pointer-events-none"
+      className="fq-chrome-btn fq-focus-ring size-8 disabled:opacity-50 disabled:pointer-events-none"
     >
       {state === "failed" ? (
         <RotateCcw className="size-4" strokeWidth={1.8} />

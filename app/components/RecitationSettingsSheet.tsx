@@ -74,7 +74,7 @@ const SectionHeader = ({
   label: string;
 }) => (
   <h3 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground mb-2">
-    <Icon className="size-3.5 text-primary" strokeWidth={1.8} />
+    <Icon className="size-3.5 text-gold" strokeWidth={1.8} />
     {label}
   </h3>
 );
@@ -303,7 +303,7 @@ const CustomRangePicker = ({
               className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 isSelected
                   ? "border-primary bg-primary/10 text-primary font-medium"
-                  : `border-border bg-card text-foreground ${disabled ? "" : "hover:bg-accent"}`
+                  : `border-border bg-card text-foreground ${disabled ? "" : "hover:bg-[hsl(var(--well)/var(--well-alpha))]"}`
               }`}
             >
               <Icon
@@ -501,7 +501,7 @@ export const RecitationSettingsSheet = () => {
                     } ${
                       isSelected
                         ? "border-primary bg-primary/10 text-primary font-medium"
-                        : `border-border bg-card text-foreground ${isDisabled ? "" : "hover:bg-accent"}`
+                        : `border-border bg-card text-foreground ${isDisabled ? "" : "hover:bg-[hsl(var(--well)/var(--well-alpha))]"}`
                     }`}
                   >
                     <RadioGroupItem value={value} id={`stop-${value}`} className="sr-only" />
@@ -531,7 +531,7 @@ export const RecitationSettingsSheet = () => {
 
           <div className="rounded-xl border border-border bg-card p-3 space-y-3">
             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Repeat2 className="size-3.5 text-primary" strokeWidth={1.8} />
+              <Repeat2 className="size-3.5 text-gold" strokeWidth={1.8} />
               {t("recitation.repeatSectionLabel", "Repeats")}
             </div>
             <RepeatStepper
@@ -552,7 +552,7 @@ export const RecitationSettingsSheet = () => {
           <div className="rounded-xl border border-border bg-card p-3 space-y-3">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-sm text-foreground">
-                <Gauge className="size-3.5 text-primary" strokeWidth={1.8} />
+                <Gauge className="size-3.5 text-gold" strokeWidth={1.8} />
                 {t("recitation.playbackSpeed", "Playback speed")}
               </span>
               <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export const RecitationSettingsSheet = () => {
 
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-sm text-foreground">
-                <Timer className="size-3.5 text-primary" strokeWidth={1.8} />
+                <Timer className="size-3.5 text-gold" strokeWidth={1.8} />
                 {t("recitation.pauseBetweenRepeats", "Pause between repeats")}
               </span>
               <div className="flex items-center gap-2">

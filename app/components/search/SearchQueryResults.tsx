@@ -25,14 +25,17 @@ export default function SearchQueryResults({
   return (
     <div
       className={cn(
-        "absolute w-full mt-2 bg-popover rounded-lg shadow-lg border border-border max-h-96 overflow-auto z-50",
+        "fq-panel-cast absolute w-full mt-2 bg-popover rounded-lg border border-border max-h-96 overflow-auto z-50",
         className,
       )}
     >
       {chapters && chapters.length > 0 && (
         <div className="border-b border-border">
-          <div className="px-4 py-2 bg-muted">
-            <span className="font-medium text-foreground">
+          {/* Result-group headings are the same overline register as every
+              other section in the app, and they say what you are looking at —
+              identity, not state. */}
+          <div className="fq-section-heading !rounded-none px-4 py-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold">
               {t("surahs", "Surahs")} (
               {toLocaleNumeral(chapters.length, locale)})
             </span>
@@ -43,7 +46,7 @@ export default function SearchQueryResults({
               key={chapter.id}
               href={`${basePath}/${chapter.pages.split("-")[0]}`}
               onClick={() => setIsOpen(false)}
-              className="block px-4 py-2 hover:bg-accent"
+              className="fq-focus-ring-inset block border-b border-border/70 px-4 py-2 transition-colors last:border-b-0 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
             >
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">
@@ -60,8 +63,8 @@ export default function SearchQueryResults({
 
       {verses && verses.length > 0 && (
         <div>
-          <div className="px-4 py-2 bg-muted">
-            <span className="font-medium text-foreground">
+          <div className="fq-section-heading !rounded-none px-4 py-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold">
               {toLocaleNumeral(verses.length, locale)}{" "}
               {verses.length > 10
                 ? t("count_verses", "Verses")
@@ -78,7 +81,7 @@ export default function SearchQueryResults({
                 basePath,
               })}
               onClick={() => setIsOpen(false)}
-              className="block px-4 py-2 hover:bg-accent"
+              className="fq-focus-ring-inset block border-b border-border/70 px-4 py-2 transition-colors last:border-b-0 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
             >
               <div className="text-sm text-muted-foreground">
                 {locale === "ar"

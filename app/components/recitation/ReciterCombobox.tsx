@@ -47,7 +47,7 @@ export const ReciterCombobox = ({
                 onChange(reciter.id);
                 setOpen(false);
               }}
-              className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+              className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[hsl(var(--well)/var(--well-alpha))]"
             >
               <Check
                 className={`me-2 size-4 shrink-0 ${reciter.id === value ? "opacity-100 text-primary" : "opacity-0"}`}

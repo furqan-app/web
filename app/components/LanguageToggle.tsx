@@ -21,16 +21,18 @@ export const LanguageToggle = () => {
   };
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-background p-1">
+    // A segmented control IS the well pattern: the unselected members read
+    // as one dimmed group, the selected one is the only live thing on it.
+    <div className="flex w-full items-center gap-1 rounded-lg border border-border bg-[hsl(var(--well)/var(--well-alpha))] p-1">
       {LANGUAGES.map(({ code, label }) => (
         <button
           key={code}
           onClick={() => switchTo(code)}
           className={cn(
-            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+            "fq-focus-ring flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             currentLang === code
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              ? "bg-primary text-primary-foreground"
+              : "text-[hsl(var(--control-inert))] hover:text-[hsl(var(--control-live))]"
           )}
         >
           {label}

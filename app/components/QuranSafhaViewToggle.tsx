@@ -9,12 +9,14 @@ export const QuranSafhaViewToggle = () => {
   const t = useTranslations();
 
   const buttonClass = (active: boolean) =>
-    `flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
-      active ? "bg-accent text-primary" : "text-muted-foreground hover:text-foreground"
+    `fq-focus-ring flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
+      active
+        ? "bg-primary/10 text-primary"
+        : "text-[hsl(var(--control-inert))] hover:text-[hsl(var(--control-live))]"
     }`;
 
   return (
-    <div className="flex gap-0.5 p-1 rounded-xl border border-border bg-card">
+    <div className="flex gap-0.5 p-1 rounded-xl border border-border bg-[hsl(var(--well)/var(--well-alpha))]">
       <button
         type="button"
         aria-label={t("reader.singlePageView", "Single page view")}

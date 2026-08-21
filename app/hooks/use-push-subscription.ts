@@ -18,11 +18,17 @@ export const usePushSubscription = () => {
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Read-only mirror of Notification.permission. Surfaced (subtask 4.3) so the
+  // UI can SHOW a denied browser permission instead of silently snapping the
+  // toggle back off — a denial is unrecoverable in-app and the user has to be
+  // told where to undo it. This reads state; it does not change the flow.
+  const [permission, setPermission] = useState<NotificationPermission | "unknown">("unknown");
 
   useEffect(() => {
     const check = async () => {
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
       setSupported(true);
+      if ("Notification" in window) setPermission(Notification.permission);
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       setSubscribed(!!subscription);
@@ -36,8 +42,9 @@ export const usePushSubscription = () => {
 
     setLoading(true);
     try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") return false;
+      const result = await Notification.requestPermission();
+      setPermission(result);
+      if (result !== "granted") return false;
 
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
@@ -83,5 +90,5 @@ export const usePushSubscription = () => {
     }
   }, []);
 
-  return { supported, subscribed, loading, subscribe, unsubscribe };
+  return { supported, subscribed, loading, permission, subscribe, unsubscribe };
 };
