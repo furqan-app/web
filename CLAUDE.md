@@ -15,10 +15,9 @@ The workflows in `docs/workflow/` are exposed as Claude Code skills. Trigger the
 | `/ship-fq-task` | "ship it", "I'm done", "commit and push" |
 | `/review-fq-work` | "review my work", "check the branch" |
 | `/retrospect` | end of session |
-| `/release <bump>` | full release orchestration |
-| `/cut-release <bump>` | cut a release branch |
-| `/promote-to-staging <version>` | open release → stg PR |
-| `/promote-release <version>` | open release → prod PR |
+| `/release <bump>` | full release orchestration (GitHub Actions under the hood) |
+| `/cut-release <bump>` | cut release branch + promote to stg (GitHub Action) |
+| `/promote-release` | promote release → prod, version auto-detected (GitHub Action) |
 | `/sync-main-from-prod` | sync prod back to main |
 | `/mujaz` | toggle terse-response mode on/off |
 | `/compress-fq-docs` | compress verbose docs |

@@ -3,7 +3,7 @@ import { useLocale } from "next-intl";
 import "./globals.css";
 import { getLanguageDirection } from "./utils/i18n";
 import localFont from "next/font/local";
-import { Tajawal } from "next/font/google";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 
 export const metadata: Metadata = {
   title: "Furqan",
@@ -35,11 +35,12 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const tajawal = Tajawal({
-  weight: ["400", "500", "700", "800"],
+const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
+  weight: ["300", "400", "500", "600", "700"],
   subsets: ["arabic", "latin"],
   variable: "--tajawal",
   display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const uthmanic = localFont({
@@ -62,7 +63,11 @@ export default function RootLayout({
 }) {
   const locale = useLocale();
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={`${ibmPlexSansArabic.variable} ${uthmanic.variable} ${surahNames.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <script
@@ -74,7 +79,7 @@ export default function RootLayout({
       <body
         suppressHydrationWarning
         dir={getLanguageDirection(locale)}
-        className={`${tajawal.variable} ${uthmanic.variable} ${surahNames.variable} bg-background antialiased`}
+        className="font-sans bg-background antialiased"
       >
         {children}
       </body>

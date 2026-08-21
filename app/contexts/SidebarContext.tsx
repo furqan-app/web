@@ -9,6 +9,13 @@ type SidebarContextValue = {
   setOpen: (open: boolean) => void;
   currentSurah: SurahSlim | null;
   setCurrentSurah: (surah: SurahSlim | null) => void;
+  // Juz/Hizb for the page currently open in the reader — derived from the
+  // same currentRub lookup Sidebar already computes for the Rub tab
+  // (rub_number is 1-240; 8 rubs/juz, 4 rubs/hizb — arithmetic, no extra
+  // fetch needed). Nav's surah-selector control reads this to show
+  // "Juz N • Hizb M" under the surah name.
+  currentJuzHizb: { juz: number; hizb: number } | null;
+  setCurrentJuzHizb: (value: { juz: number; hizb: number } | null) => void;
   // Set by SurahListItem on an explicit tap, so Sidebar can show the surah the
   // reader actually picked instead of re-deriving one from the page number —
   // page-derivation alone can't disambiguate a page that hosts more than one
@@ -33,6 +40,8 @@ const SidebarContext = createContext<SidebarContextValue>({
   setOpen: () => {},
   currentSurah: null,
   setCurrentSurah: () => {},
+  currentJuzHizb: null,
+  setCurrentJuzHizb: () => {},
   pinnedSurahId: null,
   setPinnedSurahId: () => {},
   notifyNavigating: null,
@@ -42,6 +51,7 @@ const SidebarContext = createContext<SidebarContextValue>({
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [currentSurah, setCurrentSurah] = useState<SurahSlim | null>(null);
+  const [currentJuzHizb, setCurrentJuzHizb] = useState<{ juz: number; hizb: number } | null>(null);
   const [pinnedSurahId, setPinnedSurahId] = useState<number | null>(null);
   const [notifyNavigating, setNotifyNavigatingState] = useState<(() => void) | null>(null);
   // A function value passed to useState's setter is treated as an updater, so
@@ -61,6 +71,8 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         setOpen,
         currentSurah,
         setCurrentSurah,
+        currentJuzHizb,
+        setCurrentJuzHizb,
         pinnedSurahId,
         setPinnedSurahId,
         notifyNavigating,

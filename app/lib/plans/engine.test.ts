@@ -537,3 +537,132 @@ describe("PLAN_TEMPLATES shape", () => {
     }
   });
 });
+
+// Verse-unit tracks (ADR 0038, widened) — same rule kinds, verse-ordinal
+// math. Unit is chosen per independent track via params.trackUnits.
+describe("verse-unit (ADR 0038)", () => {
+  it("fixed_cycle: assigns the first N verses on day one, whole-mushaf bounds become 1-6236", () => {
+    const [a] = deriveAssignments(
+      wird,
+      { trackUnits: { reading: "verse" }, quantities: { reading: 6 } },
+      [],
+      TODAY
+    );
+    expect(a).toMatchObject({ trackKey: "reading", unit: "verse", rangeStart: 1, rangeEnd: 6 });
+  });
+
+  it("fixed_cycle: crosses a surah boundary as a plain ordinal, no special-casing", () => {
+    // Al-Fatiha has 7 verses (ordinals 1-7); a check-off of 1-6 leaves the
+    // cursor at 7, so the next day's range (6/day) is 7-12 — verse 7 is
+    // 1:7, verses 8-12 are 2:1-2:5.
+    const log = [entry("reading", "2026-07-23", 1, 6)];
+    const [a] = deriveAssignments(
+      wird,
+      { trackUnits: { reading: "verse" }, quantities: { reading: 6 } },
+      log,
+      TODAY
+    );
+    expect(a).toMatchObject({ rangeStart: 7, rangeEnd: 12 });
+  });
+
+  it("fixed_cycle: today's own entry is echoed verbatim, not recomputed (unit carried through)", () => {
+    const log = [entry("reading", TODAY, 1, 6)];
+    const [a] = deriveAssignments(
+      wird,
+      { trackUnits: { reading: "verse" }, quantities: { reading: 6 } },
+      log,
+      TODAY
+    );
+    expect(a).toMatchObject({ unit: "verse", rangeStart: 1, rangeEnd: 6, completed: true });
+  });
+
+  it("fixed_cycle: a {unit:'pages'} fractional override resolves from the current page's own verse count", () => {
+    // Page 1 (Al-Fatiha) has 7 verses; 0.5 pages/day -> round(7*0.5) = 4 (Math.floor via clampQuantity).
+    const [a] = deriveAssignments(
+      wird,
+      { trackUnits: { reading: "verse" }, quantities: { reading: { unit: "pages", amount: 0.5 } } },
+      [],
+      TODAY
+    );
+    expect(a).toMatchObject({ rangeStart: 1, rangeEnd: 4 });
+  });
+
+  it("fixed_cycle: the fractional-page override recomputes from whichever page the cursor starts on next", () => {
+    // Cursor now at verse 5 (still page 1, 7 verses) -> same page, same
+    // 0.5-of-7 pace -> quantity stays 4, but only 3 verses remain on page 1
+    // (5,6,7), so the range spills 1 verse onto page 2.
+    const log = [entry("reading", "2026-07-23", 1, 4)];
+    const [a] = deriveAssignments(
+      wird,
+      { trackUnits: { reading: "verse" }, quantities: { reading: { unit: "pages", amount: 0.5 } } },
+      log,
+      TODAY
+    );
+    expect(a).toMatchObject({ rangeStart: 5, rangeEnd: 8 });
+  });
+
+  it("cursor_advance: target range resolved from pages to verse ordinals stays exhaustible the same way", () => {
+    // hifz target = page 1 only (verse ordinals 1-7, Al-Fatiha).
+    const params = {
+      trackUnits: { hifz: "verse" as const },
+      targetStart: 1,
+      targetEnd: 7,
+      quantities: { hifz: 7 },
+    };
+    const [first] = deriveAssignments(husun, params, [], TODAY).filter((a) => a.trackKey === "hifz");
+    expect(first).toMatchObject({ rangeStart: 1, rangeEnd: 7 });
+
+    const log = [entry("hifz", "2026-07-23", 1, 7)];
+    const hifz = byTrack(deriveAssignments(husun, params, log, TODAY), "hifz");
+    expect(hifz).toBeUndefined(); // target fully memorized
+  });
+
+  it("trailing_window: windowSize converts to a verse-equivalent default when no override is set", () => {
+    // hifz cursor_advance with no explicit quantity -> default 1 page/day
+    // becomes toVerseEquivalent(1) verses/day; qareeb's windowSize (20 pages)
+    // becomes toVerseEquivalent(20) verses (qareeb has no trackUnits entry of
+    // its own — it inherits hifz's). Just assert the window is a
+    // verse-scale number, not literally 20 (the page-mode constant).
+    const log = [entry("hifz", "2026-07-01", 1, 100)];
+    const params = { trackUnits: { hifz: "verse" as const }, targetStart: 1, targetEnd: 500 };
+    const qareeb = byTrack(deriveAssignments(husun, params, log, TODAY), "qareeb");
+    expect(qareeb).toBeDefined();
+    expect(qareeb!.rangeEnd).toBe(100);
+    expect(qareeb!.rangeEnd - qareeb!.rangeStart + 1).toBeGreaterThan(20); // verse-scale, not page-scale
+  });
+
+  it("qareeb's windowSize is overridable, in hifz's own unit, plain integer", () => {
+    const log = [entry("hifz", "2026-07-01", 1, 100)];
+    const params = {
+      trackUnits: { hifz: "verse" as const },
+      targetStart: 1,
+      targetEnd: 500,
+      quantities: { qareeb: 15 },
+    };
+    const qareeb = byTrack(deriveAssignments(husun, params, log, TODAY), "qareeb");
+    expect(qareeb).toMatchObject({ unit: "verse", rangeStart: 86, rangeEnd: 100 });
+  });
+
+  it("tahdeer's repetitions is overridable, unit-agnostic", () => {
+    const log = [entry("hifz", "2026-07-23", 30, 30)];
+    const assignments = deriveAssignments(husun, { quantities: { tahdeer: 5 } }, log, TODAY);
+    expect(byTrack(assignments, "tahdeer")).toMatchObject({ repetitions: 5 });
+  });
+
+  it("page-unit tracks (no params.trackUnits) are completely unaffected", () => {
+    const [a] = deriveAssignments(wird, {}, [], TODAY);
+    expect(a).toMatchObject({ unit: "page", rangeStart: 1, rangeEnd: 5 });
+  });
+
+  it("independent per-track units: tilawa stays pages while hifz (and its dependents) run in verses", () => {
+    const params = {
+      trackUnits: { hifz: "verse" as const },
+      targetStart: 1,
+      targetEnd: 500,
+      quantities: { hifz: 7 },
+    };
+    const assignments = deriveAssignments(husun, params, [], TODAY);
+    expect(byTrack(assignments, "tilawa")).toMatchObject({ unit: "page", rangeStart: 1, rangeEnd: 20 });
+    expect(byTrack(assignments, "hifz")).toMatchObject({ unit: "verse", rangeStart: 1, rangeEnd: 7 });
+  });
+});

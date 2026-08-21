@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { User, LogOut, Bookmark, Target, ChevronDown, ChevronUp } from "lucide-react";
+import { User, LogOut, Bookmark, CalendarDays, ChevronDown, ChevronUp, Users, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,37 +12,29 @@ import {
 import { Link } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import useTranslations from "@hooks/use-translations";
-import { cn } from "@/lib/utils";
 import { navPillClassName, menuRowClassName } from "./NavPillLink";
+import { useNotifications } from "@/app/hooks/use-notifications";
+import { NotificationBell } from "@components/notifications/NotificationBell";
 
 type Props = {
-  // Renders as a full-width menu row (NavOverflowMenu's shared row template,
-  // label always visible) instead of the compact desktop pill.
+  // Renders as a full-width menu row
   menuRow?: boolean;
-  // Portal target for DropdownMenuContent — only consumed by the non-menuRow
-  // (dropdown pill) rendering below; the menuRow rendering is an inline
-  // disclosure, not a portal, so it never needs one.
+  // Portal target for DropdownMenuContent
   container?: HTMLElement | null;
-  // Closes NavOverflowMenu's enclosing Sheet — called on every submenu item
-  // that navigates or ends the session, mirroring SharedMushafLink's own
-  // onNavigate (docs/plans/home-page-design-fixes.md, Addendum — Universal
-  // nav menu). Not called by the "Account" row's own expand/collapse toggle.
+  // Closes menu
   onNavigate?: () => void;
+  // Opens Settings Sidebar
+  onOpenSettings?: () => void;
 };
 
-export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
+export const UserMenu = ({ menuRow, container, onNavigate, onOpenSettings }: Props = {}) => {
   const { data: session } = useSession();
   const t = useTranslations();
   const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
+  const { data: notifData } = useNotifications();
+  const unreadCount = notifData?.unread_count ?? 0;
 
-  // Inline disclosure, not a DropdownMenu: NavOverflowMenu's sheet has plenty
-  // of room, and Radix's Popper-positioned DropdownMenuContent — anchored to
-  // a trigger inside a bottom Sheet that's still mid slide-in transform —
-  // was landing detached from the row, floating near the sheet's own close
-  // button instead of under "Account". An inline expand/collapse avoids
-  // Popper positioning entirely (docs/plans/home-page-design-fixes.md,
-  // Addendum — Universal nav menu).
   if (menuRow) {
     return (
       <div>
@@ -53,8 +45,11 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
           className={menuRowClassName}
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="w-7 h-7 rounded-lg bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none">
+          <span className="relative w-7 h-7 rounded-lg bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none">
             <User className="size-3.5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -end-1 size-2.5 rounded-full bg-primary border-2 border-background" />
+            )}
           </span>
           <span>{t("account", "Account")}</span>
           {expanded ? (
@@ -75,7 +70,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
               {t("marks.navLink", "My Marks")}
             </Link>
             <Link href="/plans" locale={locale} className={menuRowClassName} onClick={onNavigate}>
-              <Target className="size-4 flex-none" />
+              <CalendarDays className="size-4 flex-none" />
               {t("plans.navLink", "My Plans")}
             </Link>
             {session ? (
@@ -88,7 +83,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
                 }}
               >
                 <LogOut className="size-4 flex-none" />
-                Sign out
+                {t("signOut", "Sign out")}
               </button>
             ) : (
               <button
@@ -99,7 +94,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
                   signIn();
                 }}
               >
-                Sign in
+                {t("signIn", "Sign in")}
               </button>
             )}
           </div>
@@ -113,14 +108,12 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t("account", "Account")}
-          className={cn(navPillClassName, "md:border md:border-border")}
+          className="relative size-9 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none hover:bg-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <span className="w-7 h-7 rounded-lg bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none">
-            <User className="size-3.5" />
-          </span>
-          <span className="hidden md:inline">
-            {t("account", "Account")}
-          </span>
+          <User className="size-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -end-0.5 size-3 rounded-full bg-primary border-[2px] border-background" />
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" container={container}>
@@ -129,6 +122,19 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
             {session.user?.name}
           </DropdownMenuItem>
         ) : null}
+        
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/mushaf" locale={locale}>
+            <Users className="size-4" />
+            {t("mushaf.navLink", "Shared mushaf")}
+          </Link>
+        </DropdownMenuItem>
+        <NotificationBell className="md:hidden" asDropdownItem container={container} />
+        <DropdownMenuItem className="md:hidden cursor-pointer" onClick={() => onOpenSettings?.()}>
+          <Settings className="size-4" />
+          {t("settings", "Settings")}
+        </DropdownMenuItem>
+
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/marks" locale={locale}>
             <Bookmark className="size-4" />
@@ -137,18 +143,18 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/plans" locale={locale}>
-            <Target className="size-4" />
+            <CalendarDays className="size-4" />
             {t("plans.navLink", "My Plans")}
           </Link>
         </DropdownMenuItem>
         {session ? (
           <DropdownMenuItem className="cursor-pointer" onClick={() => signOut()}>
             <LogOut className="size-4" />
-            Sign out
+            {t("signOut", "Sign out")}
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem className="cursor-pointer" onClick={() => signIn()}>
-            Sign in
+            {t("signIn", "Sign in")}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

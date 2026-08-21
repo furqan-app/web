@@ -35,6 +35,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     open,
     setOpen,
     setCurrentSurah,
+    setCurrentJuzHizb,
     pinnedSurahId,
     setPinnedSurahId,
     setNotifyNavigating,
@@ -108,6 +109,22 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSurah?.id]);
+
+  // Juz/Hizb straight from rub_number arithmetic (8 rubs/juz, 4 rubs/hizb —
+  // 240 rubs total, no separate juz/hizb columns to query). currentRub is
+  // already computed above for the Rub tab; this just republishes it for
+  // Nav's surah-selector control.
+  useEffect(() => {
+    setCurrentJuzHizb(
+      currentRub
+        ? {
+            juz: Math.ceil(currentRub.rub_number / 8),
+            hizb: Math.ceil(currentRub.rub_number / 4),
+          }
+        : null
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRub?.rub_number]);
 
   // Scroll active item into view when sidebar opens. Only fires on open transitions,
   // not on tab switches — the user is free to browse other items without being snapped back.

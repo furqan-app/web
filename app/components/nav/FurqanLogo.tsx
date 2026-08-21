@@ -16,7 +16,7 @@ export const FurqanLogo = ({ className }: Props = {}) => (
     // for a uniform touch-target grid (2026-08-13,
     // docs/plans/home-page-design-fixes.md).
     className={cn(
-      "flex-none size-8 rounded-[10px] bg-primary flex items-center justify-center hover:opacity-90 transition-opacity",
+      "fq-icon-chip flex-none size-8 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity",
       className,
     )}
   >

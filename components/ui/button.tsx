@@ -26,6 +26,17 @@ const buttonVariants = cva(
         icon: "h-10 w-10",
       },
     },
+    compoundVariants: [
+      {
+        // Icon-only ghost buttons (nav controls, sheet close buttons, bell,
+        // etc.) never get the accent hover — it reads as unintended green
+        // in dark theme (--accent-foreground is a teal/green tone). Text
+        // ghost buttons keep the default accent hover.
+        variant: "ghost",
+        size: "icon",
+        class: "hover:bg-transparent hover:text-foreground",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

@@ -1,0 +1,61 @@
+name: Promote release to prod
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  promote-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find latest unpromoted release branch
+        id: version
+        run: |
+          git fetch origin 'refs/heads/release/*:refs/remotes/origin/release/*' 'refs/heads/prod:refs/remotes/origin/prod'
+          candidates=$(git branch -r --list 'origin/release/*' | sed 's#.*origin/release/##' | sort -t. -k1,1n -k2,2n -k3,3n -r)
+          version=""
+          for v in $candidates; do
+            if ! git merge-base --is-ancestor "origin/release/$v" origin/prod; then
+              version="$v"
+              break
+            fi
+          done
+          if [[ -z "$version" ]]; then
+            echo "No release branch found that isn't already merged into prod." >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Gather milestoned issues
+        id: issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="v${{ steps.version.outputs.version }}"
+          mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --milestone "$version" --state closed --json title,url -q '.[] | "- \(.title) (\(.url))"')
+          body=""
+          for line in "${issues[@]}"; do body+="$line"$'\n'; done
+          {
+            echo "body<<EOF"
+            echo -e "$body"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open and auto-merge release → prod PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="v${{ steps.version.outputs.version }}"
+          pr_body="Promoting $version to prod."$'\n\n'"${{ steps.issues.outputs.body }}"
+          pr_url=$(gh pr create --repo "${{ github.repository }}" --base prod --head "release/${{ steps.version.outputs.version }}" --title "Release $version" --body "$pr_body")
+          gh pr merge "$pr_url" --repo "${{ github.repository }}" --squash --auto
+          echo "### Promoting v${{ steps.version.outputs.version }} to prod" >> "$GITHUB_STEP_SUMMARY"
+          echo "PR: $pr_url" >> "$GITHUB_STEP_SUMMARY"

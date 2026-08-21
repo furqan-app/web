@@ -1,4 +1,4 @@
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 // Visual regression smoke suite — see docs/plans/visual-e2e-testing.md and
 // ADR 0022. Covers 5 fixed screens x {ar, en} x {light, dark}, run against
@@ -23,13 +23,10 @@ const SETTINGS_LABEL: Record<Locale, string> = {
   ar: "الإعدادات",
   en: "Settings",
 };
-// NavOverflowMenu's hamburger trigger — Settings/SharedMushafLink/
-// NotificationBell/UserMenu all collapse behind this at every breakpoint
-// instead of rendering directly in the nav row
-// (docs/plans/home-page-design-fixes.md, Addendum — Universal nav menu).
-const MORE_LABEL: Record<Locale, string> = {
-  ar: "المزيد",
-  en: "More",
+// UserMenu trigger
+const ACCOUNT_LABEL: Record<Locale, string> = {
+  ar: "حسابي",
+  en: "Account",
 };
 // The results dropdown's surah heading, which SearchQueryResults renders only
 // once `chapters.length > 0` — so it cannot match before results exist. Matched
@@ -108,18 +105,16 @@ for (const locale of LOCALES) {
     });
 
     test.describe(`search results (${suffix})`, () => {
-      test("search for a chapter", async ({ page }, testInfo) => {
+      test("search for a chapter", async ({ page }) => {
         await withTheme(page, theme);
         await page.goto(`/${locale}`);
 
-        // Mobile opens search in a dialog while the nav's own search bar stays
-        // mounted, so both render a results dropdown — every locator below has to
-        // be scoped to the one under test or it hits a strict-mode violation.
-        let scope: Page | Locator = page;
-        if (testInfo.project.name === "mobile") {
-          await page.getByRole("button", { name: SEARCH_PLACEHOLDER[locale] }).click();
-          scope = page.getByRole("dialog");
-        }
+        // Search is a single icon trigger at every breakpoint (desktop no
+        // longer has a persistent inline field — SearchBar.tsx,
+        // docs/plans/desktop-navbar-font-bg.md) that opens the same
+        // full-screen Sheet/dialog overlay on both desktop and mobile.
+        await page.getByRole("button", { name: SEARCH_PLACEHOLDER[locale] }).click();
+        const scope = page.getByRole("dialog");
         await scope.getByPlaceholder(SEARCH_PLACEHOLDER[locale]).fill(SEARCH_QUERY[locale]);
 
         // Positive wait on the rendered results rather than a fixed sleep: the
@@ -133,18 +128,17 @@ for (const locale of LOCALES) {
     });
 
     test.describe(`settings sheet (${suffix})`, () => {
-      test("open settings sheet", async ({ page }) => {
+      test("open settings sheet", async ({ page }, testInfo) => {
         await withTheme(page, theme);
         await page.goto(`/${locale}`);
-        // Settings is behind NavOverflowMenu's hamburger trigger at every
-        // breakpoint, not a direct nav-row button
-        // (docs/plans/home-page-design-fixes.md, Addendum — Universal nav
-        // menu) — open that first, then click Settings inside the revealed
-        // sheet.
-        await page.getByRole("button", { name: MORE_LABEL[locale] }).click();
-        await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
-        // Sheet slide-in animation (and, on mobile, the overflow sheet's
-        // slide-out happening at the same time).
+        // Settings is in the nav row on desktop (as a button), but behind the UserMenu on mobile (as a menuitem).
+        if (testInfo.project.name === "mobile") {
+          await page.getByRole("button", { name: ACCOUNT_LABEL[locale] }).click();
+          await page.getByRole("menuitem", { name: SETTINGS_LABEL[locale] }).click();
+        } else {
+          await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
+        }
+        // Sheet slide-in animation.
         await page.waitForTimeout(600);
         await expect(page).toHaveScreenshot(`settings-${suffix}.png`);
       });

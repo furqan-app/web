@@ -41,9 +41,8 @@ Plan → Implement → Review → Ship → Retrospect
 | Trigger | Instructions | Description |
 |---|---|---|
 | `/release <bump>` | [release.md](release.md) | Full orchestration: cut → staging → prod → sync |
-| `/cut-release <bump>` | [release.md](release.md) | Branch, bump version, tag, push |
-| `/promote-to-staging <ver>` | [release.md](release.md) | Open release → `stg` PR |
-| `/promote-release <ver>` | [release.md](release.md) | Open release → `prod` PR |
+| `/cut-release <bump>` | [release.md](release.md) | Branch, bump version, tag, push, promote to `stg` (GitHub Action) |
+| `/promote-release` | [release.md](release.md) | Open+auto-merge release → `prod` PR, version auto-detected (GitHub Action) |
 | `/sync-main-from-prod` | [release.md](release.md) | Sync `prod` back into `main` after release |
 
 ### Doc & UI Utilities
