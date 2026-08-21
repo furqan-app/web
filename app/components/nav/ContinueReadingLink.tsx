@@ -48,8 +48,12 @@ export const ContinueReadingLink = ({ className }: Props = {}) => {
       // flex-row-reverse (user request): visually swaps icon/label sides
       // without touching DOM order (icon is still the first child, so
       // screen readers hit it before "Continue Reading" either way).
+      // Resuming where you left off is the one genuinely LIVE thing in the
+      // chrome, and on home it is the page's single live element — so it takes
+      // --primary. It does not collide with the settings gear, which is
+      // --control-live, a neutral tone rather than the state accent.
       className={cn(
-        "flex-none flex flex-row-reverse items-center justify-center size-10 md:w-auto md:h-auto md:justify-start md:gap-2 md:px-3 md:py-1.5 md:text-xs md:text-muted-foreground",
+        "fq-focus-ring flex-none flex flex-row-reverse items-center justify-center rounded-lg size-10 text-primary md:w-auto md:h-auto md:justify-start md:gap-2 md:px-3 md:py-1.5 md:text-xs md:font-medium",
         className,
       )}
     >

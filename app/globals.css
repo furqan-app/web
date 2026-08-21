@@ -1969,6 +1969,27 @@ body,
     border-bottom: 1px solid hsl(var(--border));
   }
 
+  /* A grid's answer to the same rule (subtask 4.2). The surah list is 114
+     near-identical entries; as individual cards that is 114 competing objects,
+     and the language's answer to repetition is hairlines. A single-column
+     hairline list of 114 rows is worse than the grid at desktop width, so the
+     grid stays and the hairlines become a lattice: one surface, gaps painted
+     in the border colour, cells filled with the card colour. Cheaper and more
+     robust than per-cell border arithmetic, and it degrades to exactly the
+     hairline list at one column. Callers keep supplying their own
+     `grid-cols-*` utilities. */
+  .fq-section-lattice {
+    display: grid;
+    gap: 1px;
+    border-radius: 14px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--border));
+    overflow: hidden;
+  }
+  .fq-section-lattice > * {
+    background: hsl(var(--card));
+  }
+
   /* ========================================================================
      Nocturnal Reader Lab (Desktop RTL Visual Prototype)
      Scoped exclusively under .fq-reader-lab / .fq-reader-lab-settings.

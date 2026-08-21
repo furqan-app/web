@@ -59,9 +59,11 @@ const RubList = ({ rubs, surahs, currentRubId }: Props) => {
         <div key={group.juzNumber}>
           <div
             dir="rtl"
-            className="sticky top-0 z-10 flex items-center justify-between px-[18px] py-[9px] bg-muted border-y border-border"
+            className="fq-section-heading flex items-center justify-between px-[18px] py-[9px] !rounded-none"
           >
-            <span className="text-sm font-bold text-primary">
+            {/* Which juz you are in is identity — where you are — so it takes
+                the warm accent, not the state one. */}
+            <span className="text-[11px] font-semibold tracking-[0.14em] text-gold">
               {t("juz", "Juz")} {toLocaleNumeral(group.juzNumber, locale)}
             </span>
             <span className="text-xs text-muted-foreground">
@@ -103,7 +105,7 @@ const RubList = ({ rubs, surahs, currentRubId }: Props) => {
                   "flex items-center gap-3 px-4 py-[13px] border-b border-border transition-colors",
                   rub.id === currentRubId
                     ? "bg-primary/10"
-                    : "bg-background hover:bg-accent",
+                    : "bg-background hover:bg-[hsl(var(--well)/var(--well-alpha))]",
                 )}
               >
                 <div className="shrink-0 w-11 h-11">

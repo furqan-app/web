@@ -53,14 +53,22 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
         jumpTo(surahStartingPage);
       }}
       data-surah-id={surah.id}
+      // A lattice cell, not a card: no shadow, no radius, no lift on hover.
+      // The two hardcoded rgba casts it carried drew a real shadow on light
+      // and gold and nothing at all on dark (ADR 0032), and 114 of them made
+      // the page read as 114 objects rather than one inventory. Motion never
+      // signals hierarchy, so the hover translate goes too.
       className={cn(
-        "flex items-center gap-3 p-4 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08),0_20px_56px_-16px_rgba(0,0,0,0.18)] transition-all duration-200",
+        "flex items-center gap-3 p-4 transition-colors duration-150",
         isActive
-          ? "bg-primary/10 border border-primary/30"
-          : "bg-card border border-border",
+          ? "bg-primary/10"
+          : "hover:bg-[hsl(var(--well)/var(--well-alpha))]",
       )}
     >
-      <div className="flex-none w-10 h-10 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground font-bold text-sm">
+      {/* Neutral, not --accent. 114 accented chips is an accent that signals
+          nothing; the selected surah is the only entry allowed a state
+          colour, and it gets it from the row fill above. */}
+      <div className="flex-none w-10 h-10 rounded-full border border-border bg-[hsl(var(--well)/var(--well-alpha))] grid place-items-center text-[hsl(var(--control-live))] font-bold text-sm">
         {toLocaleNumeral(surah.id, locale)}
       </div>
 
