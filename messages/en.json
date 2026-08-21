@@ -139,6 +139,7 @@
     "pageTitle": "My Marks",
     "signedOut": "Sign in to see your marks.",
     "empty": "No marks yet.",
+    "emptyHint": "Mark a word or a verse while reading and it will appear here.",
     "emptyCategory": "No marks in this category yet.",
     "allLabel": "All",
     "filterLabel": "Filter marks"
@@ -189,6 +190,7 @@
     "pageTitle": "Daily Awrad & Learning Plans",
     "signedOut": "Sign in to see your daily awrad and learning plans.",
     "empty": "No plans yet — enroll in one below.",
+    "emptyHint": "A plan gives you a daily portion to read, listen to, or memorise.",
     "nothingToday": "Nothing due today.",
     "checkOff": "Check off",
     "undoCheckOff": "Undo check-off",

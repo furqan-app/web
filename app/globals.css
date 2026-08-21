@@ -1897,6 +1897,79 @@ body,
   }
 
   /* ========================================================================
+     Ornament (subtask 4.1). Drawn, not typed: a hairline tapering into an open
+     diamond. The `◆` glyph this replaces read as a footnote marker, inherited
+     the UI font's quirks, and sat on --primary — the state accent — when
+     ornament is identity in every theme.
+     ======================================================================== */
+  .fq-ornament {
+    /* inline-block, not the default inline: a bare <span> would ignore both
+       width and height, and the ornament would collapse to nothing anywhere
+       its parent is not a flex container. */
+    display: inline-block;
+    position: relative;
+    width: 58px;
+    height: 10px;
+    flex: none;
+  }
+  .fq-ornament::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 42px;
+    height: 1px;
+    margin-top: -0.5px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--gold-muted)) 70%,
+      hsl(var(--gold) / 0.7)
+    );
+  }
+  .fq-ornament::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    transform: rotate(45deg);
+    border: 1px solid hsl(var(--gold) / 0.75);
+  }
+  /* One asset, mirrored, serves both flanks of a symmetric pair. */
+  .fq-ornament--flip {
+    transform: scaleX(-1);
+  }
+  /* Ornament is decoration, so it is the first thing a narrowing composition
+     sheds (§11). Below the compact boundary the title keeps its whole width. */
+  @media (max-width: 767px) {
+    .fq-ornament {
+      display: none;
+    }
+  }
+
+  /* A section group's rows are hairline-separated, but a group can also carry
+     a sticky heading. `.fq-section-group` sets `overflow: hidden` to clip rows
+     to its radius — and an `overflow: hidden` ancestor is a scroll container,
+     which traps `position: sticky` inside the group's own (content-height) box
+     instead of the viewport. A heading in a clipped group silently stops
+     sticking. This modifier opts out of the clip; the first and last rows have
+     no background of their own, so nothing overflows the radius anyway. */
+  .fq-section-group-open {
+    overflow: visible;
+  }
+  .fq-section-heading {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-radius: 14px 14px 0 0;
+    background: hsl(var(--muted));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  /* ========================================================================
      Nocturnal Reader Lab (Desktop RTL Visual Prototype)
      Scoped exclusively under .fq-reader-lab / .fq-reader-lab-settings.
      Route-local experimental system — never a global theme.
