@@ -31,9 +31,19 @@ The rules the lab established and this migration carries:
 - Grouped sections with hairline rows, not stacks of identical cards.
 - Drawn ornament (hairline tapering to a diamond), not glyph characters.
 
+## Phase 0 outcome
+
+Phase 0 is complete. The language is derived for all three themes, the mushaf page face, and all three device classes, and is written up in [`docs/design/design-language.md`](../../design/design-language.md) — the artifact every later phase implements against, and the input to 1.1. Findings are recorded in ADR 0047's three addenda.
+
+Three things Phase 0 changed for later phases:
+
+- **5.1 gains scope.** Production's `768–1023px` inset band is not a device class and the lab overrides it; production has to follow (5.1 part (c)).
+- **2.1 has its token families named.** Phase 0 established chrome/well/scrim, medallion, lamp carrier + extent, page-pool and cast tokens as distinct families, and proved that every theme block must declare each family whole — an omitted token silently inherits the base block's value.
+- **The accent test in the spec is what 3.x and 4.x apply.** It is stated once, in `design-language.md` §5, rather than re-derived per screen.
+
 ## Prerequisites
 
-**1. The lab exists only as uncommitted changes in the main working tree.** `codex/reader-lab-dark-concept` has no `reader-lab` directory. Phase 0 cannot start until the lab is committed onto `feature/360-design-migration`. Resolve before opening subtask 0.1.
+**1. The lab exists only as uncommitted changes in the main working tree.** ~~`codex/reader-lab-dark-concept` has no `reader-lab` directory.~~ **Resolved** — the lab is committed on `feature/360-design-migration`.
 
 **2. Four in-flight issues are superseded by this one.** #340 (Restructure Navigation), #346 (Collapsible audio sidebar), #351 (Desktop reader layout redesign), #352 (Thinner settings sidebar) all redesign surfaces this migration covers, under the language being replaced. Their **intent** may be absorbed into 3.2 and 4.3 where it still makes sense; their **visual decisions do not constrain the new design** — the approved lab language wins every conflict, and no subtask should preserve an old-language treatment because one of these issues introduced it.
 
@@ -46,7 +56,7 @@ The uncommitted chrome edits in the main working tree (`Nav.tsx`, `UserMenu.tsx`
 | 0.1 | Light + gold lab variants | [`0.1-lab-light-gold-variants.md`](0.1-lab-light-gold-variants.md) | prerequisite above |
 | 0.2 | Page face in the lab | [`0.2-lab-page-face.md`](0.2-lab-page-face.md) | 0.1 |
 | 0.3 | Small-screen lab composition | [`0.3-lab-small-screen.md`](0.3-lab-small-screen.md) | 0.1 |
-| 0.4 | Write the design-language spec | [`0.4-design-language-spec.md`](0.4-design-language-spec.md) | 0.1, 0.2, 0.3 |
+| 0.4 | Write the design-language spec | [`0.4-design-language-spec.md`](0.4-design-language-spec.md) → [`design-language.md`](../../design/design-language.md) | 0.1, 0.2, 0.3 |
 | 1.1 | Rewrite the canon | [`1.1-rewrite-design-principles.md`](1.1-rewrite-design-principles.md) | 0.4 |
 | 2.1 | Semantic tokens | [`2.1-semantic-tokens.md`](2.1-semantic-tokens.md) | 1.1 |
 | 3.1 | UI primitives | [`3.1-ui-primitives.md`](3.1-ui-primitives.md) | 2.1 |
