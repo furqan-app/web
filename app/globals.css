@@ -481,42 +481,16 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* Nav + player glass bars — dark-theme-only white text (Correction Round; all
-     text/icons, not just primary — explicitly confirmed, including the .text-
-     muted-foreground labels/icons on SharedMushafLink/MarksLink/UserMenu and the
-     player's verse-key subtitle + control icons). Scoped to :root.theme-dark, not
-     applied unconditionally: both bars sit on a translucent bg-background/75 +
-     blur, and only in dark theme is literal white pushed for legibility over the
-     Mushaf showing through; light/gold's own tokens already read correctly
-     against their (light) translucent background, so they're untouched. Two
-     selector groups per bar: the root itself (covers unclassed/inherited text
-     and icons using currentColor) AND any descendant explicitly carrying
-     .text-foreground/.text-muted-foreground (a child's own color class always
-     wins over an inherited one, so the root rule alone doesn't reach it).
-     !important beats the Tailwind utility (utility layer wins over base by
-     source order). */
-  :root.theme-dark nav,
-  :root.theme-dark .fq-recitation-bar,
-  :root.theme-dark nav .text-foreground,
-  :root.theme-dark nav .text-muted-foreground,
-  :root.theme-dark .fq-recitation-bar .text-foreground,
-  :root.theme-dark .fq-recitation-bar .text-muted-foreground {
-    color: white !important;
-  }
-
-  /* …but the search dropdown renders INSIDE <nav> (SearchBar is a nav child, and
-     SearchQueryResults is an absolutely-positioned bg-popover panel below it), so
-     the rule above was flattening its titles and its secondary lines to the same
-     white and destroying the two-tier hierarchy. The panel is an opaque popover,
-     not translucent glass, so it has no reason to opt into the white override —
-     hand it back the normal semantic tokens. Higher specificity + later in source,
-     so it wins over the block above. */
-  :root.theme-dark nav .bg-popover .text-foreground {
-    color: hsl(var(--foreground)) !important;
-  }
-  :root.theme-dark nav .bg-popover .text-muted-foreground {
-    color: hsl(var(--muted-foreground)) !important;
-  }
+  /* Removed in subtask 3.2: a `:root.theme-dark nav, … { color: white
+     !important }` block that flattened every nav and player-bar descendant to
+     literal white, plus the counter-override that had to hand the search
+     dropdown its semantic tokens back. Both existed only because those bars
+     were translucent glass (`bg-background/75 backdrop-blur-md`) with the
+     mushaf showing through. `.fq-chrome-bar` makes chrome an opaque surface,
+     so the semantic tokens are legible on their own — and the two-tier
+     hierarchy the white override destroyed comes back for free.
+     This is also the language's rule, not just a cleanup: never scope a
+     shared rule by theme to serve one theme (ADR 0032). */
 }
 
 @layer components {
@@ -1235,15 +1209,17 @@ body,
       border-width: 1px !important;
       border-style: solid;
       border-radius: calc(var(--radius) + 4px);
-      box-shadow: var(--reader-chrome-bar-shadow);
     }
-    /* Dark needs an opaque face — translucency over (7,15,23) produces no lift.
-       `:root.theme-dark` specificity (0,2,0) beats the JSX `bg-background/75`
-       utility (0,1,0) without needing !important. */
-    :root.theme-dark .fq-recitation-bar-rail {
-      background-color: var(--reader-chrome-face);
-      border-color: var(--reader-chrome-rim);
+    /* The rail is a floating box, so its closing hairline has nothing to close
+       against — it would draw a line across the middle of a rounded card. */
+    .fq-recitation-bar-rail::after {
+      display: none;
     }
+    /* Subtask 3.2 removed a `:root.theme-dark .fq-recitation-bar-rail` face and
+       rim override, and this block's own `box-shadow: var(--reader-chrome-bar-
+       shadow)`. Both existed to give dark an opaque face the translucent JSX
+       utility denied it; `.fq-chrome-bar` now gives every theme an opaque face,
+       a rim and a cast from one rule. */
     /* Rail inner column: vertical stack, centred, overrides the horizontal layout. */
     .fq-recitation-bar-rail > div {
       max-width: none;
@@ -1815,6 +1791,109 @@ body,
     border-radius: 9999px;
     border: 1px solid hsl(var(--border));
     background: hsl(var(--well) / var(--well-alpha));
+  }
+
+  /* ========================================================================
+     Shared chrome rules (subtask 3.2). The navigation strip, the recitation
+     bar and its rail form. One treatment, three themes, values only.
+     ======================================================================== */
+
+  /* An app chrome bar is an OPAQUE surface, never glass. Over a (7,15,23)
+     desk `bg-background/75 backdrop-blur-md` reads as a hole with the mushaf
+     showing through, which is why dark needed a `color: white !important`
+     override on every nav descendant just to stay legible. An opaque face
+     puts chrome back on the brightness ladder (creases < desk <= chrome <
+     page face) and lets the semantic text tokens work unassisted.
+     Lift is the §4 rule applied literally: a rim catch-light along the top
+     edge plus a cast. On light and gold the cast does the work; on dark it
+     measures ~1 point and the warm rim carries it. Same rule, different
+     token values — never a theme-scoped copy. */
+  .fq-chrome-bar {
+    position: relative;
+    background-color: hsl(var(--chrome));
+    box-shadow:
+      inset 0 1px 0 hsl(var(--surface-rim) / var(--surface-rim-alpha)),
+      var(--panel-cast);
+  }
+  /* Closing hairline that fades at both ends, so a full-bleed bar has no hard
+     corners against the desk. */
+  .fq-chrome-bar::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--border)) 8%,
+      hsl(var(--border)) 92%,
+      transparent
+    );
+  }
+  /* The recitation bar sits at the bottom, so its closing hairline belongs on
+     the edge that faces the page. */
+  .fq-chrome-bar-bottom::after {
+    inset: 0 0 auto;
+  }
+
+  /* Identity medallion — the brand mark. Gold rim, dark face, in EVERY theme:
+     a struck seal is a material, not a tint, and inverting it on light both
+     erases that reading and leaves the white logo silhouette invisible
+     (design-language.md §12). Replaces `.fq-icon-chip` on the logo, which
+     filled it with --primary and so spent the state accent on identity. */
+  .fq-medallion {
+    border: 1px solid hsl(var(--medallion-rim));
+    background: radial-gradient(
+      120% 120% at 50% 0%,
+      hsl(var(--medallion-face)),
+      hsl(var(--medallion-edge))
+    );
+    box-shadow: inset 0 1px 0 hsl(var(--medallion-ink) / 0.14);
+    color: hsl(var(--medallion-ink));
+  }
+
+  /* Inert vs live chrome controls. The whole point of the pair: a bar full of
+     identically-weighted icons tells you nothing about which of them act. */
+  .fq-chrome-btn,
+  .fq-chrome-btn-live {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    border-radius: 9999px;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+  .fq-chrome-btn {
+    color: hsl(var(--control-inert));
+  }
+  .fq-chrome-btn-live {
+    color: hsl(var(--control-live));
+  }
+  /* Hover is a recess, so it follows the well's direction rather than a fixed
+     "darker" or "lighter" — see §4. Hover refines; it never reveals. */
+  .fq-chrome-btn:hover,
+  .fq-chrome-btn-live:hover {
+    background: hsl(var(--well) / var(--well-alpha));
+  }
+  .fq-chrome-btn:hover {
+    color: hsl(var(--control-live));
+  }
+  .fq-chrome-btn-live:hover {
+    color: hsl(var(--foreground));
+  }
+
+  /* Chrome sheds information as the viewport narrows, and the well's grouping
+     is information. Below the compact boundary its members have already
+     relocated into the account menu, leaving one control — and a lone icon in
+     a pill outline is noise. The control survives; the grouping does not. */
+  @media (max-width: 767px) {
+    .fq-chrome-well {
+      border-color: transparent;
+      background: none;
+    }
   }
 
   /* ========================================================================

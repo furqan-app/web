@@ -12,9 +12,10 @@ import {
 import { Link } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import useTranslations from "@hooks/use-translations";
-import { navPillClassName, menuRowClassName } from "./NavPillLink";
+import { menuRowClassName } from "./NavPillLink";
 import { useNotifications } from "@/app/hooks/use-notifications";
 import { NotificationBell } from "@components/notifications/NotificationBell";
+import { cn } from "@/lib/utils";
 
 type Props = {
   // Renders as a full-width menu row
@@ -42,10 +43,10 @@ export const UserMenu = ({ menuRow, container, onNavigate, onOpenSettings }: Pro
           type="button"
           aria-label={t("account", "Account")}
           aria-expanded={expanded}
-          className={menuRowClassName}
+          className={cn(menuRowClassName, "fq-focus-ring")}
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="relative w-7 h-7 rounded-lg bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none">
+          <span className="fq-well relative w-7 h-7 justify-center rounded-lg text-[hsl(var(--control-live))] flex-none">
             <User className="size-3.5" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -end-1 size-2.5 rounded-full bg-primary border-2 border-background" />
@@ -105,10 +106,15 @@ export const UserMenu = ({ menuRow, container, onNavigate, onOpenSettings }: Pro
 
   return (
     <DropdownMenu>
+      {/* Neutral chrome, not --accent. The account entry says who you are —
+          identity — and --accent is the state accent's family, so a saturated
+          avatar put a live-state colour on the one permanently-present element
+          that is never live. The unread dot keeps --primary and becomes the
+          only accent on this control, which is the point. */}
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t("account", "Account")}
-          className="relative size-9 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground flex-none hover:bg-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="fq-focus-ring fq-well relative size-9 justify-center rounded-full text-[hsl(var(--control-live))] flex-none transition-colors"
         >
           <User className="size-5" />
           {unreadCount > 0 && (

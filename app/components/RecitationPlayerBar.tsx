@@ -72,12 +72,12 @@ export const RecitationPlayerBar = () => {
   return (
     <div
       className={cn(
-        // Translucent glass everywhere (Correction Round — desktop included), and
-        // matching Nav exactly (same base token, same opacity, same blur, same
-        // border) so the two bars read as one consistent floating-chrome style.
-        // fq-recitation-bar: marker class so globals.css can target this bar's
-        // primary text specifically (dark-theme-only white override).
-        "fq-recitation-bar fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-background/75 backdrop-blur-md",
+        // Same opaque chrome treatment as Nav, from one rule — the two bars
+        // read as one surface because they ARE one surface definition.
+        // fq-chrome-bar-bottom moves the closing hairline to the edge that
+        // faces the page. fq-recitation-bar stays as a marker class for the
+        // rail transform below.
+        "fq-recitation-bar fq-chrome-bar fq-chrome-bar-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border/50",
         // Reader-only marker: at >=1367px and >=800px tall, globals.css turns the
         // bar into a vertical rail fixed to the screen-right. Off the reader route
         // there is no spread to anchor to, so the bar keeps its full-width form.
@@ -100,7 +100,10 @@ export const RecitationPlayerBar = () => {
           aria-pressed={isPlaying}
           onClick={handlePlayPause}
           disabled={isLoading}
-          className="fq-icon-chip flex items-center justify-center w-9 h-9 rounded-full shrink-0 disabled:opacity-60"
+          // The one live control on this bar. Keeps fq-icon-chip's --primary
+          // fill: playback is state, which is precisely what that accent is
+          // for — every other control here is dimmed and grouped around it.
+          className="fq-icon-chip fq-focus-ring flex items-center justify-center w-9 h-9 rounded-full shrink-0 disabled:opacity-60"
         >
           {isLoading ? (
             <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -123,7 +126,7 @@ export const RecitationPlayerBar = () => {
               <button
                 type="button"
                 aria-expanded={open}
-                className="fq-recitation-reciter-name flex min-w-0 items-center gap-1 truncate text-sm font-medium text-foreground"
+                className="fq-recitation-reciter-name fq-focus-ring flex min-w-0 items-center gap-1 truncate rounded-md text-sm font-medium text-foreground"
               >
                 <span className="truncate">
                   {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
@@ -154,7 +157,7 @@ export const RecitationPlayerBar = () => {
                 type="button"
                 aria-expanded={open}
                 aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                className="fq-recitation-rail-reciter hidden flex-col items-center gap-0.5 text-foreground"
+                className="fq-recitation-rail-reciter fq-focus-ring hidden flex-col items-center gap-0.5 rounded-md text-foreground"
               >
                 <span className="fq-recitation-rail-reciter-name w-full truncate text-center text-[10px] font-medium leading-tight">
                   {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
@@ -169,7 +172,7 @@ export const RecitationPlayerBar = () => {
           type="button"
           aria-label={t("recitation.settingsTitle", "Recitation settings")}
           onClick={() => openSettings()}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors shrink-0"
+          className="fq-chrome-btn fq-focus-ring size-8"
         >
           <SettingsIcon className="size-4" strokeWidth={1.8} />
         </button>
@@ -179,7 +182,7 @@ export const RecitationPlayerBar = () => {
             type="button"
             aria-label={t("recitation.stop", "Stop")}
             onClick={stop}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors shrink-0"
+            className="fq-chrome-btn fq-focus-ring size-8"
           >
             <Square className="size-4" strokeWidth={1.8} />
           </button>

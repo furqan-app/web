@@ -2,7 +2,6 @@
 
 import { Bell } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
-import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/app/hooks/use-notifications";
@@ -55,12 +54,20 @@ export const NotificationBell = ({ menuRow, asDropdownItem, container, className
             <span>{label}</span>
           </button>
         ) : (
-          <Button variant="ghost" size="icon" aria-label={label} className={cn("relative", className)}>
+          <button
+            type="button"
+            // Inert-cluster treatment: the bell sits inside the nav's well and
+            // must not out-weight its neighbours. The unread dot keeps
+            // --primary — an unread notification is live state, which is
+            // exactly what that accent is now reserved for.
+            aria-label={label}
+            className={cn("fq-chrome-btn fq-focus-ring relative size-9", className)}
+          >
             <Bell className="size-5" strokeWidth={1.7} />
             {unreadCount > 0 && (
               <span className="absolute top-1 end-1 size-2 rounded-full bg-primary" />
             )}
-          </Button>
+          </button>
         )}
       </PopoverTrigger>
       <PopoverContent align="end" className="p-0" container={container}>

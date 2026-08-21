@@ -36,15 +36,16 @@ export const SearchBar = () => {
 
     return (
         <>
-            {/* Icon trigger, every breakpoint — opens the same overlay below
-                (matches the reference nav: bare icons, no persistent inline field).
-                Plain icon control, no resting background. */}
+            {/* Icon trigger, every breakpoint — opens the same overlay below.
+                Sits inside the nav's inert well (Nav.tsx), so it carries the
+                grouped-control treatment rather than its own background. It
+                previously had no focus style at all. */}
             <button
-                className="flex items-center justify-center w-10 h-10 rounded-lg"
+                className="fq-chrome-btn fq-focus-ring size-9"
                 onClick={() => setOpen(true)}
                 aria-label={t("search.placeholder", "Search the Quran...")}
             >
-                <Search className="size-5 text-muted-foreground" strokeWidth={1.7} />
+                <Search className="size-5" strokeWidth={1.7} />
             </button>
 
             {/* Full-screen search overlay */}
@@ -65,10 +66,10 @@ export const SearchBar = () => {
                     <div className="flex items-center gap-2 h-14 px-3 border-b border-border shrink-0">
                         <button
                             onClick={() => setOpen(false)}
-                            className="flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent/50 transition-colors flex-shrink-0"
+                            className="fq-chrome-btn fq-focus-ring size-9"
                             aria-label="Close search"
                         >
-                            <ArrowLeft className="size-5 text-muted-foreground" strokeWidth={1.7} />
+                            <ArrowLeft className="size-5" strokeWidth={1.7} />
                         </button>
                         <div className="relative flex-1">
                             {isLoading && (
