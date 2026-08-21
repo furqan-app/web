@@ -69,10 +69,22 @@ Every theme class must define all of these CSS custom properties:
 --gold, --gold-muted, --overlay
 ```
 
-`--gold`/`--gold-muted` mark Mushaf-identity elements only (never interactive ones —
-`--primary`/`--accent` cover interaction); themes without a distinct gold identity should
+`--gold`/`--gold-muted` mark identity elements — who or what this is, where you are, a page's
+own metadata, and all ornament — and `--primary` marks live state only. Never both on one
+element. See the accent test in
+[`design-principles.md`](../design/design-principles.md#accent-colour-usage), derived in
+[`design-language.md`](../design/design-language.md) §5.
+
+> **Migration in progress (#360).** The aliasing rule below is being replaced. Every theme now
+> needs a real identity accent — on light and gold a deep bronze, since a bright gold does not
+> survive parchment — and the state accent stays emerald in all three themes rather than
+> following each theme's own `--primary`. Subtask 2.1 lands the token values; until it does,
+> this section still describes the shipped state.
+
+Themes without a distinct gold identity currently
 alias them to their own `--accent-foreground`/`--accent` rather than inventing a new hue. See
-[ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md). `--overlay` is the
+[ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md), superseded in part by
+[ADR 0047](../architecture/adr/0047-adopt-reader-lab-design-language.md). `--overlay` is the
 modal/drawer scrim color, consumed as `bg-overlay/80` — an HSL triplet (no baked-in alpha) so
 the Tailwind opacity-slash syntax works, same as every other token here.
 

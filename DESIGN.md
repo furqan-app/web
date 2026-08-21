@@ -57,6 +57,32 @@ components:
 
 # Design System: Furqan
 
+> ## ⚠ Migration in progress — parts of this file are superseded
+>
+> This file is a generated extraction of the **shipped** design, and the app is mid-migration
+> to a new design language (issue #360, [ADR 0047](docs/architecture/adr/0047-adopt-reader-lab-design-language.md)).
+> It cannot be regenerated accurately until the code carries the new tokens — `/impeccable document`
+> scans code, and phases 2–5 have not landed yet — so this banner was added by hand rather than
+> generated. **Nothing below it has been edited.**
+>
+> **The canon is [`docs/design/design-principles.md`](docs/design/design-principles.md)**, derived in
+> [`docs/design/design-language.md`](docs/design/design-language.md). Where this file disagrees with those, they win.
+>
+> Five rules below are superseded and **must not be enforced in review**:
+>
+> | Superseded rule in this file | Replaced by |
+> |---|---|
+> | "The One Accent Rule" / "Don't add a second accent color anywhere" | Two accents: warm `--gold` for identity/metadata/ornament, `--primary` for live state only |
+> | "The Gold-Is-Identity Rule" — themes without a distinct gold alias it to their own accent | Every theme gets a real identity accent; on light and gold a deep bronze. State stays emerald in all three themes |
+> | "The Flat Face Rule" / "no radial center-lighting on the page face in any theme" | The page face may be lit; the pool belongs to the spread, anchored at each card's seam edge |
+> | "the mushaf reading page is deliberately *not* the brightest surface" (ADR 0031) | Ladder is `creases < desk ≤ chrome < page face` — the page is what the lamp is on |
+> | `◆` glyph separators; 52×52px filled nav arrows | Drawn ornament (hairline tapering to an open diamond); quiet rims that warm on hover, dropped entirely where there is no gutter |
+>
+> Everything else here still holds — including every measurement of the medium: dark's
+> `(7,15,23)` headroom, the light-not-shadow rule, semantic tokens only, and the column–font contract.
+>
+> **Regenerate via `/impeccable document` once subtask 2.1 has landed the token layer, and delete this banner.**
+
 ## Overview
 
 **Creative North Star: "The Reading Desk"**
