@@ -120,12 +120,16 @@ jobs:
           fi
           gh release create "$version" --title "$version" --notes "$notes"
 
-      - name: Open and auto-merge main → stg PR
+      - name: Open and merge main → stg PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pr_url=$(gh pr create --repo "${{ github.repository }}" --base stg --head main --title "Staging update" --body "Promoting main to stg as part of cutting v${{ steps.version.outputs.new_version }}.")
-          gh pr merge "$pr_url" --repo "${{ github.repository }}" --squash --auto
+          # stg has no required status checks, so it's always immediately mergeable —
+          # enablePullRequestAutoMerge rejects that with "Pull request is in clean status".
+          # Merge directly instead of via --auto. Use a merge commit (not squash) so main's
+          # commits stay ancestors of stg — squash would break ancestor-based checks elsewhere.
+          gh pr merge "$pr_url" --repo "${{ github.repository }}" --merge
 
       - name: Summary
         run: |

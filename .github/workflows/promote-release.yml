@@ -56,6 +56,8 @@ jobs:
           version="v${{ steps.version.outputs.version }}"
           pr_body="Promoting $version to prod."$'\n\n'"${{ steps.issues.outputs.body }}"
           pr_url=$(gh pr create --repo "${{ github.repository }}" --base prod --head "release/${{ steps.version.outputs.version }}" --title "Release $version" --body "$pr_body")
-          gh pr merge "$pr_url" --repo "${{ github.repository }}" --squash --auto
+          # Use a merge commit (not squash) so the release branch tip stays an ancestor of
+          # prod — this workflow's own "is it already promoted" check relies on that.
+          gh pr merge "$pr_url" --repo "${{ github.repository }}" --merge --auto
           echo "### Promoting v${{ steps.version.outputs.version }} to prod" >> "$GITHUB_STEP_SUMMARY"
           echo "PR: $pr_url" >> "$GITHUB_STEP_SUMMARY"
