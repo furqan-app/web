@@ -377,7 +377,7 @@
     "queue": "Recitation queue",
     "audioTuning": "Audio settings",
     "inertNotice": "This option is for display only",
-    "appearanceDarkOnly": "This experiment is dark-only",
+    "appearanceLiveNote": "The only live control in this panel — your saved preference is left untouched.",
     "categoryLanguage": "Arabic (Default)",
     "categoryFontSize": "Medium (28)",
     "categoryPageView": "Facing Pages",
@@ -391,6 +391,7 @@
     "sectionReading": "Reading",
     "sectionDevice": "Device & recitation",
     "stateLocked": "Locked",
+    "stateLive": "Live",
     "stateOnline": "Online",
     "close": "Close"
   }

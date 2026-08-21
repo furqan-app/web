@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import useTranslations from "@/app/hooks/use-translations";
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
+import { LAB_THEMES, useLabTheme, type LabTheme } from "./use-lab-theme";
 import { cn } from "@/lib/utils";
 
 type ReaderLabSettingsSidebarProps = {
@@ -109,7 +110,14 @@ export function ReaderLabSettingsSidebar({
   onRestoreFocus,
 }: ReaderLabSettingsSidebarProps) {
   const t = useTranslations();
+  const { theme, setTheme } = useLabTheme();
   useCloseOnBackGesture(open, () => onOpenChange(false));
+
+  const themeLabels: Record<LabTheme, string> = {
+    light: t("theme.light", "فاتح"),
+    gold: t("theme.gold", "ذهبي"),
+    dark: t("theme.dark", "داكن"),
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -121,10 +129,11 @@ export function ReaderLabSettingsSidebar({
           event.preventDefault();
           onRestoreFocus?.();
         }}
-        overlayClassName="bg-[hsl(var(--rl-void)/0.64)] backdrop-blur-[2px]"
+        overlayClassName="fq-reader-lab-scrim"
         // The portalled element sits outside .fq-reader-lab, so it declares the
-        // lab tokens itself via .fq-reader-lab-settings.
-        className="fq-reader-lab-settings sm:max-w-[408px] w-full gap-0 border-0 bg-[hsl(var(--rl-stage))] p-0 text-[hsl(var(--rl-text))] shadow-[0_24px_64px_hsl(211_39%_2%/0.45)]"
+        // lab tokens itself via .fq-reader-lab-settings. Surface and scrim are
+        // classes, not arbitrary values, because both change per theme.
+        className="fq-reader-lab-settings fq-reader-lab-sheet sm:max-w-[408px] w-full gap-0 border-0 p-0 text-[hsl(var(--rl-text))]"
       >
         <div className="flex h-full flex-col">
           <header className="relative shrink-0 px-5 pb-4 pt-5 pe-16">
@@ -187,30 +196,48 @@ export function ReaderLabSettingsSidebar({
             </Section>
 
             <Section title={t("appearance", "المظهر")}>
-              {/* The only natively disabled control in the panel: the lab is
-                  dark-only, so there is no second option to show. */}
-              <div className="fq-reader-lab-settings-row">
-                <label className="flex min-w-0 items-center gap-2.5">
-                  <input
-                    type="radio"
-                    checked
-                    disabled
-                    readOnly
-                    name="fq-reader-lab-theme"
-                    className="sr-only"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="grid size-[18px] place-items-center rounded-full bg-[hsl(var(--rl-emerald))] text-[hsl(var(--rl-stage))]"
+              {/* The one live control in an otherwise inert panel: the whole
+                  point of this route is comparing the three value sets, and a
+                  picture of a theme cannot be compared with anything. It moves
+                  the theme class only — the stored preference is untouched and
+                  the entry theme is restored on leaving. */}
+              <div
+                role="radiogroup"
+                aria-label={t("appearance", "المظهر")}
+                className="flex flex-col"
+              >
+                {LAB_THEMES.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    role="radio"
+                    aria-checked={theme === option}
+                    onClick={() => setTheme(option)}
+                    className="fq-reader-lab-theme-row"
                   >
-                    <Check className="size-3 stroke-[3]" />
-                  </span>
-                  <span className="text-[13px] font-medium text-[hsl(var(--rl-text))]">
-                    {t("theme.dark", "داكن")}
-                  </span>
-                </label>
-                <span className="text-[11px] text-[hsl(var(--rl-muted))]">
-                  {t("readerLab.appearanceDarkOnly", "هذه التجربة مظلمة فقط")}
+                    <span
+                      aria-hidden="true"
+                      data-theme={option}
+                      className="fq-reader-lab-swatch"
+                    />
+                    <span className="min-w-0 flex-1 text-[13px] font-medium leading-tight">
+                      {themeLabels[option]}
+                    </span>
+                    <span aria-hidden="true" className="fq-reader-lab-theme-check">
+                      <Check className="size-3 stroke-[3]" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="fq-reader-lab-settings-row">
+                <div className="min-w-0 text-[11px] leading-tight text-[hsl(var(--rl-muted))]">
+                  {t(
+                    "readerLab.appearanceLiveNote",
+                    "هذا الخيار الوحيد الفعّال في اللوحة، ولا يُحفظ تفضيلك.",
+                  )}
+                </div>
+                <span className="fq-reader-lab-chip" data-tone="live">
+                  {t("readerLab.stateLive", "فعّال")}
                 </span>
               </div>
             </Section>

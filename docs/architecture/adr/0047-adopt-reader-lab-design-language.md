@@ -46,3 +46,23 @@ Leave the three existing themes untouched and let users opt in.
 - Light and gold need the language **re-derived**, not translated — every atmospheric value in the lab is a function of a near-black desk. This happens in the sandbox before production files are touched.
 - Gold currently has **zero** visual regression coverage (`visual.spec.ts` covers light and dark only), and tablet and four routes have none either. Accepted as a known risk; baselines are regenerated wholesale rather than extended first.
 - The lab remains a sandbox and still never ships (`/ar/reader-lab` stays unlinked). It gains light, gold and small-screen variants purely as a derivation surface.
+
+## Addendum — Phase 0.1 findings (2026-08-21)
+
+Deriving the light and gold variants in the lab produced three results the rest of the migration depends on. All are pixel-sampled at 1920×1080 on `/ar/reader-lab/3`.
+
+**1. The lamp's carrier channel is a property of the medium, not a constant.** "A warm pool of light over the folio" is one rule, but the channel that can express it differs per theme, and the choice follows from measuring the headroom that theme actually has:
+
+| Theme | Desk L | Headroom | Lamp is carried by | Measured |
+|---|---|---|---|---|
+| dark | 5 | ~95 up | lightness (hot, tight core) | +1 L — invisible, as ADR 0032 predicts; the rim does the work (+19 L) |
+| light | 89 | ~10 up, but the desk is **cool** | **temperature** | +28 R−B centre vs edge, ~0 L |
+| gold | 88 | ~12 up, desk already warm | lightness | +15 L centre vs edge |
+
+The first light and gold values were built as tight pools like dark's and measured **exactly zero** — the pool's centre sits under the folio, so on a wide desk the only visible pixels fall past the falloff. The pool's *extent* is therefore a per-theme token too, not a shared constant.
+
+**2. Gold-as-identity survives on parchment — but as bronze, not as metal.** This was the language's most likely failure. On `.theme-gold` the identity accent reaches 6.30:1 on chrome and 6.42:1 on the group surface, and sits 134° from the live accent. The mechanism changes: on dark, gold separates from its surround by hue *and* brightness; on parchment it can only separate by **lightness**, so "gold" there means a deep bronze roughly 50 points below the surface. A bright gold on a gold desk does collapse — the failure predicted was real, and the fix is the value, not the rule.
+
+**3. The gold theme's live accent is emerald, not its own `--primary`.** `.theme-gold`'s `--primary` is warm gold (`41 57% 43%`). Keeping it would make identity and live state the same colour, which is the one thing the two-accent grammar cannot survive. The live accent is therefore emerald in all three themes; only identity is theme-warm.
+
+A corollary: the identity medallion keeps a dark face in every theme. It is a struck seal — a material, not a tint — and inverting it on light would both erase that reading and leave the white logo mark invisible.

@@ -315,6 +315,8 @@ const user = extractUser(request); // { id, email, ... }
 - While the migration runs, `visual.spec.ts` snapshots are a **diff-review artifact, not a gate** — they are regenerated per phase. Every phase must therefore carry its own explicit mushaf-correctness verification; do not treat a green snapshot run as coverage.
 - `design-principles.md` is canonical and generates root `DESIGN.md` via `/impeccable document`. Changing one without regenerating the other leaves the ADR 0041 review gate enforcing the superseded language.
 - The reader lab stays an unlinked sandbox throughout and never ships; it gains light, gold and small-screen variants only as a derivation surface.
+- **An atmospheric rule names a light source, never a channel.** Which channel expresses it — lightness or temperature — is decided per theme by measuring that medium's headroom, and so is the gradient's extent. Values derived for one theme measure zero when ported to another (ADR 0047 Addendum, Phase 0.1). Do not port; re-derive and sample.
+- **The live accent is emerald in all three themes; only identity is theme-warm.** On the gold theme, `--primary` is itself gold, so reusing it for live state collapses the two-accent grammar into one. On light and gold, identity gold means a deep bronze that separates from the surface by lightness — a bright gold does not survive parchment.
 
 ---
 

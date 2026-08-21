@@ -378,7 +378,7 @@
     "queue": "قائمة التلاوة",
     "audioTuning": "ضبط الصوت",
     "inertNotice": "هذا الخيار للعرض التجريبي فقط",
-    "appearanceDarkOnly": "هذه التجربة مظلمة فقط",
+    "appearanceLiveNote": "هذا الخيار الوحيد الفعّال في اللوحة، ولا يُحفظ تفضيلك.",
     "categoryLanguage": "العربية (الافتراضية)",
     "categoryFontSize": "متوسط (٢٨)",
     "categoryPageView": "صفحتان متقابلتان",
@@ -392,6 +392,7 @@
     "sectionReading": "القراءة",
     "sectionDevice": "الجهاز والتلاوة",
     "stateLocked": "مثبت",
+    "stateLive": "فعّال",
     "stateOnline": "عبر الإنترنت",
     "close": "إغلاق"
   }
