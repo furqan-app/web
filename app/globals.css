@@ -36,12 +36,21 @@
     --input: 210 31% 90%;
     --ring: 169 88% 26%;
     --radius: 0.5rem;
-    /* Aliased to this theme's own accent — light theme is deliberately NOT gold
-       (see the paper comment below), so the badge that consumes --gold must not
-       gain one here. */
-    --gold: 169 88% 26%;
-    --gold-muted: 165 53% 93%;
-    --overlay: 0 0% 0%;
+    /* Identity accent (ADR 0047). --gold and --gold-muted had ZERO consumers —
+       no var(--gold) in CSS, no text-gold/bg-gold in any component — so this is
+       a scope change on a dead token, not a retint of a live one. They now carry
+       the app-wide identity role: who or what this is, where you are, a page's
+       own metadata, and all ornament. --primary keeps live state, and the two
+       are never used on the same element.
+       Supersedes "light is deliberately NOT gold": the two-accent grammar needs
+       an identity colour in every theme. On a cool near-white surface a bright
+       gold disappears, so light's identity is a deep bronze that separates by
+       lightness. Measured 5.07:1 on --card and 4.51:1 on --background. */
+    --gold: 34 45% 36%;
+    --gold-muted: 34 28% 56%;
+    /* Cool slate rather than pure black: the scrim should read as the room
+       dimming, not as a hole. */
+    --overlay: 213 30% 25%;
     /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
        the traditional gold Mushaf. Near-white paper and neutral gray ornaments;
        no gold, bronze, beige, or warm-gray tint. */
@@ -79,7 +88,62 @@
       0 5px 14px -7px rgba(30, 41, 59, 0.2);
     /* Search bar: reads as recessed into the nav via an inset shadow, no border. */
     --search-input-shadow: inset 0 1px 3px rgba(36, 48, 60, 0.08);
-  }
+  
+    /* ==== Design-language families (subtask 2.1, ADR 0047) ================
+       Four roles the shadcn token set has no name for. Every one is declared
+       in all three theme blocks — a token missing from one block silently
+       inherits nothing and flattens that theme (ADR 0032).
+       Values are derived and pixel-verified in the reader lab; the rules that
+       consume them live in docs/design/design-language.md. Nothing here is a
+       gradient or a shadow *rule* — only the values a rule reads, so a screen
+       opts in by consuming the token, and these are inert until it does. */
+
+    /* 1. Atmosphere. The lamp's carrier channel belongs to the medium: this
+       desk has ~10 points of upward headroom and is COOL, so its lamp works in
+       temperature — a warm near-white at matched lightness. Measured +28 R-B
+       centre vs edge and ~0 lightness. The extent is wide and weak because the
+       pool centres under the folio; a tight pool measured exactly zero here. */
+    --lamp: 42 70% 94%;
+    --lamp-core: 0.55;
+    --lamp-mid: 0.34;
+    --lamp-extent: 98% 92%;
+    --lamp-origin: 50% 45%;
+    /* Never the lamp's hue. On light this is the load-bearing half — the desk
+       has the downward headroom dark lacks. Measured 13-point fall to corner. */
+    --vignette: 213 30% 52%;
+    --vignette-alpha: 0.3;
+
+    /* 2. Control treatment. Chrome sits ABOVE the desk here and below it on
+       dark; the token carries the difference so the rule stays one rule. */
+    --chrome: 210 30% 95%;
+    --chrome-base: 0 0% 100%;
+    /* A well is recessed, which on a near-white bar means darker. */
+    --well: 212 20% 91%;
+    --well-alpha: 0.85;
+    /* 44% measured 4.48:1 on --chrome — under AA by 0.02. 42% measures 4.87:1. */
+    --control-inert: 209 16% 42%;
+    --control-live: 209 22% 30%;
+
+    /* 3. Elevation. Same rule as dark — the folio sits on a surface — with the
+       amplitude the medium allows. Light has real shadow headroom, so the cast
+       is real and the rim is a white top highlight. Measured 9-point fall
+       under the folio versus the same row beside it. */
+    --surface-cast:
+      0 2px 6px hsl(213 30% 30% / 0.1),
+      0 22px 48px -20px hsl(213 30% 25% / 0.34),
+      0 52px 100px -40px hsl(213 30% 25% / 0.26);
+    --surface-rim: 0 0% 100%;
+    --surface-rim-alpha: 0.95;
+    --panel-cast: 0 24px 64px hsl(213 30% 25% / 0.22);
+
+    /* 4. Identity medallion. A struck seal is a material, not a tint: it keeps
+       a dark face in every theme, so the white logo mark stays legible and the
+       reading survives. Its own foreground travels with it. */
+    --medallion-face: 211 30% 16%;
+    --medallion-edge: 211 36% 10%;
+    --medallion-rim: 36 34% 40%;
+    --medallion-ink: 39 58% 66%;
+}
 
   .theme-gold {
     --background: 43 48% 87%;
@@ -88,7 +152,12 @@
     --card-foreground: 39 25% 13%;
     --popover: 46 52% 96%;
     --popover-foreground: 39 25% 13%;
-    --primary: 41 57% 43%;
+    /* Emerald, not this theme's warm gold (ADR 0047). --primary is the LIVE
+       STATE accent and --gold is identity; on a gold theme those were the same
+       colour, which is the one thing the two-accent grammar cannot survive.
+       The old 41 57% 43% also measured 3.41:1 against white --primary-foreground
+       — a real AA failure on every button in this theme. This measures 6.7:1. */
+    --primary: 168 72% 24%;
     --primary-foreground: 0 0% 100%;
     --secondary: 44 49% 91%;
     --secondary-foreground: 39 25% 13%;
@@ -97,19 +166,24 @@
     --nav-tab-bg: hsl(var(--muted) / 0.5);
     /* See matching comment in .theme-light above. */
     --nav-icon-chip-bg: hsl(var(--primary));
-    --accent: 46 55% 86%;
-    --accent-foreground: 41 57% 43%;
+    /* Follows --primary onto emerald; the old pair measured 2.74:1. */
+    --accent: 165 42% 88%;
+    --accent-foreground: 168 72% 24%;
     --destructive: 3 66% 55%;
     --destructive-foreground: 0 0% 100%;
     --border: 43 40% 81%;
     --input: 43 40% 81%;
-    --ring: 41 57% 43%;
+    --ring: 168 72% 24%;
     --radius: 0.5rem;
-    /* Aliased to this theme's own accent — already warm/gold-toned, so a second,
-       distinct gold would be redundant here. */
-    --gold: 41 57% 43%;
-    --gold-muted: 46 55% 86%;
-    --overlay: 0 0% 0%;
+    /* Identity accent — see .theme-light. Gold-on-parchment was the single most
+       likely failure of this language, and it survives, but not as metal: on a
+       warm light surface identity can only separate by LIGHTNESS, so it is a
+       deep bronze ~50 points below the paper. Measured 6.42:1 on the group
+       surface and 134 degrees of hue from --primary. A bright gold here does
+       collapse into the surface — that prediction was correct. */
+    --gold: 34 52% 30%;
+    --gold-muted: 36 32% 54%;
+    --overlay: 36 34% 24%;
     /* Gold theme — richer warm ivory paper (the deeper, more golden variant that
        distinguishes it from the light theme). Safha info (juz/hizb/page number) is
        BLACK here, not gold, for contrast against the warm UI. */
@@ -146,8 +220,60 @@
       0 5px 14px -7px rgba(70, 52, 24, 0.24);
     /* Search bar: reads as recessed into the nav via an inset shadow, no border. */
     --search-input-shadow: inset 0 1px 3px rgba(70, 52, 24, 0.1);
-  }
+  
+    /* ==== Design-language families (subtask 2.1, ADR 0047) ================
+       Four roles the shadcn token set has no name for. Every one is declared
+       in all three theme blocks — a token missing from one block silently
+       inherits nothing and flattens that theme (ADR 0032).
+       Values are derived and pixel-verified in the reader lab; the rules that
+       consume them live in docs/design/design-language.md. Nothing here is a
+       gradient or a shadow *rule* — only the values a rule reads, so a screen
+       opts in by consuming the token, and these are inert until it does. */
 
+    /* 1. Atmosphere. Parchment is already warm, so a warmer warm says nothing:
+       this lamp goes back to LIGHTNESS, using the ~12 points of headroom the
+       desk has. Measured +15 points centre vs edge. */
+    --lamp: 46 82% 99%;
+    --lamp-core: 0.5;
+    --lamp-mid: 0.3;
+    --lamp-extent: 94% 88%;
+    --lamp-origin: 50% 45%;
+    --vignette: 34 38% 40%;
+    --vignette-alpha: 0.32;
+
+    /* 2. Control treatment. */
+    --chrome: 45 50% 93%;
+    --chrome-base: 46 56% 97%;
+    --well: 42 34% 86%;
+    --well-alpha: 0.85;
+    /* 43% measured 4.29:1 on the group surface; parchment is warm and light, so
+       muted has to sit lower here than on the cool light desk to clear AA. */
+    --control-inert: 38 17% 37%;
+    --control-live: 38 20% 29%;
+
+    /* 3. Elevation. Measured 9-point fall under the folio. */
+    --surface-cast:
+      0 2px 6px hsl(36 40% 20% / 0.12),
+      0 22px 48px -20px hsl(36 42% 18% / 0.38),
+      0 52px 100px -40px hsl(36 42% 18% / 0.28);
+    --surface-rim: 44 60% 99%;
+    --surface-rim-alpha: 0.95;
+    --panel-cast: 0 24px 64px hsl(36 42% 18% / 0.24);
+
+    /* 4. Identity medallion — dark face in every theme, see .theme-light. */
+    --medallion-face: 36 34% 18%;
+    --medallion-edge: 36 42% 11%;
+    --medallion-rim: 38 38% 42%;
+    --medallion-ink: 41 62% 68%;
+}
+
+  /* `.theme-dark.dark` used to repeat this whole block. It was byte-identical
+     across all 51 tokens, and it could never match without `.theme-dark` also
+     matching — use-theme.ts and the pre-paint script always add `dark` and
+     `theme-dark` together — so it resolved to nothing while doubling every
+     future token edit. Removed in 2.1; the token contract is "all three theme
+     blocks", not four. Tailwind's `dark:` variant still keys off `.dark`,
+     which is untouched. */
   .theme-dark {
     /* Printed-Mushaf-inspired unified palette (docs/plans/dark-theme-mushaf-unification.md).
        Backgrounds share one navy hue family (~210-212°), darkening in 4 steps:
@@ -197,10 +323,11 @@
     --input: 210 26% 19%;
     --ring: 169 88% 26%;
     --radius: 0.5rem;
-    /* Mushaf-identity gold — reserved strictly for the reader page (ornaments below);
-       no chrome exceptions, not even the surah-list badge (ADR 0031, revised). */
-    --gold: 38 32% 46%;
-    --gold-muted: 38 27% 34%;
+    /* Identity accent. ADR 0031 reserved gold strictly for the reader page with
+       "no chrome exceptions"; ADR 0047 supersedes that — identity and live state
+       are different roles and chrome needs both. Measured 4.67:1 on --card. */
+    --gold: 39 56% 57%;
+    --gold-muted: 39 41% 32%;
     --overlay: 213 31% 7%;
     /* Printed-mushaf reader palette — deep warm blue-black paper, antique gold,
        off-white text. Consumed inside the tablet reader scope AND (as of the
@@ -271,104 +398,55 @@
     --search-input-shadow: inset 0 1px 0 rgba(205, 173, 128, 0.4),
       inset 0 -1px 0 rgba(0, 0, 0, 0.6), inset 1px 0 0 rgba(205, 173, 128, 0.14),
       inset -1px 0 0 rgba(205, 173, 128, 0.14);
-  }
+  
+    /* ==== Design-language families (subtask 2.1, ADR 0047) ================
+       Four roles the shadcn token set has no name for. Every one is declared
+       in all three theme blocks — a token missing from one block silently
+       inherits nothing and flattens that theme (ADR 0032).
+       Values are derived and pixel-verified in the reader lab; the rules that
+       consume them live in docs/design/design-language.md. Nothing here is a
+       gradient or a shadow *rule* — only the values a rule reads, so a screen
+       opts in by consuming the token, and these are inert until it does. */
 
-  .theme-dark.dark {
-    --background: 213 31% 7%;
-    --foreground: 45 18% 91%;
-    --card: 213 21% 10%; /* #151A20 — unified with --nav-tab-bg so sidebars/dialogs/popovers match nav items */
-    --card-foreground: 45 18% 91%;
-    --popover: 213 21% 10%; /* #151A20 — see --card */
-    --popover-foreground: 45 18% 91%;
-    /* EXPERIMENTAL — see the matching comment in .theme-dark above. */
-    --primary: 169 88% 26%;
-    --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - see .theme-dark above */
-    --secondary: 213 21% 10%; /* #151A20 — see --card */
-    --secondary-foreground: 45 18% 91%;
-    --muted: 213 21% 10%; /* #151A20 — see --card */
-    --nav-tab-bg: #151A20;
-    /* Translucent here — dark's near-black nav gives it enough contrast, unlike light/gold. */
-    --nav-icon-chip-bg: hsl(var(--primary) / 23%);
-    /* See matching comment in .theme-dark above. */
-    --muted-foreground: 206 9% 56%;
-    --accent: 161 58% 15%;
-    /* See matching comment in .theme-dark above — deliberately not --primary. */
-    --accent-foreground: 169 88% 39%;
-    --destructive: 0 76% 63%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 26% 19%;
-    --input: 210 26% 19%;
-    --ring: 169 88% 26%;
-    --radius: 0.5rem;
-    --gold: 38 32% 46%;
-    --gold-muted: 38 27% 34%;
-    --overlay: 213 31% 7%;
-    --mushaf-paper: #0C1117;
-    /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
-       change): repurposed from a light top-catch highlight to fully opaque BLACK —
-       used as a dark accent leg in the gutter shadow below, not as a light source.
-       Still also backs the base card's top-edge inset and background-gradient top
-       stop, so those go darker too, consistent with "no gray/light tones, only
-       dark" applied everywhere on the page. */
-    --mushaf-paper-highlight: rgb(0, 0, 0);
-    --mushaf-paper-shadow: rgba(0, 0, 0, 0.35);
-    --mushaf-paper-dip: rgba(0, 0, 0, 0.06);
-    --mushaf-edge: rgba(0, 0, 0, 0.45);
-    /* Correction Round 6 (user-supplied): near-solid near-black rather than a
-       semi-transparent overlay — used as one leg of a diagonal (not centered)
-       inset-shadow pair on the gutter, see .fq-compensate-r/-l below. */
-    --mushaf-gutter-dark: #04070a;
-    --mushaf-gutter-soft: rgba(0, 0, 0, 0.09);
-    /* Unused by the dark-theme gutter as of Round 5 — a highlight hairline read as
-       an unwanted gray seam between the pages, so the gutter is shadow-only now.
-       Value kept only so the token contract stays defined (styling.md requires
-       every theme to define it) and for light/gold, which still use it. */
-    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.12);
-    --mushaf-text: #f2efe7;
-    --mushaf-ornament: #9a8256;
-    --mushaf-metadata: #8a784e;
-    --viewer-background: #0D1217;
-    /* Desktop reading-desk depth (>=1367px, dark only) — ADR 0032. These carry the
-       page's lit face, its edge rim, the sheet stack and the binding crease. Defined
-       in the dark blocks only, unlike the rest of the --mushaf-* family: on a
-       (7,15,23) background depth has to come from light rather than shadow, and
-       light/gold keep conventional shadows, so they have no use for these. The four
-       -lit- stops form the page gradient from centre to edge; --mushaf-paper
-       (#0C131A) sits mid-ramp between -fade and -edge, so it stays the reference
-       tone rather than a flat fill. Rim alphas are graded (top > side > foot) — a
-       uniform stroke on all four sides reads as a drawn frame (Correction Round 1).
-       Pass 2 lowered the four -lit- stops (page centre 29,42,56 → 22,32,42) and
-       dropped the ambient desk pool entirely, on review. */
-    --mushaf-rim-top: rgba(205, 173, 128, 0.28);
-    --mushaf-rim-side: rgba(205, 173, 128, 0.13);
-    --mushaf-rim-foot: rgba(205, 173, 128, 0.05);
-    --mushaf-sheet-edge: rgba(205, 173, 128, 0.38);
-    --mushaf-sheet-face: #0C1117;
-    --mushaf-crease: rgba(2, 5, 8, 0.95);
-    --mushaf-crease-soft: rgba(0, 0, 0, 0.4);
-    /* Floating reader chrome (recitation bar, nav arrows) at >=1367px. Same
-       ADR 0032 rule as the page: a raised face plus a warm rim, never a shadow. */
-    --reader-chrome-face: #0C1117;
-    --reader-chrome-rim: rgba(205, 173, 128, 0.16);
-    /* Dark carries chrome lift with a raised face and warm rim, never a shadow:
-       black has ~7 points of headroom on (7,15,23) and measures ~1 point beside
-       the book (ADR 0032). The other themes set these to a real shadow. */
-    --reader-chrome-rim-hover: var(--mushaf-rim-top);
-    --reader-chrome-shadow: none;
-    --reader-chrome-bar-shadow: none;
-    /* A cast shadow under the book measures nothing on (7,15,23) — dark seats the
-       page by sitting brighter than its desk instead. The slot is still declared so
-       the shared rule resolves in every theme (ADR 0032 supersede). */
-    --mushaf-page-cast: 0 0 0 0 transparent;
-    /* Search bar recess: a black inset shadow measures ~1 point on (7,15,23)
-       (ADR 0032). A single faint top line wasn't enough contrast either
-       (Correction Round 1, user-flagged as undetectable) — this is a full
-       recessed frame instead, graded like --mushaf-rim-* (bright top, dim
-       sides, dark foot), strong enough to read against the near-black nav. */
-    --search-input-shadow: inset 0 1px 0 rgba(205, 173, 128, 0.4),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.6), inset 1px 0 0 rgba(205, 173, 128, 0.14),
-      inset -1px 0 0 rgba(205, 173, 128, 0.14);
-  }
+    /* 1. Atmosphere. ~95 points of upward headroom, so this is the one desk
+       whose lamp is a hot, tight core — and the reference the other two were
+       derived AGAINST, never inverted from. */
+    --lamp: 39 44% 58%;
+    --lamp-core: 0.075;
+    --lamp-mid: 0.024;
+    --lamp-extent: 58% 62%;
+    --lamp-origin: 50% 45%;
+    --vignette: 211 39% 5%;
+    --vignette-alpha: 0.62;
+
+    /* 2. Control treatment. Chrome sits BELOW the desk here; a well is recessed
+       and therefore *lighter* than its bar. Same word, opposite direction. */
+    --chrome: 211 31% 8%;
+    --chrome-base: 211 39% 5%;
+    --well: 210 28% 12%;
+    --well-alpha: 0.5;
+    --control-inert: 207 13% 61%;
+    --control-live: 207 15% 73%;
+
+    /* 3. Elevation. A cast measures ~1 point on this desk (ADR 0032), so the
+       lift is carried by the rim — measured 19 points — with the cast spread
+       wide and soft underneath rather than dropped tight. Do NOT read the cast
+       value below as doing the work; it is the shared rule's slot, filled. */
+    --surface-cast:
+      0 2px 6px hsl(211 45% 2% / 0.5),
+      0 26px 64px -18px hsl(211 45% 2% / 0.72),
+      0 64px 128px -44px hsl(211 45% 2% / 0.6);
+    --surface-rim: 39 44% 58%;
+    --surface-rim-alpha: 0.32;
+    --panel-cast: 0 24px 64px hsl(211 39% 2% / 0.45);
+
+    /* 4. Identity medallion. */
+    --medallion-face: 210 24% 15%;
+    --medallion-edge: 211 31% 8%;
+    --medallion-rim: 39 41% 32%;
+    --medallion-ink: 39 56% 57%;
+}
+
 }
 
 @layer base {

@@ -52,6 +52,8 @@ The `tailwindcss-animate` plugin (`animate-in`, `fade-in-0`, `zoom-in-95`, `slid
 
 Themes are named CSS classes on `<html>` (e.g. `.theme-light`, `.theme-dark`), each defining the full shadcn token set. Apply `.dark` alongside any dark-variant theme class to activate `dark:` utilities.
 
+**There are three theme blocks, not four.** `.theme-dark.dark` used to duplicate `.theme-dark` and was removed in subtask 2.1: it was byte-identical across all 51 tokens, and it could never match without `.theme-dark` matching too, since the theme hook and the pre-paint script always add `dark` and `theme-dark` together. It resolved to nothing while doubling the cost of every token edit. `.dark` itself is untouched — Tailwind's `dark:` variant still keys off it.
+
 ### Token contract
 
 Every theme class must define all of these CSS custom properties:
@@ -69,22 +71,35 @@ Every theme class must define all of these CSS custom properties:
 --gold, --gold-muted, --overlay
 ```
 
+### Design-language families
+
+Four roles the shadcn set has no name for (ADR 0047, subtask 2.1). Same contract — **every theme defines every one**:
+
+```
+atmosphere   --lamp, --lamp-core, --lamp-mid, --lamp-extent, --lamp-origin
+             --vignette, --vignette-alpha
+control      --chrome, --chrome-base, --well, --well-alpha
+             --control-inert, --control-live
+elevation    --surface-cast, --surface-rim, --surface-rim-alpha, --panel-cast
+identity     --medallion-face, --medallion-edge, --medallion-rim, --medallion-ink
+```
+
+These carry **values only** — never a gradient or a shadow rule. The rules that read them are declared once, theme-agnostically, and live in `design-language.md`. A screen opts in by consuming a token; until it does, these are inert and change nothing.
+
+Two things about them are counter-intuitive and are the whole reason they are tokens:
+
+- **`--chrome` sits above the desk in light themes and below it in dark.** "Raised" means raised relative to its own medium, so a recessed `--well` is *lighter* than its bar on dark and *darker* on light. Read the rule, not the direction.
+- **`--lamp`'s carrier channel differs per theme** — lightness on dark and gold, temperature on light, decided by measuring each medium's headroom. `--lamp-extent` is per-theme for the same reason. Values derived for one theme measure zero in another; never port them.
+
 `--gold`/`--gold-muted` mark identity elements — who or what this is, where you are, a page's
 own metadata, and all ornament — and `--primary` marks live state only. Never both on one
 element. See the accent test in
 [`design-principles.md`](../design/design-principles.md#accent-colour-usage), derived in
 [`design-language.md`](../design/design-language.md) §5.
 
-> **Migration in progress (#360).** The aliasing rule below is being replaced. Every theme now
-> needs a real identity accent — on light and gold a deep bronze, since a bright gold does not
-> survive parchment — and the state accent stays emerald in all three themes rather than
-> following each theme's own `--primary`. Subtask 2.1 lands the token values; until it does,
-> this section still describes the shipped state.
+**Every theme has a real identity accent, and no theme aliases it to its own `--primary`.** ADR 0031's aliasing rule and its "gold is reader-only, no chrome exceptions" scoping are both superseded by [ADR 0047](../architecture/adr/0047-adopt-reader-lab-design-language.md). On light and gold, identity is a deep **bronze** — on a warm or near-white surface it can only separate by lightness, and a bright gold disappears into parchment. The state accent is **emerald in all three themes**, including gold, whose `--primary` was itself gold and therefore collapsed the two roles into one colour.
 
-Themes without a distinct gold identity currently
-alias them to their own `--accent-foreground`/`--accent` rather than inventing a new hue. See
-[ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md), superseded in part by
-[ADR 0047](../architecture/adr/0047-adopt-reader-lab-design-language.md). `--overlay` is the
+`--overlay` is the
 modal/drawer scrim color, consumed as `bg-overlay/80` — an HSL triplet (no baked-in alpha) so
 the Tailwind opacity-slash syntax works, same as every other token here.
 
