@@ -66,3 +66,26 @@ The first light and gold values were built as tight pools like dark's and measur
 **3. The gold theme's live accent is emerald, not its own `--primary`.** `.theme-gold`'s `--primary` is warm gold (`41 57% 43%`). Keeping it would make identity and live state the same colour, which is the one thing the two-accent grammar cannot survive. The live accent is therefore emerald in all three themes; only identity is theme-warm.
 
 A corollary: the identity medallion keeps a dark face in every theme. It is a struck seal — a material, not a tint — and inverting it on light would both erase that reading and leave the white logo mark invisible.
+
+## Addendum — Phase 0.2 findings (2026-08-21)
+
+Deriving the mushaf page face in the lab, in all three themes and both mushaf editions.
+
+**1. The ladder is re-derived, and the page is now the brightest surface.** ADR 0031 deliberately inverted this ("a real page under dim light is only slightly lighter than its surroundings, not glowing"); ADR 0047 supersedes it, and the lab's own lamp is the reason — the paper is what the lamp is on. The *ordering discipline* survives intact: one order, all themes, difference expressed in values only.
+
+```
+creases  <  desk  <=  chrome  <  page face
+```
+
+Measured (desk / chrome / paper): dark 4/7/11, light 88/95/98, gold 87/95/96. Dark and gold both needed their paper raised to clear chrome (`#0C1117` → `#111820`, `#f7f0de` → `#fdf9ee`); light already satisfied it.
+
+**2. Page lighting is one pool across the spread, not one per page.** Each card anchors the same ellipse to its own seam edge, so the two halves join at the gutter rather than producing two pools and a bright seam. The binding crease then darkens that seam — lit spread, shaded gutter, dimming outer edges, which is what an open book does. Carrier channel follows the medium exactly as in 0.1: dark takes a real lit pass (its paper has headroom), while light (L=99) and gold (L=96) have none and are carried entirely by the shading half, with the lamp expressed as the absence of shade. Measured falloff seam→outer: dark 2, light 3, gold 5.
+
+**3. Ink is unchanged in all three themes.** `--mushaf-text` is deliberately not in the lab's override set. Print ink on lit paper was already correct, and the 0.2 plan requires a separate explicit decision to touch it. That decision has not been taken.
+
+**4. Ornament, metadata and the surah frame take the identity accent in every theme.** This is the two-accent grammar reaching the page. The frame keeps exactly one colour role — it reads `--mushaf-ornament` from an inline style, so retuning the token retunes the frame and nothing adds a second token. Contrast on paper (ornament / metadata): dark 7.35 / 4.93, light 5.36 / 4.74, gold 6.53 / 5.65.
+
+**Two verification lessons, both of which produced false results before being corrected:**
+
+- **A single pixel sampled inside the text column lands on a glyph as often as on paper.** Sample the card's inner margin — the band between the card edge and the text column — and for a ladder comparison use the page's lit body, not its shaded outer edge, which is the pool's dark end and reports the page as darker than the chrome it clearly sits above.
+- **When comparing lab geometry to production, the rhythm invariant is proportional, not a constant offset.** The lab caps the folio at 792px, so every gap scales by the band ratio (~0.86). On pages carrying surah frames the fixed `0.3em` frame margin means the large and small gaps *scale* rather than *shift*, so an offset model reported page 604 as a 14.8px rhythm defect in all three themes when it is a clean uniform scale. Verified against `HEAD` without the page-face change: identical, so it was never a 0.2 regression at all.

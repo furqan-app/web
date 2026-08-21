@@ -2443,6 +2443,129 @@ body,
     color: hsl(var(--rl-chrome));
   }
 
+  /* ========================================================================
+     Page face (subtask 0.2). Lab-scoped overrides of the production mushaf
+     token family — production values are untouched; this is where the new page
+     is derived. Everything here is `.fq-reader-lab`-prefixed, so leaving the
+     route restores production's page exactly.
+     ======================================================================== */
+
+  /* Ladder. ADR 0047 supersedes ADR 0031's "the page is not the brightest
+     surface", so the order is re-derived — but the *ordering discipline*
+     survives: one order, all themes, difference expressed in values only.
+       creases  <  desk  <=  chrome  <  page face
+     The paper is the brightest thing in the room because it is what the lamp
+     is on. Measured (desk / chrome / paper): dark 5/7/9, light 89/95/99,
+     gold 88/93/96. Dark and gold both needed their paper raised to clear
+     chrome; light already satisfied it. */
+  .fq-reader-lab {
+    --mushaf-paper: #111820;
+    --mushaf-ornament: #cfa454;
+    --mushaf-metadata: #a8853f;
+    /* Ink is deliberately absent. Changing --mushaf-text is the highest-risk
+       edit in the programme and needs its own decision (0.2 Constraints);
+       print ink on lit paper was already correct in all three themes. */
+  }
+  .theme-light .fq-reader-lab {
+    /* Declared even though it equals production's value. The base block above
+       is dark's set, so a token omitted here inherits dark's — omitting this
+       one painted the light page near-black (measured L=9 against an expected
+       99) and nothing in the markup hinted at why. Every theme block declares
+       the whole family; same rule as the production depth tokens. */
+    --mushaf-paper: #fdfdfc;
+    --mushaf-ornament: #856132;
+    --mushaf-metadata: #8a6b3c;
+  }
+  .theme-gold .fq-reader-lab {
+    /* Raised from production's #f7f0de: at that value the paper measured L=95,
+       tying with the lab's chrome, and the ladder wants the page strictly
+       above it. */
+    --mushaf-paper: #fdf9ee;
+    --mushaf-ornament: #745225;
+    --mushaf-metadata: #7d5c2c;
+  }
+
+  /* ---- Light on the page ------------------------------------------------
+     ADR 0047 lifts ADR 0032's "do not light the page face". The stage lamp
+     falls *around* the folio; this extends it *onto* the paper.
+
+     It is one pool across the whole spread, not one per page: each card
+     anchors the same ellipse to its own seam edge, so the two halves join at
+     the gutter instead of producing two pools and a bright seam. The binding
+     crease then darkens that seam, which is what a real open book does —
+     lit spread, shaded gutter, dimming outer edges.
+
+     Same finding as the desk lamp in 0.1: the carrier channel belongs to the
+     medium. Dark has ~90 points of upward headroom and takes a real lit pass;
+     light's paper is already L=99 and gold's L=96, so on those the pool is
+     carried entirely by the shading half — a darkening toward the outer edge,
+     with the lamp expressed as the absence of shade. DECISIONS.md always
+     permitted shading the page; only lighting it needed ADR 0047.
+
+     Stops use `hsl(... / 0)` rather than `transparent`: `transparent` is
+     rgba(0,0,0,0) and interpolating to it drags a grey fringe through the
+     midtones. */
+  .fq-reader-lab .fq-spread .fq-safha-card {
+    --rl-page-origin: 50% 50%;
+    --rl-page-lit: 39 44% 58%;
+    --rl-page-lit-alpha: 0.07;
+    --rl-page-shade: 211 45% 2%;
+    --rl-page-shade-alpha: 0.3;
+    background-image: radial-gradient(
+      ellipse 132% 118% at var(--rl-page-origin),
+      hsl(var(--rl-page-lit) / var(--rl-page-lit-alpha)) 0%,
+      hsl(var(--rl-page-lit) / 0) 46%,
+      hsl(var(--rl-page-shade) / 0) 46%,
+      hsl(var(--rl-page-shade) / var(--rl-page-shade-alpha)) 100%
+    ) !important;
+  }
+  .theme-light .fq-reader-lab .fq-spread .fq-safha-card {
+    --rl-page-lit-alpha: 0;
+    --rl-page-shade: 213 30% 42%;
+    --rl-page-shade-alpha: 0.2;
+  }
+  .theme-gold .fq-reader-lab .fq-spread .fq-safha-card {
+    --rl-page-lit-alpha: 0;
+    --rl-page-shade: 34 40% 28%;
+    --rl-page-shade-alpha: 0.22;
+  }
+  /* The seam edge is the pool's origin. `compensate-r` is the physical right
+     card (its stack stripe sits at `right: 0`, the spine-away side), so its
+     seam is its left edge, and vice versa. */
+  .fq-reader-lab .fq-spread .fq-compensate-r > .fq-safha-card {
+    --rl-page-origin: 0% 48%;
+  }
+  .fq-reader-lab .fq-spread .fq-compensate-l > .fq-safha-card {
+    --rl-page-origin: 100% 48%;
+  }
+
+  /* ---- Ornament under the two-accent grammar ----------------------------
+     Ornament, the surah frame, the header band's diamonds and the page's
+     metadata are identity, so they take the identity accent in every theme.
+     One rule for all three themes — never a per-theme copy. Two things make
+     that necessary rather than merely tidy: production remaps these to the
+     mushaf tokens only inside its `max-width: 767px` block, so at desktop
+     light and gold fall through to the Tailwind `text-primary` /
+     `text-muted-foreground` utilities entirely; and dark has a desktop rule
+     forcing all of them to `--mushaf-text`. A first pass here scoped the fix
+     by theme and consequently fixed dark alone, leaving light's ornament
+     rendering in emerald — the one-accent look this grammar replaces.
+
+     `:root` lifts specificity to (0,4,0) so it beats
+     `:root.theme-dark .fq-spread ...` at (0,3,0) outright rather than on
+     source order. The frame keeps exactly one colour role — it reads
+     `--mushaf-ornament` from an inline style and nothing here adds a second
+     token. */
+  :root .fq-reader-lab .fq-spread .fq-safha-surah-glyph,
+  :root .fq-reader-lab .fq-spread .fq-quran-safha .fq-inline-surah,
+  :root .fq-reader-lab .fq-spread .fq-ornament {
+    color: var(--mushaf-ornament) !important;
+  }
+  :root .fq-reader-lab .fq-spread .fq-safha-meta,
+  :root .fq-reader-lab .fq-spread .fq-safha-footer {
+    color: var(--mushaf-metadata) !important;
+  }
+
   /* Motion stays understated, and disappears entirely on request. */
   @media (prefers-reduced-motion: reduce) {
     .fq-reader-lab *,
