@@ -304,6 +304,20 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Design Language (reader-lab migration, in progress)
+
+**Decision:** The app is migrating to the visual language proven in the Nocturnal Reader Lab, across all three themes and including the mushaf page face. The canonical design docs are rewritten **before** any token or component work. See [ADR 0047](adr/0047-adopt-reader-lab-design-language.md) and `docs/plans/design-migration/INDEX.md`.
+
+**Constraints:**
+- **Two-accent grammar.** Gold carries identity, metadata and ornament; the primary accent carries live state only. This supersedes `design-principles.md`'s "never reach for a second accent colour" — do not re-apply the one-accent rule in review.
+- The page face **may be lit**. ADR 0047 is the explicit decision that ADR 0032's "do not light the page face" required, and it supersedes ADR 0031's page-brightness rule too.
+- Superseding an *aesthetic* decision is expected and must be recorded in the phase's plan. Superseding a *measurement of the medium* is not: dark's `(7,15,23)` headroom, pixel-sampled depth verification, WCAG AA pairs, and the mushaf no-overlap / line-rhythm / font-size invariants all carry forward unchanged.
+- While the migration runs, `visual.spec.ts` snapshots are a **diff-review artifact, not a gate** — they are regenerated per phase. Every phase must therefore carry its own explicit mushaf-correctness verification; do not treat a green snapshot run as coverage.
+- `design-principles.md` is canonical and generates root `DESIGN.md` via `/impeccable document`. Changing one without regenerating the other leaves the ADR 0041 review gate enforcing the superseded language.
+- The reader lab stays an unlinked sandbox throughout and never ships; it gains light, gold and small-screen variants only as a derivation surface.
+
+---
+
 ## Reader Surface Depth
 
 **Decision:** The reader page face carries **no added light** in any theme — it is a flat `--mushaf-paper` fill. Depth comes from the page's **edges**: rim, sheet stack, binding crease, and a cast shadow where there is a desk to catch it. The rules are declared **once, theme-agnostically**; each theme supplies only values through the `--mushaf-rim-*` / `--mushaf-sheet-*` / `--mushaf-crease*` / `--mushaf-page-cast` / `--reader-chrome-*` token contract. On dark surfaces at or below ~10% lightness drop shadows are **omitted rather than tuned**, because on `(7,15,23)` they produce no visible pixels; dark separates its page from its desk with a **uniformly** lighter paper instead. The ordering invariant holds: page face > surround ≥ far background, creases below both. See [ADR 0032](adr/0032-dark-surface-depth-from-light.md) and its 2026-07-29 supersede.
