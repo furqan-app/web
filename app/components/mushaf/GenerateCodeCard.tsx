@@ -49,7 +49,11 @@ export const GenerateCodeCard = () => {
     >
       {code ? (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          {/* A generated code is a VALUE the user reads and copies — evidence,
+              not a live control. It carried --primary on its border and fill,
+              which claimed something was happening. The copy action beside it
+              keeps the accent, because that one does something. */}
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-[hsl(var(--well)/var(--well-alpha))] px-4 py-3">
             <span
               className="flex-1 font-mono text-lg font-bold tracking-[0.2em] text-foreground select-all"
               dir="ltr"
@@ -74,7 +78,7 @@ export const GenerateCodeCard = () => {
           <button
             onClick={generate}
             disabled={loading}
-            className="self-start flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground active:scale-95 transition-[background-color,transform] duration-150 disabled:opacity-50"
+            className="fq-focus-ring self-start flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--control-inert))] transition-[background-color,color,transform] duration-150 hover:bg-[hsl(var(--well)/var(--well-alpha))] hover:text-[hsl(var(--control-live))] active:scale-95 disabled:opacity-50"
           >
             {loading ? (
               <Loader2 className="size-3.5 animate-spin" />

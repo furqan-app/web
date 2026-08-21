@@ -69,7 +69,10 @@ Every theme class must define all of these CSS custom properties:
 --destructive, --destructive-foreground
 --border, --input, --ring, --radius
 --gold, --gold-muted, --overlay
+--warning, --warning-foreground
 ```
+
+`--warning` was added in subtask 4.4. Neither accent may carry "something is wrong", and `--destructive` is too strong for a recoverable notice, so warning is its own pair. It replaced the last raw `amber-*` utilities in the app, which came with a `dark:` variant — a per-theme fork of one rule. Measured 5.35 / 5.50 / 8.43 against a `bg-warning/10` surface on light / gold / dark.
 
 ### Design-language families
 

@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-08-21
-**Status:** in progress — Phases 0, 1, 2 and subtask 3.1 complete; 3.2 next
+**Status:** in progress — Phases 0-4 complete; 5.1 (page face and reader) next
 **Issue:** https://github.com/furqan-app/web/issues/360
 **ADR:** [0047](../../architecture/adr/0047-adopt-reader-lab-design-language.md)
 
@@ -60,12 +60,12 @@ The uncommitted chrome edits in the main working tree (`Nav.tsx`, `UserMenu.tsx`
 | 1.1 ✅ | Rewrite the canon | [`1.1-rewrite-design-principles.md`](1.1-rewrite-design-principles.md) | 0.4 |
 | 2.1 ✅ | Semantic tokens | [`2.1-semantic-tokens.md`](2.1-semantic-tokens.md) | 1.1 |
 | 3.1 ✅ | UI primitives | [`3.1-ui-primitives.md`](3.1-ui-primitives.md) | 2.1 |
-| 3.2 | Shared chrome — **next** | [`3.2-shared-chrome.md`](3.2-shared-chrome.md) | 3.1 |
-| 4.1 | Marks + plans | [`4.1-screens-marks-plans.md`](4.1-screens-marks-plans.md) | 3.2 |
-| 4.2 | Home | [`4.2-screens-home.md`](4.2-screens-home.md) | 4.1 |
-| 4.3 | Search + settings | [`4.3-screens-search-settings.md`](4.3-screens-search-settings.md) | 4.1 |
-| 4.4 | Mushaf hub + shared grant | [`4.4-screens-mushaf-hub.md`](4.4-screens-mushaf-hub.md) | 4.1 |
-| 5.1 | Page face and reader | [`5.1-page-face-and-reader.md`](5.1-page-face-and-reader.md) | 4.x complete |
+| 3.2 ✅ | Shared chrome | [`3.2-shared-chrome.md`](3.2-shared-chrome.md) | 3.1 |
+| 4.1 ✅ | Marks + plans | [`4.1-screens-marks-plans.md`](4.1-screens-marks-plans.md) | 3.2 |
+| 4.2 ✅ | Home | [`4.2-screens-home.md`](4.2-screens-home.md) | 4.1 |
+| 4.3 ✅ | Search + settings | [`4.3-screens-search-settings.md`](4.3-screens-search-settings.md) | 4.1 |
+| 4.4 ✅ | Mushaf hub + shared grant | [`4.4-screens-mushaf-hub.md`](4.4-screens-mushaf-hub.md) | 4.1 |
+| 5.1 | Page face and reader — **next** | [`5.1-page-face-and-reader.md`](5.1-page-face-and-reader.md) | 4.x complete |
 
 Phase 4's four subtasks are independent of each other once 4.1 proves the token layer end-to-end; they can run in parallel.
 

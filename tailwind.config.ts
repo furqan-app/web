@@ -47,6 +47,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--gold))",
           muted: "hsl(var(--gold-muted))",
         },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         overlay: "hsl(var(--overlay) / <alpha-value>)",
       },
       borderRadius: {

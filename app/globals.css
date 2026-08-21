@@ -49,6 +49,13 @@
        an identity colour in every theme. On a cool near-white surface a bright
        gold disappears, so light's identity is a deep bronze that separates by
        lightness. Measured 5.07:1 on --card and 4.51:1 on --background. */
+    /* Warning. Added in subtask 4.4, the last colour in the app that was
+       still painted with raw `amber-*` utilities plus a `dark:` variant —
+       the exact per-theme forking the language forbids. Neither accent may
+       carry "something is wrong", and --destructive is too strong for a
+       recoverable notice, so warning is its own pair. */
+    --warning: 32 74% 29%;
+    --warning-foreground: 40 84% 95%;
     --gold: 34 45% 36%;
     --gold-muted: 34 28% 56%;
     /* Cool slate rather than pure black: the scrim should read as the room
@@ -185,6 +192,8 @@
        deep bronze ~50 points below the paper. Measured 6.42:1 on the group
        surface and 134 degrees of hue from --primary. A bright gold here does
        collapse into the surface — that prediction was correct. */
+    --warning: 30 72% 27%;
+    --warning-foreground: 42 80% 96%;
     --gold: 34 52% 30%;
     --gold-muted: 36 32% 54%;
     --overlay: 36 34% 24%;
@@ -337,6 +346,8 @@
     /* Identity accent. ADR 0031 reserved gold strictly for the reader page with
        "no chrome exceptions"; ADR 0047 supersedes that — identity and live state
        are different roles and chrome needs both. Measured 4.67:1 on --card. */
+    --warning: 38 78% 62%;
+    --warning-foreground: 30 45% 8%;
     --gold: 39 56% 57%;
     --gold-muted: 39 41% 32%;
     --overlay: 213 31% 7%;

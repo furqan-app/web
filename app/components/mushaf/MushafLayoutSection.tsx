@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { MUSHAF_EDITION_IDS } from "@utils/mushaf-editions";
 import { MushafLayoutRow } from "@components/mushaf/MushafLayoutRow";
+import { SettingsSection } from "@components/settings/SettingsSection";
 import { useQuranMushaf } from "@contexts/QuranMushafContext";
 
 /**
@@ -32,31 +33,30 @@ export const MushafLayoutSection = () => {
   const { mushafId: activeMushafId } = useQuranMushaf();
   const activeName = tml(`editions.${activeMushafId}.name`);
 
+  // Same section shape as every other setting — it was the last block in the
+  // sheet still carrying its own <h3> and bg-muted slab. The disclosure list
+  // stays inside the group so however many editions are registered, they read
+  // as rows of one surface rather than a stack of cards; the picker is not
+  // sized for exactly the two that exist today.
   return (
-    <div>
-      <h3 className="text-sm font-medium text-muted-foreground mb-2">
-        {t("mushafLayout.title", "Mushaf Layout")}
-      </h3>
+    <SettingsSection title={t("mushafLayout.title", "Mushaf Layout")}>
       <button
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
-        className="w-full p-4 rounded-lg bg-muted flex items-center justify-between gap-3 text-start active:scale-[0.99] transition-transform duration-150"
+        className="fq-section-row fq-focus-ring w-full text-start"
       >
         <span className="text-sm font-medium truncate">{activeName}</span>
         {expanded ? (
-          <ChevronUp className="size-4 text-muted-foreground flex-none" strokeWidth={1.8} />
+          <ChevronUp className="size-4 flex-none text-[hsl(var(--control-inert))]" strokeWidth={1.8} />
         ) : (
-          <ChevronDown className="size-4 text-muted-foreground flex-none" strokeWidth={1.8} />
+          <ChevronDown className="size-4 flex-none text-[hsl(var(--control-inert))]" strokeWidth={1.8} />
         )}
       </button>
-      {expanded && (
-        <div className="space-y-2 mt-2">
-          {MUSHAF_EDITION_IDS.map((mushafId) => (
-            <MushafLayoutRow key={mushafId} mushafId={mushafId} />
-          ))}
-        </div>
-      )}
-    </div>
+      {expanded &&
+        MUSHAF_EDITION_IDS.map((mushafId) => (
+          <MushafLayoutRow key={mushafId} mushafId={mushafId} />
+        ))}
+    </SettingsSection>
   );
 };

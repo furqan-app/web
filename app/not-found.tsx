@@ -20,12 +20,15 @@ export default function Custom404() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
       <p className="text-7xl md:text-8xl font-extrabold text-foreground">404</p>
 
-      <div className="mt-4 flex items-center justify-center gap-2.5">
-        <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+      {/* Drawn ornament, identity accent. Plain <a> links stay plain <a>
+          links — a next/link client-nav from the root 404 can paint before
+          the locale tree's CSS chunk loads in production. */}
+      <div className="mt-4 flex items-center justify-center gap-4">
+        <span className="fq-ornament" aria-hidden="true" />
         <h1 className="text-lg md:text-xl font-bold text-foreground">
           {t("notFound.title", "404 - Page Not Found")}
         </h1>
-        <span className="inline-block rotate-45 text-[6px] text-primary">◆</span>
+        <span className="fq-ornament fq-ornament--flip" aria-hidden="true" />
       </div>
 
       <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
@@ -38,13 +41,13 @@ export default function Custom404() {
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <a
           href="/"
-          className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform duration-150 active:scale-[0.98]"
+          className="fq-focus-ring inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform duration-150 active:scale-[0.98]"
         >
           {t("notFound.homeLink", "Go back to Home")}
         </a>
         <a
           href="/mushaf"
-          className="inline-flex items-center rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
+          className="fq-focus-ring inline-flex items-center rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-[hsl(var(--well)/var(--well-alpha))] active:scale-[0.98]"
         >
           {t("mushaf.navLink", "Shared mushaf")}
         </a>

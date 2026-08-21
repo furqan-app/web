@@ -70,7 +70,10 @@ export const MushafLayoutRow = ({ mushafId }: Props) => {
               : tp("sizeNotice", { size: num(edition.downloadSizeMb) });
 
   return (
-    <div className="p-4 rounded-lg bg-muted space-y-3">
+    // A row of the layout group, not its own slab — so the picker holds any
+    // number of registered editions without redesign (the mushaf-variant
+    // schema is deliberately generic and more print editions are expected).
+    <div className="fq-section-row flex-col !items-stretch gap-3">
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">{name}</p>
