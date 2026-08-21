@@ -94,18 +94,19 @@ Measured (desk / chrome / paper): dark 4/7/11, light 88/95/98, gold 87/95/96. Da
 
 Giving the language a small-screen form. The lab was desktop-only by construction; it now composes in every band, and the notice survives only below a true minimum (`max-height: 400px`, where a 15-line mushaf page cannot render at all).
 
-**1. There are four reading contracts, not three.** The migration plan's band table listed mobile / tablet-landscape / desktop, and building to it produced a wrong result at 768×1024. Production's actual contracts are:
+**1. Three device classes, and production's fourth CSS contract is not one of them.** Production splits `768–1023px` into its own band — one page, stretched, but with a real desk margin and page arrows — because its desktop margin lives at `≥1367px` and `1024–1366px` is deliberately full-bleed. Building the lab to match produced a screen that is neither phone, tablet nor desktop, and the user rejected it on sight: *"I don't need this screen at all, it's desktop or tablet or mobile."*
+
+The design recognises three:
 
 | Band | Page | Surround |
 |---|---|---|
-| `<768px` | one page | none — full-bleed |
-| `768–1023px` | one page, stretched | **a real desk margin** (measured 121px each side at 768) |
-| `1024–1366px` | facing pages | none — full-bleed by explicit decision |
-| `≥1367×800` | facing pages | the desk composition |
+| compact `<1024px` | one page | none — full-bleed |
+| spread `1024–1366px` | facing pages | none — full-bleed |
+| desk `≥1367×800` | facing pages | the desk composition |
 
-The 768–1023 band exists because "the desktop group's [margin] lives at ≥1367px and the 1024–1366px band is deliberately full-bleed". Any rule keyed on "below the desk band" is therefore wrong for it.
+A portrait tablet is a tablet, and it gets the compact composition at full width rather than an inset one. The lab therefore overrides production's `768–1023` treatment rather than inheriting it, which is a change 5.1 will have to carry into production. **The lesson generalises: production's CSS bands are an implementation, not a list of device classes, and deferring to them reproduced a layout nobody had designed.**
 
-**2. Atmosphere keys off whether a desk exists, not off the band.** The lamp and vignette act on the desk, so they are dropped exactly where the page is full-bleed — production's own `(max-width: 767px), (min-width: 1024px) and (max-width: 1366px)` pair, verbatim — and kept at 768–1023, which has a surround. A vignette with nothing to darken is noise painted at the page's edge. The nav arrows follow the same query for the same reason: an arrow needs a gutter. The page's own pool from 0.2 is unaffected in every band, because it acts on the paper rather than the desk.
+**2. Atmosphere keys off whether a desk exists.** The lamp and vignette act on the desk, and only the desk band has one — compact and spread are both full-bleed, so the folio covers the stage. A vignette with nothing to darken is noise painted at the page's edge, so both layers are dropped below `1367px` rather than weakened. The nav arrows go with them, for the same reason: an arrow needs a gutter to sit in. The page's own pool from 0.2 is unaffected in every band, because it acts on the paper rather than the desk.
 
 **3. The rail's physical-right placement does not survive the move, and should not.** It was a desk decision about where a column belongs beside a centred folio. Below the desk band there is no lateral whitespace — a 72px column would inset the book and shrink double-view text — so the same three zones relay into a bottom transport bar, which reserves height instead of width and so costs the mushaf no line length. A full-width bar has no side, so the zones lay out logically and mirror correctly in both directions.
 
