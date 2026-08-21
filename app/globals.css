@@ -560,7 +560,7 @@
      pill. Mobile keeps the original compact single-line pill (px-2.5), which
      has no room for a 45px-wide absolutely-positioned ornament — left
      unconditional, it overflowed into the neighboring nav icons. */
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .fq-surah-toggle::before,
     .fq-surah-toggle::after {
       content: "";
@@ -623,7 +623,21 @@ body,
     --fq-surah-start-clearance: 0px;
   }
 
-  @media (max-width: 767px) {
+  /* ---- Compact band boundary (subtask 5.1c) -----------------------------
+     Production used to split 768-1023px into its own inset single-page
+     treatment: a desk margin of its own, a desktop-style card-width clamp, and
+     page arrows — because its desktop margin starts at >=1367 and 1024-1366 is
+     deliberately full-bleed. That produced a fourth screen nobody had designed,
+     and the user rejected it on sight: "it's desktop or tablet or mobile."
+
+     The design recognises three device classes, so the compact boundary moves
+     from 767 to 1023 and that band simply disappears. A portrait tablet is a
+     tablet and gets the compact composition at full width.
+
+     Production's CSS bands were an implementation detail, never a list of
+     device classes. Deferring to them is what reproduced the screen.
+     ------------------------------------------------------------------------ */
+  @media (max-width: 1023px) {
     .fq-content {
       /* Font from width: every mushaf line justifies to the same width — worst-case
          line-width/font-size ratio across all 604 pages is 14.42 (p.580). Dividing by
@@ -673,7 +687,7 @@ body,
   }
 
   /* ---- Mobile reader: nav overlay + mushaf paper + book stack ------------ */
-  @media (max-width: 767px) {
+  @media (max-width: 1023px) {
     /* Feature 1 — Nav overlay: reader fills full viewport (nav is fixed, out of flow).
        !important beats the JSX min-h-[…]/pb-4 Tailwind utilities. The height itself
        is NOT set here — it comes from the ICB-anchored `.fq-reader-pager-viewport`
@@ -693,6 +707,16 @@ body,
       min-width: 100vw !important;
       max-width: 100vw !important;
     }
+    /* Page arrows exist only where there is a gutter to sit in. Compact is
+       full-bleed, so they would sit ON the page; this band navigates by swipe
+       (ADR 0027), exactly as the spread band already does. The JSX carries
+       `hidden md:flex`, which stopped matching the compact boundary once it
+       moved to 1023 — CSS-gated here rather than re-fought in the markup, so
+       the correct band paints on the first frame (ADR 0043). */
+    .fq-nav-arrow {
+      display: none !important;
+    }
+
     /* Mobile carousel: single-step neighbor panels visible during swipe peek.
        fq-carousel-side (pair-step tablet neighbors) stay hidden — they have the
        wrong page content for single-step mobile navigation. */
@@ -819,8 +843,8 @@ body,
      height regardless of slot-height variance (surah banners, bismillah, etc.).
      Scoped to `.fq-spread` so the standalone QuranSafha in VerticalQuranPages
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
-     Mirrors the `@media (max-width: 767px)` mobile block above. */
-  @media (min-width: 768px) {
+     Mirrors the `@media (max-width: 1023px)` compact block above. */
+  @media (min-width: 1024px) {
     /* The frame measures the widest real Quran row. On desktop/tablet a page
        deliberately has inner paper margin, so the quran-safha content column is
        narrower than that row. Do not clamp the frame to that column; it still
@@ -889,8 +913,10 @@ body,
      around the deliberately smaller 26px desktop ink. Using
      `width`, not only `min-width`, prevents intrinsic font metrics from quietly
      stretching the page after the text itself has been made smaller. Tablet has
-     its own full-height, half-spread geometry and is intentionally excluded. */
-  @media (min-width: 768px) and (max-width: 1023px), (min-width: 1367px) {
+     its own full-height, half-spread geometry and is intentionally excluded.
+     5.1c dropped this rule's `768–1023` leg: that band is compact now, and
+     compact sizes its font from viewport width, not from a card clamp. */
+  @media (min-width: 1367px) {
     .fq-spread .fq-safha-card {
       width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
       min-width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
@@ -913,7 +939,7 @@ body,
      `gap` stays under `space-between` as the FLOOR: flexbox only ever distributes
      positive free space, so a page taller than the band degrades to flex-start with
      the floor intact rather than overlapping lines. */
-  @media (min-width: 768px) and (min-height: 800px) {
+  @media (min-width: 1024px) and (min-height: 800px) {
     .fq-reader-outer > .fq-reader-spread-container {
       flex: 1 1 auto;
       min-height: 0;
@@ -948,15 +974,9 @@ body,
     }
   }
 
-  /* Small-laptop / portrait-tablet band (768–1023px): same stretch as above, but it
-     needs its own desk margin — the desktop group's lives at ≥1367px and the
-     1024–1366px band is deliberately full-bleed, so without this the stretched card
-     butts against the nav. Kept small (16px): every px here comes out of the gaps. */
-  @media (min-width: 768px) and (max-width: 1023px) and (min-height: 800px) {
-    .fq-reader-outer > .fq-reader-spread-container {
-      padding-block: 16px;
-    }
-  }
+  /* Removed in 5.1c: a 16px desk margin that existed only for the 768–1023px
+     band. That band is now compact and full-bleed, so there is no desk for a
+     margin to sit in. */
 
   /* The fixed navigation paints at 57px (its 56px utility height plus the bottom
      border). The reader's JSX minimum uses 3.5rem/56px, which otherwise leaves a
@@ -987,7 +1007,7 @@ body,
      single-page display. Applied at md+ (matching the stack layers) and removed
      only when both pages actually show — see the lg block below. Physical
      ml/mr, not logical, because the stack peek itself is physical (translate-x). */
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .fq-compensate-r {
       margin-right: 9px;
     }
@@ -1045,7 +1065,7 @@ body,
      Placed BEFORE the tablet block so that block's identical selectors win within
      its own narrower range via normal cascade order (last rule wins on equal
      specificity) — zero behaviour change at 1024-1366px. */
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .fq-spread .fq-safha-card {
       background-color: var(--mushaf-paper) !important;
     }
@@ -1139,7 +1159,7 @@ body,
 
      Two things make a single theme-agnostic rule necessary rather than merely
      tidy, both found in 0.2: the block that remaps these to the mushaf tokens
-     is scoped `max-width: 767px`, so at desktop widths light and gold fall
+     is scoped `max-width: 1023px`, so at desktop widths light and gold fall
      through to the Tailwind `text-primary` / `text-muted-foreground` utilities
      entirely; and dark has a desktop rule forcing all of them to
      `--mushaf-text`. A first pass scoped the fix by theme and consequently
@@ -1473,7 +1493,7 @@ body,
      utility classes Nav.tsx's base className always carries. Keep these
      widths numerically identical to MOBILE_QUERY/TABLET_QUERY in
      use-is-mobile.ts/use-is-tablet.ts. */
-  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+  @media (max-width: 1366px) {
     .fq-nav-overlay-page {
       position: fixed !important;
       top: 0 !important;
@@ -1529,7 +1549,7 @@ body,
      Same breakpoints as the nav overlay block above, and for the same reason: at
      desktop widths there is no immersive transition and no race, so those keep the
      existing `min-h-[calc(100dvh-3.5rem)]` flow layout untouched. */
-  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+  @media (max-width: 1366px) {
     /* `!important` throughout for the same reason the nav overlay block needs it:
        this file is one `@layer base` block and loses to Tailwind's utility layer at
        equal specificity by source order. */
@@ -3352,7 +3372,7 @@ body,
      metadata are identity, so they take the identity accent in every theme.
      One rule for all three themes — never a per-theme copy. Two things make
      that necessary rather than merely tidy: production remaps these to the
-     mushaf tokens only inside its `max-width: 767px` block, so at desktop
+     mushaf tokens only inside its compact block, so at desktop
      light and gold fall through to the Tailwind `text-primary` /
      `text-muted-foreground` utilities entirely; and dark has a desktop rule
      forcing all of them to `--mushaf-text`. A first pass here scoped the fix
