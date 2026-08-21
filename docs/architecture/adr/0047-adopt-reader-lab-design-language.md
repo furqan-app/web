@@ -89,3 +89,30 @@ Measured (desk / chrome / paper): dark 4/7/11, light 88/95/98, gold 87/95/96. Da
 
 - **A single pixel sampled inside the text column lands on a glyph as often as on paper.** Sample the card's inner margin — the band between the card edge and the text column — and for a ladder comparison use the page's lit body, not its shaded outer edge, which is the pool's dark end and reports the page as darker than the chrome it clearly sits above.
 - **When comparing lab geometry to production, the rhythm invariant is proportional, not a constant offset.** The lab caps the folio at 792px, so every gap scales by the band ratio (~0.86). On pages carrying surah frames the fixed `0.3em` frame margin means the large and small gaps *scale* rather than *shift*, so an offset model reported page 604 as a 14.8px rhythm defect in all three themes when it is a clean uniform scale. Verified against `HEAD` without the page-face change: identical, so it was never a 0.2 regression at all.
+
+## Addendum — Phase 0.3 findings (2026-08-21)
+
+Giving the language a small-screen form. The lab was desktop-only by construction; it now composes in every band, and the notice survives only below a true minimum (`max-height: 400px`, where a 15-line mushaf page cannot render at all).
+
+**1. There are four reading contracts, not three.** The migration plan's band table listed mobile / tablet-landscape / desktop, and building to it produced a wrong result at 768×1024. Production's actual contracts are:
+
+| Band | Page | Surround |
+|---|---|---|
+| `<768px` | one page | none — full-bleed |
+| `768–1023px` | one page, stretched | **a real desk margin** (measured 121px each side at 768) |
+| `1024–1366px` | facing pages | none — full-bleed by explicit decision |
+| `≥1367×800` | facing pages | the desk composition |
+
+The 768–1023 band exists because "the desktop group's [margin] lives at ≥1367px and the 1024–1366px band is deliberately full-bleed". Any rule keyed on "below the desk band" is therefore wrong for it.
+
+**2. Atmosphere keys off whether a desk exists, not off the band.** The lamp and vignette act on the desk, so they are dropped exactly where the page is full-bleed — production's own `(max-width: 767px), (min-width: 1024px) and (max-width: 1366px)` pair, verbatim — and kept at 768–1023, which has a surround. A vignette with nothing to darken is noise painted at the page's edge. The nav arrows follow the same query for the same reason: an arrow needs a gutter. The page's own pool from 0.2 is unaffected in every band, because it acts on the paper rather than the desk.
+
+**3. The rail's physical-right placement does not survive the move, and should not.** It was a desk decision about where a column belongs beside a centred folio. Below the desk band there is no lateral whitespace — a 72px column would inset the book and shrink double-view text — so the same three zones relay into a bottom transport bar, which reserves height instead of width and so costs the mushaf no line length. A full-width bar has no side, so the zones lay out logically and mirror correctly in both directions.
+
+The transport stays pinned to the bar's true midpoint, exactly as it is pinned to the rail's on desk — the same rule, one axis rotated. Laying it out in flow instead let `space-between` push the primary control into a corner at 375px.
+
+**4. The bar reserves 60px rather than overlaying, which is a deliberate deviation from "tablet is 100dvh edge-to-edge".** Chrome covering Qur'an lines defeats the reason edge-to-edge exists, so the vertical edge is given up and the horizontal one kept. This is safe against the reading-size contract and was verified rather than assumed: reading size is **identical to production at every band** (375 → 23.88px, 768 → 26px, 1024 and 1366 → 29.97px, 1367 → 26px). The reserve costs card height only, and the height cap is not the binding constraint in those bands. Had the font moved, the reserve would have had to go — ADR 0038's contract outranks the composition.
+
+**5. Chrome loses information as the viewport narrows; the mushaf never loses reading size.** Dropped in order of how much each element earns its width: ornaments below 1367, then the wordmark, lab badge and inert icon well below 1024, then the juz/hizb line and the rail's five tertiary utilities below 768. The identity medallion and the one live control survive every band. No band changes type size to make chrome fit.
+
+**Note on ordering:** two `!important` rules at equal specificity are resolved by source order, and the compact band's `display: none` for the partner page was written *above* the desk band's `display: block`, so it silently lost and 375px rendered two unreadable columns. Order-dependent overrides in this file need to be placed deliberately, not grouped by topic.

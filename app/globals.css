@@ -1812,23 +1812,106 @@ body,
     --rl-medallion-ink: 41 62% 68%;
   }
 
-  /* Desktop gate: below 1367×800 only the Arabic notice renders.
-     `!important` on both branches, not just the desktop one: this file is a
-     single `@layer base` block and loses to Tailwind's utility layer at equal
-     specificity, so a plain `display: none` here was being overridden and the
-     whole reader rendered underneath the small-viewport notice. */
+  /* ---- Bands -------------------------------------------------------------
+     Three real compositions, not one composition and a guard. The boundaries
+     are production's own reading contracts so the derivation transfers:
+
+       compact  <1024px        one page at a time, full-bleed
+       spread   1024–1366px    facing pages, full-bleed (DECISIONS: no shadows,
+                               no desk margin — never a desktop with margins)
+       desk     >=1367×800     the composition derived in 0.1/0.2
+
+     Selection is CSS-gated, so the right band is painted on the first frame
+     (ADR 0013 Addendum 4, ADR 0043). The notice now fires only below a true
+     minimum — a viewport too short for a 15-line mushaf page, where there is
+     nothing to compose rather than something to compose differently.
+
+     `!important` on both branches, not just one: this file is a single
+     `@layer base` block and loses to Tailwind's utility layer at equal
+     specificity, so a plain `display: none` here was overridden once already
+     and the whole reader rendered underneath the notice. */
   .fq-reader-lab-gate-notice {
-    display: flex !important;
-  }
-  .fq-reader-lab-desktop {
     display: none !important;
   }
-  @media (min-width: 1367px) and (min-height: 800px) {
+  .fq-reader-lab-canvas {
+    display: contents !important;
+  }
+  @media (max-height: 400px) {
     .fq-reader-lab-gate-notice {
+      display: flex !important;
+    }
+    .fq-reader-lab-canvas {
       display: none !important;
     }
-    .fq-reader-lab-desktop {
-      display: contents !important;
+  }
+
+  /* Band values. Every band-varying dimension is a token so the rules below are
+     written once — same discipline as the theme value sets. */
+  .fq-reader-lab {
+    --rl-navbar-h: 56px;
+    --rl-transport-h: 60px;
+    --rl-folio-pad-block: 0px;
+  }
+  @media (min-width: 1367px) and (min-height: 800px) {
+    .fq-reader-lab {
+      --rl-navbar-h: 72px;
+      /* The rail is a column in this band, so no bottom band is reserved. */
+      --rl-transport-h: 0px;
+      --rl-folio-pad-block: clamp(36px, 6vh, 76px);
+    }
+  }
+  .fq-reader-lab-navbar {
+    height: var(--rl-navbar-h);
+    padding-inline: 16px;
+  }
+  @media (min-width: 1024px) {
+    .fq-reader-lab-navbar {
+      padding-inline: 24px;
+    }
+  }
+  .fq-reader-lab-stage {
+    top: var(--rl-navbar-h);
+  }
+
+  /* ---- The navbar's information ladder ----------------------------------
+     Chrome loses information as the viewport narrows; the mushaf never loses
+     reading size (that is a contract, ADR 0038). Dropped in order of how much
+     each element earns its width:
+       <1367px  the flanking ornaments — decoration first
+       <1024px  the wordmark and lab badge, and the inert icon well; the
+                identity medallion alone still says whose app this is
+        <768px  the juz/hizb line — the surah name is the orientation that
+                matters at a glance, and it truncates rather than wrapping.
+     Nothing here changes type size. */
+  @media (max-width: 1366px) {
+    .fq-reader-lab-ornament {
+      display: none;
+    }
+  }
+  @media (max-width: 1023px) {
+    .fq-reader-lab-nav-wordmark,
+    .fq-reader-lab-nav-badge,
+    .fq-reader-lab-well,
+    .fq-reader-lab-nav-divider {
+      display: none !important;
+    }
+  }
+  @media (max-width: 767px) {
+    .fq-reader-lab-nav-orient {
+      display: none !important;
+    }
+    .fq-reader-lab-nav-surah {
+      font-size: 16px;
+    }
+    /* The centre zone is the only elastic one, so it takes the slack and
+       truncates instead of pushing the gear off the bar. */
+    .fq-reader-lab-nav-centre {
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+    .fq-reader-lab-nav-lead,
+    .fq-reader-lab-nav-trail {
+      flex: none;
     }
   }
 
@@ -1867,6 +1950,24 @@ body,
     position: relative;
     z-index: 1;
   }
+  /* Both desk-atmosphere layers act on the DESK, so they are kept exactly where
+     a desk exists and dropped where it does not. The query is production's own
+     full-bleed pair verbatim — mobile and tablet-landscape, where the page
+     reaches both edges and covers the stage. A vignette with nothing to darken
+     is noise painted at the page's edge, so the layers are dropped rather than
+     weakened.
+
+     Note this is NOT simply "below the desk band": 768–1023px is a fourth
+     production contract (small-laptop / portrait tablet) that stretches the
+     page but keeps a real desk margin — measured 121px each side at 768 — so
+     the atmosphere has a surround there and stays. The page's OWN pool (0.2)
+     is unaffected in every band: it acts on the paper, not the desk. */
+  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+    .fq-reader-lab-stage::before,
+    .fq-reader-lab-stage::after {
+      content: none;
+    }
+  }
 
   /* ---- Reading stage geometry -------------------------------------------
      The lab stage is `position: fixed` below the navbar, so it has a definite
@@ -1884,9 +1985,10 @@ body,
   .fq-reader-lab .fq-reader-outer {
     height: 100% !important;
     min-height: 0 !important;
-    /* Production reserves 76px for the horizontal recitation bar; the lab's
-       rail is vertical, so the band is given back. */
-    padding-bottom: 0 !important;
+    /* Production reserves 76px for the horizontal recitation bar. In the desk
+       band the lab's rail is a column, so the band is given back; in the
+       compact and spread bands the transport is a bar again and reclaims it. */
+    padding-bottom: var(--rl-transport-h) !important;
     /* The stage owns the backdrop — the outer must not paint over the lamp. */
     background-color: transparent !important;
     justify-content: center !important;
@@ -1895,18 +1997,32 @@ body,
     flex: 1 1 auto !important;
     min-height: 0 !important;
     align-items: stretch !important;
-    padding-block: clamp(36px, 6vh, 76px) !important;
+    padding-block: var(--rl-folio-pad-block) !important;
     padding-inline: 0 !important;
   }
-  /* The column takes the full band; the spread centres inside it at the capped
-     folio height, so surplus height becomes symmetric desk margin rather than
-     an over-tall page. */
+  /* Full-bleed below the desk band. The folio proportion cap is a DESK
+     decision — it exists to stop a page stretching into a ribbon when there is
+     surplus desk around it. Below 1367px production's reader is full-bleed by
+     an explicit user decision (DECISIONS.md), so the page is supposed to reach
+     the edges and a cap there would inset the book, costing reading area and
+     shrinking double-view text. Height therefore travels by `stretch`, never
+     by `%` — ADR 0036, the same trap the desk chain documents. */
   .fq-reader-lab .fq-spread-col {
-    align-items: center !important;
+    align-items: stretch !important;
   }
   .fq-reader-lab .fq-spread {
     position: relative;
-    height: min(100%, var(--rl-folio-max-h));
+  }
+  @media (min-width: 1367px) and (min-height: 800px) {
+    /* The column takes the full band; the spread centres inside it at the
+       capped folio height, so surplus height becomes symmetric desk margin
+       rather than an over-tall page. */
+    .fq-reader-lab .fq-spread-col {
+      align-items: center !important;
+    }
+    .fq-reader-lab .fq-spread {
+      height: min(100%, var(--rl-folio-max-h));
+    }
   }
 
   /* Rim: the lamp catching the top edge of the closed block of pages. 1px,
@@ -1955,12 +2071,31 @@ body,
   .fq-reader-lab .fq-spread .fq-compensate-l .fq-safha-ribbon {
     display: none !important;
   }
+  /* Compact: one page at a time, matching production's mobile contract — a
+     spread at 375px is two unreadable columns. This must sit AFTER the forced
+     `display: block` above: both are (0,3,0) and `!important`, so source order
+     is the tiebreak, and placing it earlier left two cards on a 375px screen. */
+  @media (max-width: 1023px) {
+    .fq-reader-lab .fq-spread .fq-safha-partner {
+      display: none !important;
+    }
+  }
 
   /* ---- External page arrows ---------------------------------------------
      Production resolves these to a filled primary chip; on the nocturnal desk
      that reads as two saturated blobs competing with the folio. Here they are
      quiet rims that only warm up on hover. Geometry (gutter position, size
      band) is preserved. */
+  /* Where the page is full-bleed an arrow has no gutter to sit in and would
+     overlay the mushaf. Production navigates those bands by swipe (ADR 0027),
+     so the affordance is dropped rather than shrunk onto the page. Same query
+     as the atmosphere above, for the same reason: it keys off whether a
+     surround exists, so 768–1023px keeps its arrows along with its desk. */
+  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+    .fq-reader-lab .fq-nav-arrow {
+      display: none !important;
+    }
+  }
   .fq-reader-lab .fq-nav-arrow {
     width: 44px !important;
     height: 44px !important;
@@ -2201,6 +2336,94 @@ body,
       hsl(var(--rl-line-soft)) 90%,
       transparent
     );
+  }
+  .fq-reader-lab-rail {
+    top: var(--rl-navbar-h);
+  }
+
+  /* ---- The rail below the desk band -------------------------------------
+     The compact and spread bands are full-bleed, so there is no lateral
+     whitespace for a column to overlay: a 72px rail there would inset the book
+     and shrink double-view text, which DECISIONS.md rules out explicitly. The
+     affordance MOVES rather than the book — the same three zones relay into a
+     bottom transport bar, which reserves height instead of width and so costs
+     the mushaf no line length.
+
+     Its physical-right placement does not survive the move. That was a desk
+     decision about where a column belongs beside a centred folio, and the
+     0.3 plan re-decides it per band rather than inheriting it: a full-width bar
+     has no side, so the zones lay out in logical order and mirror correctly in
+     both directions.
+
+     Everything is `!important` because the zones carry Tailwind's `absolute`,
+     `inset-x-0`, `top-7`, `top-1/2`, `-translate-y-1/2` and `bottom-7` from
+     the JSX, and this file loses to the utility layer at equal specificity. */
+  @media (max-width: 1366px) {
+    .fq-reader-lab-rail {
+      top: auto !important;
+      inset-inline: 0 !important;
+      width: auto !important;
+      height: var(--rl-transport-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-inline: 12px;
+      background: linear-gradient(
+        to right,
+        hsl(var(--rl-surface) / 0) 0%,
+        hsl(var(--rl-surface) / 0.55) 8%,
+        hsl(var(--rl-surface) / 0.55) 92%,
+        hsl(var(--rl-surface) / 0) 100%
+      );
+    }
+    /* The hairline turns with the surface: it closes the bar's top edge, and
+       still fades before either corner. */
+    .fq-reader-lab-rail::before {
+      inset-block: auto;
+      inset-inline: 0;
+      top: 0;
+      width: auto;
+      height: 1px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        hsl(var(--rl-line-soft)) 8%,
+        hsl(var(--rl-line-soft)) 92%,
+        transparent
+      );
+    }
+    .fq-reader-lab-rail-lead,
+    .fq-reader-lab-rail-utils {
+      position: static !important;
+      transform: none !important;
+      flex-direction: row !important;
+      inset: auto !important;
+    }
+    /* Transport stays pinned to the bar's true midpoint, exactly as it is
+       pinned to the rail's on desk — the same rule, one axis rotated. Laying it
+       out in flow instead let `space-between` push it to whichever end had
+       room, which put the primary control in a corner at 375px. */
+    .fq-reader-lab-rail-transport {
+      position: absolute !important;
+      inset: auto !important;
+      left: 50% !important;
+      top: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      flex-direction: row !important;
+      gap: 10px !important;
+    }
+    .fq-reader-lab-rail-utils {
+      gap: 2px !important;
+    }
+  }
+  /* Compact drops the tertiary utilities entirely: five inert icons on a 375px
+     bar crowd the one control that matters. Chrome loses information before
+     the mushaf loses reading size. */
+  @media (max-width: 767px) {
+    .fq-reader-lab-rail-utils {
+      display: none !important;
+    }
   }
 
   .fq-reader-lab-medallion {

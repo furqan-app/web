@@ -41,10 +41,12 @@ export function ReaderLabNavbar({
   return (
     <header
       dir="rtl"
-      className="fq-reader-lab-navbar fixed top-0 inset-x-0 h-[72px] z-30 flex items-center justify-between px-6 select-none"
+      // Height and padding are band values in globals.css; the chrome loses
+      // information as the viewport narrows, never type size.
+      className="fq-reader-lab-navbar fixed top-0 inset-x-0 z-30 flex items-center justify-between select-none"
     >
       {/* Physical right (start in RTL) — identity and orientation only. */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="fq-reader-lab-nav-lead flex items-center gap-3 min-w-0">
         <span className="fq-reader-lab-mark grid place-items-center">
           <Image
             src="/icons/logo-navbar-white.png"
@@ -55,26 +57,26 @@ export function ReaderLabNavbar({
             priority
           />
         </span>
-        <span className="text-[19px] font-bold leading-none text-[hsl(var(--rl-text))]">
+        <span className="fq-reader-lab-nav-wordmark text-[19px] font-bold leading-none text-[hsl(var(--rl-text))]">
           {t("readerLab.title", "فرقان")}
         </span>
-        <span className="h-4 w-px bg-[hsl(var(--rl-line-soft))]" aria-hidden="true" />
-        <span className="text-[11px] font-medium tracking-[0.06em] text-[hsl(var(--rl-gold)/0.85)] whitespace-nowrap">
+        <span className="fq-reader-lab-nav-badge h-4 w-px bg-[hsl(var(--rl-line-soft))]" aria-hidden="true" />
+        <span className="fq-reader-lab-nav-badge text-[11px] font-medium tracking-[0.06em] text-[hsl(var(--rl-gold)/0.85)] whitespace-nowrap">
           {t("readerLab.badge", "مختبر القراءة")}
         </span>
       </div>
 
       {/* Centre — the page's own metadata, framed by drawn ornament. */}
-      <div className="flex items-center gap-4">
+      <div className="fq-reader-lab-nav-centre flex items-center gap-4 min-w-0">
         <span className="fq-reader-lab-ornament" aria-hidden="true" />
         <div className="flex flex-col items-center gap-1">
-          <span className="text-[20px] font-semibold leading-none text-[hsl(var(--rl-text))]">
+          <span className="fq-reader-lab-nav-surah truncate text-[20px] font-semibold leading-none text-[hsl(var(--rl-text))]">
             {surahName
               ? `${t("surah", "سورة")} ${surahName}`
               : t("readerLab.metadataPlaceholder", "بيانات الصفحة…")}
           </span>
           {juzNumber && hizbNumber ? (
-            <span className="text-[11px] font-medium leading-none tracking-[0.08em] text-[hsl(var(--rl-muted))]">
+            <span className="fq-reader-lab-nav-orient text-[11px] font-medium leading-none tracking-[0.08em] text-[hsl(var(--rl-muted))]">
               {t("juz", "جزء")}{" "}
               <span className="text-[hsl(var(--rl-gold))]">
                 {toLocaleNumeral(juzNumber, "ar")}
@@ -87,7 +89,7 @@ export function ReaderLabNavbar({
             </span>
           ) : (
             <span
-              className="h-px w-10 bg-[hsl(var(--rl-line-soft))]"
+              className="fq-reader-lab-nav-orient h-px w-10 bg-[hsl(var(--rl-line-soft))]"
               aria-hidden="true"
             />
           )}
@@ -99,7 +101,7 @@ export function ReaderLabNavbar({
       </div>
 
       {/* Physical left (end in RTL) — inert cluster, then the one live control. */}
-      <div className="flex items-center">
+      <div className="fq-reader-lab-nav-trail flex items-center">
         <div className="fq-reader-lab-well">
           {STATIC_ACTIONS.map(({ key, Icon, tooltip }) => {
             const label = t(tooltip, "");
@@ -118,7 +120,7 @@ export function ReaderLabNavbar({
           })}
         </div>
         <span
-          className="mx-3 h-5 w-px bg-[hsl(var(--rl-line-soft))]"
+          className="fq-reader-lab-nav-divider mx-3 h-5 w-px bg-[hsl(var(--rl-line-soft))]"
           aria-hidden="true"
         />
         <button

@@ -353,7 +353,7 @@
   "readerLab": {
     "title": "Furqan",
     "badge": "Reader Lab",
-    "desktopRequired": "Desktop reader experiment — open on a larger screen",
+    "viewportTooShort": "The viewport is too short to render a mushaf page — rotate the device or enlarge the window",
     "searchTooltip": "Search (Demo)",
     "bookmarkTooltip": "Bookmarks (Demo)",
     "notificationsTooltip": "Notifications (Demo)",

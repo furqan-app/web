@@ -69,10 +69,13 @@ export function ReaderLabRecitationRail() {
       aria-label={t("readerLab.recitationTooltip", "التلاوة")}
       // `right` is deliberate and must not become `inset-inline-end`: the rail
       // stays physically right even though the composition is RTL.
-      className="fq-reader-lab-rail fixed right-0 top-[72px] bottom-0 w-[72px] z-20 select-none"
+      // Desk band only: a fixed 72px column on the physical right. In the
+      // compact and spread bands globals.css relays the same three zones into
+      // a bottom transport bar — the affordance moves, the book is never inset.
+      className="fq-reader-lab-rail fixed right-0 bottom-0 w-[72px] z-20 select-none"
     >
       {/* Top — who is reciting, and whether anything is happening. */}
-      <div className="absolute inset-x-0 top-7 flex justify-center">
+      <div className="fq-reader-lab-rail-lead absolute inset-x-0 top-7 flex justify-center">
         <div
           className="fq-reader-lab-medallion relative grid place-items-center"
           title={tooltipText}
@@ -95,7 +98,7 @@ export function ReaderLabRecitationRail() {
 
       {/* Centre — transport, pinned to the rail's true vertical midpoint so it
           does not drift when the zones above or below change height. */}
-      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2.5">
+      <div className="fq-reader-lab-rail-transport absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2.5">
         <button
           type="button"
           aria-disabled="true"
@@ -135,7 +138,7 @@ export function ReaderLabRecitationRail() {
 
       {/* Bottom — tertiary utilities, separated from transport by empty desk
           rather than by a divider stack. */}
-      <div className="absolute inset-x-0 bottom-7 flex flex-col items-center gap-1">
+      <div className="fq-reader-lab-rail-utils absolute inset-x-0 bottom-7 flex flex-col items-center gap-1">
         {UTILITIES.map(({ key, Icon, label }) => {
           const text = t(label, "");
           return (
