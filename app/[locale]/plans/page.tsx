@@ -23,11 +23,11 @@ export default async function PlansPage({
       {/* Drawn ornament, identity accent — see marks/page.tsx. */}
       <header className="text-center mb-8">
         <div className="flex items-center justify-center gap-4">
-          <span className="fq-ornament" aria-hidden="true" />
+          <span className="fq-rule-mark" aria-hidden="true" />
           <h1 className="font-tajawal font-extrabold text-3xl md:text-4xl text-foreground">
             {t("plans.pageTitle")}
           </h1>
-          <span className="fq-ornament fq-ornament--flip" aria-hidden="true" />
+          <span className="fq-rule-mark fq-rule-mark--flip" aria-hidden="true" />
         </div>
       </header>
 

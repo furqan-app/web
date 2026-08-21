@@ -72,7 +72,10 @@ const NavigationArrow = ({
           : undefined
       }
       aria-label={isNext ? "Next page" : "Previous page"}
-      className="fq-nav-arrow hidden md:flex relative z-20 items-center justify-center shrink-0 text-primary/60 hover:text-primary transition-colors"
+      // A quiet rim that warms on hover, not a filled chip — two saturated
+      // blobs flanking the page compete with it. It was --primary, the state
+      // accent, on a control that is navigation and never live.
+      className="fq-nav-arrow fq-focus-ring hidden md:flex relative z-20 items-center justify-center shrink-0 text-[hsl(var(--control-inert))] hover:text-gold transition-colors"
     >
       <Icon className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.6} />
     </Link>

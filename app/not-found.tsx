@@ -24,11 +24,11 @@ export default function Custom404() {
           links — a next/link client-nav from the root 404 can paint before
           the locale tree's CSS chunk loads in production. */}
       <div className="mt-4 flex items-center justify-center gap-4">
-        <span className="fq-ornament" aria-hidden="true" />
+        <span className="fq-rule-mark" aria-hidden="true" />
         <h1 className="text-lg md:text-xl font-bold text-foreground">
           {t("notFound.title", "404 - Page Not Found")}
         </h1>
-        <span className="fq-ornament fq-ornament--flip" aria-hidden="true" />
+        <span className="fq-rule-mark fq-rule-mark--flip" aria-hidden="true" />
       </div>
 
       <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">
