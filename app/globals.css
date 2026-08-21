@@ -30,7 +30,10 @@
     --nav-icon-chip-bg: hsl(var(--primary));
     --accent: 165 53% 93%;
     --accent-foreground: 169 88% 26%;
-    --destructive: 0 72% 56%;
+    /* 56% measured 4.26:1 against white — under AA on every destructive button.
+       50% measures 4.91:1 and keeps the hue. (Handed over from 2.1: the pair
+       needs a foreground and a background co-designed, so it belongs here.) */
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 31% 90%;
     --input: 210 31% 90%;
@@ -169,7 +172,8 @@
     /* Follows --primary onto emerald; the old pair measured 2.74:1. */
     --accent: 165 42% 88%;
     --accent-foreground: 168 72% 24%;
-    --destructive: 3 66% 55%;
+    /* 55% measured 4.27:1 against white; 50% measures 4.86:1. See .theme-light. */
+    --destructive: 3 66% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 43 40% 81%;
     --input: 43 40% 81%;
@@ -317,8 +321,15 @@
        "simplify" it back to mirroring --primary without re-deriving both
        contrast pairs. */
     --accent-foreground: 169 88% 39%;
+    /* Dark cannot darken --destructive the way light and gold do: it doubles as
+       `text-destructive` on near-black cards, where dropping it to 50% falls to
+       3.65:1. So the FOREGROUND moves instead — white on this red measured
+       3.50:1, the theme's own near-black measures 4.96:1 — and the red stays
+       bright enough to read as error text. Same shape as the --primary /
+       --accent-foreground split above: when one lightness cannot serve both
+       pairs, move the other side of the pair. */
     --destructive: 0 76% 63%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 213 31% 7%;
     --border: 210 26% 19%;
     --input: 210 26% 19%;
     --ring: 169 88% 26%;
@@ -1704,6 +1715,107 @@ body,
      matching regular's 15fs + 14×0.40fs = 20.6fs. No explicit width — card
      sizes naturally to the widest COLRv1 line.
      See fix-tajweed-font-size.md Addendum 4. */
+
+
+  /* ========================================================================
+     Shared primitive rules (subtask 3.1). One definition each, consumed by
+     components/ui/*. These live here rather than in a component because they
+     are shared BY components — a focus ring re-declared twelve times drifts
+     twelve ways, which is what it had started to do.
+     ======================================================================== */
+
+  /* The focus ring: a gap in the chrome colour, then the state accent. Two
+     steps rather than one so it stays legible on a near-white bar and a
+     near-black one alike, without per-component tuning. Replaces the stock
+     `ring-2 ring-offset-2 ring-offset-background` pattern, whose gap was always
+     --background and so vanished on any surface that was not the page
+     background — every dialog, sheet, popover and nav bar. */
+  .fq-focus-ring:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px hsl(var(--chrome)),
+      0 0 0 4px hsl(var(--ring));
+  }
+  /* Inset variant, for controls whose own box is clipped by a scroll container
+     or sits flush in a row — a ring drawn outside them would be cut off. */
+  .fq-focus-ring-inset:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px hsl(var(--ring));
+  }
+
+  /* Floating panels — dialog, sheet, popover, dropdown, command. The cast is a
+     token so dark can spend its lift on a raised face and a rim instead of a
+     shadow that would produce no pixels (ADR 0032). */
+  .fq-panel {
+    background: hsl(var(--popover));
+    box-shadow: var(--panel-cast);
+  }
+  /* Deliberately a class, not `shadow-[var(--panel-cast)]`. Tailwind cannot
+     type-infer a bare `var()` inside `shadow-[…]` — it resolved it as a shadow
+     COLOUR, left `--tw-shadow` at its `0 0 #0000` default, and every panel
+     silently rendered with no shadow at all while the class sat in the markup
+     looking correct. `shadow-[shadow:var(--panel-cast)]` also works; a named
+     utility is clearer about what it is. */
+  .fq-panel-cast {
+    box-shadow: var(--panel-cast);
+  }
+
+  /* Grouped sections with hairline rows — ported from the lab's settings sheet,
+     which is the reference implementation. A stack of identical floating cards
+     is N competing objects; one surface with hairlines between rows is one
+     scannable inventory. */
+  .fq-section-group {
+    border-radius: 14px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    overflow: hidden;
+  }
+  .fq-section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .fq-section-row + .fq-section-row {
+    border-top: 1px solid hsl(var(--border) / 0.7);
+  }
+  /* Section overline: the manuscript register — small, tracked out, identity
+     accent, with a rule that fades away from the label. */
+  .fq-overline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: hsl(var(--gold));
+  }
+  .fq-overline::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to left, transparent, hsl(var(--gold-muted) / 0.55));
+  }
+
+  /* Inert vs live. The one control that does something sits outside any well,
+     brighter at rest; inert neighbours are grouped and dimmed. */
+  .fq-control-inert {
+    color: hsl(var(--control-inert));
+  }
+  .fq-control-live {
+    color: hsl(var(--control-live));
+  }
+  .fq-well {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--well) / var(--well-alpha));
+  }
 
   /* ========================================================================
      Nocturnal Reader Lab (Desktop RTL Visual Prototype)
