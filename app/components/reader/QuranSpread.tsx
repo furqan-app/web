@@ -33,6 +33,7 @@ type QuranSpreadProps = {
   viewingOwnerName?: string | null;
   singleStepNav: NavHrefs;
   pairStepNav: NavHrefs;
+  forceDouble?: boolean;
   // When provided (persistent pager), an arrow click swaps the page client-side
   // via this callback instead of navigating the <Link> (which would remount the
   // reader). The href is kept for SSR/no-JS + middle-click. See ADR 0028.
@@ -89,6 +90,7 @@ export const QuranSpread = ({
   viewingOwnerName,
   singleStepNav,
   pairStepNav,
+  forceDouble = false,
   onNavigate,
 }: QuranSpreadProps) => {
   const { view } = useQuranSafhaView();
@@ -100,7 +102,8 @@ export const QuranSpread = ({
   // so it's correct at first paint on slow connections — no matchMedia in the
   // display path. See ADR 0013 Addendum 4. The arrow href's pre-hydration
   // staleness is invisible (same icon, only the target differs).
-  const nav = isTablet || (view === "double" && isLgUp) ? pairStepNav : singleStepNav;
+  const nav =
+    forceDouble || isTablet || (view === "double" && isLgUp) ? pairStepNav : singleStepNav;
 
   // The non-current pair member is the "partner": CSS hides it unless the spread
   // is actually showing (lg + data-safha-view="double"). Exactly one of the two

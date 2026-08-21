@@ -18,7 +18,7 @@ export function LastReadPageSync() {
 
   useEffect(() => {
     if (!visiblePages) return;
-    if (pathname?.includes("/mushaf/")) return;
+    if (pathname?.includes("/mushaf/") || pathname?.includes("/reader-lab/")) return;
     setLastReadPage(visiblePages[0]);
   }, [visiblePages, pathname, setLastReadPage]);
 

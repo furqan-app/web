@@ -110,6 +110,7 @@ type PanelProps = {
   basePath: string;
   grantId?: string;
   viewingOwnerName?: string | null;
+  forceDouble?: boolean;
   onNavigate: (targetPage: number) => void;
 };
 
@@ -120,6 +121,7 @@ const Panel = memo(function Panel({
   basePath,
   grantId,
   viewingOwnerName,
+  forceDouble,
   onNavigate,
 }: PanelProps) {
   const { rightPage, leftPage } = getPagePair(anchor);
@@ -171,6 +173,7 @@ const Panel = memo(function Panel({
             viewingOwnerName={viewingOwnerName}
             singleStepNav={singleStepNav}
             pairStepNav={pairStepNav}
+            forceDouble={forceDouble}
             onNavigate={onNavigate}
           />
         </div>
@@ -189,6 +192,7 @@ type Props = {
   basePath: string;
   grantId?: string;
   viewingOwnerName?: string | null;
+  forceDouble?: boolean;
 };
 
 // Persistent client pager (ADR 0028). Mounts once and swaps pages via local
@@ -207,6 +211,7 @@ export function ReaderPager({
   basePath,
   grantId,
   viewingOwnerName,
+  forceDouble = false,
 }: Props) {
   const queryClient = useQueryClient();
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -236,7 +241,8 @@ export function ReaderPager({
 
   // Tablet is intentionally always a facing-page reader; desktop keeps the
   // stored single/double preference and mobile remains one page at a time.
-  const isDouble = isTablet || (view === "double" && isLgUp);
+  // When forceDouble is true (e.g. Reader Lab), force double mode.
+  const isDouble = forceDouble || isTablet || (view === "double" && isLgUp);
   const nextAnchor = stepAnchor(pageNumber, true, isDouble);
   const prevAnchor = stepAnchor(pageNumber, false, isDouble);
 
@@ -767,6 +773,7 @@ export function ReaderPager({
             basePath={basePath}
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
+            forceDouble={forceDouble}
             onNavigate={onArrowNavigate}
           />
           <Panel
@@ -777,6 +784,7 @@ export function ReaderPager({
             basePath={basePath}
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
+            forceDouble={forceDouble}
             onNavigate={onArrowNavigate}
           />
           <Panel
@@ -787,6 +795,7 @@ export function ReaderPager({
             basePath={basePath}
             grantId={grantId}
             viewingOwnerName={viewingOwnerName}
+            forceDouble={forceDouble}
             onNavigate={onArrowNavigate}
           />
         </div>
