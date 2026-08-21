@@ -63,7 +63,7 @@ The brightness ladder, one order for every theme:
 creases  <  desk  ≤  chrome  <  page face
 ```
 
-**The page is the brightest surface**, because it is what the lamp is on.
+**The page is the brightest surface**, because it is what the lamp is on. Measured at desk (desk / chrome / page): light 89.0 / 94.9 / 99.0, gold 82.7 / 92.9 / 96.3, dark 6.7 / 8.0 / 12.4.
 
 Light and gold have shadow headroom, so lift is a real cast plus a white rim along the top edge. **Dark does not**: `--background` is RGB `(7,15,23)`, about 7 points from black, so a declared shadow produces no visible pixels. Dark carries the same lift with a lighter face and a warm rim, spread wide and soft rather than dropped tight.
 
@@ -77,7 +77,7 @@ A room has a light source and it has corners. The reading desk carries two inert
 
 **A light source is expressed in whichever channel the surface has headroom for**, and that is measured, never assumed: lightness on a dark or a warm desk, **temperature** on a light cool one where there is no room to brighten. Values for one theme cannot be ported to another.
 
-The page face **may** be lit; the pool belongs to the **spread**, anchored at each card's seam edge so the two halves join at the gutter rather than making two pools and a bright seam.
+The page face **may** be lit; the pool belongs to the **spread**, anchored at each card's seam edge so the two halves join at the gutter rather than making two pools and a bright seam — and only where two facing pages are actually on screen. A lone page has no gutter to join across and keeps the centred default.
 
 Both desk layers are **dropped entirely** where the page is full-bleed and there is no surround to act on. A vignette with nothing to darken is noise. Drop the layer; do not weaken it.
 
@@ -130,6 +130,10 @@ Three device classes. Band selection is **CSS-gated**, never UA detection or a J
 | **compact** `<1024px` | one page | none — full-bleed |
 | **spread** `1024–1366px` | facing pages | none — full-bleed |
 | **desk** `≥1367×800` | facing pages | the reading desk |
+
+Production matches this exactly as of subtask 5.1c; the `768–1023px` inset band it used to carry is
+gone. Keep `MOBILE_QUERY` in `use-is-mobile.ts` numerically identical to the compact blocks in
+`globals.css`.
 
 **Chrome loses information as the viewport narrows; the mushaf never loses reading size.** Shed in order of what earns its width: ornament first, then wordmark and inert clusters, then secondary orientation and tertiary utilities. The identity mark and the one live control survive every band.
 

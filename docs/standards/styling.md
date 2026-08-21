@@ -113,9 +113,15 @@ only values. A missing token there does not fall back to something sensible; it 
 theme's page. Do not reintroduce a theme-scoped copy of a depth rule to serve one theme; add or
 retune that theme's tokens instead.
 
-**The page face carries no added light in any theme.** It is a flat `--mushaf-paper` fill; depth
-comes from the page's edges only — rim, sheet stack, binding crease, and a cast shadow where there
-is a desk to catch it. Shading (a darkening pass) is allowed; lighting the face is not.
+~~**The page face carries no added light in any theme.**~~ **Superseded by [ADR 0047](../architecture/adr/0047-adopt-reader-lab-design-language.md), subtask 5.1b.** The face now carries a
+pool, declared once theme-agnostically and valued per theme: dark's paper has upward headroom and
+takes a real lit pass, while light's (L=99) and gold's (L=96) have none, so on those the pool is
+carried entirely by its **shading** half — the lamp expressed as the absence of shade. Edge depth
+(rim, sheet stack, binding crease, cast) is unchanged and still does most of the work.
+
+The pool belongs to the **spread**, not to a page: each card anchors the same ellipse to its own
+seam edge so the halves join at the gutter, and only where two facing pages are actually on screen.
+A lone page keeps the centred default.
 
 Values still differ where the medium differs. `--reader-chrome-shadow` and `--mushaf-page-cast` are
 `none`/transparent in dark, because on a `(7,15,23)` background a shadow produces no visible pixels,

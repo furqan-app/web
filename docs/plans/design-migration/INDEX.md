@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-08-21
-**Status:** in progress — Phases 0-4 complete; 5.1 (page face and reader) next
+**Status:** complete — all phases landed. Remaining before merge: regenerate `DESIGN.md` via `/impeccable document` (and delete its banner), and regenerate visual baselines via the `workflow_dispatch` CI job.
 **Issue:** https://github.com/furqan-app/web/issues/360
 **ADR:** [0047](../../architecture/adr/0047-adopt-reader-lab-design-language.md)
 
@@ -65,7 +65,7 @@ The uncommitted chrome edits in the main working tree (`Nav.tsx`, `UserMenu.tsx`
 | 4.2 ✅ | Home | [`4.2-screens-home.md`](4.2-screens-home.md) | 4.1 |
 | 4.3 ✅ | Search + settings | [`4.3-screens-search-settings.md`](4.3-screens-search-settings.md) | 4.1 |
 | 4.4 ✅ | Mushaf hub + shared grant | [`4.4-screens-mushaf-hub.md`](4.4-screens-mushaf-hub.md) | 4.1 |
-| 5.1 | Page face and reader — **next** | [`5.1-page-face-and-reader.md`](5.1-page-face-and-reader.md) | 4.x complete |
+| 5.1 ✅ | Page face and reader | [`5.1-page-face-and-reader.md`](5.1-page-face-and-reader.md) | 4.x complete |
 
 Phase 4's four subtasks are independent of each other once 4.1 proves the token layer end-to-end; they can run in parallel.
 

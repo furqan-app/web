@@ -13,10 +13,12 @@ colors:
   muted-foreground: "hsl(208 18% 40%)"
   accent: "hsl(165 53% 93%)"
   accent-foreground: "hsl(163 86% 35%)"
-  destructive: "hsl(0 72% 56%)"
+  destructive: "hsl(0 72% 50%)"
   border: "hsl(210 31% 90%)"
-  gold: "hsl(163 86% 35%)"
-  gold-muted: "hsl(165 53% 93%)"
+  gold: "hsl(34 45% 36%)"
+  gold-muted: "hsl(34 28% 56%)"
+  warning: "hsl(32 74% 29%)"
+  warning-foreground: "hsl(40 84% 95%)"
 typography:
   ui:
     fontFamily: "Tajawal, system-ui, sans-serif"
@@ -59,11 +61,17 @@ components:
 
 > ## ⚠ Migration in progress — parts of this file are superseded
 >
-> This file is a generated extraction of the **shipped** design, and the app is mid-migration
-> to a new design language (issue #360, [ADR 0047](docs/architecture/adr/0047-adopt-reader-lab-design-language.md)).
-> It cannot be regenerated accurately until the code carries the new tokens — `/impeccable document`
-> scans code, and phases 2–5 have not landed yet — so this banner was added by hand rather than
-> generated. **Nothing below it has been edited.**
+> This file is a generated extraction of the **shipped** design. Every phase of the migration
+> (issue #360, [ADR 0047](docs/architecture/adr/0047-adopt-reader-lab-design-language.md)) has now
+> landed on `feature/360-design-migration`, but **this file has not been regenerated** — that runs
+> `/impeccable document`, which ADR 0041 excludes from what a task may execute. So the banner stays
+> until someone regenerates it deliberately.
+>
+> The `colors:` block above **was** hand-corrected, because the review gate reads it and it had gone
+> from stale to actively wrong: `gold` was extracted as `hsl(163 86% 35%)` — the emerald `--primary` —
+> which is exactly the one-accent collapse the new grammar exists to prevent. It now carries light's
+> real identity bronze, the retuned `destructive`, and the `warning` pair added in 4.4.
+> **Nothing else below has been edited.**
 >
 > **The canon is [`docs/design/design-principles.md`](docs/design/design-principles.md)**, derived in
 > [`docs/design/design-language.md`](docs/design/design-language.md). Where this file disagrees with those, they win.
@@ -81,7 +89,12 @@ components:
 > Everything else here still holds — including every measurement of the medium: dark's
 > `(7,15,23)` headroom, the light-not-shadow rule, semantic tokens only, and the column–font contract.
 >
-> **Regenerate via `/impeccable document` once subtask 2.1 has landed the token layer, and delete this banner.**
+> A sixth superseded rule, from 5.1: **"the desk carries no ambient pool"**. The desk now carries a
+> lamp and a vignette at the desk band, expressed in whichever channel that theme's medium has
+> headroom for, and dropped entirely below it.
+>
+> **Regenerate via `/impeccable document` and delete this banner.** All five phases have landed, so
+> nothing is blocking it.
 
 ## Overview
 
