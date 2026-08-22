@@ -593,12 +593,12 @@ export const QuranSafha = ({
           >
             {/* All desktop metrics derive from this same resolved word size. */}
             <div
-              className={`fq-content relative z-0 py-1 flex flex-col h-full ${isTablet ? "" : "md:px-7 md:pt-2.5 md:pb-2.5"}`}
+              className={`fq-content relative z-0 py-1 flex flex-col h-full ${isTablet ? "" : "md:px-7 md:pt-2 md:pb-1"}`}
             >
               {/* Header: 3-column — juz | ◆ surah ◆ | hizb */}
               <div
                 dir="rtl"
-                className="fq-safha-header shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center pt-0 pb-3 px-6"
+                className="fq-safha-header shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:grid-cols-3 items-center pt-1 pb-3 px-6"
               >
                 <span className="flex min-w-0 items-center gap-1.5">
                   {grantId ? (
@@ -726,7 +726,7 @@ export const QuranSafha = ({
               </div>
               {/* Footer */}
               <div
-                className="fq-safha-footer shrink-0 flex items-center justify-center gap-2 text-muted-foreground text-sm pt-3.5 pb-0"
+                className="fq-safha-footer shrink-0 flex items-center justify-center gap-2 text-muted-foreground text-sm pt-2 pb-0"
               >
                 <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
                 <span>{toLocaleNumeral(page, locale)}</span>
