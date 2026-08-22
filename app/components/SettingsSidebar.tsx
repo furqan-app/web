@@ -28,14 +28,6 @@ import {
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 type Props = {
-  // Controlled mode — used by NavOverflowMenu, which renders its own trigger
-  // row and toggles this Sheet from outside. Required for that case: this
-  // component's Sheet must NOT be nested inside NavOverflowMenu's own
-  // SheetContent, because closing that outer Sheet unmounts everything in
-  // it — including a nested Sheet that was just told to open on the same
-  // click, wiping its state before it can render. So when controlled, this
-  // component renders ONLY <Sheet><SheetContent> (no trigger at all); the
-  // caller owns open state and where/how the trigger appears.
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
@@ -44,8 +36,6 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  // On tablet the safha auto-fits the font to the page, so the manual font-size
-  // control does nothing — hide it there (still shown on desktop lg+).
   const isTablet = useIsTablet();
   const isMobile = useIsMobile();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
@@ -70,58 +60,76 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
       <SheetContent
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
+        className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
-        <SheetHeader>
-          <SheetTitle>{t("settings", "Settings")}</SheetTitle>
-          <SheetDescription className="sr-only">
+        <SheetHeader className="relative shrink-0 px-5 pb-4 pt-5 border-b border-border/70 text-start">
+          <SheetTitle className="text-base font-semibold leading-none text-foreground">
+            {t("settings", "Settings")}
+          </SheetTitle>
+          <SheetDescription className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
             {t(
               "settingsDescription",
               "Adjust language, font size, appearance, and offline access.",
             )}
           </SheetDescription>
         </SheetHeader>
-        {/* Grouped sections with identity overlines and hairline rows — the
-            lab's settings panel is the structural reference. Each setting used
-            to be its own floating `bg-muted` slab under a muted heading, which
-            made a seven-item inventory read as seven competing objects. */}
-        <div className="p-4 space-y-6 mt-2">
-          <SettingsSection title={t("language", "Language")}>
+
+        {/* Grouped sections with identity overlines and hairline rows — matching
+            the Reader Lab's structure. Three cohesive categories: Reading,
+            Appearance, and Device & Recitation. */}
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+          <SettingsSection
+            title={t("settingsSectionReading", "Reading")}
+          >
             <div className="fq-section-row">
+              <span className="text-sm font-medium text-foreground">
+                {t("language", "Language")}
+              </span>
               <LanguageToggle />
             </div>
-          </SettingsSection>
-          {!isTablet && (
-            <div className="hidden lg:block">
-              <SettingsSection title={t("quranFontSize", "Quran Font Size")}>
+
+            {!isTablet && (
+              <div className="hidden lg:contents">
                 <div className="fq-section-row">
+                  <span className="text-sm font-medium text-foreground">
+                    {t("quranFontSize", "Quran Font Size")}
+                  </span>
                   <DesktopQuranFontSizeControls />
                 </div>
-              </SettingsSection>
-            </div>
-          )}
-          {!isTablet && (
-            <div className="hidden lg:block">
-              <SettingsSection title={t("pageView", "Page View")}>
+              </div>
+            )}
+
+            {!isTablet && (
+              <div className="hidden lg:contents">
                 <div className="fq-section-row">
+                  <span className="text-sm font-medium text-foreground">
+                    {t("pageView", "Page View")}
+                  </span>
                   <QuranSafhaViewToggle />
                 </div>
-              </SettingsSection>
-            </div>
-          )}
-          <SettingsSection title={t("appearance", "Appearance")}>
-            <div className="fq-section-row">
-              <ThemeToggle />
-            </div>
+              </div>
+            )}
+
+            <MushafLayoutSection />
           </SettingsSection>
-          <MushafLayoutSection />
-          {(isMobile || isTablet) && (
-            <SettingsSection title={t("keepScreenAwake", "Screen")}>
+
+          <SettingsSection
+            title={t("appearance", "Appearance")}
+            className="p-0"
+          >
+            <ThemeToggle />
+          </SettingsSection>
+
+          <SettingsSection
+            title={t("settingsSectionDevice", "Device & Recitation")}
+          >
+            {(isMobile || isTablet) && (
               <div className="fq-section-row">
                 <label
                   htmlFor="keep-screen-awake-switch"
-                  className="cursor-pointer"
+                  className="cursor-pointer flex-1 min-w-0"
                 >
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-foreground">
                     {t("keepScreenAwakeLabel", "Keep screen awake")}
                   </span>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -137,10 +145,16 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
                   onCheckedChange={setKeepScreenAwake}
                 />
               </div>
-            </SettingsSection>
-          )}
-          <EnablePushToggle />
-          <OfflineRecitationSection />
+            )}
+
+            <EnablePushToggle />
+            <OfflineRecitationSection />
+          </SettingsSection>
+
+          {/* Closes the inventory with the terminal identity mark */}
+          <div className="flex justify-center pt-2">
+            <span className="fq-rule-mark !inline-block" aria-hidden="true" />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

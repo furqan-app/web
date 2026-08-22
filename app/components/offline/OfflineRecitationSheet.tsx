@@ -135,12 +135,17 @@ export const OfflineRecitationSheet = () => {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3 text-start"
+          className="fq-section-row fq-focus-ring w-full text-start"
         >
-          <span className="text-sm font-medium text-foreground">
-            {t("offlineRecitation.title", "Offline Recitation")}
-          </span>
-          <ChevronRight className={isRTL ? "size-4 rotate-180 text-muted-foreground" : "size-4 text-muted-foreground"} />
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium text-foreground">
+              {t("offlineRecitation.title", "Offline Recitation")}
+            </span>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t("offlineRecitation.description", "Download a surah or juz' for offline listening.")}
+            </p>
+          </div>
+          <ChevronRight className={isRTL ? "size-4 rotate-180 text-[hsl(var(--control-inert))]" : "size-4 text-[hsl(var(--control-inert))]"} />
         </button>
       </SheetTrigger>
       <SheetContent ref={setSheetContentEl} side={isRTL ? "left" : "right"} dir={getLanguageDirection(locale)}>

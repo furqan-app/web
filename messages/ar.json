@@ -403,5 +403,13 @@
     "stateLive": "فعّال",
     "stateOnline": "عبر الإنترنت",
     "close": "إغلاق"
+  },
+  "settingsSectionReading": "القراءة",
+  "settingsSectionAppearance": "المظهر",
+  "settingsSectionDevice": "الجهاز والتلاوة",
+  "fontSize": {
+    "small": "صغير",
+    "medium": "متوسط",
+    "large": "كبير"
   }
 }

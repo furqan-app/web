@@ -402,5 +402,13 @@
     "stateLive": "Live",
     "stateOnline": "Online",
     "close": "Close"
+  },
+  "settingsSectionReading": "Reading",
+  "settingsSectionAppearance": "Appearance",
+  "settingsSectionDevice": "Device & Recitation",
+  "fontSize": {
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large"
   }
 }

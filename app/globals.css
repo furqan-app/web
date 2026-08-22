@@ -2050,6 +2050,84 @@ body,
   .fq-section-row + .fq-section-row {
     border-top: 1px solid hsl(var(--border) / 0.7);
   }
+
+  /* Theme selection rows and miniature swatches for SettingsSidebar */
+  .fq-theme-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    width: 100%;
+    text-align: start;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+  .fq-theme-row:hover {
+    background: hsl(var(--well) / var(--well-alpha));
+  }
+  .fq-theme-row + .fq-theme-row {
+    border-top: 1px solid hsl(var(--border) / 0.7);
+  }
+  .fq-theme-swatch {
+    position: relative;
+    flex: none;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid hsl(var(--border));
+    background: var(--sw-desk);
+  }
+  .fq-theme-swatch::before {
+    content: "";
+    position: absolute;
+    inset: 5px 7px 0;
+    border-radius: 2px 2px 0 0;
+    background: var(--sw-paper);
+  }
+  .fq-theme-swatch::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    width: 12px;
+    height: 2px;
+    margin-left: -6px;
+    border-radius: 1px;
+    background: var(--sw-accent);
+  }
+  .fq-theme-swatch[data-theme="light"] {
+    --sw-desk: hsl(214 27% 90%);
+    --sw-paper: #fdfdfc;
+    --sw-accent: hsl(34 45% 36%);
+  }
+  .fq-theme-swatch[data-theme="gold"] {
+    --sw-desk: hsl(43 44% 84%);
+    --sw-paper: #f7f0de;
+    --sw-accent: hsl(34 52% 30%);
+  }
+  .fq-theme-swatch[data-theme="dark"] {
+    --sw-desk: hsl(211 31% 8%);
+    --sw-paper: #0c1117;
+    --sw-accent: hsl(39 56% 57%);
+  }
+  .fq-theme-check {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--border));
+    color: transparent;
+    transition: all 150ms ease;
+  }
+  .fq-theme-row[aria-checked="true"] .fq-theme-check {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
   /* Section overline: the manuscript register — small, tracked out, identity
      accent, with a rule that fades away from the label. */
   .fq-overline {

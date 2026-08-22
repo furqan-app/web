@@ -3,20 +3,27 @@
 import { RectangleVertical, BookOpen } from "lucide-react";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import useTranslations from "@hooks/use-translations";
+import { cn } from "@/lib/utils";
 
-export const QuranSafhaViewToggle = () => {
+export const QuranSafhaViewToggle = ({ className }: { className?: string }) => {
   const { view, setView } = useQuranSafhaView();
   const t = useTranslations();
 
   const buttonClass = (active: boolean) =>
-    `fq-focus-ring flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
+    cn(
+      "fq-focus-ring flex items-center justify-center size-7 rounded-md transition-colors",
       active
-        ? "bg-primary/10 text-primary"
-        : "text-[hsl(var(--control-inert))] hover:text-[hsl(var(--control-live))]"
-    }`;
+        ? "bg-primary text-primary-foreground"
+        : "text-[hsl(var(--control-inert))] hover:text-[hsl(var(--control-live))]",
+    );
 
   return (
-    <div className="flex gap-0.5 p-1 rounded-xl border border-border bg-[hsl(var(--well)/var(--well-alpha))]">
+    <div
+      className={cn(
+        "flex gap-1 p-1 rounded-lg border border-border bg-[hsl(var(--well)/var(--well-alpha))]",
+        className,
+      )}
+    >
       <button
         type="button"
         aria-label={t("reader.singlePageView", "Single page view")}
@@ -24,7 +31,7 @@ export const QuranSafhaViewToggle = () => {
         className={buttonClass(view === "single")}
         onClick={() => setView("single")}
       >
-        <RectangleVertical className="w-[18px] h-[18px]" strokeWidth={1.8} />
+        <RectangleVertical className="size-4" strokeWidth={1.8} />
       </button>
       <button
         type="button"
@@ -33,7 +40,7 @@ export const QuranSafhaViewToggle = () => {
         className={buttonClass(view === "double")}
         onClick={() => setView("double")}
       >
-        <BookOpen className="w-[18px] h-[18px]" strokeWidth={1.8} />
+        <BookOpen className="size-4" strokeWidth={1.8} />
       </button>
     </div>
   );
