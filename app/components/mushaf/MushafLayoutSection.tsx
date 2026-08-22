@@ -46,7 +46,11 @@ export const MushafLayoutSection = () => {
       {expanded && (
         <div className="bg-[hsl(var(--well)/0.15)] divide-y divide-border/40">
           {MUSHAF_EDITION_IDS.map((mushafId) => (
-            <MushafLayoutRow key={mushafId} mushafId={mushafId} />
+            <MushafLayoutRow
+              key={mushafId}
+              mushafId={mushafId}
+              onSelect={() => setExpanded(false)}
+            />
           ))}
         </div>
       )}
