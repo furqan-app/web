@@ -175,3 +175,4 @@ The user then said they would **start giving feedback**. So: **wait for that fee
 5. `a980010` `fix(5.1): remove desk lamp, vignette, and page face lighting gradients for eye comfort`
 6. `659a74c` `fix(5.1): redistribute header and footer margins around mushaf page`
 7. `32cd143` `fix(5.1): fine-tune mushaf card vertical paddings`
+8. `e357771` `fix(5.1): refine reader ornaments, recitation rail buttons, and navbar accents`
