@@ -9,7 +9,7 @@ export const SignedOutPrompt = () => {
 
   return (
     <div className="flex flex-col items-center gap-4 rounded-[20px] border border-border bg-card px-6 py-12 text-center fq-panel-cast">
-      <span className="grid place-items-center size-12 rounded-2xl bg-[hsl(var(--gold)/0.12)] text-gold">
+      <span className="grid place-items-center size-12 rounded-2xl bg-primary/10 text-primary">
         <Share2 className="size-6" strokeWidth={1.6} />
       </span>
       <p className="max-w-xs text-sm text-muted-foreground">

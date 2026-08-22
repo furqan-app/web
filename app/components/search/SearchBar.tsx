@@ -62,11 +62,11 @@ export const SearchBar = () => {
                 grouped-control treatment rather than its own background. It
                 previously had no focus style at all. */}
             <button
-                className="fq-chrome-btn fq-focus-ring size-9"
+                className="fq-chrome-btn fq-focus-ring size-7"
                 onClick={() => setOpen(true)}
                 aria-label={t("search.placeholder", "Search the Quran...")}
             >
-                <Search className="size-5" strokeWidth={1.7} />
+                <Search className="size-4" strokeWidth={1.8} />
             </button>
 
             {/* Full-screen search overlay */}
@@ -87,7 +87,7 @@ export const SearchBar = () => {
                     <div className="flex items-center gap-2 h-14 px-3 border-b border-border shrink-0">
                         <button
                             onClick={() => setOpen(false)}
-                            className="fq-chrome-btn fq-focus-ring size-9"
+                            className="fq-chrome-btn fq-focus-ring size-7"
                             aria-label="Close search"
                         >
                             <ArrowLeft className="size-5" strokeWidth={1.7} />

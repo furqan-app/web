@@ -1008,3 +1008,17 @@ amends ADR 0024).
 - Light and gold themes are unaffected by this pass — this decision and its token values apply to `.theme-dark`/`.theme-dark.dark` only.
 - **`.theme-dark`'s `--accent-foreground` is deliberately NOT `--primary`, unlike every other theme** (2026-08-13, `docs/plans/home-page-design-fixes.md`). Same-day brand retint (`docs/plans/brand-mark-icons.md`) moved `--primary` to `169 88% 26%`, kept there specifically so `--primary-foreground`'s white-on-primary button text clears WCAG AA (5.09:1). That same 26% only measures 2.4:1 against `--accent`'s `161 58% 15%` background (the surah-list badge) — below the 4.5:1 floor, and no single `--primary` lightness satisfies both pairings (raising it enough to fix the badge drops the button-text contrast to ~2.7:1; darkening `--accent` toward black still can't clear 4.5:1 against a 26%-lightness foreground, max achievable is 4.12:1). `--accent-foreground` is `169 88% 39%` in dark theme only (measures 5.0:1 against `--accent`) — same hue, independent lightness. Do not "simplify" this back to mirroring `--primary` without re-deriving both contrast pairs; that regresses whichever one you didn't just check.
 - **Explicit exception (2026-08-19, user-requested):** the nav's surah-selector pill (`.fq-surah-toggle`, `app/globals.css`, `docs/plans/desktop-navbar-font-bg.md`) references `--mushaf-ornament` directly and keeps gold in dark theme's chrome, contradicting "no exceptions in chrome" above for this one control only. An intermediate `--nav-ornament` token that resolved to emerald on dark was tried and explicitly reverted by the user back to gold — do not reintroduce that token or re-derive an emerald variant for this element without a new request.
+
+---
+
+## Unified Accent System: All Gold Accents and Ornaments Unified to Emerald Green
+
+**Decision (2026-08-22):** All gold accents, ornaments, overlines, badges, glyph tokens, and metadata across the entire app and all three themes (Light, Gold/Parchment, Dark) are unified to emerald green (`--primary` / theme-calibrated green scale). All `--gold`, `--gold-muted`, `--rl-gold`, and `--rl-gold-soft` CSS variables and Tailwind `colors.gold` are completely eliminated. `--mushaf-ornament` and `--mushaf-metadata` are set to rich emerald green values (`#13755a`/`#0f766e` light, `#116850`/`#0f766e` gold, `#10b981`/`#059669` dark). See `docs/plans/unify-accents-gold-to-green.md`.
+
+**Rationale:** Simplifies the visual hierarchy into a clean, cohesive emerald green brand language while eliminating conflicting dual-accent competition across chrome and reader pages.
+
+**Constraints:**
+- Do not re-introduce `--gold`, `--gold-muted`, or `text-gold` / `border-gold` utilities.
+- Use semantic tokens (`text-primary`, `border-primary/25`, `bg-primary/10`) for all accents, category overlines, and manuscript ornaments.
+- Maintain WCAG AA contrast for text and metadata against paper backgrounds across all three themes.
+

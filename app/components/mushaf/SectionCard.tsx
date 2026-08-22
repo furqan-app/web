@@ -31,12 +31,12 @@ export const SectionCard = ({
       {hero ? (
         // The layered inner frame is ornament, so it is identity — it was
         // --primary, which spent the state accent on a decoration.
-        <div className="absolute inset-[10px] rounded-xl border border-gold/25 pointer-events-none" />
+        <div className="absolute inset-[10px] rounded-xl border border-primary/25 pointer-events-none" />
       ) : null}
       <div className="relative">
         <div className="flex items-start gap-3">
           {/* What this section is — identity. */}
-          <span className="flex-none grid place-items-center size-9 rounded-xl bg-[hsl(var(--gold)/0.12)] text-gold">
+          <span className="flex-none grid place-items-center size-9 rounded-xl bg-primary/10 text-primary">
             <Icon className="size-[18px]" strokeWidth={1.8} />
           </span>
           <div className="min-w-0">

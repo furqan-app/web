@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
@@ -53,11 +53,11 @@ export const ContinueReadingLink = ({ className }: Props = {}) => {
       // --primary. It does not collide with the settings gear, which is
       // --control-live, a neutral tone rather than the state accent.
       className={cn(
-        "fq-focus-ring flex-none flex flex-row-reverse items-center justify-center rounded-lg size-10 md:w-auto md:h-auto md:justify-start md:gap-2 md:px-3 md:py-1.5 md:text-xs md:font-medium",
+        "fq-focus-ring flex-none flex flex-row-reverse items-center justify-center rounded-lg size-10 md:w-auto md:h-auto md:justify-start md:gap-2 md:px-2.5 md:py-1.5 md:text-xs md:font-normal text-muted-foreground hover:text-foreground transition-colors",
         className,
       )}
     >
-      <BookOpen className="size-5 md:size-4 flex-none" strokeWidth={1.7} />
+      <Bookmark className="size-4 flex-none" strokeWidth={1.8} />
       <span className="hidden md:inline">
         {t("continueReading.navLink", "Continue Reading")}
       </span>

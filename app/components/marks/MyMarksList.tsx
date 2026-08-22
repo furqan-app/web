@@ -291,7 +291,7 @@ export const MyMarksList = () => {
               >
                 {/* Which surah you are looking at is identity — where you are —
                     so it takes the warm accent, not --primary. */}
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
                   {locale === "ar" ? group.chapterNameArabic : group.chapterNameSimple}
                 </span>
               </div>

@@ -63,7 +63,7 @@ const RubList = ({ rubs, surahs, currentRubId }: Props) => {
           >
             {/* Which juz you are in is identity — where you are — so it takes
                 the warm accent, not the state one. */}
-            <span className="text-[11px] font-semibold tracking-[0.14em] text-gold">
+            <span className="text-[11px] font-semibold tracking-[0.14em] text-primary">
               {t("juz", "Juz")} {toLocaleNumeral(group.juzNumber, locale)}
             </span>
             <span className="text-xs text-muted-foreground">

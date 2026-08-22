@@ -38,7 +38,7 @@ export const AccessibleMushafList = ({ grants }: Props) => {
               <Link
                 locale={locale}
                 href={`/mushaf/${grant.grantId}/pages/1`}
-                className="fq-focus-ring group flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition-colors hover:border-gold/40 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
+                className="fq-focus-ring group flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
               >
                 <PersonAvatar name={grant.user?.name} />
                 <div className="min-w-0 flex-1">
@@ -47,10 +47,8 @@ export const AccessibleMushafList = ({ grants }: Props) => {
                       t("mushaf.unknownUser", "Unknown user")}
                   </p>
                 </div>
-                {/* Whose mushaf you are about to open is identity information — the
-                    cleanest justification for the two-accent grammar outside
-                    the reader (ADR 0047). Nothing here is live. */}
-                <span className="flex-none flex items-center gap-1 text-xs font-medium text-gold">
+                {/* Whose mushaf you are about to open is identity information. */}
+                <span className="flex-none flex items-center gap-1 text-xs font-medium text-primary">
                   {t("mushaf.accessible.open", "Open")}
                   <ArrowRight
                     className={`size-3.5 transition-transform group-hover:translate-x-0.5 ${

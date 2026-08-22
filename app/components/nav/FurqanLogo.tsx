@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -10,20 +9,11 @@ export const FurqanLogo = ({ className }: Props = {}) => (
   <Link
     href="/"
     aria-label="Home"
-    // size-10 (40px) below md to match the other mobile-visible nav icon
-    // buttons' footprint (search, overflow trigger — all h-10 w-10); reverts
-    // to the tuned 34px at md+ where the row has more items and less need
-    // for a uniform touch-target grid (2026-08-13,
-    // docs/plans/home-page-design-fixes.md).
-    // fq-medallion, not fq-icon-chip: the brand mark is identity, and
-    // fq-icon-chip fills it with --primary — the state accent. Under the
-    // two-accent grammar the mark is a struck seal (gold rim, dark face) in
-    // every theme, which is also what keeps the white silhouette readable.
     className={cn(
-      "fq-medallion fq-focus-ring flex-none size-8 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity",
+      "fq-focus-ring flex-none size-[38px] rounded-full flex items-center justify-center bg-transparent border border-primary/60 hover:border-primary hover:bg-primary/5 transition-colors",
       className,
     )}
   >
-    <Image src="/icons/logo-navbar-white.png" alt="" width={100} height={100} className="size-5 object-contain" priority />
+    <span className="fq-logo-mark size-[32px] flex-none" aria-hidden="true" />
   </Link>
 );

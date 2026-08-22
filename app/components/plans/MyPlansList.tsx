@@ -183,7 +183,7 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
         {/* What kind of plan this is — identity, so the warm accent. It was
             --primary, which put the live-state colour on every card whether
             the plan was running or abandoned. */}
-        <span className="grid place-items-center size-9 rounded-xl bg-[hsl(var(--gold)/0.12)] text-gold flex-none">
+        <span className="grid place-items-center size-9 rounded-xl bg-primary/10 text-primary flex-none">
           {Icon ? <Icon className="size-[19px]" strokeWidth={1.6} /> : null}
         </span>
         <div className="flex-1 min-w-0">

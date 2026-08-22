@@ -61,7 +61,7 @@ export function ReaderLabNavbar({
           {t("readerLab.title", "فرقان")}
         </span>
         <span className="fq-reader-lab-nav-badge h-4 w-px bg-[hsl(var(--rl-line-soft))]" aria-hidden="true" />
-        <span className="fq-reader-lab-nav-badge text-[11px] font-medium tracking-[0.06em] text-[hsl(var(--rl-gold)/0.85)] whitespace-nowrap">
+        <span className="fq-reader-lab-nav-badge text-[11px] font-medium tracking-[0.06em] text-[hsl(var(--rl-emerald)/0.85)] whitespace-nowrap">
           {t("readerLab.badge", "مختبر القراءة")}
         </span>
       </div>
@@ -78,12 +78,12 @@ export function ReaderLabNavbar({
           {juzNumber && hizbNumber ? (
             <span className="fq-reader-lab-nav-orient text-[11px] font-medium leading-none tracking-[0.08em] text-[hsl(var(--rl-muted))]">
               {t("juz", "جزء")}{" "}
-              <span className="text-[hsl(var(--rl-gold))]">
+              <span className="text-[hsl(var(--rl-emerald))]">
                 {toLocaleNumeral(juzNumber, "ar")}
               </span>
               <span className="mx-1.5 text-[hsl(var(--rl-line))]">•</span>
               {t("hizb", "الحزب")}{" "}
-              <span className="text-[hsl(var(--rl-gold))]">
+              <span className="text-[hsl(var(--rl-emerald))]">
                 {toLocaleNumeral(hizbNumber, "ar")}
               </span>
             </span>

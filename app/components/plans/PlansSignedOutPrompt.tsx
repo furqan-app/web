@@ -10,7 +10,7 @@ export const PlansSignedOutPrompt = () => {
   return (
     // See MarksSignedOutPrompt — identity icon, one live control.
     <div className="fq-panel-cast flex flex-col items-center gap-4 rounded-[20px] border border-border bg-card px-6 py-12 text-center">
-      <span className="grid place-items-center size-12 rounded-2xl bg-[hsl(var(--gold)/0.12)] text-gold">
+      <span className="grid place-items-center size-12 rounded-2xl bg-primary/10 text-primary">
         <Target className="size-6" strokeWidth={1.6} />
       </span>
       <p className="max-w-xs text-sm text-muted-foreground">

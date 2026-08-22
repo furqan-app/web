@@ -95,7 +95,7 @@ function ScaleMarks({ active }: { active: 0 | 1 | 2 }) {
           className={cn(
             "w-[3px] rounded-full",
             i === active
-              ? "bg-[hsl(var(--rl-gold))]"
+              ? "bg-[hsl(var(--rl-emerald))]"
               : "bg-[hsl(var(--rl-line))]",
           )}
         />

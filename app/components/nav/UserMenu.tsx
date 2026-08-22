@@ -114,9 +114,9 @@ export const UserMenu = ({ menuRow, container, onNavigate, onOpenSettings }: Pro
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t("account", "Account")}
-          className="fq-focus-ring fq-well relative size-9 justify-center rounded-full text-[hsl(var(--control-live))] flex-none transition-colors"
+          className="fq-focus-ring fq-well relative size-7 justify-center rounded-full text-[hsl(var(--control-live))] flex-none transition-colors"
         >
-          <User className="size-5" />
+          <User className="size-[17px]" strokeWidth={1.8} />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -end-0.5 size-3 rounded-full bg-primary border-[2px] border-background" />
           )}

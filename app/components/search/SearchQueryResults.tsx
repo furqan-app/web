@@ -35,7 +35,7 @@ export default function SearchQueryResults({
               other section in the app, and they say what you are looking at —
               identity, not state. */}
           <div className="fq-section-heading !rounded-none px-4 py-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
               {t("surahs", "Surahs")} (
               {toLocaleNumeral(chapters.length, locale)})
             </span>
@@ -64,7 +64,7 @@ export default function SearchQueryResults({
       {verses && verses.length > 0 && (
         <div>
           <div className="fq-section-heading !rounded-none px-4 py-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
               {toLocaleNumeral(verses.length, locale)}{" "}
               {verses.length > 10
                 ? t("count_verses", "Verses")

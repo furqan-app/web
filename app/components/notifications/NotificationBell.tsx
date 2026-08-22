@@ -46,9 +46,9 @@ export const NotificationBell = ({ menuRow, asDropdownItem, container, className
         ) : menuRow ? (
           <button aria-label={label} className={cn(menuRowClassName, className)}>
             <span className="relative flex-none">
-              <Bell className="size-5" strokeWidth={1.7} />
+              <Bell className="size-4" strokeWidth={1.8} />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -end-0.5 size-2 rounded-full bg-primary" />
+                <span className="absolute -top-0.5 -end-0.5 size-1.5 rounded-full bg-primary" />
               )}
             </span>
             <span>{label}</span>
@@ -61,9 +61,9 @@ export const NotificationBell = ({ menuRow, asDropdownItem, container, className
             // --primary — an unread notification is live state, which is
             // exactly what that accent is now reserved for.
             aria-label={label}
-            className={cn("fq-chrome-btn fq-focus-ring relative size-9", className)}
+            className={cn("fq-chrome-btn fq-focus-ring relative size-7", className)}
           >
-            <Bell className="size-5" strokeWidth={1.7} />
+            <Bell className="size-4" strokeWidth={1.7} />
             {unreadCount > 0 && (
               <span className="absolute top-1 end-1 size-2 rounded-full bg-primary" />
             )}
