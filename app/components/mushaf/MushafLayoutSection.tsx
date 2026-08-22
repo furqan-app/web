@@ -24,10 +24,10 @@ export const MushafLayoutSection = () => {
         className="fq-section-row fq-focus-ring w-full text-start"
       >
         <div className="flex-1 min-w-0">
-          <span className="text-[13px] font-medium text-foreground">
+          <span className="text-sm font-medium text-foreground">
             {t("mushafLayout.title", "Mushaf Layout")}
           </span>
-          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
             {activeName}
           </p>
         </div>

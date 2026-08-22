@@ -74,12 +74,12 @@ export const DesktopQuranFontSizeControls = () => {
         className="fq-section-row fq-focus-ring w-full text-start"
       >
         <div className="flex-1 min-w-0">
-          <span className="text-[13px] font-medium text-foreground">
+          <span className="text-sm font-medium text-foreground">
             {t("quranFontSize", "Quran Font Size")}
           </span>
           <div className="flex items-center gap-2 mt-0.5">
             <ScaleMarks active={activeStep} />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {activeLabel}
             </p>
           </div>

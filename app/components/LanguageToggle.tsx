@@ -22,13 +22,10 @@ export const LanguageToggle = () => {
   const activeLabel = LANGUAGES.find((l) => l.code === currentLang)?.label ?? currentLang;
 
   const switchTo = (lang: string) => {
-    if (lang === currentLang) {
-      setExpanded(false);
-      return;
-    }
+    setExpanded(false);
+    if (lang === currentLang) return;
     const newPath = pathname.replace(/^\/[a-z]{2}/, `/${lang}`);
     router.push(newPath);
-    setExpanded(false);
   };
 
   return (
@@ -40,10 +37,10 @@ export const LanguageToggle = () => {
         className="fq-section-row fq-focus-ring w-full text-start"
       >
         <div className="flex-1 min-w-0">
-          <span className="text-[13px] font-medium text-foreground">
+          <span className="text-sm font-medium text-foreground">
             {t("language", "Language")}
           </span>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {activeLabel}
           </p>
         </div>

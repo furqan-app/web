@@ -2,8 +2,7 @@
 
 import { useLocale, useTranslations as useIntlTranslations } from "next-intl";
 import {
-  CheckCircle2,
-  Circle,
+  Check,
   CloudDownload,
   CloudOff,
   Loader2,
@@ -16,21 +15,10 @@ import { usePwaPrecache } from "@hooks/use-pwa-precache";
 import { useQuranMushaf } from "@contexts/QuranMushafContext";
 import { getMushafEdition } from "@utils/mushaf-editions";
 import { OfflineProgressBar } from "@components/offline/OfflineProgressBar";
+import { cn } from "@/lib/utils";
 
 type Props = { mushafId: number };
 
-/**
- * One row of the "Mushaf Layout" Settings section — two fully independent
- * actions (download for offline, switch the active reading edition). Neither
- * implies the other: switching never requires downloading first (the reader
- * has always rendered any edition on demand over the network), and
- * downloading never changes the active edition. See
- * docs/plans/mushaf-layout-settings.md.
- *
- * No thumbnail for now (removed per feedback — the generated preview wasn't
- * the expected look). `edition.thumbnailUrl` and the generator script
- * (scripts/generate-mushaf-thumbnails.js) are left in place for a future pass.
- */
 export const MushafLayoutRow = ({ mushafId }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
@@ -47,8 +35,6 @@ export const MushafLayoutRow = ({ mushafId }: Props) => {
 
   const name = tml(`editions.${mushafId}.name`);
 
-  // Only the standalone-installed app ever offers a bulk download (ADR 0014) —
-  // the switch action has never been PWA-gated and must not become so.
   const showDownload = isStandalone && state !== "unknown";
   const hasPartialProgress = cached > 0 && cached < total;
 
@@ -62,7 +48,7 @@ export const MushafLayoutRow = ({ mushafId }: Props) => {
             "Connect to the internet to download the Quran for offline reading.",
           )
         : state === "running"
-          ? null // carried by the progress bar below instead
+          ? null
           : failed > 0
             ? tp("partialBody", { cached: num(cached), total: num(total), failed: num(failed) })
             : hasPartialProgress
@@ -70,23 +56,31 @@ export const MushafLayoutRow = ({ mushafId }: Props) => {
               : tp("sizeNotice", { size: num(edition.downloadSizeMb) });
 
   return (
-    // A row of the layout group, not its own slab — so the picker holds any
-    // number of registered editions without redesign (the mushaf-variant
-    // schema is deliberately generic and more print editions are expected).
-    <div className="fq-section-row flex-col !items-stretch gap-3">
+    <div className="fq-section-row flex-col !items-stretch gap-2 py-2.5 px-6 hover:bg-[hsl(var(--well)/0.3)] transition-colors">
       <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">{name}</p>
+        <button
+          type="button"
+          onClick={() => setMushafId(mushafId)}
+          className="flex-1 min-w-0 text-start"
+        >
+          <p
+            className={cn(
+              "text-xs font-medium leading-tight",
+              isActive ? "font-semibold text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {name}
+          </p>
           {statusText && (
-            <p className="text-xs text-muted-foreground mt-0.5">{statusText}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{statusText}</p>
           )}
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
+        </button>
+        <div className="flex items-center gap-2 shrink-0">
           {showDownload && (
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 active:scale-[0.97] transition-transform duration-150"
+              className="size-7 active:scale-[0.97] transition-transform duration-150"
               disabled={state === "done" || state === "running" || state === "offline"}
               onClick={start}
               aria-label={
@@ -99,37 +93,34 @@ export const MushafLayoutRow = ({ mushafId }: Props) => {
             >
               {state === "running" ? (
                 <Loader2
-                  className="size-4 animate-spin motion-reduce:animate-none"
+                  className="size-3.5 animate-spin motion-reduce:animate-none"
                   strokeWidth={1.8}
                 />
               ) : state === "done" ? (
-                <CheckCircle2 className="size-4 text-primary" strokeWidth={1.8} />
+                <Check className="size-3.5 text-primary" strokeWidth={2} />
               ) : state === "offline" ? (
-                <CloudOff className="size-4" strokeWidth={1.8} />
+                <CloudOff className="size-3.5" strokeWidth={1.8} />
               ) : state === "partial" ? (
-                <TriangleAlert className="size-4" strokeWidth={1.8} />
+                <TriangleAlert className="size-3.5" strokeWidth={1.8} />
               ) : (
-                <CloudDownload className="size-4" strokeWidth={1.8} />
+                <CloudDownload className="size-3.5" strokeWidth={1.8} />
               )}
             </Button>
           )}
           {isActive ? (
             <span
-              className="inline-flex size-8 items-center justify-center"
+              className="size-4 rounded-full bg-primary grid place-items-center text-primary-foreground"
               aria-label={t("mushafLayout.active", "Active")}
             >
-              <CheckCircle2 className="size-5 text-primary" strokeWidth={1.8} />
+              <Check className="size-2.5 stroke-[3]" />
             </span>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8 active:scale-[0.97] transition-transform duration-150"
+            <button
+              type="button"
+              className="size-4 rounded-full border border-border"
               onClick={() => setMushafId(mushafId)}
               aria-label={t("mushafLayout.switchAction", "Switch to this layout")}
-            >
-              <Circle className="size-5 text-muted-foreground" strokeWidth={1.8} />
-            </Button>
+            />
           )}
         </div>
       </div>

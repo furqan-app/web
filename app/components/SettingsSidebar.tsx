@@ -15,6 +15,9 @@ import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
 import { SettingsSection } from "@components/settings/SettingsSection";
 import { useIsMobile } from "@hooks/use-is-mobile";
 import { useKeepScreenAwake } from "@contexts/KeepScreenAwakeContext";
+import { usePushSubscription } from "@/app/hooks/use-push-subscription";
+import { isStandaloneDisplayMode } from "@/app/utils/platform";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -40,8 +43,17 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const isMobile = useIsMobile();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
     useKeepScreenAwake();
+  const { supported: pushSupported } = usePushSubscription();
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    setIsStandalone(isStandaloneDisplayMode());
+  }, []);
+
   const controlled = onOpenChange !== undefined;
   useCloseOnBackGesture(open ?? false, () => onOpenChange?.(false));
+
+  const hasDeviceSettings = (isMobile || isTablet) || pushSupported || isStandalone;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -105,36 +117,38 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
             <ThemeToggle />
           </SettingsSection>
 
-          <SettingsSection
-            title={t("settingsSectionDevice", "Device & Recitation")}
-          >
-            {(isMobile || isTablet) && (
-              <div className="fq-section-row">
-                <label
-                  htmlFor="keep-screen-awake-switch"
-                  className="cursor-pointer flex-1 min-w-0"
-                >
-                  <span className="text-[13px] font-medium text-foreground">
-                    {t("keepScreenAwakeLabel", "Keep screen awake")}
-                  </span>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {t(
-                      "keepScreenAwakeDescription",
-                      "Prevent your device screen from sleeping while the app is open",
-                    )}
-                  </p>
-                </label>
-                <Switch
-                  id="keep-screen-awake-switch"
-                  checked={keepScreenAwake}
-                  onCheckedChange={setKeepScreenAwake}
-                />
-              </div>
-            )}
+          {hasDeviceSettings && (
+            <SettingsSection
+              title={t("settingsSectionDevice", "Device & Recitation")}
+            >
+              {(isMobile || isTablet) && (
+                <div className="fq-section-row">
+                  <label
+                    htmlFor="keep-screen-awake-switch"
+                    className="cursor-pointer flex-1 min-w-0"
+                  >
+                    <span className="text-sm font-medium text-foreground">
+                      {t("keepScreenAwakeLabel", "Keep screen awake")}
+                    </span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {t(
+                        "keepScreenAwakeDescription",
+                        "Prevent your device screen from sleeping while the app is open",
+                      )}
+                    </p>
+                  </label>
+                  <Switch
+                    id="keep-screen-awake-switch"
+                    checked={keepScreenAwake}
+                    onCheckedChange={setKeepScreenAwake}
+                  />
+                </div>
+              )}
 
-            <EnablePushToggle />
-            <OfflineRecitationSection />
-          </SettingsSection>
+              <EnablePushToggle />
+              <OfflineRecitationSection />
+            </SettingsSection>
+          )}
 
           {/* Closes the inventory with the terminal identity mark */}
           <div className="flex justify-center pt-2">
