@@ -144,9 +144,9 @@ export const RecitationPlayerBar = () => {
           >
             <span className="fq-recitation-play-ring" aria-hidden="true" />
             {isPlaying ? (
-              <Pause className="size-4 md:size-[18px] fill-current" strokeWidth={0} />
+              <Pause className="size-4 md:size-[18px] fill-current" strokeWidth={1} />
             ) : (
-              <Play className="size-4 md:size-[18px] fill-current translate-x-px" strokeWidth={0} />
+              <Play className="size-4 md:size-[18px] fill-current translate-x-px" strokeWidth={1} />
             )}
           </button>
         </div>

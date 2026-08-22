@@ -36,7 +36,7 @@ export const HomeContinueReadingCard = ({ surahs, className }: Props) => {
   return (
     <div
       className={cn(
-        "mb-6 p-4 sm:p-4.5 rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-card to-card transition-colors duration-150 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-sm relative overflow-hidden",
+        "mb-6 p-4 sm:p-4.5 rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-card to-card transition-colors duration-150 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-sm dark:shadow-none relative overflow-hidden",
         className,
       )}
     >
@@ -74,7 +74,7 @@ export const HomeContinueReadingCard = ({ surahs, className }: Props) => {
           e.preventDefault();
           jumpTo(lastReadPage);
         }}
-        className="fq-focus-ring w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-semibold text-xs sm:text-sm hover:bg-primary/90 transition-all shadow-sm shrink-0"
+        className="fq-focus-ring w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-semibold text-xs sm:text-sm hover:bg-primary/90 transition-all shadow-sm dark:shadow-none shrink-0"
       >
         <span>{t("home.resumeReading")}</span>
         <ArrowIcon className="size-4" strokeWidth={2} />
