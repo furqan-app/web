@@ -5,11 +5,13 @@ import { appPrisma } from "@/app/utils/db";
 import {
   PLAN_DATE_RE,
   getPlanTemplate,
+  independentTrackUnit,
   type UserPlanParams,
   type UserPlanStatus,
 } from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
 import { getPageJuzNumber } from "@/app/lib/plans/resolve-units";
+import { pageOfVerse } from "@/app/lib/plans/verse-index";
 
 export type UserPlanListItem = {
   id: number;
@@ -45,9 +47,20 @@ const serializePlan = (plan: {
 const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> => {
   const { targetStart, targetEnd } = item.params;
   if (targetStart === undefined || targetEnd === undefined) return item;
+  // targetStart/targetEnd are verse ordinals when the cursor_advance track
+  // they belong to is verse-unit (ADR 0038, per-track) — convert to the page
+  // they fall on before the page-based juz lookup, same as resolvePlanParams
+  // does in reverse at enroll/edit time.
+  const template = getPlanTemplate(item.template_key);
+  const cursorAdvanceTrackKey = template?.tracks.find((t) => t.rule.kind === "cursor_advance")?.key;
+  const isVerseUnit =
+    cursorAdvanceTrackKey !== undefined &&
+    independentTrackUnit(item.params, cursorAdvanceTrackKey) === "verse";
+  const startPage = isVerseUnit ? pageOfVerse(targetStart) : targetStart;
+  const endPage = isVerseUnit ? pageOfVerse(targetEnd) : targetEnd;
   const [juzStart, juzEnd] = await Promise.all([
-    getPageJuzNumber(targetStart),
-    getPageJuzNumber(targetEnd),
+    getPageJuzNumber(startPage),
+    getPageJuzNumber(endPage),
   ]);
   if (juzStart === null || juzEnd === null) return item;
   return { ...item, target_juz_start: juzStart, target_juz_end: juzEnd };
@@ -100,7 +113,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const resolved = await resolvePlanParams(body);
+  const resolved = await resolvePlanParams(body, template);
   if ("error" in resolved) {
     return jsonResponse({ code: 422, message: resolved.error });
   }

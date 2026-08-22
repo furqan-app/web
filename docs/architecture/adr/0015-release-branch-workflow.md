@@ -1,7 +1,18 @@
 # ADR 0015: Release-branch deployment workflow (main → release/x.y.z → prod → main)
 
 **Date:** 2026-07-06
-**Status:** Partially superseded by [ADR 0026](./0026-staging-environment.md) — the "no staging environment" consequence below no longer holds; a `stg` deploy stage was added between `release/x.y.z` and `prod`.
+**Status:** Partially superseded by [ADR 0026](./0026-staging-environment.md) — the "no staging environment" consequence below no longer holds; a `stg` deploy stage was added between `release/x.y.z` and `prod`. Further superseded 2026-08-21 (Addendum below): the release mechanics moved from Claude-executed skills to GitHub Actions.
+
+## Addendum (2026-08-21): moved to GitHub Actions
+
+The three Claude Code skills that ran this flow (`/cut-release`, `/promote-release`, `/sync-main-from-prod`) now trigger GitHub Actions (`workflow_dispatch`) instead of executing the git/gh steps token-by-token in the chat — cutting per-release token cost since the mechanical work runs on GitHub's infra, not in the conversation.
+
+- **`cut-release.yml`** does what `/cut-release` used to do (bump/tag/push, DB-change flagging, issue milestone/close, GitHub Release) *and* what the separate `/promote-to-staging` skill used to do — it also opens and auto-merges the `main → stg` PR in the same run. The two were always run back-to-back, so folding them into one trigger removed a skill and a checkpoint with no loss of behavior.
+- **`promote-release.yml`** no longer takes a version argument — it lists `release/*` branches on `origin` and picks the highest-semver one not yet merged into `prod`. It opens and auto-merges the `release/x.y.z → prod` PR.
+- **`sync-main-from-prod.yml`** still just opens the `prod → main` PR — deliberately **not** auto-merged, since conflicts here are common and need a human.
+- Auto-merge relies on the repo's `allow_auto_merge` setting (now enabled) plus the existing `check-source` required status check on the `prod` ruleset — no branch-protection changes were needed for `stg` since it already has no ruleset, only the advisory `check-source` workflow.
+- This collapses `/release`'s three checkpoints to two: (1) confirming staging looks right before promoting to prod — still a human judgment call, unavoidable — and (2) the final `sync-main-from-prod` merge, kept manual for the conflict reason above. The old "prod PR merged" checkpoint is gone since that PR now auto-merges.
+- See `docs/workflow/release.md` for the current skill-level flow and `.github/workflows/{cut-release,promote-release,sync-main-from-prod}.yml` for the implementation.
 
 ## Context
 

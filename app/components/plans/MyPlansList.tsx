@@ -12,6 +12,7 @@ import { useOnlineStatus } from "@hooks/use-online-status";
 import { PLAN_TEMPLATE_UI, PLAN_TRACK_UI } from "@constants/plan-ui";
 import type { PlanProgressHistoryEntry, UserPlanListItem } from "@/app/server/actions/plans";
 import type { UserPlanStatus } from "@constants/plans";
+import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { PlanAssignmentRow } from "./PlanAssignmentRow";
 import { PlansTodayHero } from "./PlansTodayHero";
 import { AddPlanButton } from "./AddPlanButton";
@@ -87,6 +88,8 @@ const PlanHistorySection = ({ planId }: { planId: number }) => {
   const [expanded, setExpanded] = useState(false);
   const { data: history, isLoading } = usePlanHistory(planId, { enabled: expanded });
   const grouped = useMemo(() => groupHistoryByDate(history ?? []), [history]);
+  const hasVerseUnitEntry = Boolean(history?.some((e) => e.unit === "verse"));
+  const verseIndex = usePlanVerseIndex({ enabled: expanded && hasVerseUnitEntry });
 
   return (
     <div className="border-t border-border pt-2.5">
@@ -133,19 +136,24 @@ const PlanHistorySection = ({ planId }: { planId: number }) => {
                       const trackUi = PLAN_TRACK_UI[entry.track_key];
                       const start = Number(entry.range_start);
                       const end = Number(entry.range_end);
+                      const isVerseUnit = entry.unit === "verse";
+                      const startKey = isVerseUnit ? verseIndex.data?.verseKeyOf(start) : undefined;
+                      const endKey = isVerseUnit ? verseIndex.data?.verseKeyOf(end) : undefined;
                       const range =
-                        start === end
-                          ? toLocaleNumeral(start, locale)
-                          : `${toLocaleNumeral(start, locale)}–${toLocaleNumeral(end, locale)}`;
+                        isVerseUnit && startKey && endKey
+                          ? startKey === endKey
+                            ? startKey
+                            : `${startKey}–${endKey}`
+                          : start === end
+                            ? toLocaleNumeral(start, locale)
+                            : `${toLocaleNumeral(start, locale)}–${toLocaleNumeral(end, locale)}`;
                       return (
                         <div
                           key={entry.id}
                           className="flex items-center justify-between text-xs text-muted-foreground"
                         >
                           <span>{trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : entry.track_key}</span>
-                          <span>
-                            {t("page", "Page")} {range}
-                          </span>
+                          <span>{isVerseUnit ? range : `${t("page", "Page")} ${range}`}</span>
                         </div>
                       );
                     })}

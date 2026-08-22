@@ -13,6 +13,7 @@ import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { PLAN_TEMPLATE_UI } from "@constants/plan-ui";
 import type { TrackAssignment } from "@/app/lib/plans/engine";
 import { isPageInAssignmentRange } from "@/app/lib/plans/assignment-range";
+import { usePlanVerseIndex, type PlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { PlanAssignmentRow } from "./PlanAssignmentRow";
 import {
   Sheet,
@@ -31,12 +32,15 @@ const inRange = (
   visiblePages: number[] | null,
   recitedPage: number | null,
   isPlaybackActive: boolean,
+  verseIndex: PlanVerseIndex | undefined,
 ): boolean => {
+  const span = (page: number) =>
+    assignment.unit === "verse" ? verseIndex?.pageVerseSpan(page) : undefined;
   if (assignment.activity === "listen" && isPlaybackActive && recitedPage != null) {
-    return isPageInAssignmentRange(assignment, recitedPage);
+    return isPageInAssignmentRange(assignment, recitedPage, span(recitedPage));
   }
   if (!visiblePages) return false;
-  return visiblePages.some((p) => isPageInAssignmentRange(assignment, p));
+  return visiblePages.some((p) => isPageInAssignmentRange(assignment, p, span(p)));
 };
 
 // Floating pill on reader routes surfacing every active plan's today
@@ -57,6 +61,12 @@ export const PlansWidget = () => {
   const { visiblePages } = useReaderPage();
   const { recitedPage, status: recitationStatus } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
+  // Only fetch/build the verse index when at least one active track actually
+  // needs it — the page-unit majority never pays for it.
+  const hasVerseUnitAssignment = Boolean(
+    todayData?.some((plan) => plan.assignments.some((a) => a.unit === "verse")),
+  );
+  const verseIndex = usePlanVerseIndex({ enabled: hasVerseUnitAssignment });
 
   if (!isOnReaderRoute || !isSignedIn || !todayData || todayData.length === 0) {
     return null;
@@ -69,7 +79,7 @@ export const PlansWidget = () => {
   const pendingCount = rows.filter((r) => !r.assignment.completed).length;
   const doneFraction = totalCount > 0 ? (totalCount - pendingCount) / totalCount : 0;
   const isHighlighted = rows.some(({ assignment }) =>
-    inRange(assignment, visiblePages, recitedPage, recitationStatus !== "idle"),
+    inRange(assignment, visiblePages, recitedPage, recitationStatus !== "idle", verseIndex.data),
   );
 
   const RING_RADIUS = 22;
