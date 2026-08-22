@@ -407,8 +407,8 @@
   "settingsSectionAppearance": "Appearance",
   "settingsSectionDevice": "Device & Recitation",
   "fontSize": {
-    "small": "Small",
-    "medium": "Medium",
-    "large": "Large"
+    "small": "Small (26)",
+    "medium": "Medium (28)",
+    "large": "Large (30)"
   }
 }

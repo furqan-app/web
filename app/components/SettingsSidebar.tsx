@@ -81,32 +81,17 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
           <SettingsSection
             title={t("settingsSectionReading", "Reading")}
           >
-            <div className="fq-section-row">
-              <span className="text-sm font-medium text-foreground">
-                {t("language", "Language")}
-              </span>
-              <LanguageToggle />
-            </div>
+            <LanguageToggle />
 
             {!isTablet && (
               <div className="hidden lg:contents">
-                <div className="fq-section-row">
-                  <span className="text-sm font-medium text-foreground">
-                    {t("quranFontSize", "Quran Font Size")}
-                  </span>
-                  <DesktopQuranFontSizeControls />
-                </div>
+                <DesktopQuranFontSizeControls />
               </div>
             )}
 
             {!isTablet && (
               <div className="hidden lg:contents">
-                <div className="fq-section-row">
-                  <span className="text-sm font-medium text-foreground">
-                    {t("pageView", "Page View")}
-                  </span>
-                  <QuranSafhaViewToggle />
-                </div>
+                <QuranSafhaViewToggle />
               </div>
             )}
 
@@ -129,10 +114,10 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
                   htmlFor="keep-screen-awake-switch"
                   className="cursor-pointer flex-1 min-w-0"
                 >
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-[13px] font-medium text-foreground">
                     {t("keepScreenAwakeLabel", "Keep screen awake")}
                   </span>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     {t(
                       "keepScreenAwakeDescription",
                       "Prevent your device screen from sleeping while the app is open",

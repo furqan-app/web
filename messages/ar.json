@@ -408,8 +408,8 @@
   "settingsSectionAppearance": "المظهر",
   "settingsSectionDevice": "الجهاز والتلاوة",
   "fontSize": {
-    "small": "صغير",
-    "medium": "متوسط",
-    "large": "كبير"
+    "small": "صغير (٢٦)",
+    "medium": "متوسط (٢٨)",
+    "large": "كبير (٣٠)"
   }
 }

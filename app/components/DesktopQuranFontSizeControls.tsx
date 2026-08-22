@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useDesktopQuranFontSize } from "@contexts/DesktopQuranFontSizeContext";
 import { DesktopQuranFontSize } from "@types";
+import { ChevronDown, ChevronUp, Check } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,7 @@ function ScaleMarks({ active }: { active: 0 | 1 | 2 }) {
 }
 
 export const DesktopQuranFontSizeControls = () => {
+  const [expanded, setExpanded] = useState(false);
   const { desktopQuranFontSize, setDesktopQuranFontSize } =
     useDesktopQuranFontSize();
   const t = useTranslations();
@@ -46,33 +49,98 @@ export const DesktopQuranFontSizeControls = () => {
         ? 2
         : 1;
 
+  const activeKey =
+    desktopQuranFontSize === "small"
+      ? "small"
+      : desktopQuranFontSize === "large"
+        ? "large"
+        : "medium";
+
+  const activeLabel = t(
+    `fontSize.${activeKey}`,
+    activeKey === "small"
+      ? "صغير (٢٦)"
+      : activeKey === "large"
+        ? "كبير (٣٠)"
+        : "متوسط (٢٨)"
+  );
+
   return (
-    <div
-      className="flex items-center gap-2"
-      role="group"
-      aria-label={t("quranFontSize", "Quran font size")}
-    >
-      <ScaleMarks active={activeStep} />
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-[hsl(var(--well)/var(--well-alpha))] p-1">
-        {SIZES.map(({ value, key }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setDesktopQuranFontSize(value)}
-            className={cn(
-              "fq-focus-ring rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              desktopQuranFontSize === value
-                ? "bg-primary text-primary-foreground"
-                : "text-[hsl(var(--control-inert))] hover:text-[hsl(var(--control-live))]",
-            )}
-          >
-            {t(
-              `fontSize.${key}`,
-              key === "small" ? "صغير" : key === "large" ? "كبير" : "متوسط",
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
+    <>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+        className="fq-section-row fq-focus-ring w-full text-start"
+      >
+        <div className="flex-1 min-w-0">
+          <span className="text-[13px] font-medium text-foreground">
+            {t("quranFontSize", "Quran Font Size")}
+          </span>
+          <div className="flex items-center gap-2 mt-0.5">
+            <ScaleMarks active={activeStep} />
+            <p className="text-[11px] text-muted-foreground">
+              {activeLabel}
+            </p>
+          </div>
+        </div>
+        {expanded ? (
+          <ChevronUp
+            className="size-4 flex-none text-[hsl(var(--control-inert))]"
+            strokeWidth={1.8}
+          />
+        ) : (
+          <ChevronDown
+            className="size-4 flex-none text-[hsl(var(--control-inert))]"
+            strokeWidth={1.8}
+          />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="bg-[hsl(var(--well)/0.15)] divide-y divide-border/40">
+          {SIZES.map(({ value, key, step }) => {
+            const isActive = desktopQuranFontSize === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  setDesktopQuranFontSize(value);
+                  setExpanded(false);
+                }}
+                className="fq-section-row w-full text-start py-2.5 px-6 hover:bg-[hsl(var(--well)/0.3)] transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <ScaleMarks active={step} />
+                  <span
+                    className={cn(
+                      "text-xs font-medium",
+                      isActive ? "font-semibold text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {t(
+                      `fontSize.${key}`,
+                      key === "small"
+                        ? "صغير (٢٦)"
+                        : key === "large"
+                          ? "كبير (٣٠)"
+                          : "متوسط (٢٨)"
+                    )}
+                  </span>
+                </div>
+                {isActive ? (
+                  <span className="size-4 rounded-full bg-primary grid place-items-center text-primary-foreground">
+                    <Check className="size-2.5 stroke-[3]" />
+                  </span>
+                ) : (
+                  <span className="size-4 rounded-full border border-border" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 };
