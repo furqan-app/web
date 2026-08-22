@@ -18,23 +18,14 @@ Furqan is a **manuscript under a reading lamp**. Not a document viewer, not a da
 
 ## Accent colour usage
 
-**Two accents, two jobs.** This supersedes the previous single-accent rule, which forced identity and state to share one signal and made a working control look like a decoration.
+**Unified Emerald Accent.** All accents across Furqan — identity, live states, category overlines, badges, geometric rosette medallions, and manuscript ornaments — are unified in emerald green (`--primary` and calibrated semantic scales). Legacy gold tokens (`--gold`, `--gold-muted`) have been completely eliminated.
 
-- **Identity** — the warm accent (`--gold`). Who or what this is, where you are, a page's own metadata, and all ornament.
-- **State** — `--primary`. Something is happening now, is selected, is on, is live.
+- **Interaction & State** — `--primary`. Something is happening now, is selected, is on, or is live.
+- **Identity & Ornament** — `--primary` (and `--mushaf-ornament` / `--mushaf-metadata` inside the reading surface). Who or what this is, where you are, a page's own metadata, overlines, and manuscript ornaments.
+- **Recoverable Notices** — `--warning` / `--warning-foreground`.
+- **Destructive Actions** — `--destructive`.
 
-To place a new element, ask what it communicates:
-
-| The element communicates… | Role |
-|---|---|
-| Who or what this is; where you are; a page's metadata; ornament | **Identity** — warm |
-| Something is happening now, is selected, is on, succeeded, or is live | **State** — `--primary` |
-| Something is wrong | Destructive. Never either accent. |
-| Nothing — inert or decorative structure | Neither. A hairline or a muted tone. |
-
-**Never both on one element.** Apply each sparingly; an accent that appears everywhere signals nothing.
-
-The state accent is emerald in **all three themes**. Only identity is theme-warm — and on light and gold it is a deep **bronze** that separates from the surface by lightness, because a bright gold disappears into parchment. Light is no longer "deliberately not gold": every theme needs an identity accent.
+Apply accents intentionally; an accent that appears everywhere signals nothing. Emerald green is calibrated to ensure WCAG AA contrast against cards, desk surfaces, and pages across all three themes (Light, Gold, Dark).
 
 ## Control hierarchy
 

@@ -30,7 +30,6 @@ export const Nav = () => {
   // Trailing slash required — a bare "/pages" substring match false-positives
   // on any route containing that string (e.g. a hypothetical /pages-list).
   const isOnPagesRoute = pathname?.includes("/pages/") ?? false;
-  const isReaderLabRoute = pathname?.includes("/reader-lab/") ?? false;
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
@@ -50,10 +49,6 @@ export const Nav = () => {
       document.exitFullscreen();
     }
   };
-
-  // The lab mounts its own chrome. Placed after every hook — React forbids a
-  // conditional return above them.
-  if (isReaderLabRoute) return null;
 
   return (
     <nav

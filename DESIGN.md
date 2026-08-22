@@ -2,21 +2,20 @@
 name: Furqan
 description: A manuscript-inspired, word-focused Quran reading app
 colors:
-  primary: "hsl(163 86% 35%)"
+  primary: "hsl(169 88% 26%)"
   primary-foreground: "hsl(0 0% 100%)"
-  background: "hsl(210 36% 95%)"
+  background: "hsl(214 26% 86%)"
   foreground: "hsl(209 36% 14%)"
   card: "hsl(0 0% 100%)"
   card-foreground: "hsl(209 36% 14%)"
-  secondary: "hsl(200 37% 97%)"
-  muted: "hsl(208 30% 92%)"
-  muted-foreground: "hsl(208 18% 40%)"
+  secondary: "hsl(210 20% 93%)"
+  muted: "hsl(212 20% 91%)"
+  muted-foreground: "hsl(209 15% 44%)"
   accent: "hsl(165 53% 93%)"
-  accent-foreground: "hsl(163 86% 35%)"
+  accent-foreground: "hsl(169 88% 26%)"
   destructive: "hsl(0 72% 50%)"
-  border: "hsl(210 31% 90%)"
-  gold: "hsl(34 45% 36%)"
-  gold-muted: "hsl(34 28% 56%)"
+  border: "hsl(212 20% 85%)"
+  overlay: "hsl(213 30% 25%)"
   warning: "hsl(32 74% 29%)"
   warning-foreground: "hsl(40 84% 95%)"
 typography:
@@ -59,59 +58,20 @@ components:
 
 # Design System: Furqan
 
-> ## ⚠ Migration in progress — parts of this file are superseded
->
-> This file is a generated extraction of the **shipped** design. Every phase of the migration
-> (issue #360, [ADR 0047](docs/architecture/adr/0047-adopt-reader-lab-design-language.md)) has now
-> landed on `feature/360-design-migration`, but **this file has not been regenerated** — that runs
-> `/impeccable document`, which ADR 0041 excludes from what a task may execute. So the banner stays
-> until someone regenerates it deliberately.
->
-> The `colors:` block above **was** hand-corrected, because the review gate reads it and it had gone
-> from stale to actively wrong: `gold` was extracted as `hsl(163 86% 35%)` — the emerald `--primary` —
-> which is exactly the one-accent collapse the new grammar exists to prevent. It now carries light's
-> real identity bronze, the retuned `destructive`, and the `warning` pair added in 4.4.
-> **Nothing else below has been edited.**
->
-> **The canon is [`docs/design/design-principles.md`](docs/design/design-principles.md)**, derived in
-> [`docs/design/design-language.md`](docs/design/design-language.md). Where this file disagrees with those, they win.
->
-> Five rules below are superseded and **must not be enforced in review**:
->
-> | Superseded rule in this file | Replaced by |
-> |---|---|
-> | "The One Accent Rule" / "Don't add a second accent color anywhere" | Two accents: warm `--gold` for identity/metadata/ornament, `--primary` for live state only |
-> | "The Gold-Is-Identity Rule" — themes without a distinct gold alias it to their own accent | Every theme gets a real identity accent; on light and gold a deep bronze. State stays emerald in all three themes |
-> | "The Flat Face Rule" / "no radial center-lighting on the page face in any theme" | The page face may be lit; the pool belongs to the spread, anchored at each card's seam edge |
-> | "the mushaf reading page is deliberately *not* the brightest surface" (ADR 0031) | Ladder is `creases < desk ≤ chrome < page face` — the page is what the lamp is on |
-> | `◆` glyph separators; 52×52px filled nav arrows | Drawn ornament (hairline tapering to an open diamond); quiet rims that warm on hover, dropped entirely where there is no gutter |
->
-> Everything else here still holds — including every measurement of the medium: dark's
-> `(7,15,23)` headroom, the light-not-shadow rule, semantic tokens only, and the column–font contract.
->
-> A sixth superseded rule, from 5.1: **"the desk carries no ambient pool"**. The desk now carries a
-> lamp and a vignette at the desk band, expressed in whichever channel that theme's medium has
-> headroom for, and dropped entirely below it.
->
-> **Regenerate via `/impeccable document` and delete this banner.** All five phases have landed, so
-> nothing is blocking it.
-
 ## Overview
 
 **Creative North Star: "The Reading Desk"**
 
-Furqan is built to feel like sitting down with a real, physical mushaf — not a generic SaaS reading pane. Every surface commits to that: pages are print-accurate rather than reflowed, cards carry paper-like depth (rim light, sheet stack, binding crease) instead of a flat drop shadow, and the single accent color is used the way ink or gold leaf would be used on a real page — sparingly, deliberately, never as decoration for its own sake. Chrome (nav, dialogs, settings) is quieter and more conventional; the mushaf reader itself is where the craft concentrates.
+Furqan is built to feel like sitting down with a real, physical mushaf — not a generic SaaS reading pane. Every surface commits to that: pages are print-accurate rather than reflowed, cards carry paper-like depth (rim light, sheet stack, binding crease) instead of a flat drop shadow, and the single unified emerald green accent is used the way ink would be used on a real page — deliberately and with manuscript craftsmanship. Chrome (nav, dialogs, settings) is quiet and structured; the mushaf reader itself is where the craft concentrates.
 
-The system runs three parallel themes — light, gold, dark — each a complete, independently tuned palette rather than a light/dark pair with a tint swapped in. Light is deliberately a *modern, cool-neutral* reading surface (near-white paper, no warmth) precisely so gold can own the traditional illuminated-manuscript register on its own. Dark is not "light inverted": it is calibrated per [ADR 0032](docs/architecture/adr/0032-dark-surface-depth-from-light.md) to carry page depth from *light* (a lit-to-edge gradient and warm rim), because shadows are structurally invisible on its near-black background.
-
-Confirmed rejections: no drop-shadow-driven depth on dark surfaces (measured to read as ~1 point of visible lift — use light/rim tokens instead); no radial center-lighting on the page face in any theme (flat paper fill; depth comes from the edges only); no second accent color anywhere in the system.
+The system runs three parallel themes — light, gold, dark — each a complete, independently tuned palette rather than a light/dark pair with a tint swapped in. Light is a modern, cool-neutral reading surface; gold owns the traditional illuminated-manuscript register; dark is calibrated to carry page depth from light and warm rims rather than flat drop shadows on near-black backgrounds.
 
 **Key Characteristics:**
-- One accent color (`--primary`, aliased to `--gold` where no separate gold identity exists) used sparingly across all chrome
+- Unified emerald accent system (`--primary` and semantic green scales across all three themes)
 - Print-accurate mushaf pages — never a reflowed text stream
 - Paper-like depth via rim/sheet/crease tokens, not conventional box-shadow, wherever a shadow would be structurally invisible
-- Three complete, independently-tuned theme palettes (light / gold / dark), not a single palette with dark-mode filters
-- Manuscript ornamentation (corner stars, diamond separators) reserved for reading surfaces, not general UI chrome
+- Three complete, independently-tuned theme palettes (light / gold / dark)
+- Manuscript ornamentation (drawn ornaments, 8-pointed star rosette medallions) crafted to elevate reading surfaces
 
 ## Colors
 
@@ -126,9 +86,7 @@ Three named themes (`.theme-light`, `.theme-gold`, `.theme-dark` on `<html>`), e
 - **Dark** — background `hsl(212 52% 6%)` (#070f17), card `hsl(210 41% 13%)` (#14212f), foreground `hsl(45 18% 91%)` (#eceae4), border `hsl(210 26% 19%)` (#24303d). One navy hue family (~210–212°) darkening in four steps: background < mushaf paper < card < secondary/muted — the mushaf reading page is deliberately *not* the brightest surface on screen ([ADR 0031](docs/architecture/adr/0031-dark-theme-gold-emerald-semantics.md)).
 
 ### Named Rules
-**The One Accent Rule.** `--primary` (aliased to `--gold`/`--gold-muted` where no separate gold identity exists) is the only interactive/ornamental accent color in the system. Never introduce a second hue for emphasis.
-
-**The Gold-Is-Identity Rule.** `--gold`/`--gold-muted` mark mushaf-identity elements (ornaments, reader chrome) only — never interactive controls; `--primary`/`--accent` cover interaction. A theme without a distinct gold identity aliases `--gold` to its own accent rather than inventing a new hue ([ADR 0031](docs/architecture/adr/0031-dark-theme-gold-emerald-semantics.md)).
+**The Unified Accent Rule.** Emerald green (`--primary` and calibrated semantic variants) is the unified accent color across all themes (Light, Gold, Dark) for both state interaction and manuscript ornamentation. Legacy `--gold` and `--gold-muted` tokens are eliminated.
 
 **The Semantic Token Rule.** Never hardcode a hex/RGB value or a raw Tailwind color (`bg-white`, `text-black`, `bg-gray-*`) — always `bg-background` / `text-foreground` / `bg-card` / etc. Raw utilities silently break dark and gold themes.
 

@@ -68,11 +68,11 @@ Every theme class must define all of these CSS custom properties:
 --accent, --accent-foreground
 --destructive, --destructive-foreground
 --border, --input, --ring, --radius
---gold, --gold-muted, --overlay
+--overlay
 --warning, --warning-foreground
 ```
 
-`--warning` was added in subtask 4.4. Neither accent may carry "something is wrong", and `--destructive` is too strong for a recoverable notice, so warning is its own pair. It replaced the last raw `amber-*` utilities in the app, which came with a `dark:` variant — a per-theme fork of one rule. Measured 5.35 / 5.50 / 8.43 against a `bg-warning/10` surface on light / gold / dark.
+`--warning` was added in subtask 4.4. The accent may not carry "something is wrong", and `--destructive` is too strong for a recoverable notice, so warning is its own pair. It replaced the last raw `amber-*` utilities in the app, which came with a `dark:` variant — a per-theme fork of one rule. Measured 5.35 / 5.50 / 8.43 against a `bg-warning/10` surface on light / gold / dark.
 
 ### Design-language families
 
@@ -94,13 +94,7 @@ Two things about them are counter-intuitive and are the whole reason they are to
 - **`--chrome` sits above the desk in light themes and below it in dark.** "Raised" means raised relative to its own medium, so a recessed `--well` is *lighter* than its bar on dark and *darker* on light. Read the rule, not the direction.
 - **`--lamp`'s carrier channel differs per theme** — lightness on dark and gold, temperature on light, decided by measuring each medium's headroom. `--lamp-extent` is per-theme for the same reason. Values derived for one theme measure zero in another; never port them.
 
-`--gold`/`--gold-muted` mark identity elements — who or what this is, where you are, a page's
-own metadata, and all ornament — and `--primary` marks live state only. Never both on one
-element. See the accent test in
-[`design-principles.md`](../design/design-principles.md#accent-colour-usage), derived in
-[`design-language.md`](../design/design-language.md) §5.
-
-**Every theme has a real identity accent, and no theme aliases it to its own `--primary`.** ADR 0031's aliasing rule and its "gold is reader-only, no chrome exceptions" scoping are both superseded by [ADR 0047](../architecture/adr/0047-adopt-reader-lab-design-language.md). On light and gold, identity is a deep **bronze** — on a warm or near-white surface it can only separate by lightness, and a bright gold disappears into parchment. The state accent is **emerald in all three themes**, including gold, whose `--primary` was itself gold and therefore collapsed the two roles into one colour.
+**Unified Accent System (Emerald Green).** All accents, category overlines, manuscript ornaments, identity marks, and live controls are unified to emerald green (`--primary` and semantic green scales) across all three themes (Light, Gold, Dark), eliminating legacy gold tokens (`--gold`, `--gold-muted`). Mushaf ornaments and page metadata consume `--mushaf-ornament` and `--mushaf-metadata` (rich emerald tones per theme). See [DECISIONS.md](../architecture/DECISIONS.md#L1016) (2026-08-22) and `docs/plans/unify-accents-gold-to-green.md`.
 
 `--overlay` is the
 modal/drawer scrim color, consumed as `bg-overlay/80` — an HSL triplet (no baked-in alpha) so

@@ -60,7 +60,7 @@ export const HomeContinueReadingCard = ({ surahs, className }: Props) => {
               </span>
             )}
             <span className="text-xs text-muted-foreground">
-              • {t("page", "Page")} {toLocaleNumeral(lastReadPage, locale)}
+              • {t("page")} {toLocaleNumeral(lastReadPage, locale)}
             </span>
           </div>
         </div>

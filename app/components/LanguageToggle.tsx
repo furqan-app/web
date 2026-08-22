@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLocale } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "@/i18n/routing";
 import { ChevronDown, Check } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { cn } from "@/lib/utils";
@@ -21,11 +21,10 @@ export const LanguageToggle = () => {
 
   const activeLabel = LANGUAGES.find((l) => l.code === currentLang)?.label ?? currentLang;
 
-  const switchTo = (lang: string) => {
+  const switchTo = (lang: "ar" | "en") => {
     setExpanded(false);
     if (lang === currentLang) return;
-    const newPath = pathname.replace(/^\/[a-z]{2}/, `/${lang}`);
-    router.push(newPath);
+    router.push(pathname, { locale: lang });
   };
 
   return (

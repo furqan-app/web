@@ -47,21 +47,15 @@ export const RecitationPlayerBar = () => {
   const t = useTranslations();
 
   const isOnReaderRoute = Boolean(pathname?.includes("/pages/"));
-  // The lab renders its own rail, so this bar never appears there — but it is
-  // still a reader route for the hard-stop below, or merely entering the lab
-  // would kill playback the user started in the production reader.
-  const isReaderLabRoute = Boolean(pathname?.includes("/reader-lab/"));
-  const isAnyReaderRoute = isOnReaderRoute || isReaderLabRoute;
   const isIdle = status === "idle";
 
   // Hard-stop recitation when the user navigates away from any reader route.
   // Supersedes ADR 0021's background mini-player behavior (Trello #152).
   // Must sit before the early return — React rules forbid hooks after conditionals.
   useEffect(() => {
-    if (!isAnyReaderRoute && !isIdle) stop();
-  }, [isAnyReaderRoute, isIdle, stop]);
+    if (!isOnReaderRoute && !isIdle) stop();
+  }, [isOnReaderRoute, isIdle, stop]);
 
-  if (isReaderLabRoute) return null;
   if (isIdle && !(isOnReaderRoute && pageFirstVerseKey)) return null;
 
   const reciter = reciters.find((r) => r.id === settings.reciterId);
