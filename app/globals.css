@@ -1851,15 +1851,65 @@ body,
     background: hsl(var(--card));
     overflow: hidden;
   }
+  .fq-section-group > * + * {
+    border-top: 1px solid hsl(var(--border));
+  }
   .fq-section-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 12px 14px;
+    padding: 10px 14px;
   }
   .fq-section-row + .fq-section-row {
-    border-top: 1px solid hsl(var(--border) / 0.7);
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  /* Accordion drawer recessed well inside a section group */
+  .fq-section-drawer {
+    background: hsl(var(--well) / var(--well-alpha));
+    border-top: 1px solid hsl(var(--border));
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.04);
+  }
+  .fq-section-drawer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 16px 9px 24px;
+    width: 100%;
+    text-align: start;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color 150ms ease;
+  }
+  [dir="rtl"] .fq-section-drawer-row {
+    padding: 9px 24px 9px 16px;
+  }
+  .fq-section-drawer-row:hover {
+    background: hsl(var(--card) / 0.55);
+  }
+  .fq-section-drawer-row + .fq-section-drawer-row {
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  /* Crisp radio circle indicator for settings options */
+  .fq-radio-circle {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    border: 1.5px solid hsl(var(--muted-foreground) / 0.45);
+    background: hsl(var(--card));
+    color: transparent;
+    transition: all 150ms ease;
+  }
+  .fq-radio-circle[data-state="checked"] {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 
   /* Theme selection rows and miniature swatches for SettingsSidebar */
@@ -1867,7 +1917,7 @@ body,
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
+    padding: 8px 14px;
     width: 100%;
     text-align: start;
     cursor: pointer;
@@ -1877,7 +1927,7 @@ body,
     background: hsl(var(--well) / var(--well-alpha));
   }
   .fq-theme-row + .fq-theme-row {
-    border-top: 1px solid hsl(var(--border) / 0.7);
+    border-top: 1px solid hsl(var(--border));
   }
   .fq-theme-swatch {
     position: relative;
@@ -1910,17 +1960,17 @@ body,
   .fq-theme-swatch[data-theme="light"] {
     --sw-desk: hsl(214 27% 90%);
     --sw-paper: #fdfdfc;
-    --sw-accent: hsl(34 45% 36%);
+    --sw-accent: hsl(169 88% 26%);
   }
   .fq-theme-swatch[data-theme="gold"] {
     --sw-desk: hsl(43 44% 84%);
-    --sw-paper: #f7f0de;
-    --sw-accent: hsl(34 52% 30%);
+    --sw-paper: #fdf9ee;
+    --sw-accent: hsl(168 72% 24%);
   }
   .fq-theme-swatch[data-theme="dark"] {
     --sw-desk: hsl(211 31% 8%);
-    --sw-paper: #0c1117;
-    --sw-accent: hsl(39 56% 57%);
+    --sw-paper: #111820;
+    --sw-accent: hsl(160 84% 39%);
   }
   .fq-theme-check {
     display: grid;
@@ -1929,7 +1979,8 @@ body,
     width: 18px;
     height: 18px;
     border-radius: 9999px;
-    border: 1px solid hsl(var(--border));
+    border: 1.5px solid hsl(var(--muted-foreground) / 0.45);
+    background: hsl(var(--card));
     color: transparent;
     transition: all 150ms ease;
   }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale } from "next-intl";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronDown, ChevronUp, Check } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { cn } from "@/lib/utils";
 
@@ -29,36 +29,35 @@ export const LanguageToggle = () => {
   };
 
   return (
-    <>
+    <div>
       <button
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
-        className="fq-section-row fq-focus-ring w-full text-start"
+        className={cn(
+          "fq-section-row fq-focus-ring w-full text-start transition-colors",
+          expanded && "bg-muted/30",
+        )}
       >
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-[13px] font-medium text-foreground leading-tight">
             {t("language", "Language")}
           </span>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
             {activeLabel}
           </p>
         </div>
-        {expanded ? (
-          <ChevronUp
-            className="size-4 flex-none text-[hsl(var(--control-inert))]"
-            strokeWidth={1.8}
-          />
-        ) : (
-          <ChevronDown
-            className="size-4 flex-none text-[hsl(var(--control-inert))]"
-            strokeWidth={1.8}
-          />
-        )}
+        <ChevronDown
+          className={cn(
+            "size-3.5 flex-none text-muted-foreground transition-transform duration-200",
+            expanded && "rotate-180",
+          )}
+          strokeWidth={1.8}
+        />
       </button>
 
       {expanded && (
-        <div className="bg-[hsl(var(--well)/0.15)] divide-y divide-border/40">
+        <div className="fq-section-drawer">
           {LANGUAGES.map(({ code, label }) => {
             const isActive = currentLang === code;
             return (
@@ -66,28 +65,27 @@ export const LanguageToggle = () => {
                 key={code}
                 type="button"
                 onClick={() => switchTo(code)}
-                className="fq-section-row w-full text-start py-2.5 px-6 hover:bg-[hsl(var(--well)/0.3)] transition-colors"
+                className="fq-section-drawer-row"
               >
                 <span
                   className={cn(
-                    "text-xs font-medium",
+                    "text-[12px] font-medium",
                     isActive ? "font-semibold text-foreground" : "text-muted-foreground"
                   )}
                 >
                   {label}
                 </span>
-                {isActive ? (
-                  <span className="size-4 rounded-full bg-primary grid place-items-center text-primary-foreground">
-                    <Check className="size-2.5 stroke-[3]" />
-                  </span>
-                ) : (
-                  <span className="size-4 rounded-full border border-border" />
-                )}
+                <span
+                  className="fq-radio-circle"
+                  data-state={isActive ? "checked" : "unchecked"}
+                >
+                  {isActive && <Check className="size-2.5 stroke-[3]" />}
+                </span>
               </button>
             );
           })}
         </div>
       )}
-    </>
+    </div>
   );
 };

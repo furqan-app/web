@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { RectangleVertical, BookOpen, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { RectangleVertical, BookOpen, ChevronDown, Check } from "lucide-react";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import useTranslations from "@hooks/use-translations";
 import { cn } from "@/lib/utils";
@@ -17,62 +17,60 @@ export const QuranSafhaViewToggle = () => {
       : t("reader.doublePageView", "Double page view");
 
   return (
-    <>
+    <div>
       <button
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
-        className="fq-section-row fq-focus-ring w-full text-start"
+        className={cn(
+          "fq-section-row fq-focus-ring w-full text-start transition-colors",
+          expanded && "bg-muted/30",
+        )}
       >
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-[13px] font-medium text-foreground leading-tight">
             {t("pageView", "Page View")}
           </span>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
             {activeLabel}
           </p>
         </div>
-        {expanded ? (
-          <ChevronUp
-            className="size-4 flex-none text-[hsl(var(--control-inert))]"
-            strokeWidth={1.8}
-          />
-        ) : (
-          <ChevronDown
-            className="size-4 flex-none text-[hsl(var(--control-inert))]"
-            strokeWidth={1.8}
-          />
-        )}
+        <ChevronDown
+          className={cn(
+            "size-3.5 flex-none text-muted-foreground transition-transform duration-200",
+            expanded && "rotate-180",
+          )}
+          strokeWidth={1.8}
+        />
       </button>
 
       {expanded && (
-        <div className="bg-[hsl(var(--well)/0.15)] divide-y divide-border/40">
+        <div className="fq-section-drawer">
           <button
             type="button"
             onClick={() => {
               setView("single");
               setExpanded(false);
             }}
-            className="fq-section-row w-full text-start py-2.5 px-6 hover:bg-[hsl(var(--well)/0.3)] transition-colors"
+            className="fq-section-drawer-row"
           >
             <div className="flex items-center gap-2.5">
-              <RectangleVertical className="size-4 text-muted-foreground" strokeWidth={1.8} />
+              <RectangleVertical className="size-3.5 text-muted-foreground" strokeWidth={1.8} />
               <span
                 className={cn(
-                  "text-xs font-medium",
+                  "text-[12px] font-medium",
                   view === "single" ? "font-semibold text-foreground" : "text-muted-foreground"
                 )}
               >
                 {t("reader.singlePageView", "Single page view")}
               </span>
             </div>
-            {view === "single" ? (
-              <span className="size-4 rounded-full bg-primary grid place-items-center text-primary-foreground">
-                <Check className="size-2.5 stroke-[3]" />
-              </span>
-            ) : (
-              <span className="size-4 rounded-full border border-border" />
-            )}
+            <span
+              className="fq-radio-circle"
+              data-state={view === "single" ? "checked" : "unchecked"}
+            >
+              {view === "single" && <Check className="size-2.5 stroke-[3]" />}
+            </span>
           </button>
 
           <button
@@ -81,29 +79,28 @@ export const QuranSafhaViewToggle = () => {
               setView("double");
               setExpanded(false);
             }}
-            className="fq-section-row w-full text-start py-2.5 px-6 hover:bg-[hsl(var(--well)/0.3)] transition-colors"
+            className="fq-section-drawer-row"
           >
             <div className="flex items-center gap-2.5">
-              <BookOpen className="size-4 text-muted-foreground" strokeWidth={1.8} />
+              <BookOpen className="size-3.5 text-muted-foreground" strokeWidth={1.8} />
               <span
                 className={cn(
-                  "text-xs font-medium",
+                  "text-[12px] font-medium",
                   view === "double" ? "font-semibold text-foreground" : "text-muted-foreground"
                 )}
               >
                 {t("reader.doublePageView", "Double page view")}
               </span>
             </div>
-            {view === "double" ? (
-              <span className="size-4 rounded-full bg-primary grid place-items-center text-primary-foreground">
-                <Check className="size-2.5 stroke-[3]" />
-              </span>
-            ) : (
-              <span className="size-4 rounded-full border border-border" />
-            )}
+            <span
+              className="fq-radio-circle"
+              data-state={view === "double" ? "checked" : "unchecked"}
+            >
+              {view === "double" && <Check className="size-2.5 stroke-[3]" />}
+            </span>
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 };

@@ -21,10 +21,10 @@ export const EnablePushToggle = () => {
         htmlFor="enable-push-switch"
         className={denied ? "flex-1 min-w-0" : "cursor-pointer flex-1 min-w-0"}
       >
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-[13px] font-medium text-foreground leading-tight">
           {t("notifications.settings.enablePush", "Push notifications")}
         </span>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
           {denied
             ? t(
                 "notifications.settings.enablePushDenied",

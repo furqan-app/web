@@ -64,7 +64,7 @@ export const MushafLayoutRow = ({ mushafId, onSelect }: Props) => {
   };
 
   return (
-    <div className="fq-section-row flex-col !items-stretch gap-2 py-2.5 px-6 hover:bg-[hsl(var(--well)/0.3)] transition-colors">
+    <div className="fq-section-drawer-row flex-col !items-stretch gap-1.5">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -73,14 +73,14 @@ export const MushafLayoutRow = ({ mushafId, onSelect }: Props) => {
         >
           <p
             className={cn(
-              "text-xs font-medium leading-tight",
+              "text-[12px] font-medium leading-tight",
               isActive ? "font-semibold text-foreground" : "text-muted-foreground"
             )}
           >
             {name}
           </p>
           {statusText && (
-            <p className="text-[11px] text-muted-foreground mt-0.5">{statusText}</p>
+            <p className="text-[10.5px] text-muted-foreground mt-0.5 leading-tight">{statusText}</p>
           )}
         </button>
         <div className="flex items-center gap-2 shrink-0">
@@ -115,21 +115,19 @@ export const MushafLayoutRow = ({ mushafId, onSelect }: Props) => {
               )}
             </Button>
           )}
-          {isActive ? (
-            <span
-              className="size-4 rounded-full bg-primary grid place-items-center text-primary-foreground"
-              aria-label={t("mushafLayout.active", "Active")}
-            >
-              <Check className="size-2.5 stroke-[3]" />
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="size-4 rounded-full border border-border"
-              onClick={handleSelect}
-              aria-label={t("mushafLayout.switchAction", "Switch to this layout")}
-            />
-          )}
+          <span
+            className="fq-radio-circle"
+            data-state={isActive ? "checked" : "unchecked"}
+            onClick={!isActive ? handleSelect : undefined}
+            role={!isActive ? "button" : undefined}
+            aria-label={
+              isActive
+                ? t("mushafLayout.active", "Active")
+                : t("mushafLayout.switchAction", "Switch to this layout")
+            }
+          >
+            {isActive && <Check className="size-2.5 stroke-[3]" />}
+          </span>
         </div>
       </div>
       {showDownload && state === "running" && (

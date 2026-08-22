@@ -74,11 +74,11 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
         dir={getLanguageDirection(locale)}
         className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
-        <SheetHeader className="relative shrink-0 px-5 pb-4 pt-5 border-b border-border/70 text-start">
-          <SheetTitle className="text-base font-semibold leading-none text-foreground">
+        <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-5 border-b border-border/70 text-start">
+          <SheetTitle className="text-[15px] font-semibold leading-none text-foreground">
             {t("settings", "Settings")}
           </SheetTitle>
-          <SheetDescription className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+          <SheetDescription className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
             {t(
               "settingsDescription",
               "Adjust language, font size, appearance, and offline access.",
@@ -89,20 +89,20 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
         {/* Grouped sections with identity overlines and hairline rows — matching
             the Reader Lab's structure. Three cohesive categories: Reading,
             Appearance, and Device & Recitation. */}
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <SettingsSection
             title={t("settingsSectionReading", "Reading")}
           >
             <LanguageToggle />
 
             {!isTablet && (
-              <div className="hidden lg:contents">
+              <div className="hidden lg:block">
                 <DesktopQuranFontSizeControls />
               </div>
             )}
 
             {!isTablet && (
-              <div className="hidden lg:contents">
+              <div className="hidden lg:block">
                 <QuranSafhaViewToggle />
               </div>
             )}
@@ -127,10 +127,10 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
                     htmlFor="keep-screen-awake-switch"
                     className="cursor-pointer flex-1 min-w-0"
                   >
-                    <span className="text-sm font-medium text-foreground">
+                    <span className="text-[13px] font-medium text-foreground leading-tight">
                       {t("keepScreenAwakeLabel", "Keep screen awake")}
                     </span>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
                       {t(
                         "keepScreenAwakeDescription",
                         "Prevent your device screen from sleeping while the app is open",

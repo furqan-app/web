@@ -46,7 +46,7 @@ export const ThemeToggle = () => {
             data-theme={option}
             className="fq-theme-swatch"
           />
-          <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
+          <span className="min-w-0 flex-1 text-start text-[13px] font-medium text-foreground leading-tight">
             {themeLabels[option]}
           </span>
           <span aria-hidden="true" className="fq-theme-check">
