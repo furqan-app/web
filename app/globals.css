@@ -983,7 +983,7 @@ body,
      one-pixel document overflow and an unnecessary desktop scrollbar. */
   @media (min-width: 1367px) {
     .fq-reader-outer {
-      min-height: calc(100dvh - 57px) !important;
+      min-height: calc(100dvh - 70px) !important;
     }
   }
 
@@ -1077,81 +1077,6 @@ body,
     }
   }
 
-  /* ---- Light on the page (subtask 5.1b) ---------------------------------
-     ADR 0047 lifts ADR 0032's "do not light the page face". The desk lamp
-     falls AROUND the folio; this extends it ONTO the paper.
-
-     One pool across the whole spread, not one per page: each card anchors the
-     same ellipse to its own SEAM edge, so the two halves join at the gutter
-     instead of producing two pools and a bright seam. The binding crease then
-     darkens that seam — lit spread, shaded gutter, dimming outer edges, which
-     is what a real open book does.
-
-     Same carrier-channel finding as the desk lamp: it belongs to the medium.
-     Dark's paper has ~90 points of upward headroom and takes a real lit pass;
-     light's paper is L=99 and gold's L=96, so on those the pool is carried
-     entirely by its SHADING half, with the lamp expressed as the absence of
-     shade. Shading the page was always permitted; only lighting it needed 0047.
-
-     Stops use `hsl(... / 0)` rather than `transparent`: `transparent` is
-     rgba(0,0,0,0), and interpolating to it drags a grey fringe through the
-     midtones.
-
-     Theme-agnostic rule, per-theme values — never a per-theme copy of the
-     rule itself (ADR 0032). Declared after the `background-image: none` rules
-     above so it wins the `!important` tie on source order. */
-  .fq-spread .fq-safha-card {
-    --page-origin: 50% 50%;
-    --page-lit: 39 44% 58%;
-    --page-lit-alpha: 0.07;
-    --page-shade: 211 45% 2%;
-    --page-shade-alpha: 0.3;
-    background-image: radial-gradient(
-      ellipse 132% 118% at var(--page-origin),
-      hsl(var(--page-lit) / var(--page-lit-alpha)) 0%,
-      hsl(var(--page-lit) / 0) 46%,
-      hsl(var(--page-shade) / 0) 46%,
-      hsl(var(--page-shade) / var(--page-shade-alpha)) 100%
-    ) !important;
-  }
-  .theme-light .fq-spread .fq-safha-card {
-    --page-lit-alpha: 0;
-    --page-shade: 213 30% 42%;
-    --page-shade-alpha: 0.2;
-  }
-  .theme-gold .fq-spread .fq-safha-card {
-    --page-lit-alpha: 0;
-    --page-shade: 34 40% 28%;
-    --page-shade-alpha: 0.22;
-  }
-  /* The seam edge is the pool's origin — but ONLY where two facing pages are
-     actually on screen. `compensate-r` is the physical right card (its stack
-     stripe sits at `right: 0`, the spine-away side), so its seam is its left
-     edge, and vice versa.
-
-     Gated to exactly the two states that show a partner: the tablet band, which
-     is permanently an open two-page mushaf, and the desk band when the stored
-     view preference is `double`. Everywhere else a single page is showing and
-     there is no gutter for the halves to join across, so the pool keeps its
-     centred default. Anchoring a lone page at one edge would light it from a
-     seam that is not there. */
-  @media (min-width: 1024px) and (max-width: 1366px) {
-    .fq-spread .fq-compensate-r > .fq-safha-card {
-      --page-origin: 0% 48%;
-    }
-    .fq-spread .fq-compensate-l > .fq-safha-card {
-      --page-origin: 100% 48%;
-    }
-  }
-  @media (min-width: 1367px) {
-    :root[data-safha-view="double"] .fq-spread .fq-compensate-r > .fq-safha-card {
-      --page-origin: 0% 48%;
-    }
-    :root[data-safha-view="double"] .fq-spread .fq-compensate-l > .fq-safha-card {
-      --page-origin: 100% 48%;
-    }
-  }
-
   /* ---- Ornament under the two-accent grammar (subtask 5.1b) -------------
      Ornament, the surah frame, the header band's marks and the page's own
      metadata are identity, so they take the identity accent in EVERY theme.
@@ -1226,44 +1151,6 @@ body,
          bookkeeping local, so nothing here can ever climb over the nav. */
       position: relative;
       isolation: isolate;
-    }
-
-    /* ---- Desk atmosphere -------------------------------------------------
-       A room has a light source and it has corners. Two inert layers: a lamp
-       pooled where the folio sits, and a vignette closing the corners. Both
-       read their values from the theme's own tokens (2.1), so this is one rule
-       for three themes — never a per-theme copy.
-
-       Neither may paint over a Qur'an pixel, which is what the z-index pair
-       below guarantees structurally rather than by hoping the stacking order
-       works out. The lamp is behind the folio, not on it: the page has its own
-       pool (5.1b), anchored at the seam. */
-    .fq-reader-outer::before,
-    .fq-reader-outer::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
-    .fq-reader-outer::before {
-      background: radial-gradient(
-        var(--lamp-extent) at var(--lamp-origin),
-        hsl(var(--lamp) / var(--lamp-core)),
-        hsl(var(--lamp) / var(--lamp-mid)) 45%,
-        transparent 72%
-      );
-    }
-    .fq-reader-outer::after {
-      background: radial-gradient(
-        82% 76% at 50% 47%,
-        transparent 48%,
-        hsl(var(--vignette) / var(--vignette-alpha)) 100%
-      );
-    }
-    .fq-reader-outer > * {
-      position: relative;
-      z-index: 1;
     }
 
     /* ---- Folio proportion cap -------------------------------------------
@@ -1458,7 +1345,7 @@ body,
     .fq-recitation-bar-rail {
       left: auto !important;
       right: 0 !important;
-      top: 57px;
+      top: 70px;
       bottom: 0 !important;
       width: 72px;
       border-width: 0 !important;
