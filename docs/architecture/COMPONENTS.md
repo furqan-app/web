@@ -40,8 +40,11 @@ Nav                          — top bar, always visible; single flat flex row, 
 
 ```
 (page)
-  SurahList                  — same component as Sidebar; receives full surah list, default grid layout
-    SurahListItem
+  HomeHero                   — manuscript title with .fq-rule-mark flourishes, overline, and tagline
+  HomeRecommendedSurahs      — horizontal curated strip for high-frequency surahs (1, 18, 36, 55, 56, 67)
+  HomeContinueReadingCard    — living resumption card reading LastReadPageContext live with direct CTA
+  SurahList                  — 4-column responsive lattice grid of all 114 surahs
+    SurahListItem            — 8-pointed star medallion, Meccan/Medinan tags, starting page, calligraphic title
 ```
 
 ## Zone: reader (`app/[locale]/pages/[id]/page.tsx` + `app/[locale]/mushaf/[grant]/pages/[id]/page.tsx`)
