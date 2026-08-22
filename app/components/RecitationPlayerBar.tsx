@@ -115,25 +115,9 @@ export const RecitationPlayerBar = () => {
                   aria-expanded={open}
                   aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
                   title={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                  // Rail-only, and now an icon rather than a truncated name:
-                  // the rail is icons only, and an 80px-wide clipped reciter
-                  // name was never legible anyway. Reciter switching is
-                  // unchanged — this is still the combobox trigger.
-                  className="fq-recitation-rail-reciter fq-medallion fq-focus-ring relative hidden size-9 items-center justify-center rounded-full"
+                  className="fq-recitation-rail-reciter fq-recitation-lead-btn fq-focus-ring relative hidden items-center justify-center rounded-full"
                 >
                   <CircleUserRound className="size-[18px]" strokeWidth={1.6} />
-                  {/* One dot, one state — so the rail can never show two
-                      readings of itself at once. */}
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "absolute -bottom-px -right-px size-2 rounded-full ring-2 ring-[hsl(var(--chrome))]",
-                      isPlaying && "bg-primary",
-                      isLoading && "bg-primary/70 animate-pulse motion-reduce:animate-none",
-                      playbackError && "bg-destructive",
-                      !isPlaying && !isLoading && !playbackError && "bg-border",
-                    )}
-                  />
                 </button>
               )}
             />
@@ -143,6 +127,15 @@ export const RecitationPlayerBar = () => {
         <div className="fq-rail-zone fq-rail-transport">
           <button
             type="button"
+            data-state={
+              playbackError
+                ? "error"
+                : isLoading
+                  ? "loading"
+                  : isPlaying
+                    ? "playing"
+                    : "idle"
+            }
             aria-label={
               isPlaying
                 ? t("recitation.pause", "Pause")
@@ -153,17 +146,13 @@ export const RecitationPlayerBar = () => {
             aria-pressed={isPlaying}
             onClick={handlePlayPause}
             disabled={isLoading}
-            // The one live control on this bar. Keeps fq-icon-chip's --primary
-            // fill: playback is state, which is precisely what that accent is
-            // for — every other control here is dimmed and grouped around it.
-            className="fq-icon-chip fq-focus-ring flex items-center justify-center w-9 h-9 rounded-full shrink-0 disabled:opacity-60"
+            className="fq-recitation-play fq-focus-ring relative flex items-center justify-center rounded-full shrink-0 disabled:opacity-60"
           >
-            {isLoading ? (
-              <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : isPlaying ? (
-              <Pause className="size-4" strokeWidth={2} />
+            <span className="fq-recitation-play-ring" aria-hidden="true" />
+            {isPlaying ? (
+              <Pause className="size-4 md:size-[18px] fill-current" strokeWidth={0} />
             ) : (
-              <Play className="size-4" strokeWidth={2} />
+              <Play className="size-4 md:size-[18px] fill-current translate-x-px" strokeWidth={0} />
             )}
           </button>
         </div>

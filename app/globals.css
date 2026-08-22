@@ -1077,34 +1077,6 @@ body,
     }
   }
 
-  /* ---- Ornament under the two-accent grammar (subtask 5.1b) -------------
-     Ornament, the surah frame, the header band's marks and the page's own
-     metadata are identity, so they take the identity accent in EVERY theme.
-     One rule, three themes.
-
-     Two things make a single theme-agnostic rule necessary rather than merely
-     tidy, both found in 0.2: the block that remaps these to the mushaf tokens
-     is scoped `max-width: 1023px`, so at desktop widths light and gold fall
-     through to the Tailwind `text-primary` / `text-muted-foreground` utilities
-     entirely; and dark has a desktop rule forcing all of them to
-     `--mushaf-text`. A first pass scoped the fix by theme and consequently
-     fixed dark alone, leaving light's ornament rendering in emerald — the
-     exact one-accent look this grammar replaces.
-
-     `:root` lifts specificity to (0,4,0) so it beats
-     `:root.theme-dark .fq-spread …` at (0,3,0) outright rather than on source
-     order. The surah frame keeps exactly one colour role: it reads
-     `--mushaf-ornament` from an inline style and nothing here adds a second. */
-  :root .fq-spread .fq-safha-surah-glyph,
-  :root .fq-spread .fq-quran-safha .fq-inline-surah,
-  :root .fq-spread .fq-ornament {
-    color: var(--mushaf-ornament) !important;
-  }
-  :root .fq-spread .fq-safha-meta,
-  :root .fq-spread .fq-safha-footer {
-    color: var(--mushaf-metadata) !important;
-  }
-
   /* Desktop reading stage. >1366px only: here the reader spread floats with space
      around it, unlike the edge-to-edge tablet band and full-bleed mobile.
 
@@ -3452,3 +3424,87 @@ body,
     }
   }
 }
+
+  /* Recitation play button — matching Reader Lab's .fq-reader-lab-play */
+  .fq-recitation-play {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / 0.85);
+    background: hsl(var(--accent) / 0.35);
+    color: hsl(var(--primary));
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .fq-recitation-play:hover {
+    background: hsl(var(--accent) / 0.65);
+    border-color: hsl(var(--primary));
+  }
+  .fq-recitation-play-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+  }
+  .fq-recitation-play[data-state="playing"] {
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.28), 0 0 22px -4px hsl(var(--primary) / 0.45);
+  }
+  .fq-recitation-play[data-state="playing"] .fq-recitation-play-ring {
+    background: conic-gradient(
+      from -90deg,
+      hsl(var(--primary)) 0deg,
+      hsl(var(--primary)) 132deg,
+      hsl(var(--border)) 132deg,
+      hsl(var(--border)) 360deg
+    );
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  }
+  .fq-recitation-play[data-state="error"] {
+    border-color: hsl(var(--destructive) / 0.8);
+    background: hsl(var(--destructive) / 0.2);
+    color: hsl(var(--destructive));
+  }
+  .fq-recitation-play[data-state="loading"] .fq-recitation-play-ring {
+    background: conic-gradient(
+      from -90deg,
+      hsl(var(--primary)) 0deg,
+      hsl(var(--primary) / 0) 120deg,
+      hsl(var(--primary) / 0) 360deg
+    );
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+    animation: fq-spin 1.1s linear infinite;
+  }
+
+  @media (min-width: 1367px) {
+    .fq-recitation-bar-rail .fq-recitation-play {
+      width: 44px;
+      height: 44px;
+    }
+    .fq-recitation-bar-rail .fq-recitation-play-ring {
+      inset: -5px;
+    }
+  }
+
+  /* Recitation lead (reciter dropdown button) — matching play button treatment */
+  .fq-recitation-lead-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / 0.85);
+    background: hsl(var(--accent) / 0.35);
+    color: hsl(var(--primary));
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  }
+  .fq-recitation-lead-btn:hover {
+    background: hsl(var(--accent) / 0.65);
+    border-color: hsl(var(--primary));
+  }
+  @media (min-width: 1367px) {
+    .fq-recitation-bar-rail .fq-recitation-lead-btn {
+      width: 40px;
+      height: 40px;
+    }
+  }

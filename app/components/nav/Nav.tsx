@@ -109,7 +109,7 @@ export const Nav = () => {
                             metadata — where you are — so the separator takes
                             the warm accent. It was --primary, which is
                             reserved for something being live. */}
-                        <span className="text-gold" aria-hidden="true">•</span>
+                        <span className="text-primary" aria-hidden="true">•</span>
                         {t("hizb", "Hizb")} {toLocaleNumeral(currentJuzHizb.hizb, locale)}
                       </span>
                     )}

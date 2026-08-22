@@ -126,7 +126,6 @@ const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: b
         marginTop: "0.3em",
         marginBottom: "var(--fq-line-gap)",
         height: "1em",
-        color: "var(--mushaf-ornament)",
         width:
           lineWidth != null
             ? `${lineWidth}px`
@@ -726,7 +725,7 @@ export const QuranSafha = ({
               </div>
               {/* Footer */}
               <div
-                className="fq-safha-footer shrink-0 flex items-center justify-center gap-2 text-muted-foreground text-sm pt-2 pb-0"
+                className="fq-safha-footer shrink-0 flex items-center justify-center gap-2 text-muted-foreground text-xs pt-2 pb-0"
               >
                 <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
                 <span>{toLocaleNumeral(page, locale)}</span>
