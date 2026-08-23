@@ -80440,6 +80440,150 @@
       "source_file": "app/constants/recitation.ts",
       "source_location": "L13",
       "id": "app_constants_recitation_repeat_count_min"
+    },
+    {
+      "label": "MANDATORY WORKFLOW \u2014 NO EXCEPTIONS (ALL AGENTS)",
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "AGENTS.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "mandatory workflow \u2014 no exceptions (all agents)",
+      "source_file": "AGENTS.md",
+      "source_location": "L10",
+      "id": "agents_mandatory_workflow_no_exceptions_all_agents"
+    },
+    {
+      "label": "Step 6 \u2014 Create the worktree or branch",
+      "_origin": "ast",
+      "community": 162,
+      "community_name": "/plan-fq-task",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "step 6 \u2014 create the worktree or branch",
+      "source_file": ".claude/skills/plan-fq-task/SKILL.md",
+      "source_location": "L36",
+      "id": "claude_skills_plan_fq_task_skill_step_6_create_the_worktree_or_branch"
+    },
+    {
+      "label": "Step 7 \u2014 Write the plan",
+      "_origin": "ast",
+      "community": 162,
+      "community_name": "/plan-fq-task",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "step 7 \u2014 write the plan",
+      "source_file": ".claude/skills/plan-fq-task/SKILL.md",
+      "source_location": "L60",
+      "id": "claude_skills_plan_fq_task_skill_step_7_write_the_plan"
+    },
+    {
+      "label": "Step 1b \u2014 Worktree / Branch setup (runs before step 2 in the workflow doc)",
+      "_origin": "ast",
+      "community": 165,
+      "community_name": "/start-fq-task",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "step 1b \u2014 worktree / branch setup (runs before step 2 in the workflow doc)",
+      "source_file": ".claude/skills/start-fq-task/SKILL.md",
+      "source_location": "L20",
+      "id": "claude_skills_start_fq_task_skill_step_1b_worktree_branch_setup_runs_before_step_2_in_the_workflow_doc"
+    },
+    {
+      "label": "GEMINI.md",
+      "_origin": "ast",
+      "community": 310,
+      "community_name": "Antigravity (AGY) Invariants",
+      "file_type": "document",
+      "node_kind": "page",
+      "norm_label": "gemini.md",
+      "source_file": "GEMINI.md",
+      "source_location": "L1",
+      "id": "gemini"
+    },
+    {
+      "label": "1. Mandatory Workflow & Planning Mode Override",
+      "_origin": "ast",
+      "community": 310,
+      "community_name": "Antigravity (AGY) Invariants",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "1. mandatory workflow & planning mode override",
+      "source_file": "GEMINI.md",
+      "source_location": "L8",
+      "id": "gemini_1_mandatory_workflow_planning_mode_override"
+    },
+    {
+      "label": "2. Progressive Disclosure & Skills Activation",
+      "_origin": "ast",
+      "community": 310,
+      "community_name": "Antigravity (AGY) Invariants",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "2. progressive disclosure & skills activation",
+      "source_file": "GEMINI.md",
+      "source_location": "L14",
+      "id": "gemini_2_progressive_disclosure_skills_activation"
+    },
+    {
+      "label": "3. Workspace Boundary & Git Branches",
+      "_origin": "ast",
+      "community": 310,
+      "community_name": "Antigravity (AGY) Invariants",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "3. workspace boundary & git branches",
+      "source_file": "GEMINI.md",
+      "source_location": "L22",
+      "id": "gemini_3_workspace_boundary_git_branches"
+    },
+    {
+      "label": "4. Mandatory Context Loading",
+      "_origin": "ast",
+      "community": 310,
+      "community_name": "Antigravity (AGY) Invariants",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "4. mandatory context loading",
+      "source_file": "GEMINI.md",
+      "source_location": "L30",
+      "id": "gemini_4_mandatory_context_loading"
+    },
+    {
+      "label": "Antigravity (AGY) Invariants",
+      "_origin": "ast",
+      "community": 310,
+      "community_name": "Antigravity (AGY) Invariants",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "antigravity (agy) invariants",
+      "source_file": "GEMINI.md",
+      "source_location": "L6",
+      "id": "gemini_antigravity_agy_invariants"
+    },
+    {
+      "label": "GEMINI.md",
+      "_origin": "ast",
+      "community": 310,
+      "community_name": "Antigravity (AGY) Invariants",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "gemini.md",
+      "source_file": "GEMINI.md",
+      "source_location": "L1",
+      "id": "gemini_gemini_md"
+    },
+    {
+      "label": "CRITICAL RULES FOR COPILOT (CHAT & EDITS)",
+      "_origin": "ast",
+      "community": 83,
+      "community_name": "plan-fq-task workflow",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "critical rules for copilot (chat & edits)",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L5",
+      "id": "github_copilot_instructions_critical_rules_for_copilot_chat_edits"
     }
   ],
   "links": [
@@ -222834,6 +222978,28 @@
     },
     {
       "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/plan-fq-task/SKILL.md",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "claude_skills_plan_fq_task_skill_plan_fq_task",
+      "target": "claude_skills_plan_fq_task_skill_step_6_create_the_worktree_or_branch"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/plan-fq-task/SKILL.md",
+      "source_location": "L60",
+      "weight": 1.0,
+      "source": "claude_skills_plan_fq_task_skill_plan_fq_task",
+      "target": "claude_skills_plan_fq_task_skill_step_7_write_the_plan"
+    },
+    {
+      "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/promote-release/SKILL.md",
       "source_location": "L6",
@@ -223406,6 +223572,17 @@
     },
     {
       "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/start-fq-task/SKILL.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "claude_skills_start_fq_task_skill_claude_specific_additions",
+      "target": "claude_skills_start_fq_task_skill_step_1b_worktree_branch_setup_runs_before_step_2_in_the_workflow_doc"
+    },
+    {
+      "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/sync-main-from-prod/SKILL.md",
       "source_location": "L6",
@@ -223658,6 +223835,17 @@
       "target": "docs_workflow_terse_mode"
     },
     {
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "github_copilot_instructions",
+      "target": "docs_workflow_plan_task"
+    },
+    {
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -223667,6 +223855,17 @@
       "weight": 1.0,
       "source": "github_copilot_instructions_github_copilot_instructions",
       "target": "github_copilot_instructions_graphify"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "github_copilot_instructions_github_copilot_instructions",
+      "target": "github_copilot_instructions_critical_rules_for_copilot_chat_edits"
     },
     {
       "relation": "contains",
@@ -223722,6 +223921,17 @@
       "weight": 1.0,
       "source": "agents",
       "target": "docs_workflow_index"
+    },
+    {
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "agents",
+      "target": "gemini"
     },
     {
       "relation": "contains",
@@ -223799,6 +224009,17 @@
       "confidence_score": 1.0,
       "source": "agents_agents_md",
       "target": "agents_task_tracking"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "agents_agents_md",
+      "target": "agents_mandatory_workflow_no_exceptions_all_agents"
     },
     {
       "relation": "contains",
@@ -239499,6 +239720,17 @@
     },
     {
       "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "docs_workflow_plan_task",
+      "target": "gemini"
+    },
+    {
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/workflow/start-task.md",
@@ -240869,6 +241101,72 @@
       "weight": 1.0,
       "source": "claude_skills_impeccable_scripts_detector_engines_static_html_css_cascade_makestaticstyle_style",
       "target": "claude_skills_impeccable_scripts_detector_engines_static_html_css_cascade_makestaticstyle_style_getpropertyvalue"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "gemini",
+      "target": "gemini_gemini_md"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "gemini_1_mandatory_workflow_planning_mode_override",
+      "target": "gemini_antigravity_agy_invariants"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "gemini_2_progressive_disclosure_skills_activation",
+      "target": "gemini_antigravity_agy_invariants"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "gemini_3_workspace_boundary_git_branches",
+      "target": "gemini_antigravity_agy_invariants"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "gemini_4_mandatory_context_loading",
+      "target": "gemini_antigravity_agy_invariants"
+    },
+    {
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "GEMINI.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "gemini_antigravity_agy_invariants",
+      "target": "gemini_gemini_md"
     }
   ]
 }

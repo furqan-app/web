@@ -9,6 +9,7 @@ The workflows in `docs/workflow/` are exposed as Claude Code skills. Trigger the
 
 | Skill | Triggers |
 |---|---|
+| `/refine-fq-task` | "refine this", "break this down", "create issues for this" |
 | `/plan-fq-task` | "plan this", "investigate", starting any new task |
 | `/start-fq-task` | "implement", "build", "start the task" |
 | `/check-fq-standards` | run automatically by `/start-fq-task`; or "check standards", "check invariants" |
