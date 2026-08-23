@@ -17,7 +17,7 @@ import {
   versePagesUrl,
 } from "@constants/offline";
 import type { ClientToSwMessage, SwToClientMessage } from "@constants/offline";
-import { getMushafEdition } from "@utils/mushaf-editions";
+import { DEFAULT_MUSHAF_ID, getMushafEdition } from "@utils/mushaf-editions";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -71,6 +71,45 @@ const READER_HTML_CACHE_NAME = `${READER_HTML_CACHE_PREFIX}${hashString(JSON.str
 const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
 
+// ADR 0014 Addendum 6: a cache miss on a slow-but-alive connection must not
+// stall a cold launch for the full SSR document fetch — the catch handler only
+// fires on network error, never on slowness. The reader-page handler below is
+// therefore a four-row decision tree instead of a bare CacheFirst: cache hit →
+// serve; miss + bulk precache complete → serve the precached fallback shell
+// instantly, network untouched; miss otherwise → race the navigation-preloaded
+// fetch against this timeout, fallback wins → serve the shell while the fetch
+// continues in the background and is still cached under its real URL on
+// arrival. Slow 3G document loads take 5–20s; merely-meh 4G (~1s) should still
+// land real HTML, hence 3s and nothing lower.
+const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
+
+/**
+ * Memoized completeness probe for row 2 — runs ONLY on a reader-HTML cache
+ * miss, so one cold launch pays the ~604-entry `cache.keys()` walk at most
+ * once per worker lifetime. Reset when a bulk precache run completes, so a
+ * download finishing mid-session activates row 2 without waiting for the
+ * worker to restart.
+ */
+let defaultPrecacheCompletePromise: Promise<boolean> | undefined;
+
+function isDefaultPrecacheComplete(): Promise<boolean> {
+  if (!defaultPrecacheCompletePromise) {
+    defaultPrecacheCompletePromise = caches
+      .open(PAGES_CACHE_NAME)
+      .then((cache) => isCacheComplete(cache, DEFAULT_MUSHAF_ID))
+      .catch(() => false);
+  }
+  return defaultPrecacheCompletePromise;
+}
+
+async function serveReaderFallbackShell(url: URL) {
+  const locale =
+    FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
+    FALLBACK_LOCALES[0];
+  const cache = await caches.open(READER_HTML_CACHE_NAME);
+  return cache.match(fallbackDocumentUrl(locale));
+}
+
 const isPageFont = (url: URL) =>
   /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
@@ -117,10 +156,66 @@ const serwist = new Serwist({
     // later served back for a plain document request — the same failure shape
     // fix-rsc-cache-poisoning.md fixed at the CDN layer, relocated to this
     // layer (found in review before this shipped).
+    //
+    // The miss path is ADR 0014 Addendum 6's decision tree, not a bare
+    // CacheFirst — see READER_NAV_FALLBACK_TIMEOUT_MS above.
     {
       matcher: ({ url, request }) =>
         isSelfReaderPage(url) && request.mode === "navigate",
-      handler: new CacheFirst({ cacheName: READER_HTML_CACHE_NAME }),
+      handler: {
+        handle: async ({ event, request, url }) => {
+          const cache = await caches.open(READER_HTML_CACHE_NAME);
+          const cached = await cache.match(request);
+          if (cached) return cached;
+
+          // Row 2 — complete precache means every page renders client-side
+          // from cached JSON + font once the shell mounts (the pre-paint
+          // jumpTo self-correction, ADR 0042), so SSR HTML adds nothing but
+          // the network wait.
+          if (await isDefaultPrecacheComplete()) {
+            const shell = await serveReaderFallbackShell(url);
+            if (shell) return shell;
+            // No shell cached (e.g. install never completed online) — fall
+            // through to the network race below.
+          }
+
+          // Row 3 — race the network against the timeout. navigationPreload
+          // is enabled, so consume the preloaded response rather than issuing
+          // a duplicate document fetch. A rejection here propagates so the
+          // route-level catch handler still serves its fallback.
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const network = (async () => {
+            const fetchEvent = event as FetchEvent;
+            const preload =
+              "preloadResponse" in fetchEvent ? await fetchEvent.preloadResponse : undefined;
+            return preload ?? fetch(request);
+          })().then(async (response) => {
+            if (timer !== undefined) clearTimeout(timer);
+            // Late caching flows through here too when the timeout already
+            // won: the response lands under its real URL, making this page a
+            // cache-hit for every future launch.
+            if (response && response.ok) await cache.put(request, response.clone());
+            return response;
+          });
+
+          const timeout = new Promise<undefined>((resolve) => {
+            timer = setTimeout(() => resolve(undefined), READER_NAV_FALLBACK_TIMEOUT_MS);
+          });
+
+          const response = await Promise.race([network, timeout]);
+          if (response !== undefined) return response;
+
+          // Timer won. Serve the fallback shell; keep the background fetch
+          // alive (and swallow a late failure — we've already answered).
+          const shell = await serveReaderFallbackShell(url);
+          if (!shell) {
+            // Row 4 — nothing to fall back to; today's terminal behavior.
+            return network;
+          }
+          event.waitUntil(network.then(() => {}, () => {}));
+          return shell;
+        },
+      },
     },
     // Page fonts are genuinely immutable (Static Generation Strategy
     // decision) — once cached, never re-validated against the network.
@@ -410,6 +505,10 @@ async function precacheAllPages(mushafId: number) {
         new Request(precacheSentinelUrl(mushafId)),
         new Response("", { status: 200 }),
       );
+      // A row-2 probe memoized before this run finished is stale-negative —
+      // drop it so the next reader-page cache miss re-probes and activates
+      // the fast fallback path (ADR 0014 Addendum 6).
+      if (mushafId === DEFAULT_MUSHAF_ID) defaultPrecacheCompletePromise = undefined;
     }
     // Release the run BEFORE the awaited final report: a START arriving while
     // that postMessage was in flight used to be dropped silently, leaving a

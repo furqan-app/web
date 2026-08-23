@@ -587,3 +587,108 @@ manifest; see ADR 0014 Addendum 4's Implementation Note for why):
   is unreliable (false positives on captive portals) and doesn't cover slow-but-connected cases, which
   the catch handler already covers regardless of cause. A proactive online/offline banner remains
   possible future polish, not attempted here.
+
+---
+
+# Addendum 5 (2026-08-23): Fast reader-shell fallback on slow networks
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + full `build:local` production build verified; built
+`public/sw.js` inspected to confirm the compiled decision tree; not yet browser/throttle-verified —
+see Constraints)
+**Issue:** https://github.com/furqan-app/web/issues/376 (epic #375)
+**ADR:** [0014 Addendum 6](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+A cold launch of the installed PWA to an unvisited reader page (2–604) on a slow connection stalls for
+as long as the full SSR document fetch takes. The `isSelfReaderPage` handler is `CacheFirst`
+(Addendum 4): a cache miss falls through to a plain network fetch, and the `setCatchHandler` fallback
+only fires on a network *error* — a slow-but-alive link never errors, it just hangs. Meanwhile the
+consent-gated bulk download may have every page's JSON + font already in `PAGES_CACHE_NAME`, meaning
+the client could render the requested page immediately from the precached fallback shell via the
+existing pre-paint `jumpTo` self-correction (`ReaderPager.tsx` layout effect, ADR 0042).
+
+## Root Cause / Approach
+
+Replace the bare `CacheFirst` strategy object for `isSelfReaderPage && navigate` with a custom handler
+implementing the decision tree below. The cache-hit path is byte-for-byte today's behavior; only the
+miss path gains fast-fallback logic. The in-flight network fetch is never aborted — when it lands after
+a fallback was already served, its response is still written into `READER_HTML_CACHE_NAME` under the
+real URL, so that page becomes a row-1 instant hit on the next launch.
+
+The completeness probe reuses the SW's existing `isCacheComplete(cache, mushafId)` (sentinel +
+verse-pages map + 604-page count) over `PAGES_CACHE_NAME` for the default edition, memoized in SW
+memory so one cold launch pays the ~604-entry `cache.keys()` walk at most once per worker lifetime.
+It runs **only** on a cache miss — row 1 hits never touch it.
+
+## Decision Tree / Algorithm
+
+Every `isSelfReaderPage(url) && request.mode === "navigate"` request:
+
+| Row | Situation | Behavior |
+|---|---|---|
+| 1 | HTML in `READER_HTML_CACHE_NAME` | Serve cached response (unchanged CacheFirst) |
+| 2 | Miss + bulk precache complete (`isCacheComplete`, default edition) | Serve `fallbackDocumentUrl(locale)` from `READER_HTML_CACHE_NAME` immediately — network never touched |
+| 3 | Miss + no complete precache | Race the network fetch (prefer `event.preloadResponse`, navigation preload is enabled) against a 3s timer. Network first → cache & serve as today. Timer first → serve the fallback shell and keep the fetch running in the background; `cache.put` its response under the real URL when it arrives |
+| 4 | Fallback doc itself missing from cache | Fall through to network result or `Response.error()` — identical to today's terminal behavior |
+
+Navigation-preload note: with `navigationPreload: true` the browser has already started the document
+fetch when the SW wakes; row 3 must consume `handler.event.preloadResponse` rather than issuing a
+duplicate `fetch()`.
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-08-23:
+
+1. Cold launch, Slow 3G, precache complete, unvisited page → row 2: shell paints instantly, layout
+   effect jumps to the URL's page id before paint (ADR 0042), page renders from cached JSON + font.
+2. Cold launch, Slow 3G, no precache ever run, unvisited page → row 3: at most 3s wait, then shell →
+   loading spread until JSON/font arrive (or the unavailable-offline notice if truly dead).
+3. Fast connection, unvisited page → row 3 with network winning the race → real SSR HTML, cached,
+   indistinguishable from today.
+4. Visited page, offline or online → row 1, unchanged.
+5. Fully offline, unvisited page, no precache → fetch errors fast inside row 3 → fallback shell
+   (preserves today's catch-handler outcome for this case).
+6. Fresh install that has never been online, no fallback doc seeded → row 4: network/error as today.
+
+## Files to Change
+
+- `app/sw.ts` — replace the `new CacheFirst(...)` entry for `isSelfReaderPage` with a custom handler
+  implementing the tree; add SW-memory memoization of the completeness probe; extend the late-response
+  caching of row 3.
+- No changes to `app/constants/offline.ts`, `ReaderPager.tsx`, `launch.html`, or any client code — the
+  self-correction machinery (ADR 0042 layout effect) already exists and is load-bearing here.
+
+## Constraints
+
+- The `request.mode === "navigate"` matcher guard stays — dropping it lets RSC flight data into this
+  cache (Addendum 4, found in review).
+- `READER_HTML_CACHE_NAME` stays auto-versioned per deploy; the `activate` prefix cleanup stays.
+- Row 2's probe is scoped to the default edition's sentinel/keys — do not walk every registered
+  edition; the cold-launch path serves the default-edition shell regardless of which editions are
+  downloaded (the shell is per-locale, not per-edition).
+- The 3s timer must not hold the SW alive artificially beyond the backgrounded fetch it is racing —
+  the fetch continuation uses `event.waitUntil` semantics via Serwist's handler contract.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` with DevTools
+  throttling (Slow 3G/2G); Serwist is disabled in dev.
+
+## What NOT to Do
+
+- Do not bulk-precache SSR HTML for all 604 pages to solve this — reopens the ~1.5 GB rejection
+  (ADR 0028; ADR 0014 Addendum 6's What NOT to Do).
+- Do not make the row-2 fast path depend on anything newer than Addendum 1's independent tiny
+  fallback seed — but also do not confuse it with Addendum 3's constraint: the *fallback document*
+  must exist independently of the bulk download (it does, install-time seeded), while *skipping the
+  network* (row 2) legitimately requires the bulk download to be complete.
+- Do not abort the in-flight network fetch when the fallback wins the race (user decision 2026-08-23):
+  the late response is what converts future launches of that page into row-1 hits.
+- Do not lower the race timeout below ~3s (user decision 2026-08-23): merely-meh 4G connections should
+  still land real HTML; Slow 3G document loads take 5–20s and are exactly the case being fixed.
+
+## Decisions Made
+
+- Row 2 skips the network entirely when precache is complete (user confirmed 2026-08-23) — cached
+  JSON+font render beats racing for SSR HTML that adds nothing.
+- 3s race timeout (user confirmed 2026-08-23).
+- Late fetch finishes and caches (user confirmed 2026-08-23).
