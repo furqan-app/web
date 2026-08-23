@@ -11,7 +11,6 @@ import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
-import { Button } from "@/components/ui/button";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useSidebar } from "@/app/contexts/SidebarContext";
 import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
@@ -54,7 +53,10 @@ export const Nav = () => {
   return (
     <nav
       className={cn(
-        "relative z-10 text-foreground px-4 bg-background/75 backdrop-blur-md shadow-[0_8px_30px_-4px_rgba(0,0,0,0.25),0_2px_8px_rgba(0,0,0,0.08)]",
+        // fq-chrome-bar: opaque face, rim and cast from one rule in every
+        // theme. Replaces `bg-background/75 backdrop-blur-md` plus a hardcoded
+        // rgba shadow — glass over a (7,15,23) desk is a hole, not a bar.
+        "fq-chrome-bar relative z-10 text-foreground px-4",
         isOnPagesRoute && "fq-nav-overlay-page",
         isOnPagesRoute && overlayVisible && "fq-nav-visible",
       )}
@@ -62,13 +64,14 @@ export const Nav = () => {
     >
       <div className="relative h-14 flex items-center gap-2">
         <FurqanLogo className="order-1 shrink-0" />
+        <span className="hidden md:block h-4 w-px bg-border shrink-0 order-2 mx-1" aria-hidden="true" />
         {isOnPagesRoute && (
           <button
             type="button"
             onClick={() => setOpen(!open)}
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
-            className="fq-nav-tab fq-surah-toggle order-2 shrink-0 flex items-center justify-center gap-1.5 h-9 px-2.5 max-w-[8rem] md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:z-10 md:h-auto md:max-w-none md:gap-2 md:px-10 md:py-[0.3rem] cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="fq-nav-tab fq-focus-ring order-2 shrink-0 flex items-center justify-center gap-1.5 h-9 px-2.5 max-w-[8rem] md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:z-10 md:h-auto md:max-w-none md:gap-3 md:px-3 md:py-1 md:bg-transparent md:border-transparent md:shadow-none hover:opacity-85 cursor-pointer transition-opacity"
           >
             {currentSurah ? (
               <>
@@ -86,68 +89,95 @@ export const Nav = () => {
                     <ChevronDown className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
                   )}
                 </span>
-                {/* Desktop: text block (ornament-flanked name over Juz/Hizb)
-                    beside the chevron */}
-                <span className="hidden md:flex md:items-center md:gap-2">
-                  <span className="flex flex-col items-center gap-0.5">
+                {/* Desktop: drawn green ornaments flanking the surah name & metadata */}
+                <span className="hidden md:flex md:items-center md:gap-3">
+                  <span className="fq-nav-ornament" aria-hidden="true" />
+                  <span className="flex flex-col items-center gap-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="text-xs leading-none whitespace-nowrap">
-                        {isRTL ? currentSurah.name_arabic : currentSurah.name_simple}
-                      </span>
+                      {isRTL ? (
+                        <span
+                          className="font-surahnames text-[26px] leading-none whitespace-nowrap text-foreground"
+                          translate="no"
+                        >
+                          {String(currentSurah.id).padStart(3, "0")}
+                        </span>
+                      ) : (
+                        <span className="text-[17px] font-semibold leading-none whitespace-nowrap text-foreground">
+                          {currentSurah.name_simple}
+                        </span>
+                      )}
+                      {open ? (
+                        <ChevronUp className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                      ) : (
+                        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                      )}
                     </span>
                     {currentJuzHizb && (
-                      <span className="flex items-center gap-1 text-[10px] font-medium text-foreground/70 whitespace-nowrap">
+                      <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground tracking-[0.06em] whitespace-nowrap">
                         {t("juz", "Juz")} {toLocaleNumeral(currentJuzHizb.juz, locale)}
+                        {/* Identity, not state: juz/hizb is the page's own
+                            metadata — where you are — so the separator takes
+                            the warm accent. */}
                         <span className="text-primary" aria-hidden="true">•</span>
                         {t("hizb", "Hizb")} {toLocaleNumeral(currentJuzHizb.hizb, locale)}
                       </span>
                     )}
                   </span>
-                  {open ? (
-                    <ChevronUp className="size-2.5 shrink-0" strokeWidth={2} />
-                  ) : (
-                    <ChevronDown className="size-2.5 shrink-0" strokeWidth={2} />
-                  )}
+                  <span className="fq-nav-ornament fq-nav-ornament--flip" aria-hidden="true" />
                 </span>
               </>
             ) : (
-              <PanelLeftOpen className={cn("size-5", isRTL && "rotate-180")} strokeWidth={1.7} />
+              <PanelLeftOpen className={cn("size-4", isRTL && "rotate-180")} strokeWidth={1.8} />
             )}
           </button>
         )}
         <ContinueReadingLink className={cn("order-3 shrink-0", isOnPagesRoute && "hidden md:flex")} />
         <div className="order-5 flex-1 min-w-0" aria-hidden="true" />
-        <div className="order-10 shrink-0">
-          <UserMenu onOpenSettings={() => setSettingsOpen(true)} />
+
+        {/* The secondary cluster. Grouped in one recessed well so it reads as a
+            single dimmed group rather than three things that each look like
+            the main action — the lab's navbar is the reference. Below md the
+            well drops its border and fill (fq-chrome-well): its other members
+            have already relocated into the account menu, and a lone icon in a
+            pill outline is noise. */}
+        <div className="fq-well fq-chrome-well order-6 shrink-0">
+          <SearchBar />
+          {isDesktopUp && fullscreenEnabled && (
+            <button
+              type="button"
+              className="fq-chrome-btn fq-focus-ring hidden md:flex size-7"
+              onClick={toggleFullscreen}
+              aria-label={isFullscreen ? "Exit focus mode" : "Enter focus mode"}
+              aria-pressed={isFullscreen}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="size-4" strokeWidth={1.8} />
+              ) : (
+                <Maximize2 className="size-4" strokeWidth={1.8} />
+              )}
+            </button>
+          )}
+          <NotificationBell className="hidden md:flex" />
         </div>
-        <NotificationBell className="hidden md:flex order-9 shrink-0" />
-        <Button
-          variant="ghost"
-          size="icon"
+
+        <span className="hidden md:block h-4 w-px bg-border shrink-0 order-7 mx-1" aria-hidden="true" />
+
+        {/* The one live control on this surface, outside the well and warmer at
+            rest, so which icon actually opens something is legible without
+            hovering it. */}
+        <button
+          type="button"
           onClick={() => setSettingsOpen(true)}
           aria-label={t("settings", "Settings")}
-          className="hidden md:flex order-8 shrink-0"
+          className="fq-chrome-btn-live fq-focus-ring flex size-7 order-8 shrink-0"
         >
-          <Settings className="size-5" strokeWidth={1.7} />
-        </Button>
-        {isDesktopUp && fullscreenEnabled && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden md:flex order-7 shrink-0"
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? "Exit focus mode" : "Enter focus mode"}
-            aria-pressed={isFullscreen}
-          >
-            {isFullscreen ? (
-              <Minimize2 className="size-5" strokeWidth={1.7} />
-            ) : (
-              <Maximize2 className="size-5" strokeWidth={1.7} />
-            )}
-          </Button>
-        )}
-        <div className="order-6 shrink-0">
-          <SearchBar />
+          <Settings className="size-[18px]" strokeWidth={1.8} />
+        </button>
+
+        <span className="hidden md:block h-4 w-px bg-border shrink-0 order-9 mx-1" aria-hidden="true" />
+
+        <div className="order-10 shrink-0">
+          <UserMenu />
         </div>
       </div>
       <SettingsSidebar open={settingsOpen} onOpenChange={setSettingsOpen} />

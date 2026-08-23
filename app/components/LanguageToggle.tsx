@@ -1,41 +1,90 @@
 "use client";
 
-import { useLocale } from 'next-intl';
-import { useRouter, usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { useLocale } from "next-intl";
+import { useRouter, usePathname } from "@/i18n/routing";
+import { ChevronDown, Check } from "lucide-react";
+import useTranslations from "@hooks/use-translations";
+import { cn } from "@/lib/utils";
 
 const LANGUAGES = [
-  { code: 'ar', label: 'العربية' },
-  { code: 'en', label: 'English' },
+  { code: "ar", label: "العربية" },
+  { code: "en", label: "English" },
 ] as const;
 
 export const LanguageToggle = () => {
+  const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const currentLang = useLocale();
+  const t = useTranslations();
 
-  const switchTo = (lang: string) => {
+  const activeLabel = LANGUAGES.find((l) => l.code === currentLang)?.label ?? currentLang;
+
+  const switchTo = (lang: "ar" | "en") => {
+    setExpanded(false);
     if (lang === currentLang) return;
-    const newPath = pathname.replace(/^\/[a-z]{2}/, `/${lang}`);
-    router.push(newPath);
+    router.push(pathname, { locale: lang });
   };
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-background p-1">
-      {LANGUAGES.map(({ code, label }) => (
-        <button
-          key={code}
-          onClick={() => switchTo(code)}
+    <div>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+        className={cn(
+          "fq-section-row fq-focus-ring w-full text-start transition-colors",
+          expanded && "bg-muted/30",
+        )}
+      >
+        <div className="flex-1 min-w-0">
+          <span className="text-[13px] font-medium text-foreground leading-tight">
+            {t("language", "Language")}
+          </span>
+          <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
+            {activeLabel}
+          </p>
+        </div>
+        <ChevronDown
           className={cn(
-            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            currentLang === code
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            "size-3.5 flex-none text-muted-foreground transition-transform duration-200",
+            expanded && "rotate-180",
           )}
-        >
-          {label}
-        </button>
-      ))}
+          strokeWidth={1.8}
+        />
+      </button>
+
+      {expanded && (
+        <div className="fq-section-drawer">
+          {LANGUAGES.map(({ code, label }) => {
+            const isActive = currentLang === code;
+            return (
+              <button
+                key={code}
+                type="button"
+                onClick={() => switchTo(code)}
+                className="fq-section-drawer-row"
+              >
+                <span
+                  className={cn(
+                    "text-[12px] font-medium",
+                    isActive ? "font-semibold text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {label}
+                </span>
+                <span
+                  className="fq-radio-circle"
+                  data-state={isActive ? "checked" : "unchecked"}
+                >
+                  {isActive && <Check className="size-2.5 stroke-[3]" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

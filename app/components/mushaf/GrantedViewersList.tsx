@@ -74,7 +74,7 @@ export const GrantedViewersList = ({ grants, onRevoked }: Props) => {
                     <button
                       onClick={() => setConfirmId(null)}
                       disabled={isBusy}
-                      className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent active:scale-95 transition-[background-color,transform] duration-150"
+                      className="fq-focus-ring rounded-lg px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--control-inert))] transition-[background-color,color,transform] duration-150 hover:bg-[hsl(var(--well)/var(--well-alpha))] hover:text-destructive active:scale-95"
                     >
                       {t("mushaf.viewers.cancel", "Cancel")}
                     </button>

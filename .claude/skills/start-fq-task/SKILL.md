@@ -17,7 +17,14 @@ gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:todo" 
 ```
 One call — `@me` resolves to the authenticated `gh` account, no separate identity lookup needed.
 
-### Step 1b — Worktree setup (runs before step 2 in the workflow doc)
+### Step 1b — Worktree / Branch setup (runs before step 2 in the workflow doc)
+
+**In AGY / workspace-confined IDEs:**
+- Verify you are on the task branch: `git branch --show-current`
+- If not, switch to the task branch (`git checkout <type>/<issue-number>-<short-description>`).
+- `<abs>` is the repo root (`$(pwd)`). Skip worktree and external dev server port allocation; use normal local dev workflow (`npm run dev` on port 3000 if needed).
+
+**In Claude Code / CLI (external worktrees):**
 
 **Check for an existing worktree first:**
 - Run `git worktree list` and look for a path ending in `furqan-<slug>`

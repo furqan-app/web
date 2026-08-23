@@ -2,7 +2,14 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronsUpDown, Pause, Play, Settings as SettingsIcon, Square } from "lucide-react";
+import {
+  ChevronsUpDown,
+  CircleUserRound,
+  Pause,
+  Play,
+  Settings as SettingsIcon,
+  Square,
+} from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import useTranslations from "@/app/hooks/use-translations";
@@ -66,12 +73,12 @@ export const RecitationPlayerBar = () => {
   return (
     <div
       className={cn(
-        // Translucent glass everywhere (Correction Round — desktop included), and
-        // matching Nav exactly (same base token, same opacity, same blur, same
-        // border) so the two bars read as one consistent floating-chrome style.
-        // fq-recitation-bar: marker class so globals.css can target this bar's
-        // primary text specifically (dark-theme-only white override).
-        "fq-recitation-bar fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-background/75 backdrop-blur-md",
+        // Same opaque chrome treatment as Nav, from one rule — the two bars
+        // read as one surface because they ARE one surface definition.
+        // fq-chrome-bar-bottom moves the closing hairline to the edge that
+        // faces the page. fq-recitation-bar stays as a marker class for the
+        // rail transform below.
+        "fq-recitation-bar fq-chrome-bar fq-chrome-bar-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border/50",
         // Reader-only marker: at >=1367px and >=800px tall, globals.css turns the
         // bar into a vertical rail fixed to the screen-right. Off the reader route
         // there is no spread to anchor to, so the bar keeps its full-width form.
@@ -81,29 +88,68 @@ export const RecitationPlayerBar = () => {
       )}
       style={isOverlayMode ? { transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" } : undefined}
     >
+      {/* Three zones, mirroring the lab's rail: who is reciting, the transport,
+          and the tertiary utilities. In bar form the wrappers are
+          `display: contents`, so the flex row lays out exactly as it always
+          did; in rail form globals.css turns them into absolutely-positioned
+          zones pinned to the rail's top, true midpoint and foot. */}
       <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5">
-        <button
-          type="button"
-          aria-label={
-            isPlaying
-              ? t("recitation.pause", "Pause")
-              : isIdle
-                ? t("recitation.listen", "Listen")
-                : t("recitation.resume", "Resume")
-          }
-          aria-pressed={isPlaying}
-          onClick={handlePlayPause}
-          disabled={isLoading}
-          className="fq-icon-chip flex items-center justify-center w-9 h-9 rounded-full shrink-0 disabled:opacity-60"
-        >
-          {isLoading ? (
-            <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          ) : isPlaying ? (
-            <Pause className="size-4" strokeWidth={2} />
-          ) : (
-            <Play className="size-4" strokeWidth={2} />
-          )}
-        </button>
+        <div className="fq-rail-zone fq-rail-lead">
+          {isOnReaderRoute ? (
+            <ReciterCombobox
+              reciters={reciters}
+              value={settings.reciterId}
+              onChange={(id) => updateSettings({ reciterId: id })}
+              portalContainer={null}
+              contentClassName="w-64 p-0"
+              side="left"
+              trigger={({ open }) => (
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                  title={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                  className="fq-recitation-rail-reciter fq-recitation-lead-btn fq-focus-ring relative hidden items-center justify-center rounded-full"
+                >
+                  <CircleUserRound className="size-[18px]" strokeWidth={1.6} />
+                </button>
+              )}
+            />
+          ) : null}
+        </div>
+
+        <div className="fq-rail-zone fq-rail-transport">
+          <button
+            type="button"
+            data-state={
+              playbackError
+                ? "error"
+                : isLoading
+                  ? "loading"
+                  : isPlaying
+                    ? "playing"
+                    : "idle"
+            }
+            aria-label={
+              isPlaying
+                ? t("recitation.pause", "Pause")
+                : isIdle
+                  ? t("recitation.listen", "Listen")
+                  : t("recitation.resume", "Resume")
+            }
+            aria-pressed={isPlaying}
+            onClick={handlePlayPause}
+            disabled={isLoading}
+            className="fq-recitation-play fq-focus-ring relative flex items-center justify-center rounded-full shrink-0 disabled:opacity-60"
+          >
+            <span className="fq-recitation-play-ring" aria-hidden="true" />
+            {isPlaying ? (
+              <Pause className="size-4 md:size-[18px] fill-current" strokeWidth={1} />
+            ) : (
+              <Play className="size-4 md:size-[18px] fill-current translate-x-px" strokeWidth={1} />
+            )}
+          </button>
+        </div>
 
         <div className="fq-recitation-info min-w-0 flex-1">
           <ReciterCombobox
@@ -117,7 +163,7 @@ export const RecitationPlayerBar = () => {
               <button
                 type="button"
                 aria-expanded={open}
-                className="fq-recitation-reciter-name flex min-w-0 items-center gap-1 truncate text-sm font-medium text-foreground"
+                className="fq-recitation-reciter-name fq-focus-ring flex min-w-0 items-center gap-1 truncate rounded-md text-sm font-medium text-foreground"
               >
                 <span className="truncate">
                   {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
@@ -135,49 +181,29 @@ export const RecitationPlayerBar = () => {
           )}
         </div>
 
-        {isOnReaderRoute ? (
-          <ReciterCombobox
-            reciters={reciters}
-            value={settings.reciterId}
-            onChange={(id) => updateSettings({ reciterId: id })}
-            portalContainer={null}
-            contentClassName="w-64 p-0"
-            side="left"
-            trigger={({ open }) => (
-              <button
-                type="button"
-                aria-expanded={open}
-                aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                className="fq-recitation-rail-reciter hidden flex-col items-center gap-0.5 text-foreground"
-              >
-                <span className="fq-recitation-rail-reciter-name w-full truncate text-center text-[10px] font-medium leading-tight">
-                  {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                </span>
-                <ChevronsUpDown className="size-3 shrink-0 opacity-50" />
-              </button>
-            )}
-          />
-        ) : null}
-
-        <button
-          type="button"
-          aria-label={t("recitation.settingsTitle", "Recitation settings")}
-          onClick={() => openSettings()}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors shrink-0"
-        >
-          <SettingsIcon className="size-4" strokeWidth={1.8} />
-        </button>
-
-        {!isIdle ? (
+        <div className="fq-rail-zone fq-rail-utils">
           <button
             type="button"
-            aria-label={t("recitation.stop", "Stop")}
-            onClick={stop}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors shrink-0"
+            aria-label={t("recitation.settingsTitle", "Recitation settings")}
+            title={t("recitation.settingsTitle", "Recitation settings")}
+            onClick={() => openSettings()}
+            className="fq-chrome-btn fq-focus-ring size-8"
           >
-            <Square className="size-4" strokeWidth={1.8} />
+            <SettingsIcon className="size-4" strokeWidth={1.8} />
           </button>
-        ) : null}
+
+          {!isIdle ? (
+            <button
+              type="button"
+              aria-label={t("recitation.stop", "Stop")}
+              title={t("recitation.stop", "Stop")}
+              onClick={stop}
+              className="fq-chrome-btn fq-focus-ring size-8"
+            >
+              <Square className="size-4" strokeWidth={1.8} />
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

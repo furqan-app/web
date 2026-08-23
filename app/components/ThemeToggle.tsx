@@ -1,16 +1,11 @@
-'use client';
+"use client";
 
 import { useTheme } from "@hooks/use-theme";
-import { Moon, Sun, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import useTranslations from "@hooks/use-translations";
 
-const themes = [
-  { value: 'light', icon: Sun, labelKey: 'light', labelFallback: 'Light' },
-  { value: 'dark', icon: Moon, labelKey: 'dark', labelFallback: 'Dark' },
-  { value: 'gold', icon: Sparkles, labelKey: 'gold', labelFallback: 'Gold' },
-] as const;
+const THEME_OPTIONS = ["light", "gold", "dark"] as const;
 
 export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
@@ -22,24 +17,42 @@ export const ThemeToggle = () => {
   }, []);
 
   if (!mounted) {
-    return <div className="h-9" />;
+    return <div className="h-32" />;
   }
 
+  const themeLabels: Record<string, string> = {
+    light: t("light", "فاتح"),
+    gold: t("gold", "ذهبي"),
+    dark: t("dark", "داكن"),
+  };
+
   return (
-    <div className="flex gap-2">
-      {themes.map(({ value, icon: Icon, labelKey, labelFallback }) => (
-        <Button
-          key={value}
-          variant={theme === value ? "default" : "ghost"}
-          size="sm"
-          className="flex-1 gap-1.5"
-          onClick={() => setTheme(value)}
-          aria-pressed={theme === value}
-          aria-label={t(labelKey, labelFallback)}
+    <div
+      role="radiogroup"
+      aria-label={t("appearance", "المظهر")}
+      className="flex flex-col w-full"
+    >
+      {THEME_OPTIONS.map((option) => (
+        <button
+          key={option}
+          type="button"
+          role="radio"
+          aria-checked={theme === option}
+          onClick={() => setTheme(option)}
+          className="fq-theme-row fq-focus-ring"
         >
-          <Icon className="size-4" />
-          <span className="hidden sm:inline">{t(labelKey, labelFallback)}</span>
-        </Button>
+          <span
+            aria-hidden="true"
+            data-theme={option}
+            className="fq-theme-swatch"
+          />
+          <span className="min-w-0 flex-1 text-start text-[13px] font-medium text-foreground leading-tight">
+            {themeLabels[option]}
+          </span>
+          <span aria-hidden="true" className="fq-theme-check">
+            <Check className="size-3 stroke-[3]" />
+          </span>
+        </button>
       ))}
     </div>
   );

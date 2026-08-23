@@ -11,8 +11,9 @@ import { PlanAssignmentRow } from "./PlanAssignmentRow";
 import type { StreakResult } from "@/app/lib/plans/streak";
 import { cn } from "@/lib/utils";
 
-const CARD_SHADOW =
-  "shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)]";
+// Token, not a literal: the hardcoded rgba drew a real cast on light and
+// gold and nothing on dark, where --background is (7,15,23) (ADR 0032).
+const CARD_SHADOW = "fq-panel-cast";
 
 // A fixed 7-day streak view — unrelated to how many tracks are due today
 // (that count lives in the "N of M today" line above it). Labeled explicitly
