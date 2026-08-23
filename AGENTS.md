@@ -3,22 +3,33 @@
 Universal entry point for all AI coding agents working in this repository.
 
 > Claude Code: see `CLAUDE.md` for skill shortcuts and hooks.
+> Antigravity (AGY): see `GEMINI.md` and `.agents/skills/`.
 > GitHub Copilot: see `.github/copilot-instructions.md`.
+> Cursor: see `.cursorrules`.
 
-## MANDATORY WORKFLOW — NO EXCEPTIONS
+## MANDATORY WORKFLOW — NO EXCEPTIONS (ALL AGENTS)
 
-**NEVER edit or create any file without going through both steps in order:**
+**NEVER edit or create any app file without going through both steps in order:**
 
-1. **Plan** — investigate and produce a spec in `docs/plans/` → see [`docs/workflow/plan-task.md`](docs/workflow/plan-task.md)
+1. **Plan** — investigate and produce a spec in `docs/plans/<slug>.md` → see [`docs/workflow/plan-task.md`](docs/workflow/plan-task.md)
+   - Socratic inquiry: ask clarifying/adversarial questions **one at a time**.
+   - Do NOT jump straight to code edits or multi-file diffs.
+   - Wait for explicit user confirmation on the plan before writing code.
 2. **Implement** — implement from that plan → see [`docs/workflow/start-task.md`](docs/workflow/start-task.md)
+   - Load `docs/architecture/DECISIONS.md` and relevant standards before editing.
+   - Run `check-fq-standards` pre- and post-implementation.
 
 This applies to every change, no matter how small: one-liner fixes, font swaps, copy changes — everything. If you find yourself about to edit a file, stop and plan first.
+
+**Workspace vs. Worktree:**
+- If your environment supports external worktrees (Claude Code CLI), use `../furqan-<slug>`.
+- If your environment is workspace-confined (AGY, Copilot, Cursor, OpenCode), work on a local branch directly inside the repository (`git checkout -b <type>/<issue>-<slug>`).
 
 **This is not limited to file edits.** It applies equally to operational, data, and infrastructure actions: running scripts (seeders, scrapers, one-off Node scripts), seeding or mutating any database, `prisma db push` / migrations, importing SQL dumps, Docker/`compose` changes, and anything that touches the environment, containers, or running services. Plan first, every time.
 
 When in doubt, ask. Never act unilaterally. Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
 
-**Scope — AI tooling files are exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/` (excluding `docs/workflow/`), translation files, and config that affects the running app. Changes to AI agent tooling — `.claude/`, `docs/workflow/`, `AGENTS.md`, `.github/copilot-instructions.md` — are meta/infra and do not require the plan → implement flow. Still confirm with the user before making tooling changes.
+**Scope — AI tooling files are exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/` (excluding `docs/workflow/`), translation files, and config that affects the running app. Changes to AI agent tooling — `.claude/`, `.agents/`, `docs/workflow/`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules` — are meta/infra and do not require the plan → implement flow. Still confirm with the user before making tooling changes.
 
 ## Project
 
