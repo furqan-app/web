@@ -227,3 +227,31 @@ route-aware `setCatchHandler` fix shipped alongside it.
 **Consequence.** This narrows, but does not remove, ADR 0023's precache exclusion for the tajweed edition — see that ADR's Addendum 7. The `~99 MB` combined download if a user downloads both editions is accepted (product decision, not re-litigated here); no warning gate is added when a second edition is downloaded.
 
 **What NOT to do:** do not make the two editions share a completion sentinel, dismissed-flag, or `runId`/progress channel — each of those was sized for exactly one downloadable edition and silently cross-reports otherwise. Do not change the first-run gate or install-prompt to offer edition choice — they stay single-edition (the default), per Addendum 2.
+
+## Addendum 6 (2026-08-23): Fast reader-shell fallback on slow networks
+
+**Issue:** [#376](https://github.com/furqan-app/web/issues/376)
+
+**Context.** Addendum 4's `CacheFirst` for reader-page HTML only fast-paths cache *hits*. On a cache
+miss over a slow-but-alive connection, a cold launch to an unvisited page 2–604 stalls on the full SSR
+document fetch — the `setCatchHandler` fallback fires on network *error*, never on slowness. Yet when
+the consent-gated bulk download is complete, every page renders client-side from cached JSON + font;
+the SSR fetch adds nothing but delay.
+
+**Decision.** The reader-page navigation handler becomes a four-row decision tree instead of a bare
+`CacheFirst`: (1) cache hit → serve as before; (2) miss + bulk precache complete → serve the precached
+fallback shell immediately, network untouched, and let ADR 0042's pre-paint `jumpTo` self-correction
+land the requested page; (3) miss otherwise → race the navigation-preloaded fetch against 3s, serving
+the fallback shell if the timer wins while the fetch continues in the background and is still cached
+under its real URL on arrival; (4) no fallback doc at all → today's terminal behavior.
+
+**Trade-off accepted:** row 2 means users with a complete download stop receiving true SSR HTML on
+cold launches to unvisited pages — the shell + client render replaces it. This is deliberate: the
+rendered result is identical (same words, same fonts from the same immutable sources), and paint speed
+is bounded by local I/O rather than the network. Row 3's late-caching converts each fallback-then-fetch
+page into a row-1 hit for subsequent launches.
+
+**What NOT to do:** do not abort the background fetch when the fallback wins row 3 — it is what warms
+the cache. Do not bulk-precache page HTML to avoid the tree entirely (~1.5 GB, rejected since ADR
+0028). Do not drop the `request.mode === "navigate"` matcher guard or the per-deploy auto-versioned
+cache name — both remain load-bearing from Addendum 4.

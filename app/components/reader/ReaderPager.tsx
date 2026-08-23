@@ -306,6 +306,12 @@ export function ReaderPager({
       strip.style.transition = "none";
       flushSync(() => setAnchor(target));
       strip.style.transform = "translateX(-100%)";
+      // Deferred here rather than in the touch handler so `.fq-dragging` (ADR
+      // 0023 Addendum 8's hover-suppression gate) stays active through the
+      // whole commit-slide settle, not just until touch lifts — both the
+      // natural EXIT_MS timeout and an early settleInFlight takeover land in
+      // this function, so both are covered. See ADR 0023 Addendum 9.
+      strip.classList.remove("fq-dragging");
       isCommitting.current = false;
     },
     [basePath],
@@ -319,13 +325,19 @@ export function ReaderPager({
       // flight is meaningless — CANCEL it (do not settle it), or its timer would
       // fire 300ms later and overwrite the re-anchor, URL included.
       const pending = inFlight.current;
+      const strip = stripRef.current;
       if (pending) {
         inFlight.current = null;
         clearTimeout(pending.timer);
         isCommitting.current = false;
+        // Cancelling here means `commitTo` (the usual place `.fq-dragging` is
+        // removed on settle — ADR 0023 Addendum 9) never runs for this turn.
+        // Without this, a jumpTo landing mid-commit-slide (reachable from
+        // SurahListItem/RubList/ContinueReadingLink, or another edition
+        // switch) would leave the class stuck until some later swipe.
+        if (strip) strip.classList.remove("fq-dragging");
       }
       window.history.replaceState(null, "", `${basePath}/${target}`);
-      const strip = stripRef.current;
       if (strip) strip.style.transition = "none";
       setAnchor(target);
       if (strip) strip.style.transform = "translateX(-100%)";
@@ -553,6 +565,11 @@ export function ReaderPager({
     if (snapClearTimer.current) {
       clearTimeout(snapClearTimer.current);
       snapClearTimer.current = null;
+      // The cancelled snap-back's timer callback would have removed
+      // `.fq-dragging` on completion (ADR 0023 Addendum 9) — cancelling the
+      // timer alone would leave it stuck if this new touch never becomes a
+      // real drag (onTouchMove re-adds it, harmlessly, if it does).
+      if (stripRef.current) stripRef.current.classList.remove("fq-dragging");
     }
     if (stripRef.current) stripRef.current.style.transition = "none";
   };
@@ -573,6 +590,19 @@ export function ReaderPager({
     stripRef.current.style.transform = `translateX(calc(-100% + ${deltaX}px))`;
   };
 
+  // Shared by onTouchEnd's sub-threshold branch and onTouchCancel: animates the
+  // strip back to rest, then clears the transition and `.fq-dragging` (deferred
+  // to the snap-back's own completion, not release/cancel time — ADR 0023
+  // Addendum 9) once it finishes.
+  const startSnapBack = (strip: HTMLDivElement) => {
+    strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
+    strip.style.transform = "translateX(-100%)";
+    snapClearTimer.current = setTimeout(() => {
+      strip.style.transition = "";
+      strip.classList.remove("fq-dragging");
+    }, SNAP_BACK_MS);
+  };
+
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null || touchStartY.current === null) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
@@ -583,18 +613,16 @@ export function ReaderPager({
 
     const strip = stripRef.current;
     if (!strip) return;
-    strip.classList.remove("fq-dragging");
 
     if (Math.abs(deltaX) < COMMIT_THRESHOLD) {
-      strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
-      strip.style.transform = "translateX(-100%)";
-      snapClearTimer.current = setTimeout(() => {
-        strip.style.transition = "";
-      }, SNAP_BACK_MS);
+      startSnapBack(strip);
       return;
     }
 
     // Quran is always RTL: swipe right = next page, swipe left = previous.
+    // `.fq-dragging` removal deferred to `commitTo` (reached by both the
+    // natural EXIT_MS timeout and an early settleInFlight takeover) — see ADR
+    // 0023 Addendum 9.
     animateCommit(deltaX > 0);
   };
 
@@ -608,13 +636,12 @@ export function ReaderPager({
     const wasDragging = isDragging.current;
     isDragging.current = false;
     const strip = stripRef.current;
-    if (strip) strip.classList.remove("fq-dragging");
     if (wasDragging && !isCommitting.current && strip) {
-      strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
-      strip.style.transform = "translateX(-100%)";
-      snapClearTimer.current = setTimeout(() => {
-        strip.style.transition = "";
-      }, SNAP_BACK_MS);
+      startSnapBack(strip);
+    } else if (strip) {
+      // No snap-back will run (wasn't dragging, or a commit already claimed the
+      // strip) — nothing else will clear the class, so do it immediately.
+      strip.classList.remove("fq-dragging");
     }
   };
 

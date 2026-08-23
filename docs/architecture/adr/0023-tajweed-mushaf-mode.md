@@ -170,3 +170,57 @@ mid-swipe). See `docs/plans/fix-tajweed-swipe-flicker.md` for the implementation
 **What NOT to do:** do not re-investigate the font-prefetch-lookahead or CSS-insertion-recalc theories
 above — both were live-tested and disproven this session, not just reasoned about. Do not "fix" this by
 changing font-loading/prefetch code; the font is not the mechanism.
+
+## Addendum 9: Stylesheet churn, settle-window hover gap, and a touch-primary root guard
+
+**Date:** 2026-08-23
+**Issue:** [#374 stabilize tajweed stylesheet injection and extend swipe hover suppression](https://github.com/furqan-app/web/issues/374) (part of #371)
+
+Three separate, independently-scoped perf items — not a re-investigation of Addendum 8's flicker
+root cause, which stands as confirmed. Addendum 8's "not CSS `<style>`-insertion recalc cost" finding
+ruled out the insertion churn as *the flicker's driver* (equal-magnitude longtask cost with or without
+the mutation); it did not establish the churn itself as free. #371 scopes "stylesheet injection churn
+stabilization" as its own goal, separate from "extend swipe hover suppression" — both below.
+
+**1. `FontFaceInjector` stylesheet churn — and a pre-existing ADR 0029 violation found while
+implementing this.** Was: one `<style>` DOM element per LRU-kept page id, mounted/unmounted by React as
+the window shifts — believed safe per ADR 0029 ("sibling mounts don't re-parse existing sheets").
+**That belief was empirically false.** Live `document.fonts` status polling against the real running app
+across real page turns (not a synthetic test) showed every swipe reset **every already-loaded tajweed
+face doc-wide** to `unloaded`, not just the entering id's — the exact bug class ADR 0029 exists to
+prevent, present in production and undetected until this task's implementation phase. A shared
+`CSSStyleSheet` mutated via targeted `insertRule`/`deleteRule` was tried first and confirmed (same live
+method) to reset every face in the shared sheet on both insert *and* remove — worse, not better. The fix
+that shipped: one `CSSStyleSheet` **per** page id (never shared), each given its content once via
+`replaceSync()` at creation (safe — a brand-new sheet has no prior loaded face to reset), adopted via
+`document.adoptedStyleSheets.push()` as ids enter the LRU window. Confirmed live: zero resets across 22
+tracked families over 8 real swipes under the 24-id cap. Eviction past the cap still resets every other
+adopted sheet — matching the (undocumented) pre-existing behavior, not a regression, just not solved on
+that path. See ADR 0029's amendment for the corrected invariant record.
+
+**2. `.fq-dragging` removed before its animation settles.** `ReaderPager`'s touch handlers stripped
+`.fq-dragging` (the class gating off the Addendum-8 hover suppression) synchronously the instant touch
+lifted — before either the 300ms commit slide (`EXIT_MS`) or the 200ms sub-threshold snap-back
+(`SNAP_BACK_MS`) had actually finished animating the strip into place. A touch-primary browser's
+synthetic hover-on-tap could re-trigger the expensive filter during that still-animating window.
+**Decision:** removal now happens where each settle path actually completes — `commitTo` (reached by
+both the natural `EXIT_MS` timeout and `settleInFlight`'s early-takeover path) for the commit case, and
+the `snapClearTimer` callback for both the sub-threshold snap-back and the `onTouchCancel` snap-back —
+never eagerly in the touch handler itself.
+
+**3. No root-level touch guard existed.** `QuranWord.tsx`'s `hover:` utilities compile to a plain
+`:hover` selector — `tailwind.config.ts` has no `hover` variant override — so pure-touch devices had no
+guard against the filter/transform at all, drag-state-gating aside. **Decision:** a scoped
+`@media (hover: none) { .fq-qword:hover, .fq-ayah-end:hover { filter: none !important; transform: none
+!important; } }` rule in `globals.css`, next to the Addendum-8 `.fq-dragging` rule — not a global
+Tailwind `hover` variant redefinition, which would change hover behavior on every hoverable element
+app-wide including ones explicitly out of scope here. This is the primary guard for pure-touch devices;
+item 2 remains complementary defense-in-depth for hybrid devices (`hover: hover` true because a mouse is
+present, but the current interaction is a touch) where a real synthetic hover can still occur mid-settle.
+
+**What NOT to do:** do not share one `CSSStyleSheet` across multiple page ids for item 1, and do not
+call `replaceSync()` on a sheet that already backs a loaded face — both confirmed live to reset sibling
+ids' FontFace status; only a brand-new, never-yet-adopted sheet's own initial `replaceSync()` is safe. Do
+not redefine Tailwind's global `hover` variant for item 3 — scope the guard to `.fq-qword`/`.fq-ayah-end`
+in `globals.css` instead. Do not treat item 3 as a replacement for item 2 (or vice versa) — they cover
+different device classes. Do not trust ADR 0029's original Option B claim without the correction below.

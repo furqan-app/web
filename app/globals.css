@@ -1406,6 +1406,27 @@ body,
     transform: none !important;
   }
 
+  /* Root-level guard for pure-touch devices (ADR 0023 Addendum 9). The rule
+     above only neutralizes the hover filter while `.fq-dragging` is present —
+     a touch-primary browser's synthetic hover-on-tap can still trigger it
+     outside any drag window (e.g. a tap-and-hold that never crosses the drag
+     threshold). The project's own convention for gating a hover-only affordance
+     is `(hover: hover) and (pointer: fine)` (docs/../skills/ui-motion) — this is
+     that condition's negation (De Morgan's: NOT(hover:hover AND pointer:fine) =
+     hover:none OR pointer:coarse), so it also catches a device that can hover
+     but only coarsely, not just one that cannot hover at all. A hybrid device
+     with a mouse present (hover:hover AND pointer:fine) still keeps relying on
+     the rule above for its touch interactions. Not a global Tailwind `hover`
+     variant redefinition — scoped to the same two selectors as the drag rule,
+     so nothing outside QuranWord's hover cue is affected. */
+  @media (hover: none), (pointer: coarse) {
+    .fq-qword:hover,
+    .fq-ayah-end:hover {
+      filter: none !important;
+      transform: none !important;
+    }
+  }
+
   /* Reader height, anchored to the initial containing block (ADR 0044).
 
      In the installed PWA (`display: "fullscreen"`) Android launches non-immersive
