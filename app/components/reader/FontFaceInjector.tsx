@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { ensurePageFonts } from "@/app/utils/page-font-registry";
+import { MushafEdition } from "@/app/utils/mushaf-editions";
+import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
 
 type Props = {
   pageIds: number[];
@@ -70,7 +72,7 @@ export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
   const baseInjectedIdsKey = baseInjectedIds.join(",");
 
   useEffect(() => {
-    // Colour-glyph editions load via the keyed <style> path below instead —
+    // Colour-glyph editions load via the adopted-stylesheet path below instead —
     // registering them here too would download every page font twice.
     if (edition.usesColorGlyphs) return;
     ensurePageFonts(baseInjectedIds, edition);
@@ -78,25 +80,106 @@ export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseInjectedIdsKey, edition]);
 
-  // Shared tajweed-rule color overrides (indices 3–9). Frame slots 10–12 differ
-  // per theme to match each card background (Trello #113, ADR 0023 Addendum 13).
-  const RULE_OVERRIDES = "3 #E70D8A, 4 #BC7F22, 5 #C4A94D, 6 #029E48, 7 #067497, 8 #0FAEC1, 9 #E70D8A";
+  // One CSSStyleSheet per page id, adopted via `document.adoptedStyleSheets`
+  // instead of a mounted `<style>` DOM element (ADR 0023 Addendum 9). A brand
+  // new sheet's own `replaceSync` is safe — it has no prior CSS-connected
+  // FontFace to reset, unlike rewriting a sheet already backing loaded faces
+  // (ADR 0029). Persisted in a ref (not React state) because it tracks live
+  // platform objects (CSSStyleSheet instances adopted by the document), not
+  // renderable data.
+  //
+  // Keyed by page id alone, not id+edition — safe today because only one
+  // `usesColorGlyphs` edition exists (QCF V4 Tajweed). If a second colour-glyph
+  // edition is ever added, switching between the two would keep adopting a
+  // stale sheet for an id already present under the other edition's
+  // fontFamily/URL. Re-key by `${edition.id}:${id}` if that ever happens.
+  const sheetsRef = useRef<Map<number, CSSStyleSheet>>(new Map());
 
-  // Tajweed stays CSS — @font-palette-values has no FontFace-API equivalent —
-  // but as one keyed <style> per page id, content static after mount. React
-  // mounts/unmounts whole elements on LRU change and never rewrites a live
-  // sheet, so committing never resets a sibling page's tajweed face either.
-  // Only injected (and therefore only fetched) for a colour-glyph edition — the
-  // COLRv1 fonts are ~9-10x heavier than the base font. See ADR 0023.
-  if (!edition.usesColorGlyphs) return null;
+  // Drops every sheet this instance owns — shared by the edition-switch-away
+  // branch below and the unmount-only teardown effect, so the two don't drift.
+  const dropOwnedSheets = (sheets: Map<number, CSSStyleSheet>) => {
+    if (sheets.size === 0) return;
+    const owned = new Set(sheets.values());
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => !owned.has(s));
+    sheets.clear();
+  };
 
-  return (
-    <>
-      {injectedIds.map((id) => (
-        <style
-          key={id}
-          dangerouslySetInnerHTML={{
-            __html: `
+  // A layout effect, not a plain effect: the replaced `<style key={id}>` JSX
+  // registered its @font-face rule synchronously as part of React's own
+  // render/commit, available to `document.fonts.check()` as soon as hydration
+  // committed. A plain effect fires one tick later, after paint — widening the
+  // window where `QuranSafha`'s `fontReady` gate (ADR 0034) sees the font as
+  // not-yet-registered. The skeleton/hidden-text contract still covers that
+  // window safely either way, but a layout effect keeps the timing as close to
+  // the pre-existing behavior as possible rather than deliberately widening it.
+  useIsomorphicLayoutEffect(() => {
+    const sheets = sheetsRef.current;
+
+    if (!edition.usesColorGlyphs) {
+      // Edition switched away from a colour-glyph one — drop every sheet this
+      // instance owns rather than leaving stale tajweed @font-face rules adopted.
+      dropOwnedSheets(sheets);
+      return;
+    }
+
+    const keepSet = new Set(injectedIds);
+
+    // New ids only: adopting via `.push()` (not a shared sheet's insertRule, and
+    // not array reassignment) is confirmed NOT to reset any other adopted
+    // sheet's already-loaded FontFace — measured live via document.fonts status
+    // polling during implementation (see docs/plans/tajweed-stylesheet-hover-suppression.md).
+    const toAdopt: CSSStyleSheet[] = [];
+    for (const id of injectedIds) {
+      if (sheets.has(id)) continue;
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(buildTajweedRules(id, edition));
+      sheets.set(id, sheet);
+      toAdopt.push(sheet);
+    }
+    if (toAdopt.length > 0) {
+      document.adoptedStyleSheets.push(...toAdopt);
+    }
+
+    // Evicted ids (LRU past MAX_KEPT): removing an adopted sheet DOES still
+    // reset every other adopted sheet's FontFace to `unloaded` (measured — the
+    // same underlying reset the mounted-`<style>` design was believed, but not
+    // actually confirmed, to avoid; see ADR 0023 Addendum 9 / ADR 0029). This
+    // is therefore no worse than the pre-existing behavior, not a regression —
+    // it just no longer ALSO happens on every plain insertion, which today's
+    // `<style>`-per-id mount does unconditionally.
+    const evictIds: number[] = [];
+    const toEvict: CSSStyleSheet[] = [];
+    sheets.forEach((sheet, id) => {
+      if (keepSet.has(id)) return;
+      evictIds.push(id);
+      toEvict.push(sheet);
+    });
+    evictIds.forEach((id) => sheets.delete(id));
+    if (toEvict.length > 0) {
+      const evictSet = new Set(toEvict);
+      document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => !evictSet.has(s));
+    }
+  }, [injectedIds, edition]);
+
+  // Unmount-only teardown — separate from the sync effect above so its cleanup
+  // does not run (and incorrectly evict everything) on every ordinary id-list
+  // change, only when this FontFaceInjector instance itself unmounts.
+  useEffect(() => {
+    const sheets = sheetsRef.current;
+    return () => dropOwnedSheets(sheets);
+  }, []);
+
+  // Never renders DOM — tajweed rules are adopted imperatively above; the
+  // non-colour-glyph branch has nothing to render either.
+  return null;
+}
+
+// Shared tajweed-rule color overrides (indices 3–9). Frame slots 10–12 differ
+// per theme to match each card background (Trello #113, ADR 0023 Addendum 13).
+const RULE_OVERRIDES = "3 #E70D8A, 4 #BC7F22, 5 #C4A94D, 6 #029E48, 7 #067497, 8 #0FAEC1, 9 #E70D8A";
+
+function buildTajweedRules(id: number, edition: MushafEdition): string {
+  return `
 @font-face {
   font-family: '${edition.fontFamily(id)}';
   src: url('${edition.fontUrl(id)}') format('woff2');
@@ -116,10 +199,5 @@ export function FontFaceInjector({ pageIds, baseFontIds }: Props) {
   font-family: '${edition.fontFamily(id)}';
   base-palette: 2;
   override-colors: ${RULE_OVERRIDES}, 10 #faf9f4, 11 #faf9f4, 12 #faf9f4;
-}`,
-          }}
-        />
-      ))}
-    </>
-  );
+}`;
 }

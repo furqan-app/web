@@ -29,8 +29,9 @@ export type MushafEdition = {
   linesPerPage: number;
   /**
    * COLRv1 color-glyph fonts need CSS `@font-palette-values` (no FontFace-API
-   * equivalent), so they take the keyed-`<style>` path in FontFaceInjector
-   * instead of the immutable FontFace registry. See ADR 0029 and ADR 0023.
+   * equivalent), so they take the adopted-`CSSStyleSheet` path in
+   * FontFaceInjector instead of the immutable FontFace registry. See ADR 0029
+   * and ADR 0023.
    */
   usesColorGlyphs: boolean;
   /**

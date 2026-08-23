@@ -2,7 +2,7 @@
 
 **Type:** bug
 **Date:** 2026-07-07
-**Status:** implemented
+**Status:** implemented (Addendum 12)
 **Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf
 **Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread
 **Trello #133:** https://trello.com/c/eFWXR9ca — surah name frame, full text width (Addendum 8)
@@ -646,4 +646,108 @@ No change to: the gap-detection algorithm, `RenderItem[]`, `QuranLine.tsx`, `Sur
 
 - Frame width is measured from real rendered `.fq-safha-row` elements at runtime, not computed from any fixed ratio constant. `QURAN_MAX_LINE_WIDTH_RATIO` survives only as the SSR fallback.
 - Frame clearance (both sides) is bought by an explicit `marginTop`, independent of width — not by shrinking the art, and not by relying on ink overflow eating into the ambient `--fq-line-gap`.
+
+## Addendum 12 — Hide the banner until its own width is measured (Issue #373)
+
+**Date:** 2026-08-23
+**Issue:** [#373](https://github.com/furqan-app/web/issues/373) (part of #371)
+
+### Problem
+
+Confirmed via a headless Playwright trace (real compositing — the in-app preview browsers available
+during planning don't reliably composite frames, see the plan's investigation notes): on a page
+revisit, `.fq-surah-frame`'s `width` was written twice while fully visible — `224.25px`, then
+`364px` 38ms later — a visible ~140px snap. This happens after the container (`.fq-quran-safha`)
+becomes visible (`fontReady` true) but before `SurahBannerLine`'s own `lineWidth` measurement has
+settled.
+
+### Root cause
+
+Addendum 11 established that `document.fonts` can report ready before Chromium/WebKit commit the new
+glyph metrics to layout — `SurahBannerLine`'s effect already accounts for this with a double-
+`requestAnimationFrame` plus a 150ms fallback timer. But the banner's *visibility* was never gated on
+that same measurement completing — it inherits visibility purely from the parent container's
+`fontReady` state. So whenever the container reveals before the frame's own measurement lands (the
+lag Addendum 11 already proved exists), the frame paints at its stale/fallback width first and snaps
+once the delayed measurement corrects it — visibly, because the container is already showing it.
+
+### Fix
+
+`SurahBannerLine` gates its own visibility on a new local `measured` boolean, independent of the
+parent's `fontReady`. **The first implementation attempt flipped `measured` inside the shared
+`measure()` function** — called from every trigger (the immediate call, `ResizeObserver`,
+`document.fonts.ready`) — and a live Playwright trace showed the jump was still fully reproducible:
+the untrusted immediate/`ResizeObserver` call can itself return a stale width and reveal on it, before
+the later "actually reliable" correction lands. The fix separates the two concerns: `measure()` still
+updates `lineWidth` from every trigger (for genuine post-reveal resize tracking), but only a `reveal()`
+wrapper — called exclusively from the double-RAF callback and the 150ms fallback timer, the two points
+the existing code comments already call "the first reliable point to read the final row boxes" —
+flips `measured`:
+
+```
+const measure = () => { /* updates lineWidth only, from every trigger */ };
+const reveal = () => { measure(); setMeasured(true); };
+// wired to: requestAnimationFrame(() => requestAnimationFrame(reveal))
+//       and: window.setTimeout(reveal, 150)
+```
+
+`measured` resets to `false` at the top of the effect (defensive — in practice a mounted instance's
+`fontReady` prop only ever transitions false→true once, never back, since a loaded font stays loaded
+for the component's lifetime; see the `fontReady` addendum in `fix-safha-swipe-flicker.md`). The
+outer div's `visibility` becomes `measured ? "visible" : "hidden"`, independent of the container's
+own visibility.
+
+**Trade-off, confirmed with the user:** the banner now reveals 1-2 frames after the rest of the
+page's text on *every* surah-opening page load, not just the cached-revisit case this issue reports —
+branching the gate to apply only on remounts was considered and rejected as unnecessary complexity
+for a barely-perceptible delay.
+
+### Verified Test Cases
+
+Confirmed with a headless Playwright trace (`MutationObserver` on `.fq-surah-frame`/`.fq-quran-safha`
+style attributes, real compositing):
+
+1. **Cold load** (fresh hard navigation to a surah-opening tajweed page): frame starts
+   `visibility:hidden` at the SSR fallback width (`calc(14.42 * var(--fq-safha-font))`), settles ~2s
+   later to `visibility:visible` at the real measured width (`364px` in the trace) — never observed
+   visible at the wrong width.
+2. **Cached revisit** (page revisited after leaving the pager's live window, font/content already
+   warm): frame's style attribute was written twice — `width: 224.25px` while still `hidden`, then
+   `width: 364px` when it flipped `visible` — the reveal always carried the final width, no jump.
+   **This is the exact case that exposed a flaw in the first implementation attempt**: an earlier
+   version flipped `measured` from the untrusted `measure()` calls (immediate/ResizeObserver/
+   `fonts.ready`) and the SAME trace showed `width: 224.25px` revealed as `visible`, then silently
+   corrected to `364px` — confirming the fix must gate on the double-RAF/150ms "trusted" callbacks
+   specifically, not on any successful measurement.
+3. Pages 1-2 (fixed-template banner slot): same component, same gate — no special-casing needed
+   (not independently re-traced; identical code path to case 1/2 above).
+
+### Files to Change
+
+- `app/components/QuranSafha.tsx` — `SurahBannerLine`: add `measured` state, set alongside
+  `lineWidth` in `measure()`, gate the outer div's `visibility` on it.
+- `docs/architecture/DECISIONS.md` — add a bullet to the Surah Banner Placement decision: the frame's
+  reveal is gated on its own measurement completing, independent of the container's `fontReady`.
+
+### Constraints
+
+- `measured` must be set in the *same* `measure()` call as `lineWidth` — never gate visibility on
+  `lineWidth != null` directly, since `lineWidth`'s SSR/first-paint fallback value
+  (`QURAN_MAX_LINE_WIDTH_RATIO`) is never `null`, which would make the gate a no-op.
+- Keep the existing double-RAF + 150ms fallback timer — this addendum changes what the measurement's
+  success *reveals*, not how the measurement itself is obtained.
+
+### What NOT to Do
+
+- Do not gate the banner's visibility on the container's `fontReady` alone (today's behavior) —
+  that's exactly what allows the container to reveal before the banner's own measurement lands,
+  which is the jump this addendum fixes.
+- Do not special-case cold-load vs. revisit paths for this gate — confirmed with the user that a
+  small, consistent reveal lag on every load is preferable to the added branching.
+
+### Decisions Made
+
+- The surah banner's visibility is decoupled from the container's `fontReady` and gated on its own
+  `measured` flag instead — the container can reveal its text before the banner is ready without
+  producing a visible banner-width jump.
 - The frame's clearance budget must account for the line *above* as well as the line below — the bismillah-only check in Addendum 8 was incomplete, not wrong.
