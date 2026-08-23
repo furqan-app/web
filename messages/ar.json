@@ -1,12 +1,25 @@
 {
   "home": {
     "title": "الفرقان",
+    "overline": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
     "tagline": "كلُّ كلمة أمانة، وكلُّ آية رحلة — علِّق وتأمَّل وأتقن حفظك للقرآن الكريم، خطوةً بخطوة بجانب شيخك.",
-    "description": "اقرأ واستمع إلى القرآن"
+    "description": "اقرأ واستمع إلى القرآن",
+    "recommendedSurahs": "السور الموصى بها",
+    "continueReading": "تابع القراءة",
+    "resumeReading": "متابعة التلاوة"
+  },
+  "revelation": {
+    "makkah": "مكية",
+    "madinah": "مدنية"
   },
   "search": {
     "placeholder": "ابحث عن السورة بالاسم أو الرقم",
-    "description": "ابحث عن سورة أو آية بالاسم أو الرقم."
+    "description": "ابحث عن سورة أو آية بالاسم أو الرقم.",
+    "idleTitle": "ابحث في القرآن",
+    "idleHint": "اكتب اسم سورة أو رقم آية أو عبارة.",
+    "loading": "جارٍ البحث…",
+    "noResults": "لا توجد نتائج",
+    "noResultsHint": "جرّب كتابة مختلفة، أو ابحث برقم السورة."
   },
   "sidebar": {
     "title": "التنقل في القرآن",
@@ -140,6 +153,7 @@
     "pageTitle": "علاماتي",
     "signedOut": "سجّل الدخول لرؤية علاماتك.",
     "empty": "لا توجد علامات بعد.",
+    "emptyHint": "علّم كلمة أو آية أثناء القراءة وستظهر هنا.",
     "emptyCategory": "لا توجد علامات في هذا التصنيف بعد.",
     "allLabel": "الكل",
     "filterLabel": "تصفية العلامات"
@@ -190,6 +204,7 @@
     "pageTitle": "الأوراد وخطط التعلم",
     "signedOut": "سجّل الدخول لرؤية أورادك اليومية وخطط التعلم.",
     "empty": "لا توجد خطط بعد — اشترك في إحداها بالأسفل.",
+    "emptyHint": "تمنحك الخطة ورداً يومياً للقراءة أو الاستماع أو الحفظ.",
     "nothingToday": "لا يوجد شيء مستحق اليوم.",
     "checkOff": "وضع علامة إتمام",
     "undoCheckOff": "التراجع عن علامة الإتمام",
@@ -347,7 +362,8 @@
     "settings": {
       "title": "الإشعارات",
       "enablePush": "إشعارات الدفع",
-      "enablePushDescription": "احصل على إشعارات بالتذكيرات والتحديثات على هذا الجهاز"
+      "enablePushDescription": "احصل على إشعارات بالتذكيرات والتحديثات على هذا الجهاز",
+      "enablePushDenied": "محظورة من المتصفح — اسمح بالإشعارات في إعدادات الموقع لتفعيلها."
     },
     "types": {
       "plansDailyReminder": {
@@ -359,5 +375,58 @@
         "body": "هذا إشعار تجريبي."
       }
     }
+  },
+  "readerLab": {
+    "title": "فرقان",
+    "badge": "مختبر القراءة",
+    "viewportTooShort": "الشاشة قصيرة جداً لعرض صفحة المصحف — أدر الجهاز أو كبّر النافذة",
+    "searchTooltip": "البحث (عرض تجريبي)",
+    "bookmarkTooltip": "العلامات المرجعية (عرض تجريبي)",
+    "notificationsTooltip": "الإشعارات (عرض تجريبي)",
+    "settingsTooltip": "الإعدادات",
+    "settingsTitle": "الإعدادات",
+    "settingsDescription": "خيارات التخصيص والمظهر للمختبر التجريبي",
+    "recitationTooltip": "التلاوة",
+    "recitationIdle": "متوقف",
+    "recitationPlaying": "قيد التشغيل",
+    "recitationPaused": "مؤقت",
+    "recitationLoading": "جارٍ التحميل",
+    "recitationError": "خطأ في التشغيل",
+    "reciterDefault": "القارئ الحالي",
+    "prevVerse": "الآية السابقة",
+    "nextVerse": "الآية التالية",
+    "play": "تشغيل",
+    "pause": "إيقاف مؤقت",
+    "repeat": "تكرار التلاوة",
+    "favorite": "إضافة إلى المفضلة",
+    "volume": "مستوى الصوت",
+    "queue": "قائمة التلاوة",
+    "audioTuning": "ضبط الصوت",
+    "inertNotice": "هذا الخيار للعرض التجريبي فقط",
+    "appearanceLiveNote": "هذا الخيار الوحيد الفعّال في اللوحة، ولا يُحفظ تفضيلك.",
+    "categoryLanguage": "العربية (الافتراضية)",
+    "categoryFontSize": "متوسط (٢٨)",
+    "categoryPageView": "صفحتان متقابلتان",
+    "categoryAppearance": "داكن",
+    "categoryMushafLayout": "مصحف مجمع الملك فهد (طبعة ١٤٠٥هـ)",
+    "categoryKeepScreenAwake": "مفعل تلقائياً",
+    "categoryNotifications": "غير مفعلة",
+    "categoryOfflineRecitation": "جاهز للاستماع",
+    "metadataPlaceholder": "بيانات الصفحة…",
+    "presentationOnly": "لوحة عرض: كل خيار هنا يُظهر حالته الحالية فقط، ولا يغيّر شيئاً في التطبيق.",
+    "sectionReading": "القراءة",
+    "sectionDevice": "الجهاز والتلاوة",
+    "stateLocked": "مثبت",
+    "stateLive": "فعّال",
+    "stateOnline": "عبر الإنترنت",
+    "close": "إغلاق"
+  },
+  "settingsSectionReading": "القراءة",
+  "settingsSectionAppearance": "المظهر",
+  "settingsSectionDevice": "الجهاز والتلاوة",
+  "fontSize": {
+    "small": "صغير (٢٦)",
+    "medium": "متوسط (٢٨)",
+    "large": "كبير (٣٠)"
   }
 }

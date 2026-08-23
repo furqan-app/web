@@ -52,6 +52,8 @@ The `tailwindcss-animate` plugin (`animate-in`, `fade-in-0`, `zoom-in-95`, `slid
 
 Themes are named CSS classes on `<html>` (e.g. `.theme-light`, `.theme-dark`), each defining the full shadcn token set. Apply `.dark` alongside any dark-variant theme class to activate `dark:` utilities.
 
+**There are three theme blocks, not four.** `.theme-dark.dark` used to duplicate `.theme-dark` and was removed in subtask 2.1: it was byte-identical across all 51 tokens, and it could never match without `.theme-dark` matching too, since the theme hook and the pre-paint script always add `dark` and `theme-dark` together. It resolved to nothing while doubling the cost of every token edit. `.dark` itself is untouched — Tailwind's `dark:` variant still keys off it.
+
 ### Token contract
 
 Every theme class must define all of these CSS custom properties:
@@ -66,13 +68,35 @@ Every theme class must define all of these CSS custom properties:
 --accent, --accent-foreground
 --destructive, --destructive-foreground
 --border, --input, --ring, --radius
---gold, --gold-muted, --overlay
+--overlay
+--warning, --warning-foreground
 ```
 
-`--gold`/`--gold-muted` mark Mushaf-identity elements only (never interactive ones —
-`--primary`/`--accent` cover interaction); themes without a distinct gold identity should
-alias them to their own `--accent-foreground`/`--accent` rather than inventing a new hue. See
-[ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md). `--overlay` is the
+`--warning` was added in subtask 4.4. The accent may not carry "something is wrong", and `--destructive` is too strong for a recoverable notice, so warning is its own pair. It replaced the last raw `amber-*` utilities in the app, which came with a `dark:` variant — a per-theme fork of one rule. Measured 5.35 / 5.50 / 8.43 against a `bg-warning/10` surface on light / gold / dark.
+
+### Design-language families
+
+Four roles the shadcn set has no name for (ADR 0047, subtask 2.1). Same contract — **every theme defines every one**:
+
+```
+atmosphere   --lamp, --lamp-core, --lamp-mid, --lamp-extent, --lamp-origin
+             --vignette, --vignette-alpha
+control      --chrome, --chrome-base, --well, --well-alpha
+             --control-inert, --control-live
+elevation    --surface-cast, --surface-rim, --surface-rim-alpha, --panel-cast
+identity     --medallion-face, --medallion-edge, --medallion-rim, --medallion-ink
+```
+
+These carry **values only** — never a gradient or a shadow rule. The rules that read them are declared once, theme-agnostically, and live in `design-language.md`. A screen opts in by consuming a token; until it does, these are inert and change nothing.
+
+Two things about them are counter-intuitive and are the whole reason they are tokens:
+
+- **`--chrome` sits above the desk in light themes and below it in dark.** "Raised" means raised relative to its own medium, so a recessed `--well` is *lighter* than its bar on dark and *darker* on light. Read the rule, not the direction.
+- **`--lamp`'s carrier channel differs per theme** — lightness on dark and gold, temperature on light, decided by measuring each medium's headroom. `--lamp-extent` is per-theme for the same reason. Values derived for one theme measure zero in another; never port them.
+
+**Unified Accent System (Emerald Green).** All accents, category overlines, manuscript ornaments, identity marks, and live controls are unified to emerald green (`--primary` and semantic green scales) across all three themes (Light, Gold, Dark), eliminating legacy gold tokens (`--gold`, `--gold-muted`). Mushaf ornaments and page metadata consume `--mushaf-ornament` and `--mushaf-metadata` (rich emerald tones per theme). See [DECISIONS.md](../architecture/DECISIONS.md#L1016) (2026-08-22) and `docs/plans/unify-accents-gold-to-green.md`.
+
+`--overlay` is the
 modal/drawer scrim color, consumed as `bg-overlay/80` — an HSL triplet (no baked-in alpha) so
 the Tailwind opacity-slash syntax works, same as every other token here.
 
@@ -83,9 +107,15 @@ only values. A missing token there does not fall back to something sensible; it 
 theme's page. Do not reintroduce a theme-scoped copy of a depth rule to serve one theme; add or
 retune that theme's tokens instead.
 
-**The page face carries no added light in any theme.** It is a flat `--mushaf-paper` fill; depth
-comes from the page's edges only — rim, sheet stack, binding crease, and a cast shadow where there
-is a desk to catch it. Shading (a darkening pass) is allowed; lighting the face is not.
+~~**The page face carries no added light in any theme.**~~ **Superseded by [ADR 0047](../architecture/adr/0047-adopt-reader-lab-design-language.md), subtask 5.1b.** The face now carries a
+pool, declared once theme-agnostically and valued per theme: dark's paper has upward headroom and
+takes a real lit pass, while light's (L=99) and gold's (L=96) have none, so on those the pool is
+carried entirely by its **shading** half — the lamp expressed as the absence of shade. Edge depth
+(rim, sheet stack, binding crease, cast) is unchanged and still does most of the work.
+
+The pool belongs to the **spread**, not to a page: each card anchors the same ellipse to its own
+seam edge so the halves join at the gutter, and only where two facing pages are actually on screen.
+A lone page keeps the centred default.
 
 Values still differ where the medium differs. `--reader-chrome-shadow` and `--mushaf-page-cast` are
 `none`/transparent in dark, because on a `(7,15,23)` background a shadow produces no visible pixels,

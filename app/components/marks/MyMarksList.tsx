@@ -83,13 +83,34 @@ const groupBySurah = (items: Array<MarkListItem>): Array<SurahGroup> => {
   return groups;
 };
 
+// Skeleton mirrors the real row's shape inside one group surface, so the
+// loading state does not restructure the page the moment data lands.
 const MarkRowSkeleton = () => (
-  <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 animate-pulse">
+  <div className="fq-section-row animate-pulse">
     <span className="size-6 rounded-md bg-muted flex-none" />
     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
       <div className="h-3 w-24 rounded bg-muted" />
       <div className="h-4 w-40 rounded bg-muted" />
     </div>
+  </div>
+);
+
+// Empty states are designed here rather than left as a bare centred sentence —
+// the language spec never covered them, and a list screen is where they are
+// most often seen.
+const MarksEmptyState = ({
+  title,
+  hint,
+}: {
+  title: string;
+  hint?: string;
+}) => (
+  <div className="fq-section-group flex flex-col items-center gap-3 px-6 py-14 text-center">
+    <span className="fq-well grid size-12 place-items-center rounded-2xl text-[hsl(var(--control-inert))]">
+      <Bookmark className="size-6" strokeWidth={1.6} />
+    </span>
+    <p className="text-sm font-medium text-foreground">{title}</p>
+    {hint ? <p className="max-w-xs text-xs text-muted-foreground">{hint}</p> : null}
   </div>
 );
 
@@ -159,7 +180,7 @@ export const MyMarksList = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="fq-section-group">
         <MarkRowSkeleton />
         <MarkRowSkeleton />
         <MarkRowSkeleton />
@@ -179,9 +200,13 @@ export const MyMarksList = () => {
   // strip entirely, same as before pagination.
   if (active === "all" && exhausted) {
     return (
-      <p className="text-center text-sm text-muted-foreground py-12">
-        {t("marks.empty", "No marks yet.")}
-      </p>
+      <MarksEmptyState
+        title={t("marks.empty", "No marks yet.")}
+        hint={t(
+          "marks.emptyHint",
+          "Mark a word or a verse while reading and it will appear here.",
+        )}
+      />
     );
   }
 
@@ -194,7 +219,7 @@ export const MyMarksList = () => {
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={t("marks.filterLabel", "Filter marks")}
-            className="w-full flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="fq-focus-ring w-full flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground"
           >
             <span className="flex items-center gap-2">
               <FilterDot chip={activeFilter.chip} />
@@ -232,11 +257,14 @@ export const MyMarksList = () => {
             <button
               key={f.key}
               onClick={() => setActive(f.key)}
+              // Selected IS live state, so --primary is right here. The inert
+              // ones sit at the well's recessed value rather than --muted, so
+              // one filter reads as chosen and the rest read as one group.
               className={cn(
-                "flex flex-none items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors",
+                "fq-focus-ring flex flex-none items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors",
                 isActive
                   ? "bg-primary/10 text-primary border-primary/30"
-                  : "bg-muted text-muted-foreground border-transparent hover:bg-accent"
+                  : "border-transparent bg-[hsl(var(--well)/var(--well-alpha))] text-[hsl(var(--control-inert))] hover:text-[hsl(var(--control-live))]"
               )}
             >
               <FilterDot chip={f.chip} />
@@ -247,18 +275,23 @@ export const MyMarksList = () => {
       </div>
 
       {exhausted ? (
-        <p className="text-center text-sm text-muted-foreground py-8">
-          {t("marks.emptyCategory", "No marks in this category yet.")}
-        </p>
+        <MarksEmptyState
+          title={t("marks.emptyCategory", "No marks in this category yet.")}
+        />
       ) : (
-        <div className="flex flex-col gap-2">
+        // One surface per surah with hairline-separated rows, not a stack of
+        // identical floating cards — N cards is N competing objects, and it is
+        // what made this inventory unscannable.
+        <div className="flex flex-col gap-4">
           {groupBySurah(activeItems).map((group) => (
-            <div key={group.chapterNameSimple} className="flex flex-col gap-2">
+            <div key={group.chapterNameSimple} className="fq-section-group fq-section-group-open">
               <div
                 dir={locale === "ar" ? "rtl" : "ltr"}
-                className="sticky top-0 z-10 px-4 py-2 bg-muted border-y border-border"
+                className="fq-section-heading px-4 py-2"
               >
-                <span className="text-sm font-bold text-primary">
+                {/* Which surah you are looking at is identity — where you are —
+                    so it takes the warm accent, not --primary. */}
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
                   {locale === "ar" ? group.chapterNameArabic : group.chapterNameSimple}
                 </span>
               </div>
@@ -271,12 +304,12 @@ export const MyMarksList = () => {
                 return (
                   <div
                     key={key}
-                    className="w-full flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:bg-accent/50 transition-colors"
+                    className="fq-section-row items-start transition-colors hover:bg-[hsl(var(--well)/var(--well-alpha))]"
                   >
                     <Link
                       href={`/pages/${mark.page_number}`}
                       locale={locale}
-                      className="flex items-center gap-3 flex-1 min-w-0"
+                      className="fq-focus-ring-inset flex items-center gap-3 flex-1 min-w-0 rounded-md"
                     >
                       <span
                         className={cn(
@@ -308,11 +341,15 @@ export const MyMarksList = () => {
                           {mark.snippet}
                         </div>
                         {mark.comment ? (
+                          // A comment is content, not live state. It carried
+                          // --primary on its border, fill and icon, which put
+                          // the state accent on every row that happened to
+                          // have a note. Hairline and a muted tone instead.
                           <div
                             dir="auto"
-                            className="mt-1 flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2.5 py-1.5"
+                            className="mt-1 flex items-center gap-1.5 rounded-md border border-border bg-[hsl(var(--well)/var(--well-alpha))] px-2.5 py-1.5"
                           >
-                            <MessageSquare className="size-3 text-primary fill-primary/20 flex-none" strokeWidth={1.8} />
+                            <MessageSquare className="size-3 flex-none text-[hsl(var(--control-inert))]" strokeWidth={1.8} />
                             <span className="text-sm text-foreground/80 truncate">
                               {commentPreview(mark.comment)}
                             </span>
@@ -334,7 +371,7 @@ export const MyMarksList = () => {
                       onClick={(e) => handleRemove(e, mark)}
                       disabled={isRemoving}
                       aria-label={t("markModal.removeMark", "Remove Mark")}
-                      className="text-muted-foreground hover:text-destructive transition-colors flex-none disabled:opacity-50"
+                      className="fq-chrome-btn fq-focus-ring size-8 hover:text-destructive disabled:opacity-50"
                     >
                       <Trash2 className="size-4" strokeWidth={1.8} />
                     </button>
@@ -345,7 +382,7 @@ export const MyMarksList = () => {
           ))}
 
           {hasNextPage ? (
-            <div ref={sentinelRef}>
+            <div ref={sentinelRef} className={isFetchingNextPage ? "fq-section-group" : undefined}>
               {isFetchingNextPage ? <MarkRowSkeleton /> : null}
             </div>
           ) : null}

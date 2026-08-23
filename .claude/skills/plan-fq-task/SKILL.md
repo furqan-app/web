@@ -33,33 +33,33 @@ Every task must have a GitHub issue on `furqan-app/web` before implementation st
   Type IDs for this org (`furqan-app`): Task `IT_kwDOCyJLuM4BcAGi`, Bug `IT_kwDOCyJLuM4BcAGj`, Feature `IT_kwDOCyJLuM4BcAGk`. Use Bug/Feature matching the plan's `Type`; anything else stays `Task`.
 - Note the issue number/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
 
-## Step 6 — Create the worktree
+## Step 6 — Create the worktree or branch
 
-Derive the slug from the planned filename (e.g. `fix-search-debounce`). Then:
+Derive the slug from the planned filename (e.g. `fix-search-debounce`).
 
-- Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
-- If one exists, skip the rest of this step — the plan will be written into that worktree in step 7.
-- If none exists:
-  1. Derive the branch name from the GitHub issue: `<type>/<issue-number>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
-  2. Check whether the branch already exists: `git branch --list <branch-name>`
+**Environment check:**
+- **In Claude Code / CLI environments (supports external worktrees):**
+  1. Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
+  2. If none exists, derive branch `<type>/<issue-number>-<short-description>` and run:
      ```bash
-     # Branch does NOT exist yet:
-     git worktree add ../furqan-<slug> -b <branch-name>
-
-     # Branch already exists:
-     git worktree add ../furqan-<slug> <branch-name>
+     git worktree add ../furqan-<slug> -b <branch-name>  # if branch does not exist
+     git worktree add ../furqan-<slug> <branch-name>     # if branch exists
      ```
-  3. Record the entry in `~/.claude/furqan-worktrees.json` (merge with existing — do not overwrite):
+  3. Record in `~/.claude/furqan-worktrees.json`:
      ```json
      { "<slug>": { "worktreePath": "../furqan-<slug>", "branch": "<branch-name>" } }
      ```
-     Omit `port` here — it is assigned by `/start-fq-task` when the dev server is started.
+  4. Resolve absolute path `<abs>` via `git worktree list | grep furqan-<slug> | awk '{print $1}'`.
+- **In AGY / IDE environments (workspace-confined):**
+  1. Create or switch to the feature branch directly inside the workspace root:
+     ```bash
+     git checkout -b <type>/<issue-number>-<short-description>
+     ```
+  2. The target path `<abs>` is the workspace root itself (`$(pwd)`).
 
-After creating (or finding) the worktree, resolve its **absolute path** once — `git worktree list | grep furqan-<slug> | awk '{print $1}'` — and use that absolute path (`<abs>` below) for every subsequent file write and command. Never build paths from the relative `../furqan-<slug>` form.
+## Step 7 — Write the plan
 
-## Step 7 — Write the plan (worktree path)
-
-Write all plan-phase files into the **worktree** (`<abs>`), not the main repo:
+Write all plan-phase files into `<abs>`:
 - Plan: `<abs>/docs/plans/<slug>.md`
 - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
 - DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`

@@ -159,7 +159,7 @@ export function MarkModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
       <DialogContent
         hideDefaultClose
-        className="w-full max-w-sm bg-card rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] overflow-hidden p-4 gap-3"
+        className="fq-panel-cast w-full max-w-sm bg-card rounded-2xl overflow-hidden p-4 gap-3"
       >
         <div className="mb-3">
           <div className="flex items-center justify-between">
@@ -168,7 +168,7 @@ export function MarkModal({
                 ? t("markModal.markWordLabel", "Mark word")
                 : t("markModal.markVerseLabel", "Mark verse")}
             </p>
-            <DialogClose className="rounded-full p-1.5 text-muted-foreground opacity-70 ring-offset-background transition-[opacity,background-color,color] duration-150 hover:opacity-100 hover:bg-accent hover:text-accent-foreground active:scale-90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <DialogClose className="fq-focus-ring rounded-full p-1.5 text-muted-foreground opacity-70 transition-[opacity,background-color,color] duration-150 hover:opacity-100 hover:bg-accent hover:text-accent-foreground active:scale-90 disabled:pointer-events-none">
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </DialogClose>

@@ -30,21 +30,27 @@
     --nav-icon-chip-bg: hsl(var(--primary));
     --accent: 165 53% 93%;
     --accent-foreground: 169 88% 26%;
-    --destructive: 0 72% 56%;
+    /* 56% measured 4.26:1 against white — under AA on every destructive button.
+       50% measures 4.91:1 and keeps the hue. (Handed over from 2.1: the pair
+       needs a foreground and a background co-designed, so it belongs here.) */
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 31% 90%;
     --input: 210 31% 90%;
     --ring: 169 88% 26%;
     --radius: 0.5rem;
-    /* Aliased to this theme's own accent — light theme is deliberately NOT gold
-       (see the paper comment below), so the badge that consumes --gold must not
-       gain one here. */
-    --gold: 169 88% 26%;
-    --gold-muted: 165 53% 93%;
-    --overlay: 0 0% 0%;
-    /* Light theme — a MODERN, cool-neutral reading interface, deliberately NOT
-       the traditional gold Mushaf. Near-white paper and neutral gray ornaments;
-       no gold, bronze, beige, or warm-gray tint. */
+    /* Warning. Added in subtask 4.4, the last colour in the app that was
+       still painted with raw `amber-*` utilities plus a `dark:` variant —
+       the exact per-theme forking the language forbids. Neither accent may
+       carry "something is wrong", and --destructive is too strong for a
+       recoverable notice, so warning is its own pair. */
+    --warning: 32 74% 29%;
+    --warning-foreground: 40 84% 95%;
+    /* Cool slate rather than pure black: the scrim should read as the room
+       dimming, not as a hole. */
+    --overlay: 213 30% 25%;
+    /* Light theme — a cool-neutral reading interface.
+       Ornament and metadata are emerald green. */
     --mushaf-paper: #fdfdfc;
     --mushaf-paper-highlight: rgba(255, 255, 255, 0.72);
     --mushaf-paper-shadow: rgba(36, 48, 60, 0.05);
@@ -54,8 +60,8 @@
     --mushaf-gutter-soft: rgba(28, 38, 48, 0.065);
     --mushaf-gutter-highlight: rgba(255, 255, 255, 0.4);
     --mushaf-text: #17191c;
-    --mushaf-ornament: #737b83;
-    --mushaf-metadata: #818992;
+    --mushaf-ornament: #13755a;
+    --mushaf-metadata: #0f766e;
     --viewer-background: #e3e8ef;
     /* Reading-desk depth (ADR 0032, extended to all themes). Same token contract
        and same gradient direction as dark — lit core, darkening to the edge — only
@@ -79,7 +85,62 @@
       0 5px 14px -7px rgba(30, 41, 59, 0.2);
     /* Search bar: reads as recessed into the nav via an inset shadow, no border. */
     --search-input-shadow: inset 0 1px 3px rgba(36, 48, 60, 0.08);
-  }
+  
+    /* ==== Design-language families (subtask 2.1, ADR 0047) ================
+       Four roles the shadcn token set has no name for. Every one is declared
+       in all three theme blocks — a token missing from one block silently
+       inherits nothing and flattens that theme (ADR 0032).
+       Values are derived and pixel-verified in the reader lab; the rules that
+       consume them live in docs/design/design-language.md. Nothing here is a
+       gradient or a shadow *rule* — only the values a rule reads, so a screen
+       opts in by consuming the token, and these are inert until it does. */
+
+    /* 1. Atmosphere. The lamp's carrier channel belongs to the medium: this
+       desk has ~10 points of upward headroom and is COOL, so its lamp works in
+       temperature — a warm near-white at matched lightness. Measured +28 R-B
+       centre vs edge and ~0 lightness. The extent is wide and weak because the
+       pool centres under the folio; a tight pool measured exactly zero here. */
+    --lamp: 42 70% 94%;
+    --lamp-core: 0.55;
+    --lamp-mid: 0.34;
+    --lamp-extent: 98% 92%;
+    --lamp-origin: 50% 45%;
+    /* Never the lamp's hue. On light this is the load-bearing half — the desk
+       has the downward headroom dark lacks. Measured 13-point fall to corner. */
+    --vignette: 213 30% 52%;
+    --vignette-alpha: 0.3;
+
+    /* 2. Control treatment. Chrome sits ABOVE the desk here and below it on
+       dark; the token carries the difference so the rule stays one rule. */
+    --chrome: 210 30% 95%;
+    --chrome-base: 0 0% 100%;
+    /* A well is recessed, which on a near-white bar means darker. */
+    --well: 212 20% 91%;
+    --well-alpha: 0.85;
+    /* 44% measured 4.48:1 on --chrome — under AA by 0.02. 42% measures 4.87:1. */
+    --control-inert: 209 16% 42%;
+    --control-live: 209 22% 30%;
+
+    /* 3. Elevation. Same rule as dark — the folio sits on a surface — with the
+       amplitude the medium allows. Light has real shadow headroom, so the cast
+       is real and the rim is a white top highlight. Measured 9-point fall
+       under the folio versus the same row beside it. */
+    --surface-cast:
+      0 2px 6px hsl(213 30% 30% / 0.1),
+      0 22px 48px -20px hsl(213 30% 25% / 0.34),
+      0 52px 100px -40px hsl(213 30% 25% / 0.26);
+    --surface-rim: 0 0% 100%;
+    --surface-rim-alpha: 0.95;
+    --panel-cast: 0 24px 64px hsl(213 30% 25% / 0.22);
+
+    /* 4. Identity medallion. A struck seal is a material, not a tint: it keeps
+       a dark face in every theme, so the white logo mark stays legible and the
+       reading survives. Its own foreground travels with it. */
+    --medallion-face: 211 30% 16%;
+    --medallion-edge: 211 36% 10%;
+    --medallion-rim: 36 34% 40%;
+    --medallion-ink: 39 58% 66%;
+}
 
   .theme-gold {
     --background: 43 48% 87%;
@@ -88,7 +149,8 @@
     --card-foreground: 39 25% 13%;
     --popover: 46 52% 96%;
     --popover-foreground: 39 25% 13%;
-    --primary: 41 57% 43%;
+    /* Primary live-state and identity unified accent. Measures 6.7:1 against white. */
+    --primary: 168 72% 24%;
     --primary-foreground: 0 0% 100%;
     --secondary: 44 49% 91%;
     --secondary-foreground: 39 25% 13%;
@@ -97,23 +159,28 @@
     --nav-tab-bg: hsl(var(--muted) / 0.5);
     /* See matching comment in .theme-light above. */
     --nav-icon-chip-bg: hsl(var(--primary));
-    --accent: 46 55% 86%;
-    --accent-foreground: 41 57% 43%;
-    --destructive: 3 66% 55%;
+    /* Follows --primary onto emerald; the old pair measured 2.74:1. */
+    --accent: 165 42% 88%;
+    --accent-foreground: 168 72% 24%;
+    /* 55% measured 4.27:1 against white; 50% measures 4.86:1. See .theme-light. */
+    --destructive: 3 66% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 43 40% 81%;
     --input: 43 40% 81%;
-    --ring: 41 57% 43%;
+    --ring: 168 72% 24%;
     --radius: 0.5rem;
-    /* Aliased to this theme's own accent — already warm/gold-toned, so a second,
-       distinct gold would be redundant here. */
-    --gold: 41 57% 43%;
-    --gold-muted: 46 55% 86%;
-    --overlay: 0 0% 0%;
+    /* Identity accent — see .theme-light. Gold-on-parchment was the single most
+       likely failure of this language, and it survives, but not as metal: on a
+       warm light surface identity can only separate by LIGHTNESS, so it is a
+       deep bronze ~50 points below the paper. Measured 6.42:1 on the group
+       surface and 134 degrees of hue from --primary. A bright gold here does
+       collapse into the surface — that prediction was correct. */
+    --warning: 30 72% 27%;
+    --warning-foreground: 42 80% 96%;
+    --overlay: 36 34% 24%;
     /* Gold theme — richer warm ivory paper (the deeper, more golden variant that
-       distinguishes it from the light theme). Safha info (juz/hizb/page number) is
-       BLACK here, not gold, for contrast against the warm UI. */
-    --mushaf-paper: #f7f0de;
+       distinguishes it from the light theme). */
+    --mushaf-paper: #fdf9ee;
     --mushaf-paper-highlight: rgba(255, 253, 247, 0.8);
     --mushaf-paper-shadow: rgba(70, 52, 24, 0.1);
     --mushaf-paper-dip: rgba(70, 52, 24, 0.025);
@@ -122,8 +189,8 @@
     --mushaf-gutter-soft: rgba(45, 32, 14, 0.1);
     --mushaf-gutter-highlight: rgba(255, 251, 244, 0.38);
     --mushaf-text: #2a2420;
-    --mushaf-ornament: #a8844a;
-    --mushaf-metadata: #26221f;
+    --mushaf-ornament: #116850;
+    --mushaf-metadata: #0f766e;
     --viewer-background: #e8ddc0;
     /* Reading-desk depth (ADR 0032, extended to all themes) — light's ramp carried
        onto warm paper. The crease lands ~10% below the page face, matching the
@@ -146,8 +213,60 @@
       0 5px 14px -7px rgba(70, 52, 24, 0.24);
     /* Search bar: reads as recessed into the nav via an inset shadow, no border. */
     --search-input-shadow: inset 0 1px 3px rgba(70, 52, 24, 0.1);
-  }
+  
+    /* ==== Design-language families (subtask 2.1, ADR 0047) ================
+       Four roles the shadcn token set has no name for. Every one is declared
+       in all three theme blocks — a token missing from one block silently
+       inherits nothing and flattens that theme (ADR 0032).
+       Values are derived and pixel-verified in the reader lab; the rules that
+       consume them live in docs/design/design-language.md. Nothing here is a
+       gradient or a shadow *rule* — only the values a rule reads, so a screen
+       opts in by consuming the token, and these are inert until it does. */
 
+    /* 1. Atmosphere. Parchment is already warm, so a warmer warm says nothing:
+       this lamp goes back to LIGHTNESS, using the ~12 points of headroom the
+       desk has. Measured +15 points centre vs edge. */
+    --lamp: 46 82% 99%;
+    --lamp-core: 0.5;
+    --lamp-mid: 0.3;
+    --lamp-extent: 94% 88%;
+    --lamp-origin: 50% 45%;
+    --vignette: 34 38% 40%;
+    --vignette-alpha: 0.32;
+
+    /* 2. Control treatment. */
+    --chrome: 45 50% 93%;
+    --chrome-base: 46 56% 97%;
+    --well: 42 34% 86%;
+    --well-alpha: 0.85;
+    /* 43% measured 4.29:1 on the group surface; parchment is warm and light, so
+       muted has to sit lower here than on the cool light desk to clear AA. */
+    --control-inert: 38 17% 37%;
+    --control-live: 38 20% 29%;
+
+    /* 3. Elevation. Measured 9-point fall under the folio. */
+    --surface-cast:
+      0 2px 6px hsl(36 40% 20% / 0.12),
+      0 22px 48px -20px hsl(36 42% 18% / 0.38),
+      0 52px 100px -40px hsl(36 42% 18% / 0.28);
+    --surface-rim: 44 60% 99%;
+    --surface-rim-alpha: 0.95;
+    --panel-cast: 0 24px 64px hsl(36 42% 18% / 0.24);
+
+    /* 4. Identity medallion — dark face in every theme, see .theme-light. */
+    --medallion-face: 36 34% 18%;
+    --medallion-edge: 36 42% 11%;
+    --medallion-rim: 38 38% 42%;
+    --medallion-ink: 41 62% 68%;
+}
+
+  /* `.theme-dark.dark` used to repeat this whole block. It was byte-identical
+     across all 51 tokens, and it could never match without `.theme-dark` also
+     matching — use-theme.ts and the pre-paint script always add `dark` and
+     `theme-dark` together — so it resolved to nothing while doubling every
+     future token edit. Removed in 2.1; the token contract is "all three theme
+     blocks", not four. Tailwind's `dark:` variant still keys off `.dark`,
+     which is untouched. */
   .theme-dark {
     /* Printed-Mushaf-inspired unified palette (docs/plans/dark-theme-mushaf-unification.md).
        Backgrounds share one navy hue family (~210-212°), darkening in 4 steps:
@@ -191,45 +310,38 @@
        "simplify" it back to mirroring --primary without re-deriving both
        contrast pairs. */
     --accent-foreground: 169 88% 39%;
+    /* Dark cannot darken --destructive the way light and gold do: it doubles as
+       `text-destructive` on near-black cards, where dropping it to 50% falls to
+       3.65:1. So the FOREGROUND moves instead — white on this red measured
+       3.50:1, the theme's own near-black measures 4.96:1 — and the red stays
+       bright enough to read as error text. Same shape as the --primary /
+       --accent-foreground split above: when one lightness cannot serve both
+       pairs, move the other side of the pair. */
     --destructive: 0 76% 63%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 213 31% 7%;
     --border: 210 26% 19%;
     --input: 210 26% 19%;
     --ring: 169 88% 26%;
     --radius: 0.5rem;
-    /* Mushaf-identity gold — reserved strictly for the reader page (ornaments below);
-       no chrome exceptions, not even the surah-list badge (ADR 0031, revised). */
-    --gold: 38 32% 46%;
-    --gold-muted: 38 27% 34%;
+    /* Identity accent. ADR 0031 reserved gold strictly for the reader page with
+       "no chrome exceptions"; ADR 0047 supersedes that — identity and live state
+       are different roles and chrome needs both. Measured 4.67:1 on --card. */
+    --warning: 38 78% 62%;
+    --warning-foreground: 30 45% 8%;
     --overlay: 213 31% 7%;
-    /* Printed-mushaf reader palette — deep warm blue-black paper, antique gold,
-       off-white text. Consumed inside the tablet reader scope AND (as of the
-       dark-theme unification pass) the desktop/portrait-tablet scope below
-       768px-and-up — see the widened .fq-safha-card paper rule further down. */
-    --mushaf-paper: #0C1117;
-    /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
-       change): repurposed from a light top-catch highlight to fully opaque BLACK —
-       used as a dark accent leg in the gutter shadow below, not as a light source.
-       Still also backs the base card's top-edge inset and background-gradient top
-       stop, so those go darker too, consistent with "no gray/light tones, only
-       dark" applied everywhere on the page. */
+    /* Printed-mushaf reader palette — deep warm blue-black paper, emerald green ornament,
+       off-white text. */
+    --mushaf-paper: #111820;
     --mushaf-paper-highlight: rgb(0, 0, 0);
     --mushaf-paper-shadow: rgba(0, 0, 0, 0.35);
     --mushaf-paper-dip: rgba(0, 0, 0, 0.06);
     --mushaf-edge: rgba(0, 0, 0, 0.45);
-    /* Correction Round 6 (user-supplied): near-solid near-black rather than a
-       semi-transparent overlay — used as one leg of a diagonal (not centered)
-       inset-shadow pair on the gutter, see .fq-compensate-r/-l below. */
     --mushaf-gutter-dark: #04070a;
     --mushaf-gutter-soft: rgba(0, 0, 0, 0.09);
-    /* Unused by the dark-theme gutter as of Round 5 — a highlight hairline read as
-       an unwanted gray seam between the pages, so the gutter is shadow-only now.
-       Value kept only so the token contract stays defined (styling.md requires
-       every theme to define it) and for light/gold, which still use it. */
     --mushaf-gutter-highlight: rgba(210, 220, 235, 0.12);
     --mushaf-text: #f2efe7;
-    --mushaf-ornament: #9a8256;
-    --mushaf-metadata: #8a784e;
+    --mushaf-ornament: #10b981;
+    --mushaf-metadata: #059669;
     --viewer-background: #0D1217;
     /* Desktop reading-desk depth (>=1367px, dark only) — ADR 0032. These carry the
        page's lit face, its edge rim, the sheet stack and the binding crease. Defined
@@ -271,104 +383,55 @@
     --search-input-shadow: inset 0 1px 0 rgba(205, 173, 128, 0.4),
       inset 0 -1px 0 rgba(0, 0, 0, 0.6), inset 1px 0 0 rgba(205, 173, 128, 0.14),
       inset -1px 0 0 rgba(205, 173, 128, 0.14);
-  }
+  
+    /* ==== Design-language families (subtask 2.1, ADR 0047) ================
+       Four roles the shadcn token set has no name for. Every one is declared
+       in all three theme blocks — a token missing from one block silently
+       inherits nothing and flattens that theme (ADR 0032).
+       Values are derived and pixel-verified in the reader lab; the rules that
+       consume them live in docs/design/design-language.md. Nothing here is a
+       gradient or a shadow *rule* — only the values a rule reads, so a screen
+       opts in by consuming the token, and these are inert until it does. */
 
-  .theme-dark.dark {
-    --background: 213 31% 7%;
-    --foreground: 45 18% 91%;
-    --card: 213 21% 10%; /* #151A20 — unified with --nav-tab-bg so sidebars/dialogs/popovers match nav items */
-    --card-foreground: 45 18% 91%;
-    --popover: 213 21% 10%; /* #151A20 — see --card */
-    --popover-foreground: 45 18% 91%;
-    /* EXPERIMENTAL — see the matching comment in .theme-dark above. */
-    --primary: 169 88% 26%;
-    --primary-foreground: 0 0% 100%; /* EXPERIMENTAL - see .theme-dark above */
-    --secondary: 213 21% 10%; /* #151A20 — see --card */
-    --secondary-foreground: 45 18% 91%;
-    --muted: 213 21% 10%; /* #151A20 — see --card */
-    --nav-tab-bg: #151A20;
-    /* Translucent here — dark's near-black nav gives it enough contrast, unlike light/gold. */
-    --nav-icon-chip-bg: hsl(var(--primary) / 23%);
-    /* See matching comment in .theme-dark above. */
-    --muted-foreground: 206 9% 56%;
-    --accent: 161 58% 15%;
-    /* See matching comment in .theme-dark above — deliberately not --primary. */
-    --accent-foreground: 169 88% 39%;
-    --destructive: 0 76% 63%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 26% 19%;
-    --input: 210 26% 19%;
-    --ring: 169 88% 26%;
-    --radius: 0.5rem;
-    --gold: 38 32% 46%;
-    --gold-muted: 38 27% 34%;
-    --overlay: 213 31% 7%;
-    --mushaf-paper: #0C1117;
-    /* Correction Round 7 (user-supplied, recalibrated after another --mushaf-paper
-       change): repurposed from a light top-catch highlight to fully opaque BLACK —
-       used as a dark accent leg in the gutter shadow below, not as a light source.
-       Still also backs the base card's top-edge inset and background-gradient top
-       stop, so those go darker too, consistent with "no gray/light tones, only
-       dark" applied everywhere on the page. */
-    --mushaf-paper-highlight: rgb(0, 0, 0);
-    --mushaf-paper-shadow: rgba(0, 0, 0, 0.35);
-    --mushaf-paper-dip: rgba(0, 0, 0, 0.06);
-    --mushaf-edge: rgba(0, 0, 0, 0.45);
-    /* Correction Round 6 (user-supplied): near-solid near-black rather than a
-       semi-transparent overlay — used as one leg of a diagonal (not centered)
-       inset-shadow pair on the gutter, see .fq-compensate-r/-l below. */
-    --mushaf-gutter-dark: #04070a;
-    --mushaf-gutter-soft: rgba(0, 0, 0, 0.09);
-    /* Unused by the dark-theme gutter as of Round 5 — a highlight hairline read as
-       an unwanted gray seam between the pages, so the gutter is shadow-only now.
-       Value kept only so the token contract stays defined (styling.md requires
-       every theme to define it) and for light/gold, which still use it. */
-    --mushaf-gutter-highlight: rgba(210, 220, 235, 0.12);
-    --mushaf-text: #f2efe7;
-    --mushaf-ornament: #9a8256;
-    --mushaf-metadata: #8a784e;
-    --viewer-background: #0D1217;
-    /* Desktop reading-desk depth (>=1367px, dark only) — ADR 0032. These carry the
-       page's lit face, its edge rim, the sheet stack and the binding crease. Defined
-       in the dark blocks only, unlike the rest of the --mushaf-* family: on a
-       (7,15,23) background depth has to come from light rather than shadow, and
-       light/gold keep conventional shadows, so they have no use for these. The four
-       -lit- stops form the page gradient from centre to edge; --mushaf-paper
-       (#0C131A) sits mid-ramp between -fade and -edge, so it stays the reference
-       tone rather than a flat fill. Rim alphas are graded (top > side > foot) — a
-       uniform stroke on all four sides reads as a drawn frame (Correction Round 1).
-       Pass 2 lowered the four -lit- stops (page centre 29,42,56 → 22,32,42) and
-       dropped the ambient desk pool entirely, on review. */
-    --mushaf-rim-top: rgba(205, 173, 128, 0.28);
-    --mushaf-rim-side: rgba(205, 173, 128, 0.13);
-    --mushaf-rim-foot: rgba(205, 173, 128, 0.05);
-    --mushaf-sheet-edge: rgba(205, 173, 128, 0.38);
-    --mushaf-sheet-face: #0C1117;
-    --mushaf-crease: rgba(2, 5, 8, 0.95);
-    --mushaf-crease-soft: rgba(0, 0, 0, 0.4);
-    /* Floating reader chrome (recitation bar, nav arrows) at >=1367px. Same
-       ADR 0032 rule as the page: a raised face plus a warm rim, never a shadow. */
-    --reader-chrome-face: #0C1117;
-    --reader-chrome-rim: rgba(205, 173, 128, 0.16);
-    /* Dark carries chrome lift with a raised face and warm rim, never a shadow:
-       black has ~7 points of headroom on (7,15,23) and measures ~1 point beside
-       the book (ADR 0032). The other themes set these to a real shadow. */
-    --reader-chrome-rim-hover: var(--mushaf-rim-top);
-    --reader-chrome-shadow: none;
-    --reader-chrome-bar-shadow: none;
-    /* A cast shadow under the book measures nothing on (7,15,23) — dark seats the
-       page by sitting brighter than its desk instead. The slot is still declared so
-       the shared rule resolves in every theme (ADR 0032 supersede). */
-    --mushaf-page-cast: 0 0 0 0 transparent;
-    /* Search bar recess: a black inset shadow measures ~1 point on (7,15,23)
-       (ADR 0032). A single faint top line wasn't enough contrast either
-       (Correction Round 1, user-flagged as undetectable) — this is a full
-       recessed frame instead, graded like --mushaf-rim-* (bright top, dim
-       sides, dark foot), strong enough to read against the near-black nav. */
-    --search-input-shadow: inset 0 1px 0 rgba(205, 173, 128, 0.4),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.6), inset 1px 0 0 rgba(205, 173, 128, 0.14),
-      inset -1px 0 0 rgba(205, 173, 128, 0.14);
-  }
+    /* 1. Atmosphere. ~95 points of upward headroom, so this is the one desk
+       whose lamp is a hot, tight core — and the reference the other two were
+       derived AGAINST, never inverted from. */
+    --lamp: 39 44% 58%;
+    --lamp-core: 0.075;
+    --lamp-mid: 0.024;
+    --lamp-extent: 58% 62%;
+    --lamp-origin: 50% 45%;
+    --vignette: 211 39% 5%;
+    --vignette-alpha: 0.62;
+
+    /* 2. Control treatment. Chrome sits BELOW the desk here; a well is recessed
+       and therefore *lighter* than its bar. Same word, opposite direction. */
+    --chrome: 211 31% 8%;
+    --chrome-base: 211 39% 5%;
+    --well: 210 28% 12%;
+    --well-alpha: 0.5;
+    --control-inert: 207 13% 61%;
+    --control-live: 207 15% 73%;
+
+    /* 3. Elevation. A cast measures ~1 point on this desk (ADR 0032), so the
+       lift is carried by the rim — measured 19 points — with the cast spread
+       wide and soft underneath rather than dropped tight. Do NOT read the cast
+       value below as doing the work; it is the shared rule's slot, filled. */
+    --surface-cast:
+      0 2px 6px hsl(211 45% 2% / 0.5),
+      0 26px 64px -18px hsl(211 45% 2% / 0.72),
+      0 64px 128px -44px hsl(211 45% 2% / 0.6);
+    --surface-rim: 39 44% 58%;
+    --surface-rim-alpha: 0.32;
+    --panel-cast: 0 24px 64px hsl(211 39% 2% / 0.45);
+
+    /* 4. Identity medallion. */
+    --medallion-face: 210 24% 15%;
+    --medallion-edge: 211 31% 8%;
+    --medallion-rim: 39 41% 32%;
+    --medallion-ink: 39 56% 57%;
+}
+
 }
 
 @layer base {
@@ -392,42 +455,16 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* Nav + player glass bars — dark-theme-only white text (Correction Round; all
-     text/icons, not just primary — explicitly confirmed, including the .text-
-     muted-foreground labels/icons on SharedMushafLink/MarksLink/UserMenu and the
-     player's verse-key subtitle + control icons). Scoped to :root.theme-dark, not
-     applied unconditionally: both bars sit on a translucent bg-background/75 +
-     blur, and only in dark theme is literal white pushed for legibility over the
-     Mushaf showing through; light/gold's own tokens already read correctly
-     against their (light) translucent background, so they're untouched. Two
-     selector groups per bar: the root itself (covers unclassed/inherited text
-     and icons using currentColor) AND any descendant explicitly carrying
-     .text-foreground/.text-muted-foreground (a child's own color class always
-     wins over an inherited one, so the root rule alone doesn't reach it).
-     !important beats the Tailwind utility (utility layer wins over base by
-     source order). */
-  :root.theme-dark nav,
-  :root.theme-dark .fq-recitation-bar,
-  :root.theme-dark nav .text-foreground,
-  :root.theme-dark nav .text-muted-foreground,
-  :root.theme-dark .fq-recitation-bar .text-foreground,
-  :root.theme-dark .fq-recitation-bar .text-muted-foreground {
-    color: white !important;
-  }
-
-  /* …but the search dropdown renders INSIDE <nav> (SearchBar is a nav child, and
-     SearchQueryResults is an absolutely-positioned bg-popover panel below it), so
-     the rule above was flattening its titles and its secondary lines to the same
-     white and destroying the two-tier hierarchy. The panel is an opaque popover,
-     not translucent glass, so it has no reason to opt into the white override —
-     hand it back the normal semantic tokens. Higher specificity + later in source,
-     so it wins over the block above. */
-  :root.theme-dark nav .bg-popover .text-foreground {
-    color: hsl(var(--foreground)) !important;
-  }
-  :root.theme-dark nav .bg-popover .text-muted-foreground {
-    color: hsl(var(--muted-foreground)) !important;
-  }
+  /* Removed in subtask 3.2: a `:root.theme-dark nav, … { color: white
+     !important }` block that flattened every nav and player-bar descendant to
+     literal white, plus the counter-override that had to hand the search
+     dropdown its semantic tokens back. Both existed only because those bars
+     were translucent glass (`bg-background/75 backdrop-blur-md`) with the
+     mushaf showing through. `.fq-chrome-bar` makes chrome an opaque surface,
+     so the semantic tokens are legible on their own — and the two-tier
+     hierarchy the white override destroyed comes back for free.
+     This is also the language's rule, not just a cleanup: never scope a
+     shared rule by theme to serve one theme (ADR 0032). */
 }
 
 @layer components {
@@ -465,54 +502,56 @@
     color: hsl(var(--primary-foreground));
   }
 
-  .fq-surah-toggle {
+  /* Nav manuscript ornament: drawn hairline rule tapering into an open diamond in emerald green (--primary). */
+  .fq-nav-ornament {
     position: relative;
+    width: 48px;
+    height: 10px;
+    flex: none;
+    pointer-events: none;
+  }
+  .fq-nav-ornament::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 34px;
+    height: 1px;
+    margin-top: -0.5px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--primary) / 0.35) 60%,
+      hsl(var(--primary) / 0.85)
+    );
+  }
+  .fq-nav-ornament::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    transform: rotate(45deg);
+    border: 1px solid hsl(var(--primary) / 0.85);
+  }
+  .fq-nav-ornament--flip {
+    transform: scaleX(-1);
   }
 
-  /* Desktop-only: the ornament box is sized for the md:px-10 (40px) padded
-     pill. Mobile keeps the original compact single-line pill (px-2.5), which
-     has no room for a 45px-wide absolutely-positioned ornament — left
-     unconditional, it overflowed into the neighboring nav icons. */
-  @media (min-width: 768px) {
-    .fq-surah-toggle::before,
-    .fq-surah-toggle::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      width: 45px;
-      height: 45px;
-      pointer-events: none;
-      /* Color-agnostic: the PNG is a plain white silhouette (alpha channel
-         only carries the shape), so the actual color comes from
-         background-color below via --mushaf-ornament — the same token the
-         other mushaf ornament glyphs use, so this automatically matches
-         light/gold/dark instead of needing a separately-baked PNG per theme.
-         Explicit ADR 0031 exception, user-requested (2026-08-19): dark
-         theme's chrome is otherwise gold-free, but this control keeps gold. */
-      -webkit-mask-image: url("/icons/surah-ornament-mask.png");
-      mask-image: url("/icons/surah-ornament-mask.png");
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-      -webkit-mask-size: contain;
-      mask-size: contain;
-      -webkit-mask-position: center;
-      mask-position: center;
-      background-color: var(--mushaf-ornament);
-    }
-
-    .fq-surah-toggle::before {
-      /* Box width matches the button's own md:px-10 (40px) padding exactly,
-         so flush left lands the ornament's spine right at the text edge. */
-      left: -30px;
-      transform: translateY(-50%);
-    }
-
-    .fq-surah-toggle::after {
-      right: -30px;
-      /* Mirror of the open ornament — same asset, flipped, so both sides
-         share one file instead of a second low-quality close PNG. */
-      transform: translateY(-50%) scaleX(-1);
-    }
+  /* Nav logo mark: pure silhouette masked with emerald green (--primary) */
+  .fq-logo-mark {
+    display: inline-block;
+    -webkit-mask-image: url("/icons/logo-navbar-white.png");
+    mask-image: url("/icons/logo-navbar-white.png");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    background-color: hsl(var(--primary));
   }
 }
 
@@ -536,7 +575,21 @@ body,
     --fq-surah-start-clearance: 0px;
   }
 
-  @media (max-width: 767px) {
+  /* ---- Compact band boundary (subtask 5.1c) -----------------------------
+     Production used to split 768-1023px into its own inset single-page
+     treatment: a desk margin of its own, a desktop-style card-width clamp, and
+     page arrows — because its desktop margin starts at >=1367 and 1024-1366 is
+     deliberately full-bleed. That produced a fourth screen nobody had designed,
+     and the user rejected it on sight: "it's desktop or tablet or mobile."
+
+     The design recognises three device classes, so the compact boundary moves
+     from 767 to 1023 and that band simply disappears. A portrait tablet is a
+     tablet and gets the compact composition at full width.
+
+     Production's CSS bands were an implementation detail, never a list of
+     device classes. Deferring to them is what reproduced the screen.
+     ------------------------------------------------------------------------ */
+  @media (max-width: 1023px) {
     .fq-content {
       /* Font from width: every mushaf line justifies to the same width — worst-case
          line-width/font-size ratio across all 604 pages is 14.42 (p.580). Dividing by
@@ -586,7 +639,7 @@ body,
   }
 
   /* ---- Mobile reader: nav overlay + mushaf paper + book stack ------------ */
-  @media (max-width: 767px) {
+  @media (max-width: 1023px) {
     /* Feature 1 — Nav overlay: reader fills full viewport (nav is fixed, out of flow).
        !important beats the JSX min-h-[…]/pb-4 Tailwind utilities. The height itself
        is NOT set here — it comes from the ICB-anchored `.fq-reader-pager-viewport`
@@ -606,6 +659,16 @@ body,
       min-width: 100vw !important;
       max-width: 100vw !important;
     }
+    /* Page arrows exist only where there is a gutter to sit in. Compact is
+       full-bleed, so they would sit ON the page; this band navigates by swipe
+       (ADR 0027), exactly as the spread band already does. The JSX carries
+       `hidden md:flex`, which stopped matching the compact boundary once it
+       moved to 1023 — CSS-gated here rather than re-fought in the markup, so
+       the correct band paints on the first frame (ADR 0043). */
+    .fq-nav-arrow {
+      display: none !important;
+    }
+
     /* Mobile carousel: single-step neighbor panels visible during swipe peek.
        fq-carousel-side (pair-step tablet neighbors) stay hidden — they have the
        wrong page content for single-step mobile navigation. */
@@ -631,14 +694,8 @@ body,
        "paper fading into light." */
     .fq-spread .fq-safha-card {
       background-color: var(--mushaf-paper) !important;
-      background-image: radial-gradient(
-        ellipse 70% 48% at 86% 100%,
-        var(--mushaf-paper-dip) 0%,
-        transparent 76%
-      ) !important;
-      box-shadow:
-        inset 0 1px 0 var(--mushaf-paper-highlight),
-        inset 0 0 28px var(--mushaf-paper-dip);
+      background-image: none !important;
+      box-shadow: none !important;
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
@@ -711,18 +768,17 @@ body,
     .fq-spread .fq-quran-safha .fq-bismillah { color: var(--mushaf-text) !important; }
     .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-ornament) !important; }
     .fq-spread .fq-ornament { color: var(--mushaf-ornament) !important; }
-    .fq-spread .fq-safha-surah-glyph { color: var(--mushaf-ornament) !important; }
-    .fq-spread .fq-safha-meta,
-    .fq-spread .fq-safha-footer { color: var(--mushaf-metadata) !important; }
-    /* Dark theme — metadata, footer, ornaments → mushaf-text (off-white, not gold). */
-    :root.theme-dark .fq-spread .fq-safha-meta,
-    :root.theme-dark .fq-spread .fq-safha-footer,
-    :root.theme-dark .fq-spread .fq-safha-surah-glyph,
-    :root.theme-dark .fq-spread .fq-quran-safha .fq-inline-surah,
-    :root.theme-dark .fq-spread .fq-ornament { color: var(--mushaf-text) !important; }
-    /* Gold theme — surah name follows ink, not gold. */
-    :root.theme-gold .fq-spread .fq-safha-surah-glyph,
-    :root.theme-gold .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-text) !important; }
+
+
+    /* Removed in 5.1b: two theme-scoped blocks that forced dark's and gold's
+       page metadata, surah glyph, inline surah name and ornaments to
+       `--mushaf-text` so they would read "quietly, not gold". Ornament is
+       identity under the two-accent grammar and takes the identity accent in
+       every theme (ADR 0047), so their whole purpose is reversed — and they
+       were a per-theme copy of a rule the theme-agnostic block further down now
+       states once. They also outranked it: `:root.theme-dark .fq-spread .x` is
+       (0,4,0) against that block's (0,3,0), so gold's surah glyph and every one
+       of dark's marks kept rendering as ink until these were deleted. */
   }
 
   /* Desktop spread (md+): both facing pages fill the same fixed parent height
@@ -732,8 +788,8 @@ body,
      height regardless of slot-height variance (surah banners, bismillah, etc.).
      Scoped to `.fq-spread` so the standalone QuranSafha in VerticalQuranPages
      (no `.fq-spread` ancestor) keeps its natural content-height block layout.
-     Mirrors the `@media (max-width: 767px)` mobile block above. */
-  @media (min-width: 768px) {
+     Mirrors the `@media (max-width: 1023px)` compact block above. */
+  @media (min-width: 1024px) {
     /* The frame measures the widest real Quran row. On desktop/tablet a page
        deliberately has inner paper margin, so the quran-safha content column is
        narrower than that row. Do not clamp the frame to that column; it still
@@ -802,8 +858,10 @@ body,
      around the deliberately smaller 26px desktop ink. Using
      `width`, not only `min-width`, prevents intrinsic font metrics from quietly
      stretching the page after the text itself has been made smaller. Tablet has
-     its own full-height, half-spread geometry and is intentionally excluded. */
-  @media (min-width: 768px) and (max-width: 1023px), (min-width: 1367px) {
+     its own full-height, half-spread geometry and is intentionally excluded.
+     5.1c dropped this rule's `768–1023` leg: that band is compact now, and
+     compact sizes its font from viewport width, not from a card clamp. */
+  @media (min-width: 1367px) {
     .fq-spread .fq-safha-card {
       width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
       min-width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
@@ -826,7 +884,7 @@ body,
      `gap` stays under `space-between` as the FLOOR: flexbox only ever distributes
      positive free space, so a page taller than the band degrades to flex-start with
      the floor intact rather than overlapping lines. */
-  @media (min-width: 768px) and (min-height: 800px) {
+  @media (min-width: 1024px) and (min-height: 800px) {
     .fq-reader-outer > .fq-reader-spread-container {
       flex: 1 1 auto;
       min-height: 0;
@@ -861,22 +919,16 @@ body,
     }
   }
 
-  /* Small-laptop / portrait-tablet band (768–1023px): same stretch as above, but it
-     needs its own desk margin — the desktop group's lives at ≥1367px and the
-     1024–1366px band is deliberately full-bleed, so without this the stretched card
-     butts against the nav. Kept small (16px): every px here comes out of the gaps. */
-  @media (min-width: 768px) and (max-width: 1023px) and (min-height: 800px) {
-    .fq-reader-outer > .fq-reader-spread-container {
-      padding-block: 16px;
-    }
-  }
+  /* Removed in 5.1c: a 16px desk margin that existed only for the 768–1023px
+     band. That band is now compact and full-bleed, so there is no desk for a
+     margin to sit in. */
 
   /* The fixed navigation paints at 57px (its 56px utility height plus the bottom
      border). The reader's JSX minimum uses 3.5rem/56px, which otherwise leaves a
      one-pixel document overflow and an unnecessary desktop scrollbar. */
   @media (min-width: 1367px) {
     .fq-reader-outer {
-      min-height: calc(100dvh - 57px) !important;
+      min-height: calc(100dvh - 70px) !important;
     }
   }
 
@@ -900,7 +952,7 @@ body,
      single-page display. Applied at md+ (matching the stack layers) and removed
      only when both pages actually show — see the lg block below. Physical
      ml/mr, not logical, because the stack peek itself is physical (translate-x). */
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .fq-compensate-r {
       margin-right: 9px;
     }
@@ -958,7 +1010,7 @@ body,
      Placed BEFORE the tablet block so that block's identical selectors win within
      its own narrower range via normal cascade order (last rule wins on equal
      specificity) — zero behaviour change at 1024-1366px. */
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .fq-spread .fq-safha-card {
       background-color: var(--mushaf-paper) !important;
     }
@@ -970,15 +1022,24 @@ body,
     }
   }
 
-  /* Desktop reading stage (user request — premium reading-desk atmosphere).
-     >1366px only: here the reader spread floats with space around it, unlike the
-     edge-to-edge tablet band and full-bleed mobile.
+  /* Desktop reading stage. >1366px only: here the reader spread floats with space
+     around it, unlike the edge-to-edge tablet band and full-bleed mobile.
 
-     Pass 1 put a soft radial pool of light on .fq-reader-outer behind the book.
-     Pass 2 REMOVED it on review: the flat (7,15,23) surround reads better, and the
-     desk light was competing with the page's own gradient. Do not reintroduce it —
-     if depth beside the book is ever wanted again, the page face is the lever, not
-     the desk. */
+     ~~Pass 2 REMOVED the desk pool on review… do not reintroduce it.~~
+     **Superseded by ADR 0047 (subtask 5.1a).** That removal was an aesthetic
+     decision, and the migration's decision tree supersedes aesthetic decisions
+     while carrying measurements of the medium forward. The two objections it
+     recorded are both answered rather than ignored:
+
+       - "the desk light was competing with the page's own gradient" — the page
+         gradient it competed with was a centre-lighting ramp that no longer
+         exists. The page's pool (5.1b) is anchored at the SEAM and belongs to
+         the spread, so it runs the other way and joins the lamp instead of
+         fighting it.
+       - "the flat surround reads better" — that was measured against a pool
+         derived for one theme. 0.1 established that a lamp's carrier channel
+         belongs to the medium: lightness on dark and gold, temperature on
+         light, with a per-theme extent. Those are the values used here. */
   @media (min-width: 1367px) {
     /* The desk. Until now the desktop surround was the app's own `bg-background`
        from ReaderPager's JSX, which made two things impossible on light and gold:
@@ -1003,6 +1064,47 @@ body,
     :root.theme-dark { --viewer-background: #0D1217; }
     .fq-reader-outer {
       background-color: var(--viewer-background) !important;
+      /* Contains the two atmosphere layers below and keeps their z-index
+         bookkeeping local, so nothing here can ever climb over the nav. */
+      position: relative;
+      isolation: isolate;
+    }
+
+    /* ---- Folio proportion cap -------------------------------------------
+       Surplus becomes symmetric margin, never stretch. Above this height the
+       band is taller than a printed book proportion needs, and letting the
+       page grow into it reads as a ribbon rather than a folio.
+
+       This supersedes Trello #172's "leftover height becomes line gaps" at the
+       DESK BAND ONLY — an aesthetic decision, superseded per the migration's
+       decision tree. Below 1367px that model is untouched, and it is still what
+       makes the compact reader read like a printed mushaf.
+
+       The cap is applied one level DOWN from the stretch, which is the only
+       arrangement that gives both. `.fq-spread-col` keeps stretching to the
+       full band from the rhythm block, so it has a definite used height; the
+       cap and the centring then go on `.fq-spread` inside it, where `100%`
+       resolves against that definite height rather than against an indefinite
+       one (ADR 0036 is about the latter).
+
+       Two arrangements were tried first and both silently collapsed the column
+       to its 654px content height in every theme and at every viewport height:
+         - `height: min(100%, …)` on `.fq-spread-col` itself — the percentage
+           resolved against the flex-grown container, i.e. `auto` (ADR 0036).
+         - `max-height` + `margin-block: auto` on `.fq-spread-col` — an auto
+           cross-axis margin cancels `align-items: stretch` outright, so the
+           item was content-sized again and the cap never engaged. Same for
+           `align-items: center` on the container.
+       Neither failure is visible in the declaration; both were caught by
+       measuring the rendered box. */
+    .fq-spread-col {
+      --folio-max-h: 792px;
+    }
+    .fq-reader-outer .fq-spread-col {
+      align-items: center;
+    }
+    .fq-reader-outer .fq-spread-col > .fq-spread {
+      height: min(100%, var(--folio-max-h));
     }
 
     /* Page face. Flat --mushaf-paper in every theme: the radial centre-lighting
@@ -1014,13 +1116,14 @@ body,
        point beside the book — that dead end cost Correction Rounds 3, 7 and 8, and
        is why ADR 0032 exists. */
     .fq-spread .fq-safha-card {
-      /* Flat paper — no centre lighting (user decision). Depth comes from the
-         edges only.
+      /* ~~Flat paper — no centre lighting.~~ **Superseded by ADR 0047
+         (subtask 5.1b)**, which is the explicit decision ADR 0032's "do not
+         light the page face" always required. The pool is declared in the
+         theme-agnostic block further down; only the rim and cast live here.
          Inset rim + an OUTER cast shadow seating the book on the desk. The cast is
          the one place light/gold genuinely need shadow where dark cannot use it, so
          it is a token: real on light/gold, transparent on dark. Desktop only — the
          tablet reader is full-bleed and has no desk for a shadow to fall on. */
-      background-image: none !important;
       box-shadow:
         inset 0 1px 0 var(--mushaf-rim-top),
         inset 1px 0 0 var(--mushaf-rim-side),
@@ -1125,6 +1228,12 @@ body,
     }
     .fq-reader-outer > .fq-reader-spread-container {
       padding-block: 64px;
+      /* Chrome RESERVES space; it never overlaps the mushaf. The rail is a
+         72px fixed column on the physical right, so the composition has to
+         account for it before the folio is centred — otherwise the page is
+         centred in the full viewport and the rail sits on top of the arrow.
+         Physical `padding-right`, matching the rail's physical placement. */
+      padding-right: 72px;
     }
     /* Wider paper around the same line. The text block cannot be stretched to fill
        a wider page (a mushaf line is justified by the font's own kashida, never by
@@ -1132,48 +1241,117 @@ body,
     .fq-spread .fq-content {
       padding-inline: 68px;
     }
-    /* Rail: fixed right edge, vertically centred. !important terms beat the JSX
-       `inset-x-0` / `bottom-0` utilities (utility layer wins over @layer base on
-       source order). border-width !important also beats the JSX `border-t` utility
-       so all four sides get 1px. */
+    /* ---- Recitation rail: a full-height alignment zone ---------------------
+       Ported from the lab. It was a 96px floating card, vertically centred,
+       carrying a play chip beside a reciter name clipped to 80px. It is now a
+       full-height 72px column on the physical right, icons only, with the same
+       three zones the lab established: identity at the top, transport pinned to
+       the rail's TRUE midpoint, tertiary utilities at the foot. Separating them
+       with empty desk rather than a divider stack is what stops it reading as a
+       second sidebar.
+
+       `right`, not `inset-inline-end`, deliberately: the rail stays physically
+       right in both directions, exactly as the lab decided. Below this band the
+       same three zones relay into the full-width bottom bar, which reserves
+       height instead of width — the affordance moves, the book is never inset.
+
+       57px = the nav's painted height (56px utility + its border). !important
+       terms beat the JSX `inset-x-0` / `bottom-0` utilities: this file is one
+       `@layer base` block and loses to the utility layer at equal specificity
+       on source order. */
     .fq-recitation-bar-rail {
       left: auto !important;
-      bottom: auto !important;
-      right: 24px !important;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 96px;
-      border-width: 1px !important;
-      border-style: solid;
-      border-radius: calc(var(--radius) + 4px);
-      box-shadow: var(--reader-chrome-bar-shadow);
+      right: 0 !important;
+      top: 70px;
+      bottom: 0 !important;
+      width: 72px;
+      border-width: 0 !important;
+      border-radius: 0;
+      backdrop-filter: blur(14px);
     }
-    /* Dark needs an opaque face — translucency over (7,15,23) produces no lift.
-       `:root.theme-dark` specificity (0,2,0) beats the JSX `bg-background/75`
-       utility (0,1,0) without needing !important. */
-    :root.theme-dark .fq-recitation-bar-rail {
-      background-color: var(--reader-chrome-face);
-      border-color: var(--reader-chrome-rim);
+    /* The surface fades out at both ends so the column has no hard corners
+       against the desk, and the divider is a hairline that never reaches one.
+       A full-height column is a ZONE, not a bar: it wants neither the flat
+       opaque face nor the top rim catch-light that `.fq-chrome-bar` gives a
+       horizontal strip — a rim drawn across the top of a column reads as a
+       stray line.
+
+       Doubled selector, deliberately. `.fq-chrome-bar` is declared ~600 lines
+       LATER in this file at the same (0,1,0) specificity, so it won the tie on
+       source order: measured, the rail still had `background-color:
+       rgb(14,20,27)` sitting opaque behind this gradient (so the ends faded to
+       chrome, not to the desk) and still carried the rim plus `--panel-cast`,
+       while both `background` and `box-shadow: none` sat in the file looking
+       applied. Raising specificity here beats it outright; moving the block
+       would reorder everything else in the band. */
+    .fq-chrome-bar.fq-recitation-bar-rail {
+      background:
+        linear-gradient(
+          to bottom,
+          hsl(var(--chrome) / 0) 0%,
+          hsl(var(--chrome) / 0.92) 12%,
+          hsl(var(--chrome) / 0.92) 88%,
+          hsl(var(--chrome) / 0) 100%
+        );
+      box-shadow: none;
     }
-    /* Rail inner column: vertical stack, centred, overrides the horizontal layout. */
+    .fq-recitation-bar-rail::before {
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      /* Physical left — the inner edge, whichever direction the page reads. */
+      left: 0;
+      width: 1px;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        hsl(var(--border)) 10%,
+        hsl(var(--border)) 90%,
+        transparent
+      );
+    }
+    /* The bar's closing hairline would draw a line across the column's middle. */
+    .fq-recitation-bar-rail::after {
+      display: none;
+    }
+    /* The inner row stops being a layout box at all: the three zones position
+       themselves against the fixed rail, so nothing drifts when a zone gains or
+       loses a control (the stop button appears only while playing). */
     .fq-recitation-bar-rail > div {
+      display: block;
       max-width: none;
+      padding: 0;
+      height: 100%;
+    }
+    .fq-recitation-bar-rail .fq-rail-zone {
+      position: absolute;
+      inset-inline: 0;
+      display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.875rem 0.375rem;
+      gap: 0.25rem;
     }
-    /* Info div: not flex-1 in rail, text centred. */
+    .fq-recitation-bar-rail .fq-rail-lead {
+      top: 28px;
+    }
+    /* The rail's true midpoint, not the midpoint of what happens to be stacked
+       above it. */
+    .fq-recitation-bar-rail .fq-rail-transport {
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .fq-recitation-bar-rail .fq-rail-utils {
+      bottom: 28px;
+    }
+    /* Icons only: the verse key, the inline reciter name and the offline notice
+       are all text, and none of them survives a 72px column. Every one is still
+       present in the bar form below this band. */
     .fq-recitation-bar-rail .fq-recitation-info {
       display: none;
     }
-    /* Rail-only reciter trigger: hidden by default (bar form shows the name
-       inline in .fq-recitation-info instead); revealed here, truncated to the
-       96px rail width minus its padding. Trello #183. */
     .fq-recitation-bar-rail .fq-recitation-rail-reciter {
       display: flex;
-      width: 100%;
-      max-width: 80px;
     }
   }
 
@@ -1192,7 +1370,7 @@ body,
      utility classes Nav.tsx's base className always carries. Keep these
      widths numerically identical to MOBILE_QUERY/TABLET_QUERY in
      use-is-mobile.ts/use-is-tablet.ts. */
-  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+  @media (max-width: 1366px) {
     .fq-nav-overlay-page {
       position: fixed !important;
       top: 0 !important;
@@ -1248,7 +1426,7 @@ body,
      Same breakpoints as the nav overlay block above, and for the same reason: at
      desktop widths there is no immersive transition and no race, so those keep the
      existing `min-h-[calc(100dvh-3.5rem)]` flow layout untouched. */
-  @media (max-width: 767px), (min-width: 1024px) and (max-width: 1366px) {
+  @media (max-width: 1366px) {
     /* `!important` throughout for the same reason the nav overlay block needs it:
        this file is one `@layer base` block and loses to Tailwind's utility layer at
        equal specificity by source order. */
@@ -1494,30 +1672,10 @@ body,
     .fq-spread .fq-ornament {
       color: var(--mushaf-ornament) !important;
     }
-    .fq-spread .fq-safha-surah-glyph {
-      color: var(--mushaf-ornament) !important;
-    }
-    .fq-spread .fq-safha-meta,
-    .fq-spread .fq-safha-footer {
-      color: var(--mushaf-metadata) !important;
-    }
-    /* Dark theme — page CHROME (header/footer metadata, the surah-name glyph, the
-       inline surah name, and the ◆ separators) takes the off-white text colour so
-       the info reads quietly, not gold. Gold is reserved for the surah banner frame;
-       ayah-end markers now follow the general tablet rule (--mushaf-text). */
-    :root.theme-dark .fq-spread .fq-safha-meta,
-    :root.theme-dark .fq-spread .fq-safha-footer,
-    :root.theme-dark .fq-spread .fq-safha-surah-glyph,
-    :root.theme-dark .fq-spread .fq-quran-safha .fq-inline-surah,
-    :root.theme-dark .fq-spread .fq-ornament {
-      color: var(--mushaf-text) !important;
-    }
-    /* Gold theme — the surah name is NOT gold; render it in the ink text colour
-       (matching the black safha info). Ornaments and the frame stay gold. */
-    :root.theme-gold .fq-spread .fq-safha-surah-glyph,
-    :root.theme-gold .fq-spread .fq-quran-safha .fq-inline-surah {
-      color: var(--mushaf-text) !important;
-    }
+
+
+    /* The tablet band's copy of the same two theme-scoped blocks — removed in
+       5.1b for the same reason. See the mobile block above. */
 
     /* Compact page chrome on tablet: shrink the header (surah glyph) and footer
        (page number) so more of the 100dvh card goes to the mushaf text. !important
@@ -1626,4 +1784,547 @@ body,
      matching regular's 15fs + 14×0.40fs = 20.6fs. No explicit width — card
      sizes naturally to the widest COLRv1 line.
      See fix-tajweed-font-size.md Addendum 4. */
+
+
+  /* ========================================================================
+     Shared primitive rules (subtask 3.1). One definition each, consumed by
+     components/ui/*. These live here rather than in a component because they
+     are shared BY components — a focus ring re-declared twelve times drifts
+     twelve ways, which is what it had started to do.
+     ======================================================================== */
+
+  /* The focus ring: a gap in the chrome colour, then the state accent. Two
+     steps rather than one so it stays legible on a near-white bar and a
+     near-black one alike, without per-component tuning. Replaces the stock
+     `ring-2 ring-offset-2 ring-offset-background` pattern, whose gap was always
+     --background and so vanished on any surface that was not the page
+     background — every dialog, sheet, popover and nav bar. */
+  .fq-focus-ring:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px hsl(var(--chrome)),
+      0 0 0 4px hsl(var(--ring));
+  }
+  /* Inset variant, for controls whose own box is clipped by a scroll container
+     or sits flush in a row — a ring drawn outside them would be cut off. */
+  .fq-focus-ring-inset:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px hsl(var(--ring));
+  }
+
+  /* Floating panels — dialog, sheet, popover, dropdown, command. The cast is a
+     token so dark can spend its lift on a raised face and a rim instead of a
+     shadow that would produce no pixels (ADR 0032). */
+  .fq-panel {
+    background: hsl(var(--popover));
+    box-shadow: var(--panel-cast);
+  }
+  /* Deliberately a class, not `shadow-[var(--panel-cast)]`. Tailwind cannot
+     type-infer a bare `var()` inside `shadow-[…]` — it resolved it as a shadow
+     COLOUR, left `--tw-shadow` at its `0 0 #0000` default, and every panel
+     silently rendered with no shadow at all while the class sat in the markup
+     looking correct. `shadow-[shadow:var(--panel-cast)]` also works; a named
+     utility is clearer about what it is. */
+  .fq-panel-cast {
+    box-shadow: var(--panel-cast);
+  }
+
+  /* Grouped sections with hairline rows — ported from the lab's settings sheet,
+     which is the reference implementation. A stack of identical floating cards
+     is N competing objects; one surface with hairlines between rows is one
+     scannable inventory. */
+  .fq-section-group {
+    border-radius: 14px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    overflow: hidden;
+  }
+  .fq-section-group > * + * {
+    border-top: 1px solid hsl(var(--border));
+  }
+  .fq-section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+  .fq-section-row + .fq-section-row {
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  /* Accordion drawer recessed well inside a section group */
+  .fq-section-drawer {
+    background: hsl(var(--well) / var(--well-alpha));
+    border-top: 1px solid hsl(var(--border));
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.04);
+  }
+  .fq-section-drawer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 16px 9px 24px;
+    width: 100%;
+    text-align: start;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color 150ms ease;
+  }
+  [dir="rtl"] .fq-section-drawer-row {
+    padding: 9px 24px 9px 16px;
+  }
+  .fq-section-drawer-row:hover {
+    background: hsl(var(--card) / 0.55);
+  }
+  .fq-section-drawer-row + .fq-section-drawer-row {
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  /* Crisp radio circle indicator for settings options */
+  .fq-radio-circle {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    border: 1.5px solid hsl(var(--muted-foreground) / 0.45);
+    background: hsl(var(--card));
+    color: transparent;
+    transition: all 150ms ease;
+  }
+  .fq-radio-circle[data-state="checked"] {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  /* Theme selection rows and miniature swatches for SettingsSidebar */
+  .fq-theme-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    width: 100%;
+    text-align: start;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+  .fq-theme-row:hover {
+    background: hsl(var(--well) / var(--well-alpha));
+  }
+  .fq-theme-row + .fq-theme-row {
+    border-top: 1px solid hsl(var(--border));
+  }
+  .fq-theme-swatch {
+    position: relative;
+    flex: none;
+    width: 44px;
+    height: 30px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid hsl(var(--border));
+    background: var(--sw-desk);
+  }
+  .fq-theme-swatch::before {
+    content: "";
+    position: absolute;
+    inset: 5px 7px 0;
+    border-radius: 2px 2px 0 0;
+    background: var(--sw-paper);
+  }
+  .fq-theme-swatch::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    width: 12px;
+    height: 2px;
+    margin-left: -6px;
+    border-radius: 1px;
+    background: var(--sw-accent);
+  }
+  .fq-theme-swatch[data-theme="light"] {
+    --sw-desk: hsl(214 27% 90%);
+    --sw-paper: #fdfdfc;
+    --sw-accent: hsl(169 88% 26%);
+  }
+  .fq-theme-swatch[data-theme="gold"] {
+    --sw-desk: hsl(43 44% 84%);
+    --sw-paper: #fdf9ee;
+    --sw-accent: hsl(168 72% 24%);
+  }
+  .fq-theme-swatch[data-theme="dark"] {
+    --sw-desk: hsl(211 31% 8%);
+    --sw-paper: #111820;
+    --sw-accent: hsl(160 84% 39%);
+  }
+  .fq-theme-check {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    border: 1.5px solid hsl(var(--muted-foreground) / 0.45);
+    background: hsl(var(--card));
+    color: transparent;
+    transition: all 150ms ease;
+  }
+  .fq-theme-row[aria-checked="true"] .fq-theme-check {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  /* Section overline: the manuscript register — small, tracked out, identity
+     accent, with a rule that fades away from the label. 11px, not 10px: below
+     the app's type-size floor. */
+  .fq-overline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: hsl(var(--primary));
+  }
+  .fq-overline::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to left, transparent, hsl(var(--primary) / 0.35));
+  }
+  /* Dark only: --primary at 26% lightness on --chrome (8% lightness) measures
+     3.6:1 on this small text, under the 4.5:1 AA floor — light/gold's much
+     brighter chrome keeps the same colour legible (4.5:1 / 5.9:1) without an
+     override. 32% measures 5.2:1, same hue, text only — the primary token
+     itself and everything else built on it (buttons, focus rings) is untouched. */
+  :root.theme-dark .fq-overline {
+    color: hsl(169 88% 32%);
+  }
+  :root.theme-dark .fq-overline::after {
+    background: linear-gradient(to left, transparent, hsl(169 88% 32% / 0.35));
+  }
+
+  /* Inert vs live. The one control that does something sits outside any well,
+     brighter at rest; inert neighbours are grouped and dimmed. */
+  .fq-control-inert {
+    color: hsl(var(--control-inert));
+  }
+  .fq-control-live {
+    color: hsl(var(--control-live));
+  }
+  .fq-well {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--well) / var(--well-alpha));
+  }
+
+  /* ========================================================================
+     Shared chrome rules (subtask 3.2). The navigation strip, the recitation
+     bar and its rail form. One treatment, three themes, values only.
+     ======================================================================== */
+
+  /* An app chrome bar is an OPAQUE surface, never glass. Over a (7,15,23)
+     desk `bg-background/75 backdrop-blur-md` reads as a hole with the mushaf
+     showing through, which is why dark needed a `color: white !important`
+     override on every nav descendant just to stay legible. An opaque face
+     puts chrome back on the brightness ladder (creases < desk <= chrome <
+     page face) and lets the semantic text tokens work unassisted.
+     Lift is the §4 rule applied literally: a rim catch-light along the top
+     edge plus a cast. On light and gold the cast does the work; on dark it
+     measures ~1 point and the warm rim carries it. Same rule, different
+     token values — never a theme-scoped copy. */
+  .fq-chrome-bar {
+    position: relative;
+    background-color: hsl(var(--chrome));
+    box-shadow:
+      inset 0 1px 0 hsl(var(--surface-rim) / var(--surface-rim-alpha)),
+      var(--panel-cast);
+  }
+  /* Closing hairline that fades at both ends, so a full-bleed bar has no hard
+     corners against the desk. */
+  .fq-chrome-bar::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--border)) 8%,
+      hsl(var(--border)) 92%,
+      transparent
+    );
+  }
+  /* The recitation bar sits at the bottom, so its closing hairline belongs on
+     the edge that faces the page. */
+  .fq-chrome-bar-bottom::after {
+    inset: 0 0 auto;
+  }
+
+  /* The recitation transport's three zones — identity, transport, utilities.
+     `display: contents` in bar form, so the wrappers add no box and the
+     full-width bar lays out exactly as it did before they existed; the desk
+     band turns them into real, absolutely-positioned zones of the rail. One
+     markup, two compositions, and the zone a control belongs to is stated in
+     the JSX rather than inferred from source order. */
+  .fq-rail-zone {
+    display: contents;
+  }
+
+  /* Identity medallion — the brand mark. Gold rim, dark face, in EVERY theme:
+     a struck seal is a material, not a tint, and inverting it on light both
+     erases that reading and leaves the white logo silhouette invisible
+     (design-language.md §12). Replaces `.fq-icon-chip` on the logo, which
+     filled it with --primary and so spent the state accent on identity. */
+  .fq-medallion {
+    border: 1px solid hsl(var(--medallion-rim));
+    background: radial-gradient(
+      120% 120% at 50% 0%,
+      hsl(var(--medallion-face)),
+      hsl(var(--medallion-edge))
+    );
+    box-shadow: inset 0 1px 0 hsl(var(--medallion-ink) / 0.14);
+    color: hsl(var(--medallion-ink));
+  }
+
+  /* Inert vs live chrome controls. The whole point of the pair: a bar full of
+     identically-weighted icons tells you nothing about which of them act. */
+  .fq-chrome-btn,
+  .fq-chrome-btn-live {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    border-radius: 9999px;
+    transition:
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+  .fq-chrome-btn {
+    color: hsl(var(--control-inert));
+  }
+  .fq-chrome-btn-live {
+    color: hsl(var(--control-live));
+  }
+  /* Hover is a recess, so it follows the well's direction rather than a fixed
+     "darker" or "lighter" — see §4. Hover refines; it never reveals. */
+  .fq-chrome-btn:hover,
+  .fq-chrome-btn-live:hover {
+    background: hsl(var(--well) / var(--well-alpha));
+  }
+  .fq-chrome-btn:hover {
+    color: hsl(var(--control-live));
+  }
+  .fq-chrome-btn-live:hover {
+    color: hsl(var(--foreground));
+  }
+
+  /* Chrome sheds information as the viewport narrows, and the well's grouping
+     is information. Below the compact boundary its members have already
+     relocated into the account menu, leaving one control — and a lone icon in
+     a pill outline is noise. The control survives; the grouping does not. */
+  @media (max-width: 767px) {
+    .fq-chrome-well {
+      border-color: transparent;
+      background: none;
+    }
+  }
+
+  /* ========================================================================
+     Ornament (subtask 4.1, renamed in 5.1). Drawn, not typed: a hairline
+     tapering into an open diamond. The `◆` glyph this replaces read as a
+     footnote marker, inherited the UI font's quirks, and sat on --primary —
+     the state accent — when ornament is identity in every theme.
+
+     Named `fq-rule-mark`, NOT `fq-ornament`: the mushaf already owns
+     `.fq-ornament` for its header-band and footer markers, and 4.1's version of
+     this rule silently turned every one of them into a 58x10 hairline box.
+     Invisible on the four screens 4.1 touched and only visible on the reader.
+
+     Colour comes from `currentColor` via `--fq-mark`, so a caller inside the
+     mushaf can hand it `--mushaf-ornament` without this rule knowing anything
+     about the reader. */
+  .fq-rule-mark {
+    --fq-mark: hsl(var(--primary));
+    --fq-mark-soft: hsl(var(--primary) / 0.45);
+    /* inline-block, not the default inline: a bare <span> would ignore both
+       width and height, and the ornament would collapse to nothing anywhere
+       its parent is not a flex container. */
+    display: inline-block;
+    position: relative;
+    width: 58px;
+    height: 10px;
+    flex: none;
+  }
+  .fq-rule-mark::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 42px;
+    height: 1px;
+    margin-top: -0.5px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--fq-mark-soft) 70%,
+      var(--fq-mark)
+    );
+  }
+  .fq-rule-mark::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    transform: rotate(45deg);
+    border: 1px solid var(--fq-mark);
+  }
+  /* One asset, mirrored, serves both flanks of a symmetric pair. */
+  .fq-rule-mark--flip {
+    transform: scaleX(-1);
+  }
+  /* Ornament is decoration, so it is the first thing a narrowing composition
+     sheds (§11). Below the compact boundary the title keeps its whole width. */
+  @media (max-width: 767px) {
+    .fq-rule-mark {
+      display: none;
+    }
+  }
+
+  /* A section group's rows are hairline-separated, but a group can also carry
+     a sticky heading. `.fq-section-group` sets `overflow: hidden` to clip rows
+     to its radius — and an `overflow: hidden` ancestor is a scroll container,
+     which traps `position: sticky` inside the group's own (content-height) box
+     instead of the viewport. A heading in a clipped group silently stops
+     sticking. This modifier opts out of the clip; the first and last rows have
+     no background of their own, so nothing overflows the radius anyway. */
+  .fq-section-group-open {
+    overflow: visible;
+  }
+  .fq-section-heading {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-radius: 14px 14px 0 0;
+    background: hsl(var(--muted));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  /* A grid's answer to the same rule (subtask 4.2). The surah list is 114
+     near-identical entries; as individual cards that is 114 competing objects,
+     and the language's answer to repetition is hairlines. A single-column
+     hairline list of 114 rows is worse than the grid at desktop width, so the
+     grid stays and the hairlines become a lattice: one surface, gaps painted
+     in the border colour, cells filled with the card colour. Cheaper and more
+     robust than per-cell border arithmetic, and it degrades to exactly the
+     hairline list at one column. Callers keep supplying their own
+     `grid-cols-*` utilities. */
+  .fq-section-lattice {
+    display: grid;
+    gap: 1px;
+    border-radius: 14px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--border));
+    overflow: hidden;
+  }
+  .fq-section-lattice > * {
+    background: hsl(var(--card));
+  }
+
+  /* Recitation play button */
+  .fq-recitation-play {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / 0.85);
+    background: hsl(var(--accent) / 0.35);
+    color: hsl(var(--primary));
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .fq-recitation-play:hover {
+    background: hsl(var(--accent) / 0.65);
+    border-color: hsl(var(--primary));
+  }
+  .fq-recitation-play-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+  }
+  .fq-recitation-play[data-state="playing"] {
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.28), 0 0 22px -4px hsl(var(--primary) / 0.45);
+  }
+  .fq-recitation-play[data-state="playing"] .fq-recitation-play-ring {
+    background: conic-gradient(
+      from -90deg,
+      hsl(var(--primary)) 0deg,
+      hsl(var(--primary)) 132deg,
+      hsl(var(--border)) 132deg,
+      hsl(var(--border)) 360deg
+    );
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  }
+  .fq-recitation-play[data-state="error"] {
+    border-color: hsl(var(--destructive) / 0.8);
+    background: hsl(var(--destructive) / 0.2);
+    color: hsl(var(--destructive));
+  }
+  .fq-recitation-play[data-state="loading"] .fq-recitation-play-ring {
+    background: conic-gradient(
+      from -90deg,
+      hsl(var(--primary)) 0deg,
+      hsl(var(--primary) / 0) 120deg,
+      hsl(var(--primary) / 0) 360deg
+    );
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+    animation: fq-spin 1.1s linear infinite;
+  }
+
+  @media (min-width: 1367px) {
+    .fq-recitation-bar-rail .fq-recitation-play {
+      width: 44px;
+      height: 44px;
+    }
+    .fq-recitation-bar-rail .fq-recitation-play-ring {
+      inset: -5px;
+    }
+  }
+
+  /* Recitation lead (reciter dropdown button) — matching play button treatment */
+  .fq-recitation-lead-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / 0.85);
+    background: hsl(var(--accent) / 0.35);
+    color: hsl(var(--primary));
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  }
+  .fq-recitation-lead-btn:hover {
+    background: hsl(var(--accent) / 0.65);
+    border-color: hsl(var(--primary));
+  }
+  @media (min-width: 1367px) {
+    .fq-recitation-bar-rail .fq-recitation-lead-btn {
+      width: 40px;
+      height: 40px;
+    }
+  }
 }

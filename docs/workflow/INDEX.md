@@ -5,9 +5,10 @@ All AI workflow instructions for this project. Load the relevant file when a wor
 ## Core Cycle
 
 ```
-Plan → Implement → Review → Ship → Retrospect
+Refine → Plan → Implement → Review → Ship → Retrospect
 ```
 
+0. **[Refine a task](refine-task.md)** — break a big/vague task into scoped issues (epic + children); no implementation
 1. **[Plan a task](plan-task.md)** — investigate, clarify, write a spec in `docs/plans/`
 2. **[Implement a task](start-task.md)** — load context, implement from the plan
 3. **[Review work](review-work.md)** — check for bugs, quality issues, plan drift
@@ -22,6 +23,7 @@ Plan → Implement → Review → Ship → Retrospect
 
 | Trigger | Instructions | Description |
 |---|---|---|
+| `/refine-fq-task` | [refine-task.md](refine-task.md) | Break a big task into scoped issues (epic + children, `status:backlog`) — no implementation |
 | `/plan-fq-task` | [plan-task.md](plan-task.md) | Socratic planning → `docs/plans/<slug>.md` |
 | `/start-fq-task` | [start-task.md](start-task.md) | Implement from a plan, load all context |
 | `/check-fq-standards` | [check-fq-standards.md](check-fq-standards.md) | Pre/post-implementation guardrail vs DECISIONS.md + engineering bar |

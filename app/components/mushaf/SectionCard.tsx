@@ -23,16 +23,19 @@ export const SectionCard = ({
   return (
     <section
       className={cn(
-        "relative bg-card border border-border rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)]",
+        "fq-panel-cast relative bg-card border border-border rounded-[20px]",
         hero ? "p-5 md:p-7" : "p-5 md:p-6",
         className,
       )}
     >
       {hero ? (
-        <div className="absolute inset-[10px] rounded-xl border border-primary/20 pointer-events-none" />
+        // The layered inner frame is ornament, so it is identity — it was
+        // --primary, which spent the state accent on a decoration.
+        <div className="absolute inset-[10px] rounded-xl border border-primary/25 pointer-events-none" />
       ) : null}
       <div className="relative">
         <div className="flex items-start gap-3">
+          {/* What this section is — identity. */}
           <span className="flex-none grid place-items-center size-9 rounded-xl bg-primary/10 text-primary">
             <Icon className="size-[18px]" strokeWidth={1.8} />
           </span>

@@ -4,55 +4,135 @@ Aesthetic direction and UI sensibility for Furqan. Load this alongside `docs/sta
 
 This is the canonical source. `DESIGN.md` at repo root is a generated token extraction for the impeccable skill — regenerate it via `/impeccable document` after changing this file, don't hand-edit it.
 
+The full derivation behind every principle here — why it exists, how it was measured, what it does in each theme and at each screen size — is [`design-language.md`](design-language.md). This file is the distillation you apply; that file is the argument. When they disagree, the language spec is right and this file is stale.
+
 ---
 
 ## Character
 
-Furqan is a **manuscript-inspired reading app**. Every UI choice should evoke the physical act of holding and reading a book, not a generic SaaS dashboard. Distinctive, not templated.
+Furqan is a **manuscript under a reading lamp**. Not a document viewer, not a dashboard, not a reading app with a dark mode. The interface makes a printed page feel present — lit, seated on a surface, surrounded by quiet — and then gets out of the way.
+
+**The page is the thing; chrome is the room around it. When the two compete, the room loses.** Nearly every rule below is a consequence of that sentence.
 
 ---
 
-## Cards and surfaces
-
-- Use rounded corners with meaningful radius — `rounded-[20px]` for primary content cards (mushaf page, large dialogs), `rounded-xl` / `rounded-lg` for secondary surfaces
-- Flat, borderless, unshadowed cards are wrong for this app — every card should feel slightly elevated
-- Preferred shadow: `shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)]` — subtle at the top edge, soft diffuse lift at the bottom
-- **Layered frames**: where the design reference shows a double border, implement it as an outer border + an absolutely-positioned inner frame (`inset-[10px] border border-primary/20 rounded-xl pointer-events-none`) rather than nested padding divs
-
 ## Accent colour usage
 
-- Use `text-primary` / `border-primary/20` as the single unifying ornament colour — it adapts automatically across light, gold, and dark themes
-- Apply the accent **sparingly but consistently**: corner ornaments, inner frame accent, header separators, footer markers — all the same token, all at low opacity except for the focal element
-- Never reach for a second accent colour; one is enough
+**Unified Emerald Accent.** All accents across Furqan — identity, live states, category overlines, badges, geometric rosette medallions, and manuscript ornaments — are unified in emerald green (`--primary` and calibrated semantic scales). Legacy gold tokens (`--gold`, `--gold-muted`) have been completely eliminated.
+
+- **Interaction & State** — `--primary`. Something is happening now, is selected, is on, or is live.
+- **Identity & Ornament** — `--primary` (and `--mushaf-ornament` / `--mushaf-metadata` inside the reading surface). Who or what this is, where you are, a page's own metadata, overlines, and manuscript ornaments.
+- **Recoverable Notices** — `--warning` / `--warning-foreground`.
+- **Destructive Actions** — `--destructive`.
+
+Apply accents intentionally; an accent that appears everywhere signals nothing. Emerald green is calibrated to ensure WCAG AA contrast against cards, desk surfaces, and pages across all three themes (Light, Gold, Dark).
+
+## Control hierarchy
+
+**Group the inert; let the live one stand apart.** Several secondary or inert affordances sit together in one recessed well, reading as a single dimmed cluster instead of several things that look clickable. The control that actually does something sits outside the well, warmer at rest, and is the only element on that surface allowed a state colour.
+
+A live control expresses idle, loading, active and error from **one** state token, so it can never show two readings of itself at once.
+
+One focus ring everywhere: a gap in the chrome colour, then the state accent.
+
+## Cards and surfaces
+
+- **Grouped sections with hairline rows, not stacks of identical cards.** Related rows share one surface; the group carries the border and the radius. Eight floating cards are eight competing objects.
+- A section is introduced by an **overline** — small, tracked out, warm, with a rule that fades away from the label.
+- A card is warranted when its content is genuinely a separate object the user might act on, move, or dismiss — not merely when several rows appear together.
+- Inert values read as evidence, not controls: plain text, never button chrome.
+- Rounded corners with meaningful radius — `rounded-[20px]` for primary content cards, `rounded-xl` / `rounded-lg` for secondary surfaces.
+- **Layered frames**: where a double border is called for, implement it as an outer border plus an absolutely-positioned inner frame (`inset-[10px] border border-primary/20 rounded-xl pointer-events-none`), not nested padding divs.
+
+## Depth
+
+**Depth rules are shared by all themes; only values differ.** Never scope a depth rule by theme to serve one theme — retune that theme's tokens instead.
+
+The brightness ladder, one order for every theme:
+
+```
+creases  <  desk  ≤  chrome  <  page face
+```
+
+**The page is the brightest surface**, because it is what the lamp is on. Measured at desk (desk / chrome / page): light 89.0 / 94.9 / 99.0, gold 82.7 / 92.9 / 96.3, dark 6.7 / 8.0 / 12.4.
+
+Light and gold have shadow headroom, so lift is a real cast plus a white rim along the top edge. **Dark does not**: `--background` is RGB `(7,15,23)`, about 7 points from black, so a declared shadow produces no visible pixels. Dark carries the same lift with a lighter face and a warm rim, spread wide and soft rather than dropped tight.
+
+**Never add a drop shadow to a dark surface expecting lift** — including floating dark chrome, which takes an opaque raised face and a warm rim, never a shadow and never translucent glass. This is a measurement of the medium, not a preference.
+
+"Raised" means raised relative to its own medium: a recessed well is lighter than its bar on dark and darker than it on light. Read the rule, not the direction.
+
+## Atmosphere
+
+A room has a light source and it has corners. The reading desk carries two inert layers — a **lamp** pooled where the page sits, and a **vignette** closing the corners — and neither ever paints over a Qur'an pixel.
+
+**A light source is expressed in whichever channel the surface has headroom for**, and that is measured, never assumed: lightness on a dark or a warm desk, **temperature** on a light cool one where there is no room to brighten. Values for one theme cannot be ported to another.
+
+The page face **may** be lit; the pool belongs to the **spread**, anchored at each card's seam edge so the two halves join at the gutter rather than making two pools and a bright seam — and only where two facing pages are actually on screen. A lone page has no gutter to join across and keeps the centred default.
+
+Both desk layers are **dropped entirely** where the page is full-bleed and there is no surround to act on. A vignette with nothing to darken is noise. Drop the layer; do not weaken it.
 
 ## Ornamental elements
 
-- **Corner star ornaments** on the mushaf page card — four 18px SVG stars at each corner (`text-primary opacity-60`), path: `M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z` (viewBox 0 0 18 18)
-- **◆ diamond separators** flanking centred titles — `inline-block rotate-45 text-[6px] text-primary`
-- Ornaments must be `pointer-events-none` and placed in a high `z-index` layer
+**Ornament is drawn, not typed.** A hairline rule tapering into an open diamond, rendered from CSS. Glyph characters (`✦`, `◆`) read as footnote markers at small sizes and inherit the text font's quirks. One asset, mirrored, serves both flanks of a symmetric pair.
 
-## Header bands in reading views
+Ornament is **identity**, so it takes the warm accent in every theme — including the mushaf's header-band marks, footer markers, page metadata, and the surah frame.
 
-Use a **3-column grid** (`dir="rtl" grid grid-cols-3`):
-- Column 1 (RTL → rightmost): primary metadata (e.g. juz number) — `text-[10px] font-bold tracking-widest text-muted-foreground`
-- Column 2 (centre): `◆ Title ◆` — title in `text-sm font-bold text-foreground`, diamonds in `text-primary`
-- Column 3 (RTL → leftmost): secondary metadata (e.g. hizb) — same style as column 1, `text-end`
-- Separated from content by `border-b border-border pb-2 mb-4`
+**The surah frame keeps exactly one colour role.** A previous three-role model needed per-theme overrides in two separate bands purely to collapse itself back to one colour.
+
+Ornament closes and frames; it never divides, never sits inside the reading column, and never overlays Qur'an text. Ornaments are `pointer-events-none` in a high `z-index` layer.
+
+## Type
+
+The **reading size is a contract, not an aesthetic** — ADR 0038 and `docs/standards/quran-rendering.md`. No principle here may move it.
+
+The interface scale is small, dense and quiet so nothing in the chrome competes with the page: a bold wordmark, a semibold page-orientation line that truncates rather than wraps, small tracked-out muted secondary orientation, and the smallest heaviest-tracked step reserved for section overlines.
 
 ## Navigation buttons
 
-Circular `<Link>` or `<button>`, **not** icon-as-button:
-- Size: `w-[52px] h-[52px] rounded-full`
-- Surface: `bg-card border border-border shadow-sm`
-- Icon: `ChevronLeft` / `ChevronRight` from lucide-react at `size={18} strokeWidth={1.8}` — thin and light
-- Hover: `hover:bg-accent hover:text-accent-foreground transition-colors`
-- Never use filled or circle-wrapped icon variants (e.g. `ArrowRightCircle`, `CircleChevronRight`) — they read as too heavy
+Circular `<Link>` or `<button>`, **not** icon-as-button. On the reading desk they are quiet rims that warm on hover, not filled chips — two saturated blobs flanking the page compete with it. Icon: `ChevronLeft` / `ChevronRight` from lucide-react, thin stroke.
+
+Page arrows exist only where there is a **gutter to sit in**. Where the page is full-bleed they are dropped, not shrunk onto the page; those bands navigate by swipe.
+
+Never use a filled or circle-wrapped icon variant (e.g. `ArrowRightCircle`, `CircleChevronRight`) — they read as too heavy.
 
 ## Icons
 
 - Source: `lucide-react` only (per DECISIONS.md)
 - Default `strokeWidth`: prefer `1.6`–`1.8` for UI chrome; `2` only where emphasis is needed
 - Choose the bare shape variant over the outlined-circle variant when both exist
+
+## Motion
+
+Short and understated: colour, background and border transitions around 160ms on a plain ease. A looping indicator is the only continuous animation, and only while something is genuinely in progress.
+
+**Motion never signals hierarchy** — placement, contrast or the state accent does that.
+
+**No design may depend on hover.** Hover refines; it never reveals.
+
+Under `prefers-reduced-motion: reduce`, every animation and transition collapses to effectively zero, declared once per surface rather than per component.
+
+## Screen sizes
+
+Three device classes. Band selection is **CSS-gated**, never UA detection or a JS breakpoint in the display path, so the correct band paints on the first frame.
+
+| Band | Page | Surround |
+|---|---|---|
+| **compact** `<1024px` | one page | none — full-bleed |
+| **spread** `1024–1366px` | facing pages | none — full-bleed |
+| **desk** `≥1367×800` | facing pages | the reading desk |
+
+Production matches this exactly as of subtask 5.1c; the `768–1023px` inset band it used to carry is
+gone. Keep `MOBILE_QUERY` in `use-is-mobile.ts` numerically identical to the compact blocks in
+`globals.css`.
+
+**Chrome loses information as the viewport narrows; the mushaf never loses reading size.** Shed in order of what earns its width: ornament first, then wordmark and inert clusters, then secondary orientation and tertiary utilities. The identity mark and the one live control survive every band.
+
+**Chrome reserves space; it never overlaps the mushaf.** A transport that has no room to sit beside the page moves to a bar that reserves **height**, never width, so line length is untouched.
+
+See `design-language.md` §11 for the full per-rule table.
+
+---
 
 ## Process
 

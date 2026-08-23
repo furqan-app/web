@@ -49,7 +49,7 @@ export const OfflineInstallPrompt = () => {
 
   return (
     <div
-      className="fixed bottom-24 start-4 z-50 w-[calc(100%-2rem)] max-w-sm rounded-xl border bg-card p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] sm:w-full"
+      className="fixed bottom-24 start-4 z-50 w-[calc(100%-2rem)] max-w-sm rounded-xl border bg-card p-5 fq-panel-cast sm:w-full"
       role="dialog"
       aria-label={t("offline.installedTitle", "Furqan is installed")}
     >

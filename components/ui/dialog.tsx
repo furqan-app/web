@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg origin-center scale-95 opacity-0 transition-[transform,opacity] duration-200 ease-out data-[state=open]:scale-100 data-[state=open]:opacity-100 data-[state=closed]:duration-150 motion-reduce:transition-opacity motion-reduce:scale-100 sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 fq-panel-cast origin-center scale-95 opacity-0 transition-[transform,opacity] duration-200 ease-out data-[state=open]:scale-100 data-[state=open]:opacity-100 data-[state=closed]:duration-150 motion-reduce:transition-opacity motion-reduce:scale-100 sm:rounded-lg",
         className
       )}
       {...props}
@@ -48,7 +48,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       {!hideDefaultClose && (
-        <DialogPrimitive.Close className="absolute end-4 top-4 rounded-full p-1.5 text-muted-foreground opacity-70 ring-offset-background transition-[opacity,background-color,color] duration-150 hover:opacity-100 hover:bg-accent hover:text-accent-foreground active:scale-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
+        <DialogPrimitive.Close className="fq-focus-ring fq-control-live absolute end-4 top-4 rounded-full p-1.5 opacity-70 transition-[opacity,background-color,color] duration-150 hover:opacity-100 hover:bg-accent hover:text-accent-foreground active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>

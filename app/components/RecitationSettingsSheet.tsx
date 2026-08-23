@@ -8,6 +8,7 @@ import {
   ChevronsUpDown,
   CircleDashed,
   CircleDot,
+  CircleUserRound,
   FileText,
   Gauge,
   Headphones,
@@ -15,16 +16,17 @@ import {
   MapPin,
   Minus,
   Plus,
+  Repeat1,
   Repeat2,
   Timer,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import useTranslations from "@/app/hooks/use-translations";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -56,6 +58,7 @@ import { RangePoint, RepeatCount, Reciter, StopPoint } from "@/app/types/recitat
 import { SurahResult } from "@/app/types";
 import { MUSHAF_LAST_PAGE } from "@/app/constants/plans";
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
+import { cn } from "@/lib/utils";
 
 const nextRepeatCount = (value: RepeatCount, direction: 1 | -1): RepeatCount => {
   if (direction === 1) {
@@ -67,16 +70,12 @@ const nextRepeatCount = (value: RepeatCount, direction: 1 | -1): RepeatCount => 
 };
 
 const SectionHeader = ({
-  icon: Icon,
   label,
 }: {
-  icon: typeof Users;
+  icon?: typeof Users;
   label: string;
 }) => (
-  <h3 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground mb-2">
-    <Icon className="size-3.5 text-primary" strokeWidth={1.8} />
-    {label}
-  </h3>
+  <div className="fq-overline mb-2">{label}</div>
 );
 
 const STOP_POINT_OPTIONS: { value: StopPoint; icon: typeof Users; labelKey: string; fallback: string }[] = [
@@ -96,33 +95,32 @@ const RANGE_TYPE_OPTIONS: { value: RangePoint["type"]; icon: typeof Users; label
 
 const ReciterTrigger = forwardRef<
   HTMLButtonElement,
-  { selected: Reciter | null; open: boolean } & React.ComponentPropsWithoutRef<typeof Button>
+  { selected: Reciter | null; open: boolean } & React.ComponentPropsWithoutRef<"button">
 >(({ selected, open, ...props }, ref) => {
   const t = useTranslations();
   return (
-    <Button
+    <button
       ref={ref}
       type="button"
-      variant="outline"
-      role="combobox"
       aria-expanded={open}
-      className="w-full justify-between rounded-xl border-border bg-card font-normal h-auto py-2.5"
+      className="fq-section-row fq-focus-ring w-full rounded-xl border border-border bg-card text-start transition-colors hover:bg-muted/30"
       {...props}
     >
-      {selected ? (
-        <span className="flex flex-col items-start text-start">
-          <span className="text-foreground">{selected.translatedName}</span>
-          {selected.style ? (
-            <span className="text-xs text-muted-foreground">{selected.style}</span>
+      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+        <CircleUserRound className="size-4 text-muted-foreground shrink-0" strokeWidth={1.8} />
+        <div className="flex-1 min-w-0">
+          <span className="text-[13px] font-medium text-foreground leading-tight block truncate">
+            {selected ? selected.translatedName : t("recitation.reciterPlaceholder", "Choose a reciter")}
+          </span>
+          {selected?.style ? (
+            <span className="text-[11px] text-muted-foreground leading-tight mt-0.5 block truncate">
+              {selected.style}
+            </span>
           ) : null}
-        </span>
-      ) : (
-        <span className="text-muted-foreground">
-          {t("recitation.reciterPlaceholder", "Choose a reciter")}
-        </span>
-      )}
-      <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
-    </Button>
+        </div>
+      </div>
+      <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground opacity-60" />
+    </button>
   );
 });
 ReciterTrigger.displayName = "ReciterTrigger";
@@ -152,23 +150,17 @@ const SurahCombobox = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
+        <button
           type="button"
-          variant="outline"
-          role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className="flex-1 justify-between rounded-xl border-border bg-card font-normal h-auto py-2.5"
+          className="flex-1 fq-section-row rounded-xl border border-border bg-card text-start py-2 px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/30 disabled:opacity-50"
         >
-          {selected ? (
-            <span className="text-foreground truncate">{displayName(selected)}</span>
-          ) : (
-            <span className="text-muted-foreground">
-              {t("recitation.surahPlaceholder", "Choose a surah")}
-            </span>
-          )}
-          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
-        </Button>
+          <span className="truncate">
+            {selected ? displayName(selected) : t("recitation.surahPlaceholder", "Choose a surah")}
+          </span>
+          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground opacity-60" />
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" container={portalContainer}>
         <Command>
@@ -184,10 +176,10 @@ const SurahCombobox = ({
                     onChange(chapter.id);
                     setOpen(false);
                   }}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-[13px]"
                 >
                   <Check
-                    className={`me-2 size-4 ${chapter.id === value ? "opacity-100 text-primary" : "opacity-0"}`}
+                    className={`me-2 size-3.5 ${chapter.id === value ? "opacity-100 text-primary" : "opacity-0"}`}
                   />
                   <span className="text-foreground">{displayName(chapter)}</span>
                 </CommandItem>
@@ -200,12 +192,6 @@ const SurahCombobox = ({
   );
 };
 
-// The "to" picker for stopPoint "custom". Bounds are always derived live from
-// referencePage/referenceSurah/referenceAyah (the current playing/viewed
-// position) rather than captured once — an effect corrects a stale rangeTo
-// (from an earlier session, before the reference moved) the moment the
-// reference changes, so the displayed value and the value actually used at
-// resolve time never diverge. See docs/plans/recitation-playback.md Addendum 9.
 const CustomRangePicker = ({
   chapters,
   rangeTo,
@@ -257,10 +243,6 @@ const CustomRangePicker = ({
     ayahCeil,
   );
 
-  // Number inputs are buffered locally and only clamped/committed on blur —
-  // clamping on every keystroke (the first cut of this component) fought
-  // the user mid-type: typing "12" with a floor of 5 would snap to "5" after
-  // the first digit, so the second digit landed on "5" instead of "1".
   const [pageInput, setPageInput] = useState(String(page));
   useEffect(() => setPageInput(String(page)), [page]);
   const commitPage = () => {
@@ -282,8 +264,8 @@ const CustomRangePicker = ({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3 space-y-3">
-      <SectionHeader icon={MapPin} label={t("recitation.rangeTo", "Stop at point")} />
+    <div className="rounded-xl border border-border bg-card p-3.5 space-y-3">
+      <SectionHeader label={t("recitation.rangeTo", "Stop at point")} />
 
       <div className="grid grid-cols-2 gap-2">
         {RANGE_TYPE_OPTIONS.map(({ value, icon: Icon, labelKey, fallback }) => {
@@ -300,14 +282,18 @@ const CustomRangePicker = ({
                     : { type: "verse", surah, ayah },
                 )
               }
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={cn(
+                "flex items-center gap-2 rounded-xl border px-3 py-2 text-[12.5px] transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                 isSelected
                   ? "border-primary bg-primary/10 text-primary font-medium"
-                  : `border-border bg-card text-foreground ${disabled ? "" : "hover:bg-accent"}`
-              }`}
+                  : "border-border bg-card text-foreground hover:bg-[hsl(var(--well)/var(--well-alpha))]"
+              )}
             >
               <Icon
-                className={`size-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                className={cn(
+                  "size-3.5 shrink-0",
+                  isSelected ? "text-primary" : "text-muted-foreground"
+                )}
                 strokeWidth={1.8}
               />
               {t(labelKey, fallback)}
@@ -329,6 +315,7 @@ const CustomRangePicker = ({
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
           }}
+          className="h-9 text-[13px]"
         />
       ) : (
         <div className="flex gap-2">
@@ -351,7 +338,7 @@ const CustomRangePicker = ({
             min={ayahFloor}
             max={ayahCeil}
             value={ayahInput}
-            className="w-20 shrink-0"
+            className="w-20 shrink-0 h-9 text-[13px]"
             disabled={disabled}
             onChange={(e) => setAyahInput(e.target.value)}
             onBlur={commitAyah}
@@ -366,42 +353,49 @@ const CustomRangePicker = ({
 };
 
 const RepeatStepper = ({
+  icon: Icon,
   label,
   value,
   onChange,
   disabled = false,
 }: {
+  icon?: LucideIcon;
   label: string;
   value: RepeatCount;
   onChange: (value: RepeatCount) => void;
   disabled?: boolean;
 }) => (
-  <div className="flex items-center justify-between">
-    <span className="text-sm text-foreground">{label}</span>
-    <div className="flex items-center gap-2">
-      <Button
+  <div className="fq-section-row py-2.5 px-4">
+    <div className="flex items-center gap-2.5 min-w-0">
+      {Icon && (
+        <Icon className="size-4 text-muted-foreground shrink-0" strokeWidth={1.8} />
+      )}
+      <span className="text-[13px] font-medium text-foreground leading-tight truncate">
+        {label}
+      </span>
+    </div>
+    <div className="flex items-center gap-1.5 shrink-0">
+      <button
         type="button"
-        variant="outline"
-        size="icon"
-        className="h-8 w-8"
+        aria-label="Decrease"
+        className="size-7 rounded-lg border border-border bg-card grid place-items-center text-foreground hover:bg-muted/60 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all"
         disabled={disabled}
         onClick={() => onChange(nextRepeatCount(value, -1))}
       >
         <Minus className="size-3.5" />
-      </Button>
-      <span className="w-8 text-center text-sm font-medium tabular-nums">
+      </button>
+      <span className="w-8 text-center text-[13px] font-semibold tabular-nums text-foreground">
         {value === "infinite" ? "∞" : value}
       </span>
-      <Button
+      <button
         type="button"
-        variant="outline"
-        size="icon"
-        className="h-8 w-8"
+        aria-label="Increase"
+        className="size-7 rounded-lg border border-border bg-card grid place-items-center text-foreground hover:bg-muted/60 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all"
         disabled={disabled}
         onClick={() => onChange(nextRepeatCount(value, 1))}
       >
         <Plus className="size-3.5" />
-      </Button>
+      </button>
     </div>
   </div>
 );
@@ -445,10 +439,13 @@ export const RecitationSettingsSheet = () => {
         ref={setSheetContentEl}
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
+        className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
-        <SheetHeader>
-          <SheetTitle>{t("recitation.settingsTitle", "Recitation settings")}</SheetTitle>
-          <SheetDescription className="sr-only">
+        <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-5 border-b border-border/70 text-start">
+          <SheetTitle className="text-[15px] font-semibold leading-none text-foreground">
+            {t("recitation.settingsTitle", "Recitation settings")}
+          </SheetTitle>
+          <SheetDescription className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
             {t(
               "recitation.settingsDescription",
               "Choose a reciter and configure playback.",
@@ -456,18 +453,18 @@ export const RecitationSettingsSheet = () => {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="p-4 space-y-6 mt-2 overflow-y-auto">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
           {activeOverride ? (
-            <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2.5 text-sm text-primary">
+            <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2.5 text-xs text-primary">
               <Headphones className="size-4 shrink-0" strokeWidth={1.8} />
-              <span className="truncate">
+              <span className="truncate font-medium">
                 {t("recitation.playingOverride", "Playing")}: {activeOverride.label}
               </span>
             </div>
           ) : null}
 
           <div>
-            <SectionHeader icon={Users} label={t("recitation.reciter", "Reciter")} />
+            <SectionHeader label={t("recitation.reciter", "Reciter")} />
             <ReciterCombobox
               reciters={reciters}
               value={settings.reciterId}
@@ -480,7 +477,7 @@ export const RecitationSettingsSheet = () => {
           </div>
 
           <div>
-            <SectionHeader icon={CircleDashed} label={t("recitation.stopPoint", "Stop at")} />
+            <SectionHeader label={t("recitation.stopPoint", "Stop at")} />
             <RadioGroup
               value={settings.stopPoint}
               onValueChange={(value) => updateSettings({ stopPoint: value as StopPoint })}
@@ -494,22 +491,25 @@ export const RecitationSettingsSheet = () => {
                   <label
                     key={value}
                     htmlFor={`stop-${value}`}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-[12.5px] transition-all",
                       isDisabled
-                        ? "cursor-not-allowed opacity-50"
-                        : "cursor-pointer"
-                    } ${
+                        ? "cursor-not-allowed opacity-50 border-border bg-card"
+                        : "cursor-pointer",
                       isSelected
-                        ? "border-primary bg-primary/10 text-primary font-medium"
-                        : `border-border bg-card text-foreground ${isDisabled ? "" : "hover:bg-accent"}`
-                    }`}
+                        ? "border-primary bg-primary/10 text-primary font-medium shadow-sm"
+                        : "border-border bg-card text-foreground hover:bg-[hsl(var(--well)/var(--well-alpha))]"
+                    )}
                   >
                     <RadioGroupItem value={value} id={`stop-${value}`} className="sr-only" />
                     <Icon
-                      className={`size-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                      className={cn(
+                        "size-4 shrink-0 transition-colors",
+                        isSelected ? "text-primary" : "text-muted-foreground"
+                      )}
                       strokeWidth={1.8}
                     />
-                    {t(labelKey, fallback)}
+                    <span className="truncate">{t(labelKey, fallback)}</span>
                   </label>
                 );
               })}
@@ -529,114 +529,118 @@ export const RecitationSettingsSheet = () => {
             />
           ) : null}
 
-          <div className="rounded-xl border border-border bg-card p-3 space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Repeat2 className="size-3.5 text-primary" strokeWidth={1.8} />
-              {t("recitation.repeatSectionLabel", "Repeats")}
-            </div>
-            <RepeatStepper
-              label={t("recitation.repeatEachAyah", "Repeat each ayah")}
-              value={settings.perAyahRepeatCount}
-              onChange={(value) => updateSettings({ perAyahRepeatCount: value })}
-            />
-            {settings.stopPoint !== "none" ? (
+          <div>
+            <SectionHeader label={t("recitation.repeatSectionLabel", "Repeats & Speed")} />
+            <div className="fq-section-group">
               <RepeatStepper
-                label={t("recitation.repeatRange", "Repeat whole range")}
-                value={settings.rangeRepeatCount}
-                onChange={(value) => updateSettings({ rangeRepeatCount: value })}
-                disabled={activeOverride != null}
+                icon={Repeat1}
+                label={t("recitation.repeatEachAyah", "Repeat each ayah")}
+                value={settings.perAyahRepeatCount}
+                onChange={(value) => updateSettings({ perAyahRepeatCount: value })}
               />
-            ) : null}
+              {settings.stopPoint !== "none" ? (
+                <RepeatStepper
+                  icon={Repeat2}
+                  label={t("recitation.repeatRange", "Repeat whole range")}
+                  value={settings.rangeRepeatCount}
+                  onChange={(value) => updateSettings({ rangeRepeatCount: value })}
+                  disabled={activeOverride != null}
+                />
+              ) : null}
+
+              <div className="fq-section-row py-2.5 px-4">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Gauge className="size-4 text-muted-foreground shrink-0" strokeWidth={1.8} />
+                  <span className="text-[13px] font-medium text-foreground leading-tight truncate">
+                    {t("recitation.playbackSpeed", "Playback speed")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    aria-label="Decrease speed"
+                    className="size-7 rounded-lg border border-border bg-card grid place-items-center text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                    onClick={() =>
+                      updateSettings({
+                        playbackSpeed: Math.max(
+                          PLAYBACK_SPEED_MIN,
+                          Number((settings.playbackSpeed - PLAYBACK_SPEED_STEP).toFixed(2)),
+                        ),
+                      })
+                    }
+                  >
+                    <Minus className="size-3.5" />
+                  </button>
+                  <span className="w-10 text-center text-[13px] font-semibold tabular-nums text-foreground">
+                    {settings.playbackSpeed}x
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Increase speed"
+                    className="size-7 rounded-lg border border-border bg-card grid place-items-center text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                    onClick={() =>
+                      updateSettings({
+                        playbackSpeed: Math.min(
+                          PLAYBACK_SPEED_MAX,
+                          Number((settings.playbackSpeed + PLAYBACK_SPEED_STEP).toFixed(2)),
+                        ),
+                      })
+                    }
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="fq-section-row py-2.5 px-4">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Timer className="size-4 text-muted-foreground shrink-0" strokeWidth={1.8} />
+                  <span className="text-[13px] font-medium text-foreground leading-tight truncate">
+                    {t("recitation.pauseBetweenRepeats", "Pause between repeats")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    aria-label="Decrease pause"
+                    className="size-7 rounded-lg border border-border bg-card grid place-items-center text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                    onClick={() =>
+                      updateSettings({
+                        pauseBetweenRepeatsMs: Math.max(
+                          0,
+                          settings.pauseBetweenRepeatsMs - PAUSE_BETWEEN_REPEATS_STEP_MS,
+                        ),
+                      })
+                    }
+                  >
+                    <Minus className="size-3.5" />
+                  </button>
+                  <span className="w-10 text-center text-[13px] font-semibold tabular-nums text-foreground">
+                    {settings.pauseBetweenRepeatsMs / 1000}s
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Increase pause"
+                    className="size-7 rounded-lg border border-border bg-card grid place-items-center text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                    onClick={() =>
+                      updateSettings({
+                        pauseBetweenRepeatsMs: Math.min(
+                          PAUSE_BETWEEN_REPEATS_MAX_MS,
+                          settings.pauseBetweenRepeatsMs + PAUSE_BETWEEN_REPEATS_STEP_MS,
+                        ),
+                      })
+                    }
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-sm text-foreground">
-                <Gauge className="size-3.5 text-primary" strokeWidth={1.8} />
-                {t("recitation.playbackSpeed", "Playback speed")}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() =>
-                    updateSettings({
-                      playbackSpeed: Math.max(
-                        PLAYBACK_SPEED_MIN,
-                        Number((settings.playbackSpeed - PLAYBACK_SPEED_STEP).toFixed(2)),
-                      ),
-                    })
-                  }
-                >
-                  <Minus className="size-3.5" />
-                </Button>
-                <span className="w-10 text-center text-sm font-medium tabular-nums">
-                  {settings.playbackSpeed}x
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() =>
-                    updateSettings({
-                      playbackSpeed: Math.min(
-                        PLAYBACK_SPEED_MAX,
-                        Number((settings.playbackSpeed + PLAYBACK_SPEED_STEP).toFixed(2)),
-                      ),
-                    })
-                  }
-                >
-                  <Plus className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-sm text-foreground">
-                <Timer className="size-3.5 text-primary" strokeWidth={1.8} />
-                {t("recitation.pauseBetweenRepeats", "Pause between repeats")}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() =>
-                    updateSettings({
-                      pauseBetweenRepeatsMs: Math.max(
-                        0,
-                        settings.pauseBetweenRepeatsMs - PAUSE_BETWEEN_REPEATS_STEP_MS,
-                      ),
-                    })
-                  }
-                >
-                  <Minus className="size-3.5" />
-                </Button>
-                <span className="w-10 text-center text-sm font-medium tabular-nums">
-                  {settings.pauseBetweenRepeatsMs / 1000}s
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() =>
-                    updateSettings({
-                      pauseBetweenRepeatsMs: Math.min(
-                        PAUSE_BETWEEN_REPEATS_MAX_MS,
-                        settings.pauseBetweenRepeatsMs + PAUSE_BETWEEN_REPEATS_STEP_MS,
-                      ),
-                    })
-                  }
-                >
-                  <Plus className="size-3.5" />
-                </Button>
-              </div>
-            </div>
+          {/* Closes the inventory with the terminal identity mark */}
+          <div className="flex justify-center pt-2">
+            <span className="fq-rule-mark !inline-block" aria-hidden="true" />
           </div>
         </div>
       </SheetContent>

@@ -24,16 +24,13 @@ export default async function MushafHubPage({
   return (
     <main className="container mx-auto px-4 py-8 md:py-10 max-w-2xl min-h-[calc(100dvh-3.5rem)]">
       <header className="text-center mb-8">
-        <div className="flex items-center justify-center gap-2.5">
-          <span className="inline-block rotate-45 text-[8px] text-primary">
-            ◆
-          </span>
+        {/* Drawn ornament, identity accent — see marks/page.tsx. */}
+        <div className="flex items-center justify-center gap-4">
+          <span className="fq-rule-mark" aria-hidden="true" />
           <h1 className="font-tajawal font-extrabold text-3xl md:text-4xl text-foreground">
             {t("mushaf.hubTitle")}
           </h1>
-          <span className="inline-block rotate-45 text-[8px] text-primary">
-            ◆
-          </span>
+          <span className="fq-rule-mark fq-rule-mark--flip" aria-hidden="true" />
         </div>
         <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
           {t("mushaf.hubTagline")}

@@ -53,7 +53,7 @@ export const QuantityStepper = ({ value, onChange, min = 1, step = 1 }: Props) =
         onKeyDown={(e) => {
           if (e.key === "Enter") e.currentTarget.blur();
         }}
-        className="w-14 border-0 bg-transparent text-center text-2xl font-extrabold tabular-nums text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+        className="fq-focus-ring w-14 border-0 bg-transparent text-center text-2xl font-extrabold tabular-nums text-foreground rounded-md"
       />
       <button
         type="button"
