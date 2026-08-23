@@ -64,8 +64,24 @@ const SKELETON_BARS = Array.from({ length: SKELETON_LINE_COUNT }, (_, i) => i);
 const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: boolean }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const [lineWidth, setLineWidth] = useState<number | null>(null);
+  // Gates the banner's OWN visibility, independent of the container's
+  // fontReady-driven reveal. `measure()` is called from several triggers below
+  // (the immediate call, ResizeObserver, document.fonts.ready) that can ALL
+  // still return a stale pre-font-settle width — the comment further down
+  // ("Two frames later is the first reliable point") is exactly why they can't
+  // be trusted to reveal. Only the two calls already treated as reliable — the
+  // double-RAF callback and the 150ms fallback timer — are allowed to flip this
+  // true, via `reveal()`. An earlier version flipped it inside plain `measure()`
+  // and still showed the jump empirically (Playwright trace during
+  // implementation: 224.25px revealed, then silently corrected to 364px) —
+  // confirming an untrusted call really can win the race. Reset false on every
+  // effect run — defensive: in practice a mounted instance's fontReady only
+  // ever transitions false→true once, never back, since a loaded font stays
+  // loaded for the component's lifetime. See Issue #373.
+  const [measured, setMeasured] = useState(false);
 
   useLayoutEffect(() => {
+    setMeasured(false);
     const safha = outerRef.current?.closest(".fq-quran-safha");
     if (!safha) return;
     const measure = () => {
@@ -74,6 +90,10 @@ const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: b
         max = Math.max(max, row.getBoundingClientRect().width);
       });
       if (max > 0) setLineWidth(max);
+    };
+    const reveal = () => {
+      measure();
+      setMeasured(true);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -96,9 +116,9 @@ const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: b
     // glyph metrics to layout. Two frames later is the first reliable point to
     // read the final row boxes on Chromium and WebKit.
     const raf = requestAnimationFrame(() => {
-      requestAnimationFrame(measure);
+      requestAnimationFrame(reveal);
     });
-    const delayedMeasure = window.setTimeout(measure, 150);
+    const delayedMeasure = window.setTimeout(reveal, 150);
     return () => {
       ro.disconnect();
       document.fonts.removeEventListener("loadingdone", onFontsDone);
@@ -131,6 +151,7 @@ const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: b
             ? `${lineWidth}px`
             : `calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))`,
         maxWidth: "100%",
+        visibility: measured ? "visible" : "hidden",
       }}
     >
       <SurahFrameSVG
@@ -202,6 +223,20 @@ const BlankLine = () => (
 // and callbacks below don't see a new object on every render while the page's
 // content JSON is still in flight.
 const NO_LINES: Record<string, Array<WordWithVerse>> = {};
+
+// Flips true once, after the first client paint. Gates whether `fontReady`'s
+// lazy initializer may call `document.fonts.check()` directly: doing so during
+// the INITIAL hydration render risks a Suspense mismatch (server always
+// renders false; a bfcache'd client could read true). Every QuranSafha mounted
+// AFTER hydration — a pager panel created by a swipe/jump/far-neighbor
+// recreate — has no server-rendered counterpart to mismatch against, so a live
+// check there is always safe. Deliberately NOT a per-font memory (e.g. a
+// loadedFonts Set): that was tried and reverted (see fix-safha-swipe-flicker.md's
+// 2026-08-23 addendum) because a remembered "ever loaded" flag goes stale once
+// the persistent pager evicts and re-injects a font's @font-face rule. This
+// boolean answers only "has the hydration boundary passed" — the per-font
+// truth always comes from a fresh document.fonts.check() call.
+let hasHydrated = false;
 
 // Placeholder that reserves a header cell's line box while its value is unknown.
 // The header is the card's ONLY content-dependent dimension — the text area is
@@ -319,10 +354,21 @@ export const QuranSafha = ({
   // a blank page. check() reports the true state, so the skeleton shows until the
   // glyphs can actually paint.
   //
-  // Starts false so SSR and hydration match (no Suspense mismatch); the effect syncs
-  // it on mount and on every `loadingdone`. The persistent pager doesn't remount
-  // panels on swipe (it moves them), so a ready page never flashes back to skeleton.
-  const [fontReady, setFontReady] = useState(false);
+  // The lazy initializer reads document.fonts.check() directly ONLY once
+  // hasHydrated is true — on the very first (SSR/hydration) render it still
+  // starts false, matching the server, so there is no Suspense mismatch. Every
+  // later mount (a swipe/jump/far-neighbor panel created post-hydration) is a
+  // pure client insertion, so checking live is safe and eliminates the
+  // guaranteed one-paint flash a hardcoded `false` used to cause even when the
+  // font was already loaded (Issue #373). The effect below still drives the
+  // genuinely-loading and re-eviction cases — this only shortcuts the common
+  // already-ready case.
+  const [fontReady, setFontReady] = useState(() =>
+    hasHydrated ? document.fonts.check(fontSpec) : false,
+  );
+  useEffect(() => {
+    hasHydrated = true;
+  }, []);
   useEffect(() => {
     let cancelled = false;
     const sync = () => {
