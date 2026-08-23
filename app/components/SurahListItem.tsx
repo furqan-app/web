@@ -100,7 +100,7 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
         </div>
 
         {/* Revelation Tag */}
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-border/60 bg-[hsl(var(--well)/var(--well-alpha))] text-muted-foreground leading-none shrink-0">
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium border border-border/60 bg-[hsl(var(--well)/var(--well-alpha))] text-muted-foreground leading-none shrink-0">
           {revelationLabel}
         </span>
       </div>

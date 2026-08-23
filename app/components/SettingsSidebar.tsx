@@ -130,7 +130,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
                     <span className="text-[13px] font-medium text-foreground leading-tight">
                       {t("keepScreenAwakeLabel", "Keep screen awake")}
                     </span>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
                       {t(
                         "keepScreenAwakeDescription",
                         "Prevent your device screen from sleeping while the app is open",

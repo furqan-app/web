@@ -118,13 +118,6 @@ export const MushafLayoutRow = ({ mushafId, onSelect }: Props) => {
           <span
             className="fq-radio-circle"
             data-state={isActive ? "checked" : "unchecked"}
-            onClick={!isActive ? handleSelect : undefined}
-            role={!isActive ? "button" : undefined}
-            aria-label={
-              isActive
-                ? t("mushafLayout.active", "Active")
-                : t("mushafLayout.switchAction", "Switch to this layout")
-            }
           >
             {isActive && <Check className="size-2.5 stroke-[3]" />}
           </span>

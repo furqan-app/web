@@ -20,10 +20,10 @@ colors:
   warning-foreground: "hsl(40 84% 95%)"
 typography:
   ui:
-    fontFamily: "Tajawal, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans Arabic, system-ui, sans-serif"
     fontWeight: 400
   ui-emphasis:
-    fontFamily: "Tajawal, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans Arabic, system-ui, sans-serif"
     fontWeight: 700
   quran-word-on-page:
     fontFamily: "quran-p{pageId} (per-page glyph font)"
@@ -78,7 +78,7 @@ The system runs three parallel themes — light, gold, dark — each a complete,
 Three named themes (`.theme-light`, `.theme-gold`, `.theme-dark` on `<html>`), each defining the full shadcn token set as an HSL triplet consumed via `hsl(var(--token))`. Default theme is **light** (with a first-visit `prefers-color-scheme: dark` fallback to dark); user choice persists. HSL is the project's canonical color format — do not restate values as hex in code.
 
 ### Primary
-- **Reading Emerald** (`hsl(163 86% 35%)` / #0ca67b, light theme): the single interactive accent — primary buttons, links, focus rings, active states. Same role, different exact hue per theme (gold theme: `hsl(41 57% 43%)` / #ac852f; dark theme: `hsl(162 88% 41%)` / #0dc58d, an intentionally more vibrant emerald reverted from a muted version that read "dirty and lifeless" against a reference review).
+- **Reading Emerald** (`hsl(169 88% 26%)` / #087d67, light theme): the single interactive accent — primary buttons, links, focus rings, active states. Same role, different exact hue per theme (gold theme: `hsl(168 72% 24%)` / #116958; dark theme: `hsl(169 88% 26%)` / #087d67).
 
 ### Neutral (per theme)
 - **Light** — background `hsl(210 36% 95%)` (#eef2f7), card `hsl(0 0% 100%)` (#ffffff), foreground `hsl(209 36% 14%)` (#172431), border `hsl(210 31% 90%)` (#dee6ed). A modern cool-neutral surface, deliberately not warm/gold-tinted.
@@ -92,12 +92,12 @@ Three named themes (`.theme-light`, `.theme-gold`, `.theme-dark` on `<html>`), e
 
 ## Typography
 
-**UI Font:** Tajawal (Google Font, weights 400/500/700/800, Arabic + Latin subsets) via `--tajawal` CSS variable / `font-tajawal`.
+**UI Font:** IBM Plex Sans Arabic (Google Font, Arabic + Latin subsets) via the `--tajawal` CSS variable / `font-tajawal` (variable name predates the font swap; the font itself, not the variable name, changed in #349).
 **Quran Reading Font (in-page):** a per-page glyph font (`quran-p{pageId}`), loaded inline only on the mushaf page route — matches the exact print layout of that physical page.
 **Quran Reading Font (standalone):** UthmanicHafs1Ver18 (local, `--uthmanic` / `font-uthmanic`) — used for verse/word display outside the page route (search, marks, tooltips).
 **Surah Name Font:** a custom glyph font (`sura_names.ttf`, `--surah-names` / `font-surahnames`) that maps a zero-padded surah number (`"001"`–`"114"`) to a calligraphic surah-name glyph — never pass `name_arabic` text to it.
 
-**Character:** Tajawal carries all UI chrome with a clean, humanist geometric register; the Quran/surah fonts are swapped in only for scripture and surah-name display, so the reading content always reads as calligraphic manuscript text sitting inside a plainer, quieter interface frame.
+**Character:** IBM Plex Sans Arabic carries all UI chrome with a clean, humanist geometric register; the Quran/surah fonts are swapped in only for scripture and surah-name display, so the reading content always reads as calligraphic manuscript text sitting inside a plainer, quieter interface frame.
 
 ### Named Rules
 **The Column–Font Contract Rule.** Every Quran-text rendering context has exactly one correct source column and one correct font — never mix across rows (see [docs/standards/quran-rendering.md](docs/standards/quran-rendering.md)). Getting this wrong silently renders the wrong glyphs (e.g. unrendered rub-el-hizb markers, or a surah-name font fed literal Arabic text instead of a page number).
@@ -158,7 +158,7 @@ Circular, not icon-as-button: `w-[52px] h-[52px] rounded-full`, `bg-card border 
 
 ### Reading Surface Ornaments (signature)
 - **Corner star ornaments:** four 18px SVG stars at each corner of the mushaf card, `text-primary opacity-60`, path `M9 1L10.5 7L17 8.5L10.5 10L9 17L7.5 10L1 8.5L7.5 7Z` (viewBox 0 0 18 18), `pointer-events-none`.
-- **Diamond separators** flanking centered titles: `inline-block rotate-45 text-[6px] text-primary`.
+- **Rule marks** flanking centered titles: `.fq-rule-mark` — a drawn hairline (not a glyph character) tapering into an open diamond, colored via `--fq-mark`/`--fq-mark-soft` (defaults to `--primary`). Mirror with `.fq-rule-mark--flip` for the second flank.
 - **Header bands** (reading views): 3-column RTL grid — primary metadata (e.g. juz), centered `◆ Title ◆`, secondary metadata (e.g. hizb); separated from content by `border-b border-border pb-2 mb-4`.
 
 ### Icons

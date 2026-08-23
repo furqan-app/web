@@ -1979,13 +1979,14 @@ body,
   }
 
   /* Section overline: the manuscript register — small, tracked out, identity
-     accent, with a rule that fades away from the label. */
+     accent, with a rule that fades away from the label. 11px, not 10px: below
+     the app's type-size floor. */
   .fq-overline {
     display: flex;
     align-items: center;
     gap: 8px;
     margin: 0 2px 8px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.14em;
     color: hsl(var(--primary));
@@ -1995,6 +1996,17 @@ body,
     flex: 1;
     height: 1px;
     background: linear-gradient(to left, transparent, hsl(var(--primary) / 0.35));
+  }
+  /* Dark only: --primary at 26% lightness on --chrome (8% lightness) measures
+     3.6:1 on this small text, under the 4.5:1 AA floor — light/gold's much
+     brighter chrome keeps the same colour legible (4.5:1 / 5.9:1) without an
+     override. 32% measures 5.2:1, same hue, text only — the primary token
+     itself and everything else built on it (buttons, focus rings) is untouched. */
+  :root.theme-dark .fq-overline {
+    color: hsl(169 88% 32%);
+  }
+  :root.theme-dark .fq-overline::after {
+    background: linear-gradient(to left, transparent, hsl(169 88% 32% / 0.35));
   }
 
   /* Inert vs live. The one control that does something sits outside any well,
@@ -2231,7 +2243,6 @@ body,
   .fq-section-lattice > * {
     background: hsl(var(--card));
   }
-}
 
   /* Recitation play button */
   .fq-recitation-play {
@@ -2316,3 +2327,4 @@ body,
       height: 40px;
     }
   }
+}
