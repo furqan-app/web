@@ -100,10 +100,12 @@ Loads the right context (decisions + standards + plan), then implements the task
    - Ask the user which plan to implement if not specified
    - Derive the slug from the plan filename (e.g. `fix-search-debounce`)
    - **Read the plan in full from the worktree path: `../furqan-<slug>/docs/plans/<slug>.md`**. If that path does not exist, fall back to `docs/plans/<slug>.md` in the main repo (older tasks pre-dating the worktree-first flow). Read every addendum, especially `Constraints` and `What NOT to Do` — the newest addendum is the source of truth.
-   - Find the plan's GitHub issue (linked in the plan) and move it to In Progress and assign it to yourself before starting implementation:
-     ```bash
-     gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:todo" --add-label "status:in-progress" --add-assignee @me
-     ```
+    - Find the plan's GitHub issue (linked in the plan) and move it to In Progress and assign it to yourself before starting implementation:
+      ```bash
+      gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:todo" --add-label "status:in-progress" --add-assignee @me
+      .claude/skills/scripts/sync-issue-board-status.sh <issue-number> status:in-progress
+      ```
+    - The second command moves the card on the Furqan Kanban board (fallback if the `issue-status-to-project.yml` workflow hasn't fired yet). It needs gh project scopes (`gh auth refresh -s read:project -s project`); if it fails with a scope error, continue — the workflow will sync it.
 
 1b. **Set up worktree and start dev server**
 

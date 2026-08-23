@@ -6,7 +6,8 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: read
+  issues: write
+  repository-projects: write
 
 jobs:
   promote-release:
@@ -40,7 +41,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="v${{ steps.version.outputs.version }}"
-          mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --milestone "$version" --state closed --json title,url -q '.[] | "- \(.title) (\(.url))"')
+          mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --milestone "$version" --state all --json title,url -q '.[] | "- \(.title) (\(.url))"')
           body=""
           for line in "${issues[@]}"; do body+="$line"$'\n'; done
           {
@@ -61,3 +62,17 @@ jobs:
           gh pr merge "$pr_url" --repo "${{ github.repository }}" --merge --auto
           echo "### Promoting v${{ steps.version.outputs.version }} to prod" >> "$GITHUB_STEP_SUMMARY"
           echo "PR: $pr_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Mark milestoned issues done and close them
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="v${{ steps.version.outputs.version }}"
+          # Issues stay open through cut-release (stg); they close here, at prod.
+          mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --milestone "$version" --state open --json number -q '.[].number')
+          for n in "${issues[@]}"; do
+            echo "Marking #$n as shipped in prod"
+            gh issue edit "$n" --repo "${{ github.repository }}" \
+              --remove-label "status:to-be-released" --add-label "status:done" || true
+            gh issue close "$n" --repo "${{ github.repository }}" || true
+          done
