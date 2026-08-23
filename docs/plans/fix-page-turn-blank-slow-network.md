@@ -2,7 +2,7 @@
 
 **Type:** bug
 **Date:** 2026-07-30
-**Status:** implemented
+**Status:** implemented (Addendum 1 — tajweed lookahead; browser verification pending)
 **Trello:** #159 https://trello.com/c/iVramC8c
 **ADR:** [0034](../architecture/adr/0034-page-turn-readiness-on-slow-networks.md)
 **Related:** ADR 0028 (persistent pager), ADR 0029 (immutable font registry),
@@ -301,9 +301,10 @@ Every figure below is loading-state vs loaded-state on the same page.
   cosmetic settling artefact on the same surface. See the NOT RESOLVED note above for where to
   restart.
 
-- **Colour-glyph (tajweed) editions get no font lookahead.** Their fonts load through
+- ~~**Colour-glyph (tajweed) editions get no font lookahead.** Their fonts load through
   `FontFaceInjector`'s keyed `<style>` elements, which only cover the live window, so Stage B warms
-  their JSON but not their font. Not a regression; the tajweed path is exactly as it was.
+  their JSON but not their font. Not a regression; the tajweed path is exactly as it was.~~ Closed by
+  Addendum 1.
 - **Stage B's mid-gesture guard may be self-defeating** — see the note under Decisions Made.
 - The 3G end-to-end timing improvement was not re-measured under real throttling; verification used a
   deterministic fetch delay, which proves the loading state and the dimensional stability but not the
@@ -330,3 +331,126 @@ Every figure below is loading-state vs loaded-state on the same page.
   rationale does not survive scrutiny either: once Stage A has resolved, nothing the user is waiting
   on is in flight, so Stage B is not competing with anything. Kept as planned rather than deviating
   silently — revisit by either dropping it or narrowing it to `isCommitting`.
+
+## Addendum 1: Tajweed (colour-glyph) lookahead
+
+**Type:** bug
+**Date:** 2026-08-23
+**Issue:** [#372 fix(reader): pre-warm tajweed fonts via Stage B lookahead and registry prefetch](https://github.com/furqan-app/web/issues/372) (part of #371)
+
+### Summary
+
+Closes the "Known gaps" item above. Colour-glyph (tajweed) editions never got a font lookahead:
+Stage B warmed their JSON but not their font, because tajweed fonts don't go through the immutable
+`FontFace` registry (`page-font-registry.ts`) at all — `@font-palette-values` has no FontFace-API
+equivalent, so they load via `FontFaceInjector`'s keyed `<style>` elements, which only exist for
+pages already in the live window. There was no way to warm a page's tajweed font before its
+`<style>` tag mounts.
+
+A second, subtler bug found during investigation: `pageFontsReady(baseFontIds, edition)` — the gate
+Stage B waits on before firing — silently resolves **instantly** for a colour-glyph edition today,
+since `registry.get()` never finds an entry for a tajweed id. So even the *gate*, not just the warm,
+was a no-op for this edition: Stage B could fire before the live window's own tajweed fonts had
+actually finished downloading, competing with them for the same bandwidth — exactly what ADR 0034's
+two-stage sequencing exists to prevent.
+
+### Root Cause
+
+Same as the "Known gaps" entry above, restated precisely:
+
+- `ReaderPager.tsx`'s Stage B effect explicitly early-returns for `edition.usesColorGlyphs` before
+  ever calling anything font-related (`ReaderPager.tsx:700-705`).
+- `pageFontsReady` (`page-font-registry.ts:62-66`) is a pure registry read — `Promise.all(ids.map(id
+  => registry.get(...)?.loaded))` — and an id with no registered face resolves immediately. Tajweed
+  ids are never registered, so this always resolves immediately for a colour-glyph edition,
+  regardless of whether the live window's `<style>`-declared fonts have actually loaded.
+
+### Decision Tree / Algorithm
+
+| Stage | Edition | Action | Gate |
+|---|---|---|---|
+| A (live window, unchanged trigger) | madani | `ensurePageFonts` (registry, unchanged) | `pageFontsReady` via registry `.loaded` (unchanged) |
+| A (live window) | tajweed | none — CSS `<style>` already mounted by `FontFaceInjector` | **NEW:** `pageFontsReady` branches on `edition.usesColorGlyphs` → `Promise.all(ids.map(id => document.fonts.load('1em "<family>"').catch(() => {})))`, **one `.catch(() => {})` per id, inside the `map`** — not a single catch around the outer `Promise.all` — so one dead/offline font can never reject the whole gate and stall the pager effect (mirrors `pageFontsReady`'s existing per-id `.catch` for the registry path). This works because a CSS `@font-face` rule, once its `<style>` element is in the DOM, automatically appears as an entry in `document.fonts` — calling `.load()` on it reuses that real face (idempotent if already loading/loaded) rather than creating a duplicate. The `<style>` elements for the ids passed in are guaranteed already mounted by the time this runs: `FontFaceInjector`'s `useLruIds` commits the ids synchronously during render (not in an effect), and this effect is on the parent, which runs after the child's — the same ordering `ensurePageFonts`'s call site already relies on for the registry path. |
+| B (lookahead target, direction of travel) | madani | `ensurePageFonts` (unchanged) | — |
+| B (lookahead target) | tajweed | **NEW:** `warmColorGlyphFont(ids, edition)` — plain `fetch()` per id, no `FontFace`/`document.fonts` involvement (avoids decoding a font object that gets thrown away — CSS will parse its own face later when the `<style>` mounts for real). Pair-expanded only when `isDouble`, mirroring `ensurePageFonts(isDouble ? [rightPage, leftPage] : [target], edition)`. Fetch errors are swallowed (`.catch(() => {})`, same pattern as `face.load().catch(() => {})`). Skips ids already recorded in a small in-memory warmed-ids `Set<string>`, keyed via the **existing `keyOf(edition.id, page)` helper already used by the registry** (not a separately-invented key format) — unbounded, max 604 page ids for the whole book, trivial memory, no eviction needed — so a repeated Stage B computation for the same still-unreached target doesn't refire the fetch. | — |
+
+Both new functions live in `page-font-registry.ts`, next to `ensurePageFonts`/`pageFontsReady`.
+`ensurePageFonts` itself is untouched — the immutable registry contract (ADR 0029) does not gain a
+new entry point.
+
+### Verified Test Cases
+
+| Case | Today | After |
+|---|---|---|
+| Forward swipe, double view, tajweed | Stage B fires JSON warm only; font fetch starts only once the page enters the live window and its `<style>` mounts | `pageFontsReady` genuinely waits on the live window's tajweed fonts before Stage B fires; Stage B then `fetch()`s the target's woff2(s) into the SW's `PAGES_CACHE_NAME` (already `CacheFirst` for `/fonts/v4/colrv1/woff2/p[0-9]+\.woff2`, `app/sw.ts:75`), so the later CSS-triggered fetch is a cache hit |
+| Direction reversal | N/A (tajweed had no warm) | No cancellation, matching ADR 0034's existing accepted stance for madani — waste bounded to ~1 page; `fetch()` isn't aborted either |
+| Non-sequential jump (surah list to a distant page) | Lookahead irrelevant | Same — the lookahead target is stale, no benefit, no harm (identical to the original plan's case 4) |
+| Mobile single view | N/A | `warmColorGlyphFont` called with `[target]` only, not pair-expanded — matches `baseFontIds`'s existing `isDouble` scoping (ADR 0029 Addendum) |
+| Offline / tajweed edition not downloaded for that page | N/A | `fetch()` rejects, caught and swallowed — no unhandled rejection, no crash, no stall of the rest of the session |
+| Revisit before the Stage B target ever gets committed to | N/A | Warmed-ids `Set` skips the redundant `fetch()` |
+
+### Files to Change
+
+- `app/utils/page-font-registry.ts`
+  - `pageFontsReady(ids, edition)`: branch on `edition.usesColorGlyphs` — colour-glyph path calls
+    `document.fonts.load('1em "<family>"')` per id instead of the registry lookup, with its own
+    `.catch(() => {})` per id inside the `map` (not one catch around the outer `Promise.all`).
+  - Add `warmColorGlyphFont(ids, edition): void` — `fetch()`-based cache warm, deduped via a
+    module-level `Set<string>` keyed with the existing `keyOf(edition.id, page)` helper (not a new
+    key format), errors swallowed.
+- `app/components/reader/ReaderPager.tsx`
+  - Stage B: replace the `if (edition.usesColorGlyphs) return;` early-return with a call to
+    `warmColorGlyphFont`, pair-expanded only when `isDouble`, mirroring the existing
+    `ensurePageFonts` call on the line below it.
+- `docs/architecture/adr/0034-page-turn-readiness-on-slow-networks.md` — Addendum documenting the
+  `document.fonts.load()`-against-CSS-family technique and the fetch-based warm.
+- `docs/architecture/DECISIONS.md` — Font System section note updated to reflect tajweed now has a
+  Stage B lookahead path.
+
+### Constraints
+
+- Do not add tajweed ids to the immutable `FontFace` registry (`ensurePageFonts`) — that would
+  double-download every tajweed font (once via the registry, once via `FontFaceInjector`'s keyed
+  `<style>`), exactly the failure mode `FontFaceInjector`'s own effect comment already guards
+  against.
+- Do not mutate any live `<style>` element's content to warm a font — ADR 0029's "never rewrite a
+  stylesheet containing `@font-face` rules" rule stands; the warm mechanism here never touches a
+  stylesheet at all, only primes bytes via `fetch()`.
+- `warmColorGlyphFont` pair-expands only when `isDouble`, same as `baseFontIds`/`ensurePageFonts` —
+  never eagerly fetch an unused spread partner's tajweed font on mobile single view.
+- No cancellation on direction reversal for the tajweed warm either — consistent with the existing
+  accepted waste for the madani path.
+- Verify on both `/ar` and `/en`, tajweed mode on, at mobile, tablet double-view, and desktop widths.
+
+### What NOT to Do
+
+- Do not change `ensurePageFonts`'s registration/eviction semantics, or make it accept colour-glyph
+  ids — the two font-loading paths (registry vs. CSS keyed `<style>`) stay separate, per ADR 0029 and
+  ADR 0023.
+- Do not add a fourth mounted panel or otherwise change the live window size (ADR 0028) — this is
+  cache-warming only, same as the original Stage B.
+- Do not build a duplicate skeleton or touch `QuranSafha`'s loading-state logic — out of scope, and
+  already covered by the base plan above.
+- Do not touch `@font-palette-values` palette rules or colour indices (out of scope per the issue).
+- Do not touch Quran text line-grouping or word justification (out of scope per the issue).
+- Do not add eviction to the warmed-ids `Set` — 604 page ids is a trivial upper bound; don't add
+  LRU-cap complexity that mirrors `MAX_KEPT` for no measurable benefit.
+
+### Known limitation
+
+- **Pre-service-worker-activation cache sharing is unverified.** The `fetch()` → SW `CacheFirst` →
+  later CSS-triggered-fetch chain this addendum relies on is only proven for a client the service
+  worker already controls. On a cold first visit before SW activation (or private browsing with no
+  SW), some browsers partition the plain HTTP disk cache by `Sec-Fetch-Dest` (`empty` for a JS
+  `fetch()` vs `font` for a CSS-triggered load), which could mean the priming request doesn't share a
+  cache entry with the real one in that narrow window. Not a regression either way — worst case is
+  exactly today's behavior (network fetch once the page enters the live window) — but check it on a
+  cold browser profile during browser verification rather than assuming steady-state PWA behavior
+  covers it.
+
+### Review pass
+
+Reviewed by Antigravity (`agy`, read-only pass, 2026-08-23) before implementation: confirmed the
+`document.fonts.load()` gate and `fetch()`-based warm are both technically sound and don't conflict
+with ADR 0029 or ADR 0028; the per-id `.catch`, quoted font-family string, `keyOf` reuse, and the
+pre-SW-activation caveat above came out of that pass.

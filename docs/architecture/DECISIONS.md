@@ -41,6 +41,12 @@ AI agents load this file at the start of every task. The `adr/` directory contai
   Stage B lookahead prefetch ([ADR 0034](adr/0034-page-turn-readiness-on-slow-networks.md)), which
   warms the *next* page's font before it is visible on purpose — it is still bound by the same
   pair-expand-only-when-`isDouble` rule, so it never downloads a font for a page the layout is hiding.
+  Colour-glyph editions get their own Stage B path rather than going through `ensurePageFonts`:
+  `pageFontsReady` gates on `document.fonts.load()` against the CSS family name (reusing the real
+  `@font-face`, not a duplicate object) and `warmColorGlyphFont` primes the lookahead target's bytes
+  with a plain `fetch()` (relying on the service worker's existing `CacheFirst` rule for
+  `/fonts/v4/colrv1/woff2/`), never adding tajweed ids to the registry itself. See ADR 0034's
+  Addendum.
 - Do not add Quran page fonts to the global CSS.
 - `<style dangerouslySetInnerHTML>` for per-page `@font-face` rules **must** live in a `"use client"` component (`FontFaceInjector`), never in a Server Component. Next.js App Router treats `<style>` in RSC output as a resource and hoists it to a different DOM position on the client, causing React hydration mismatches. `<link rel="preload">` is NOT affected and may remain in the Server Component. See [ADR 0020](adr/0020-client-component-for-inline-style-injection.md).
 - Desktop reading size is persisted under the new `desktopQuranFontSize` key as semantic `small` / `medium` / `large` presets (26/28/30px; default `small`). The legacy numeric `quranFontScale` key is deliberately ignored rather than migrated. Mobile is fixed and tablet is auto-fit; neither exposes this preference. See [ADR 0038](adr/0038-reader-size-contracts-and-tablet-double-view.md).

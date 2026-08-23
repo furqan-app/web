@@ -91,3 +91,43 @@ price than a shimmer.
   `FontFace.load()` does not exist, and the waste is bounded at roughly 87 KB.
 - **-** The header's surah glyph appears mid-shimmer when the JSON lands, a little ahead of the text.
   Accepted as a progress signal; it moves nothing, since the height is already reserved.
+
+## Addendum: Stage B lookahead extended to colour-glyph (tajweed) editions
+
+**Date:** 2026-08-23
+**Issue:** [#372](https://github.com/furqan-app/web/issues/372)
+
+Tajweed fonts don't go through the immutable `FontFace` registry this decision's Stage B was written
+against — `@font-palette-values` has no FontFace-API equivalent, so they load via
+`FontFaceInjector`'s keyed `<style>` elements instead (ADR 0029, ADR 0023). Two consequences that
+were not obvious from the original decision text:
+
+1. **`pageFontsReady`'s registry lookup silently no-ops for tajweed.** An id with no registered face
+   resolves immediately, so Stage A's gate — meant to stop Stage B from competing with the live
+   window's own downloads — never actually waited on anything for this edition.
+2. **There was no warm path for the lookahead target at all**, since a CSS `@font-face` only exists
+   (and only fetches) once its `<style>` element mounts, which only happens for pages already in the
+   live window.
+
+**Fix, without adding a second registry:**
+
+- `pageFontsReady` branches on `edition.usesColorGlyphs`. For a colour-glyph edition it calls
+  `document.fonts.load('1em "<family>"')` per id instead of reading the registry, with a per-id
+  `.catch(() => {})` (never one catch around the whole `Promise.all` — a single dead font must not
+  stall the gate for every other id). This is safe specifically because a CSS `@font-face` rule
+  becomes a real entry in `document.fonts` as soon as its `<style>` is parsed into the DOM — `.load()`
+  against it is idempotent (returns the existing load if one is already in flight or done) and reuses
+  the actual face the page renders with, so this does not create a second, throwaway font object the
+  way registering it separately would.
+- A new `warmColorGlyphFont(ids, edition)` primes the lookahead target's bytes with a plain
+  `fetch()` — deliberately not `FontFace`/`document.fonts`, since decoding a font object here would
+  be wasted work once the real CSS face parses the same bytes later. The service worker's existing
+  `CacheFirst` rule for `/fonts/v4/colrv1/woff2/p[0-9]+\.woff2` (`app/sw.ts`) makes this land in the
+  same cache regardless of what triggered the request, so the later CSS-triggered fetch is a cache
+  hit rather than a network request.
+
+**What this does not change:** `ensurePageFonts`'s registration/eviction semantics are untouched;
+tajweed ids still never enter `document.fonts` via the registry. The two font-loading paths (registry
+for the base edition, CSS keyed `<style>` for colour-glyph editions) remain fully separate — this
+addendum gives the CSS path its own readiness signal and its own warm mechanism, rather than merging
+it into the registry's.
