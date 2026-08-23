@@ -663,6 +663,7 @@ payload; windowing removes the mass mount.
   input and needed a latch, a microtask and a drain to avoid dropping gestures of its own.
 - Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
   spread (ADR 0013) against the pager/window model.
+- **Immutable content queries (`usePage`, `useVersePages`) run with `networkMode: "always"`** — their `fetch()` resolves from the service worker's `CacheFirst` rules even when `navigator.onLine === false`, so a downloaded-but-unvisited page renders offline instead of pausing forever (the default `"online"` mode skips `queryFn` entirely while offline). Do not extend this to dynamic hooks (marks/plans stay online-aware), and do not disable `refetchOnReconnect` on these queries — loaded pages are immune via `staleTime: Infinity`, while errored ones self-heal on reconnect. See `docs/plans/pwa-offline-support.md` Addendum 6.
 - **A page turn commits immediately and is never gated on the target's readiness** ([ADR
   0034](adr/0034-page-turn-readiness-on-slow-networks.md)). The two assets a turn needs — the page's
   content JSON and its WOFF2 font — cost real network time (a double-view turn moves ~167 KB of font,
