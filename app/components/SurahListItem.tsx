@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
 import { SurahResult } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { useLocale } from "next-intl";
@@ -27,64 +26,97 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
   const surahStartingPage = Number(surah.pages.split("-")[0]);
   const glyphCode = String(surah.id).padStart(3, "0");
 
+  const revelationLabel =
+    surah.revelation_place === "makkah"
+      ? t("revelation.makkah", "Meccan")
+      : t("revelation.madinah", "Medinan");
+
   return (
     <Link
       locale={locale}
       href={`${basePath}/${surahStartingPage}`}
       onClick={(e) => {
-        // Must fire before setOpen(false), synchronously: tells
-        // useCloseOnBackGesture's cleanup (armed by the sidebar being open on
-        // standalone mobile/tablet) that a competing navigation is already
-        // underway, so it skips its timing-based history.state check instead
-        // of racing jumpTo's own replaceState for the guard's history entry —
-        // same fix as #313 (NavOverflowMenu's <Link> rows), applied here too.
-        // See docs/plans/close-overlays-on-back-swipe.md, Addendum.
         notifyNavigating?.();
         setOpen(false);
-        // A reader is already mounted (this list is open from within it, e.g.
-        // the nav sidebar) — move it client-side instead of navigating, same
-        // as swipe/arrows. Works offline for any precached page. Plain
-        // left-click only; modified/middle clicks fall through to the href.
         if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
-        // Tell Sidebar exactly which surah this was — page number alone can't
-        // disambiguate a page that hosts more than one surah (see Sidebar.tsx).
         setPinnedSurahId(surah.id);
         jumpTo(surahStartingPage);
       }}
       data-surah-id={surah.id}
       className={cn(
-        "flex items-center gap-3 p-4 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08),0_20px_56px_-16px_rgba(0,0,0,0.18)] transition-all duration-200",
-        isActive
-          ? "bg-primary/10 border border-primary/30"
-          : "bg-card border border-border",
+        "group flex flex-col rounded-2xl border border-border/80 bg-card hover:border-primary/50 transition-all duration-150 relative overflow-hidden shadow-sm dark:shadow-none",
+        isActive && "border-primary/50 bg-primary/5",
       )}
     >
-      <div className="flex-none w-10 h-10 rounded-full bg-accent border border-accent-foreground/20 grid place-items-center text-accent-foreground font-bold text-sm">
-        {toLocaleNumeral(surah.id, locale)}
+      {/* Upper Stage: Star Medallion + Calligraphic Name + Revelation Tag */}
+      <div className="p-3.5 sm:p-4 flex items-center justify-between gap-3 flex-1 min-w-0">
+        {/* Authentic 8-pointed Islamic geometric star rosette medallion */}
+        <div className="relative size-10 flex-none grid place-items-center">
+          <svg
+            viewBox="0 0 36 36"
+            className="absolute inset-0 size-full text-primary/70 group-hover:text-primary transition-colors duration-150"
+            fill="none"
+            aria-hidden="true"
+          >
+            <rect
+              x="5.5"
+              y="5.5"
+              width="25"
+              height="25"
+              rx="2.5"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              className="fill-[hsl(var(--well)/var(--well-alpha))]"
+            />
+            <rect
+              x="5.5"
+              y="5.5"
+              width="25"
+              height="25"
+              rx="2.5"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              transform="rotate(45 18 18)"
+              className="fill-[hsl(var(--well)/var(--well-alpha))]"
+            />
+          </svg>
+          <span className="relative z-10 text-xs font-bold text-foreground">
+            {toLocaleNumeral(surah.id, locale)}
+          </span>
+        </div>
+
+        {/* Surah Name */}
+        <div className="flex-1 min-w-0">
+          {isRTL ? (
+            <div className="font-surahnames text-[26px] sm:text-[28px] text-foreground leading-none pt-0.5">
+              {glyphCode}
+            </div>
+          ) : (
+            <div className="font-bold text-sm text-foreground leading-tight">
+              {surah.name_simple}
+            </div>
+          )}
+        </div>
+
+        {/* Revelation Tag */}
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium border border-border/60 bg-[hsl(var(--well)/var(--well-alpha))] text-muted-foreground leading-none shrink-0">
+          {revelationLabel}
+        </span>
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-        {isRTL ? (
-          <div className="font-surahnames text-2xl text-foreground leading-none">
-            {glyphCode}
-          </div>
-        ) : (
-          <div className="font-bold text-sm text-foreground leading-tight">
-            {surah.name_simple}
-          </div>
-        )}
-        <div className="text-xs text-muted-foreground whitespace-nowrap">
+      {/* Recessed Footer Well: Verse Count & Starting Page Landmark */}
+      <div className="px-3.5 py-1.5 border-t border-border/50 bg-[hsl(var(--well)/var(--well-alpha))] flex items-center justify-between text-[11px] text-muted-foreground/80">
+        <span>
           {toLocaleNumeral(surah.verses_count, locale)}{" "}
           {surah.verses_count > 10
             ? t("count_verses", "Verses")
             : t("verses", "Verses")}
-        </div>
+        </span>
+        <span>
+          {t("page", "Page")} {toLocaleNumeral(surahStartingPage, locale)}
+        </span>
       </div>
-
-      <ChevronRight
-        className={cn("flex-none size-4 text-muted-foreground", isRTL && "rotate-180")}
-      />
     </Link>
   );
 };

@@ -146,3 +146,44 @@ targeting).
 - Do not add hover-state removals to a shared class (`menuRowClassName`, `navPillClassName`, button
   variants) without checking every consumer gets a replacement — the `menuRowClassName` regression above
   happened exactly this way.
+
+---
+
+## Addendum 2: Lab-Style Green CSS Ornament & Surah Font (2026-08-22)
+
+**Status:** implemented
+
+### Summary
+Adopt the Reader Lab's pure-CSS drawn manuscript ornaments and layout for the navbar surah toggle button:
+1. Replace raster `surah-ornament-mask.png` with drawn CSS ornaments (`.fq-nav-ornament`): tapering hairline rules with open 45° diamonds styled in emerald green (`--primary`).
+2. Use `font-surahnames` (`sura_names.ttf`, zero-padded 3-digit surah code) for the surah name in Arabic/RTL.
+3. Retain the toggle arrow (`ChevronDown` / `ChevronUp`) to signal menu expansion.
+4. Remove the boxed pill background on desktop in favor of an unboxed, centered group on the navbar surface.
+
+---
+
+## Addendum 3: Continue Reading Icon/Weight, Group Dividers, and Logo Size (2026-08-22)
+
+**Status:** implemented
+
+### Summary
+Refine navbar elements to match user visual feedback:
+1. Continue Reading link uses `Bookmark` save icon at `size-4`, with unweighted `font-normal text-xs` label.
+2. Vertical dividers (`h-4 w-px bg-border`) separate logical icon groups on desktop.
+3. Medallion logo inner image increased to `size-[24px]` for crisp visibility.
+
+---
+
+## Addendum 4: Green 32px Logo with Navbar Background (2026-08-22)
+
+**Status:** implemented
+
+### Summary
+Restyle the `FurqanLogo` component:
+1. Render the logo silhouette in emerald green (`--primary`) via CSS mask on `logo-navbar-white.png`.
+2. Increase logo mark to 32px size (`size-[32px]`) for clear visibility.
+3. Remove the dark medallion background and gold rim, setting the background to match the navbar (`bg-transparent`).
+
+
+
+

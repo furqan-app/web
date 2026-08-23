@@ -12,8 +12,12 @@ import { MushafLayoutSection } from "@components/mushaf/MushafLayoutSection";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
+import { SettingsSection } from "@components/settings/SettingsSection";
 import { useIsMobile } from "@hooks/use-is-mobile";
 import { useKeepScreenAwake } from "@contexts/KeepScreenAwakeContext";
+import { usePushSubscription } from "@/app/hooks/use-push-subscription";
+import { isStandaloneDisplayMode } from "@/app/utils/platform";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -27,14 +31,6 @@ import {
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 type Props = {
-  // Controlled mode — used by NavOverflowMenu, which renders its own trigger
-  // row and toggles this Sheet from outside. Required for that case: this
-  // component's Sheet must NOT be nested inside NavOverflowMenu's own
-  // SheetContent, because closing that outer Sheet unmounts everything in
-  // it — including a nested Sheet that was just told to open on the same
-  // click, wiping its state before it can render. So when controlled, this
-  // component renders ONLY <Sheet><SheetContent> (no trigger at all); the
-  // caller owns open state and where/how the trigger appears.
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
@@ -43,14 +39,21 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  // On tablet the safha auto-fits the font to the page, so the manual font-size
-  // control does nothing — hide it there (still shown on desktop lg+).
   const isTablet = useIsTablet();
   const isMobile = useIsMobile();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
     useKeepScreenAwake();
+  const { supported: pushSupported } = usePushSubscription();
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    setIsStandalone(isStandaloneDisplayMode());
+  }, []);
+
   const controlled = onOpenChange !== undefined;
   useCloseOnBackGesture(open ?? false, () => onOpenChange?.(false));
+
+  const hasDeviceSettings = (isMobile || isTablet) || pushSupported || isStandalone;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -69,84 +72,88 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
       <SheetContent
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
+        className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
-        <SheetHeader>
-          <SheetTitle>{t("settings", "Settings")}</SheetTitle>
-          <SheetDescription className="sr-only">
+        <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-5 border-b border-border/70 text-start">
+          <SheetTitle className="text-[15px] font-semibold leading-none text-foreground">
+            {t("settings", "Settings")}
+          </SheetTitle>
+          <SheetDescription className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
             {t(
               "settingsDescription",
               "Adjust language, font size, appearance, and offline access.",
             )}
           </SheetDescription>
         </SheetHeader>
-        <div className="p-4 space-y-6 mt-2">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("language", "Language")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted">
-              <LanguageToggle />
-            </div>
-          </div>
-          {!isTablet && (
-            <div className="hidden lg:block">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                {t("quranFontSize", "Quran Font Size")}
-              </h3>
-              <div className="p-4 rounded-lg bg-muted">
+
+        {/* Grouped sections with identity overlines and hairline rows — matching
+            the Reader Lab's structure. Three cohesive categories: Reading,
+            Appearance, and Device & Recitation. */}
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+          <SettingsSection
+            title={t("settingsSectionReading", "Reading")}
+          >
+            <LanguageToggle />
+
+            {!isTablet && (
+              <div className="hidden lg:block">
                 <DesktopQuranFontSizeControls />
               </div>
-            </div>
-          )}
-          {!isTablet && (
-            <div className="hidden lg:block">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                {t("pageView", "Page View")}
-              </h3>
-              <div className="p-4 rounded-lg bg-muted">
+            )}
+
+            {!isTablet && (
+              <div className="hidden lg:block">
                 <QuranSafhaViewToggle />
               </div>
-            </div>
+            )}
+
+            <MushafLayoutSection />
+          </SettingsSection>
+
+          <SettingsSection
+            title={t("appearance", "Appearance")}
+            className="p-0"
+          >
+            <ThemeToggle />
+          </SettingsSection>
+
+          {hasDeviceSettings && (
+            <SettingsSection
+              title={t("settingsSectionDevice", "Device & Recitation")}
+            >
+              {(isMobile || isTablet) && (
+                <div className="fq-section-row">
+                  <label
+                    htmlFor="keep-screen-awake-switch"
+                    className="cursor-pointer flex-1 min-w-0"
+                  >
+                    <span className="text-[13px] font-medium text-foreground leading-tight">
+                      {t("keepScreenAwakeLabel", "Keep screen awake")}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                      {t(
+                        "keepScreenAwakeDescription",
+                        "Prevent your device screen from sleeping while the app is open",
+                      )}
+                    </p>
+                  </label>
+                  <Switch
+                    id="keep-screen-awake-switch"
+                    checked={keepScreenAwake}
+                    onCheckedChange={setKeepScreenAwake}
+                  />
+                </div>
+              )}
+
+              <EnablePushToggle />
+              <OfflineRecitationSection />
+            </SettingsSection>
           )}
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              {t("appearance", "Appearance")}
-            </h3>
-            <div className="p-4 rounded-lg bg-muted">
-              <ThemeToggle />
-            </div>
+
+          {/* Closes the inventory with the terminal identity mark */}
+          <div className="flex justify-center pt-2">
+            <span className="fq-rule-mark !inline-block" aria-hidden="true" />
           </div>
-          <MushafLayoutSection />
-          {(isMobile || isTablet) && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                {t("keepScreenAwake", "Screen")}
-              </h3>
-              <div className="p-4 rounded-lg bg-muted flex items-center justify-between gap-3">
-                <label
-                  htmlFor="keep-screen-awake-switch"
-                  className="cursor-pointer"
-                >
-                  <span className="text-sm font-medium">
-                    {t("keepScreenAwakeLabel", "Keep screen awake")}
-                  </span>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t(
-                      "keepScreenAwakeDescription",
-                      "Prevent your device screen from sleeping while the app is open",
-                    )}
-                  </p>
-                </label>
-                <Switch
-                  id="keep-screen-awake-switch"
-                  checked={keepScreenAwake}
-                  onCheckedChange={setKeepScreenAwake}
-                />
-              </div>
-            </div>
-          )}
-          <EnablePushToggle />
-          <OfflineRecitationSection />
         </div>
       </SheetContent>
     </Sheet>

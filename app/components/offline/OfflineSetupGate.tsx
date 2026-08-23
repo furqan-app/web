@@ -56,7 +56,7 @@ export const OfflineSetupGate = () => {
     <Dialog open>
       <DialogContent
         hideDefaultClose
-        className="max-w-sm rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)]"
+        className="fq-panel-cast max-w-sm rounded-xl"
         onEscapeKeyDown={(event) => event.preventDefault()}
         onPointerDownOutside={(event) => event.preventDefault()}
         onInteractOutside={(event) => event.preventDefault()}

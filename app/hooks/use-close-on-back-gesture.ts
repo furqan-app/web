@@ -13,6 +13,21 @@ interface FQNavigateEvent extends Event {
   intercept: () => void;
 }
 
+// Minimal structural type for the Navigation API surface this hook uses.
+// TypeScript's DOM lib does not ship one yet, and `window.navigation` is
+// absent on the browsers the popstate fallback below exists for — so the
+// property is optional and every read is guarded.
+interface FQNavigation {
+  currentEntry?: { key?: string };
+  addEventListener: (type: "navigate", listener: (e: FQNavigateEvent) => void) => void;
+  removeEventListener: (type: "navigate", listener: (e: FQNavigateEvent) => void) => void;
+}
+
+const getNavigation = (): FQNavigation | undefined =>
+  typeof window === "undefined"
+    ? undefined
+    : (window as Window & { navigation?: FQNavigation }).navigation;
+
 // A FRESH object per push, never a shared constant — same reasoning as
 // AndroidBackExitGuard's guardState() (ADR 0040's 2026-08-14 addendum). Also
 // carries a unique `id`: every guarded overlay pushes the same `fqOverlayGuard`
@@ -28,9 +43,7 @@ const overlayGuardState = () => ({
 // can be used to preempt the browser's default navigation instead of only
 // reacting to it after the fact via `popstate` — see ADR 0045.
 const supportsNavigationApi = () =>
-  typeof window !== "undefined" &&
-  "navigation" in window &&
-  typeof (window as any).navigation?.addEventListener === "function";
+  typeof getNavigation()?.addEventListener === "function";
 
 // How long to keep listening, after intercepting the closing `traverse`, for
 // a follow-up `reload` navigation the same gesture can trigger (observed
@@ -93,8 +106,8 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
       setTimeout(disarmOverlayBackGuard, 0);
     };
 
-    if (supportsNavigationApi()) {
-      const nav = (window as any).navigation;
+    const nav = getNavigation();
+    if (nav && supportsNavigationApi()) {
       // Read immediately after the push above — at this point
       // `nav.currentEntry` is synchronously the entry we just pushed. Used
       // instead of `fqOverlayGuardId`/`getState()` because on-device testing

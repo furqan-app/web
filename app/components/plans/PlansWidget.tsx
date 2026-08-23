@@ -122,7 +122,7 @@ export const PlansWidget = () => {
           </svg>
           <span
             className={cn(
-              "absolute inset-[6px] grid place-items-center rounded-full bg-primary shadow-[0_6px_14px_-6px_rgba(0,0,0,0.4)] transition-shadow duration-200",
+              "absolute inset-[6px] grid place-items-center rounded-full bg-primary fq-panel-cast transition-shadow duration-200",
               isHighlighted && "shadow-[0_0_0_4px_hsl(var(--primary)/0.25)]",
             )}
           >

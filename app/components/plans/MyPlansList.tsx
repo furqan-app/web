@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
-import { ChevronDown, MoreVertical, Pause, Pencil, Play, XCircle, CheckCircle2 } from "lucide-react";
+import { ChevronDown, MoreVertical, Pause, Pencil, Play, Target, XCircle, CheckCircle2 } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { usePlans } from "@hooks/use-plans";
@@ -25,8 +25,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-const CARD_SHADOW =
-  "shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)]";
+// A plan IS a distinct object the user acts on, edits and dismisses, so a card
+// is warranted here (unlike a marks row). Only the hardcoded rgba literal goes:
+// it drew a real shadow on light and gold and nothing at all on dark, where
+// --background is (7,15,23). --panel-cast spends dark's lift where it shows.
+const CARD_SHADOW = "fq-panel-cast";
 
 const STATUS_ACTIONS: Record<UserPlanStatus, { status: UserPlanStatus; icon: typeof Pause; labelKey: string; defaultLabel: string }[]> = {
   active: [
@@ -56,8 +59,8 @@ const STATUS_LABEL: Record<UserPlanStatus, { labelKey: string; defaultLabel: str
 };
 
 const PlanRowSkeleton = () => (
-  <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 animate-pulse">
-    <span className="size-9 rounded-lg bg-muted flex-none" />
+  <div className="fq-panel-cast flex items-center gap-3 rounded-2xl border border-border bg-card p-4 animate-pulse">
+    <span className="size-9 rounded-xl bg-muted flex-none" />
     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
       <div className="h-3 w-24 rounded bg-muted" />
       <div className="h-4 w-40 rounded bg-muted" />
@@ -93,7 +96,7 @@ const PlanHistorySection = ({ planId }: { planId: number }) => {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        className="fq-focus-ring flex items-center gap-1.5 rounded-md text-xs font-semibold text-[hsl(var(--control-inert))] transition-colors hover:text-[hsl(var(--control-live))]"
       >
         <ChevronDown
           className={cn(
@@ -183,8 +186,11 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
       : [];
 
   return (
-    <div className={cn("flex flex-col gap-3.5 rounded-2xl bg-card p-4", CARD_SHADOW)}>
+    <div className={cn("flex flex-col gap-3.5 rounded-2xl border border-border bg-card p-4", CARD_SHADOW)}>
       <div className="flex items-center gap-3">
+        {/* What kind of plan this is — identity, so the warm accent. It was
+            --primary, which put the live-state colour on every card whether
+            the plan was running or abandoned. */}
         <span className="grid place-items-center size-9 rounded-xl bg-primary/10 text-primary flex-none">
           {Icon ? <Icon className="size-[19px]" strokeWidth={1.6} /> : null}
         </span>
@@ -192,7 +198,14 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
           <div className="text-sm font-extrabold text-foreground">
             {ui ? t(ui.labelKey, ui.defaultLabel) : plan.template_key}
           </div>
-          <div className="text-xs text-muted-foreground">
+          {/* …and whether it is running IS state, so that is where --primary
+              goes. One accent per element, never both. */}
+          <div
+            className={cn(
+              "text-xs",
+              plan.status === "active" ? "font-medium text-primary" : "text-muted-foreground",
+            )}
+          >
             {t(statusUi.labelKey, statusUi.defaultLabel)}
           </div>
         </div>
@@ -201,7 +214,7 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t("plans.actions.label", "Plan actions")}
-              className="flex items-center justify-center size-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="fq-chrome-btn fq-focus-ring size-8"
             >
               <MoreVertical className="size-4" strokeWidth={1.8} />
             </DropdownMenuTrigger>
@@ -280,7 +293,7 @@ export const MyPlansList = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3.5">
         <PlanRowSkeleton />
         <PlanRowSkeleton />
       </div>
@@ -291,9 +304,21 @@ export const MyPlansList = () => {
   if (items.length === 0) {
     return (
       <div className="flex flex-col gap-6">
-        <p className="text-center text-sm text-muted-foreground py-8">
-          {t("plans.empty", "No plans yet — enroll in one below.")}
-        </p>
+        {/* Designed empty state rather than a bare centred sentence. */}
+        <div className="fq-section-group flex flex-col items-center gap-3 px-6 py-14 text-center">
+          <span className="fq-well grid size-12 place-items-center rounded-2xl text-[hsl(var(--control-inert))]">
+            <Target className="size-6" strokeWidth={1.6} />
+          </span>
+          <p className="text-sm font-medium text-foreground">
+            {t("plans.empty", "No plans yet — enroll in one below.")}
+          </p>
+          <p className="max-w-xs text-xs text-muted-foreground">
+            {t(
+              "plans.emptyHint",
+              "A plan gives you a daily portion to read, listen to, or memorise.",
+            )}
+          </p>
+        </div>
         <AddPlanButton />
       </div>
     );
@@ -307,7 +332,9 @@ export const MyPlansList = () => {
       {active.length > 0 ? <PlansTodayHero /> : null}
 
       <div className="flex flex-col gap-3.5">
-        <div className="text-xs font-extrabold tracking-wide text-muted-foreground">
+        {/* Section overline — the manuscript register: small, tracked out,
+            warm, with a rule that fades away from the label. */}
+        <div className="fq-overline">
           {t("plans.myPlans", "My plans")}
         </div>
         {active.map((plan) => (
