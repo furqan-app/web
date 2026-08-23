@@ -1,103 +1,103 @@
-# Graph Report - furqan-design-migration  (2026-08-22)
+# Graph Report - furqan  (2026-08-23)
 
 ## Corpus Check
-- 1907 files · ~3,117,997 words
+- 1901 files · ~3,082,864 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6390 nodes · 13348 edges · 380 communities (325 shown, 55 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 287 edges (avg confidence: 0.71)
+- 6338 nodes · 13183 edges · 368 communities (313 shown, 55 thin omitted)
+- Extraction: 98% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 197 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f6558c08`
+- Built from commit: `1283e3aa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- SearchBar.tsx
+- useTranslations
 - ADR 0028: Reader uses a persistent client pager over slim static content
 - MyPlansList.tsx
+- live-browser.js
+- get-page-words.ts
+- jsonResponse
+- use-close-on-back-gesture.ts
 - checks.mjs
-- [locale]/layout.tsx
-- constants/plans.ts
-- stop-point/route.ts
-- plans/route.ts
 - Tablet Nav Overlay Effect
 - RecitationContext.tsx
 - ReaderPager.tsx
-- useTranslations
+- context.mjs
 - QuranSafha.tsx
-- live-browser.js
-- modern-screenshot.umd.js
-- Shared Mushaf Access
-- live-server.mjs
+- connectSSE
 - design-system.mjs
-- SettingsSidebar.tsx
-- el
-- dispatch.ts
-- MyMarksList.tsx
-- jsonResponse
-- use-translations.ts
-- RecitationSettingsSheet.tsx
+- Shared Mushaf Access
+- button.tsx
+- detect-antipatterns-browser.js
+- setLiveState
+- doctor.mjs
+- notifications/types.ts
+- parseAnyColor
+- cn
+- hook-lib.mjs
+- NotificationBell.tsx
 - e2e-fixture/generate.js
 - sw.ts
 - MyMarksList.tsx client component
 - auth-middleware.ts
-- detect-antipatterns-browser.js
-- context.mjs
-- hook-lib.mjs
-- notifications/types.ts
+- svelte-component.mjs
+- [locale]/layout.tsx
+- live-accept.mjs
+- getNotificationDeps
 - QuranSafha
 - Nav
 - Daily Awrad UI
 - Regression Classes
 - Fix Reader Navigation Infinite Render Loop
-- concept-seed.mjs
+- initPageChat
 - Column-Font Contract
-- setLiveState
+- concept-seed.mjs
 - Split Quran Content and Application Data into Two Databases
 - compilerOptions
 - ReaderPager
 - Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette
 - Page Turn Blanks the Reader on Slow Networks
-- initPageChat
+- modern-screenshot.umd.js
 - PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit
-- start-task Load context gate
+- OfflineRecitationSheet.tsx
 - Mobile Safha: Full-Screen Sizing
 - Fix: Verse Rendering Outside the Quran Page
 - Fix: Surah Banner Placement and Standalone Line Sizing
 - Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle
-- deps.ts
 - live-commit-manual-edits.mjs
+- layout.md
 - Font System (Immutable FontFace Registry)
 - release workflow (/release)
 - PlanAssignmentRow component
 - scripts
-- detect-text.mjs
+- detect-html.mjs
 - SettingsSidebar
 - Adopt Prisma Migrations for furqan_app
 - Base Notification System
 - Mushaf Double-Page Spread Toggle
 - RecitationContext.tsx
-- plan-fq-task workflow
+- mushaf-editions.ts
 - Fix Hostinger Auto-Deploy Build Failures
 - Fix Homepage CDN Cache Poisoning (Hostinger Edge)
-- sentry/route.ts
+- session-store.mjs
 - QuranSafha.tsx
 - impeccable-config.mjs
 - Tailwind Safelist for Dynamic Quran Font-Size Classes
-- quranPrisma / appPrisma clients
+- start-task Load context gate
 - ADR 0032: Depth on near-black surfaces from light, not shadow (superseded by flat page decision)
-- docs/architecture/DECISIONS.md
+- compress-fq-docs
 - /ship-fq-task skill
-- resumeSession
-- live-accept.mjs
+- collectBrowserFindings
+- utils.ts
 - MyPlansList
 - fq-logger: Structured Logging & Observability
 - fq-reader-spread-container flex:1 + space-between fill
 - ReaderPager.tsx (client persistent pager)
-- ui-motion guidance
+- captureElementToBlob
 - Workflow Index
 - ADR 0025: A mark is one row - category plus optional comment
 - Furqan (Quran Memorization Tool)
@@ -108,14 +108,14 @@
 - Sentry Error Tracking
 - ReaderPage.tsx
 - AI-First Documentation & Workflow System
-- Session Handoff — Dark Theme Mushaf Unification
+- staleness-deep.mjs
 - Fix dead tailwindcss-animate classes in dialog.tsx (plugin not installed)
 - Fix: Hamza-Alif Mismatch in Verse Search
-- i18n Setup (next-intl, ar/en locales)
-- css-cascade.mjs
-- furqan_app Prisma migrations workflow
+- createLiveBrowserSessionState
+- hook-admin.mjs
+- use-pwa-precache.ts
 - ADR 0030: Plan engine - code-defined templates, typed scheduling rules, derived daily assignments
-- Theme system (named CSS classes on html)
+- FontFaceInjector.tsx
 - ADR 0037: Notification dispatch via a channel registry, no queue/worker infra
 - Arrow Controls on Desktop
 - Mobile Navigation UX
@@ -125,7 +125,7 @@
 - global-error.tsx
 - Fix Marks Broken by Hardcoded localhost URL
 - Sentry Error Tracking via DSN-Presence Gating
-- Reader depth token family (--mushaf-rim-*, --reader-chrome-*)
+- checkHeadingRhythmDOM
 - Design System Foundation
 - Enhanced RubList Sidebar
 - Fullscreen API desktop toggle (requestFullscreen/exitFullscreen)
@@ -156,20 +156,20 @@
 - Query Parameters via request.nextUrl.searchParams
 - Path Aliases convention
 - Border Radius tokens
-- hook-before-edit.mjs
+- mountSvelteComponentVariant
 - devDependencies
 - components.json
-- hook-admin.mjs
-- mujaz-stats.js
+- live-wrap.mjs
+- .claude/hooks/mujaz-stats.js
 - AGENTS.md
-- app/layout.tsx
-- manual-apply.mjs
+- MyMarksList.tsx
+- hook-before-edit.mjs
 - Addendum — Wrong surah name on shared multi-surah pages (2026-08-16)
 - visual.spec.ts
-- live-wrap.mjs
+- live-server.mjs
 - extract-translations.js
 - /promote-to-staging
-- /ui-motion
+- ui-motion guidance
 - Configure Project-Local Trello MCP for Codex
 - Fix Navbar Icon Overflow on Mobile/Tablet
 - Homepage Surah Card: Direction-Based Name Display
@@ -177,136 +177,126 @@
 - Save Last Read Page + Navbar Link to Resume
 - detect-antipatterns.mjs
 - dependencies
-- /plan-fq-task
+- plan-fq-task workflow
 - Steps
 - /review-fq-work
 - /start-fq-task
 - setup.js
 - /ship-fq-task
 - next.config.mjs
-- detect-html.mjs
+- manual-apply.mjs
 - /cut-release <major|minor|patch>
-- compress-fq-docs
-- /release <major|minor|patch>
+- checkHtmlPatterns
+- createLiveBrowserDomHelpers
 - ADR 0038: Reader size contracts are per-band, and tablet is always double-page
 - extends
-- register
+- instrumentation.ts
 - Furqan
-- /confirm-dangerous-git
-- /promote-release <version>
-- /sync-main-from-prod
+- Core Cycle (Plan → Implement → Review → Ship → Retrospect)
+- handlePollPost
+- filterFindings
 - package.json
-- mujaz
+- detect-csp.mjs
 - reader-shot.mjs
-- doctor.mjs
-- graphify-sync-rebuild.sh
-- mujaz-statusline.sh
-- commit-staged/SKILL.md
-- svelte-component.mjs
-- clsx
-- rel
+- detect-text.mjs
+- .claude/hooks/graphify-sync-rebuild.sh
+- .claude/hooks/mujaz-statusline.sh
+- embed-prompt.mjs
+- design-parser.mjs
+- MarkModal.tsx
+- svelte-ast.mjs
+- accept-css.mjs
 - live-poll.mjs
+- live-status.mjs
 - generate-image.mjs
-- applyEditing
-- layout.md
-- initGlobalBar
-- next-auth
-- next-intl
-- impeccable/SKILL.md
-- parseAnyColor
-- live-copy-edit-agent.mjs
-- @radix-ui/react-popover
-- @radix-ui/react-radio-group
-- @radix-ui/react-slider
-- injected/index.mjs
 - scanCssTextForPulsingDot
-- @radix-ui/react-tabs
+- detect-url.mjs
+- syncEditBadgeHitProxies
+- instructions.mjs
+- impeccable/SKILL.md
+- live.md
+- constants/plans.ts
+- QuranPage.tsx
+- @radix-ui/react-slider
+- el
+- live-copy-edit-agent.mjs
+- readLiveServerInfo
+- initGlobalBar
+- renderGroupedTemplate
+- render-context.ts
 - Mushaf Page Frame — Designer Asset Spec
-- showToast
-- react-virtuoso
-- roots.mjs
-- critique-storage.mjs
-- @serwist/next
+- resolveLengthPx
+- iOS platform
 - tailwind-merge
 - @tanstack/react-query
-- @types/nodemailer
-- collectVisualContrastCandidates
-- handleManualEditActivity
+- checkElementGptBorderShadowDOM
+- impeccable-paths.mjs
+- roots.mjs
+- critique-storage.mjs
 - live-manual-edit-evidence.mjs
 - Responsive Design
+- handleManualEditActivity
 - event-validation.mjs
-- ReaderLabSettingsSidebar.tsx
-- checkQuality
-- live-status.mjs
+- injected/index.mjs
 - playwright.config.ts
 - postcss.config.mjs
 - sentry.client.config.ts
 - tailwind.config.ts
-- GET
-- POST
-- Bismillah calligraphy SVG (decorative Arabic glyph: "Bismillah ir-Rahman ir-Raheem")
-- Decorative surah banner frame graphic (surah-frame.svg)
+- checkHeadingRhythmDOM
+- source-search.mjs
+- browser-script-parts.mjs
+- isScreenReaderOnlyTextStyle
+- deps.ts
+- Impeccable Documenter
 - Offline Recitation Audio Download
-- Home Page Design Fixes
 - insert-ui.mjs
-- svelte-ast.mjs
+- inline-ignores.mjs
 - generate-mushaf-thumbnails.js
-- live.md
 - onboard.md
-- accept-css.mjs
-- runHook
 - manual-edit-routes.mjs
-- resolveLengthPx
-- live-inject.mjs
-- Design System: Furqan
 - Changes
 - The Toolkit
-- collectBrowserFindings
-- onAnnotDown
-- 5.1 — Page face and reader
-- Trello → GitHub Issues Migration Plan
-- resolveLiveInjectionAnchor
-- tanstack-adapter.mjs
-- Furqan Design Language
-- 4.3 — Search and settings surfaces
-- quran-json/generate.js
-- impeccable-paths.mjs
-- live.mjs
-- checkQuality
-- session-store.mjs
-- staleness-deep.mjs
-- sveltekit-adapter.mjs
-- edge.ts
-- serve-question.mjs
-- detect-utils.mjs
+- Session Handoff — Dark Theme Mushaf Unification
 - Nocturnal Reader Lab — Desktop RTL
+- Trello → GitHub Issues Migration Plan
+- 20260708033111_init/migration.sql
+- onAnnotDown
+- frameworks/index.mjs
+- tanstack-adapter.mjs
+- Home Page Design Fixes
+- quran-json/generate.js
+- live.mjs
+- .codex/hooks/mujaz-stats.js
+- sveltekit-adapter.mjs
+- 20260803193743_add_notification_tables/migration.sql
+- serve-question.mjs
+- parseAnyColor
+- detect-utils.mjs
+- analyzeVisualContrastCandidate
 - animate.md
 - Handle `generate`
 - context-signals.mjs
+- stop-point/route.ts
 - Wire /impeccable into the plan/implement/review workflow
-- 4.1 — Marks and plans screens
-- 4.4 — Mushaf hub and shared-grant surfaces
-- Session handoff — design migration (#360)
+- provider.mjs
+- resolveLiveInjectionAnchor
 - Generate Report
+- parseRgb
+- Android platform
+- live-inject.mjs
 - tag-strategy.mjs
-- 2.1 — Semantic tokens
-- 4.2 — Home screen
 - seed.js
+- sentry/route.ts
 - Impeccable Asset Producer
 - optimize.md
-- sampleCssBackground
-- SAFE_TAGS
-- sampleCssBackground
-- template-extensions.mjs
-- 3.2 — Shared chrome
+- graphify.js
+- Fix reader desktop scrollbar bug
 - Scan mode (approach C: auto-extract, then confirm descriptive language)
-- constants.mjs
-- frameworks/index.mjs
+- sampleCssBackground
 - pin.mjs
-- Design Migration — reader-lab language, app-wide
 - Simplify the Design
 - Hardening Dimensions
-- scheduleLazyVisualContrast
+- surface-briefs.mjs
 - StaticElement
 - ui-core.mjs
 - journal.mjs
@@ -318,104 +308,98 @@
 - New visual work
 - polish.md
 - quieter.md
-- checkTextOcclusionDOM
-- collectNumberedSectionLabelCandidates
-- renderGroupedTemplate
+- Restructure Navigation for Clean UX
 - palette.mjs
 - 0042-pwa-launch-resolves-before-first-paint.md
 - Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)
-- Plan: Set `font-tajawal` globally on app root & Tailwind `sans`
 - Safha Ribbon Indicator
-- api/marks/route.ts
 - Generate Combined Critique Report
 - Init flow
-- collectVisualContrastCandidates
-- applyDeferredSvelteComponentAccepts
+- Plan: Set `font-tajawal` globally on app root & Tailwind `sans`
+- api/marks/route.ts
 - Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available
 - Nav: Dedupe NavPillLink classNames into Shared Component
-- 0.1 — Light and gold variants in the lab
-- 0.2 — The mushaf page face in the lab
-- 0.3 — Small-screen composition in the lab
-- 1.1 — Rewrite the canon
-- 3.1 — UI primitives
 - Fix Tajweed Mushaf Swipe Flicker
 - Unify Tajweed toggle + offline downloads into one Mushaf Layout setting
 - Addendum — 2026-08-14: cold launch flashes the home page before redirecting
-- Restructure Navigation for Clean UX
-- Unify Accents: Replace Gold Accents and Ornaments with Emerald Green
 - Common Cognitive Load Violations
 - Operate mode depth (and Read notes)
 - Shape
-- ADR 0047: Adopt the reader-lab design language app-wide, canon first
+- 20260724200427_add_plan_engine_tables/migration.sql
 - slice.py
 - Close Overlays on Back-Swipe (Mobile/Tablet PWA)
-- 0.4 — Write the design-language spec
 - Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA)
 - Fix Sidebar Bottom Clip
 - Addendum — 2026-08-14: swipe after a language switch reverts to Arabic page 1
 - Restore Continue Reading nav icon on installed PWA
-- colorize.md
 - Persona-Based Design Testing
 - Extract Flow
-- live-setup.md
-- css
-- checkRadialSpotlight
-- scaffoldSvelteComponentSession
+- rules/graphify.md
+- workflows/graphify.md
+- axios
+- staleness-notice.mjs
 - Addendum — surah Sidebar was missed by the notifyNavigating fix (2026-08-16)
-- Android platform
+- Impeccable Finish Reviewer
+- template-extensions.mjs
 - Generate Report
 - Cognitive Load Assessment
-- Impeccable Finish Reviewer
+- tune-ornament-css.mjs
 - Impeccable Manual Edit Applier
+- /impeccable hooks
 - ADR 0043: Overlays close on back-gesture via a shared history guard, coordinated with AndroidBackExitGuard
 - verses-words.js
-- Diagnostic Scan
-- /impeccable hooks
-- normalizeGitHubEvent
-- /visualize-fq-design
+- bolder.md
+- mysql2
+- nodemailer
 - ADR 0040: Double-push history guard for Android PWA back-to-exit
 - 0042 — PWA Cold Launch Resolves Before First Paint
 - PWA Testing (Browser Pane, No Device)
-- Impeccable Documenter
-- hook.mjs
 - ADR 0043: Breakpoint-Dependent Positioning Must Be CSS-Gated, Not JS-Hook-Gated
 - ADR 0045: Use the Navigation API to intercept the overlay-close back-gesture, with a popstate fallback
 - Heuristics Scoring Guide
 - detect.mjs
+- hook.mjs
 - measure.py
 - preview.py
 - tune-vars.js
-- axios
 - check-linefit.js
 - @radix-ui/react-dropdown-menu
-- Android platform
-- Diagnostic Scan
-- Merge three mobile safha ADRs into rewritten ADR 0011
-- cmdk
+- /visualize-fq-design
+- @radix-ui/react-slot
+- @sentry/nextjs
+- clsx
+- source-lock.mjs
+- next
+- pino
+- @radix-ui/react-switch
+- checkElementRadialSpotlightDOM
+- .codex/hooks/graphify-sync-rebuild.sh
+- .codex/hooks/mujaz-statusline.sh
+- react
 
 ## God Nodes (most connected - your core abstractions)
-1. `useTranslations()` - 112 edges
-2. `cn()` - 89 edges
-3. `el()` - 72 edges
-4. `jsonResponse()` - 60 edges
-5. `extractUser()` - 44 edges
-6. `runHook()` - 40 edges
+1. `useTranslations()` - 109 edges
+2. `cn()` - 106 edges
+3. `jsonResponse()` - 60 edges
+4. `extractUser()` - 44 edges
+5. `parseAnyColor()` - 37 edges
+6. `runHook()` - 37 edges
 7. `collectBrowserFindings()` - 36 edges
-8. `parseAnyColor()` - 36 edges
+8. `parseAnyColor()` - 34 edges
 9. `toLocaleNumeral()` - 34 edges
-10. `parseAnyColor()` - 33 edges
+10. `setLiveState()` - 32 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `createPushChannel()` --indirect_call--> `payload()`  [INFERRED]
-  app/lib/notifications/channels/push.ts → .claude/skills/impeccable/scripts/hook-lib.mjs
-- `GET()` --indirect_call--> `v()`  [INFERRED]
-  app/api/marks/route.ts → .claude/skills/impeccable/scripts/modern-screenshot.umd.js
-- `PlanEnrollForm()` --indirect_call--> `v()`  [INFERRED]
-  app/components/plans/PlanEnrollForm.tsx → .claude/skills/impeccable/scripts/modern-screenshot.umd.js
-- `resolvePlanParams()` --indirect_call--> `v()`  [INFERRED]
-  app/lib/plans/validate-params.ts → .claude/skills/impeccable/scripts/modern-screenshot.umd.js
-- `derivePageMetadata()` --indirect_call--> `v()`  [INFERRED]
-  scripts/quran-seed/derive.js → .claude/skills/impeccable/scripts/modern-screenshot.umd.js
+- `FilterDot()` --calls--> `cn()`  [EXTRACTED]
+  app/components/marks/MyMarksList.tsx → lib/utils.ts
+- `WeekStrip()` --calls--> `cn()`  [EXTRACTED]
+  app/components/plans/PlansTodayHero.tsx → lib/utils.ts
+- `DialogOverlay` --calls--> `cn()`  [EXTRACTED]
+  components/ui/dialog.tsx → lib/utils.ts
+- `DialogFooter()` --calls--> `cn()`  [EXTRACTED]
+  components/ui/dialog.tsx → lib/utils.ts
+- `Future Two-Page Book Layout (Recto/Verso)` --semantically_similar_to--> `Mushaf Double-Page Spread (Pairing, Data-Fetch, Decoration)`  [INFERRED] [semantically similar]
+  docs/architecture/APP_PURPOSE.md → docs/architecture/adr/0013-mushaf-double-page-spread.md
 
 ## Import Cycles
 - None detected.
@@ -443,111 +427,111 @@
 - **Furqan full release orchestration pipeline** — docs_workflow_release_cut_release, docs_workflow_release_promote_to_staging, docs_workflow_release_promote_release, docs_workflow_release_sync_main_from_prod [EXTRACTED 1.00]
 - **Furqan two-database split (Quran content vs App data)** — docs_standards_database_furqan_quran_db, docs_standards_database_furqan_app_db, docs_standards_database_no_cross_domain_fk [EXTRACTED 1.00]
 
-## Communities (380 total, 55 thin omitted)
+## Communities (368 total, 55 thin omitted)
 
-### Community 0 - "SearchBar.tsx"
-Cohesion: 0.12
-Nodes (23): AccessibleMushafList(), Props, GenerateCodeCard(), GrantedViewersList(), Props, MushafHub(), PersonAvatar(), Props (+15 more)
+### Community 0 - "useTranslations"
+Cohesion: 0.06
+Nodes (44): handler, authOptions, MarksSignedOutPrompt(), AccessibleMushafList(), Props, AccessRemovedBanner(), ADR-0012, GenerateCodeCard() (+36 more)
 
 ### Community 1 - "ADR 0028: Reader uses a persistent client pager over slim static content"
 Cohesion: 0.05
 Nodes (41): QuranSwipeNav component (mobile swipe reader), ADR 0019: sessionStorage key for cross-page swipe direction, ADR 0020: Client Component required for inline <style> injection, FontFaceInjector.tsx (Client Component), ReaderPage Server Component, Cross-chapter stop-point chaining (Juz/Hizb/Rub stop points), data-fq-word attribute highlight mechanism (supersedes DOM ref registry), QDC runtime proxy (app/api/quran/recitations) (+33 more)
 
 ### Community 2 - "MyPlansList.tsx"
-Cohesion: 0.04
-Nodes (85): PlanProgressHistoryEntry, UserPlanListItem, TodayPlanAssignments, OfflineProgressBar(), Props, OfflineRecitationSheet(), AddPlanButton(), JuzRangeSlider() (+77 more)
+Cohesion: 0.08
+Nodes (35): PlanProgressHistoryEntry, UserPlanListItem, TodayPlanAssignments, AddPlanButton(), EDIT_VIEW_FOR_TEMPLATE, groupHistoryByDate(), PlanHistorySection(), STATUS_ACTIONS (+27 more)
 
-### Community 3 - "checks.mjs"
+### Community 3 - "live-browser.js"
 Cohesion: 0.03
-Nodes (134): borderColorsFromStyle(), borderWidthsFromStyle(), checkBorders(), checkClippedOverflow(), checkCreamPalette(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementBorders() (+126 more)
+Nodes (126): addManualContextText(), applyEditing(), applyGlobalBarLabelState(), applyPlaceholderSizingStyles(), bufferToBase64(), buildCollapsible(), buildColorModels(), buildListHtml() (+118 more)
 
-### Community 4 - "[locale]/layout.tsx"
-Cohesion: 0.06
-Nodes (37): DesktopQuranFontSizeControls(), ScaleMarks(), SIZES, THEME_OPTIONS, ThemeToggle(), DESKTOP_QURAN_FONT_SIZES, DesktopQuranFontSizeContext, DesktopQuranFontSizeContextType (+29 more)
+### Community 4 - "get-page-words.ts"
+Cohesion: 0.08
+Nodes (25): ReaderLabPage(), ReaderLabPageProps, ReaderLabShell(), ReaderPage(), ReaderPageProps, ADR-0012, ADR-0013, ADR-0028 (+17 more)
 
-### Community 5 - "constants/plans.ts"
-Cohesion: 0.10
-Nodes (36): GET(), toDateString(), GET(), ADR-0030, getPlanTemplate(), MissedDayPolicy, PLAN_ACTIVITIES, PLAN_TEMPLATES (+28 more)
+### Community 5 - "jsonResponse"
+Cohesion: 0.09
+Nodes (48): deleteMark(), getGrantForViewer(), MarkBody, MarkWithAuthor, ADR-0012, ADR-0025, upsertMark(), withAuthorNames() (+40 more)
 
-### Community 6 - "stop-point/route.ts"
-Cohesion: 0.38
-Nodes (6): GET(), isTextScope(), resolvePageStop(), Scope, SCOPE_FIELD, ADR-0033
+### Community 6 - "use-close-on-back-gesture.ts"
+Cohesion: 0.11
+Nodes (24): OfflineRecitationSection(), ADR-0046, AndroidBackExitGuard(), guardState(), Props, ADR-0040, ADR-0043, FQNavigateEvent (+16 more)
 
-### Community 7 - "plans/route.ts"
-Cohesion: 0.17
-Nodes (15): PATCH(), ADR-0030, GET(), POST(), serializePlan(), toDateString(), withTargetJuz(), USER_PLAN_STATUSES (+7 more)
+### Community 7 - "checks.mjs"
+Cohesion: 0.03
+Nodes (120): ANIMATION_VALUE_KEYWORDS, borderColorsFromStyle(), borderWidthsFromStyle(), checkBorders(), checkClippedOverflow(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementBorders() (+112 more)
 
 ### Community 8 - "Tablet Nav Overlay Effect"
 Cohesion: 0.07
 Nodes (31): Seeder guard+reset+fetch+insert algorithm, scripts/quran-seed/seed.js orchestrator, ADR 0027 — tablet swipe carousel, 3-panel tablet swipe carousel, Tablet Nav Overlay Effect, Mobile reader UX addendum (nav overlay, long-press), --mushaf-* printed-mushaf CSS tokens, NavOverlayContext (+23 more)
 
 ### Community 9 - "RecitationContext.tsx"
-Cohesion: 0.07
-Nodes (44): DEFAULT_RECITATION_SETTINGS, ADR-0021, getInitialSettings(), RecitationContext, RecitationContextType, RecitationProvider(), resolveStopTarget(), setWordHighlightClass() (+36 more)
+Cohesion: 0.06
+Nodes (57): DEFAULT_RECITATION_SETTINGS, PAUSE_BETWEEN_REPEATS_MAX_MS, PAUSE_BETWEEN_REPEATS_STEP_MS, PLAYBACK_SPEED_MAX, PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_STEP, QURAN_LAST_CHAPTER_ID, QURAN_LAST_VERSE_KEY (+49 more)
 
 ### Community 10 - "ReaderPager.tsx"
-Cohesion: 0.03
-Nodes (101): MushafLayoutRow(), Props, MushafLayoutSection(), QuranSafhaViewToggle(), FontFaceInjector(), nextKept(), Props, ADR-0023 (+93 more)
+Cohesion: 0.07
+Nodes (38): NavHrefs, PagePayload, QuranSpread(), QuranSpreadProps, ADR-0013, ADR-0028, ADR-0034, computeSpreadNav() (+30 more)
 
-### Community 11 - "useTranslations"
+### Community 11 - "context.mjs"
 Cohesion: 0.05
-Nodes (56): MarksSignedOutPrompt(), AccessRemovedBanner(), ADR-0012, SignedOutPrompt(), ContinueReadingLink(), Props, ADR-0042, Nav() (+48 more)
+Nodes (89): appendAutonomyCounterDirective(), appendDetectorFallback(), appendImageGenDirective(), appendImageToolsDirective(), appendSubagentAuthorizationDirective(), appendSurfaceBriefContext(), automaticHookMode(), buildMissingTargetDirective() (+81 more)
 
 ### Community 12 - "QuranSafha.tsx"
-Cohesion: 0.05
-Nodes (43): LineProps, QuranLine(), ADR-0025, NO_LINES, QuranSafhaProps, SKELETON_BARS, tailwindFontUtility, ADR-0012 (+35 more)
+Cohesion: 0.04
+Nodes (62): Bismillah calligraphy SVG (decorative Arabic glyph: "Bismillah ir-Rahman ir-Raheem"), DesktopQuranFontSizeControls(), sizes, LineProps, QuranLine(), ADR-0025, NO_LINES, QuranSafha() (+54 more)
 
-### Community 13 - "live-browser.js"
-Cohesion: 0.03
-Nodes (132): applyGlobalBarLabelState(), applyPlaceholderSizingStyles(), averageRgb01(), bindEditBadgeProxy(), bufferToBase64(), buildCollapsible(), buildColorModels(), buildDesignHeader() (+124 more)
+### Community 13 - "connectSSE"
+Cohesion: 0.07
+Nodes (71): abortSvelteComponentInjection(), applyParamDefaults(), applyParamValue(), applySavedSessionMeta(), clampVariantIndex(), clearSession(), closedClipPath(), completeParameterPublication() (+63 more)
 
-### Community 14 - "modern-screenshot.umd.js"
-Cohesion: 0.09
-Nodes (52): ae(), be(), bt(), Ce(), Ct(), de(), dt(), _e() (+44 more)
+### Community 14 - "design-system.mjs"
+Cohesion: 0.07
+Nodes (67): addClampEndpoints(), addColorObject(), addDesignColor(), addFontSizeStep(), addRoundedScale(), addRoundedToken(), addSidecarColors(), addSidecarRadii() (+59 more)
 
 ### Community 15 - "Shared Mushaf Access"
 Cohesion: 0.08
 Nodes (27): ADR 0009 — reproducible Quran seeder, Reproducible Quran Database Seeder, ADR 0012 — shared mushaf access, Shared Mushaf Access, Mark author attribution (Marked by X), MushafAccessGrant model, MushafShareCode model, ViewingChip component (+19 more)
 
-### Community 16 - "live-server.mjs"
-Cohesion: 0.06
-Nodes (64): assembleLiveBrowserScript(), assertLiveBrowserScriptParts(), LIVE_BROWSER_SCRIPT_PARTS, readLiveBrowserScriptParts(), resolveLiveBrowserScriptParts(), eventPriority(), selectAvailablePendingEvent(), acknowledgePendingEvent() (+56 more)
+### Community 16 - "button.tsx"
+Cohesion: 0.18
+Nodes (12): SwUpdateBanner(), ADR-0014, themes, ThemeToggle(), ADR-0014, useSwUpdate(), getInitialTheme(), Theme (+4 more)
 
-### Community 17 - "design-system.mjs"
-Cohesion: 0.07
-Nodes (66): addClampEndpoints(), addColorObject(), addDesignColor(), addFontSizeStep(), addRoundedScale(), addRoundedToken(), addSidecarColors(), addSidecarRadii() (+58 more)
-
-### Community 18 - "SettingsSidebar.tsx"
-Cohesion: 0.06
-Nodes (48): KeepScreenAwakeSync(), EnablePushToggle(), OfflineRecitationSection(), ADR-0046, AndroidBackExitGuard(), guardState(), Props, ADR-0040 (+40 more)
-
-### Community 19 - "el"
-Cohesion: 0.07
-Nodes (55): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTooltip(), bindConfigureInlineControlHover(), bindConfigureModifierPillHover(), buildConfigureActionControl(), buildConfigureCountControl(), buildConfigureRow() (+47 more)
-
-### Community 20 - "dispatch.ts"
-Cohesion: 0.08
-Nodes (36): handle(), isAuthorized(), GET(), NotificationListItem, isAllowedInProd(), POST(), getNotificationType(), NOTIFICATION_TYPES (+28 more)
-
-### Community 21 - "MyMarksList.tsx"
-Cohesion: 0.06
-Nodes (35): handler, authOptions, chipByCategory, commentPreview(), FilterDot(), FILTERS, groupBySurah(), MyMarksList() (+27 more)
-
-### Community 22 - "jsonResponse"
-Cohesion: 0.09
-Nodes (46): deleteMark(), getGrantForViewer(), MarkBody, MarkWithAuthor, ADR-0012, ADR-0025, upsertMark(), withAuthorNames() (+38 more)
-
-### Community 23 - "use-translations.ts"
-Cohesion: 0.10
-Nodes (25): OfflineDownloadPanel(), PanelState, Props, OfflineInstallPrompt(), ADR-0014, OfflineSetupGate(), ADR-0014, PlansBrowseView (+17 more)
-
-### Community 24 - "RecitationSettingsSheet.tsx"
+### Community 17 - "detect-antipatterns-browser.js"
 Cohesion: 0.05
-Nodes (53): NotificationListResponse, LANGUAGES, LanguageToggle(), MarkerColorPicker(), Props, getTitle(), MarkedByLine(), MarkModal() (+45 more)
+Nodes (60): browserColorsClose(), browserDesignSystemConfig(), browserHasDirectText(), browserPrimaryFont(), browserRadiusTokens(), browserSampleText(), buildSelectorSegment(), checkBrowserDesignSystemSources() (+52 more)
+
+### Community 18 - "setLiveState"
+Cohesion: 0.08
+Nodes (69): abandonForeignSession(), buildInsertPlaceholderSnapshotFromDom(), buildPickedAnchorSnapshot(), cancelEditing(), cancelEditingToPicking(), cancelInsertConfigure(), captureAndEmit(), checkpointPayload() (+61 more)
+
+### Community 19 - "doctor.mjs"
+Cohesion: 0.11
+Nodes (37): applyFixes(), cli(), collect(), parseArgs(), readProjectRootPatterns(), rel(), renderText(), safeRead() (+29 more)
+
+### Community 20 - "notifications/types.ts"
+Cohesion: 0.07
+Nodes (46): GET(), NotificationListItem, getNotificationType(), NOTIFICATION_TYPES, NotificationChannelKey, NotificationContent, NotificationEmailContent, NotificationTypeDef (+38 more)
+
+### Community 21 - "parseAnyColor"
+Cohesion: 0.10
+Nodes (45): checkColors(), checkElementAIPaletteDOM(), checkElementColors(), checkElementColorsDOM(), checkElementGlowDOM(), checkElementHoverContrast(), checkElementIconTile(), checkElementIconTileDOM() (+37 more)
+
+### Community 22 - "cn"
+Cohesion: 0.07
+Nodes (44): MarkerColorPicker(), Props, ReaderLabSettingsSidebarProps, ScaleMarks(), StateSwitch(), Props, ReciterCombobox(), CustomRangePicker() (+36 more)
+
+### Community 23 - "hook-lib.mjs"
+Cohesion: 0.05
+Nodes (60): ACK_EXTS, ADVISORY_RULES, applyConfigSource(), applyDetectorConfigSource(), applyPatchText(), canonicalPath(), canonicalPathCache, clampByte() (+52 more)
+
+### Community 24 - "NotificationBell.tsx"
+Cohesion: 0.11
+Nodes (24): NotificationListResponse, menuRowClassName, navPillClassName, Props, Props, UserMenu(), EnablePushToggle(), NotificationBell() (+16 more)
 
 ### Community 25 - "e2e-fixture/generate.js"
-Cohesion: 0.14
-Nodes (21): cliProgress, {
+Cohesion: 0.13
+Nodes (15): cliProgress, {
   deriveRubs,
   deriveRubVerseMappings,
   derivePageMetadata,
@@ -556,11 +540,11 @@ Nodes (21): cliProgress, {
   layoutFromSeededWords,
   LAYOUT_MUSHAF_IDS,
   DEFAULT_MUSHAF_ID,
-}, { fetchVersesAndWords, TOTAL_PAGES }, fs, insertStatements(), ADR-0033 (+13 more)
+}, { fetchVersesAndWords, TOTAL_PAGES }, fs, insertStatements(), ADR-0033 (+7 more)
 
 ### Community 26 - "sw.ts"
 Cohesion: 0.07
-Nodes (46): ClientToSwMessage, FALLBACK_LOCALES, fallbackDocumentUrl(), offlineFallbackUrl(), pageFontUrl(), pageJsonUrl(), precacheSentinelUrl(), SwToClientMessage (+38 more)
+Nodes (57): FALLBACK_LOCALES, fallbackDocumentUrl(), OFFLINE_DOWNLOAD_MB, offlineFallbackUrl(), pageFontUrl(), pageJsonUrl(), PAGES_CACHE_NAME, PAGES_CACHE_VERSION (+49 more)
 
 ### Community 27 - "MyMarksList.tsx client component"
 Cohesion: 0.12
@@ -568,23 +552,23 @@ Nodes (20): ADR 0017 — App DB uses migrations, not db push, ADR 0022 — verse
 
 ### Community 28 - "auth-middleware.ts"
 Cohesion: 0.17
-Nodes (14): isJSONRequest(), protectedRoutes, ADR-0012, ADR-0030, ADR-0037, withAuth(), withIntl(), CustomMiddleware (+6 more)
+Nodes (15): isJSONRequest(), protectedRoutes, ADR-0012, ADR-0030, ADR-0037, withAuth(), withIntl(), CustomMiddleware (+7 more)
 
-### Community 29 - "detect-antipatterns-browser.js"
-Cohesion: 0.06
-Nodes (57): browserColorsClose(), browserDesignSystemConfig(), browserHasDirectText(), browserPrimaryFont(), browserRadiusTokens(), browserSampleText(), buildSelectorSegment(), checkBrowserDesignSystemSources() (+49 more)
+### Community 29 - "svelte-component.mjs"
+Cohesion: 0.07
+Nodes (60): collectUnusedSelectors(), verifyAcceptedSource(), applyLegacyDeferredAcceptsOnStartup(), buildPropsScriptV2(), loadSvelteCompiler(), appendCssToSvelteStyle(), appendSanitizedCssRule(), applyDeferredSvelteComponentAccepts() (+52 more)
 
-### Community 30 - "context.mjs"
-Cohesion: 0.08
-Nodes (49): appendAutonomyCounterDirective(), appendDetectorFallback(), appendImageGenDirective(), appendImageToolsDirective(), appendSubagentAuthorizationDirective(), appendSurfaceBriefContext(), automaticHookMode(), buildMissingTargetDirective() (+41 more)
+### Community 30 - "[locale]/layout.tsx"
+Cohesion: 0.05
+Nodes (60): KeepScreenAwakeSync(), LANGUAGES, LanguageToggle(), FurqanLogo(), Props, Nav(), Sidebar(), QuranSafhaViewToggle() (+52 more)
 
-### Community 31 - "hook-lib.mjs"
-Cohesion: 0.06
-Nodes (58): ACK_EXTS, ADVISORY_RULES, applyConfigSource(), applyDetectorConfigSource(), canonicalPath(), canonicalPathCache, clampByte(), cleanIgnoreValueDisplay() (+50 more)
-
-### Community 32 - "notifications/types.ts"
+### Community 31 - "live-accept.mjs"
 Cohesion: 0.11
-Nodes (23): NotificationChannelKey, createEmailChannel(), fallbackEmail(), baseInput, fakeLogger, createInAppChannel(), createPushChannel(), baseInput (+15 more)
+Nodes (41): safeSessionId(), resolveLiveTemplateExtensions(), acceptCli(), acceptReceiptPath(), argVal(), buildAcceptedWrappedSource(), buildCarbonizeReplacement(), decodeHtmlAttr() (+33 more)
+
+### Community 32 - "getNotificationDeps"
+Cohesion: 0.14
+Nodes (20): dynamic, GET, handle(), isAuthorized(), POST, ALLOWED_PUSH_HOSTS, DELETE(), hashEndpoint() (+12 more)
 
 ### Community 33 - "QuranSafha"
 Cohesion: 0.13
@@ -606,17 +590,17 @@ Nodes (15): /check-fq-standards, Claude-specific additions, API / auth / i18n, C
 Cohesion: 0.22
 Nodes (8): Constraints, Decisions Made, Files to Change, Fix, Fix Reader Navigation Infinite Render Loop, Root Cause, Summary, What NOT to Do
 
-### Community 38 - "concept-seed.mjs"
+### Community 38 - "initPageChat"
 Cohesion: 0.08
-Nodes (48): API_BASE, API_TIMEOUT_MS, apiBudgetMs(), dealCompositions(), driveSelection(), fetchRoll(), here, loadLocal() (+40 more)
+Nodes (53): armPageChatForTyping(), attachSteerFocusDebug(), attachSteerFocusGuard(), buildSteerProcessingDots(), buildSteerQueueHint(), clearSteerAwaitTimer(), clearSteerFocusRecoverTimer(), collapsePageChat() (+45 more)
 
 ### Community 39 - "Column-Font Contract"
 Cohesion: 0.14
 Nodes (15): ADR 0002 — Non-page Quran text rendering, ADR 0012 — Mark from_user/to_user ownership, ADR 0025 — Mark granularity, Mark model (verse/word granularity), No FK/relation across Quran/App domains rule, getDirection() helper (app/utils/i18n.ts), Column-Font Contract, Common Rendering Mistakes table (+7 more)
 
-### Community 40 - "setLiveState"
-Cohesion: 0.08
-Nodes (77): abandonForeignSession(), abortSvelteComponentInjection(), buildInsertPlaceholderSnapshotFromDom(), buildPickedAnchorSnapshot(), cancelEditing(), cancelEditingToPicking(), cancelInsertConfigure(), captureAndEmit() (+69 more)
+### Community 40 - "concept-seed.mjs"
+Cohesion: 0.07
+Nodes (50): API_BASE, API_TIMEOUT_MS, apiBudgetMs(), dealCompositions(), driveSelection(), fetchRoll(), here, loadLocal() (+42 more)
 
 ### Community 41 - "Split Quran Content and Application Data into Two Databases"
 Cohesion: 0.21
@@ -631,24 +615,24 @@ Cohesion: 0.20
 Nodes (12): Release-Branch Deployment Workflow (main -> release/x.y.z -> prod -> main), MushafSwitchSync, NavOverlayContext, PlansWidget, ReaderPage, ReaderPageContext, ReaderPager, ReaderPageSync (+4 more)
 
 ### Community 44 - "Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette"
-Cohesion: 0.21
-Nodes (14): ADR 0004 page sizing viewport-fit budget (referenced), ADR 0005 font safelist (referenced), ADR 0031 gold vs emerald semantics (referenced/revised), ADR 0032 dark surface depth from light (referenced), Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette, Gutter/binding-crease correction rounds 1-10 (iterative, measured), ADR 0031 gold vs emerald semantics (referenced), ADR 0032 dark surface depth from light (referenced) (+6 more)
+Cohesion: 0.23
+Nodes (12): Merge three mobile safha ADRs into rewritten ADR 0011, Consolidate Mobile Safha Sizing Docs, ADR 0004 page sizing viewport-fit budget (referenced), ADR 0005 font safelist (referenced), ADR 0011 mobile quran font scale vw formula (referenced), ADR 0032 dark surface depth from light (referenced), Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette, Gutter/binding-crease correction rounds 1-10 (iterative, measured) (+4 more)
 
 ### Community 45 - "Page Turn Blanks the Reader on Slow Networks"
 Cohesion: 0.24
 Nodes (11): ADR 0028: Persistent pager, ADR 0029: Immutable font registry, ADR 0034: Page-turn readiness on slow networks, QuranSpread.tsx, ReaderPager.tsx, app/utils/page-font-registry.ts, arrow-controls-desktop.md (#156), OPEN: skeleton renders wider than page, recitation bar resizes (unresolved) (+3 more)
 
-### Community 46 - "initPageChat"
+### Community 46 - "modern-screenshot.umd.js"
 Cohesion: 0.09
-Nodes (47): armPageChatForTyping(), attachSteerFocusDebug(), attachSteerFocusGuard(), clearSteerAwaitTimer(), clearSteerFocusRecoverTimer(), collapsePageChat(), expandPageChat(), finishVoiceSession() (+39 more)
+Nodes (55): ae(), be(), bt(), Ce(), s(), Ct(), de(), dt() (+47 more)
 
 ### Community 47 - "PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit"
 Cohesion: 0.22
 Nodes (9): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit, Summary, Verified Test Cases (+1 more)
 
-### Community 48 - "start-task Load context gate"
-Cohesion: 0.40
-Nodes (5): API Input Validation rule (422 on failure), jsonResponse(), Legacy page words route (raw NextResponse.json), API Response Envelope, API Route Structure
+### Community 48 - "OfflineRecitationSheet.tsx"
+Cohesion: 0.08
+Nodes (40): MushafLayoutRow(), Props, ADR-0014, MushafLayoutSection(), OfflineDownloadPanel(), PanelState, Props, OfflineProgressBar() (+32 more)
 
 ### Community 49 - "Mobile Safha: Full-Screen Sizing"
 Cohesion: 0.18
@@ -666,21 +650,21 @@ Nodes (10): ADR 0004: 15-slot page budget / font scale, ADR 0016: Surah banner (
 Cohesion: 0.22
 Nodes (10): ADR 0013: Mushaf double-page spread (partner font not preloaded), ADR 0014: PWA offline architecture, ADR 0027: QuranSwipeNav remount on navigation, QuranWord.tsx, app/hooks/use-is-tablet.ts, app/hooks/use-pwa-precache.ts, app/sw.ts, Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle (+2 more)
 
-### Community 53 - "deps.ts"
-Cohesion: 0.14
-Nodes (21): ALLOWED_PUSH_HOSTS, DELETE(), hashEndpoint(), isValidPushEndpoint(), POST(), RenderContext, createLogEmailTransport(), createSmtpEmailTransport() (+13 more)
-
-### Community 54 - "live-commit-manual-edits.mjs"
-Cohesion: 0.11
+### Community 53 - "live-commit-manual-edits.mjs"
+Cohesion: 0.10
 Nodes (49): allEntryIds(), argVal(), buildRepairBatch(), candidatesForEntry(), changedFilesSinceSnapshot(), clearAppliedEntries(), collectApplyOwnedFiles(), collectRollbackFiles() (+41 more)
+
+### Community 54 - "layout.md"
+Cohesion: 0.06
+Nodes (33): Adaptation Strategies, Assess Adaptation Challenge, Implement & Verify, Orientation & foldables, Phone → Tablet (iPad / large screens), Platform → platform (iOS ↔ Android), Web → native (porting a website or web app), 1. Accessibility (VoiceOver / TalkBack) (+25 more)
 
 ### Community 55 - "Font System (Immutable FontFace Registry)"
 Cohesion: 0.22
 Nodes (10): Encoding for Quran Text Rendered Outside the Page Route, Normalize Hamza-Alif Forms in Incoming Search Query, FontFaceInjector, page-font-registry.ts (ensurePageFonts), QuranFontScaleContext, QuranFontScaleControls, SearchBar, SearchQueryResults (+2 more)
 
 ### Community 56 - "release workflow (/release)"
-Cohesion: 0.27
-Nodes (10): ADR 0009 — Reproducible Quran seeder, ADR 0015, ADR 0026, furqan_quran seeder (db push --force-reset), npm run seed:quran -- --force, release workflow (/release), Cut Release (/cut-release), Promote Release (/promote-release) (+2 more)
+Cohesion: 0.10
+Nodes (19): Precondition, /promote-release <version>, Steps, What NOT to do, Failure handling, Precondition, /release <major|minor|patch>, Steps (+11 more)
 
 ### Community 57 - "PlanAssignmentRow component"
 Cohesion: 0.20
@@ -690,9 +674,9 @@ Nodes (10): activeOverride state ({id,label}), ADR 0033 — mushaf editions (pag
 Cohesion: 0.08
 Nodes (26): scripts, app-generate, app-migrate-dev, app-studio, build, build:local, dev, e2e:build (+18 more)
 
-### Community 59 - "detect-text.mjs"
-Cohesion: 0.09
-Nodes (39): blankCssComments(), BLOCK_BRACE_PREFIX_KEYWORDS, CSS_IN_JS_EXTENSIONS, detectText(), extFromFilePath(), extractCSSinJS(), extractStyleBlocks(), findCSSinJSTemplates() (+31 more)
+### Community 59 - "detect-html.mjs"
+Cohesion: 0.05
+Nodes (45): applyStaticDeclaration(), buildBorderOverrideMap(), parseShorthand(), resolveVar(), buildStaticStyleMap(), buildStaticWindow(), collectStaticCssRules(), collectStaticCssText() (+37 more)
 
 ### Community 60 - "SettingsSidebar"
 Cohesion: 0.22
@@ -714,9 +698,9 @@ Nodes (9): ADR 0013 — mushaf double-page spread, getPagePair() pairing math, M
 Cohesion: 0.28
 Nodes (9): ADR 0021 — recitation playback (QDC proxy, audio-driven navigation), chainToNextChapter cross-chapter chaining logic, Addendum 9 — Custom stop-at point (page or verse), QDC audio API (api.qurancdn.com) proxied via RecitationProvider adapter, Addendum 7 — whole-range repeat never looping (currentVerseKeyRef stale bug), RecitationContext.tsx, Add Quran Recitation Playback with Reciter Selection, RecitationSettingsSheet.tsx (+1 more)
 
-### Community 65 - "plan-fq-task workflow"
-Cohesion: 0.25
-Nodes (9): Core Cycle (Plan → Implement → Review → Ship → Retrospect), plan-fq-task workflow, Existing plan/addendum check (step 0), ADR check step, Plan file format (docs/plans/<slug>.md), Task ticket requirement before implementation, Verify the solution together (decision tree + test cases), retrospect workflow (+1 more)
+### Community 65 - "mushaf-editions.ts"
+Cohesion: 0.12
+Nodes (20): MushafSwitchSync(), Props, ADR-0021, ADR-0033, getInitialMushafId(), QuranMushafContext, QuranMushafContextType, QuranMushafProvider() (+12 more)
 
 ### Community 66 - "Fix Hostinger Auto-Deploy Build Failures"
 Cohesion: 0.29
@@ -726,9 +710,9 @@ Nodes (8): ADR 0010: Prisma no explicit datasource URL, app/api/auth/options.ts,
 Cohesion: 0.25
 Nodes (8): ADR 0011: Mobile Quran font scale vw formula, ADR 0035: Bounded revalidate on static document routes, QuranSwipeNav.tsx (renamed from QuranPageShell), app/[locale]/page.tsx, app/[locale]/pages/[id]/page.tsx, app/[locale]/pages/vertical/page.tsx, Fix Homepage CDN Cache Poisoning (Hostinger Edge), Fix Reversed Mobile Swipe Navigation Direction
 
-### Community 68 - "sentry/route.ts"
-Cohesion: 0.32
-Nodes (7): buildSlackMessage(), isValidSignature(), LEVEL_EMOJI, POST(), SentryAlertPayload, ADR-0019, ADR-0018
+### Community 68 - "session-store.mjs"
+Cohesion: 0.20
+Nodes (17): applyEvent(), baseSnapshot(), COMPLETED_PHASES, createLiveSessionStore(), getReadableJournalPath(), persist(), readState(), deriveRenderState() (+9 more)
 
 ### Community 69 - "QuranSafha.tsx"
 Cohesion: 0.29
@@ -742,29 +726,29 @@ Nodes (47): applyDetectionConfigSource(), clampByte(), cleanIgnoreValueDisplay()
 Cohesion: 0.39
 Nodes (8): Viewport-Fit Sizing for the Mushaf Page, FONT_V1 (vh-Derived Font Scale Model), Tailwind Safelist for Dynamic Quran Font-Size Classes, Minimum Floor for vh-Derived Quran Font Size and Spacing, Mushaf Double-Page Spread (Pairing, Data-Fetch, Decoration), RecitationPlayerBar, Desktop Reading Group (>=1367px Vertical Rail), Nav Z-Index Invariant (relative z-10)
 
-### Community 72 - "quranPrisma / appPrisma clients"
-Cohesion: 0.29
-Nodes (8): ADR 0008 — Quran/App Database Split, Data Fetching pattern (Prisma vs React Query), Server vs Client Components rule, Connection limit=1 constraint (Hostinger 75 cap), furqan_app database, furqan_quran database, quranPrisma / appPrisma clients, Database Stack (MySQL, two DBs)
+### Community 72 - "start-task Load context gate"
+Cohesion: 0.09
+Nodes (23): docs/architecture/APP_PURPOSE.md, docs/architecture/COMPONENTS.md, docs/design/design-principles.md, API Input Validation rule (422 on failure), jsonResponse(), Legacy page words route (raw NextResponse.json), API Response Envelope, API Route Structure (+15 more)
 
 ### Community 73 - "ADR 0032: Depth on near-black surfaces from light, not shadow (superseded by flat page decision)"
 Cohesion: 0.29
 Nodes (8): ADR 0031: Dark theme - gold marks Mushaf identity, emerald marks interaction, Emerald tokens (--primary, --accent, --ring), Gold tokens (--gold, --mushaf-ornament, --surah-frame-gold), Monotonic brightness ladder verification method (sampled pixels), ADR 0032: Depth on near-black surfaces from light, not shadow (superseded by flat page decision), Flat --mushaf-paper page fill (graded-light ramp removed, all themes), fq-spread-col align-items stretch chain + space-between line rhythm, ADR 0036: The desktop reader fills its height band, leftover height becomes line rhythm
 
-### Community 74 - "docs/architecture/DECISIONS.md"
-Cohesion: 0.25
-Nodes (7): docs/architecture/DECISIONS.md, docs/plans/release-branch-workflow.md, auth-middleware (middleware.ts), Adding a Protected Route workflow, Load context gate (DECISIONS.md + ADRs + standards), review-fq-work workflow, Review dimensions (Bugs, Quality, Plan Consistency)
+### Community 74 - "compress-fq-docs"
+Cohesion: 0.12
+Nodes (15): Anti-patterns to avoid, compress-fq-docs, Scope, Steps, The core heuristic, ADR 0017 — Prisma migrations for App DB, docs/architecture/DECISIONS.md, docs/plans/adopt-prisma-migrations.md (+7 more)
 
 ### Community 75 - "/ship-fq-task skill"
 Cohesion: 0.29
 Nodes (8): ~/.claude/hooks/block-dangerous-git.sh (removed global hook), commit-staged skill, /confirm-dangerous-git skill, Git Workflow Skills (commit/push gating), /ship-fq-task skill, ~/.claude/furqan-worktrees.json state file, Git Worktrees Workflow Integration, /start-fq-task skill (worktree creation)
 
-### Community 76 - "resumeSession"
-Cohesion: 0.06
-Nodes (75): applyParamDefaults(), applyParamValue(), applySavedSessionMeta(), buildParamsPanel(), clampVariantIndex(), clearHandled(), clearSession(), closedClipPath() (+67 more)
+### Community 76 - "collectBrowserFindings"
+Cohesion: 0.16
+Nodes (20): browserFindingsFromMap(), checkBorders(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementBorders(), checkElementBordersDOM(), checkElementPseudoStripeDOM(), checkElementTextOverflowDOM() (+12 more)
 
-### Community 77 - "live-accept.mjs"
-Cohesion: 0.10
-Nodes (43): matchesTemplateExtension(), resolveLiveTemplateExtensions(), acceptCli(), acceptReceiptPath(), argVal(), buildAcceptedWrappedSource(), buildCarbonizeReplacement(), decodeHtmlAttr() (+35 more)
+### Community 77 - "utils.ts"
+Cohesion: 0.05
+Nodes (56): ContinueReadingLink(), Props, ADR-0042, Props, ADR-0044, buildJuzGroups(), JuzGroup, Props (+48 more)
 
 ### Community 78 - "MyPlansList"
 Cohesion: 0.33
@@ -782,13 +766,13 @@ Nodes (7): ADR 0036 — reader fills height band, min-height:800px gate for rhyt
 Cohesion: 0.33
 Nodes (7): ADR 0028 — reader persistent pager, ADR 0029 — immutable page font registration, app/utils/page-font-registry.ts (immutable FontFace registry + LRU), ReaderPager.tsx (client persistent pager), Reader Swipe Performance: Persistent Client Pager, RecitationFollow leaf component (pager-owns-follow), Slim static content JSON pipeline (public/quran/pages/{n}.json)
 
-### Community 82 - "ui-motion guidance"
-Cohesion: 0.18
-Nodes (13): docs/architecture/APP_PURPOSE.md, docs/architecture/COMPONENTS.md, docs/design/design-principles.md, Animation rule (tailwindcss-animate not installed), Semantic Color Token Usage, Styling Stack (Tailwind + shadcn/ui), start-task Load context gate, ui-motion guidance (+5 more)
+### Community 82 - "captureElementToBlob"
+Cohesion: 0.12
+Nodes (20): averageRgb01(), captureChromeNodes(), captureElementFromRenderedAncestor(), captureElementToBlob(), compileShader(), cssColorToRgb01(), dominantRgb01(), findBackdropAncestor() (+12 more)
 
 ### Community 83 - "Workflow Index"
-Cohesion: 0.33
-Nodes (7): commit-staged / commit-message workflow, confirm-dangerous-git workflow, Workflow Index, ship-fq-task workflow, No AI signatures rule, terse mode (mujaz), mujaz-mode.js hook + .mujaz-off flag
+Cohesion: 0.15
+Nodes (10): Claude Skills, graphify, Hooks, Claude implementation, mujaz, Workflow Index, terse mode (mujaz), mujaz-mode.js hook + .mujaz-off flag (+2 more)
 
 ### Community 84 - "ADR 0025: A mark is one row - category plus optional comment"
 Cohesion: 0.33
@@ -826,9 +810,9 @@ Nodes (5): ADR 0020: Client component for inline style injection, FontFaceInject
 Cohesion: 0.40
 Nodes (5): AI-First Documentation & Workflow System, Documentation structure (docs/, DECISIONS.md living file, adr/ archive), Task workflow: plan → start → review → retrospect, /retrospect skill plan, Retrospect skill 3-phase workflow (infer, propose, save)
 
-### Community 93 - "Session Handoff — Dark Theme Mushaf Unification"
-Cohesion: 0.12
-Nodes (17): ReaderLabDesktopGate(), ADR-0013, ADR-0043, ReaderLabSettingsSidebar(), ReaderLabSettingsSidebarProps, ScaleMarks(), StateSwitch(), ReaderLabShellProps (+9 more)
+### Community 93 - "staleness-deep.mjs"
+Cohesion: 0.18
+Nodes (19): checkDesignCoverage(), checkDesignDrift(), checkDetectorIgnores(), checkHookInstallation(), checkLegacyLiveState(), checkWorkspaces(), collectHookCommands(), finding() (+11 more)
 
 ### Community 94 - "Fix dead tailwindcss-animate classes in dialog.tsx (plugin not installed)"
 Cohesion: 0.40
@@ -838,25 +822,25 @@ Nodes (5): DELETE mark handler scoped by to_user, Delete My Marks, Fix dead tail
 Cohesion: 0.40
 Nodes (5): ADR 0007 Arabic search query normalization (referenced), Fix: Hamza-Alif Mismatch in Verse Search, normalizeArabicQuery util (hamza-alif normalization), Fix: Ayah Font Not Rendering in Search Results and Mark Modal, Font-encoding contract table (per-page glyph vs UthmanicHafs1Ver18)
 
-### Community 96 - "i18n Setup (next-intl, ar/en locales)"
-Cohesion: 0.40
-Nodes (5): npm run extract-translations, Translation Key Naming convention, i18n/routing.ts locale-aware navigation, i18n Setup (next-intl, ar/en locales), messages/ar.json + messages/en.json
+### Community 96 - "createLiveBrowserSessionState"
+Cohesion: 0.20
+Nodes (14): createLiveBrowserSessionState(), clearHandled(), clearScrollY(), clearSession(), isHandled(), loadSession(), markHandled(), nextCheckpointRevision() (+6 more)
 
-### Community 97 - "css-cascade.mjs"
-Cohesion: 0.08
-Nodes (32): applyStaticDeclaration(), buildBorderOverrideMap(), buildStaticStyleMap(), buildStaticWindow(), collectStaticCssRules(), compareStaticPriority(), cssPropToCamel(), expandStaticBoxValues() (+24 more)
+### Community 97 - "hook-admin.mjs"
+Cohesion: 0.12
+Nodes (42): ACTIONS, addIgnoreFile(), addIgnoreRule(), addIgnoreValue(), DETECTOR_CONFIG_KEYS, detectorSection(), fileHasImpeccableHookMarker(), HOOK_MANIFEST_TARGETS (+34 more)
 
-### Community 98 - "furqan_app Prisma migrations workflow"
-Cohesion: 0.50
-Nodes (4): ADR 0017 — Prisma migrations for App DB, docs/plans/adopt-prisma-migrations.md, furqan_app Prisma migrations workflow, compress-fq-docs workflow
+### Community 98 - "use-pwa-precache.ts"
+Cohesion: 0.20
+Nodes (13): OfflineInstallPrompt(), ADR-0014, ClientToSwMessage, precacheDismissedKey(), SwToClientMessage, ADR-0014, useAppInstalled(), broadcastDismissed() (+5 more)
 
 ### Community 99 - "ADR 0030: Plan engine - code-defined templates, typed scheduling rules, derived daily assignments"
 Cohesion: 0.50
 Nodes (4): الحصون الخمسة memorization program, ADR 0030: Plan engine - code-defined templates, typed scheduling rules, derived daily assignments, Five typed scheduling rule kinds (fixed_cycle, cursor_advance, trailing_window, completed_cycle, lookahead), UserPlan enrollment + ProgressEntry append-only log
 
-### Community 100 - "Theme system (named CSS classes on html)"
-Cohesion: 0.50
-Nodes (4): ADR 0031 — Dark theme gold/emerald semantics, Adding a new theme workflow, Theme system (named CSS classes on html), Theme Token Contract
+### Community 100 - "FontFaceInjector.tsx"
+Cohesion: 0.17
+Nodes (14): FontFaceInjector(), nextKept(), Props, ADR-0023, ADR-0028, ADR-0029, useLruIds(), ensurePageFonts() (+6 more)
 
 ### Community 101 - "ADR 0037: Notification dispatch via a channel registry, no queue/worker infra"
 Cohesion: 0.50
@@ -890,9 +874,9 @@ Nodes (3): addPageMark.ts, getPageMarks.ts, Fix Marks Broken by Hardcoded localh
 Cohesion: 1.00
 Nodes (3): Sentry Error Tracking via DSN-Presence Gating, Sentry-to-Slack Alerting via Self-Hosted Relay Webhook, fq-logger Wraps Pino and Forwards Error Logs to Sentry
 
-### Community 110 - "Reader depth token family (--mushaf-rim-*, --reader-chrome-*)"
-Cohesion: 0.67
-Nodes (3): ADR 0032 — Dark surface depth from light, Reader Surface Depth (Flat Page Face, Edge-Driven Depth), Reader depth token family (--mushaf-rim-*, --reader-chrome-*)
+### Community 110 - "checkHeadingRhythmDOM"
+Cohesion: 0.18
+Nodes (16): checkHeadingRhythmDOM(), clusterTop(), edgeAbove(), edgeBelow(), hasOwnTopBoundary(), insideSmallCard(), isVisibleFlow(), overlapsX() (+8 more)
 
 ### Community 111 - "Design System Foundation"
 Cohesion: 0.67
@@ -922,37 +906,37 @@ Nodes (3): Store Static Page Metadata in Database, PageMetadata Prisma model, Mu
 Cohesion: 0.09
 Nodes (21): Files to Change, Finding 10 (note) — `endResult` is an unclear name, Finding 11 (note) — play button ignores the row's `disabled` prop, Finding 12 (note) — override shape spelled out twice, Finding 13 (note) — DECISIONS.md:606 omits `label`, Finding 14 (warning) — docs claim editing "Repeat" clears the override, Finding 15 (note) — untracked `app/generated` symlink, Finding 16 — otherwise clean (+13 more)
 
-### Community 141 - "hook-before-edit.mjs"
-Cohesion: 0.09
-Nodes (59): allow(), bumpCursorDenial(), cursorBlockMessage(), deny(), detectProposedHtml(), done(), escapeRegExp(), findingSignature() (+51 more)
+### Community 141 - "mountSvelteComponentVariant"
+Cohesion: 0.14
+Nodes (21): acceptedDomAlreadyClean(), applyOriginalAttrsToSvelteAnchor(), commitAcceptedSvelteComponentToDom(), componentModuleCandidates(), describeMountFailure(), detectDevServerBase(), ensureAcceptedDomClean(), findAcceptedRuntimeWrappers() (+13 more)
 
 ### Community 142 - "devDependencies"
 Cohesion: 0.05
 Nodes (39): @babel/parser, @babel/traverse, dotenv-cli, eslint, eslint-config-next, fs-extra, devDependencies, @babel/parser (+31 more)
 
 ### Community 143 - "components.json"
-Cohesion: 0.18
-Nodes (10): aliases, components, hooks, lib, ui, utils, rsc, $schema (+2 more)
-
-### Community 144 - "hook-admin.mjs"
 Cohesion: 0.12
-Nodes (42): ACTIONS, addIgnoreFile(), addIgnoreRule(), addIgnoreValue(), DETECTOR_CONFIG_KEYS, detectorSection(), fileHasImpeccableHookMarker(), HOOK_MANIFEST_TARGETS (+34 more)
+Nodes (16): aliases, components, hooks, lib, ui, utils, rsc, $schema (+8 more)
 
-### Community 145 - "mujaz-stats.js"
+### Community 144 - "live-wrap.mjs"
+Cohesion: 0.12
+Nodes (39): hasGeneratedHeader(), HEADER_MARKERS, isGeneratedFile(), isGitIgnored(), resolveSourceTraits(), argVal(), buildInsertWrapperLines(), computeInsertLine() (+31 more)
+
+### Community 145 - ".claude/hooks/mujaz-stats.js"
 Cohesion: 0.12
 Nodes (9): path, ROOT, { FLAG_PATH }, fs, { FLAG_PATH, STATS_PATH }, fs, { FLAG_PATH }, fs (+1 more)
 
 ### Community 146 - "AGENTS.md"
-Cohesion: 0.13
-Nodes (10): Commands, Documentation, graphify, impeccable, MANDATORY WORKFLOW — NO EXCEPTIONS, Project, Task tracking, Claude Skills (+2 more)
+Cohesion: 0.25
+Nodes (7): Commands, Documentation, graphify, impeccable, MANDATORY WORKFLOW — NO EXCEPTIONS, Project, Task tracking
 
-### Community 147 - "app/layout.tsx"
+### Community 147 - "MyMarksList.tsx"
 Cohesion: 0.13
-Nodes (39): assessCoverage(), buildColor(), CANONICAL_SECTIONS, collectBullets(), collectColorValues(), collectParagraphs(), detectFormat(), extractColors() (+31 more)
+Nodes (18): chipByCategory, commentPreview(), FilterDot(), FILTERS, groupBySurah(), MyMarksList(), SurahGroup, ADR-0024 (+10 more)
 
-### Community 148 - "manual-apply.mjs"
+### Community 148 - "hook-before-edit.mjs"
 Cohesion: 0.09
-Nodes (43): getLiveAnnotationsDir(), getLiveDir(), addOpToManualApplyChunk(), APPLY_EVENT_HARD_TIMEOUT_MS, APPLY_EVENT_SOFT_DEADLINE_MS, buildManualApplyAgentAction(), clearManualApplyTransaction(), collectManualApplyFiles() (+35 more)
+Nodes (55): bumpCursorDenial(), detectProposedHtml(), escapeRegExp(), findingSignature(), firstMatch(), firstString(), hasFragmentEditContent(), main() (+47 more)
 
 ### Community 149 - "Addendum — Wrong surah name on shared multi-surah pages (2026-08-16)"
 Cohesion: 0.09
@@ -962,9 +946,9 @@ Nodes (22): 1. Extend SidebarContext with current surah, 2. Nav trigger, 3. Side
 Cohesion: 0.14
 Nodes (11): ACCOUNT_LABEL, Locale, LOCALES, SEARCH_PLACEHOLDER, SEARCH_QUERY, SEARCH_RESULTS_HEADING, SETTINGS_LABEL, Theme (+3 more)
 
-### Community 151 - "live-wrap.mjs"
-Cohesion: 0.11
-Nodes (42): hasGeneratedHeader(), HEADER_MARKERS, isGeneratedFile(), isGitIgnored(), resolveSourceTraits(), argVal(), buildInsertWrapperLines(), computeInsertLine() (+34 more)
+### Community 151 - "live-server.mjs"
+Cohesion: 0.07
+Nodes (45): eventPriority(), selectAvailablePendingEvent(), activeSessionSummaries(), agentPollingConnected(), annotRoot, args, cleanupSvelteComponentSessionsBeforeExit(), createRequestHandler() (+37 more)
 
 ### Community 152 - "extract-translations.js"
 Cohesion: 0.23
@@ -974,9 +958,9 @@ Nodes (11): extractKeysFromFile(), findAllFiles(), fs, languages, localesDir, ma
 Cohesion: 0.20
 Nodes (8): Precondition, /promote-to-staging, Steps, What NOT to do, ADR 0039: `stg` tracks `main` directly, decoupled from release branches, Consequences, Context, Decision
 
-### Community 154 - "/ui-motion"
-Cohesion: 0.20
-Nodes (9): 1. Should this even animate?, 2. Easing and duration, 3. Component states, 4. Performance, 5. Accessibility, 6. Reference techniques (use only when the task calls for it), Review checklist (use for `/review-fq-work` UI findings and self-review), /ui-motion (+1 more)
+### Community 154 - "ui-motion guidance"
+Cohesion: 0.12
+Nodes (16): 1. Should this even animate?, 2. Easing and duration, 3. Component states, 4. Performance, 5. Accessibility, 6. Reference techniques (use only when the task calls for it), Review checklist (use for `/review-fq-work` UI findings and self-review), /ui-motion (+8 more)
 
 ### Community 155 - "Configure Project-Local Trello MCP for Codex"
 Cohesion: 0.20
@@ -999,56 +983,56 @@ Cohesion: 0.20
 Nodes (9): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Save Last Read Page + Navbar Link to Resume, Summary, Verified Test Cases (+1 more)
 
 ### Community 160 - "detect-antipatterns.mjs"
-Cohesion: 0.12
-Nodes (37): confirm(), detectCli(), dim(), fileUrlToLocalPath(), formatAdvisorySection(), formatFindings(), formatFindingsBody(), formatFindingSummary() (+29 more)
+Cohesion: 0.08
+Nodes (44): confirm(), detectCli(), dim(), fileUrlToLocalPath(), formatAdvisorySection(), formatFindings(), formatFindingsBody(), formatFindingSummary() (+36 more)
 
 ### Community 161 - "dependencies"
 Cohesion: 0.05
-Nodes (39): axios, class-variance-authority, cli-progress, lucide-react, mysql2, next, nodemailer, dependencies (+31 more)
+Nodes (39): class-variance-authority, cli-progress, cmdk, lucide-react, next-auth, next-intl, dependencies, class-variance-authority (+31 more)
 
-### Community 162 - "/plan-fq-task"
-Cohesion: 0.22
-Nodes (8): Anti-patterns to avoid, Plan file format, /plan-fq-task, Step 5 — Ensure a GitHub issue, Step 6 — Create the worktree, Step 7 — Write the plan (worktree path), Steps, What this skill does (legacy)
+### Community 162 - "plan-fq-task workflow"
+Cohesion: 0.14
+Nodes (13): Anti-patterns to avoid, Plan file format, /plan-fq-task, Step 5 — Ensure a GitHub issue, Step 6 — Create the worktree, Step 7 — Write the plan (worktree path), Steps, What this skill does (legacy) (+5 more)
 
 ### Community 163 - "Steps"
 Cohesion: 0.22
 Nodes (8): 1 — Scan the session, 2 — Scan DECISIONS.md for stale entries, 3 — Propose changes one at a time (review-before-write), 4 — Confirm before saving, 5 — Save the retrospective file, Anti-patterns to avoid, /retrospect, Steps
 
 ### Community 164 - "/review-fq-work"
-Cohesion: 0.20
+Cohesion: 0.22
 Nodes (9): 1 — Get the diff, 2 — Spawn the review subagent, 3 — Print the report, Anti-patterns to avoid, Choosing the review model, Claude-specific: Dimension 4 (Design & UX), Claude-specific: spawning the reviewer, /review-fq-work (+1 more)
 
 ### Community 165 - "/start-fq-task"
-Cohesion: 0.22
-Nodes (8): Anti-patterns to avoid, Claude-specific additions, Context paths (step 2 in the workflow doc), /start-fq-task, Step 1 — GitHub issue integration, Step 1b — Worktree setup (runs before step 2 in the workflow doc), Steps, What this skill does (legacy)
+Cohesion: 0.18
+Nodes (10): Anti-patterns to avoid, Claude-specific additions, Context paths (step 2 in the workflow doc), /start-fq-task, Step 1 — GitHub issue integration, Step 1b — Worktree setup (runs before step 2 in the workflow doc), Steps, What this skill does (legacy) (+2 more)
 
 ### Community 166 - "setup.js"
 Cohesion: 0.31
 Nodes (8): { execSync }, fs, loadFixture(), main(), mysql, parseConnection(), path, requireEnv()
 
 ### Community 167 - "/ship-fq-task"
-Cohesion: 0.25
+Cohesion: 0.29
 Nodes (7): Claude-specific additions, No AI signatures — anywhere, /ship-fq-task, Step 6 — GitHub issue integration, Step 7 — Clean up the worktree (mandatory — always run, even if step 6 was skipped), Steps, What NOT to do
 
 ### Community 168 - "next.config.mjs"
 Cohesion: 0.22
 Nodes (8): ADR-0014, ADR-0017, ADR-0023, ADR-0029, ADR-0042, nextConfig, withNextIntl, withSerwist
 
-### Community 169 - "detect-html.mjs"
-Cohesion: 0.12
-Nodes (34): mergeDesignSystemFindings(), createBrowserDetector(), detectUrl(), launchBrowser(), measureContentHiddenAfterReveal(), runVisualContrastFallback(), serializeDesignSystemForBrowser(), runTextContentAnalyzers() (+26 more)
+### Community 169 - "manual-apply.mjs"
+Cohesion: 0.09
+Nodes (49): addOpToManualApplyChunk(), APPLY_EVENT_HARD_TIMEOUT_MS, APPLY_EVENT_SOFT_DEADLINE_MS, buildManualApplyAgentAction(), clearManualApplyTransaction(), collectManualApplyFiles(), compactManualApplyBatch(), compactManualApplyCandidates() (+41 more)
 
 ### Community 170 - "/cut-release <major|minor|patch>"
 Cohesion: 0.29
 Nodes (6): Claude-specific: GitHub issue integration (step 8), /cut-release <major|minor|patch>, No AI signatures, Precondition, Steps, What NOT to do
 
-### Community 171 - "compress-fq-docs"
-Cohesion: 0.33
-Nodes (5): Anti-patterns to avoid, compress-fq-docs, Scope, Steps, The core heuristic
+### Community 171 - "checkHtmlPatterns"
+Cohesion: 0.17
+Nodes (15): buildHtmlPatternCorpora(), checkHtmlPatterns(), collectMarqueeKeyframes(), collectPulseKeyframes(), cssLengthToPx(), indexInSourceRanges(), infiniteAnimationNames(), isRoundDotRadius() (+7 more)
 
-### Community 172 - "/release <major|minor|patch>"
-Cohesion: 0.33
-Nodes (5): Failure handling, Precondition, /release <major|minor|patch>, Steps, What NOT to do
+### Community 172 - "createLiveBrowserDomHelpers"
+Cohesion: 0.19
+Nodes (10): createLiveBrowserDomHelpers(), cssId(), liveUiRoot(), makeFrozenAnchor(), own(), pickable(), rectIsUsableAnchor(), uiAppend() (+2 more)
 
 ### Community 173 - "ADR 0038: Reader size contracts are per-band, and tablet is always double-page"
 Cohesion: 0.33
@@ -1058,696 +1042,628 @@ Nodes (5): ADR 0038: Reader size contracts are per-band, and tablet is always do
 Cohesion: 0.33
 Nodes (5): extends, ignorePatterns, app/generated/, next/core-web-vitals, next/typescript
 
-### Community 175 - "register"
-Cohesion: 0.33
-Nodes (3): register(), ADR-0017, ADR-0017
+### Community 175 - "instrumentation.ts"
+Cohesion: 0.38
+Nodes (4): onRequestError, register(), ADR-0017, ADR-0017
 
 ### Community 176 - "Furqan"
-Cohesion: 0.33
-Nodes (5): Architecture at a glance, Commands, Documentation, Furqan, Local setup
+Cohesion: 0.20
+Nodes (9): ADR 0008 — Quran/App Database Split, ADR 0009 — Reproducible Quran seeder, furqan_quran seeder (db push --force-reset), npm run seed:quran -- --force, Architecture at a glance, Commands, Documentation, Furqan (+1 more)
 
-### Community 177 - "/confirm-dangerous-git"
-Cohesion: 0.40
-Nodes (4): /confirm-dangerous-git, Dangerous commands covered, Non-goals, Rule
+### Community 177 - "Core Cycle (Plan → Implement → Review → Ship → Retrospect)"
+Cohesion: 0.13
+Nodes (12): commit-staged, /confirm-dangerous-git, Dangerous commands covered, Non-goals, Rule, commit-staged / commit-message workflow, confirm-dangerous-git workflow, Core Cycle (Plan → Implement → Review → Ship → Retrospect) (+4 more)
 
-### Community 178 - "/promote-release <version>"
-Cohesion: 0.40
-Nodes (4): Precondition, /promote-release <version>, Steps, What NOT to do
+### Community 178 - "handlePollPost"
+Cohesion: 0.26
+Nodes (15): acknowledgePendingEvent(), broadcast(), broadcastAgentPollingIfChanged(), cancelQueuedAnonymousExitEvents(), findAvailablePendingEvent(), findPendingEventById(), flushPendingPolls(), handlePollGet() (+7 more)
 
-### Community 179 - "/sync-main-from-prod"
-Cohesion: 0.50
-Nodes (3): Steps, /sync-main-from-prod, What NOT to do
+### Community 179 - "filterFindings"
+Cohesion: 0.26
+Nodes (13): cleanIgnoreValueDisplay(), extractFindingIgnoreValue(), extractFindingIgnoreValueRaw(), extractMotionIgnoreValue(), filterFindings(), findingMatchesScopedIgnoreFile(), formatFindingIgnoreCommand(), isAdvisoryFinding() (+5 more)
 
 ### Community 180 - "package.json"
 Cohesion: 0.50
 Nodes (3): name, private, version
 
-### Community 183 - "doctor.mjs"
-Cohesion: 0.13
-Nodes (34): applyFixes(), cli(), collect(), parseArgs(), readProjectRootPatterns(), renderText(), safeRead(), SCRIPTS_DIR (+26 more)
+### Community 181 - "detect-csp.mjs"
+Cohesion: 0.20
+Nodes (10): detectCsp(), INLINE_HEADER_SIGNALS, LAYOUT_EXTS, MONOREPO_HELPER_SIGNALS, NUXT_ROUTE_RULES_SIGNALS, NUXT_SECURITY_SIGNALS, SCAN_EXTS, SKIP_DIRS (+2 more)
 
-### Community 184 - "graphify-sync-rebuild.sh"
+### Community 183 - "detect-text.mjs"
+Cohesion: 0.07
+Nodes (44): blankCssComments(), BLOCK_BRACE_PREFIX_KEYWORDS, CSS_IN_JS_EXTENSIONS, detectText(), extFromFilePath(), extractCSSinJS(), extractStyleBlocks(), findCSSinJSTemplates() (+36 more)
+
+### Community 184 - ".claude/hooks/graphify-sync-rebuild.sh"
 Cohesion: 0.50
 Nodes (3): GRAPHIFY_CHANGED, PYTHONHASHSEED, graphify-sync-rebuild.sh script
 
-### Community 187 - "svelte-component.mjs"
-Cohesion: 0.08
-Nodes (49): collectUnusedSelectors(), verifyAcceptedSource(), applyLegacyDeferredAcceptsOnStartup(), buildPropsScriptV2(), loadSvelteCompiler(), appendCssToSvelteStyle(), appendSanitizedCssRule(), applyDeferredSvelteComponentAccepts() (+41 more)
+### Community 186 - "embed-prompt.mjs"
+Cohesion: 0.20
+Nodes (7): args, buf, crc32(), crcTable, file, pngChunk(), readMode
 
-### Community 189 - "rel"
-Cohesion: 0.09
-Nodes (41): ANIMATION_VALUE_KEYWORDS, buildHtmlPatternCorpora(), checkColors(), checkElementAIPaletteDOM(), checkElementRadialSpotlight(), checkElementRadialSpotlightDOM(), checkGlow(), checkHoverContrast() (+33 more)
-
-### Community 190 - "live-poll.mjs"
-Cohesion: 0.11
-Nodes (36): completionAckForAcceptResult(), completionTypeForAcceptResult(), PREVIEW_MODES_WITHOUT_SOURCE_MARKERS, acceptInstructions(), bootInstructions(), deferredWrapperInstructions(), generateInstructions(), insertScaffoldInstructions() (+28 more)
-
-### Community 191 - "generate-image.mjs"
-Cohesion: 0.08
-Nodes (30): detectCsp(), INLINE_HEADER_SIGNALS, LAYOUT_EXTS, MONOREPO_HELPER_SIGNALS, NUXT_ROUTE_RULES_SIGNALS, NUXT_SECURITY_SIGNALS, SCAN_EXTS, SKIP_DIRS (+22 more)
-
-### Community 192 - "applyEditing"
-Cohesion: 0.09
-Nodes (32): addManualContextText(), applyEditing(), buildLocatorForLeaf(), canRestoreManualEditElement(), contextElementForManualEdit(), copyEditContainerContext(), copyEditLeafContext(), cssIdent() (+24 more)
-
-### Community 193 - "layout.md"
-Cohesion: 0.06
-Nodes (29): Adaptation Strategies, Assess Adaptation Challenge, Implement & Verify, Orientation & foldables, Phone → Tablet (iPad / large screens), Platform → platform (iOS ↔ Android), Web → native (porting a website or web app), Recommended Actions (+21 more)
-
-### Community 194 - "initGlobalBar"
+### Community 187 - "design-parser.mjs"
 Cohesion: 0.13
-Nodes (28): agentHasWorkInFlight(), agentStatusText(), barPaletteForTheme(), brandMarkSvg(), buildSteerProcessingDots(), buildSteerQueueHint(), designPanelCss(), detectPageTheme() (+20 more)
+Nodes (39): assessCoverage(), buildColor(), CANONICAL_SECTIONS, collectBullets(), collectColorValues(), collectParagraphs(), detectFormat(), extractColors() (+31 more)
 
-### Community 197 - "impeccable/SKILL.md"
-Cohesion: 0.07
-Nodes (24): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat, Craft (deprecated alias), Craft floor, Refuse (+16 more)
-
-### Community 198 - "parseAnyColor"
+### Community 188 - "MarkModal.tsx"
 Cohesion: 0.10
-Nodes (38): buildHtmlPatternCorpora(), checkElementGlow(), checkGlow(), checkHtmlPatterns(), collectCssCustomProps(), collectMarqueeKeyframes(), collectPulseKeyframes(), colorToHex() (+30 more)
+Nodes (22): getTitle(), MarkedByLine(), MarkModal(), ModalProps, ADR-0012, ADR-0025, ADR-0028, OfflineSetupGate() (+14 more)
 
-### Community 199 - "live-copy-edit-agent.mjs"
+### Community 189 - "svelte-ast.mjs"
+Cohesion: 0.21
+Nodes (20): Analysis, analyzeAttributes(), analyzeFragment(), analyzeNode(), analyzeSvelteMarkup(), applyReplacements(), classifyEachKey(), classifyRoots() (+12 more)
+
+### Community 190 - "accept-css.mjs"
+Cohesion: 0.24
+Nodes (20): bakeParamValues(), collectAllSelectors(), collectSelectorsFromNodes(), escapeRegExp(), formatBody(), isToggleOn(), normalizeSelector(), normalizeToggleForVar() (+12 more)
+
+### Community 191 - "live-poll.mjs"
+Cohesion: 0.14
+Nodes (29): completionAckForAcceptResult(), completionTypeForAcceptResult(), PREVIEW_MODES_WITHOUT_SOURCE_MARKERS, augmentEventWithAcceptHandling(), buildAcceptScriptArgs(), buildPollReplyPayload(), completeAcceptHandling(), DEFAULT_EVENT_LEASE_MS (+21 more)
+
+### Community 192 - "live-status.mjs"
+Cohesion: 0.30
+Nodes (13): collectManualApplyFiles(), manualApplyReplyCommand(), manualApplyResumeHint(), mountFailureAction(), parseArgs(), renderSummary(), resumeCli(), summarizeManualApplyEvent() (+5 more)
+
+### Community 193 - "generate-image.mjs"
+Cohesion: 0.18
+Nodes (12): crc32(), hash32(), hslToRgb(), out, palette(), pngChunk(), pngFake(), promptFile (+4 more)
+
+### Community 194 - "scanCssTextForPulsingDot"
+Cohesion: 0.14
+Nodes (26): buildHtmlPatternCorpora(), checkHtmlPatterns(), collectCssCustomProps(), collectMarqueeKeyframes(), collectPulseKeyframes(), cssLengthToPx(), cssTextHasDarkRootBg(), extractShadowLengths() (+18 more)
+
+### Community 195 - "detect-url.mjs"
+Cohesion: 0.21
+Nodes (18): detectUrl(), launchBrowser(), measureContentHiddenAfterReveal(), runVisualContrastFallback(), serializeDesignSystemForBrowser(), captureVisualContrastCandidate(), compareScreenshotContrast(), sanitizeScreenshotClip() (+10 more)
+
+### Community 196 - "syncEditBadgeHitProxies"
+Cohesion: 0.27
+Nodes (10): bindEditBadgeProxy(), editBadgeProxyTargets(), initEditBadge(), initEditBadgeHitProxies(), positionEditBadge(), proxyMouseEvent(), setImportantStyle(), styleEditBadgeProxy() (+2 more)
+
+### Community 197 - "instructions.mjs"
+Cohesion: 0.40
+Nodes (9): acceptInstructions(), bootInstructions(), deferredWrapperInstructions(), generateInstructions(), insertScaffoldInstructions(), instructionsForEvent(), pollCmd(), replyCmd() (+1 more)
+
+### Community 198 - "impeccable/SKILL.md"
+Cohesion: 0.09
+Nodes (19): Craft (deprecated alias), Craft floor, Refuse, Verify, Pitfalls, Seed mode, Step 1: Route through new-work's workshop, Step 2: Write seed DESIGN.md (+11 more)
+
+### Community 199 - "live.md"
+Cohesion: 0.06
+Nodes (29): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode, Cleanup (+21 more)
+
+### Community 200 - "constants/plans.ts"
+Cohesion: 0.07
+Nodes (50): GET(), POST(), serializePlan(), toDateString(), withTargetJuz(), GET(), toDateString(), GET() (+42 more)
+
+### Community 201 - "QuranPage.tsx"
+Cohesion: 0.28
+Nodes (5): Props, QuranPage, VerticalQuranPages(), revalidate, ADR-0035
+
+### Community 203 - "el"
+Cohesion: 0.07
+Nodes (55): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTooltip(), bindConfigureInlineControlHover(), bindConfigureModifierPillHover(), buildConfigureActionControl(), buildConfigureCountControl(), buildConfigureRow() (+47 more)
+
+### Community 204 - "live-copy-edit-agent.mjs"
 Cohesion: 0.14
 Nodes (31): applyMockWrites(), buildCopyEditBatchPrompt(), checkFrameworkSourceSyntax(), chooseCopyEditAgent(), COMMAND_AUTH_CACHE, commandAuthed(), commandExists(), compactBatchForPrompt() (+23 more)
 
-### Community 203 - "injected/index.mjs"
-Cohesion: 0.14
-Nodes (21): browserColorsClose(), browserHasDirectText(), browserRadiusTokens(), browserSampleText(), checkElementDesignSystemDOM(), enableCycleMode(), getSpotlightBackdrop(), isBrowserDesignColorAllowed() (+13 more)
+### Community 205 - "readLiveServerInfo"
+Cohesion: 0.39
+Nodes (7): readLiveServerInfo(), FORBIDDEN, verifyAcceptedFile(), completeCli(), completeThroughServer(), parseArgs(), readServerInfo()
 
-### Community 204 - "scanCssTextForPulsingDot"
-Cohesion: 0.17
-Nodes (18): escapeRegExp(), extractPlatform(), extractSectionValue(), loadContext(), loadNativePlatformReferences(), safeRead(), cli(), COMMON_DEV_PORTS (+10 more)
+### Community 206 - "initGlobalBar"
+Cohesion: 0.09
+Nodes (39): agentHasWorkInFlight(), agentStatusText(), barPaletteForTheme(), brandMarkSvg(), buildDesignHeader(), buildParamsPanel(), designPanelCss(), detectPageTheme() (+31 more)
 
-### Community 206 - "Mushaf Page Frame — Designer Asset Spec"
+### Community 207 - "renderGroupedTemplate"
+Cohesion: 0.24
+Nodes (11): cursorBlockMessage(), clampGroupedToBudget(), clampToBudget(), directiveFooter(), formatFindingLine(), quoteCommandArg(), relativize(), renderCleanAck() (+3 more)
+
+### Community 208 - "render-context.ts"
+Cohesion: 0.39
+Nodes (7): RenderContext, buildRenderContext(), interpolate(), loadMessages(), lookup(), messagesCache, toSafeLocale()
+
+### Community 209 - "Mushaf Page Frame — Designer Asset Spec"
 Cohesion: 0.07
 Nodes (27): Deliver three tiles, not one frame, Implementation note (not for the designer), KFGQPC does not ship a page frame (searched 2026-08-17), Licence, Measured findings, Mushaf Page Frame — Designer Asset Spec, Nice to have, Public-domain scans: reference material, not a tile source (tested 2026-08-17) (+19 more)
 
-### Community 207 - "showToast"
-Cohesion: 0.16
-Nodes (19): acceptedDomAlreadyClean(), applyOriginalAttrsToSvelteAnchor(), commitAcceptedSvelteComponentToDom(), componentModuleCandidates(), describeMountFailure(), detectDevServerBase(), ensureAcceptedDomClean(), findAcceptedRuntimeWrappers() (+11 more)
+### Community 210 - "resolveLengthPx"
+Cohesion: 0.13
+Nodes (21): checkElementHeroEyebrow(), checkElementHeroEyebrowDOM(), checkHeroEyebrow(), checkKickerAboveHeading(), checkKickerAboveHeadingDOM(), checkKickerAboveHeadingFromDoc(), checkNumberedSectionLabels(), checkNumberedSectionLabelsDOM() (+13 more)
 
-### Community 209 - "roots.mjs"
-Cohesion: 0.16
+### Community 211 - "iOS platform"
+Cohesion: 0.25
+Nodes (8): Color & materials, Components & controls, iOS platform, Layout & structure, Motion, The iOS slop test, Touch targets, Typography
+
+### Community 214 - "checkElementGptBorderShadowDOM"
+Cohesion: 0.38
+Nodes (7): borderColorsFromStyle(), borderWidthsFromStyle(), checkElementGptBorderShadow(), checkElementGptBorderShadowDOM(), checkGptThinBorderWideShadow(), shadowLayerAlpha(), shadowMaxBlurPx()
+
+### Community 215 - "impeccable-paths.mjs"
+Cohesion: 0.12
+Nodes (26): resolveProjectRoot(), CRITIQUE_DIR, firstExisting(), getDesignSidecarCandidates(), getDesignSidecarPath(), getImpeccableDir(), getLegacyLiveAnnotationsDir(), getLegacyLiveConfigPath() (+18 more)
+
+### Community 216 - "roots.mjs"
+Cohesion: 0.15
 Nodes (27): CANDIDATE_SCAN_IGNORED, consumeTargetArg(), CONTEXT_FALLBACK_DIRS, DESIGN_NAMES, DEV_CONFIG_MARKERS, discoverAppCandidates(), enterLiveRoot(), exists() (+19 more)
 
-### Community 210 - "critique-storage.mjs"
-Cohesion: 0.18
-Nodes (21): coerceSlug(), listSnapshotsForSlug(), main(), nowFilenameStamp(), parseFrontmatter(), readLatestSnapshot(), readTrend(), serializeFrontmatter() (+13 more)
+### Community 217 - "critique-storage.mjs"
+Cohesion: 0.35
+Nodes (10): coerceSlug(), listSnapshotsForSlug(), main(), nowFilenameStamp(), parseFrontmatter(), readLatestSnapshot(), readTrend(), serializeFrontmatter() (+2 more)
 
-### Community 215 - "collectVisualContrastCandidates"
-Cohesion: 0.16
-Nodes (16): addBrowserFindings(), addVisualContrastFindings(), addVisualContrastResult(), analyzeVisualContrast(), analyzeVisualContrastCandidate(), clearOverlays(), detachOverlay(), disconnectLazyVisualContrastObserver() (+8 more)
-
-### Community 216 - "handleManualEditActivity"
-Cohesion: 0.17
-Nodes (26): clearStoredManualApplyState(), fetchPendingCount(), handleManualEditActivity(), hidePendingApplyDock(), manualApplyLoadingText(), manualApplyStateKey(), manualEditEventForCurrentPage(), numberOrNull() (+18 more)
-
-### Community 217 - "live-manual-edit-evidence.mjs"
+### Community 218 - "live-manual-edit-evidence.mjs"
 Cohesion: 0.15
 Nodes (25): analyzeSourceHint(), buildCandidatesForOp(), buildContextHintsByRef(), collectSearchFiles(), countOps(), decodeBasicHtml(), escapeRegExp(), findContextMatches() (+17 more)
 
-### Community 218 - "Responsive Design"
+### Community 219 - "Responsive Design"
 Cohesion: 0.08
 Nodes (25): Assess Adaptation Challenge, Breakpoints: Content-Driven, Content Adaptation, Desktop Adaptation (Mobile → Desktop), Detect Input Method, Not Just Screen Size, Email Adaptation (Web → Email), Implement Adaptations, Layout Adaptation Patterns (+17 more)
 
-### Community 219 - "event-validation.mjs"
-Cohesion: 0.14
-Nodes (24): AGENT_PHASE_SET, FORBIDDEN_MANUAL_EDIT_TEXT_CHARS, INSERT_POSITIONS, isValidId(), isValidMountVariant(), isValidVariantId(), validateAnnotationFields(), validateEvent() (+16 more)
+### Community 220 - "handleManualEditActivity"
+Cohesion: 0.18
+Nodes (25): clearStoredManualApplyState(), fetchPendingCount(), handleManualEditActivity(), hidePendingApplyDock(), manualApplyLoadingText(), manualApplyStateKey(), manualEditEventForCurrentPage(), numberOrNull() (+17 more)
 
-### Community 220 - "ReaderLabSettingsSidebar.tsx"
-Cohesion: 0.09
-Nodes (28): GET(), GET(), Props, ADR-0044, bytesToMb(), RowState, ADR-0046, SearchBar() (+20 more)
+### Community 221 - "event-validation.mjs"
+Cohesion: 0.12
+Nodes (26): AGENT_PHASE_SET, FORBIDDEN_MANUAL_EDIT_TEXT_CHARS, INSERT_POSITIONS, isValidId(), isValidMountVariant(), isValidVariantId(), MOUNT_ERROR_MAX_LENGTH, MOUNT_URL_MAX_LENGTH (+18 more)
 
-### Community 221 - "checkQuality"
-Cohesion: 0.21
-Nodes (20): checkElementColors(), checkElementColorsDOM(), checkElementGlowDOM(), checkElementHoverContrast(), checkElementIconTile(), checkElementIconTileDOM(), checkIconTile(), collectVisualContrastCandidates() (+12 more)
+### Community 222 - "injected/index.mjs"
+Cohesion: 0.06
+Nodes (68): addBrowserFindings(), addVisualContrastFindings(), addVisualContrastResult(), analyzeVisualContrast(), analyzeVisualContrastCandidate(), blendRgba(), browserColorsClose(), browserDesignSystemConfig() (+60 more)
 
-### Community 222 - "live-status.mjs"
-Cohesion: 0.17
-Nodes (14): getLegacyLiveSessionsDir(), safeSessionId(), missedCompletionFromSnapshot(), applyEvent(), baseSnapshot(), COMPLETED_PHASES, deriveRenderState(), GENERATION_FENCED_PHASES (+6 more)
+### Community 227 - "checkHeadingRhythmDOM"
+Cohesion: 0.62
+Nodes (7): checkHeadingRhythmDOM(), clusterTop(), edgeAbove(), edgeBelow(), hasOwnTopBoundary(), isVisibleFlow(), overlapsX()
 
-### Community 232 - "Offline Recitation Audio Download"
+### Community 228 - "source-search.mjs"
+Cohesion: 0.38
+Nodes (6): IMPECCABLE_DIR, matchesTemplateExtension(), findSourceFile(), NEVER_SOURCE_DIRS, SOURCE_SEARCH_DIRS, walk()
+
+### Community 229 - "browser-script-parts.mjs"
+Cohesion: 0.33
+Nodes (6): assembleLiveBrowserScript(), assertLiveBrowserScriptParts(), LIVE_BROWSER_SCRIPT_PARTS, readLiveBrowserScriptParts(), resolveLiveBrowserScriptParts(), loadBrowserScripts()
+
+### Community 230 - "isScreenReaderOnlyTextStyle"
+Cohesion: 0.47
+Nodes (6): clippedByInset(), clippedByRect(), expandBoxShorthand(), firstMetricLengthPx(), isScreenReaderOnlyTextStyle(), metricLengthPx()
+
+### Community 232 - "deps.ts"
+Cohesion: 0.11
+Nodes (22): createLogEmailTransport(), createSmtpEmailTransport(), EmailMessage, EmailTransport, getEmailTransport(), hasSmtpConfig(), build(), CONSOLE_FOR_LEVEL (+14 more)
+
+### Community 233 - "Impeccable Documenter"
+Cohesion: 0.40
+Nodes (4): Impeccable Documenter, Input Contract, Output Contract, Workflow
+
+### Community 234 - "Offline Recitation Audio Download"
 Cohesion: 0.08
 Nodes (23): ADR 0046: Offline recitation audio via explicit per-surah/juz download, reusing the page cache and the wird override mechanism, Consequences, Context, Decision, Options Considered, Approach, Constraints, Decision Tree / Algorithm (+15 more)
 
-### Community 233 - "Home Page Design Fixes"
-Cohesion: 0.08
-Nodes (24): Addendum — Restructure Navigation & Direct Settings Access, Addendum — Universal nav menu; sidebar toggle moves into Nav, Constraints, Constraints, Constraints, Decision Tree / Algorithm, Decision Tree / Algorithm, Decisions Made (+16 more)
-
-### Community 234 - "insert-ui.mjs"
-Cohesion: 0.11
-Nodes (10): canCreateInsert(), clampPlaceholderSize(), computeInsertPosition(), groupSiblingRows(), hitSiblingInsertGap(), horizontalOverlap(), insertCreateDisabledReason(), insertLineCoords() (+2 more)
-
-### Community 235 - "svelte-ast.mjs"
-Cohesion: 0.22
-Nodes (20): Analysis, analyzeAttributes(), analyzeFragment(), analyzeNode(), analyzeSvelteMarkup(), applyReplacements(), classifyEachKey(), classifyRoots() (+12 more)
-
-### Community 236 - "generate-mushaf-thumbnails.js"
-Cohesion: 0.13
-Nodes (21): { chromium }, EDITIONS, fetchBasmalahGlyphs(), htmlFor(), ADR-0023, ADR-0033, main(), OUT_DIR (+13 more)
-
-### Community 237 - "live.md"
+### Community 235 - "insert-ui.mjs"
 Cohesion: 0.09
-Nodes (21): Cleanup, Exit, First-time setup, Handle `accept`, Handle `discard`, Handle fallback, Handle `manual_edit_apply`, Handle `prefetch` (+13 more)
+Nodes (13): canCreateInsert(), clampPlaceholderSize(), computeInsertPosition(), groupSiblingRows(), hitSiblingInsertGap(), horizontalOverlap(), insertCreateDisabledReason(), insertLineCoords() (+5 more)
+
+### Community 236 - "inline-ignores.mjs"
+Cohesion: 0.40
+Nodes (9): addRules(), applyInlineIgnores(), getSet(), hasDirectives(), isInlineIgnored(), normalizeRule(), parseInlineIgnores(), parseRuleList() (+1 more)
+
+### Community 237 - "generate-mushaf-thumbnails.js"
+Cohesion: 0.13
+Nodes (22): { chromium }, EDITIONS, fetchBasmalahGlyphs(), htmlFor(), ADR-0023, ADR-0033, main(), OUT_DIR (+14 more)
 
 ### Community 238 - "onboard.md"
 Cohesion: 0.09
 Nodes (22): Assess Onboarding Needs, Context Over Ceremony, Contextual Help, Design Onboarding Experiences, Documentation & Help, Empty State Design, Feature Discovery & Adoption, Guided Tours & Walkthroughs (+14 more)
 
-### Community 239 - "accept-css.mjs"
-Cohesion: 0.19
-Nodes (23): bakeParamValues(), collectAllSelectors(), collectSelectorsFromNodes(), escapeRegExp(), formatBody(), isToggleOn(), normalizeSelector(), normalizeToggleForVar() (+15 more)
+### Community 239 - "manual-edit-routes.mjs"
+Cohesion: 0.18
+Nodes (22): args, buffer, cwd, pageUrlFilter, remaining, compactManualLogText(), summarizeManualApplyFailures(), summarizeManualDiagnostics() (+14 more)
 
-### Community 240 - "runHook"
-Cohesion: 0.19
-Nodes (19): checkDesignCoverage(), checkDesignDrift(), checkDetectorIgnores(), checkHookInstallation(), checkLegacyLiveState(), checkWorkspaces(), collectHookCommands(), finding() (+11 more)
+### Community 240 - "Changes"
+Cohesion: 0.04
+Nodes (44): Buttons, Cards / Containers, Colors, Components, Design System: Furqan, Do:, Do's and Don'ts, Don't: (+36 more)
 
-### Community 241 - "manual-edit-routes.mjs"
-Cohesion: 0.19
-Nodes (19): scrubManualEditsAgainstFile(), scrubManualEditsAgainstOriginalBlock(), args, cwd, pageUrlFilter, remaining, buildManualEditEvidence(), createManualEditRoutes() (+11 more)
-
-### Community 242 - "resolveLengthPx"
-Cohesion: 0.12
-Nodes (22): checkElementHeroEyebrow(), checkElementHeroEyebrowDOM(), checkElementQualityDOM(), checkHeroEyebrow(), checkKickerAboveHeading(), checkKickerAboveHeadingDOM(), checkKickerAboveHeadingFromDoc(), checkNumberedSectionLabels() (+14 more)
-
-### Community 243 - "live-inject.mjs"
-Cohesion: 0.16
-Nodes (20): describeInjectArtifacts(), frameworkIgnorePatterns(), resolveFramework(), applyNuxtLiveAdapter(), buildNuxtPlugin(), detectNuxtProject(), nuxt, removeNuxtLiveAdapter() (+12 more)
-
-### Community 244 - "Design System: Furqan"
-Cohesion: 0.09
-Nodes (22): Buttons, Cards / Containers, Colors, Components, Design System: Furqan, Do:, Do's and Don'ts, Don't: (+14 more)
-
-### Community 245 - "Changes"
-Cohesion: 0.09
-Nodes (21): Addendum 2: Lab-Style Green CSS Ornament & Surah Font (2026-08-22), Addendum 3: Continue Reading Icon/Weight, Group Dividers, and Logo Size (2026-08-22), Addendum 4: Green 32px Logo with Navbar Background (2026-08-22), Changes, Decisions Made, Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation, Files Changed, `.fq-recitation-active-word` visibility (+13 more)
-
-### Community 246 - "The Toolkit"
+### Community 241 - "The Toolkit"
 Cohesion: 0.10
 Nodes (20): Animate complex properties, Assess What "Extraordinary" Means Here, For data-heavy interfaces, For functional UI, For performance-critical UI, For visual/marketing surfaces, Implement with Discipline, Interact with the device (+12 more)
 
-### Community 247 - "collectBrowserFindings"
-Cohesion: 0.13
-Nodes (24): browserFindingsFromMap(), checkBorders(), checkCreamPalette(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementBorders(), checkElementBordersDOM(), checkElementPseudoStripeDOM() (+16 more)
+### Community 242 - "Session Handoff — Dark Theme Mushaf Unification"
+Cohesion: 0.40
+Nodes (5): ADR 0031 gold vs emerald semantics (referenced/revised), ADR 0031 gold vs emerald semantics (referenced), ADR 0032 dark surface depth from light (referenced), Session Handoff — Dark Theme Mushaf Unification, Hard constraints — do NOT break (value-identical theme blocks, gold reader-only, etc.)
 
-### Community 248 - "onAnnotDown"
-Cohesion: 0.18
-Nodes (19): applyPlaceholderDimensions(), beginEditPin(), buildAnnotationsForCapture(), buildPinElement(), cancelEditingPin(), finalizeEditingPin(), initAnnotOverlay(), localCoords() (+11 more)
-
-### Community 249 - "5.1 — Page face and reader"
-Cohesion: 0.10
-Nodes (20): 5.1 — Page face and reader, A defect this subtask found in 4.1, (a) The stage, Addendum: Visual Feedback Round (Lighting & Mushaf Margins), Approach, (b) The page face, (c) The 768–1023 band is gone, Constraints (+12 more)
-
-### Community 250 - "Trello → GitHub Issues Migration Plan"
-Cohesion: 0.10
-Nodes (19): Board audit (2026-08-13, live pull from Trello MCP), `.claude/skills/cut-release/SKILL.md`, `.claude/skills/plan-fq-task/SKILL.md`, `.claude/skills/promote-release/SKILL.md` and `promote-to-staging/SKILL.md`, `.claude/skills/ship-fq-task/SKILL.md`, `.claude/skills/start-fq-task/SKILL.md`, Not in scope, Open questions for the user (+11 more)
-
-### Community 251 - "resolveLiveInjectionAnchor"
-Cohesion: 0.22
-Nodes (15): buildSvelteExpressionTextMap(), buildSveltePropValuesFromLiveElement(), buildSveltePropValuesV2(), cloneWithoutElements(), collectTextNodes(), collectVisibleTexts(), cssEscapeIdent(), elementMatchesOriginalMarkup() (+7 more)
-
-### Community 252 - "tanstack-adapter.mjs"
-Cohesion: 0.23
-Nodes (15): applyTanStackLiveAdapter(), buildTanStackLiveRootComponent(), detectTanStackStartProject(), escapeRegExp(), findRootRouteFile(), insertAfterLastImport(), isManagedComponent(), packageHasTanStackStart() (+7 more)
-
-### Community 253 - "Furqan Design Language"
-Cohesion: 0.11
-Nodes (19): 10. Motion, 11. Per-band behaviour, 12. Rules that did not survive derivation, 1. Character, 2. Composition, 3. Atmosphere, 4. Depth, 5. Accent grammar (+11 more)
-
-### Community 254 - "4.3 — Search and settings surfaces"
-Cohesion: 0.10
-Nodes (21): 4.3 — Search and settings surfaces, A probe lesson worth keeping, Accent-grammar corrections, Addendum 2: Senior Typography Calibration & UX Polish (Lab Scale Alignment), Addendum 3: Recitation Settings Sheet UX & Visual Unification, Addendum: Visual Feedback Round (Settings Redesign), Approach, Constraints (+13 more)
-
-### Community 255 - "quran-json/generate.js"
-Cohesion: 0.13
-Nodes (17): fs, getPageWords(), groupBy(), ADR-0028, ADR-0033, {
-  LAYOUT_MUSHAF_IDS,
-  GLYPH_FIELD_BY_MUSHAF,
-}, OUT_ROOT, path (+9 more)
-
-### Community 256 - "impeccable-paths.mjs"
-Cohesion: 0.14
-Nodes (20): firstExisting(), getDesignSidecarCandidates(), getDesignSidecarPath(), getImpeccableDir(), getLegacyLiveConfigPath(), getLegacyLiveServerPath(), getLiveConfigPath(), getLiveServerPath() (+12 more)
-
-### Community 257 - "live.mjs"
-Cohesion: 0.18
-Nodes (16): resolveProjectRoot(), resolveTargetSelection(), getLegacyLiveAnnotationsDir(), parseTargetOptions(), parseTargetPath(), TargetArgError, __dirname, ensureServerRunning() (+8 more)
-
-### Community 258 - "checkQuality"
-Cohesion: 0.15
-Nodes (17): borderColorsFromStyle(), borderWidthsFromStyle(), checkElementGptBorderShadow(), checkElementGptBorderShadowDOM(), checkGptThinBorderWideShadow(), checkQuality(), colorsNearlyMatch(), cssColorAlpha() (+9 more)
-
-### Community 259 - "session-store.mjs"
-Cohesion: 0.17
-Nodes (16): directChildDirs(), discoverRootsForPattern(), discoverTargetCandidates(), expandSimplePattern(), findTargetExample(), hasFallbackWorkspaceChildren(), hasVisualImplementation(), isIgnoredWorkspaceDiscoveryDir() (+8 more)
-
-### Community 260 - "staleness-deep.mjs"
-Cohesion: 0.29
-Nodes (14): collectManualApplyFiles(), manualApplyReplyCommand(), manualApplyResumeHint(), mountFailureAction(), parseArgs(), renderSummary(), resumeCli(), summarizeManualApplyEvent() (+6 more)
-
-### Community 261 - "sveltekit-adapter.mjs"
-Cohesion: 0.24
-Nodes (16): applySvelteKitLiveAdapter(), buildSvelteLiveRootComponent(), defaultSvelteLayout(), detectSvelteKitProject(), ensureSvelteLiveRootComponent(), escapeRegExp(), fileIncludes(), findSvelteKitAppHtml() (+8 more)
-
-### Community 262 - "edge.ts"
-Cohesion: 0.24
-Nodes (13): build(), CONSOLE_FOR_LEVEL, Level, LEVEL_VALUE, write(), wrap(), redact(), SENSITIVE_KEYS (+5 more)
-
-### Community 263 - "serve-question.mjs"
-Cohesion: 0.12
-Nodes (9): LastReadPageProvider(), esc(), localImages, page(), payloadPath, portArg, QUESTION_DIR, server (+1 more)
-
-### Community 264 - "detect-utils.mjs"
-Cohesion: 0.28
-Nodes (13): astro, detectAstroProject(), fileExists(), findConfigFile(), firstExistingFile(), hasAnyDependency(), literalConfigFiles(), readPackageDeps() (+5 more)
-
-### Community 266 - "Nocturnal Reader Lab — Desktop RTL"
+### Community 243 - "Nocturnal Reader Lab — Desktop RTL"
 Cohesion: 0.12
 Nodes (16): Confirmed Product Decisions, Constraints, Decision Tree, Decisions Made, Design Remediation, Design Revision — 2026-08-21, Files to Change, Implementation From the Ground Up (+8 more)
 
-### Community 267 - "animate.md"
+### Community 244 - "Trello → GitHub Issues Migration Plan"
+Cohesion: 0.10
+Nodes (19): Board audit (2026-08-13, live pull from Trello MCP), `.claude/skills/cut-release/SKILL.md`, `.claude/skills/plan-fq-task/SKILL.md`, `.claude/skills/promote-release/SKILL.md` and `promote-to-staging/SKILL.md`, `.claude/skills/ship-fq-task/SKILL.md`, `.claude/skills/start-fq-task/SKILL.md`, Not in scope, Open questions for the user (+11 more)
+
+### Community 245 - "20260708033111_init/migration.sql"
+Cohesion: 0.40
+Nodes (4): `marks`, `mushaf_access_grants`, `mushaf_share_codes`, `users`
+
+### Community 246 - "onAnnotDown"
+Cohesion: 0.15
+Nodes (21): applyPlaceholderDimensions(), beginEditPin(), buildAnnotationsForCapture(), buildPinElement(), cancelEditingPin(), clampPlaceholderSize(), finalizeEditingPin(), initAnnotOverlay() (+13 more)
+
+### Community 247 - "frameworks/index.mjs"
+Cohesion: 0.18
+Nodes (10): COMMENT_SYNTAXES, FRAMEWORKS, INJECT_KINDS, PREVIEW_MODES, SOURCE_TRAIT_DEFAULTS, STYLE_MODES, TAG_PATCH_KIND, nuxt (+2 more)
+
+### Community 248 - "tanstack-adapter.mjs"
+Cohesion: 0.16
+Nodes (20): tanstackStart, applyTanStackLiveAdapter(), buildTanStackLiveRootComponent(), detectTanStackStartProject(), escapeRegExp(), findRootRouteFile(), insertAfterLastImport(), isManagedComponent() (+12 more)
+
+### Community 249 - "Home Page Design Fixes"
+Cohesion: 0.08
+Nodes (24): Addendum — Restructure Navigation & Direct Settings Access, Addendum — Universal nav menu; sidebar toggle moves into Nav, Constraints, Constraints, Constraints, Decision Tree / Algorithm, Decision Tree / Algorithm, Decisions Made (+16 more)
+
+### Community 250 - "quran-json/generate.js"
+Cohesion: 0.15
+Nodes (14): fs, getPageWords(), groupBy(), ADR-0028, ADR-0033, {
+  LAYOUT_MUSHAF_IDS,
+  GLYPH_FIELD_BY_MUSHAF,
+}, OUT_ROOT, path (+6 more)
+
+### Community 251 - "live.mjs"
+Cohesion: 0.29
+Nodes (12): resolveTargetSelection(), __dirname, ensureServerRunning(), globToRegex(), globToRegex(), resolveFiles(), liveCli(), relOrNull() (+4 more)
+
+### Community 252 - ".codex/hooks/mujaz-stats.js"
+Cohesion: 0.12
+Nodes (9): path, ROOT, { FLAG_PATH }, fs, { FLAG_PATH, STATS_PATH }, fs, { FLAG_PATH }, fs (+1 more)
+
+### Community 253 - "sveltekit-adapter.mjs"
+Cohesion: 0.18
+Nodes (20): applySvelteKitLiveAdapter(), buildSvelteLiveRootComponent(), defaultSvelteLayout(), detectSvelteKitProject(), ensureSvelteLiveRootComponent(), escapeRegExp(), fileIncludes(), findSvelteKitAppHtml() (+12 more)
+
+### Community 254 - "20260803193743_add_notification_tables/migration.sql"
+Cohesion: 0.50
+Nodes (4): `notification_deliveries`, `notifications`, `push_subscriptions`, `scheduled_notifications`
+
+### Community 255 - "serve-question.mjs"
+Cohesion: 0.18
+Nodes (13): answerFile(), esc(), loadRound(), localImages, nextFile(), page(), payloadPath, portArg (+5 more)
+
+### Community 256 - "parseAnyColor"
+Cohesion: 0.10
+Nodes (27): checkCreamPalette(), checkElementQualityDOM(), checkQuality(), checkTextOcclusionDOM(), colorsNearlyMatch(), creamFromClassList(), cssColorAlpha(), cssColorIsTransparent() (+19 more)
+
+### Community 257 - "detect-utils.mjs"
+Cohesion: 0.27
+Nodes (13): astro, detectAstroProject(), fileExists(), findConfigFile(), firstExistingFile(), hasAnyDependency(), literalConfigFiles(), readPackageDeps() (+5 more)
+
+### Community 258 - "analyzeVisualContrastCandidate"
+Cohesion: 0.14
+Nodes (18): addBrowserFindings(), addVisualContrastFindings(), addVisualContrastResult(), analyzeVisualContrast(), analyzeVisualContrastCandidate(), blendRgba(), clampByte(), clearOverlays() (+10 more)
+
+### Community 259 - "animate.md"
 Cohesion: 0.12
 Nodes (14): Accessibility and control, Choose material by meaning, Find the job, Implement to the runtime, Set the motion thesis, Timing and easing, Verify, Visitor mode (+6 more)
 
-### Community 268 - "Handle `generate`"
+### Community 260 - "Handle `generate`"
 Cohesion: 0.12
 Nodes (16): 1. Read the screenshot (if present), 2. Wrap the element, 3. Load the action's reference, 4. Plan three variants: identity first, then mode, then axes, 5. Apply the freeform prompt (if present), 6. Deliver variants, 7. Parameters (composition-sized, 0-4 per variant), 8. Signal done (+8 more)
 
-### Community 269 - "context-signals.mjs"
-Cohesion: 0.50
-Nodes (7): isLiveServerPidReachable(), clearStaleLock(), readLock(), releaseOwnLock(), sleepSync(), sourceLockPath(), withSourceLockSync()
+### Community 261 - "context-signals.mjs"
+Cohesion: 0.19
+Nodes (15): escapeRegExp(), extractPlatform(), extractSectionValue(), cli(), COMMON_DEV_PORTS, devServerSignals(), gatherSignals(), gitSignals() (+7 more)
 
-### Community 270 - "Wire /impeccable into the plan/implement/review workflow"
+### Community 262 - "stop-point/route.ts"
+Cohesion: 0.15
+Nodes (14): GET(), GET(), isTextScope(), resolvePageStop(), Scope, SCOPE_FIELD, ADR-0033, GET() (+6 more)
+
+### Community 263 - "Wire /impeccable into the plan/implement/review workflow"
 Cohesion: 0.12
 Nodes (14): ADR 0041: Impeccable design commands wired into the plan/implement/review cycle, plan-driven not ad hoc, Consequences, Context, Decision, Options Considered, Approach, Constraints, Decision Tree / Algorithm (+6 more)
 
-### Community 271 - "4.1 — Marks and plans screens"
-Cohesion: 0.12
-Nodes (16): 4.1 — Marks and plans screens, Accent-grammar corrections found on these screens, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Empty and loading states, Files to Change (+8 more)
+### Community 264 - "provider.mjs"
+Cohesion: 0.50
+Nodes (3): IMPECCABLE_COMMAND, IMPECCABLE_COMMAND_PREFIX, IMPECCABLE_PROVIDER_ID
 
-### Community 272 - "4.4 — Mushaf hub and shared-grant surfaces"
-Cohesion: 0.12
-Nodes (16): 4.4 — Mushaf hub and shared-grant surfaces, A new token family: `--warning`, Accent-grammar corrections, Approach, Borrowed context is the grammar's clearest case, Constraints, Constraints honoured, Decision Tree / Algorithm (+8 more)
+### Community 265 - "resolveLiveInjectionAnchor"
+Cohesion: 0.16
+Nodes (19): buildSvelteExpressionTextMap(), buildSveltePropValuesFromLiveElement(), buildSveltePropValuesV2(), cloneWithoutElements(), collectTextNodes(), collectVisibleTexts(), cssEscapeIdent(), elementMatchesOriginalMarkup() (+11 more)
 
-### Community 273 - "Session handoff — design migration (#360)"
-Cohesion: 0.12
-Nodes (15): 1. Where things stand, 2. Commit convention for feedback fixes, 3. Read these first, in this order, 4. What is left before merge, 5. What was never verified, 6. One flagged deviation, 7. Hard-won facts — these cost real time to find, 8. Standing constraints (+7 more)
-
-### Community 274 - "Generate Report"
+### Community 266 - "Generate Report"
 Cohesion: 0.13
 Nodes (14): 1. Accessibility (A11y), 2. Performance, 3. Theming, 4. Responsive Design, 5. Implementation Integrity (CRITICAL), Audit Health Score, Detailed Findings by Severity, Diagnostic Scan (+6 more)
 
-### Community 275 - "tag-strategy.mjs"
-Cohesion: 0.21
-Nodes (16): buildLiveScriptSrc(), appendOriginToDirective(), buildTagBlock(), commentClose(), commentOpen(), detectLineEnding(), findCspMetaTags(), getAttr() (+8 more)
-
-### Community 276 - "2.1 — Semantic tokens"
+### Community 267 - "parseRgb"
 Cohesion: 0.13
-Nodes (15): 2.1 — Semantic tokens, Approach, Constraints, Contrast, before → after, Decision Tree / Algorithm, Decisions Made, Decisions Made — the two deferred questions, Files to Change (+7 more)
+Nodes (32): checkColors(), checkElementAIPaletteDOM(), checkElementColors(), checkElementColorsDOM(), checkElementGlow(), checkElementGlowDOM(), checkElementHoverContrast(), checkElementIconTile() (+24 more)
 
-### Community 277 - "4.2 — Home screen"
-Cohesion: 0.13
-Nodes (15): 4.2 — Home screen, Accent-grammar corrections, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Implementation notes (2026-08-22) (+7 more)
-
-### Community 278 - "seed.js"
-Cohesion: 0.15
-Nodes (13): axios, fetchChapters(), fetchChaptersOnce(), ADR-0009, cliProgress, {
-  deriveRubs,
-  deriveRubVerseMappings,
-  derivePageMetadata,
-}, { execSync }, { fetchChapters } (+5 more)
-
-### Community 279 - "Impeccable Asset Producer"
-Cohesion: 0.14
-Nodes (12): Core Rule, Decision Sketches, Impeccable Asset Producer, Input Contract, Output Contract, Prompt Pattern, Workflow, Generate three compositional options (+4 more)
-
-### Community 280 - "optimize.md"
-Cohesion: 0.14
-Nodes (13): Animation Performance, Assess Performance Issues, Core Web Vitals Optimization, Cumulative Layout Shift (CLS < 0.1), Interaction to Next Paint (INP < 200ms), Largest Contentful Paint (LCP < 2.5s), Loading Performance, Network Optimization (+5 more)
-
-### Community 281 - "sampleCssBackground"
-Cohesion: 0.22
-Nodes (14): firstCssUrl(), getLayerValue(), loadVisualContrastImage(), parseObjectPosition(), parsePositionPair(), parsePositionToken(), pickWorstContrastColor(), pointToImageSource() (+6 more)
-
-### Community 282 - "SAFE_TAGS"
-Cohesion: 0.21
-Nodes (12): findMonorepoRoot(), firstExisting(), hasGitBoundary(), isCandidateProjectRoot(), isPathInside(), nearestTargetContextRoot(), resolveContext(), resolveContextDir() (+4 more)
-
-### Community 283 - "sampleCssBackground"
-Cohesion: 0.20
-Nodes (15): blendRgba(), clampByte(), firstCssUrl(), getLayerValue(), loadVisualContrastImage(), parseObjectPosition(), parsePositionPair(), parsePositionToken() (+7 more)
-
-### Community 284 - "template-extensions.mjs"
-Cohesion: 0.36
-Nodes (6): extensionCache, LIVE_TEMPLATE_EXTENSIONS, mergeExtensions(), normalizeExtensionEntries(), readLiveTemplateExtensions(), safeReadJson()
-
-### Community 285 - "3.2 — Shared chrome"
-Cohesion: 0.14
-Nodes (14): 3.2 — Shared chrome, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Implementation notes (2026-08-22), Measured (rendered pixels, `/en/pages/2`, 1440×900) (+6 more)
-
-### Community 286 - "Scan mode (approach C: auto-extract, then confirm descriptive language)"
-Cohesion: 0.15
-Nodes (13): Component translation rules, Narrative mapping, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Step 1: Find the design assets, Step 2: Auto-extract what can be auto-extracted, Step 2b: Stage the frontmatter, Step 3: Ask the user for qualitative language (+5 more)
-
-### Community 287 - "constants.mjs"
-Cohesion: 0.17
-Nodes (11): checkElementItalicSerif(), checkElementItalicSerifDOM(), checkItalicSerif(), checkTypography(), resolveSerif(), BRAND_FONT_DOMAINS, GITHUB_DOMAINS, GOOGLE_DOMAINS (+3 more)
-
-### Community 288 - "frameworks/index.mjs"
-Cohesion: 0.18
-Nodes (10): COMMENT_SYNTAXES, FRAMEWORKS, INJECT_KINDS, PATCH_UNDOERS, PREVIEW_MODES, SOURCE_TRAIT_DEFAULTS, STYLE_MODES, staticHtml (+2 more)
-
-### Community 289 - "pin.mjs"
-Cohesion: 0.23
-Nodes (11): CODEX_HARNESSES, commandPrefixForSkillsDir(), __dirname, findHarnessDirs(), generatePinnedSkill(), HARNESS_DIRS, loadCommandMetadata(), pin() (+3 more)
-
-### Community 290 - "Design Migration — reader-lab language, app-wide"
-Cohesion: 0.15
-Nodes (13): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Design Migration — reader-lab language, app-wide, Files to Change, Phase 0 outcome, Phases (+5 more)
-
-### Community 291 - "Simplify the Design"
-Cohesion: 0.17
-Nodes (11): Assess Current State, Code Simplification, Content Simplification, Document Removed Complexity, Information Architecture, Interaction Simplification, Layout Simplification, Plan Simplification (+3 more)
-
-### Community 292 - "Hardening Dimensions"
-Cohesion: 0.17
-Nodes (11): Accessibility Resilience, Assess Hardening Needs, Edge Cases & Boundary Conditions, Error Handling, Hardening Dimensions, Input Validation & Sanitization, Internationalization (i18n), Performance Resilience (+3 more)
-
-### Community 293 - "scheduleLazyVisualContrast"
-Cohesion: 0.20
-Nodes (12): addBrowserFindings(), addVisualContrastFindings(), addVisualContrastResult(), clearOverlays(), detachOverlay(), disconnectLazyVisualContrastObserver(), postExtensionError(), rememberVisualContrastAnalysis() (+4 more)
-
-### Community 295 - "ui-core.mjs"
-Cohesion: 0.23
-Nodes (10): createLiveBrowserDomHelpers(), activeElementDeep(), appendStyleToLiveUiRoot(), appendToLiveUiRoot(), escapeCssIdent(), getLiveUiElementById(), LIVE_CHROME_MOUNT_CONTRACT, LIVE_UI_COMPONENT_IDS (+2 more)
-
-### Community 296 - "journal.mjs"
-Cohesion: 0.36
-Nodes (11): clearInjectJournal(), healArtifact(), healInjectJournal(), injectJournalPath(), insideProject(), normalizeRel(), pruneEmptyDirs(), readIfPresent() (+3 more)
-
-### Community 297 - "generation-preflight.mjs"
-Cohesion: 0.35
-Nodes (9): buildGenerationPreflight(), compactError(), execFileAsync, insertTarget(), normalizeTarget(), replaceTarget(), runGenerationPreflight(), sourceResolutionCache (+1 more)
-
-### Community 298 - "Product"
-Cohesion: 0.17
-Nodes (11): Accessibility & Inclusion, Brand Commitments, Capabilities and Constraints, Evidence on Hand, Operating Context, Platform, Positioning, Product (+3 more)
-
-### Community 299 - "clarify.md"
-Cohesion: 0.18
-Nodes (10): Actions and navigation, Audit the language, Errors and permissions, Forms, Help and instructional text, Loading, empty, and success states, Rewrite by function, Set the message hierarchy (+2 more)
-
-### Community 300 - "critique.md"
-Cohesion: 0.18
-Nodes (10): Action Summary, Ask the User, Assessment A: Design Review, Assessment B: Detector + Browser Evidence, Assessment Orchestration, Hard Invariants, Persist the Snapshot, Purpose (+2 more)
-
-### Community 301 - "Nielsen's 10 Heuristics"
-Cohesion: 0.18
-Nodes (11): 10. Help and Documentation, 1. Visibility of System Status, 2. Match Between System and Real World, 3. User Control and Freedom, 4. Consistency and Standards, 5. Error Prevention, 6. Recognition Rather Than Recall, 7. Flexibility and Efficiency of Use (+3 more)
-
-### Community 302 - "New visual work"
-Cohesion: 0.18
-Nodes (11): 1. Decide what is already true, 2. Ask what will change the work, 3. Choose the right amount of invention, 4. Commit the world, 5. Record the decision, 6. Build with full commitment, 7. Inspect and finish, Create a whole surface inside an established world (+3 more)
-
-### Community 303 - "polish.md"
-Cohesion: 0.18
-Nodes (10): 1. Establish the system, 2. Gather the evidence, 3. Triage, 4. Polish the whole path, 5. Verify and finish, Color, imagery, and icons, Content and code, Flow and hierarchy (+2 more)
-
-### Community 304 - "quieter.md"
-Cohesion: 0.18
-Nodes (10): Assess Current State, Color Refinement, Composition Refinement, Motion Reduction, Plan Refinement, Refine the Design, Simplification, Verify Quality (+2 more)
-
-### Community 305 - "checkTextOcclusionDOM"
-Cohesion: 0.22
-Nodes (11): checkTextOcclusionDOM(), clippedByInset(), clippedByRect(), elementDirectText(), expandBoxShorthand(), firstMetricLengthPx(), isLayeredElement(), isOpaqueDecoratedBox() (+3 more)
-
-### Community 306 - "collectNumberedSectionLabelCandidates"
-Cohesion: 0.31
-Nodes (8): buildVerseSnippet(), GET(), getSortKey(), MarkListItem, MarksPage, ADR-0025, VALID_CATEGORIES, EMPTY_PAGE
-
-### Community 307 - "renderGroupedTemplate"
-Cohesion: 0.25
-Nodes (11): clampGroupedToBudget(), clampToBudget(), directiveFooter(), formatFindingIgnoreCommand(), formatFindingLine(), quoteCommandArg(), relativize(), renderCleanAck() (+3 more)
-
-### Community 308 - "palette.mjs"
-Cohesion: 0.24
-Nodes (7): args, buildWeights(), hashUnit(), pickSeed(), seed, SEEDS, weightedPick()
-
-### Community 309 - "0042-pwa-launch-resolves-before-first-paint.md"
-Cohesion: 0.22
-Nodes (5): ADR 0044: Viewport Units Are Unreliable Across the Installed PWA's Fullscreen Transition, Consequences, Context, Decision, Options Considered
-
-### Community 310 - "Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)"
-Cohesion: 0.18
-Nodes (10): Approach, Constraints, Decision Tree — asset placement, Decisions Made, Files to Change, Open Item Before Implementation, Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav), Summary (+2 more)
-
-### Community 311 - "Plan: Set `font-tajawal` globally on app root & Tailwind `sans`"
-Cohesion: 0.18
-Nodes (10): Automated Tests, Configuration & Root Layout, Goal Description, Manual Verification, [MODIFY] [layout.tsx](file:///home/tahamohamed/Desktop/cs/non-work/projects/furqan/app/layout.tsx), [MODIFY] [tailwind.config.ts](file:///home/tahamohamed/Desktop/cs/non-work/projects/furqan/tailwind.config.ts), Plan: Set `font-tajawal` globally on app root & Tailwind `sans`, Proposed Changes (+2 more)
-
-### Community 312 - "Safha Ribbon Indicator"
-Cohesion: 0.18
-Nodes (10): Approach, Constraints, Decision Tree, Decisions Made, Files to Change, Safha Ribbon Indicator, Summary, Verified Test Cases (+2 more)
-
-### Community 313 - "api/marks/route.ts"
-Cohesion: 0.32
-Nodes (8): browserDesignSystemConfig(), browserFindingsFromMap(), browserPrimaryFont(), checkBrowserDesignSystemSources(), collectBrowserFindings(), collectBrowserFindingsAsync(), decodeBrowserGoogleFamily(), normalizeBrowserFontName()
-
-### Community 314 - "Generate Combined Critique Report"
-Cohesion: 0.20
-Nodes (10): Design Health Score, Design Specificity Verdict, Generate Combined Critique Report, Minor Observations, Overall Impression, Persona Red Flags, Priority Issues, Questions to Consider (+2 more)
-
-### Community 315 - "Init flow"
-Cohesion: 0.20
-Nodes (10): Completion gate, Init flow, Step 1: Load current state, Step 2: Explore the project, Step 3: Interview for product truth, Step 4: Write PRODUCT.md, Step 5: Configure live mode when useful, Step 6: Wrap up or resume (+2 more)
-
-### Community 316 - "collectVisualContrastCandidates"
-Cohesion: 0.24
-Nodes (10): analyzeVisualContrast(), analyzeVisualContrastCandidate(), blendRgba(), clampByte(), collectVisualContrastCandidates(), collectVisualContrastReasons(), getDirectText(), getDirectTextRect() (+2 more)
-
-### Community 317 - "applyDeferredSvelteComponentAccepts"
-Cohesion: 0.38
-Nodes (9): appendStalenessDirective(), buildStalenessDirective(), cachePath(), filterFreshFindings(), pruneCache(), readCache(), readJson(), stalenessCheckDisabled() (+1 more)
-
-### Community 318 - "Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available"
-Cohesion: 0.20
-Nodes (10): Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available, Constraints, Decision Tree, Decisions Made (new), Files to Change, Investigation, Root cause, Verified Test Cases (new) (+2 more)
-
-### Community 319 - "Nav: Dedupe NavPillLink classNames into Shared Component"
-Cohesion: 0.20
-Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Nav: Dedupe NavPillLink classNames into Shared Component, Root Cause / Approach, Summary, Verified Test Cases (+1 more)
-
-### Community 320 - "0.1 — Light and gold variants in the lab"
-Cohesion: 0.20
-Nodes (10): 0.1 — Light and gold variants in the lab, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Findings, Summary (+2 more)
-
-### Community 321 - "0.2 — The mushaf page face in the lab"
-Cohesion: 0.20
-Nodes (10): 0.2 — The mushaf page face in the lab, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Findings, Summary (+2 more)
-
-### Community 322 - "0.3 — Small-screen composition in the lab"
-Cohesion: 0.20
-Nodes (10): 0.3 — Small-screen composition in the lab, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Findings, Summary (+2 more)
-
-### Community 323 - "1.1 — Rewrite the canon"
-Cohesion: 0.20
-Nodes (10): 1.1 — Rewrite the canon, Addendum — the regeneration step could not run as written (2026-08-21), Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Summary (+2 more)
-
-### Community 324 - "3.1 — UI primitives"
-Cohesion: 0.20
-Nodes (10): 3.1 — UI primitives, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Findings, Summary (+2 more)
-
-### Community 325 - "Fix Tajweed Mushaf Swipe Flicker"
-Cohesion: 0.20
-Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Fix Tajweed Mushaf Swipe Flicker, Root Cause, Summary, Verified Test Cases (+1 more)
-
-### Community 326 - "Unify Tajweed toggle + offline downloads into one Mushaf Layout setting"
-Cohesion: 0.20
-Nodes (9): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Summary, Unify Tajweed toggle + offline downloads into one Mushaf Layout setting, Verified Test Cases (+1 more)
-
-### Community 327 - "Addendum — 2026-08-14: cold launch flashes the home page before redirecting"
-Cohesion: 0.20
-Nodes (10): Addendum — 2026-08-14: cold launch flashes the home page before redirecting, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Root Cause, Summary (+2 more)
-
-### Community 328 - "Restructure Navigation for Clean UX"
-Cohesion: 0.20
-Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Restructure Navigation for Clean UX, Root Cause / Approach, Summary, Verified Test Cases (+1 more)
-
-### Community 329 - "Unify Accents: Replace Gold Accents and Ornaments with Emerald Green"
-Cohesion: 0.20
-Nodes (9): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Summary, Unify Accents: Replace Gold Accents and Ornaments with Emerald Green, Verified Test Cases (+1 more)
-
-### Community 330 - "Common Cognitive Load Violations"
-Cohesion: 0.22
-Nodes (9): 1. The Wall of Options, 2. The Memory Bridge, 3. The Hidden Navigation, 4. The Jargon Barrier, 5. The Visual Noise Floor, 6. The Inconsistent Pattern, 7. The Multi-Task Demand, 8. The Context Switch (+1 more)
-
-### Community 331 - "Operate mode depth (and Read notes)"
-Cohesion: 0.22
-Nodes (9): Color, Components, Layout, Motion, Operate mode depth (and Read notes), Product constraints, Product permissions, The product slop test (+1 more)
-
-### Community 332 - "Shape"
-Cohesion: 0.22
-Nodes (8): Cadence, Confirm and stop, Phase 1: Discovery interview, Phase 2: Resolve the design direction, Phase 3: Write the brief, Round 1: purpose, people, and outcome, Round 2: material, behavior, and boundaries, Shape
-
-### Community 333 - "ADR 0047: Adopt the reader-lab design language app-wide, canon first"
-Cohesion: 0.22
-Nodes (9): Addendum — Phase 0.1 findings (2026-08-21), Addendum — Phase 0.2 findings (2026-08-21), Addendum — Phase 0.3 findings (2026-08-21), Addendum — Phases 3–5 (production), 2026-08-22, ADR 0047: Adopt the reader-lab design language app-wide, canon first, Consequences, Context, Decision (+1 more)
-
-### Community 334 - "slice.py"
-Cohesion: 0.28
-Nodes (6): translate a path's numbers (pdftocairo emits absolute M/C/L only)., groups: list of (paths, punch_paths) rendered in order., all paths intersecting the rect, translated; viewBox does the clipping., shift(), svg(), tile()
-
-### Community 335 - "Close Overlays on Back-Swipe (Mobile/Tablet PWA)"
-Cohesion: 0.22
-Nodes (9): Close Overlays on Back-Swipe (Mobile/Tablet PWA), Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Root Cause, Summary, Verified Test Cases (+1 more)
-
-### Community 336 - "0.4 — Write the design-language spec"
-Cohesion: 0.22
-Nodes (9): 0.4 — Write the design-language spec, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Summary, Verified Test Cases (+1 more)
-
-### Community 337 - "Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA)"
-Cohesion: 0.22
-Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA), Root Cause, Summary, Verified Test Cases (+1 more)
-
-### Community 338 - "Fix Sidebar Bottom Clip"
-Cohesion: 0.22
-Nodes (8): Constraints, Decisions Made, Files to Change, Fix, Fix Sidebar Bottom Clip, Root Cause, Summary, What NOT to Do
-
-### Community 339 - "Addendum — 2026-08-14: swipe after a language switch reverts to Arabic page 1"
-Cohesion: 0.22
-Nodes (9): Addendum — 2026-08-14: swipe after a language switch reverts to Arabic page 1, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Root Cause, Summary, Verified Test Cases (+1 more)
-
-### Community 340 - "Restore Continue Reading nav icon on installed PWA"
-Cohesion: 0.22
-Nodes (9): ADR Amendment, Approach, Constraints, Decisions Made, Files to Change, Restore Continue Reading nav icon on installed PWA, Root Cause, Summary (+1 more)
-
-### Community 341 - "colorize.md"
-Cohesion: 0.31
-Nodes (10): isExcludedByWorkspacePattern(), isSelectableCandidate(), MONOREPO_FALLBACK_PROJECT_DIRS, nearestProjectLikeRoot(), normalizeWorkspacePattern(), projectRootFromDoubleStarPattern(), projectRootFromWorkspacePattern(), resolveWorkspaceProjectRoot() (+2 more)
-
-### Community 342 - "Persona-Based Design Testing"
-Cohesion: 0.25
-Nodes (8): 1. Impatient Power User: "Alex", 2. Confused First-Timer: "Jordan", 3. Accessibility-Dependent User: "Sam", 4. Deliberate Stress Tester: "Riley", 5. Distracted Mobile User: "Casey", Persona-Based Design Testing, Project-Specific Personas, Selecting Personas
-
-### Community 343 - "Extract Flow"
-Cohesion: 0.25
-Nodes (7): Extract Flow, Step 1: Discover the Design System, Step 2: Identify Patterns, Step 3: Plan Extraction, Step 4: Extract & Enrich, Step 5: Migrate, Step 6: Document
-
-### Community 344 - "live-setup.md"
-Cohesion: 0.11
-Nodes (25): checkColors(), checkElementAIPaletteDOM(), checkElementMotion(), checkElementMotionDOM(), checkElementRadialSpotlight(), checkElementRadialSpotlightDOM(), checkHoverContrast(), checkLayout() (+17 more)
-
-### Community 345 - "css"
-Cohesion: 0.25
-Nodes (9): buildSelectorSegment(), generateSelector(), isLikelyHashedClass(), tailwind, baseColor, config, css, cssVariables (+1 more)
-
-### Community 346 - "checkRadialSpotlight"
-Cohesion: 0.40
-Nodes (9): addRules(), applyInlineIgnores(), getSet(), hasDirectives(), isInlineIgnored(), normalizeRule(), parseInlineIgnores(), parseRuleList() (+1 more)
-
-### Community 347 - "scaffoldSvelteComponentSession"
-Cohesion: 0.32
-Nodes (4): Props, QuranPage, VerticalQuranPages(), ADR-0035
-
-### Community 348 - "Addendum — surah Sidebar was missed by the notifyNavigating fix (2026-08-16)"
-Cohesion: 0.25
-Nodes (8): Addendum — surah Sidebar was missed by the notifyNavigating fix (2026-08-16), Approach, Bug, Constraints, Decisions Made, Files to Change, Root cause, What NOT to Do
-
-### Community 349 - "Android platform"
-Cohesion: 0.25
-Nodes (7): Apply at system scale, Audit before choosing, Choose a strategy, Contrast and perception, Live-mode signature params, Verify, Visitor mode
-
-### Community 350 - "Generate Report"
-Cohesion: 0.29
-Nodes (7): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings
-
-### Community 351 - "Cognitive Load Assessment"
-Cohesion: 0.29
-Nodes (7): Cognitive Load Assessment, Cognitive Load Checklist, Extraneous Load: Bad Design, Germane Load: Learning Effort, Intrinsic Load: The Task Itself, The Working Memory Rule, Three Types of Cognitive Load
-
-### Community 352 - "Impeccable Finish Reviewer"
-Cohesion: 0.29
-Nodes (6): Checks, in order, Disposition, Impeccable Finish Reviewer, Input Contract, Output Contract, Verdict Pass
-
-### Community 353 - "Impeccable Manual Edit Applier"
-Cohesion: 0.29
-Nodes (6): Checks, Entry Atomicity, Impeccable Manual Edit Applier, Input Contract, Output Contract, Workflow
-
-### Community 354 - "ADR 0043: Overlays close on back-gesture via a shared history guard, coordinated with AndroidBackExitGuard"
-Cohesion: 0.29
-Nodes (7): Addendum — 2026-08-15: "is my entry still on top" must be deferred and identity-checked, Addendum — 2026-08-16: microtask defer is not enough for a Link's own navigation, ADR 0043: Overlays close on back-gesture via a shared history guard, coordinated with AndroidBackExitGuard, Consequences, Context, Decision, Options Considered
-
-### Community 355 - "verses-words.js"
-Cohesion: 0.38
-Nodes (6): axios, correctAudioUrl(), fetchPage(), fetchVersesAndWords(), ADR-0009, PARAMS
-
-### Community 356 - "Diagnostic Scan"
-Cohesion: 0.40
-Nodes (5): cloneDefaultConfig(), detectorSection(), hookSection(), readConfig(), safeReadJson()
-
-### Community 357 - "/impeccable hooks"
-Cohesion: 0.33
-Nodes (6): Constraints, Failure modes, Flow, /impeccable hooks, Intentional findings, Routing
-
-### Community 358 - "normalizeGitHubEvent"
-Cohesion: 0.47
-Nodes (6): applyPatchText(), envProjectDir(), looksLikeApplyPatch(), normalizeGitHubEvent(), normalizeHookEvent(), parseGitHubToolArgs()
-
-### Community 359 - "/visualize-fq-design"
-Cohesion: 0.33
-Nodes (5): Execution, Next Steps, Screenshot source, Setup, /visualize-fq-design
-
-### Community 360 - "ADR 0040: Double-push history guard for Android PWA back-to-exit"
-Cohesion: 0.33
-Nodes (6): Addendum — 2026-08-14: the pushed state object must be freshly allocated, ADR 0040: Double-push history guard for Android PWA back-to-exit, Consequences, Context, Decision, Options Considered
-
-### Community 361 - "0042 — PWA Cold Launch Resolves Before First Paint"
-Cohesion: 0.33
-Nodes (6): 0042 — PWA Cold Launch Resolves Before First Paint, Addendum — 2026-08-18: un-hide ContinueReadingLink on standalone mobile/tablet, Alternatives Considered, Consequences, Context, Decision
-
-### Community 362 - "PWA Testing (Browser Pane, No Device)"
-Cohesion: 0.33
-Nodes (5): PWA Testing (Browser Pane, No Device), Simulating a back-gesture / back button, Spoofing Android, Spoofing standalone/fullscreen mode, What this can't cover
-
-### Community 363 - "Impeccable Documenter"
-Cohesion: 0.40
-Nodes (4): Impeccable Documenter, Input Contract, Output Contract, Workflow
-
-### Community 364 - "hook.mjs"
-Cohesion: 0.83
-Nodes (3): isStopEvent(), main(), readStdin()
-
-### Community 365 - "ADR 0043: Breakpoint-Dependent Positioning Must Be CSS-Gated, Not JS-Hook-Gated"
-Cohesion: 0.40
-Nodes (5): ADR 0043: Breakpoint-Dependent Positioning Must Be CSS-Gated, Not JS-Hook-Gated, Consequences, Context, Decision, Options Considered
-
-### Community 366 - "ADR 0045: Use the Navigation API to intercept the overlay-close back-gesture, with a popstate fallback"
-Cohesion: 0.40
-Nodes (5): ADR 0045: Use the Navigation API to intercept the overlay-close back-gesture, with a popstate fallback, Consequences, Context, Decision, Options Considered
-
-### Community 367 - "Heuristics Scoring Guide"
-Cohesion: 0.50
-Nodes (4): Heuristics Scoring Guide, Issue Severity (P0–P3), Reference Material, Score Summary
-
-### Community 368 - "detect.mjs"
-Cohesion: 0.50
-Nodes (3): candidates, detectorPath, __dirname
-
-### Community 373 - "axios"
-Cohesion: 0.25
-Nodes (7): append-arrays, append-string, Config drift, Consent prompt (use this phrasing), CSP detection (first-time only), Troubleshooting, Write the config
-
-### Community 376 - "Android platform"
+### Community 268 - "Android platform"
 Cohesion: 0.29
 Nodes (7): Android platform, Color & theming, Components & motion, Layout & structure, The Android slop test, Touch targets, Typography
 
-### Community 377 - "Diagnostic Scan"
-Cohesion: 0.33
-Nodes (6): 1. Accessibility (VoiceOver / TalkBack), 2. Performance, 3. Appearance & Theming, 4. Platform Conformance (CRITICAL), 5. Adaptivity, Diagnostic Scan
+### Community 269 - "live-inject.mjs"
+Cohesion: 0.16
+Nodes (19): describeInjectArtifacts(), frameworkIgnorePatterns(), resolveFramework(), applyNuxtLiveAdapter(), buildNuxtPlugin(), detectNuxtProject(), NUXT_PLUGIN_MARKER, NUXT_PLUGIN_NAME (+11 more)
 
-### Community 378 - "Merge three mobile safha ADRs into rewritten ADR 0011"
+### Community 270 - "tag-strategy.mjs"
+Cohesion: 0.20
+Nodes (17): appendOriginToDirective(), buildTagBlock(), commentClose(), commentOpen(), detectLineEnding(), findCspMetaTags(), getAttr(), insertTag() (+9 more)
+
+### Community 271 - "seed.js"
+Cohesion: 0.15
+Nodes (21): main(), byId(), derivePageMetadata(), deriveRubs(), deriveRubVerseMappings(), HIZB_POSITION_MAP, ADR-0009, ADR-0033 (+13 more)
+
+### Community 272 - "sentry/route.ts"
+Cohesion: 0.32
+Nodes (7): buildSlackMessage(), isValidSignature(), LEVEL_EMOJI, POST(), SentryAlertPayload, ADR-0019, ADR-0018
+
+### Community 273 - "Impeccable Asset Producer"
+Cohesion: 0.14
+Nodes (12): Core Rule, Decision Sketches, Impeccable Asset Producer, Input Contract, Output Contract, Prompt Pattern, Workflow, Generate three compositional options (+4 more)
+
+### Community 274 - "optimize.md"
+Cohesion: 0.14
+Nodes (13): Animation Performance, Assess Performance Issues, Core Web Vitals Optimization, Cumulative Layout Shift (CLS < 0.1), Interaction to Next Paint (INP < 200ms), Largest Contentful Paint (LCP < 2.5s), Loading Performance, Network Optimization (+5 more)
+
+### Community 276 - "Fix reader desktop scrollbar bug"
+Cohesion: 0.20
+Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Fix reader desktop scrollbar bug, Root Cause, Summary, Verified Test Cases (+1 more)
+
+### Community 277 - "Scan mode (approach C: auto-extract, then confirm descriptive language)"
+Cohesion: 0.15
+Nodes (13): Component translation rules, Narrative mapping, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Step 1: Find the design assets, Step 2: Auto-extract what can be auto-extracted, Step 2b: Stage the frontmatter, Step 3: Ask the user for qualitative language (+5 more)
+
+### Community 278 - "sampleCssBackground"
+Cohesion: 0.22
+Nodes (14): firstCssUrl(), getLayerValue(), loadVisualContrastImage(), parseObjectPosition(), parsePositionPair(), parsePositionToken(), pickWorstContrastColor(), pointToImageSource() (+6 more)
+
+### Community 279 - "pin.mjs"
+Cohesion: 0.22
+Nodes (11): CODEX_HARNESSES, commandPrefixForSkillsDir(), __dirname, findHarnessDirs(), generatePinnedSkill(), HARNESS_DIRS, loadCommandMetadata(), pin() (+3 more)
+
+### Community 280 - "Simplify the Design"
+Cohesion: 0.17
+Nodes (11): Assess Current State, Code Simplification, Content Simplification, Document Removed Complexity, Information Architecture, Interaction Simplification, Layout Simplification, Plan Simplification (+3 more)
+
+### Community 281 - "Hardening Dimensions"
+Cohesion: 0.17
+Nodes (11): Accessibility Resilience, Assess Hardening Needs, Edge Cases & Boundary Conditions, Error Handling, Hardening Dimensions, Input Validation & Sanitization, Internationalization (i18n), Performance Resilience (+3 more)
+
+### Community 282 - "surface-briefs.mjs"
+Cohesion: 0.31
+Nodes (12): getSurfaceBriefDir(), listSurfaceBriefs(), normalizeSurfaceTarget(), parseSurfaceBrief(), resolveSurfaceBrief(), SURFACE_BRIEF_VERSION, surfaceBriefPathForTarget(), writeSurfaceBrief() (+4 more)
+
+### Community 284 - "ui-core.mjs"
+Cohesion: 0.29
+Nodes (8): appendStyleToLiveUiRoot(), appendToLiveUiRoot(), escapeCssIdent(), getLiveUiElementById(), LIVE_CHROME_MOUNT_CONTRACT, LIVE_UI_COMPONENT_IDS, LIVE_UI_SURFACES, resolveLiveUiRoot()
+
+### Community 285 - "journal.mjs"
+Cohesion: 0.26
+Nodes (14): PATCH_UNDOERS, clearInjectJournal(), healArtifact(), healInjectJournal(), INJECT_JOURNAL_RELPATH, INJECT_JOURNAL_VERSION, injectJournalPath(), insideProject() (+6 more)
+
+### Community 286 - "generation-preflight.mjs"
+Cohesion: 0.30
+Nodes (10): buildGenerationPreflight(), compactError(), execFileAsync, insertTarget(), normalizeTarget(), replaceTarget(), runGenerationPreflight(), sourceResolutionCache (+2 more)
+
+### Community 287 - "Product"
+Cohesion: 0.17
+Nodes (11): Accessibility & Inclusion, Brand Commitments, Capabilities and Constraints, Evidence on Hand, Operating Context, Platform, Positioning, Product (+3 more)
+
+### Community 288 - "clarify.md"
+Cohesion: 0.18
+Nodes (10): Actions and navigation, Audit the language, Errors and permissions, Forms, Help and instructional text, Loading, empty, and success states, Rewrite by function, Set the message hierarchy (+2 more)
+
+### Community 289 - "critique.md"
+Cohesion: 0.18
+Nodes (10): Action Summary, Ask the User, Assessment A: Design Review, Assessment B: Detector + Browser Evidence, Assessment Orchestration, Hard Invariants, Persist the Snapshot, Purpose (+2 more)
+
+### Community 290 - "Nielsen's 10 Heuristics"
+Cohesion: 0.18
+Nodes (11): 10. Help and Documentation, 1. Visibility of System Status, 2. Match Between System and Real World, 3. User Control and Freedom, 4. Consistency and Standards, 5. Error Prevention, 6. Recognition Rather Than Recall, 7. Flexibility and Efficiency of Use (+3 more)
+
+### Community 291 - "New visual work"
+Cohesion: 0.18
+Nodes (11): 1. Decide what is already true, 2. Ask what will change the work, 3. Choose the right amount of invention, 4. Commit the world, 5. Record the decision, 6. Build with full commitment, 7. Inspect and finish, Create a whole surface inside an established world (+3 more)
+
+### Community 292 - "polish.md"
+Cohesion: 0.18
+Nodes (10): 1. Establish the system, 2. Gather the evidence, 3. Triage, 4. Polish the whole path, 5. Verify and finish, Color, imagery, and icons, Content and code, Flow and hierarchy (+2 more)
+
+### Community 293 - "quieter.md"
+Cohesion: 0.18
+Nodes (10): Assess Current State, Color Refinement, Composition Refinement, Motion Reduction, Plan Refinement, Refine the Design, Simplification, Verify Quality (+2 more)
+
+### Community 294 - "Restructure Navigation for Clean UX"
+Cohesion: 0.20
+Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Restructure Navigation for Clean UX, Root Cause / Approach, Summary, Verified Test Cases (+1 more)
+
+### Community 295 - "palette.mjs"
+Cohesion: 0.24
+Nodes (7): args, buildWeights(), hashUnit(), pickSeed(), seed, SEEDS, weightedPick()
+
+### Community 296 - "0042-pwa-launch-resolves-before-first-paint.md"
+Cohesion: 0.22
+Nodes (5): ADR 0044: Viewport Units Are Unreliable Across the Installed PWA's Fullscreen Transition, Consequences, Context, Decision, Options Considered
+
+### Community 297 - "Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)"
+Cohesion: 0.18
+Nodes (10): Approach, Constraints, Decision Tree — asset placement, Decisions Made, Files to Change, Open Item Before Implementation, Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav), Summary (+2 more)
+
+### Community 298 - "Safha Ribbon Indicator"
+Cohesion: 0.18
+Nodes (10): Approach, Constraints, Decision Tree, Decisions Made, Files to Change, Safha Ribbon Indicator, Summary, Verified Test Cases (+2 more)
+
+### Community 299 - "Generate Combined Critique Report"
+Cohesion: 0.20
+Nodes (10): Design Health Score, Design Specificity Verdict, Generate Combined Critique Report, Minor Observations, Overall Impression, Persona Red Flags, Priority Issues, Questions to Consider (+2 more)
+
+### Community 300 - "Init flow"
+Cohesion: 0.20
+Nodes (10): Completion gate, Init flow, Step 1: Load current state, Step 2: Explore the project, Step 3: Interview for product truth, Step 4: Write PRODUCT.md, Step 5: Configure live mode when useful, Step 6: Wrap up or resume (+2 more)
+
+### Community 301 - "Plan: Set `font-tajawal` globally on app root & Tailwind `sans`"
+Cohesion: 0.18
+Nodes (10): Automated Tests, Configuration & Root Layout, Goal Description, Manual Verification, [MODIFY] [layout.tsx](file:///home/tahamohamed/Desktop/cs/non-work/projects/furqan/app/layout.tsx), [MODIFY] [tailwind.config.ts](file:///home/tahamohamed/Desktop/cs/non-work/projects/furqan/tailwind.config.ts), Plan: Set `font-tajawal` globally on app root & Tailwind `sans`, Proposed Changes (+2 more)
+
+### Community 302 - "api/marks/route.ts"
+Cohesion: 0.29
+Nodes (8): buildVerseSnippet(), GET(), getSortKey(), MarkListItem, MarksPage, ADR-0025, VALID_CATEGORIES, EMPTY_PAGE
+
+### Community 303 - "Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available"
+Cohesion: 0.20
+Nodes (10): Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available, Constraints, Decision Tree, Decisions Made (new), Files to Change, Investigation, Root cause, Verified Test Cases (new) (+2 more)
+
+### Community 304 - "Nav: Dedupe NavPillLink classNames into Shared Component"
+Cohesion: 0.20
+Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Nav: Dedupe NavPillLink classNames into Shared Component, Root Cause / Approach, Summary, Verified Test Cases (+1 more)
+
+### Community 305 - "Fix Tajweed Mushaf Swipe Flicker"
+Cohesion: 0.20
+Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Fix Tajweed Mushaf Swipe Flicker, Root Cause, Summary, Verified Test Cases (+1 more)
+
+### Community 306 - "Unify Tajweed toggle + offline downloads into one Mushaf Layout setting"
+Cohesion: 0.20
+Nodes (9): Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Summary, Unify Tajweed toggle + offline downloads into one Mushaf Layout setting, Verified Test Cases (+1 more)
+
+### Community 307 - "Addendum — 2026-08-14: cold launch flashes the home page before redirecting"
+Cohesion: 0.20
+Nodes (10): Addendum — 2026-08-14: cold launch flashes the home page before redirecting, Approach, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Root Cause, Summary (+2 more)
+
+### Community 308 - "Common Cognitive Load Violations"
+Cohesion: 0.22
+Nodes (9): 1. The Wall of Options, 2. The Memory Bridge, 3. The Hidden Navigation, 4. The Jargon Barrier, 5. The Visual Noise Floor, 6. The Inconsistent Pattern, 7. The Multi-Task Demand, 8. The Context Switch (+1 more)
+
+### Community 309 - "Operate mode depth (and Read notes)"
+Cohesion: 0.22
+Nodes (9): Color, Components, Layout, Motion, Operate mode depth (and Read notes), Product constraints, Product permissions, The product slop test (+1 more)
+
+### Community 310 - "Shape"
+Cohesion: 0.22
+Nodes (8): Cadence, Confirm and stop, Phase 1: Discovery interview, Phase 2: Resolve the design direction, Phase 3: Write the brief, Round 1: purpose, people, and outcome, Round 2: material, behavior, and boundaries, Shape
+
+### Community 312 - "slice.py"
+Cohesion: 0.28
+Nodes (6): translate a path's numbers (pdftocairo emits absolute M/C/L only)., groups: list of (paths, punch_paths) rendered in order., all paths intersecting the rect, translated; viewBox does the clipping., shift(), svg(), tile()
+
+### Community 313 - "Close Overlays on Back-Swipe (Mobile/Tablet PWA)"
+Cohesion: 0.22
+Nodes (9): Close Overlays on Back-Swipe (Mobile/Tablet PWA), Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Root Cause, Summary, Verified Test Cases (+1 more)
+
+### Community 314 - "Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA)"
+Cohesion: 0.22
+Nodes (9): Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA), Root Cause, Summary, Verified Test Cases (+1 more)
+
+### Community 315 - "Fix Sidebar Bottom Clip"
+Cohesion: 0.22
+Nodes (8): Constraints, Decisions Made, Files to Change, Fix, Fix Sidebar Bottom Clip, Root Cause, Summary, What NOT to Do
+
+### Community 316 - "Addendum — 2026-08-14: swipe after a language switch reverts to Arabic page 1"
+Cohesion: 0.22
+Nodes (9): Addendum — 2026-08-14: swipe after a language switch reverts to Arabic page 1, Constraints, Decision Tree / Algorithm, Decisions Made, Files to Change, Root Cause, Summary, Verified Test Cases (+1 more)
+
+### Community 317 - "Restore Continue Reading nav icon on installed PWA"
+Cohesion: 0.22
+Nodes (9): ADR Amendment, Approach, Constraints, Decisions Made, Files to Change, Restore Continue Reading nav icon on installed PWA, Root Cause, Summary (+1 more)
+
+### Community 318 - "Persona-Based Design Testing"
+Cohesion: 0.25
+Nodes (8): 1. Impatient Power User: "Alex", 2. Confused First-Timer: "Jordan", 3. Accessibility-Dependent User: "Sam", 4. Deliberate Stress Tester: "Riley", 5. Distracted Mobile User: "Casey", Persona-Based Design Testing, Project-Specific Personas, Selecting Personas
+
+### Community 319 - "Extract Flow"
+Cohesion: 0.25
+Nodes (7): Extract Flow, Step 1: Discover the Design System, Step 2: Identify Patterns, Step 3: Plan Extraction, Step 4: Extract & Enrich, Step 5: Migrate, Step 6: Document
+
+### Community 323 - "staleness-notice.mjs"
+Cohesion: 0.38
+Nodes (9): appendStalenessDirective(), buildStalenessDirective(), cachePath(), filterFreshFindings(), pruneCache(), readCache(), readJson(), stalenessCheckDisabled() (+1 more)
+
+### Community 324 - "Addendum — surah Sidebar was missed by the notifyNavigating fix (2026-08-16)"
+Cohesion: 0.25
+Nodes (8): Addendum — surah Sidebar was missed by the notifyNavigating fix (2026-08-16), Approach, Bug, Constraints, Decisions Made, Files to Change, Root cause, What NOT to Do
+
+### Community 325 - "Impeccable Finish Reviewer"
+Cohesion: 0.29
+Nodes (6): Checks, in order, Disposition, Impeccable Finish Reviewer, Input Contract, Output Contract, Verdict Pass
+
+### Community 326 - "template-extensions.mjs"
+Cohesion: 0.36
+Nodes (6): extensionCache, LIVE_TEMPLATE_EXTENSIONS, mergeExtensions(), normalizeExtensionEntries(), readLiveTemplateExtensions(), safeReadJson()
+
+### Community 327 - "Generate Report"
+Cohesion: 0.29
+Nodes (7): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings
+
+### Community 328 - "Cognitive Load Assessment"
+Cohesion: 0.29
+Nodes (7): Cognitive Load Assessment, Cognitive Load Checklist, Extraneous Load: Bad Design, Germane Load: Learning Effort, Intrinsic Load: The Task Itself, The Working Memory Rule, Three Types of Cognitive Load
+
+### Community 330 - "Impeccable Manual Edit Applier"
+Cohesion: 0.29
+Nodes (6): Checks, Entry Atomicity, Impeccable Manual Edit Applier, Input Contract, Output Contract, Workflow
+
+### Community 331 - "/impeccable hooks"
+Cohesion: 0.33
+Nodes (6): Constraints, Failure modes, Flow, /impeccable hooks, Intentional findings, Routing
+
+### Community 332 - "ADR 0043: Overlays close on back-gesture via a shared history guard, coordinated with AndroidBackExitGuard"
+Cohesion: 0.29
+Nodes (7): Addendum — 2026-08-15: "is my entry still on top" must be deferred and identity-checked, Addendum — 2026-08-16: microtask defer is not enough for a Link's own navigation, ADR 0043: Overlays close on back-gesture via a shared history guard, coordinated with AndroidBackExitGuard, Consequences, Context, Decision, Options Considered
+
+### Community 333 - "verses-words.js"
+Cohesion: 0.38
+Nodes (6): axios, correctAudioUrl(), fetchPage(), fetchVersesAndWords(), ADR-0009, PARAMS
+
+### Community 334 - "bolder.md"
+Cohesion: 0.33
+Nodes (5): Before you finish, Scope is sovereign, The amplification, The skeleton test, Why it reads flat
+
+### Community 337 - "ADR 0040: Double-push history guard for Android PWA back-to-exit"
+Cohesion: 0.33
+Nodes (6): Addendum — 2026-08-14: the pushed state object must be freshly allocated, ADR 0040: Double-push history guard for Android PWA back-to-exit, Consequences, Context, Decision, Options Considered
+
+### Community 338 - "0042 — PWA Cold Launch Resolves Before First Paint"
+Cohesion: 0.33
+Nodes (6): 0042 — PWA Cold Launch Resolves Before First Paint, Addendum — 2026-08-18: un-hide ContinueReadingLink on standalone mobile/tablet, Alternatives Considered, Consequences, Context, Decision
+
+### Community 339 - "PWA Testing (Browser Pane, No Device)"
+Cohesion: 0.33
+Nodes (5): PWA Testing (Browser Pane, No Device), Simulating a back-gesture / back button, Spoofing Android, Spoofing standalone/fullscreen mode, What this can't cover
+
+### Community 340 - "ADR 0043: Breakpoint-Dependent Positioning Must Be CSS-Gated, Not JS-Hook-Gated"
+Cohesion: 0.40
+Nodes (5): ADR 0043: Breakpoint-Dependent Positioning Must Be CSS-Gated, Not JS-Hook-Gated, Consequences, Context, Decision, Options Considered
+
+### Community 341 - "ADR 0045: Use the Navigation API to intercept the overlay-close back-gesture, with a popstate fallback"
+Cohesion: 0.40
+Nodes (5): ADR 0045: Use the Navigation API to intercept the overlay-close back-gesture, with a popstate fallback, Consequences, Context, Decision, Options Considered
+
+### Community 342 - "Heuristics Scoring Guide"
+Cohesion: 0.50
+Nodes (4): Heuristics Scoring Guide, Issue Severity (P0–P3), Reference Material, Score Summary
+
+### Community 343 - "detect.mjs"
+Cohesion: 0.50
+Nodes (3): candidates, detectorPath, __dirname
+
+### Community 344 - "hook.mjs"
+Cohesion: 0.39
+Nodes (7): allow(), deny(), done(), isStopEvent(), writeAuditLog(), main(), readStdin()
+
+### Community 351 - "/visualize-fq-design"
+Cohesion: 0.33
+Nodes (5): Execution, Next Steps, Screenshot source, Setup, /visualize-fq-design
+
+### Community 355 - "source-lock.mjs"
+Cohesion: 0.50
+Nodes (7): isLiveServerPidReachable(), clearStaleLock(), readLock(), releaseOwnLock(), sleepSync(), sourceLockPath(), withSourceLockSync()
+
+### Community 361 - "checkElementRadialSpotlightDOM"
 Cohesion: 0.67
-Nodes (3): Merge three mobile safha ADRs into rewritten ADR 0011, Consolidate Mobile Safha Sizing Docs, ADR 0011 mobile quran font scale vw formula (referenced)
+Nodes (4): checkElementRadialSpotlight(), checkElementRadialSpotlightDOM(), elementGradientValue(), spotlightLabel()
+
+### Community 362 - ".codex/hooks/graphify-sync-rebuild.sh"
+Cohesion: 0.50
+Nodes (3): GRAPHIFY_CHANGED, PYTHONHASHSEED, graphify-sync-rebuild.sh script
 
 ## Ambiguous Edges - Review These
 - `Static Generation Strategy (604 Quran Pages)` → `Release-Branch Deployment Workflow (main -> release/x.y.z -> prod -> main)`  [AMBIGUOUS]
@@ -1758,7 +1674,7 @@ Nodes (3): Merge three mobile safha ADRs into rewritten ADR 0011, Consolidate Mo
   docs/workflow/review-work.md · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **2066 isolated node(s):** `graphify-sync-rebuild.sh script`, `PYTHONHASHSEED`, `GRAPHIFY_CHANGED`, `path`, `ROOT` (+2061 more)
+- **1970 isolated node(s):** `graphify-sync-rebuild.sh script`, `PYTHONHASHSEED`, `GRAPHIFY_CHANGED`, `path`, `ROOT` (+1965 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **55 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -1771,11 +1687,11 @@ _Questions this graph is uniquely positioned to answer:_
   _Edge tagged AMBIGUOUS (relation: references) - confidence is low._
 - **What is the exact relationship between `docs/plans/release-branch-workflow.md` and `Review dimensions (Bugs, Quality, Plan Consistency)`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `v()` connect `modern-screenshot.umd.js` to `css-cascade.mjs`, `MyPlansList.tsx`, `checks.mjs`, `parseAnyColor`, `plans/route.ts`, `scanCssTextForPulsingDot`, `resumeSession`, `live-browser.js`, `collectNumberedSectionLabelCandidates`, `app/layout.tsx`, `collectBrowserFindings`, `e2e-fixture/generate.js`, `rel`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
-- **Why does `useTranslations()` connect `useTranslations` to `SearchBar.tsx`, `MyPlansList.tsx`, `[locale]/layout.tsx`, `ReaderPager.tsx`, `QuranSafha.tsx`, `SettingsSidebar.tsx`, `MyMarksList.tsx`, `use-translations.ts`, `RecitationSettingsSheet.tsx`, `ReaderLabSettingsSidebar.tsx`, `Session Handoff — Dark Theme Mushaf Unification`?**
-  _High betweenness centrality (0.061) - this node is a cross-community bridge._
-- **Why does `PlanEnrollForm()` connect `MyPlansList.tsx` to `useTranslations`, `modern-screenshot.umd.js`, `use-translations.ts`?**
-  _High betweenness centrality (0.055) - this node is a cross-community bridge._
-- **Are the 44 inferred relationships involving `el()` (e.g. with `browserFindingsFromMap()` and `collectVisualContrastCandidates()`) actually correct?**
-  _`el()` has 44 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `FqLogger` connect `deps.ts` to `notifications/types.ts`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **Why does `appPrisma` connect `jsonResponse` to `get-page-words.ts`, `constants/plans.ts`, `deps.ts`, `utils.ts`, `api/marks/route.ts`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
+- **Why does `cn()` connect `cn` to `useTranslations`, `MyPlansList.tsx`, `utils.ts`, `OfflineRecitationSheet.tsx`, `button.tsx`, `MyMarksList.tsx`, `NotificationBell.tsx`, `MarkModal.tsx`, `[locale]/layout.tsx`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
+- **What connects `graphify-sync-rebuild.sh script`, `PYTHONHASHSEED`, `GRAPHIFY_CHANGED` to the rest of the system?**
+  _1970 weakly-connected nodes found - possible documentation gaps or missing edges._

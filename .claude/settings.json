@@ -1,13 +1,54 @@
 {
   "hooks": {
     "SessionStart": [
-      { "hooks": [{ "type": "command", "command": "node .claude/hooks/mujaz-mode.js" }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/mujaz-mode.js"
+          }
+        ]
+      }
     ],
     "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "command": "node .claude/hooks/mujaz-mode.js" }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/mujaz-mode.js"
+          }
+        ]
+      }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "node .claude/hooks/mujaz-stats.js" }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/mujaz-stats.js"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/tahamohamed/.local/bin/graphify hook-guard search"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/tahamohamed/.local/bin/graphify hook-guard read"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
