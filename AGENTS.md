@@ -33,17 +33,39 @@ When in doubt, ask. Never act unilaterally. Don't make any changes until you hav
 
 ## Project
 
-Furqan — word-focused Qur'an reading app. Next.js 14 App Router, MySQL/Prisma, NextAuth (Google OAuth), next-intl (ar/en), Tailwind/shadcn.
+Furqan — word-focused Qur'an reading app. Users read from print-accurate mushaf page layouts (all 604 pages statically generated), mark progress/memorization at word level, follow reading plans (awrad), and can share their marked mushaf with a teacher or family member through revocable grants.
+
+Stack: Next.js 14 App Router · TypeScript · Tailwind/shadcn (Radix) · next-intl (`ar` RTL default, `en` LTR) · NextAuth (Google OAuth) · TanStack React Query · Sentry · PWA via `@serwist/next` (offline reliability is a hard product requirement). Tests: Vitest (unit) + Playwright (visual e2e).
+
+**Two MySQL databases, never joined by FK** (ADR 0008): `furqan_quran` (read-only content, `quranPrisma`, local :3307) and `furqan_app` (user/interaction data, `appPrisma`, local :3308) — both exported from `app/utils/db.ts`, with separate schemas at `prisma/quran/` and `prisma/app/` and separate generated clients under `app/generated/`.
+
+- Product definition: `PRODUCT.md` — users, positioning, principles
+- Design system: `DESIGN.md` + `docs/design/design-principles.md`
 
 ## Commands
 
 ```bash
 npm run dev              # dev server (port 3000)
-npm run build            # production build
+npm run build            # prisma migrate deploy (app DB) + production build
 npm run lint             # ESLint
-npm run prisma-studio    # DB GUI (requires .env.local)
-npm run prisma-generate  # regenerate Prisma client
+npm test                 # Vitest unit tests
+npm run prisma-generate  # regenerate BOTH Prisma clients (quran + app)
+npm run quran-studio     # Prisma Studio for furqan_quran
+npm run app-studio       # Prisma Studio for furqan_app
+npm run app-migrate-dev  # schema changes on furqan_app (versioned migrations)
+npm run seed:quran -- --force  # rebuild furqan_quran from the QDC API (destructive)
 npm run extract-translations  # sync i18n keys
+```
+
+Local DBs: `docker compose up -d` (quran :3307, app :3308, phpMyAdmin :8081).
+
+Visual e2e (Playwright; uses dedicated e2e DBs from `compose.e2e.yml` — never touches dev DBs):
+
+```bash
+npm run e2e:db:up        # start e2e MySQL containers
+npm run e2e:setup        # load the e2e fixture
+npm run e2e:test         # build + start + run Playwright
+npm run e2e:db:down      # tear down e2e DBs
 ```
 
 ## Documentation
@@ -51,18 +73,27 @@ npm run extract-translations  # sync i18n keys
 Load these before starting any task:
 
 - **Active decisions**: `docs/architecture/DECISIONS.md` — non-negotiable constraints; load before any task
+- **Product & design**: `PRODUCT.md`, `DESIGN.md`, `docs/design/design-principles.md`
 - **Standards** (load the file(s) matching the task domain):
   - `docs/standards/api-conventions.md` — route structure, response shape, auth
   - `docs/standards/component-patterns.md` — server vs client, data fetching, props
   - `docs/standards/database.md` — Prisma patterns, schema gotchas
   - `docs/standards/i18n.md` — translation keys, direction, next-intl usage
-  - `docs/standards/styling.md` — Tailwind tokens, dark mode, RTL/LTR
+  - `docs/standards/styling.md` — Tailwind tokens, themes, RTL/LTR
+  - `docs/standards/quran-rendering.md` — column–font contract for Quran text
+  - `docs/standards/pwa-testing.md` — exercising PWA-gated behavior in the browser
 - **Task plans**: `docs/plans/`
+- **ADR history**: `docs/architecture/adr/`
+- **Deployment**: `docs/deployment/hostinger.md`
 - **All AI workflows**: [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md)
 
 ## Task tracking
 
 The workflow tracks tasks as GitHub Issues on `furqan-app/web` — no MCP setup needed, agents use the `gh` CLI (or `gh-axi`) directly. Status is a `status:*` label (`backlog` → `todo` → `in-progress` → `in-review` → `to-be-released` → closed); type is the native GitHub Issue Type (Task/Bug/Feature), not a label.
+
+## Releases
+
+Branching model: work ships from feature branches → `main` (via `/ship-fq-task`); releases cut from `main` → release branch → promoted `stg` → `prod` via `/release <major|minor|patch>` (GitHub Actions under the hood). Deploy target is Hostinger.
 
 ## graphify
 
