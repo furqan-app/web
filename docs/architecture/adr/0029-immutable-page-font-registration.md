@@ -91,3 +91,41 @@ to `"single"` — `isLgUp` alone would still eagerly over-fetch for that case.
 `.load()` rather than relying on CSS declaration) must be scoped to ids that are actually
 rendered, not just "in the window" — the window and the visible set are not the same thing
 once double-view pairing is involved.
+
+## Addendum: Option B's "sibling mounts don't re-parse existing sheets" claim was false
+
+**Date:** 2026-08-23
+**Issue:** [#374](https://github.com/furqan-app/web/issues/374) (part of #371)
+
+**Problem found.** This ADR's Decision section claimed Option B (one immutable `<style>`
+element per tajweed page id) was safe because "React only mounts/unmounts siblings; sibling
+mounts don't re-parse existing sheets." That claim was never actually verified against a real
+browser — it was reasoned from the general principle that *removing* an unrelated sheet is
+safe (which Option A's design correctly relies on), extended by assumption to *mounting* a new
+sibling `<style>` element too. Live `document.fonts` status polling against the real running
+app, across real page turns (not a synthetic test), showed the assumption was wrong: mounting
+**any** new `<style>` element with an `@font-face` rule resets **every** already-loaded
+CSS-connected `FontFace` in the document to `unloaded`, regardless of which sheet or element it
+came from. This was the exact "structurally impossible" class of bug this ADR exists to
+prevent — present in production, on every tajweed page turn, undetected because the reload
+completes fast enough (fonts are `Cache-Control: immutable`) not to have been reported as a
+visible symptom, and because Addendum 8's swipe-flicker investigation attributed the reported
+flicker entirely to hover-filter cost, not to this.
+
+**Fix.** `FontFaceInjector`'s tajweed path no longer uses Option B's `<style>`-per-id DOM
+mounting. It now creates one `CSSStyleSheet` **per** page id (never shared across ids), gives
+each sheet its content exactly once via `replaceSync()` at creation — safe, since a brand-new
+sheet has no prior loaded face to reset — and adopts it via `document.adoptedStyleSheets.push()`
+as the id enters the LRU window. Confirmed live: this causes **zero** resets on insertion,
+strictly better than both the original `<style>`-per-id design and a shared-sheet
+`insertRule`/`deleteRule` variant tested and rejected in the same session (confirmed to reset
+every face in the shared sheet on both insert and remove). Eviction past the LRU cap still
+resets every other adopted sheet — same category of behavior this ADR already accepted for
+Option A's registry eviction, not a new regression. See ADR 0023 Addendum 9 and
+`docs/plans/tajweed-stylesheet-hover-suppression.md` for the full investigation and
+verification data.
+
+**What NOT to do:** do not restore Option B's `<style>`-per-id DOM mounting for tajweed. Do not
+assume any claim in this ADR about browser stylesheet-mutation behavior holds without live
+`document.fonts` verification — this session's finding is exactly why that assumption failed
+silently for over a month.
