@@ -10,10 +10,10 @@ export const FurqanLogo = ({ className }: Props = {}) => (
     href="/"
     aria-label="Home"
     className={cn(
-      "fq-focus-ring flex-none size-[38px] rounded-full flex items-center justify-center bg-transparent border border-primary/60 hover:border-primary hover:bg-primary/5 transition-colors",
+      "fq-focus-ring flex-none rounded-full size-[35px] flex items-center justify-center bg-transparent transition-colors",
       className,
     )}
   >
-    <span className="fq-logo-mark size-[32px] flex-none" aria-hidden="true" />
+    <span className="fq-logo-mark size-[150%] flex-none" aria-hidden="true" />
   </Link>
 );

@@ -36,7 +36,7 @@ export const HomeContinueReadingCard = ({ surahs, className }: Props) => {
   return (
     <div
       className={cn(
-        "mb-6 p-4 sm:p-4.5 rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-card to-card transition-colors duration-150 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-sm dark:shadow-none relative overflow-hidden",
+        "mb-6 p-4 sm:p-4.5 rounded-2xl border border-border/80 hover:border-primary/50 bg-card transition-colors duration-150 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-sm dark:shadow-none relative overflow-hidden",
         className,
       )}
     >

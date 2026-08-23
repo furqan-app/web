@@ -169,7 +169,7 @@ export const Nav = () => {
           type="button"
           onClick={() => setSettingsOpen(true)}
           aria-label={t("settings", "Settings")}
-          className="fq-chrome-btn-live fq-focus-ring hidden md:flex size-7 order-8 shrink-0"
+          className="fq-chrome-btn-live fq-focus-ring flex size-7 order-8 shrink-0"
         >
           <Settings className="size-[18px]" strokeWidth={1.8} />
         </button>
@@ -177,7 +177,7 @@ export const Nav = () => {
         <span className="hidden md:block h-4 w-px bg-border shrink-0 order-9 mx-1" aria-hidden="true" />
 
         <div className="order-10 shrink-0">
-          <UserMenu onOpenSettings={() => setSettingsOpen(true)} />
+          <UserMenu />
         </div>
       </div>
       <SettingsSidebar open={settingsOpen} onOpenChange={setSettingsOpen} />

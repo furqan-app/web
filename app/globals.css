@@ -694,14 +694,8 @@ body,
        "paper fading into light." */
     .fq-spread .fq-safha-card {
       background-color: var(--mushaf-paper) !important;
-      background-image: radial-gradient(
-        ellipse 70% 48% at 86% 100%,
-        var(--mushaf-paper-dip) 0%,
-        transparent 76%
-      ) !important;
-      box-shadow:
-        inset 0 1px 0 var(--mushaf-paper-highlight),
-        inset 0 0 28px var(--mushaf-paper-dip);
+      background-image: none !important;
+      box-shadow: none !important;
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
@@ -774,9 +768,8 @@ body,
     .fq-spread .fq-quran-safha .fq-bismillah { color: var(--mushaf-text) !important; }
     .fq-spread .fq-quran-safha .fq-inline-surah { color: var(--mushaf-ornament) !important; }
     .fq-spread .fq-ornament { color: var(--mushaf-ornament) !important; }
-    .fq-spread .fq-safha-surah-glyph { color: var(--mushaf-ornament) !important; }
-    .fq-spread .fq-safha-meta,
-    .fq-spread .fq-safha-footer { color: var(--mushaf-metadata) !important; }
+
+
     /* Removed in 5.1b: two theme-scoped blocks that forced dark's and gold's
        page metadata, surah glyph, inline surah name and ornaments to
        `--mushaf-text` so they would read "quietly, not gold". Ornament is
@@ -1679,13 +1672,8 @@ body,
     .fq-spread .fq-ornament {
       color: var(--mushaf-ornament) !important;
     }
-    .fq-spread .fq-safha-surah-glyph {
-      color: var(--mushaf-ornament) !important;
-    }
-    .fq-spread .fq-safha-meta,
-    .fq-spread .fq-safha-footer {
-      color: var(--mushaf-metadata) !important;
-    }
+
+
     /* The tablet band's copy of the same two theme-scoped blocks — removed in
        5.1b for the same reason. See the mobile block above. */
 

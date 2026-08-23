@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { User, LogOut, Bookmark, CalendarDays, ChevronDown, ChevronUp, Users, Settings } from "lucide-react";
+import { User, LogOut, Bookmark, CalendarDays, ChevronDown, ChevronUp, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,11 +24,9 @@ type Props = {
   container?: HTMLElement | null;
   // Closes menu
   onNavigate?: () => void;
-  // Opens Settings Sidebar
-  onOpenSettings?: () => void;
 };
 
-export const UserMenu = ({ menuRow, container, onNavigate, onOpenSettings }: Props = {}) => {
+export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
   const { data: session } = useSession();
   const t = useTranslations();
   const locale = useLocale();
@@ -136,10 +134,7 @@ export const UserMenu = ({ menuRow, container, onNavigate, onOpenSettings }: Pro
           </Link>
         </DropdownMenuItem>
         <NotificationBell className="md:hidden" asDropdownItem container={container} />
-        <DropdownMenuItem className="md:hidden cursor-pointer" onClick={() => onOpenSettings?.()}>
-          <Settings className="size-4" />
-          {t("settings", "Settings")}
-        </DropdownMenuItem>
+
 
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/marks" locale={locale}>
