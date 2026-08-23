@@ -26,7 +26,7 @@ import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 import { storage } from "@/app/utils/storage";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
-import { ensurePageFonts, pageFontsReady } from "@/app/utils/page-font-registry";
+import { ensurePageFonts, pageFontsReady, warmColorGlyphFont } from "@/app/utils/page-font-registry";
 
 const TOTAL_PAGES = 604;
 const TOTAL_PAIRS = TOTAL_PAGES / 2;
@@ -697,12 +697,16 @@ export function ReaderPager({
 
       // Same visibility scoping as baseFontIds: pair-expand only in double view,
       // or a single-page session eagerly downloads a partner font it will never
-      // paint (ADR 0029's Addendum). Colour-glyph editions are skipped entirely —
-      // their fonts load through FontFaceInjector's keyed <style> elements, which
-      // only cover the live window, so there is no lookahead path for them.
-      if (edition.usesColorGlyphs) return;
+      // paint (ADR 0029's Addendum). Colour-glyph editions warm through a
+      // separate cache-priming path (ADR 0034 Addendum) since their fonts never
+      // enter this registry — see warmColorGlyphFont.
       const { rightPage, leftPage } = getPagePair(target);
-      ensurePageFonts(isDouble ? [rightPage, leftPage] : [target], edition);
+      const targetIds = isDouble ? [rightPage, leftPage] : [target];
+      if (edition.usesColorGlyphs) {
+        warmColorGlyphFont(targetIds, edition);
+        return;
+      }
+      ensurePageFonts(targetIds, edition);
     });
 
     return () => {
