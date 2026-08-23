@@ -27,6 +27,8 @@ This check is a literal, mandatory action every time — it has been skipped bef
 
 ### 2. Investigate (bugs) or clarify (features)
 
+**Query the graph first.** If `graphify-out/graph.json` exists, run `graphify query "<question>"` (or `graphify path "A" "B"` for a specific relationship) before reading files manually — it's cheaper than grepping cold. Use its answer as your map to the relevant files. If it has no answer, is stale, or doesn't exist, fall back to manual tracing below without commenting on it.
+
 **For bugs:**
 - Trace the bug through the codebase before asking anything
 - Read all files in the relevant data flow
@@ -39,6 +41,8 @@ This check is a literal, mandatory action every time — it has been skipped bef
 - Ask one adversarial question at a time — wait for the answer before asking the next
 - Questions should surface: scope ambiguity, edge cases, mobile/RTL behavior, interaction with existing systems, timing concerns
 - If the task removes or relocates an existing UI trigger/control, explicitly verify every breakpoint and route that used it still has equivalent access before writing "unchanged" anywhere in the plan — check what else depends on it, don't assume.
+
+**UI-mode design pass.** If the task involves components, pages, layout, or styling, run `/impeccable critique` (or `audit` for a technical-quality-leaning task) against the files under investigation. If it returns findings with suggested commands, carry them into a `## Design Remediation` section in the plan (see Plan file format below) — `command → target file(s)`, taken verbatim from each finding's suggested command. No findings, or a non-UI task: skip the section (ADR 0041).
 
 ### 3. Verify the solution together — before writing anything
 
@@ -100,6 +104,9 @@ The verified if/then logic or classification table agreed with the user in step 
 
 ## Verified Test Cases
 The concrete examples walked through in step 3 and what the algorithm produces for each.
+
+## Design Remediation
+(UI tasks only, omit entirely otherwise) `command → target file(s)` pairs from the Step 2 `/impeccable critique`/`audit` pass, for `/start-fq-task` to execute after implementation (ADR 0041).
 
 ## Files to Change
 - `path/to/file.ts` — what changes and why

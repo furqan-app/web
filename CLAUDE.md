@@ -11,25 +11,17 @@ The workflows in `docs/workflow/` are exposed as Claude Code skills. Trigger the
 |---|---|
 | `/plan-fq-task` | "plan this", "investigate", starting any new task |
 | `/start-fq-task` | "implement", "build", "start the task" |
+| `/check-fq-standards` | run automatically by `/start-fq-task`; or "check standards", "check invariants" |
 | `/ship-fq-task` | "ship it", "I'm done", "commit and push" |
 | `/review-fq-work` | "review my work", "check the branch" |
 | `/retrospect` | end of session |
-| `/release <bump>` | full release orchestration |
-| `/cut-release <bump>` | cut a release branch |
-| `/promote-to-staging <version>` | open release → stg PR |
-| `/promote-release <version>` | open release → prod PR |
+| `/release <bump>` | full release orchestration (GitHub Actions under the hood) |
+| `/cut-release <bump>` | cut release branch + promote to stg (GitHub Action) |
+| `/promote-release` | promote release → prod, version auto-detected (GitHub Action) |
 | `/sync-main-from-prod` | sync prod back to main |
 | `/mujaz` | toggle terse-response mode on/off |
 | `/compress-fq-docs` | compress verbose docs |
 | `/confirm-dangerous-git` | gate before destructive git commands |
-
-## MCP Server Setup (Trello)
-
-Copy `.mcp.json.example` → `.mcp.json` and fill in your Trello API key and token.
-Get key: https://trello.com/power-ups/admin
-Get token: `https://trello.com/1/authorize?expiration=never&name=furqan&scope=read,write&response_type=token&key=YOUR_API_KEY`
-
-If `npx` isn't found, use the absolute path from `which npx`. nvm users: set `"command"` to the full node path and pass npx as the first arg.
 
 ## Hooks
 

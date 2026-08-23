@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import {
   BookMarked,
   BookOpen,
@@ -55,6 +55,7 @@ import {
 import { RangePoint, RepeatCount, Reciter, StopPoint } from "@/app/types/recitation";
 import { SurahResult } from "@/app/types";
 import { MUSHAF_LAST_PAGE } from "@/app/constants/plans";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 const nextRepeatCount = (value: RepeatCount, direction: 1 | -1): RepeatCount => {
   if (direction === 1) {
@@ -93,21 +94,20 @@ const RANGE_TYPE_OPTIONS: { value: RangePoint["type"]; icon: typeof Users; label
   { value: "verse", icon: BookMarked, labelKey: "recitation.rangeTypeVerse", fallback: "Verse" },
 ];
 
-const ReciterTrigger = ({
-  selected,
-  open,
-}: {
-  selected: Reciter | null;
-  open: boolean;
-}) => {
+const ReciterTrigger = forwardRef<
+  HTMLButtonElement,
+  { selected: Reciter | null; open: boolean } & React.ComponentPropsWithoutRef<typeof Button>
+>(({ selected, open, ...props }, ref) => {
   const t = useTranslations();
   return (
     <Button
+      ref={ref}
       type="button"
       variant="outline"
       role="combobox"
       aria-expanded={open}
       className="w-full justify-between rounded-xl border-border bg-card font-normal h-auto py-2.5"
+      {...props}
     >
       {selected ? (
         <span className="flex flex-col items-start text-start">
@@ -124,7 +124,8 @@ const ReciterTrigger = ({
       <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
     </Button>
   );
-};
+});
+ReciterTrigger.displayName = "ReciterTrigger";
 
 const SurahCombobox = ({
   chapters,
@@ -436,6 +437,7 @@ export const RecitationSettingsSheet = () => {
   const referenceSurah = referenceSurahRaw || 1;
   const referenceAyah = referenceAyahRaw || 1;
   const referencePage = recitedPage ?? currentPageNumber ?? 1;
+  useCloseOnBackGesture(isSettingsOpen, closeSettings);
 
   return (
     <Sheet open={isSettingsOpen} onOpenChange={(open) => !open && closeSettings()}>

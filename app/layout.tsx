@@ -3,22 +3,29 @@ import { useLocale } from "next-intl";
 import "./globals.css";
 import { getLanguageDirection } from "./utils/i18n";
 import localFont from "next/font/local";
-import { Tajawal } from "next/font/google";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 
 export const metadata: Metadata = {
   title: "Furqan",
   description: "The word focused Quran app",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
+    icon: [
+      { url: "/icons/favicon.ico", sizes: "any" },
+      { url: "/icons/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/icons/favicon-32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/icons/icon-apple-180.png", sizes: "180x180" }],
   },
   appleWebApp: {
     capable: true,
-    // black-translucent makes the iOS status bar transparent, overlaying app
-    // content. viewportFit:cover below + env(safe-area-inset-top) on the navbar
-    // prevents nav content being hidden behind the notch on notched devices.
-    statusBarStyle: "black-translucent",
+    // "default": opaque status bar, always visible, never overlays content.
+    // Was "black-translucent" (Android's fullscreen counterpart had the same
+    // always-visible-status-bar goal); reverted (#317) — see
+    // docs/plans/feature-pwa-fullscreen-focus-mode.md Addendum. viewportFit:
+    // cover + env(safe-area-inset-top) on the navbar are left in place; they
+    // resolve to 0px with no translucent bar to clear, per spec.
+    statusBarStyle: "default",
     title: "Furqan",
   },
 };
@@ -28,11 +35,12 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const tajawal = Tajawal({
-  weight: ["400", "500", "700", "800"],
+const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
+  weight: ["300", "400", "500", "600", "700"],
   subsets: ["arabic", "latin"],
   variable: "--tajawal",
   display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const uthmanic = localFont({
@@ -55,7 +63,11 @@ export default function RootLayout({
 }) {
   const locale = useLocale();
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={`${ibmPlexSansArabic.variable} ${uthmanic.variable} ${surahNames.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <script
@@ -67,7 +79,7 @@ export default function RootLayout({
       <body
         suppressHydrationWarning
         dir={getLanguageDirection(locale)}
-        className={`${tajawal.variable} ${uthmanic.variable} ${surahNames.variable} bg-background antialiased`}
+        className="font-sans bg-background antialiased"
       >
         {children}
       </body>

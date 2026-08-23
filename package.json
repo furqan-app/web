@@ -1,6 +1,6 @@
 {
   "name": "furqan",
-  "version": "1.7.2",
+  "version": "1.7.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -69,6 +69,7 @@
     "@babel/traverse": "^7.25.9",
     "@playwright/test": "^1.61.1",
     "@svgr/webpack": "^8.1.0",
+    "@types/dom-navigation": "^1.0.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -1,154 +1,93 @@
 # Release Workflow
 
-Covers the full release lifecycle: cutting a release branch, promoting to staging, promoting to production, and syncing main afterwards. See also `docs/plans/release-branch-workflow.md`, ADR 0015, and ADR 0026.
-
----
+Release mechanics run as GitHub Actions (`workflow_dispatch`), not as Claude-executed git/gh steps. Claude's job is to trigger the right workflow, poll it to completion, and relay the result — see ADR 0015 addendum. See also `docs/plans/release-branch-workflow.md`, ADR 0015, and ADR 0026.
 
 ## Full Release Orchestration (`/release <bump>`)
 
-Orchestrates cut → staging → prod → sync as one continuous flow. Only stops at the three checkpoints below where the flow genuinely cannot proceed without the user acting outside the chat.
-
-**Never pause between purely mechanical steps.** Only the three checkpoints below warrant a pause.
+Orchestrates cut → stg → prod → sync as one continuous flow, pausing only at the two checkpoints below.
 
 ### Precondition
 
-A bump type (`major`, `minor`, or `patch`) must be given. If missing, ask for it once, then proceed through the whole flow without asking again except at the checkpoints.
+A bump type (`major`, `minor`, or `patch`) must be given. If missing, ask once, then proceed through the whole flow without asking again except at the checkpoints.
 
 ### Steps
 
-1. **Run Cut Release in full** (see below). Its own preconditions (clean tree, on main) apply as normal. Do not pause before or after this step.
-
-2. **Run Promote to Staging** (see below). Opens the `release/x.y.z → stg` PR. Proceed straight to Checkpoint 1 — no pause before this step.
-
-3. **Checkpoint 1 — staging.** Tell the user the PR is open and ask them to merge it on GitHub. Hostinger auto-deploys the staging site on any push to `stg` — no manual redeploy click is needed. Do not trust a bare "done": verify via `gh pr view <number> --json state -q .state` and only continue once it reports `MERGED`. Once merged, ask the user to verify the deployed staging site looks right — wait for their explicit confirmation before continuing.
-
-4. **Run Promote Release** (see below). Opens the `release/x.y.z → prod` PR. Proceed immediately once staging is confirmed.
-
-5. **Checkpoint 2 — prod PR merged.** Tell the user the PR is open and ask them to merge it on GitHub. Do not trust a bare "done": verify via `gh pr view <number> --json state -q .state` and only continue once it reports `MERGED`. If the user says they merged it but the check disagrees, keep waiting.
-
-6. **Run Sync Main from Prod** (see below). Opens the `prod → main` PR. Proceed immediately once the prod PR is confirmed merged.
-
-7. **Checkpoint 3 — final merge.** Tell the user the sync PR is open and ask them to merge it (resolving any conflicts if needed). Verify via `gh pr view` the same way as Checkpoint 2. Once merged, report the release complete.
+1. **Trigger Cut Release** (see below). Poll to completion. This also opens and auto-merges the `main → stg` PR — do not pause before or after.
+2. **Checkpoint 1 — staging.** Tell the user staging has deployed and ask them to look at the site and confirm it's good. Wait for explicit confirmation — this judgment call is the user's, not inferable from `gh`.
+3. **Trigger Promote Release** (see below). Poll to completion. It auto-detects the version and auto-merges the prod PR — no pause needed once it reports success.
+4. **Trigger Sync Main from Prod** (see below). Poll to completion — it only opens the PR.
+5. **Checkpoint 2 — final merge.** Tell the user the sync PR is open and ask them to merge it (resolving conflicts if needed) on GitHub — this one is never auto-merged. Verify via `gh pr view <url> --json state -q .state` reporting `MERGED`; do not trust a bare "done" from the user. Once merged, report the release complete.
 
 ### Failure handling
 
-If any git/gh step fails partway, stop immediately and report the failure plainly. Do not silently retry with a different approach or guess at a recovery — that decision belongs to the user.
+If any workflow run fails, stop immediately and report the failure (link the run) plainly. Do not retry with a different approach or guess at a recovery.
 
 ### What NOT to do
 
-- Do not ask "should I continue?" between mechanical steps — only the three checkpoints warrant a pause.
-- Do not merge any PR yourself.
-- Do not skip Checkpoint 1 or treat a merged stg PR alone as sufficient — the user must also confirm staging looks right.
-- Do not skip Checkpoint 3.
-- Do not trust the user's word over `gh`'s reported state for any PR-merge checkpoint — always re-verify.
+- Do not ask "should I continue?" between the workflow triggers — only the two checkpoints warrant a pause.
+- Do not merge the sync PR yourself.
+- Do not skip Checkpoint 1 or treat "workflow succeeded" as equivalent to "staging looks right."
+- Do not trust the user's word over `gh`'s reported state for the Checkpoint 2 merge.
 
 ---
 
 ## Cut Release (`/cut-release <bump>`)
 
-Branches a new `release/x.y.z` off `main`, bumps and tags the version, stamps the release tracking system, and flags any DB changes that may need manual action.
+Triggers the `cut-release.yml` GitHub Action, which does everything in one run: branches `release/x.y.z` off `main`, bumps and tags the version, milestones/closes queued issues, flags DB changes needing manual action, creates the GitHub Release, and opens+auto-merges the `main → stg` PR.
 
 ### Precondition
 
 - A bump type (`major`, `minor`, or `patch`) must be given. If missing, ask — do not guess or default.
-- `git status` must be clean. If not, stop and tell the user to commit/stash first.
+- A clean local working tree is no longer required — the workflow runs on GitHub's own checkout of `main`, not your working tree.
 
 ### Steps
 
-1. `git fetch origin`.
-2. `git checkout main && git pull` (fast-forward only).
-3. Read `"version"` from `package.json`. Compute the new version by applying the given bump type (semver: major resets minor+patch to 0, minor resets patch to 0, patch increments only the patch number).
-4. `git checkout -b release/<new-version>`.
-5. Edit `package.json`'s `"version"` field to `<new-version>`. Run `npm install --package-lock-only` so `package-lock.json`'s top-level `version` field stays in sync (do not run a full `npm install`). Stage both files and commit: `chore(release): bump version to <new-version>`. No AI signature.
-6. `git tag v<new-version>`.
-7. `git push -u origin release/<new-version>` then `git push origin v<new-version>`.
-8. **Update your release tracking system** — mark all tasks included in this release as released (labeled with `v<new-version>` and moved to Done). If your system has an equivalent of Trello's "To Be Released" list, pull tasks from there. If the list is empty, continue anyway — an empty release is still valid.
-9. **Detect DB changes needing manual action** (non-blocking — this only builds content for steps 10 and 11, never pauses):
-   - Find the previous release tag: `git tag --list 'v*' --sort=-v:refname` on `origin`, take the first entry that isn't `v<new-version>`. Sort by semver. If no prior tag exists (first release), skip this step.
-   - `git diff --name-only <previous-tag>..release/<new-version>` and check against:
-
-   | Path touched | Flag | Notes wording |
-   |---|---|---|
-   | `prisma/quran/schema.prisma` | Quran DB | "Quran DB schema changed — re-seed prod manually (`npm run seed:quran -- --force`) if this release should reflect it." |
-   | `scripts/quran-seed/**` (any file) | Quran DB | "Quran seed logic/data changed — re-seed prod manually if you want this release's data live." |
-   | `prisma/app/migrations/**` (new or changed files) | App DB | "New Prisma migration(s) — will auto-apply via `prisma migrate deploy` on deploy. No action needed; consider backing up the App DB first." |
-
-   If any flags fire, build a `## Manual Action Required` section for step 10 and surface it in the final report.
-10. Create the GitHub Release: `gh release create v<new-version> --title "v<new-version>" --notes "<body>"`, where the body is a "What's included" heading, one bullet per task in this release, and the `## Manual Action Required` section if one was built.
-11. Report: new version, branch name, tag, GitHub Release URL, tasks labeled/moved. Restate the `## Manual Action Required` section prominently if one was built.
+1. `gh workflow run cut-release.yml -f bump=<bump> --repo furqan-app/web`.
+2. Poll for the run: `gh run list --workflow=cut-release.yml --repo furqan-app/web --limit 1 --json databaseId,status,conclusion`. Wait until `status` is `completed`.
+3. If `conclusion` is not `success`, stop and report the failure with `gh run view <id> --repo furqan-app/web --log-failed`.
+4. On success, read the job summary: `gh run view <id> --repo furqan-app/web --json jobs` then fetch the summary text, or simply `gh run view <id> --repo furqan-app/web` and follow the run URL. Report: new version, release branch, tag, GitHub Release URL, and the "Manual action required" section verbatim if it's non-empty.
 
 ### What NOT to do
 
 - Do not infer the bump type from commit history — it must be given explicitly.
-- Do not cut from any branch other than `main`.
-- Do not push to `prod` or open any PR — that's Promote Release's job.
-- Do not pause for a flagged DB change (step 9) — it's a reminder, never a checkpoint.
-- Do not detect generic breaking changes (API contract changes, removed routes, etc.) — only the specific DB paths in step 9's table are checked.
+- Do not run the git/gh steps yourself — the workflow does them all. Your job is trigger + poll + relay.
+- Do not pause for a flagged DB change — it's a reminder, surfaced in the report, never a checkpoint.
 
 ---
 
-## Promote to Staging (`/promote-to-staging <version>`)
+## Promote Release (`/promote-release`)
 
-Opens the `release/<version>` → `stg` PR for staging verification.
-
-### Precondition
-
-- A version must be given (e.g. `1.3.0`). If missing, ask for it.
-- `release/<version>` must exist on `origin`. If not, stop — run Cut Release first.
-
-### Steps
-
-1. `git fetch origin`; confirm `origin/release/<version>` exists.
-2. Best-effort: look up tasks carrying the `v<version>` label in your tracking system to reference in the PR body.
-3. `gh pr create --base stg --head release/<version> --title "Staging v<version>"` with a body summarizing the release (linking tasks found above, if any).
-4. Report the PR URL. Tell the user:
-   - The `check-source` gate on `stg` requires this PR's head branch to start with `release/` — it will pass automatically.
-   - Merge the PR on GitHub. Hostinger auto-deploys on any push to `stg` — no manual redeploy needed.
-
-### What NOT to do
-
-- Do not merge the PR — only open it.
-- Do not touch the release tracking system — that already happened in Cut Release.
-
----
-
-## Promote Release (`/promote-release <version>`)
-
-Opens the `release/<version>` → `prod` PR once staging verification has passed.
+Triggers the `promote-release.yml` GitHub Action, which auto-detects the latest release branch not yet merged into `prod`, opens the `release/x.y.z → prod` PR, and auto-merges it.
 
 ### Precondition
 
-- A version must be given (e.g. `1.3.0`). If missing, ask for it.
-- `release/<version>` must exist on `origin`. If not, stop — run Cut Release first.
+None — no version argument needed, the workflow finds it.
 
 ### Steps
 
-1. `git fetch origin`; confirm `origin/release/<version>` exists.
-2. Best-effort: look up tasks carrying the `v<version>` label in your tracking system to reference in the PR body.
-3. `gh pr create --base prod --head release/<version> --title "Release v<version>"` with a body summarizing the release (linking tasks found above, if any).
-4. Report the PR URL. Tell the user:
-   - The `check-source` gate on `prod` requires this PR's head branch to start with `release/` — it will pass automatically.
-   - Merge the PR on GitHub. Hostinger auto-deploys on any push to `prod` — no manual redeploy needed.
+1. `gh workflow run promote-release.yml --repo furqan-app/web`.
+2. Poll `gh run list --workflow=promote-release.yml --repo furqan-app/web --limit 1 --json databaseId,status,conclusion` until `completed`.
+3. If `conclusion` is not `success` (e.g. no unpromoted release branch found), stop and report the failure.
+4. On success, report the version promoted and the PR URL from the run summary.
 
 ### What NOT to do
 
-- Do not merge the PR — only open it.
-- Do not touch the release tracking system — that already happened in Cut Release.
+- Do not ask for or accept a version argument — the workflow determines it.
+- Do not merge anything yourself — the workflow auto-merges once its required check passes.
 
 ---
 
 ## Sync Main from Prod (`/sync-main-from-prod`)
 
-Opens the `prod` → `main` PR after a release, so any fixes made on the release branch during stabilization make it back into `main`.
+Triggers the `sync-main-from-prod.yml` GitHub Action, which opens the `prod → main` PR. This one is never auto-merged — conflicts here need a human.
 
 ### Steps
 
-1. `git fetch origin`.
-2. Determine the version for the PR title: `git describe --tags origin/prod` (latest tag reachable from `prod`).
-3. `gh pr create --base main --head prod --title "Sync main with prod (v<version>)"` with a body noting this brings release-stabilization fixes back into `main`.
-4. Report the PR URL. Tell the user: merging and resolving any conflicts is a manual step from here.
+1. `gh workflow run sync-main-from-prod.yml --repo furqan-app/web`.
+2. Poll `gh run list --workflow=sync-main-from-prod.yml --repo furqan-app/web --limit 1 --json databaseId,status,conclusion` until `completed`.
+3. Report the PR URL from the run summary. Tell the user: merging and resolving any conflicts is a manual step from here.
 
 ### What NOT to do
 
-- Do not merge the PR — only open it.
+- Do not merge the PR — only trigger the workflow that opens it.
 - Do not attempt to auto-resolve merge conflicts — flag them and let the user handle it.

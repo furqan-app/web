@@ -9,11 +9,13 @@ Read and follow [`docs/workflow/start-task.md`](../../../docs/workflow/start-tas
 
 ## Claude-specific additions
 
-### Step 1 — Trello integration
+### Step 1 — GitHub issue integration
 
 When the workflow doc says "move the task to In Progress in your project management system":
-- `mcp__trello__move_card` the card to **In Progress**
-- Assign the card to yourself: read `TRELLO_API_KEY`/`TRELLO_TOKEN` from `.mcp.json` (`mcpServers.trello.env`) and call `GET https://api.trello.com/1/members/me?key=<key>&token=<token>&fields=id,fullName,username` to resolve the authenticated member. Then `mcp__trello__assign_member_to_card` with that member's `id`. Never print or log the key/token values themselves. If the request fails (missing `.mcp.json`, network error), skip silently.
+```bash
+gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:todo" --add-label "status:in-progress" --add-assignee @me
+```
+One call — `@me` resolves to the authenticated `gh` account, no separate identity lookup needed.
 
 ### Step 1b — Worktree setup (runs before step 2 in the workflow doc)
 
@@ -25,7 +27,7 @@ When the workflow doc says "move the task to In Progress in your project managem
   - If the entry has no `port`: skip to "Assign a port" below.
 
 **If no existing worktree:**
-1. Derive the branch name from the Trello card: `<type>/<card-short-id>-<short-description>`
+1. Derive the branch name from the GitHub issue: `<type>/<issue-number>-<short-description>`
 2. Create the worktree:
    ```bash
    # If branch does NOT exist yet:
@@ -47,7 +49,7 @@ When the workflow doc says "move the task to In Progress in your project managem
 **Symlink `.env.local` and `.mcp.json` if they exist:**
 ```bash
 ln -s $(pwd)/.env.local ../furqan-<slug>/.env.local   # warn if missing
-ln -s $(pwd)/.mcp.json ../furqan-<slug>/.mcp.json     # needed for MCP tools in the worktree
+ln -s $(pwd)/.mcp.json ../furqan-<slug>/.mcp.json     # needed for MCP tools (e.g. quranhub) in the worktree
 ```
 
 **Assign a port:** read `~/.claude/furqan-worktrees.json`, collect all `.port` values, find the lowest integer ≥ 3001 not already in use.
@@ -91,8 +93,10 @@ Loads the right context (decisions + standards + plan), then implements the task
    - Ask the user which plan to implement if not specified
    - Derive the slug from the plan filename (e.g. `fix-search-debounce`)
    - **Read the plan in full from the worktree path: `../furqan-<slug>/docs/plans/<slug>.md`**. If that path does not exist, fall back to `docs/plans/<slug>.md` in the main repo (older tasks pre-dating the worktree-first flow). Read every addendum, especially `Constraints` and `What NOT to Do` — the newest addendum is the source of truth.
-   - Find the plan's Trello card (linked in the plan) and move it to **In Progress** (`mcp__trello__move_card`) before starting implementation.
-   - Assign the card to the person starting the task: read `TRELLO_API_KEY`/`TRELLO_TOKEN` from `.mcp.json` (`mcpServers.trello.env`) and call `GET https://api.trello.com/1/members/me?key=<key>&token=<token>&fields=id,fullName,username` to resolve the authenticated member directly from the token — this identifies the actual Trello account regardless of local git config. Then `mcp__trello__assign_member_to_card` with that member's `id`. Never print or log the key/token values themselves. If the request fails (missing `.mcp.json`, network error), skip silently — don't block implementation over it.
+   - Find the plan's GitHub issue (linked in the plan) and move it to In Progress and assign it to yourself before starting implementation:
+     ```bash
+     gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:todo" --add-label "status:in-progress" --add-assignee @me
+     ```
 
 1b. **Set up worktree and start dev server**
 
@@ -104,7 +108,7 @@ Loads the right context (decisions + standards + plan), then implements the task
      - If the entry has no `port` (worktree was created by `/plan-fq-task` before the dev server step): skip steps 1–3 below and continue from step 4 to assign a port and start the dev server.
 
    **If no existing worktree** (rare — `/plan-fq-task` normally creates it; this path covers tasks planned before that flow or worktree revival):
-   1. Derive the branch name from the Trello card using the project convention: `<type>/<card-short-id>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
+   1. Derive the branch name from the GitHub issue using the project convention: `<type>/<issue-number>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
    2. Create the worktree — check whether the branch already exists first:
       ```bash
       # If branch does NOT exist yet (new task):
@@ -131,7 +135,7 @@ Loads the right context (decisions + standards + plan), then implements the task
 
       # if .mcp.json exists:
       ln -s $(pwd)/.mcp.json ../furqan-<slug>/.mcp.json
-      # .mcp.json must be present in the worktree so MCP servers (e.g. Trello) are
+      # .mcp.json must be present in the worktree so MCP servers (e.g. quranhub) are
       # available in sessions started from the worktree directory
       ```
    6. Assign a port — read `~/.claude/furqan-worktrees.json` (treat as `{}` if missing or empty), collect all `.port` values from existing entries, then find the lowest integer ≥ 3001 not already in use

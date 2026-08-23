@@ -1,11 +1,11 @@
-import { QuranFontScale, QuranSafhaView } from "@types";
-import { RecitationSettings } from "@/app/types/recitation";
+import { DesktopQuranFontSize, QuranSafhaView } from "@types";
+import { RecitationDownloadItem, RecitationSettings } from "@/app/types/recitation";
 
-export type StorageKey = 'theme' | 'quranFontScale' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage';
+export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'lastReadPath' | 'keepScreenAwake' | 'recitationDownloads';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
-  quranFontScale: QuranFontScale;
+  desktopQuranFontSize: DesktopQuranFontSize;
   quranSafhaView: QuranSafhaView;
   recitationSettings: RecitationSettings;
   // Active mushaf edition (ADR 0033). `quranTajweedMode` is the superseded
@@ -16,6 +16,21 @@ type StorageValueType = {
   // active at the time — same convention as any deep link, see
   // MushafSwitchSync). Never written for the shared-mushaf grant reader.
   lastReadPage: number;
+  // The same position as a full locale-prefixed path ("/ar/pages/300"), written
+  // together with lastReadPage from the one site in LastReadPageContext. It
+  // exists for public/launch.html, which runs before React and therefore has no
+  // way to resolve a locale — storing the path means that script needs no
+  // locale detection at all (ADR 0042). Two write sites would let the launch
+  // redirect and ContinueReadingLink disagree about where the user left off.
+  lastReadPath: string;
+  // Whether the mobile/tablet Wake Lock toggle is on. Default true, applied
+  // when this key is absent (never written yet) — see KeepScreenAwakeContext.
+  keepScreenAwake: boolean;
+  // Deliberately-downloaded offline recitation items (ADR 0046) — the source
+  // of truth for what's downloaded; Cache Storage alone can't tell a
+  // deliberate download apart from a page asset merely shared with the bulk
+  // PWA cache.
+  recitationDownloads: RecitationDownloadItem[];
 };
 
 export const storage = {

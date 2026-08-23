@@ -33,6 +33,7 @@ export const RecitationPlayerBar = () => {
     togglePlayPause,
     stop,
     openSettings,
+    playbackError,
   } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
   const pathname = usePathname();
@@ -93,7 +94,7 @@ export const RecitationPlayerBar = () => {
           aria-pressed={isPlaying}
           onClick={handlePlayPause}
           disabled={isLoading}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground shrink-0 disabled:opacity-60"
+          className="fq-icon-chip flex items-center justify-center w-9 h-9 rounded-full shrink-0 disabled:opacity-60"
         >
           {isLoading ? (
             <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -125,7 +126,13 @@ export const RecitationPlayerBar = () => {
               </button>
             )}
           />
-          <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
+          {isIdle && playbackError === "offline-unavailable" ? (
+            <p className="truncate text-xs text-destructive">
+              {t("recitation.offlineUnavailable", "Not available offline")}
+            </p>
+          ) : (
+            <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
+          )}
         </div>
 
         {isOnReaderRoute ? (
@@ -156,7 +163,7 @@ export const RecitationPlayerBar = () => {
           type="button"
           aria-label={t("recitation.settingsTitle", "Recitation settings")}
           onClick={() => openSettings()}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+          className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors shrink-0"
         >
           <SettingsIcon className="size-4" strokeWidth={1.8} />
         </button>
@@ -166,7 +173,7 @@ export const RecitationPlayerBar = () => {
             type="button"
             aria-label={t("recitation.stop", "Stop")}
             onClick={stop}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent transition-colors shrink-0"
           >
             <Square className="size-4" strokeWidth={1.8} />
           </button>

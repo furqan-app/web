@@ -9,16 +9,29 @@ Read and follow [`docs/workflow/plan-task.md`](../../../docs/workflow/plan-task.
 
 After completing the ADR check (step 4 in the workflow doc), do these Claude-specific steps before writing the plan:
 
-## Step 5 — Ensure a Trello ticket
+## Step 5 — Ensure a GitHub issue
 
-Every task must have a Trello ticket on the "Furqan" board before implementation starts (see `mcp__trello__get_active_board_info`).
+Every task must have a GitHub issue on `furqan-app/web` before implementation starts.
 
-- Check whether a card already covers this work (`mcp__trello__get_cards_by_list_id` across the relevant lists, or ask the user if unsure).
-- If none exists, create one in the **Todo** list (`mcp__trello__add_card_to_list`):
-  - Title: the plan's task title
-  - Description: one-paragraph summary from the plan, plus a link/reference to `docs/plans/<slug>.md`
-  - Label: `Feature` or `Bug` matching the plan's `Type`
-- Note the card ID/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
+- Check whether an issue already covers this work: `gh issue list --search "<keywords>" --state open`, or ask the user if unsure.
+- If none exists, create one with `status:todo`:
+  ```bash
+  gh issue create --repo furqan-app/web --title "<plan title>" \
+    --body "<one-paragraph summary>\n\n_Plan: docs/plans/<slug>.md_" \
+    --label "status:todo"
+  ```
+- Set the native Issue Type (Task/Bug/Feature — separate from labels; the `gh` CLI has no flag for this, it's GraphQL-only):
+  ```bash
+  NODE_ID=$(gh api repos/furqan-app/web/issues/<issue-number> --jq .node_id)
+  gh api graphql -f query='
+    mutation($issueId: ID!, $issueTypeId: ID!) {
+      updateIssueIssueType(input: {issueId: $issueId, issueTypeId: $issueTypeId}) {
+        issue { number issueType { name } }
+      }
+    }' -f issueId="$NODE_ID" -f issueTypeId="<type-id>"
+  ```
+  Type IDs for this org (`furqan-app`): Task `IT_kwDOCyJLuM4BcAGi`, Bug `IT_kwDOCyJLuM4BcAGj`, Feature `IT_kwDOCyJLuM4BcAGk`. Use Bug/Feature matching the plan's `Type`; anything else stays `Task`.
+- Note the issue number/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
 
 ## Step 6 — Create the worktree
 
@@ -27,7 +40,7 @@ Derive the slug from the planned filename (e.g. `fix-search-debounce`). Then:
 - Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
 - If one exists, skip the rest of this step — the plan will be written into that worktree in step 7.
 - If none exists:
-  1. Derive the branch name from the Trello card: `<type>/<card-short-id>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
+  1. Derive the branch name from the GitHub issue: `<type>/<issue-number>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
   2. Check whether the branch already exists: `git branch --list <branch-name>`
      ```bash
      # Branch does NOT exist yet:
@@ -124,16 +137,19 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 
    If no new decisions: skip this step.
 
-5. **Ensure a Trello ticket exists**
+5. **Ensure a GitHub issue exists**
 
-   Every task must have a Trello ticket on the "Furqan" board before implementation starts (see `mcp__trello__get_active_board_info`).
+   Every task must have a GitHub issue on `furqan-app/web` before implementation starts.
 
-   - Check whether a card already covers this work (`mcp__trello__get_cards_by_list_id` across the relevant lists, or ask the user if unsure).
-   - If none exists, create one in the **Todo** list (`mcp__trello__add_card_to_list`):
-     - Title: the plan's task title
-     - Description: one-paragraph summary from the plan, plus a link/reference to `docs/plans/<slug>.md`
-     - Label: `Feature` or `Bug` matching the plan's `Type`
-   - Note the card ID/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
+   - Check whether an issue already covers this work: `gh issue list --search "<keywords>" --state open`, or ask the user if unsure.
+   - If none exists, create one with `status:todo`:
+     ```bash
+     gh issue create --repo furqan-app/web --title "<plan title>" \
+       --body "<one-paragraph summary>\n\n_Plan: docs/plans/<slug>.md_" \
+       --label "status:todo"
+     ```
+   - Set the native Issue Type via GraphQL (Task `IT_kwDOCyJLuM4BcAGi`, Bug `IT_kwDOCyJLuM4BcAGj`, Feature `IT_kwDOCyJLuM4BcAGk` — see Step 5 above for the exact call).
+   - Note the issue number/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
 
 6. **Create the worktree**
 
@@ -142,7 +158,7 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    - Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
    - If one exists, skip the rest of this step — the plan will be written into that worktree in step 7.
    - If none exists:
-     1. Derive the branch name from the Trello card using the project convention: `<type>/<card-short-id>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
+     1. Derive the branch name from the GitHub issue using the project convention: `<type>/<issue-number>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
      2. Check whether the branch already exists: `git branch --list <branch-name>`
         ```bash
         # Branch does NOT exist yet:
@@ -226,6 +242,6 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 - Do not skip the ADR check — run it explicitly before writing the plan.
 - Do not put the ADR check after the plan — it must come before.
 - Do not write plan files into the main repo working tree — they must go into the worktree created in step 6, addressed by its resolved **absolute** path. Writing to the main repo leaves them absent from the feature branch; writing via the relative `../furqan-<slug>` form has created stray directories outside the repo.
-- Do not create the worktree before the Trello card exists — the branch name is derived from the card.
+- Do not create the worktree before the GitHub issue exists — the branch name is derived from the issue number.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation (plans, COMPONENTS.md, DECISIONS.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

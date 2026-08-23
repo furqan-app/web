@@ -9,10 +9,13 @@ import { toLocaleNumeral } from "@/app/utils/i18n";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
 import { useVersePages } from "@hooks/use-verse-pages";
 import { useSidebar } from "@/app/contexts/SidebarContext";
+import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { cn } from "@/lib/utils";
 
 type Props = {
   rubs: RubWithVerses[];
   surahs: SurahResult[];
+  currentRubId?: number;
 };
 
 type JuzGroup = { juzNumber: number; rubs: RubWithVerses[] };
@@ -33,12 +36,13 @@ function buildJuzGroups(rubs: RubWithVerses[]): JuzGroup[] {
   return groups;
 }
 
-const RubList = ({ rubs, surahs }: Props) => {
+const RubList = ({ rubs, surahs, currentRubId }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
   const { data: versePages } = useVersePages();
   const { setOpen } = useSidebar();
+  const { jumpTo } = useReaderNavigation();
 
   // A rub starts at a verse, and which page that verse sits on depends on the
   // mushaf edition — 56 verses land on a different page between editions, so a
@@ -87,8 +91,20 @@ const RubList = ({ rubs, surahs }: Props) => {
                 href={`${basePath}/${pageOfVerse(rub.startVerse)}`}
                 locale={locale}
                 dir="rtl"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-[13px] border-b border-border bg-background hover:bg-accent transition-colors"
+                data-rub-id={rub.id}
+                onClick={(e) => {
+                  setOpen(false);
+                  // Same client-side handoff as SurahListItem — see there.
+                  if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  jumpTo(pageOfVerse(rub.startVerse));
+                }}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-[13px] border-b border-border transition-colors",
+                  rub.id === currentRubId
+                    ? "bg-primary/10"
+                    : "bg-background hover:bg-accent",
+                )}
               >
                 <div className="shrink-0 w-11 h-11">
                   {isHizbStart ? (

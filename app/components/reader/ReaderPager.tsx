@@ -16,10 +16,15 @@ import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { ReaderPageSync } from "@/app/components/reader/ReaderPageSync";
 import { MushafSwitchSync } from "@/app/components/reader/MushafSwitchSync";
+import { AndroidBackExitGuard } from "@/app/components/reader/AndroidBackExitGuard";
 import { useQuranSafhaView } from "@/app/contexts/QuranSafhaViewContext";
 import { useIsLgUp } from "@/app/hooks/use-is-lg-up";
+import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
+import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
+import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { storage } from "@/app/utils/storage";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
 import { ensurePageFonts, pageFontsReady } from "@/app/utils/page-font-registry";
 
@@ -118,12 +123,21 @@ const Panel = memo(function Panel({
   onNavigate,
 }: PanelProps) {
   const { rightPage, leftPage } = getPagePair(anchor);
-  const rightData = usePage(rightPage).data;
-  const leftData = usePage(leftPage).data;
+  const rightQuery = usePage(rightPage);
+  const leftQuery = usePage(leftPage);
+  const rightData = rightQuery.data;
+  const leftData = leftQuery.data;
+  // isPaused: React Query's default networkMode skips the fetch entirely
+  // while offline rather than erroring, so isError alone would miss the
+  // common case. isError still covers a genuine failure while online (e.g. a
+  // 404). Either way, with no data and no reason to expect one is coming, the
+  // card shows a notice instead of an indefinite skeleton (ADR 0014 Addendum 3).
+  const rightUnavailable = !rightData && (rightQuery.isPaused || rightQuery.isError);
+  const leftUnavailable = !leftData && (leftQuery.isPaused || leftQuery.isError);
   const { singleStepNav, pairStepNav } = computeSpreadNav(anchor, isRTL, basePath);
 
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="w-full shrink-0">
+    <div dir={isRTL ? "rtl" : "ltr"} className="fq-reader-panel w-full shrink-0">
       <div className="fq-reader-outer bg-background w-full min-h-[calc(100dvh-3.5rem)] pb-4 flex flex-col items-center justify-start md:justify-center px-0">
         <div className="fq-reader-spread-container w-full flex justify-center items-start md:items-center px-0 md:ps-14 md:pe-10 gap-0 md:gap-8">
           {/* Rendered whether or not the data has landed: the spread shows its
@@ -143,11 +157,13 @@ const Panel = memo(function Panel({
               pageId: rightPage,
               lines: rightData?.lines ?? null,
               pageMetadata: rightData?.pageMetadata ?? null,
+              unavailableOffline: rightUnavailable,
             }}
             leftPage={{
               pageId: leftPage,
               lines: leftData?.lines ?? null,
               pageMetadata: leftData?.pageMetadata ?? null,
+              unavailableOffline: leftUnavailable,
             }}
             isRTL={isRTL}
             locale={locale}
@@ -196,8 +212,10 @@ export function ReaderPager({
   const isRTL = getLanguageDirection(locale) === "rtl";
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
+  const isTablet = useIsTablet();
   const { toggleOverlay } = useNavOverlay();
   const { mushafId, edition } = useQuranMushaf();
+  const { setJumpTo } = useReaderNavigation();
 
   // Seed the SSR pair once, before children (usePage) render, so the initial page
   // paints synchronously from cache with no fetch/skeleton.
@@ -216,7 +234,9 @@ export function ReaderPager({
   const pageNumber = anchor;
   const { rightPage: curRightId, leftPage: curLeftId } = getPagePair(pageNumber);
 
-  const isDouble = view === "double" && isLgUp;
+  // Tablet is intentionally always a facing-page reader; desktop keeps the
+  // stored single/double preference and mobile remains one page at a time.
+  const isDouble = isTablet || (view === "double" && isLgUp);
   const nextAnchor = stepAnchor(pageNumber, true, isDouble);
   const prevAnchor = stepAnchor(pageNumber, false, isDouble);
 
@@ -236,6 +256,28 @@ export function ReaderPager({
   // bet on. Only a neighbor-step commit updates it; a jump to an arbitrary page
   // (recitation follow, edition switch) leaves the last known direction alone.
   const lastDirection = useRef<"next" | "prev">("next");
+  // The in-flight animated commit, so new input can TAKE OVER from it rather than
+  // be dropped (Trello #153, ADR 0028 Addendum 2026-08-11). `animateCommit`'s slide
+  // used to finish on an unstored `setTimeout`, which nothing could cancel — the
+  // reason input during the window had to be discarded. Holding the id plus its
+  // target makes the turn settleable on demand.
+  const inFlight = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    target: number;
+  } | null>(null);
+
+  // Land an in-flight turn immediately, then let the caller proceed as if nothing
+  // were in flight. It SETTLES rather than aborts: the user already committed to
+  // that turn past the threshold, so dropping it would lose a page they asked for.
+  // Safe to call from an event handler — `commitTo`'s `flushSync` is a top-level
+  // flush here, not nested inside another one.
+  const settleInFlight = () => {
+    const pending = inFlight.current;
+    if (!pending) return;
+    inFlight.current = null;
+    clearTimeout(pending.timer);
+    commitTo(pending.target);
+  };
 
   // Swap the anchor and re-center atomically. The panel revealed during the drag
   // (an outer slot) and the panel that must sit at the -100% rest slot are
@@ -267,6 +309,15 @@ export function ReaderPager({
   // edition changes and the same verse now lives on a different page.
   const jumpTo = useCallback(
     (target: number) => {
+      // An edition switch relocates the reader by verse, so a page step still in
+      // flight is meaningless — CANCEL it (do not settle it), or its timer would
+      // fire 300ms later and overwrite the re-anchor, URL included.
+      const pending = inFlight.current;
+      if (pending) {
+        inFlight.current = null;
+        clearTimeout(pending.timer);
+        isCommitting.current = false;
+      }
       window.history.replaceState(null, "", `${basePath}/${target}`);
       const strip = stripRef.current;
       if (strip) strip.style.transition = "none";
@@ -302,7 +353,15 @@ export function ReaderPager({
       // next lives in the left slot (reveal by dragging right → toward 0%);
       // prev in the right slot (toward -200%).
       strip.style.transform = `translateX(${goNext ? "0%" : "-200%"})`;
-      window.setTimeout(() => commitTo(target), EXIT_MS);
+      // Handle stored so new input can settle this turn early instead of being
+      // dropped, and so jumpTo/unmount can cancel it outright.
+      inFlight.current = {
+        target,
+        timer: setTimeout(() => {
+          inFlight.current = null;
+          commitTo(target);
+        }, EXIT_MS),
+      };
     },
     [nextAnchor, prevAnchor, commitTo],
   );
@@ -322,6 +381,10 @@ export function ReaderPager({
   const followTo = useCallback(
     (target: number) => {
       queueMicrotask(() => {
+        // Deliberately does NOT take over an in-flight turn the way user input
+        // does: follow is automatic, and truncating a turn the reader started
+        // would have playback fighting the finger. It converges — the next
+        // recitedPage/anchor change re-checks.
         if (isDragging.current || isCommitting.current) return;
         commitTo(target);
       });
@@ -334,7 +397,17 @@ export function ReaderPager({
   // no-flicker recenter. A ref holds the latest impl (fresh nextAnchor/prevAnchor).
   const navRef = useRef<(targetPage: number) => void>(() => {});
   navRef.current = (targetPage: number) => {
-    if (isCommitting.current) return;
+    // Land the in-flight turn, then RE-ENTER through the ref rather than falling
+    // through. This closure's `nextAnchor`/`prevAnchor` (and `animateCommit`) are
+    // pre-settle and would resolve to the wrong page — but `commitTo`'s `flushSync`
+    // re-renders synchronously, so by the time settleInFlight returns, navRef.current
+    // is a fresh closure with the settled anchors. It cannot recurse: the fresh call
+    // sees inFlight cleared.
+    if (inFlight.current) {
+      settleInFlight();
+      navRef.current(targetPage);
+      return;
+    }
     // Arrow hrefs are locale-visual; map the destination to the physical next/prev
     // slot. A click never animates (animate=false) — no drag to continue.
     if (targetPage === nextAnchor) animateCommit(true, false);
@@ -342,6 +415,89 @@ export function ReaderPager({
     else commitTo(targetPage);
   };
   const onArrowNavigate = useCallback((targetPage: number) => navRef.current(targetPage), []);
+
+  // Direction-based stepping for the keyboard, with the same settle-then-re-enter
+  // handoff as navRef (and for the same staleness reason).
+  const stepRef = useRef<(goNext: boolean) => void>(() => {});
+  stepRef.current = (goNext: boolean) => {
+    if (inFlight.current) {
+      settleInFlight();
+      stepRef.current(goNext);
+      return;
+    }
+    animateCommit(goNext, false);
+  };
+
+  // Cancel an in-flight turn on unmount. Its timer would otherwise fire after
+  // teardown and run `history.replaceState`, rewriting the URL of whatever route
+  // the user navigated to — possible only now that the handle is stored.
+  useEffect(() => {
+    return () => {
+      const pending = inFlight.current;
+      if (!pending) return;
+      inFlight.current = null;
+      clearTimeout(pending.timer);
+    };
+  }, []);
+
+  // Publishes jumpTo into ReaderNavigationContext so a Link that would
+  // otherwise trigger a full navigation (SurahListItem, RubList,
+  // ContinueReadingLink) can move this already-mounted pager client-side
+  // instead — no network round trip, works offline for any precached page.
+  // Cleared on unmount so those callers fall back to normal navigation once no
+  // pager is mounted (ADR 0014 Addendum 3).
+  useEffect(() => {
+    // setJumpTo already wraps its argument in the () => fn form required to
+    // store a function in useState (see ReaderNavigationContext) — wrapping
+    // it again here would store a function that RETURNS jumpTo instead of
+    // one that calls it, silently breaking every jumpTo() call site.
+    setJumpTo(jumpTo);
+    return () => setJumpTo(null);
+  }, [jumpTo, setJumpTo]);
+
+  // Self-correction for the offline navigation fallback (ADR 0014 Addendum 3):
+  // when the service worker's setCatchHandler serves the precached page-1
+  // document in place of a failed navigation, the SSR props describe page 1
+  // but the address bar still names whatever page (or route) was actually
+  // requested. Reader-path requests (`{basePath}/{id}`) correct to that id;
+  // anything else (a failed `/` or `/{locale}` cold launch) falls back to the
+  // last-read page, which defaults to 1 when nothing is known yet. A real
+  // online navigation already has a matching pathname, so this is a no-op
+  // there — mount-only, so it never fights a normal swipe/commit afterward.
+  //
+  // The locale prefix is stripped from BOTH sides before matching: this effect
+  // also runs on a remount triggered by a locale change, where the URL still
+  // names the old locale while `basePath` already names the new one. Comparing
+  // them raw discarded a perfectly good page id and fell through to the
+  // last-read branch (#288). Everything after the locale is compared exactly,
+  // so the grant reader's longer `/mushaf/{grant}/pages` base still matches
+  // only itself.
+  //
+  // `lastReadPage` is read from storage rather than LastReadPageContext: a
+  // locale change remounts the provider, so the context reads back its
+  // hydration default of 1 at exactly this moment. Safe as a one-shot read
+  // because this runs once on mount and needs the value now, not live (unlike
+  // the always-mounted nav link).
+  //
+  // A LAYOUT effect, deliberately (ADR 0042). As a plain useEffect this ran
+  // after paint, so page 1's words were on screen before the jump — the
+  // "brief page-1 flash" ADR 0014 Addendum 3 had accepted as a trade-off.
+  // jumpTo is fully synchronous (it calls setAnchor directly), so re-anchoring
+  // here lands in the same frame and page 1 never reaches the screen; the
+  // requested page shows the loading spread ADR 0034 already requires for an
+  // uncached page. Do not revert this to useEffect.
+  useIsomorphicLayoutEffect(() => {
+    const stripLocale = (p: string) => p.replace(/^\/[a-z]{2}(?=\/|$)/, "");
+    const pathname = stripLocale(window.location.pathname);
+    const base = stripLocale(basePath);
+    const isReaderPath = pathname.startsWith(`${base}/`);
+    const match = isReaderPath ? pathname.slice(base.length + 1).match(/^(\d+)$/) : null;
+    const requestedPage = match ? Number(match[1]) : (storage.get("lastReadPage") ?? 1);
+    if (requestedPage !== initialPage && requestedPage >= 1 && requestedPage <= TOTAL_PAGES) {
+      jumpTo(requestedPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Physical ArrowLeft/ArrowRight keys commit the same page step as the click
   // arrows, instantly (animate=false). Direction is locale-independent: tracing
@@ -369,15 +525,22 @@ export function ReaderPager({
       ) {
         return;
       }
-      if (isCommitting.current) return;
-      animateCommit(e.key === "ArrowLeft", false);
+      // Takes over an in-flight turn rather than being dropped (#153); stepRef
+      // settles it and re-enters with fresh anchors.
+      stepRef.current(e.key === "ArrowLeft");
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [animateCommit]);
+    // stepRef is a ref — stable, and always holds the latest impl.
+  }, []);
 
   const onTouchStart = (e: React.TouchEvent) => {
-    if (isCommitting.current) return;
+    // A gesture arriving mid-turn TAKES OVER: land the in-flight turn immediately,
+    // then drag from the page it landed on. Settling (not aborting) keeps the turn
+    // the user already committed to past the threshold. Everything after this runs
+    // exactly as it would with nothing in flight — which is why onTouchMove and
+    // onTouchEnd need no commit-awareness at all.
+    settleInFlight();
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isDragging.current = false;
@@ -395,6 +558,9 @@ export function ReaderPager({
     if (!isDragging.current && Math.abs(deltaX) <= Math.abs(deltaY)) return;
     isDragging.current = true;
     if (!stripRef.current) return;
+    // See globals.css's `.fq-dragging` rule (ADR 0023 Addendum 8) — suppresses
+    // the word hover filter/transform for the duration of the drag.
+    stripRef.current.classList.add("fq-dragging");
     stripRef.current.style.transition = "none";
     // Anchored to the -100% rest so the neighbor already sitting beside the
     // current panel is revealed as the finger moves.
@@ -411,6 +577,7 @@ export function ReaderPager({
 
     const strip = stripRef.current;
     if (!strip) return;
+    strip.classList.remove("fq-dragging");
 
     if (Math.abs(deltaX) < COMMIT_THRESHOLD) {
       strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
@@ -423,6 +590,26 @@ export function ReaderPager({
 
     // Quran is always RTL: swipe right = next page, swipe left = previous.
     animateCommit(deltaX > 0);
+  };
+
+  // A browser-cancelled touch (system back-gesture, scroll takeover, multi-touch)
+  // never reaches onTouchEnd. Without this, isDragging stays stuck true and wedges
+  // both followTo and the Stage B lookahead for the rest of the session — a
+  // pre-existing gap, fixed here because it is one line of state to reset.
+  const onTouchCancel = () => {
+    touchStartX.current = null;
+    touchStartY.current = null;
+    const wasDragging = isDragging.current;
+    isDragging.current = false;
+    const strip = stripRef.current;
+    if (strip) strip.classList.remove("fq-dragging");
+    if (wasDragging && !isCommitting.current && strip) {
+      strip.style.transition = `transform ${SNAP_BACK_MS}ms ${EASE_OUT}`;
+      strip.style.transform = "translateX(-100%)";
+      snapClearTimer.current = setTimeout(() => {
+        strip.style.transition = "";
+      }, SNAP_BACK_MS);
+    }
   };
 
   const currentPageWords = pageNumber === curRightId ? rightData : leftData;
@@ -530,6 +717,7 @@ export function ReaderPager({
         firstVerseKey={firstVerseKey}
         onReanchor={jumpTo}
       />
+      <AndroidBackExitGuard active={!grantId} />
       <link
         rel="preload"
         href={edition.fontUrl(pageNumber)}
@@ -537,11 +725,17 @@ export function ReaderPager({
         type="font/woff2"
         crossOrigin="anonymous"
       />
+      {/* fq-reader-pager-viewport: marker only. On the mobile/tablet breakpoints
+          globals.css makes this box `position: fixed; inset: 0`, so the reader's
+          height comes from the initial containing block and never from a viewport
+          unit — in the installed PWA those units go stale across the fullscreen
+          transition and leave the reader taller than the screen (ADR 0044). */}
       <div
-        className="w-full overflow-hidden"
+        className="fq-reader-pager-viewport w-full overflow-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
         onClick={(e) => {
           if (!e.currentTarget.contains(e.target as Node)) return;
           toggleOverlay();

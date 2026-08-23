@@ -24,6 +24,7 @@ Plan → Implement → Review → Ship → Retrospect
 |---|---|---|
 | `/plan-fq-task` | [plan-task.md](plan-task.md) | Socratic planning → `docs/plans/<slug>.md` |
 | `/start-fq-task` | [start-task.md](start-task.md) | Implement from a plan, load all context |
+| `/check-fq-standards` | [check-fq-standards.md](check-fq-standards.md) | Pre/post-implementation guardrail vs DECISIONS.md + engineering bar |
 | `/review-fq-work` | [review-work.md](review-work.md) | Code review on current branch diff |
 | `/ship-fq-task` | [ship-task.md](ship-task.md) | Commit → push → PR → ticket update |
 | `/retrospect` | [retrospect.md](retrospect.md) | End-of-session retrospective |
@@ -40,9 +41,8 @@ Plan → Implement → Review → Ship → Retrospect
 | Trigger | Instructions | Description |
 |---|---|---|
 | `/release <bump>` | [release.md](release.md) | Full orchestration: cut → staging → prod → sync |
-| `/cut-release <bump>` | [release.md](release.md) | Branch, bump version, tag, push |
-| `/promote-to-staging <ver>` | [release.md](release.md) | Open release → `stg` PR |
-| `/promote-release <ver>` | [release.md](release.md) | Open release → `prod` PR |
+| `/cut-release <bump>` | [release.md](release.md) | Branch, bump version, tag, push, promote to `stg` (GitHub Action) |
+| `/promote-release` | [release.md](release.md) | Open+auto-merge release → `prod` PR, version auto-detected (GitHub Action) |
 | `/sync-main-from-prod` | [release.md](release.md) | Sync `prod` back into `main` after release |
 
 ### Doc & UI Utilities
