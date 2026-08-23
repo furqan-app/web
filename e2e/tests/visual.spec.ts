@@ -23,11 +23,6 @@ const SETTINGS_LABEL: Record<Locale, string> = {
   ar: "الإعدادات",
   en: "Settings",
 };
-// UserMenu trigger
-const ACCOUNT_LABEL: Record<Locale, string> = {
-  ar: "حسابي",
-  en: "Account",
-};
 // The results dropdown's surah heading, which SearchQueryResults renders only
 // once `chapters.length > 0` — so it cannot match before results exist. Matched
 // by prefix because the count is rendered inside it as a localized numeral.
@@ -128,16 +123,12 @@ for (const locale of LOCALES) {
     });
 
     test.describe(`settings sheet (${suffix})`, () => {
-      test("open settings sheet", async ({ page }, testInfo) => {
+      test("open settings sheet", async ({ page }) => {
         await withTheme(page, theme);
         await page.goto(`/${locale}`);
-        // Settings is in the nav row on desktop (as a button), but behind the UserMenu on mobile (as a menuitem).
-        if (testInfo.project.name === "mobile") {
-          await page.getByRole("button", { name: ACCOUNT_LABEL[locale] }).click();
-          await page.getByRole("menuitem", { name: SETTINGS_LABEL[locale] }).click();
-        } else {
-          await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
-        }
+        // Settings is a button in the nav row at every breakpoint (design migration,
+        // ADR 0047 subtask 3.2) — no longer tucked behind the UserMenu on mobile.
+        await page.getByRole("button", { name: SETTINGS_LABEL[locale] }).click();
         // Sheet slide-in animation.
         await page.waitForTimeout(600);
         await expect(page).toHaveScreenshot(`settings-${suffix}.png`);
