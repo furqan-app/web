@@ -33,5 +33,11 @@ export const usePage = (page: number) => {
     queryKey: pageQueryKey(page, mushafId),
     queryFn: () => fetchPageAPI(page, mushafId),
     staleTime: Infinity,
+    // Fetch through the service worker's CacheFirst rules even when
+    // navigator.onLine === false, so a downloaded-but-unvisited page renders
+    // offline instead of pausing forever (pwa-offline-support.md Addendum 6).
+    // refetchOnReconnect stays default: loaded pages are immune via
+    // staleTime Infinity; errored ones self-heal on reconnect.
+    networkMode: "always",
   });
 };

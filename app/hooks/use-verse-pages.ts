@@ -17,5 +17,9 @@ export const useVersePages = () => {
     queryKey: ["verse-pages", mushafId],
     queryFn: () => fetchVersePages(mushafId),
     staleTime: Infinity,
+    // Same rationale as usePage (pwa-offline-support.md Addendum 6): the
+    // verse-pages JSON is SW-cached and immutable — fetch it even while
+    // navigator.onLine is false instead of pausing.
+    networkMode: "always",
   });
 };

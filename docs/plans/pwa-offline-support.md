@@ -692,3 +692,70 @@ Walked through and confirmed by the user 2026-08-23:
   JSON+font render beats racing for SSR HTML that adds nothing.
 - 3s race timeout (user confirmed 2026-08-23).
 - Late fetch finishes and caches (user confirmed 2026-08-23).
+
+# Addendum 6 (2026-08-23): No reader reload/skeleton flicker on network toggle
+
+**Type:** bug
+**Status:** implemented (lint + typecheck clean; browser/offline verification pending — see
+pwa-testing standard)
+**Issue:** https://github.com/furqan-app/web/issues/377 (epic #375)
+
+## Summary
+
+Toggling the device's network connection while viewing a safha in the PWA pauses and re-evaluates
+React Query fetches: the default `networkMode: "online"` skips `queryFn` entirely whenever
+`navigator.onLine === false`, so a fetch that would be served instantly by the service worker's
+`CacheFirst` rule never even runs — an offline swipe to a downloaded-but-unvisited page shows the
+unavailable-offline notice instead of the page. Pause/resume churn around connection events is also
+the flicker class this issue reports.
+
+## Approach
+
+Two-line config change on exactly the immutable-content queries; nothing else.
+
+- `app/hooks/use-quran-page.ts` (`usePage`) and `app/hooks/use-verse-pages.ts` (`useVersePages`)
+  gain `networkMode: "always"`. Their `fetch()` goes through the SW's CacheFirst rules for
+  `/quran/pages/...` and `/quran/verse-pages/...`, so it succeeds offline from cache, errors cleanly
+  when genuinely unavailable, and is untouched online.
+- `refetchOnReconnect`/`refetchOnWindowFocus` stay at their **defaults**: with `staleTime: Infinity`
+  a successfully-loaded page can never go stale, so reconnect can never refetch it — disabling those
+  options would only kill the self-healing of a query that *errored* offline (no data = stale), which
+  is exactly what should resolve into the page when the connection returns.
+- `usePageVerseBounds` is deliberately excluded: its `/api/...` route has no SW cache rule, so
+  `"always"` would only convert a clean pause into an error storm offline.
+- Audit result (no code change): every `useOnlineStatus` consumer (RecitationContext,
+  MarkModal, plans widgets, OfflineRecitationSheet, use-pwa-precache) gates an affordance and never
+  remounts reader state; `useSwUpdate` only prompts via banner; `QuranSafha`'s fontReady Set is
+  network-independent. The flicker class lives entirely in React Query's pause/resume churn.
+
+## Verified Test Cases
+
+Confirmed by the user 2026-08-23:
+
+1. Airplane mode + complete precache, swipe to a downloaded-but-unvisited page → renders from SW
+   cache (broken today — paused fetch never reaches the cache).
+2. Wi-Fi toggles while viewing a loaded page → nothing happens; data fresh forever.
+3. Reconnect after a failed page load → auto-heals into the page (default `refetchOnReconnect`).
+4. Marks/plans/session behavior unchanged (still online-only notices per ADR 0014).
+
+## Files to Change
+
+- `app/hooks/use-quran-page.ts` — add `networkMode: "always"` to `usePage`.
+- `app/hooks/use-verse-pages.ts` — add `networkMode: "always"` to `useVersePages`.
+
+## Constraints
+
+- ReaderPager's `unavailableOffline` derivation (`!data && (isPaused || isError)`) stays as-is — with
+  `"always"` the paused half simply stops firing for these queries; the errored half covers genuine
+  unavailability.
+- Marks operations remain online-only (ADR 0014); do not extend `networkMode` changes to any dynamic
+  hook.
+
+## What NOT to Do
+
+- Do not disable `refetchOnReconnect`/`refetchOnWindowFocus` on the content queries (the issue text
+  suggests it) — loaded pages are immune via `staleTime: Infinity`; disabling only removes offline-
+  error self-healing on reconnect.
+- Do not set `networkMode: "always"` globally on the QueryClient — marks/plans writes must keep their
+  online-aware semantics.
+- Do not touch `usePageVerseBounds` or add SW caching for its API route here — out of scope (#377).
