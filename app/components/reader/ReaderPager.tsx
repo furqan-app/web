@@ -514,6 +514,11 @@ export function ReaderPager({
     if (requestedPage !== initialPage && requestedPage >= 1 && requestedPage <= TOTAL_PAGES) {
       jumpTo(requestedPage);
     }
+    // Lift ReaderPage's pre-paint jump gate (issue #405 fix C) in the same
+    // frame as the correction — the strip becomes visible showing the requested
+    // page, never the SSR document's own page. Runs whether or not jumpTo fired
+    // (a matching pathname means the gate never engaged, so this is a no-op).
+    document.documentElement.classList.remove("fq-pending-jump");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -698,6 +703,13 @@ export function ReaderPager({
             queryKey: pageQueryKey(page, mushafId),
             queryFn: () => fetchPageAPI(page, mushafId),
             staleTime: Infinity,
+            // Must match usePage: with the default "online" mode an offline
+            // swipe creates a PAUSED prefetch, and React Query then blocks
+            // that page's mount fetch behind the paused retryer's promise
+            // (Query.fetch returns the in-flight promise when data is
+            // undefined) — the page hangs on skeleton even though its JSON
+            // is in the SW cache (#405, Addendum 7 fix A).
+            networkMode: "always",
           }),
         ),
       );

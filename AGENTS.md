@@ -89,7 +89,7 @@ Load these before starting any task:
 
 ## Task tracking
 
-The workflow tracks tasks as GitHub Issues on `furqan-app/web` — no MCP setup needed, agents use the `gh` CLI (or `gh-axi`) directly. Status is a `status:*` label (`backlog` → `todo` → `in-progress` → `in-review` → `to-be-released` → closed); type is the native GitHub Issue Type (Task/Bug/Feature), not a label.
+The workflow tracks tasks as GitHub Issues on `furqan-app/web` — no MCP setup needed, agents use the `gh` CLI (or `gh-axi`) directly. Status is a `status:*` label (`backlog` → `todo` → `in-progress` → `in-review` → `to-be-released` → `done`, closed at prod promote); type is the native GitHub Issue Type (Task/Bug/Feature), not a label. Labels sync to the Furqan Kanban board (project #3) automatically via `issue-status-to-project.yml`; skills also call `.claude/skills/scripts/sync-issue-board-status.sh` directly as a fallback.
 
 ## Releases
 

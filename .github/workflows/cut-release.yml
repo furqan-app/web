@@ -80,7 +80,7 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Milestone and close queued issues
+      - name: Milestone queued issues
         id: issues
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -98,8 +98,8 @@ jobs:
               title="${rest%%|*}"
               url="${rest##*|}"
               gh issue edit "$n" --repo "${{ github.repository }}" --milestone "$version"
-              gh issue edit "$n" --repo "${{ github.repository }}" --remove-label "status:to-be-released"
-              gh issue close "$n" --repo "${{ github.repository }}"
+              # Keep the issue open and labeled status:to-be-released — /promote-release
+              # marks it done and closes it when the version reaches prod.
               body+="- $title ($url)\n"
             done
           fi
