@@ -163,7 +163,7 @@ export const RecitationPlayerBar = () => {
               <button
                 type="button"
                 aria-expanded={open}
-                className="fq-recitation-reciter-name fq-focus-ring flex min-w-0 items-center gap-1 truncate rounded-md text-sm font-medium text-foreground"
+                className="fq-recitation-reciter-name fq-focus-ring flex min-w-0 items-center gap-1 truncate rounded-md text-xs font-normal md:text-sm md:font-medium text-foreground"
               >
                 <span className="truncate">
                   {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
