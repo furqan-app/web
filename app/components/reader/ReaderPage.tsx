@@ -35,17 +35,37 @@ export const ReaderPage = async ({
   const initialRightData = await getPageWords(rightPageId);
   const initialLeftData = await getPageWords(leftPageId);
 
+  // Pre-paint jump gate (issue #405, plan Addendum 7 fix C). When this static
+  // document is served as the offline fallback (SW catch handler / slow-network
+  // race), the URL names a different page than the SSR content — today page 1's
+  // words painted during hydration, before ReaderPager's correction layout
+  // effect could run (the "Al-Fatiha flash" on a reconnect document reload).
+  // This inline script runs at parse time, BEFORE the reader content below
+  // paints: whenever the URL does not already name exactly this page — a
+  // reader path with another id, OR a non-reader URL (`/`, `/{locale}`) that
+  // the catch handler served this document for — it hides the pager strip via
+  // the `fq-pending-jump` class, which ReaderPager's correction effect removes
+  // in the same frame as its jumpTo. Plain <script> in a Server Component —
+  // same pattern as the theme flash-prevention script in the root layout (the
+  // ADR 0020 restriction is scoped to @font-face-bearing <style>, not
+  // scripts). The 2s timer is the bounded-reveal safety: a failed correction
+  // must resolve to the fallback's own content, never a permanent blank.
+  const jumpGateScript = `(function(){try{var m=location.pathname.match(/\\/pages\\/(\\d+)/);if(!m||Number(m[1])!==${pageNumber}){var d=document.documentElement;d.classList.add("fq-pending-jump");setTimeout(function(){d.classList.remove("fq-pending-jump")},2000)}}catch(e){}})();`;
+
   return (
-    <ReaderPager
-      initialPage={pageNumber}
-      rightPageId={rightPageId}
-      leftPageId={leftPageId}
-      initialRightData={initialRightData}
-      initialLeftData={initialLeftData}
-      locale={locale}
-      basePath={basePath}
-      grantId={grantId}
-      viewingOwnerName={viewingOwnerName}
-    />
+    <>
+      <script dangerouslySetInnerHTML={{ __html: jumpGateScript }} />
+      <ReaderPager
+        initialPage={pageNumber}
+        rightPageId={rightPageId}
+        leftPageId={leftPageId}
+        initialRightData={initialRightData}
+        initialLeftData={initialLeftData}
+        locale={locale}
+        basePath={basePath}
+        grantId={grantId}
+        viewingOwnerName={viewingOwnerName}
+      />
+    </>
   );
 };

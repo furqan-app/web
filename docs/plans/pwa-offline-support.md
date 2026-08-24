@@ -759,3 +759,189 @@ Confirmed by the user 2026-08-23:
 - Do not set `networkMode: "always"` globally on the QueryClient — marks/plans writes must keep their
   online-aware semantics.
 - Do not touch `usePageVerseBounds` or add SW caching for its API route here — out of scope (#377).
+
+---
+
+# Addendum 7 (2026-08-24): Network transitions are invisible for fully-downloaded users
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `build:local` clean; fallback-path gate verified in a
+production build via Playwright — see Verification below; stg device verification of the user's
+live repro pending)
+**Issue:** https://github.com/furqan-app/web/issues/405 (epic #375)
+
+## Summary
+
+Product rule (user-confirmed 2026-08-24): **a user with the complete offline download must never
+see any re-render, skeleton, reload, or wrong-page flash when the network connection toggles** —
+offline or back online. Skeleton/unavailable states are acceptable only for pages outside the
+download (no download run, partial, or non-default edition). Two violations remain after Addendum 6:
+
+1. **Offline swipe skeleton cycle.** Prod (v1.8.0) predates Addendum 6's fix (#401 — unreleased at
+   report time). Independently, main still has a residual gap: the pager's neighbor prefetch
+   (`warmJson`, `ReaderPager.tsx` ~line 697) uses `queryClient.prefetchQuery` **without**
+   `networkMode: "always"`. Offline, each swipe commit creates a *paused* prefetch for the next
+   page; when that page's `usePage` observer mounts, React Query's `Query.fetch` finds an existing
+   non-idle fetch with no data and returns the paused retryer's promise instead of starting a new
+   fetch — so the mount fetch never reaches the SW cache and the panel hangs on skeleton. Swiping
+   back and forth across the cached/paused boundary replays the cycle.
+
+2. **Reconnect re-initialization.** Repro (stg = current main, Addendum 6 live): cold-launch
+   offline → fallback document → `jumpTo` corrects to last-read (page 50). Toggle wifi back on
+   while reading page 50 → the view replays the entire launch fallback path: a flash of page 1
+   (Al-Fatiha), then the skeleton, then page 50's content again. The reader is being
+   re-initialized from scratch at the reconnect moment — replaying "page-1 shell → correct → load
+   current page". Nothing in the app listens to `online` to reload or navigate (audited:
+   `use-online-status` only sets state; no `router.refresh`/`location.reload` outside the
+   tap-gated `useSwUpdate` banner), so the trigger is structural — either a full document reload
+   (OS-initiated, e.g. Android restoring a discarded renderer) or a client-side remount of
+   `ReaderPager` (e.g. a reconnect-refetched query transiently changing a key/ancestor, reverting
+   the pager to its SSR-seeded `initialPage` = 1 from the fallback document).
+
+## Approach
+
+Three workstreams, in order:
+
+**A. Unblock offline prefetch (certain fix).** Add `networkMode: "always"` to `warmJson`'s
+`prefetchQuery` options in `ReaderPager.tsx`, matching `usePage`. Offline prefetches then resolve
+through the SW's CacheFirst rules instead of pausing, and can no longer block the mount fetch.
+
+**B. Identify and eliminate the reconnect trigger (diagnose then fix).** Reproduce on a local
+production build (`build:local && npm start` — Serwist is disabled in dev) with the offline
+download complete: cold-launch offline, correct to a mid-mushaf page, reconnect, observe.
+Instrument to distinguish the two candidates:
+
+| Observation | Diagnosis | Fix |
+|---|---|---|
+| `performance.getEntriesByType("navigation")` shows a new document / app shell re-boots | Document reload (OS-initiated or fallback-path navigation) | Hardening C below; the reload itself is out of our control |
+| No new document; React tree remounts the pager (log in `ReaderPager` mount effect) | Structural client remount — find which reconnect-refetched query flips a key/ancestor (`MushafSwitchSync`, mushaf/grant/session queries are the suspects) | Make that refetch non-structural (`placeholderData: keepPreviousData`, or guard the key/ancestor against transient undefined) — reconnect must not change the mounted tree |
+
+**C. Flash hardening (do regardless of B's diagnosis).** When the reader mounts and
+`location.pathname`'s page id differs from the SSR-seeded `initialPage` (the fallback-document
+signature), render the skeleton-until-corrected state instead of painting page 1's content first.
+The Al-Fatiha flash is the post-hydration gap between first paint of the fallback document and the
+`jumpTo` layout-effect correction; gating the first paint on "correction not yet applied" removes
+it for every path that reaches the fallback (cold launch, reconnect reload), with no new
+SW/client protocol. This **revokes Addendum 3's accepted trade-off** ("brief page-1 flash then
+corrects — accepted"): it is no longer accepted.
+
+## Decision Tree / Algorithm
+
+| # | State | Network toggles | Expected behavior |
+|---|---|---|---|
+| 1 | Full download, page rendered | offline → online | **Nothing changes on screen.** No skeleton, no reload, no page-1 flash, no progress-bar redraw |
+| 2 | Full download, swipe offline (any of the 604 pages) | — | Renders from SW cache, seamless (Addendum 6 + fix A) |
+| 3 | Full download, reconnect reloads the document anyway (OS-initiated) | — | Fallback path shows skeleton-until-corrected, then the last-read page — never page 1's content (fix C) |
+| 4 | No/partial download, offline swipe to uncached page | — | Existing `unavailableOffline` notice over skeleton (Addendum 3 row 6) — unchanged, acceptable |
+| 5 | No download, reconnect | — | Errored queries self-heal via default `refetchOnReconnect` (Addendum 6) — unchanged |
+
+## Verified Test Cases
+
+User's live repro (stg, 2026-08-24) — the case this addendum must make disappear:
+
+- Cold-launch offline → page 50 (last-read) renders. Toggle wifi on while page 50 is open →
+  today: progress bar reloads, Al-Fatiha flashes, skeleton, page 50 re-renders. After: row 1 —
+  nothing visible happens.
+
+Walked through with the user (2026-08-24):
+
+- Full download, offline, three consecutive forward swipes past the prefetched window → each
+  renders from cache (fix A removes the paused-prefetch block).
+- Full download, swipe forward then back repeatedly across any boundary → no skeleton either
+  direction.
+- Full download, reconnect with the app backgrounded/foregrounded in any order → row 1.
+- Reconnect after a genuinely errored page load (no download) → heals into the page (unchanged).
+- Marks/plans remain online-only; their offline notices are unchanged.
+
+## Files to Change
+
+- `app/components/reader/ReaderPager.tsx` — `warmJson` prefetch gains `networkMode: "always"`
+  (fix A). First-paint gate: when the mount-time pathname/last-read correction is pending, render
+  the skeleton instead of `initialPage`'s content (fix C). Plus whatever B's diagnosis requires
+  (expected: a guard in this file or an ancestor provider, not a new system).
+- `app/components/QuranSafha.tsx` — only if the fix-C gate is cheapest at the safha's existing
+  `showSkeleton` layer; prefer the pager level if it can be expressed there without touching the
+  fontReady contract (DECISIONS: `hasHydrated` mechanism is off-limits).
+- Possibly one provider/query hook touched by B's diagnosis — TBD by the reproduction, kept
+  minimal.
+
+No SW changes are expected: fix C works entirely client-side from `location.pathname` vs
+`initialPage`, and fix A is client config.
+
+## Constraints
+
+- Reconnect must not change the mounted component tree for a fully-downloaded user (row 1). Any
+  fix that makes reconnect *fast* but still re-render is a failure.
+- Do not regress the two-stage prefetch lead (ADR 0034): `networkMode: "always"` changes *where*
+  prefetch fetches through, not *when* stages run.
+- The fix-C gate must be hydration-safe: server render and first client render must agree (the
+  correction is client-only knowledge — follow the `hasHydrated` pattern's rules, DECISIONS Font
+  System section).
+- Safety against a permanent blank: if the correction never lands, the skeleton must resolve to
+  the fallback's own content rather than spin forever (bound the gate, don't leave it absolute).
+- Marks operations stay online-only (ADR 0014); no `networkMode`/refetch changes to dynamic hooks
+  (Addendum 6's boundary).
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start`; Serwist is
+  disabled in `npm run dev`.
+
+## What NOT to Do
+
+- Do not ship fix A alone and declare the issue done — symptom 2 (reconnect re-initialization) is
+  independent of it and reproduces on current main.
+- Do not "fix" the reconnect symptom by disabling `refetchOnReconnect` globally or on content
+  queries (Addendum 6's What NOT to Do stands: errored-query self-healing is load-bearing for row
+  5).
+- Do not add an `online`-event listener that reloads, re-fetches, or navigates — the correct
+  behavior is that reconnect is a non-event for the reader.
+- Do not serve the last-read page's document from the SW fallback instead of page 1 — considered
+  and rejected: the last-read page's HTML is usually *not* in `READER_HTML_CACHE_NAME` (swiped-to
+  pages never document-load), so it would fall through to page 1 anyway while adding a
+  client→SW last-read-URL protocol.
+- Do not reintroduce the accepted-flash rationale from Addendum 3 — superseded by this addendum.
+- Do not touch the `hasHydrated`/fontReady skeleton contract while gating first paint (see
+  Constraints).
+
+## Decisions Made
+
+- The product rule is absolute for fully-downloaded users: network toggles are invisible (user,
+  2026-08-24). Skeleton states are for pages outside the download only.
+- Diagnose-then-fix for the reconnect trigger (B), with hardening C shipped regardless — C
+  removes the user-visible wrong-page flash even when the trigger itself (OS reload) can't be
+  eliminated.
+- SW-side last-read-document fallback rejected in favor of the client-side paint gate (see What
+  NOT to Do).
+- Verification target after implementation: deploy to stg and re-test the user's exact repro on
+  the installed PWA (user, 2026-08-24).
+
+## Implementation Outcome (2026-08-24)
+
+**Fix B diagnosis (resolved):** the Al-Fatiha flash the user saw can only come from a **full
+document reload**. A client-side `ReaderPager` remount cannot produce it — the correction layout
+effect (ADR 0042) re-anchors before paint, so page 1 never renders. The reload trigger is
+therefore outside the app: nothing listens to `online` to reload or navigate (audited), so the
+OS/browser restored the PWA's document when connectivity returned. The reload itself is not ours
+to eliminate; fix C's gate removes its wrong-page flash on every path that reaches the fallback
+document, which is the user-visible half of the problem.
+
+**Fix C shape note (deviation from the plan's wording, not its intent):** the gate is not a React
+render branch — React cannot run before the SSR HTML paints. It is a parse-time inline script in
+`ReaderPage` (server component, same pattern as the root layout's theme flash script) that adds
+`fq-pending-jump` to `<html>` whenever the URL doesn't name the document's own page, a
+`visibility: hidden` rule on `.fq-reader-pager-strip` in `globals.css`, and removal of the class
+in `ReaderPager`'s correction layout effect. The 2s script-side timer is the bounded-reveal
+safety. The visible sequence on a fallback load becomes: themed blank frame (pre-hydration) →
+skeleton (React, target page loading) → target page.
+
+## Verification (2026-08-24, `build:local` + `next start` + Playwright)
+
+| Check | Result |
+|---|---|
+| `npm run lint` / `npx tsc --noEmit` | clean |
+| Gate script present in static `/ar/pages/1` HTML | confirmed (`.next/server/app/ar/pages/1.html`) |
+| Normal visit `/ar/pages/1` | gate not engaged, strip visible |
+| Fallback signature (page-1 document served at `/ar/pages/50`, exactly what the SW catch handler does) — pre/at hydration | `fq-pending-jump` present, strip `visibility: hidden` |
+| Same, after hydration + correction | gate lifted, URL stays `/ar/pages/50`, 765 page-50 words rendered, zero Al-Fatiha text on the page |
+| Fix A | config-level (`networkMode: "always"` on `warmJson`), mirrors the already-shipped `usePage` option; behavioral offline-swipe verification happens on stg (needs a real SW + device network toggle) |
+
+Not verified locally: the OS-initiated reconnect reload itself (needs a real device toggling
+wifi) — that is the stg device test against the user's exact repro.
