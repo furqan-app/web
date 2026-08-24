@@ -1406,6 +1406,18 @@ body,
     transform: none !important;
   }
 
+  /* Pre-paint jump gate (issue #405, plan Addendum 7 fix C). When a reader
+     document is served as the offline fallback, the URL names a different page
+     than the SSR content; ReaderPage's inline script adds this class at parse
+     time so the strip never paints the wrong page's words during hydration.
+     ReaderPager's correction layout effect removes it in the same frame as its
+     jumpTo; the script's own 2s timer is the bounded-reveal safety. `visibility`
+     (not display) keeps layout metrics intact and the themed page background
+     visible — a blank themed frame, never a flash of Al-Fatiha. */
+  html.fq-pending-jump .fq-reader-pager-strip {
+    visibility: hidden;
+  }
+
   /* Root-level guard for pure-touch devices (ADR 0023 Addendum 9). The rule
      above only neutralizes the hover filter while `.fq-dragging` is present —
      a touch-primary browser's synthetic hover-on-tap can still trigger it
@@ -1632,11 +1644,11 @@ body,
        with the rules they described and are not reproduced here. */
     .fq-spread .fq-safha-card {
       background-image: none !important;
-      box-shadow:
+      /* box-shadow:
         inset 0 1px 0 var(--mushaf-rim-top),
         inset 1px 0 0 var(--mushaf-rim-side),
         inset -1px 0 0 var(--mushaf-rim-side),
-        inset 0 -1px 0 var(--mushaf-rim-foot) !important;
+        inset 0 -1px 0 var(--mushaf-rim-foot) !important; */
     }
     /* Centre binding separator — one rule, all themes, modelled on real open-book
        macro photography. A centred overlay at the seam reads as the crease where

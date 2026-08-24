@@ -92,6 +92,7 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 6. **Update the GitHub issue**
    - `gh issue comment <issue-number> --repo furqan-app/web --body "..."`: post the PR URL and a short summary
    - `gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:in-progress" --add-label "status:in-review"`
+   - `.claude/skills/scripts/sync-issue-board-status.sh <issue-number> status:in-review` — moves the card on the Furqan Kanban board (fallback if the `issue-status-to-project.yml` workflow hasn't fired yet; on scope error, continue — the workflow will sync it)
 
 7. **Clean up the worktree** (mandatory — always run, even if step 6 was skipped)
    - Read the current branch name (`git branch --show-current`)
