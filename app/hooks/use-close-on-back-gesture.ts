@@ -137,7 +137,20 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
             // Echo from our own history.back() in cleanup below — the
             // overlay is already closing via whatever path triggered it.
             selfClosingRef.current = false;
-            nav.removeEventListener("navigate", onNavigate);
+            // The spurious hard-reload ADR 0045 documents fires after ANY
+            // back traversal — programmatic ones included, not just real
+            // gestures. Arm the same watch instead of removing the listener
+            // (issue #418: after a browser-initiated document reload, every
+            // X-button overlay close was hard-reloading the page). Armed
+            // here inside the async traverse handler, after the effect
+            // cleanup has already returned, so the cleanup-survival problem
+            // the gesture path guards against cannot recur — the listener
+            // is removed only by the watch timer or an intercepted reload.
+            awaitingReload = true;
+            reloadWatchTimer = setTimeout(() => {
+              awaitingReload = false;
+              nav.removeEventListener("navigate", onNavigate);
+            }, RELOAD_WATCH_MS);
             return;
           }
 
