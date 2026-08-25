@@ -6,7 +6,18 @@
     "description": "Read and Listen to Quran",
     "recommendedSurahs": "Recommended Surahs",
     "continueReading": "Continue Reading",
-    "resumeReading": "Resume Reading"
+    "resumeReading": "Resume Reading",
+    "searchLabel": "Navigation search",
+    "searchPlaceholder": "Find a surah, juz, or page",
+    "searchClear": "Clear search",
+    "resultsCount": "{count} results",
+    "juzRow": "Juz {n} · starts p. {page}",
+    "juzRowShort": "Juz {n}",
+    "pageRow": "Page {n}",
+    "juzRangeHint": "Juz {min}–{max}",
+    "pageRangeHint": "Pages {min}–{max}",
+    "noMatches": "No matches",
+    "verseSearchHint": "Looking for a verse? Use Search in the top bar."
   },
   "revelation": {
     "makkah": "Meccan",
@@ -427,5 +438,18 @@
     "small": "Small (26)",
     "medium": "Medium (28)",
     "large": "Large (30)"
-  }
+  },
+  "overline": "",
+  "title": "",
+  "tagline": "",
+  "recommendedSurahs": "",
+  "searchLabel": "",
+  "searchPlaceholder": "",
+  "searchClear": "",
+  "noMatches": "",
+  "verseSearchHint": "",
+  "viewingChipGeneric": "",
+  "light": "فاتح",
+  "gold": "ذهبي",
+  "dark": "داكن"
 }

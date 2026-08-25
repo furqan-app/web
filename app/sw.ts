@@ -125,6 +125,11 @@ const isPageJson = (url: URL) =>
 const isVersePagesJson = (url: URL) =>
   /^\/quran\/verse-pages\/[0-9]+\.json$/.test(url.pathname);
 
+// Juz start positions — verse_key + default-edition start page per juz,
+// generated once from the rubs table. Immutable; same treatment as
+// verse-pages so home-page juz jump rows resolve offline (ADR 0033).
+const isJuzStartsJson = (url: URL) => url.pathname === "/quran/juz-starts.json";
+
 // Offline Recitation Audio (ADR 0046). The chapter-audio metadata route
 // RecitationContext.play() already calls — caching its exact response is what
 // lets a downloaded item's play() call resolve fully offline with zero
@@ -224,7 +229,7 @@ const serwist = new Serwist({
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     {
-      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url),
+      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url) || isJuzStartsJson(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     // Offline Recitation Audio (ADR 0046) — both immutable per reciter+chapter

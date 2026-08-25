@@ -6,7 +6,18 @@
     "description": "اقرأ واستمع إلى القرآن",
     "recommendedSurahs": "السور الموصى بها",
     "continueReading": "تابع القراءة",
-    "resumeReading": "متابعة التلاوة"
+    "resumeReading": "متابعة التلاوة",
+    "searchLabel": "البحث التنقلي",
+    "searchPlaceholder": "ابحث عن سورة أو جزء أو صفحة",
+    "searchClear": "مسح البحث",
+    "resultsCount": "{count} نتيجة",
+    "juzRow": "الجزء {n} · يبدأ في ص {page}",
+    "juzRowShort": "الجزء {n}",
+    "pageRow": "صفحة {n}",
+    "juzRangeHint": "الأجزاء {min}–{max}",
+    "pageRangeHint": "الصفحات {min}–{max}",
+    "noMatches": "لا توجد نتائج",
+    "verseSearchHint": "تبحث عن آية؟ استخدم البحث في الشريط العلوي."
   },
   "revelation": {
     "makkah": "مكية",
@@ -428,5 +439,18 @@
     "small": "صغير (٢٦)",
     "medium": "متوسط (٢٨)",
     "large": "كبير (٣٠)"
-  }
+  },
+  "overline": "",
+  "title": "",
+  "tagline": "",
+  "recommendedSurahs": "",
+  "searchLabel": "",
+  "searchPlaceholder": "",
+  "searchClear": "",
+  "noMatches": "",
+  "verseSearchHint": "",
+  "viewingChipGeneric": "",
+  "light": "فاتح",
+  "gold": "ذهبي",
+  "dark": "داكن"
 }

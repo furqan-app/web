@@ -11,7 +11,7 @@ export type VersePages = Record<string, number>;
 export const fetchVersePages = async (mushafId: number): Promise<VersePages> =>
   fetch(`/quran/verse-pages/${mushafId}.json`).then((r) => r.json());
 
-export const useVersePages = () => {
+export const useVersePages = (enabled = true) => {
   const { mushafId } = useQuranMushaf();
   return useQuery({
     queryKey: ["verse-pages", mushafId],
@@ -21,5 +21,8 @@ export const useVersePages = () => {
     // verse-pages JSON is SW-cached and immutable — fetch it even while
     // navigator.onLine is false instead of pausing.
     networkMode: "always",
+    // Surfaces that may never need the ~73KB map (e.g. home search until a
+    // juz intent appears) pass false to defer the fetch entirely.
+    enabled,
   });
 };

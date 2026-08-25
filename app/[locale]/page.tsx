@@ -1,8 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
-import { SurahList } from "../components/SurahList";
 import { HomeHero } from "../components/home/HomeHero";
-import { HomeRecommendedSurahs } from "../components/home/HomeRecommendedSurahs";
-import { HomeContinueReadingCard } from "../components/home/HomeContinueReadingCard";
+import { HomeSearchSection } from "../components/home/HomeSearchSection";
 import { getSurahs } from "../hooks/get-surahs";
 import { Locale } from "../types/config";
 import { getLanguageDirection } from "../utils/i18n";
@@ -24,9 +22,7 @@ export default async function Home({
   return (
     <main className="container mx-auto px-4 py-8 md:py-10 min-h-screen max-w-5xl">
       <HomeHero isRTL={isRTL} />
-      <HomeContinueReadingCard surahs={surahs} />
-      <HomeRecommendedSurahs surahs={surahs} />
-      <SurahList surahs={surahs} />
+      <HomeSearchSection surahs={surahs} />
     </main>
   );
 }
