@@ -87,3 +87,20 @@ by custom state (found during implementation — see Consequences).
   `open` to `false` — well inside the watch window. An early implementation draft let that cleanup
   unconditionally clear the timer, silently defeating the fix; the shipped version gates the cleanup on
   an `awaitingReload` flag instead.
+
+## Addendum (2026-08-24, issue #418): the self-close echo path must arm the same reload-watch
+
+The original decision covered only the real back-gesture close. The **self-close echo path** — the
+microtask cleanup that pops the guard's own entry via `history.back()` when the overlay closes via
+X/backdrop/Escape — intercepted its own echo traverse but removed the navigate listener immediately,
+never arming the `awaitingReload` watch. The spurious hard-`reload` this ADR documents fires after
+*any* back traversal, programmatic ones included: after a browser-initiated document reload (e.g.
+the OS reloading the PWA on network reconnect), every X-button overlay close produced a full
+document reload.
+
+Amendment: the echo path arms the identical `awaitingReload` + `RELOAD_WATCH_MS` watch instead of
+removing the listener immediately — one interception contract for both close paths. Structurally
+simpler there than in the gesture path: the watch is armed inside the async traverse handler, after
+the effect cleanup has already returned, so the cleanup-survival problem (last Consequence above)
+cannot recur. The popstate fallback's echo path keeps its accepted, irreducible gap (see the plan's
+Addendum 3, `docs/plans/close-overlays-on-back-swipe.md`).
