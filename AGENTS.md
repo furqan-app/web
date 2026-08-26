@@ -22,8 +22,8 @@ Universal entry point for all AI coding agents working in this repository.
 This applies to every change, no matter how small: one-liner fixes, font swaps, copy changes — everything. If you find yourself about to edit a file, stop and plan first.
 
 **Workspace vs. Worktree:**
-- If your environment supports external worktrees (Claude Code CLI), use `../furqan-<slug>`.
-- If your environment is workspace-confined (AGY, Copilot, Cursor, OpenCode), work on a local branch directly inside the repository (`git checkout -b <type>/<issue>-<slug>`).
+- If your environment supports external worktrees (Claude Code CLI, AGY), use `../furqan-<slug>`.
+- If your environment is workspace-confined (Copilot, Cursor, OpenCode), work on a local branch directly inside the repository (`git checkout -b <type>/<issue>-<slug>`).
 
 **This is not limited to file edits.** It applies equally to operational, data, and infrastructure actions: running scripts (seeders, scrapers, one-off Node scripts), seeding or mutating any database, `prisma db push` / migrations, importing SQL dumps, Docker/`compose` changes, and anything that touches the environment, containers, or running services. Plan first, every time.
 
