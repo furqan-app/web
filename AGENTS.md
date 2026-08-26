@@ -35,7 +35,7 @@ When in doubt, ask. Never act unilaterally. Don't make any changes until you hav
 
 Furqan — word-focused Qur'an reading app. Users read from print-accurate mushaf page layouts (all 604 pages statically generated), mark progress/memorization at word level, follow reading plans (awrad), and can share their marked mushaf with a teacher or family member through revocable grants.
 
-Stack: Next.js 14 App Router · TypeScript · Tailwind/shadcn (Radix) · next-intl (`ar` RTL default, `en` LTR) · NextAuth (Google OAuth) · TanStack React Query · Sentry · PWA via `@serwist/next` (offline reliability is a hard product requirement). Tests: Vitest (unit) + Playwright (visual e2e).
+Stack: Next.js 14 App Router · TypeScript · Tailwind/shadcn (Radix) · next-intl (`ar` RTL default, `en` LTR) · NextAuth (Google OAuth) · TanStack React Query · Sentry · PWA via `@serwist/next` (offline reliability is a hard product requirement). Tests: Vitest (unit) + Playwright (functional e2e).
 
 **Two MySQL databases, never joined by FK** (ADR 0008): `furqan_quran` (read-only content, `quranPrisma`, local :3307) and `furqan_app` (user/interaction data, `appPrisma`, local :3308) — both exported from `app/utils/db.ts`, with separate schemas at `prisma/quran/` and `prisma/app/` and separate generated clients under `app/generated/`.
 
@@ -59,7 +59,7 @@ npm run extract-translations  # sync i18n keys
 
 Local DBs: `docker compose up -d` (quran :3307, app :3308, phpMyAdmin :8081).
 
-Visual e2e (Playwright; uses dedicated e2e DBs from `compose.e2e.yml` — never touches dev DBs):
+Functional e2e (Playwright; uses dedicated e2e DBs from `compose.e2e.yml` — never touches dev DBs):
 
 ```bash
 npm run e2e:db:up        # start e2e MySQL containers
