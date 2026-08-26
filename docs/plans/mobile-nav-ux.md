@@ -3,6 +3,7 @@
 **Type:** feature  
 **Date:** 2026-07-01  
 **Status:** implemented
+**Issue:** [#431](https://github.com/furqan-app/web/issues/431)
 
 ## Summary
 
@@ -70,3 +71,34 @@ Add `AccountCard` entry.
 - Keep `next/dynamic` deferred loading of Sidebar in `pages/layout.tsx`.
 - Do not add a UserMenu icon to mobile nav or a bottom navigation bar.
 - Do not move Sidebar to root locale layout.
+
+---
+
+## Addendum 1: Sleek Calligraphic Surah Selector Pill UI Polish (2026-08-26)
+
+**Status:** implemented
+**Issue:** [#431](https://github.com/furqan-app/web/issues/431)
+
+### Summary
+The mobile navbar Surah toggle button currently renders as a basic rectangular block with plain sans-serif Arabic typography. This addendum elevates the mobile button to a sleek, `rounded-full` pill using `--nav-tab-bg` with a subtle hairline border, calligraphic `font-surahnames` for Arabic/RTL, a refined numeral prefix, smooth rotating chevron indicator, and tactile press micro-motion (`active:scale-[0.97]`).
+
+### Approach & Changes
+
+1. **Sleek Pill Container (`Nav.tsx`)**
+   - Refine the mobile button classes to use a `rounded-full` pill with `h-8 px-3 py-1 bg-[var(--nav-tab-bg)] border border-border/70 shadow-sm` and tactile press `active:scale-[0.97]`.
+2. **Typography & Arabic Calligraphy**
+   - In Arabic (`isRTL`): render `font-surahnames` glyph font at `text-[19px]` with zero-padded code `String(currentSurah.id).padStart(3, "0")`, paired with a subtle numeral prefix (`toLocaleNumeral(currentSurah.id, locale)`).
+   - In English: clean `text-xs font-semibold` (`currentSurah.name_simple`).
+3. **Animated Chevron Indicator**
+   - Use `ChevronDown` with `transition-transform duration-200` and `open && "rotate-180"`, removing static icon switching.
+
+### Files Changed
+- `docs/plans/mobile-nav-ux.md` — this plan addendum.
+- `app/components/nav/Nav.tsx` — mobile pill markup and styling.
+
+### Verification Plan
+1. `npm run lint` && `npm test`
+2. Visual check in mobile viewport:
+   - Arabic layout with `font-surahnames` calligraphic glyph.
+   - English layout with clean typography.
+   - Drawer toggle and chevron rotation.
