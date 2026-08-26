@@ -21,7 +21,19 @@ One call — `@me` resolves to the authenticated `gh` account, no separate ident
 
 **In AGY / workspace-confined IDEs:**
 - Verify you are on the task branch: `git branch --show-current`
-- If not, switch to the task branch (`git checkout <type>/<issue-number>-<short-description>`).
+- If not:
+  ```bash
+  # If branch does not exist yet (defaults to updated origin/main):
+  git fetch origin
+  git checkout -b <type>/<issue-number>-<short-description> origin/main
+
+  # If starting from a specific base branch:
+  git fetch origin
+  git checkout -b <type>/<issue-number>-<short-description> <base-branch>
+
+  # If branch already exists:
+  git checkout <type>/<issue-number>-<short-description>
+  ```
 - `<abs>` is the repo root (`$(pwd)`). Skip worktree and external dev server port allocation; use normal local dev workflow (`npm run dev` on port 3000 if needed).
 
 **In Claude Code / CLI (external worktrees):**
@@ -37,8 +49,13 @@ One call — `@me` resolves to the authenticated `gh` account, no separate ident
 1. Derive the branch name from the GitHub issue: `<type>/<issue-number>-<short-description>`
 2. Create the worktree:
    ```bash
-   # If branch does NOT exist yet:
-   git worktree add ../furqan-<slug> -b <branch-name>
+   # If branch does NOT exist yet (defaults to updated origin/main):
+   git fetch origin
+   git worktree add ../furqan-<slug> -b <branch-name> origin/main
+
+   # If starting from a specific base branch:
+   git fetch origin
+   git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
 
    # If branch already exists:
    git worktree add ../furqan-<slug> <branch-name>
@@ -120,8 +137,13 @@ Loads the right context (decisions + standards + plan), then implements the task
    1. Derive the branch name from the GitHub issue using the project convention: `<type>/<issue-number>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
    2. Create the worktree — check whether the branch already exists first:
       ```bash
-      # If branch does NOT exist yet (new task):
-      git worktree add ../furqan-<slug> -b <branch-name>
+      # If branch does NOT exist yet (defaults to updated origin/main):
+      git fetch origin
+      git worktree add ../furqan-<slug> -b <branch-name> origin/main
+
+      # If starting from a specific base branch:
+      git fetch origin
+      git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
 
       # If branch already exists (e.g. PR was opened, continuing after review):
       git worktree add ../furqan-<slug> <branch-name>
