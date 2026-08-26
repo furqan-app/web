@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-07-07
-**Status:** implemented (see Addendum 2026-08-02 for open bug fix)
+**Status:** implemented
 
 ## Summary
 
@@ -305,3 +305,85 @@ Tightening in the same PR would mean the new value never runs against a known-go
 - **Search waits on the results heading, not the result row** — the home page's surah list renders links with the same accessible name, so a row locator would resolve against the list beneath the dropdown and pass early. The heading only exists once `chapters.length > 0`.
 - **No production component touched to make the search test targetable.** A `data-testid` on `SearchQueryResults` was considered and rejected: the heading gives an unambiguous locator with a loud (timeout) failure mode, so the plan's "test-harness only" constraint holds.
 - **Trello #174's description left intact, correction appended as a comment** (user, 2026-08-02) — preserves the original hypothesis and how it was misread.
+
+## Addendum (2026-08-27): Deprecate Visual Snapshots & Transition CI to Functional E2E (#428)
+
+**Type:** task
+**Status:** implemented
+**GitHub Issue:** [#428](https://github.com/furqan-app/web/issues/428)
+**Parent Epic:** [#421](https://github.com/furqan-app/web/issues/421)
+
+### Summary
+
+Deprecate the 36 static visual screenshot baselines and transition the PR CI workflow from visual regression diffing to running the behavioral Playwright E2E test suite. Visual screenshot testing created high maintenance churn on benign UI/styling updates while failing to test actual interactive user journeys. Sibling issues (#423–#427) introduce dedicated behavioral suites for reader navigation, search, sidebar, settings, and word marking.
+
+### Root Cause / Approach
+
+1. **Delete visual snapshot baselines and spec**: Remove `e2e/tests/visual.spec.ts` and all 36 snapshot PNG files under `e2e/tests/visual.spec.ts-snapshots/`.
+2. **Remove obsolete baseline and diff workflows**:
+   - Delete `.github/workflows/update-visual-baselines.yml` (no snapshot baselines to update).
+   - Delete `.github/workflows/visual-e2e-report-cleanup.yml` (no hosted gh-pages diff reports created).
+3. **Transition PR CI workflow**:
+   - Rename `.github/workflows/visual-e2e.yml` to `.github/workflows/e2e.yml`.
+   - Update workflow name to `E2E tests` and job name to `e2e`.
+   - Permissions reduced to read-only `contents: read`.
+   - Steps: checkout -> setup Node 20 with npm cache -> `npm ci` -> set up e2e databases (`npm run e2e:setup`) -> install Playwright chromium -> run E2E suite (`npm run e2e:test`) -> upload Playwright report artifact on failure (`playwright-report/`).
+   - Remove GitHub Pages report deployment and sticky PR comment steps.
+4. **Update Playwright configuration (`playwright.config.ts`)**:
+   - Remove `expect.toHaveScreenshot` configuration (`maxDiffPixelRatio: 0.002`).
+   - Remove JSON reporter (`playwright-report/results.json`) and configure standard CI html reporter (`[["html", { open: "never" }]]`).
+   - Update header documentation comments.
+5. **Update Architectural Records**:
+   - Addendum in `docs/architecture/adr/0022-visual-e2e-testing.md` recording the transition from visual diffs to behavioral E2E tests.
+   - Update `docs/architecture/DECISIONS.md` under `## E2E Testing` and `## CI: E2E Skip on Config-Only PRs`.
+
+### Decision Tree / Actions
+
+| File / Component | Action | Details |
+|---|---|---|
+| `e2e/tests/visual.spec.ts` | Delete | Deprecate visual regression test file. |
+| `e2e/tests/visual.spec.ts-snapshots/**` | Delete | Remove 36 committed baseline PNG images. |
+| `.github/workflows/update-visual-baselines.yml` | Delete | Remove baseline regeneration workflow. |
+| `.github/workflows/visual-e2e-report-cleanup.yml` | Delete | Remove gh-pages report cleanup workflow. |
+| `.github/workflows/visual-e2e.yml` → `.github/workflows/e2e.yml` | Rename & Modify | Streamline to standard PR CI job with artifact upload on failure. |
+| `playwright.config.ts` | Modify | Remove screenshot diff config & JSON reporter. |
+| `docs/architecture/adr/0022-visual-e2e-testing.md` | Modify | Document deprecation of visual snapshots & transition to behavioral E2E. |
+| `docs/architecture/DECISIONS.md` | Modify | Update E2E testing invariants and decisions. |
+| `docs/plans/visual-e2e-testing.md` | Modify | Add this addendum and set status to ready-to-implement. |
+
+### Verified Test Cases
+
+- **Playwright Configuration**: `npx playwright test --help` loads without syntax/configuration errors.
+- **Workflow YAML Validation**: `.github/workflows/e2e.yml` has valid GitHub Actions schema, contains proper service container definitions, runs `e2e:setup`, and executes `npm run e2e:test`.
+- **Clean Repository State**: No dangling references to `update-visual-baselines.yml`, `visual-e2e-report-cleanup.yml`, or `visual.spec.ts-snapshots/`.
+- **Database Isolation Invariant**: `compose.e2e.yml` and `e2e:setup` remain untouched and continue to operate on dedicated ephemeral DB containers (ports 3309/3310).
+
+### Files to Change
+
+- `e2e/tests/visual.spec.ts` — deleted
+- `e2e/tests/visual.spec.ts-snapshots/**` — 36 files deleted
+- `.github/workflows/update-visual-baselines.yml` — deleted
+- `.github/workflows/visual-e2e-report-cleanup.yml` — deleted
+- `.github/workflows/visual-e2e.yml` → `.github/workflows/e2e.yml` — renamed and updated
+- `playwright.config.ts` — updated
+- `docs/architecture/adr/0022-visual-e2e-testing.md` — updated with addendum
+- `docs/architecture/DECISIONS.md` — updated
+- `docs/plans/visual-e2e-testing.md` — updated with this addendum
+
+### Constraints
+
+- E2E databases continue to use dedicated disposable containers via `compose.e2e.yml` and `e2e:setup` on ports 3309/3310 — never touch dev DB ports 3307/3308.
+- The full 604-page fixture (`e2e/fixtures/quran-fixture.sql`) remains in place for functional test builds.
+- PR CI continues to soft-block on test failure by uploading Playwright test report artifacts.
+
+### What NOT to Do
+
+- Do not modify `compose.e2e.yml`, `scripts/e2e-fixture/setup.js`, or `scripts/e2e-fixture/generate.js` — the ephemeral database orchestration infrastructure remains active and required for functional E2E tests.
+- Do not write new behavioral specs in this task — behavioral test suites are partitioned into sibling issues #423–#427.
+- Do not keep `gh-pages` branch deployments for PR test runs — standard artifact upload on failure is sufficient for functional test reports.
+
+### Decisions Made
+
+- Standard GitHub Actions artifact upload for test failures (no GitHub Pages deployment or PR comments).
+- Deprecation of all 36 PNG visual baselines and `toHaveScreenshot` comparisons.
+- Streamlining Playwright configuration to focus exclusively on functional E2E testing.

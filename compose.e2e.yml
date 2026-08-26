@@ -1,4 +1,4 @@
-# Ephemeral, disposable databases for the visual e2e suite (see ADR 0018 and
+# Ephemeral, disposable databases for the e2e suite (see ADR 0022 and
 # docs/plans/visual-e2e-testing.md). Deliberately separate containers/ports/
 # volumes from compose.yml's dev quran-db/app-db — e2e:setup force-resets
 # these on every run, and must never touch a developer's real seeded dev DB.
