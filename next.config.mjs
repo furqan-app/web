@@ -1,8 +1,65 @@
+import { createHash } from 'node:crypto';
 import createNextIntlPlugin from 'next-intl/plugin';
 import withSerwistInit from '@serwist/next';
 import { withSentryConfig } from '@sentry/nextjs';
 
 const withNextIntl = createNextIntlPlugin();
+
+// The two reader fallback shells (ADR 0014 Addendum 7, #438). These are real
+// SSG'd reader documents, not files under public/, so they cannot come from
+// `globPublicPatterns` below — that list is globbed here in the `webpack()`
+// config phase, before Next has generated any HTML, so a `public/` copy would
+// always be one build stale and its `/_next/static/chunks/*` URLs would 404
+// after deploy. They also must NOT be passed as `additionalPrecacheEntries`:
+// @serwist/next uses that option to *replace* the public glob, which would
+// silently drop launch.html, the offline documents and the icons.
+// `manifestTransforms` is the one injection point that appends without
+// displacing anything — user transforms run first, ahead of both Serwist's own
+// URL rewrite (a no-op for these absolute app paths) and the public-glob merge.
+//
+// Being manifest entries rather than a best-effort `install`-handler fetch is
+// the whole point: PrecacheStrategy throws on a non-cacheable response, so the
+// worker cannot activate without its shells, and a failed install leaves the
+// previous worker and its caches intact. It does NOT avoid install-time
+// network — a hydratable Next document must carry the current build's chunk
+// URLs, so it can only be fetched from the build that produced it.
+//
+// Must stay in sync with FALLBACK_LOCALES in app/constants/offline.ts, which
+// is what app/sw.ts passes to matchPrecache. It cannot be imported here — this
+// file is plain ESM evaluated by Node before any TS compilation, and that
+// module is TS behind a path alias — so it is duplicated for the same reason
+// FALLBACK_LOCALES itself hardcodes the locales rather than importing routing.
+const READER_FALLBACK_SHELL_LOCALES = ['ar', 'en'];
+
+/** @type {import('@serwist/build').ManifestTransform} */
+const appendReaderFallbackShells = (manifestEntries) => {
+  // Revision hashed from the webpack build assets this transform receives —
+  // the same input class app/sw.ts hashes for READER_HTML_CACHE_NAME, so shell
+  // freshness and reader-HTML cache busting move together by construction.
+  const revision = createHash('sha256')
+    .update(JSON.stringify(manifestEntries))
+    .digest('hex')
+    .slice(0, 16);
+
+  return {
+    manifest: [
+      ...manifestEntries,
+      // `size` is required by the transform's return schema but unknowable
+      // here — these documents are prerendered after the client webpack
+      // compile this transform runs in. Zero is safe rather than merely
+      // tolerated: Serwist's own maximumFileSizeToCacheInBytes filter is
+      // applied ahead of user transforms (so it can never drop these), and the
+      // only later reader of `size` sums it for the build-log total before
+      // deleting the field from every entry.
+      ...READER_FALLBACK_SHELL_LOCALES.map((locale) => ({
+        url: `/${locale}/pages/1`,
+        revision,
+        size: 0,
+      })),
+    ],
+    warnings: [],
+  };
+};
 
 const withSerwist = withSerwistInit({
   swSrc: 'app/sw.ts',
@@ -35,6 +92,7 @@ const withSerwist = withSerwistInit({
     'offline-ar.html',
     'offline-en.html',
   ],
+  manifestTransforms: [appendReaderFallbackShells],
 });
 
 /** @type {import('next').NextConfig} */

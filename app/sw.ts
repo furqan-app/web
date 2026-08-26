@@ -102,13 +102,24 @@ function isDefaultPrecacheComplete(): Promise<boolean> {
   return defaultPrecacheCompletePromise;
 }
 
-async function serveReaderFallbackShell(url: URL) {
-  const locale =
-    FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
-    FALLBACK_LOCALES[0];
-  const cache = await caches.open(READER_HTML_CACHE_NAME);
-  return cache.match(fallbackDocumentUrl(locale));
-}
+const fallbackLocale = (url: URL) =>
+  FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
+  FALLBACK_LOCALES[0];
+
+// ADR 0014 Addendum 7: the shell is a build-time precache entry (appended by
+// next.config.mjs's manifestTransforms), not a best-effort install-time fetch
+// into READER_HTML_CACHE_NAME. matchPrecache resolves it regardless of which
+// cache Serwist's own versioning stores the manifest under — same as
+// offlineFallbackUrl below. It cannot be missing on an active worker: install
+// is atomic, so a worker that failed to fetch a shell never activates and the
+// previous deploy's worker and caches stay intact. Callers still branch on
+// `undefined` — that is matchPrecache's contract, and row 4 of the tree below
+// is defined by it. The return type is annotated rather than inferred because
+// this reads `serwist`, whose own type is inferred from the runtimeCaching
+// handler that calls this: a cycle TypeScript silently resolves to `any`
+// (TS7022/TS7023) instead of flagging at the call sites.
+const serveReaderFallbackShell = (url: URL): Promise<Response | undefined> =>
+  serwist.matchPrecache(fallbackDocumentUrl(fallbackLocale(url)));
 
 const isPageFont = (url: URL) =>
   /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
@@ -288,46 +299,19 @@ self.addEventListener("activate", (event: ExtendableEvent) => {
 // offline document instead (terminal state, not flash-then-corrects).
 serwist.setCatchHandler(async ({ request, url }) => {
   if (request.mode !== "navigate") return Response.error();
-  const locale =
-    FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
-    FALLBACK_LOCALES[0];
 
   if (isSelfReaderPage(url)) {
-    const cache = await caches.open(READER_HTML_CACHE_NAME);
-    const fallback = await cache.match(fallbackDocumentUrl(locale));
+    const fallback = await serveReaderFallbackShell(url);
     return fallback ?? Response.error();
   }
 
   // Precached via globPublicPatterns (next.config.mjs), same as launch.html —
   // matchPrecache resolves it regardless of which cache Serwist's own
   // versioning happens to store the precache manifest under.
-  const fallback = await serwist.matchPrecache(offlineFallbackUrl(locale));
-  return fallback ?? Response.error();
-});
-
-// Precache the reader fallback document itself — page 1's real reader-page
-// HTML for both locales — at install time, for every visitor. Independent of
-// the consent-gated bulk download (must work before that has ever run) and
-// tiny next to it, so no standalone/consent gate applies here, unlike the
-// page fonts and bulk JSON PAGES_CACHE_NAME holds. Best-effort: a failure
-// here (installing while offline) just means no fallback exists yet until a
-// later online visit. Lives in READER_HTML_CACHE_NAME, not PAGES_CACHE_NAME
-// (ADR 0014 Addendum 4) — it's reader HTML like any other, so it needs the
-// same per-deploy auto-refresh; the old shared cache location meant this one
-// document was fetched once at first install and never revalidated again,
-// its own smaller instance of the staleness class the rest of this addendum
-// fixes. It shares its cache key with isSelfReaderPage's own CacheFirst rule,
-// so any ordinary online visit to page 1 populates it too — this seed is only
-// for a visitor who is offline before ever reaching page 1 normally.
-self.addEventListener("install", (event: ExtendableEvent) => {
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(READER_HTML_CACHE_NAME);
-      await Promise.all(
-        FALLBACK_LOCALES.map((locale) => ensureCached(cache, fallbackDocumentUrl(locale))),
-      );
-    })(),
+  const fallback = await serwist.matchPrecache(
+    offlineFallbackUrl(fallbackLocale(url)),
   );
+  return fallback ?? Response.error();
 });
 
 // Bulk pre-cache, edition-parameterized (ADR 0014 Addendum 5) — any registered
