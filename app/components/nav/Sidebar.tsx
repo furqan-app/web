@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SurahList } from "../SurahList";
 import useTranslations from "@/app/hooks/use-translations";
+import { useTranslations as useNextIntlTranslations } from "next-intl";
 import RubList from "../RubList";
+import AyahPicker from "./AyahPicker";
 import { SurahResult } from "@types";
 import { RubWithVerses } from "@/app/types/prisma";
-import { X } from "lucide-react";
+import { Search, SearchX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -18,7 +20,8 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLocale } from "next-intl";
-import { getLanguageDirection } from "@/app/utils/i18n";
+import { getLanguageDirection, toLocaleNumeral } from "@/app/utils/i18n";
+import { parseNavQuery, rubMatchesQuery, surahMatchesQuery } from "@/app/utils/nav-search";
 import { useSidebar } from "@/app/contexts/SidebarContext";
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
@@ -29,6 +32,7 @@ type Props = {
 
 const Sidebar = ({ surahs, rubs }: Props) => {
   const t = useTranslations();
+  const tSidebar = useNextIntlTranslations("sidebar");
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
   const {
@@ -57,8 +61,49 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     return () => setNotifyNavigating(null);
   }, [stableNotifyNavigating, setNotifyNavigating]);
   const [activeTab, setActiveTab] = useState("surahs");
+  // Per-tab filter state lives here, NOT inside TabsContent — Radix unmounts
+  // inactive tabs, so an in-tab input would lose its value (and focus) on
+  // every switch. Independent queries also let each tab keep its own filter.
+  const [surahQuery, setSurahQuery] = useState("");
+  const [rubQuery, setRubQuery] = useState("");
   const surahsScrollRef = useRef<HTMLDivElement>(null);
   const rubsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Shared grammar with the home search (nav-search.ts): digit folding,
+  // juz/page/hizb/rub prefixes, hamza-folded name matching.
+  const parsedSurah = useMemo(() => parseNavQuery(surahQuery), [surahQuery]);
+  const parsedRub = useMemo(() => parseNavQuery(rubQuery), [rubQuery]);
+  const surahsById = useMemo(() => new Map(surahs.map((s) => [s.id, s])), [surahs]);
+  const filteredSurahs = useMemo(
+    () => (parsedSurah.text ? surahs.filter((s) => surahMatchesQuery(s, parsedSurah)) : surahs),
+    [surahs, parsedSurah],
+  );
+  const filteredRubs = useMemo(
+    () => (parsedRub.text ? rubs.filter((r) => rubMatchesQuery(r, parsedRub, surahsById)) : rubs),
+    [rubs, parsedRub, surahsById],
+  );
+  const activeQuery = activeTab === "surahs" ? surahQuery : rubQuery;
+  const setActiveQuery = activeTab === "surahs" ? setSurahQuery : setRubQuery;
+  const activeCount = activeTab === "surahs" ? filteredSurahs.length : filteredRubs.length;
+  const isFiltering = activeQuery.trim().length > 0;
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      // Clear-first contract: only an empty field lets Escape close the sheet
+      // (Radix Dialog closes on Escape by default, even from inside inputs).
+      if (activeQuery.trim()) {
+        e.stopPropagation();
+        setActiveQuery("");
+      }
+      return;
+    }
+    if (e.key !== "Enter") return;
+    // Activate the first filtered result via its real link — the link already
+    // owns the jumpTo + setOpen(false) handoff, so Enter inherits it for free.
+    e.preventDefault();
+    const container = activeTab === "surahs" ? surahsScrollRef.current : rubsScrollRef.current;
+    container?.querySelector<HTMLAnchorElement>("a[data-surah-id], a[data-rub-id]")?.click();
+  };
 
   const pageNumber = parseInt(pathname?.match(/\/pages\/(\d+)/)?.[1] ?? "0", 10);
 
@@ -126,8 +171,9 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRub?.rub_number]);
 
-  // Scroll active item into view when sidebar opens. Only fires on open transitions,
-  // not on tab switches — the user is free to browse other items without being snapped back.
+  // Scroll active item into view on open, and again on tab switch while open
+  // (`activeTab` is in the deps) — with filters this reveals your position in
+  // the tab you just entered, or no-ops harmlessly if it's filtered out.
   const activeTabRef = useRef(activeTab);
   const activeSurahRef = useRef(activeSurah);
   const currentRubRef = useRef(currentRub);
@@ -186,7 +232,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
         </SheetDescription>
         <div className="flex justify-end p-4 border-b shrink-0">
           <SheetClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={tSidebar("close")}>
               <X className="h-4 w-4" />
             </Button>
           </SheetClose>
@@ -204,20 +250,96 @@ const Sidebar = ({ surahs, rubs }: Props) => {
             <TabsTrigger value="rubs" className="flex-1">
               {t("rubs", "Rubs")}
             </TabsTrigger>
+            <TabsTrigger value="ayahs" className="flex-1">
+              {tSidebar("tabAyahs")}
+            </TabsTrigger>
           </TabsList>
+          {/* One adaptive filter field, outside the scroll containers so it
+              never scrolls away; semantics follow the active tab. Same visual
+              language as the home search field. Hidden on the ayahs tab — the
+              picker owns an input (#433). */}
+          {activeTab !== "ayahs" && (
+          <div className="px-4 pt-2 pb-1 shrink-0">
+            <div className="relative flex items-center">
+              <Search
+                className="size-4 text-muted-foreground absolute start-3 pointer-events-none"
+                strokeWidth={1.8}
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                value={activeQuery}
+                onChange={(e) => setActiveQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder={
+                  activeTab === "surahs"
+                    ? tSidebar("filterPlaceholderSurahs")
+                    : tSidebar("filterPlaceholderRubs")
+                }
+                aria-label={
+                  activeTab === "surahs"
+                    ? tSidebar("filterPlaceholderSurahs")
+                    : tSidebar("filterPlaceholderRubs")
+                }
+                dir="auto"
+                className="fq-focus-ring w-full h-10 rounded-xl border border-border bg-card ps-9 pe-10 text-sm text-foreground placeholder:text-muted-foreground font-tajawal transition-colors duration-150 hover:border-primary/40 focus:border-primary/60 outline-none"
+              />
+              {isFiltering && (
+                <button
+                  type="button"
+                  onClick={() => setActiveQuery("")}
+                  aria-label={tSidebar("filterClear")}
+                  className="absolute end-2 size-7 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--well)/var(--well-alpha))] transition-colors duration-150 fq-focus-ring"
+                >
+                  <X className="size-4" strokeWidth={1.8} />
+                </button>
+              )}
+            </div>
+            {isFiltering && activeCount > 0 && (
+              <p className="mt-1.5 text-xs text-muted-foreground" role="status">
+                {tSidebar("filterResultsCount", {
+                  count: activeCount,
+                  n: toLocaleNumeral(activeCount, locale),
+                })}
+              </p>
+            )}
+          </div>
+          )}
           <TabsContent
             value="surahs"
             ref={surahsScrollRef}
             className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
           >
-            <SurahList surahs={surahs} activeSurahId={activeSurah?.id} className="sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-2" />
+            {parsedSurah.text && filteredSurahs.length === 0 ? (
+              <FilterEmptyState
+                message={tSidebar("filterNoMatches")}
+                range={tSidebar("filterRangeSurahs")}
+              />
+            ) : (
+              <SurahList surahs={filteredSurahs} activeSurahId={activeSurah?.id} className="sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-2" />
+            )}
           </TabsContent>
           <TabsContent
             value="rubs"
             ref={rubsScrollRef}
             className="flex-1 overflow-y-auto pb-[calc(1rem+env(safe-area-inset-bottom,0px))] mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
           >
-            <RubList rubs={rubs} surahs={surahs} currentRubId={currentRub?.id} />
+            {parsedRub.text && filteredRubs.length === 0 ? (
+              <FilterEmptyState
+                message={tSidebar("filterNoMatches")}
+                range={tSidebar("filterRangeRubs")}
+              />
+            ) : (
+              <RubList rubs={rubs} filteredRubs={parsedRub.text ? filteredRubs : undefined} surahs={surahs} currentRubId={currentRub?.id} />
+            )}
+          </TabsContent>
+          <TabsContent
+            value="ayahs"
+            className="flex-1 overflow-y-auto pb-[calc(1rem+env(safe-area-inset-bottom,0px))] mt-0 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
+          >
+            {activeSurah ? (
+              <AyahPicker surah={activeSurah} surahs={surahs} currentPage={pageNumber} />
+            ) : null}
           </TabsContent>
         </Tabs>
       </SheetContent>
@@ -225,5 +347,17 @@ const Sidebar = ({ surahs, rubs }: Props) => {
     </>
   );
 };
+
+// Sheet-scale empty state (halved padding vs the home page's full-screen
+// variant): icon + one-line message + the valid ranges for this tab.
+const FilterEmptyState = ({ message, range }: { message: string; range: string }) => (
+  <div className="flex flex-col items-center gap-2.5 px-4 py-8 text-center">
+    <span className="fq-well grid size-10 place-items-center rounded-xl text-muted-foreground">
+      <SearchX className="size-5" strokeWidth={1.6} />
+    </span>
+    <p className="text-sm font-medium text-foreground">{message}</p>
+    <p className="text-xs text-muted-foreground">{range}</p>
+  </div>
+);
 
 export default Sidebar;

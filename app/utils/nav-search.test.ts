@@ -4,8 +4,10 @@ import {
   jumpRows,
   juzStartPage,
   pageOfVerseKey,
+  parseAyahNumber,
   parseNavQuery,
   rangeHint,
+  rubMatchesQuery,
   surahMatchesQuery,
 } from "./nav-search";
 
@@ -18,6 +20,13 @@ const surah = (id: number, name_simple: string, name_arabic: string) => ({
   revelation_place: "makkah",
   pages: "1-1",
 });
+
+const rub = (rub_number: number, chapter_number: number) =>
+  ({
+    id: rub_number,
+    rub_number,
+    rubVerseMappings: [{ chapter_number }],
+  }) as Parameters<typeof rubMatchesQuery>[0];
 
 describe("foldDigits", () => {
   it("folds Eastern Arabic and Extended digits to ASCII", () => {
@@ -43,6 +52,13 @@ describe("parseNavQuery", () => {
   it("parses page prefixes in both locales", () => {
     expect(parseNavQuery("page 562")).toEqual({ text: "page 562", number: 562, prefix: "page" });
     expect(parseNavQuery("صفحة ٥٦٢")).toEqual({ text: "صفحة 562", number: 562, prefix: "page" });
+  });
+
+  it("parses hizb and rub prefixes in both locales (sidebar grammar)", () => {
+    expect(parseNavQuery("hizb 12")).toEqual({ text: "hizb 12", number: 12, prefix: "hizb" });
+    expect(parseNavQuery("حزب ١٢")).toEqual({ text: "حزب 12", number: 12, prefix: "hizb" });
+    expect(parseNavQuery("rub 200")).toEqual({ text: "rub 200", number: 200, prefix: "rub" });
+    expect(parseNavQuery("ربع ٢٠٠")).toEqual({ text: "ربع 200", number: 200, prefix: "rub" });
   });
 
   it("treats prefix without a number as text", () => {
@@ -118,6 +134,52 @@ describe("rangeHint", () => {
     expect(rangeHint(parseNavQuery("999"))).toBe(null);
     expect(rangeHint(parseNavQuery("mulk"))).toBe(null);
   });
+
+  it("never hints for sidebar-only prefixes (home regression guard)", () => {
+    expect(rangeHint(parseNavQuery("hizb 99"))).toBe(null);
+    expect(rangeHint(parseNavQuery("rub 999"))).toBe(null);
+    expect(jumpRows(parseNavQuery("hizb 3"))).toEqual([]);
+    expect(jumpRows(parseNavQuery("rub 3"))).toEqual([]);
+  });
+});
+
+describe("rubMatchesQuery (sidebar rubs tab)", () => {
+  const surahs = new Map([
+    [19, surah(19, "Maryam", "مريم")],
+    [2, surah(2, "Al-Baqarah", "البقرة")],
+  ]);
+  // rub 17 = first rub of juz 3; rub 9 = first rub of hizb 3
+  const r17 = rub(17, 2);
+  const r9 = rub(9, 2);
+  const r3 = rub(3, 1);
+  const maryamRub = rub(65, 19);
+
+  it("bare number is the union of juz/hizb/rub", () => {
+    const p = parseNavQuery("3");
+    expect(rubMatchesQuery(r17, p, surahs)).toBe(true); // juz 3
+    expect(rubMatchesQuery(r9, p, surahs)).toBe(true); // hizb 3
+    expect(rubMatchesQuery(r3, p, surahs)).toBe(true); // rub 3
+    expect(rubMatchesQuery(maryamRub, p, surahs)).toBe(false);
+  });
+
+  it("prefixes scope to one division", () => {
+    expect(rubMatchesQuery(r17, parseNavQuery("جزء ٣"), surahs)).toBe(true);
+    expect(rubMatchesQuery(r9, parseNavQuery("جزء ٣"), surahs)).toBe(false);
+    expect(rubMatchesQuery(r9, parseNavQuery("حزب ٣"), surahs)).toBe(true);
+    expect(rubMatchesQuery(r3, parseNavQuery("ربع ٣"), surahs)).toBe(true);
+    expect(rubMatchesQuery(r3, parseNavQuery("حزب ٣"), surahs)).toBe(false);
+  });
+
+  it("page prefix matches no rubs (not a rub division)", () => {
+    expect(rubMatchesQuery(r3, parseNavQuery("page 3"), surahs)).toBe(false);
+  });
+
+  it("text matches the associated surah name, hamza-folded", () => {
+    expect(rubMatchesQuery(maryamRub, parseNavQuery("مريم"), surahs)).toBe(true);
+    expect(rubMatchesQuery(maryamRub, parseNavQuery("maryam"), surahs)).toBe(true);
+    expect(rubMatchesQuery(r17, parseNavQuery("البقرة"), surahs)).toBe(true);
+    expect(rubMatchesQuery(r17, parseNavQuery("kahf"), surahs)).toBe(false);
+  });
 });
 
 describe("juz start resolution", () => {
@@ -135,5 +197,20 @@ describe("juz start resolution", () => {
   it("prefers the active edition's page once loaded (ADR 0033)", () => {
     expect(pageOfVerseKey({ "2:142": 23 }, "2:142", 22)).toBe(23);
     expect(pageOfVerseKey({}, "2:142", 22)).toBe(22);
+  });
+});
+
+describe("parseAyahNumber (ayah picker input)", () => {
+  it("accepts ASCII and Arabic-Indic whole numbers", () => {
+    expect(parseAyahNumber("255")).toBe(255);
+    expect(parseAyahNumber("٢٥٥")).toBe(255);
+    expect(parseAyahNumber(" 7 ")).toBe(7);
+  });
+
+  it("rejects non-numeric and partial input", () => {
+    expect(parseAyahNumber("abc")).toBe(null);
+    expect(parseAyahNumber("12a")).toBe(null);
+    expect(parseAyahNumber("2:255")).toBe(null);
+    expect(parseAyahNumber("")).toBe(null);
   });
 });
