@@ -139,7 +139,7 @@ const user = extractUser(request); // { id, email, ... }
 
 **Constraints:**
 - Do not attempt to read the session via `getServerSession` inside API routes — use `extractUser` instead, which reads the header the middleware sets.
-- The `user` header is only forwarded for routes the `auth-middleware` matcher protects (all under `/api/...`). **Server components / layouts are not covered** — the middleware forwards the header to matched API-route requests, not to RSC renders. So page/layout server components that need the user (e.g. the `/mushaf/[grant]` grant guard) must call `getServerSession(authOptions)` directly; `extractUser` is API-routes-only. `session.user` carries the full app `User` row (incl. `id`) via the session callback, but is not type-augmented — read `id` via a cast (`(session.user as { id?: number }).id`). Layout guards should `redirect()`, not `notFound()`, for both the unauthenticated case (→ locale home) and the authorized-but-no-longer case (a revoked/foreign grant → `/{locale}/mushaf?removed=1`, where the hub shows a generic "access removed" banner — never the owner's name, per ADR 0012). Genuine 404s all render the root `app/not-found.tsx` (Next routes every unmatched URL there; a segment `not-found.tsx` only catches an explicit `notFound()` in a *page*, which the app no longer has). That root file must therefore use **theme tokens** (so it's themed against the inline-script theme class, not stark) and **plain `<a>` links** (a `next/link` client-nav from the root-layout 404 into the locale tree can paint before that tree's CSS chunk loads in prod).
+- The `user` header is only forwarded for routes the `auth-middleware` matcher protects (all under `/api/...`). **Server components / layouts are not covered** — the middleware forwards the header to matched API-route requests, not to RSC renders. So page/layout server components that need the user (e.g. the `/mushaf/[grant]` grant guard) must call `getServerSession(authOptions)` directly; `extractUser` is API-routes-only. `session.user` carries the full app `User` row (incl. `id`) via the session callback, but is not type-augmented — read `id` via a cast (`(session.user as { id?: number }).id`). Layout guards should `redirect()`, not `notFound()`, for both the unauthenticated case (→ locale home) and the authorized-but-no-longer case (a revoked/foreign grant → `/{locale}/mushaf?removed=1`, where the hub shows a generic "access removed" banner — never the owner's name, per ADR 0012). Genuine 404s render `app/not-found.tsx` (for root unmatched URLs) and `app/[locale]/not-found.tsx` (for `[locale]` segment `notFound()` calls, delegating to `Custom404`). Both use **theme tokens** (so they are themed against the inline-script theme class) and **plain `<a>` links** (a `next/link` client-nav from a 404 boundary into the locale tree can paint before that tree's CSS chunk loads in prod).
 - The middleware strips any client-supplied `user` request header before injecting the trusted token, and forwards it via `NextResponse.next({ request: { headers } })` — never `response.headers.set`. A client cannot forge identity, and the token is never echoed to the browser.
 - `extractUser` returns `null` (never throws) if the `user` header is missing or malformed — every call site must check for `null` and return `jsonResponse({ code: 401, message: "Unauthorized" })` before using `user.id`. This is a defensive boundary check for a state that shouldn't occur (middleware is expected to always set the header correctly) — see `app/api/quran/pages/[pageId]/marks/route.ts` for the pattern.
 
@@ -1051,4 +1051,18 @@ amends ADR 0024).
 - Do not re-introduce `--gold`, `--gold-muted`, or `text-gold` / `border-gold` utilities.
 - Use semantic tokens (`text-primary`, `border-primary/25`, `bg-primary/10`) for all accents, category overlines, and manuscript ornaments.
 - Maintain WCAG AA contrast for text and metadata against paper backgrounds across all three themes.
+
+---
+
+## Developer Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit
+
+**Decision (2026-08-27):** Playwright is configured in `playwright.config.ts` to use `next dev` locally (reusing `http://localhost:3000`), completely bypassing the heavy 1,208-page static compilation during local testing. In CI, it executes `npm run e2e:build && npm run e2e:start` for full SSG validation. Next.js build concurrency (`experimental.cpus`) in `next.config.mjs` is capped at 2 CPU workers locally (overrideable via `NEXT_BUILD_CPUS`) to keep host machines responsive during `npm run build` and `e2e:build`. See `docs/plans/local-build-and-test-ergonomics.md` (Issue #450).
+
+**Rationale:** Generating all 604 mushaf pages across 2 locales (1,208 pages) during production builds maxes out CPU and memory, freezing local development machines. Dev-server execution and CPU worker caps allow instant local test execution and unconstrained CI validation.
+
+**Constraints:**
+- Local Playwright tests target the dev server (`http://localhost:3000`) and must support `reuseExistingServer: true`.
+- CI must keep running `npm run e2e:build && npm run e2e:start` to validate full SSG static generation before merging.
+- Local `next build` worker count defaults to 2 cores unless overridden by `NEXT_BUILD_CPUS`.
+
 

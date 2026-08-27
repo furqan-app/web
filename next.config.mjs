@@ -103,6 +103,13 @@ const nextConfig = {
   // Required pre-Next-15 for instrumentation.ts to run (see ADR 0017).
   experimental: {
     instrumentationHook: true,
+    // Limit static generation worker concurrency on local builds to 2 CPUs (or NEXT_BUILD_CPUS)
+    // to avoid pinning all host CPU cores and freezing the system on 1,208 pages. CI uses all runner cores.
+    cpus: process.env.CI
+      ? undefined
+      : process.env.NEXT_BUILD_CPUS
+        ? Number(process.env.NEXT_BUILD_CPUS)
+        : 2,
   },
   async headers() {
     return [
