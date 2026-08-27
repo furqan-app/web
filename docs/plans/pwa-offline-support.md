@@ -1144,3 +1144,182 @@ Still open: verified test case 6 (the RSC soft-nav). Deferred to the stg device 
 (2026-08-27) — the static evidence above was judged sufficient to merge on. If a soft-nav to
 `/{locale}/pages/1` ever comes back as HTML instead of RSC flight data, `PrecacheRoute` is matching
 ahead of `defaultCache`'s RSC rule and this is the cause.
+
+---
+
+# Addendum 9 (2026-08-27): The instant-shell path follows the reader's active edition
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `npm test` + full `build:local` clean; built `public/sw.js`
+and the client chunk both inspected to confirm they resolve the same marker key — see Implementation
+Outcome. Throttled device pass still pending)
+**Issue:** https://github.com/furqan-app/web/issues/439 (epic #375)
+**ADR:** [0014 Addendum 8](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+Addendum 5's row 2 — "miss + bulk precache complete → serve the shell instantly, network untouched" —
+probes `isCacheComplete(cache, DEFAULT_MUSHAF_ID)` (`app/sw.ts:99`). Downloads have been per-edition
+since ADR 0014 Addendum 5 and page content per-edition since ADR 0033, so a reader who downloaded only
+the Tajweed edition never satisfies that probe: every cold launch to an unvisited page falls into row
+3's 3 s race despite having every byte needed to render that page already on disk. The fix is to probe
+the edition the reader is actually about to render.
+
+## Root Cause / Approach
+
+One hardcoded constant, plus the fact that the service worker has no way to know the active edition.
+`QuranMushafContext` holds it in `localStorage` (unreadable from a worker) and the reader URL is
+edition-agnostic on purpose (`/{locale}/pages/{id}`, ADR 0033 — an edition is a client-side choice, not
+a route). The fallback shell is edition-agnostic too, so row 2 is not choosing *what* to serve, only
+whether to skip the network — and skipping is correct exactly when the client can render the requested
+page locally, which needs the **active** edition's JSON and font.
+
+So the client mirrors its active edition into Cache Storage as a synthetic entry (the same idiom as the
+precache sentinel), and the worker reads it on the miss path.
+
+**Issue #439's "Hole 2" needs no separate work.** Row 2 already returns the shell with no timer
+(`app/sw.ts:186-191`), and Addendum 8 made the shell impossible to miss on an active worker (install is
+atomic), so the only surviving way for a fully-downloaded user to pay the 3 s race was the probe asking
+about the wrong edition. Fixing the probe closes both holes. Row 3's 3 s race stays exactly as-is for
+the genuine no-download case, where real SSR HTML is still worth a bounded wait.
+
+## Decision Tree / Algorithm
+
+Rows are unchanged; only row 2's condition moves.
+
+| Row | Situation | Behavior |
+|---|---|---|
+| 1 | HTML in `READER_HTML_CACHE_NAME` | Serve cached — unchanged |
+| 2 | Miss + **active** edition's precache complete | Serve the precached shell immediately, network untouched |
+| 3 | Miss otherwise | 3 s race vs the navigation-preloaded fetch — unchanged |
+| 4 | Shell missing from the precache | Network/error — unreachable since Addendum 8, kept as the contract |
+
+Active-edition resolution, read fresh on every miss:
+
+| Stored marker | Resolves to |
+|---|---|
+| Absent (fresh install, install predating this build, `caches` unavailable) | `DEFAULT_MUSHAF_ID` — today's behavior |
+| A registered id (2 or 19) | That id |
+| An unregistered id (written by an older/newer build) | `DEFAULT_MUSHAF_ID`, via `getMushafEdition(id).id` |
+| Read throws | `DEFAULT_MUSHAF_ID` |
+
+Memo lifecycle:
+
+| Event | Effect |
+|---|---|
+| First miss for edition X this worker lifetime | Probe runs, result memoized under X |
+| Any edition's bulk run completes | That edition's memo entry dropped (today: only the default's) |
+| `reportStatus` deletes a stale sentinel for X | X's memo entry dropped — a partially-evicted cache cannot stay falsely instant |
+| Marker read | Never memoized — a mid-session edition switch must land on the next navigation |
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-08-27:
+
+| # | State | Expected |
+|---|---|---|
+| 1 | Default downloaded, active = default, Slow 3G cold launch, unvisited page | Row 2 → instant (regression check against Addendum 5) |
+| 2 | **Tajweed-only downloaded, active = Tajweed** | Row 2 → instant — **the fix** |
+| 3 | Nothing downloaded | Row 3 → 3 s race, unchanged |
+| 4 | Both editions downloaded, active = either | Row 2 → instant |
+| 5 | Downloaded {Tajweed}, active = default | Row 3 → real SSR HTML (their edition) on a fast link; shell at 3 s on a slow one |
+| 6 | Fresh install, never launched | No marker → default probe → false → row 3, unchanged |
+| 7 | Existing **default** user upgrading, marker not yet written | No marker → default → probe true → row 2 instant, no regression |
+| 8 | Existing **Tajweed-only** user upgrading | First cold launch after the upgrade still pays the 3 s race; the provider writes the marker that session, every launch after is instant. Accepted — no client hook runs earlier than the provider |
+| 9 | Download finishes mid-session for edition X | Memo dropped → next miss re-probes → row 2 activates without a worker restart |
+| 10 | Partial eviction found by `reportStatus` | Memo dropped → row 3, not a false instant |
+
+## Files to Change
+
+- `app/constants/offline.ts` — add `PREFS_CACHE_VERSION`/`PREFS_CACHE_NAME` (`fq-prefs-v{N}`) and
+  `ACTIVE_MUSHAF_URL` (`/__fq-active-mushaf`), plus a guarded fire-and-forget `writeActiveMushafId(id)`
+  helper. Both sides import from here for the same reason `PAGES_CACHE_VERSION` lives here — a
+  duplicated literal would let the writer and the reader drift onto different keys.
+- `app/contexts/QuranMushafContext.tsx` — call `writeActiveMushafId` from the hydration effect (with
+  the resolved persisted id, not the initial default) and from `handleMushafIdChange`. Never awaited,
+  never blocking; a rejection is swallowed.
+- `app/sw.ts` — `defaultPrecacheCompletePromise` becomes a `Map<number, Promise<boolean>>`; add
+  `readActiveMushafId()` (unmemoized, normalizing through `getMushafEdition`) and
+  `isActivePrecacheComplete()`; row 2 calls the latter. Drop the `mushafId === DEFAULT_MUSHAF_ID` guard
+  on the run-completion invalidation (`app/sw.ts:495`) so any edition's completion clears its own entry,
+  and add the same invalidation where `reportStatus` deletes a stale sentinel. Update the row 2 comment
+  and the `READER_NAV_FALLBACK_TIMEOUT_MS` block, which both still say "default edition".
+
+No changes to `ReaderPager.tsx`, `next.config.mjs`, the manifest transform, `use-pwa-precache.ts`, or
+the `ClientToSwMessage`/`SwToClientMessage` contract. No new unit tests: every part of this is Cache
+Storage I/O inside a service worker, which the Vitest suite (pure logic under `app/lib/`) does not
+reach — verification is the throttled production-build pass below.
+
+## Constraints
+
+- The marker lives in its own cache. Not `pages-v{N}` (a deliberate `PAGES_CACHE_VERSION` bump discards
+  it along with the download that constant scopes) and not `reader-html-{hash}` (deleted every deploy by
+  `activate`). The `activate` cleanup filters on the `reader-html-` prefix, so a new cache name is
+  already safe from it — but re-check that filter if the prefix is ever generalized.
+- Absent/unreadable/unregistered marker must resolve to `DEFAULT_MUSHAF_ID`. That is today's behavior,
+  which is what keeps every existing install from regressing.
+- The marker read stays unmemoized; only the completeness probe is memoized, and per-edition.
+- Row 3's 3 s timeout, rows 1/3/4, the `request.mode === "navigate"` matcher guard, and the per-deploy
+  auto-versioned `READER_HTML_CACHE_NAME` are all untouched (ADR 0014 Addenda 4, 6).
+- Guard the client write on `caches` being defined — it is absent in insecure contexts and the provider
+  renders on every route.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` (Serwist is disabled in
+  `npm run dev`), DevTools Slow 3G, installed PWA, cold launch to an unvisited page, for each of
+  (a) default edition downloaded, (b) Tajweed-only downloaded, (c) nothing downloaded. (a) and (b) must
+  paint with no network wait; (c) must behave exactly as it does today.
+
+## What NOT to Do
+
+- Do not make row 2 fire when *any* registered edition is complete — considered and rejected
+  (user, 2026-08-27): it lets one edition's cached data stand in for another's readiness, which ADR 0033
+  forbids, and hands the shell to a reader who then fetches their own edition's JSON and font over the
+  slow link the fast path exists to avoid.
+- Do not use a cookie to carry the edition to the worker — rejected for the CDN cache-key exposure on
+  statically-generated routes (ADR 0035, `fix-rsc-cache-poisoning.md`).
+- Do not add a `SET_ACTIVE_MUSHAF` message to the SW message contract. That contract is scoped to
+  download runs (`runId`/`mushafId`, ADR 0014 Addendum 5); a message also cannot help the cold launch
+  this fixes, where the worker answers the navigation before any client exists to send one.
+- Do not lower, remove, or condition row 3's 3 s race for the no-download case (ADR 0014 Addendum 6
+  user decision, 2026-08-23 — merely-meh 4G should still land real HTML).
+- Do not treat "skip the 3 s timer" as separate work from the probe fix — row 2 already has no timer and
+  Addendum 8 already guarantees the shell; there is nothing else there.
+- Do not bulk-precache SSR HTML for all 604 pages (~1.5 GB, rejected since ADR 0028).
+- Do not widen this to non-reader routes or to the shared-mushaf grant reader
+  (`/{locale}/mushaf/{grant}/pages/{id}` does not match `isSelfReaderPage` at all) — out of scope.
+- Do not optimize the probe's `cache.keys()` enumeration cost here — a separate child of epic #375.
+
+## Decisions Made
+
+- The worker learns the active edition from a persisted Cache Storage marker written by
+  `QuranMushafProvider`, probing that one edition (user, 2026-08-27). Union-probe and cookie
+  alternatives rejected — see What NOT to Do.
+- The marker gets its own `fq-prefs-v{N}` cache rather than riding in `pages-v{N}`.
+- Issue #439's second hole (the 3 s race) needs no change of its own; the probe fix closes it
+  (confirmed with the user, 2026-08-27).
+- One-time cost accepted: an existing Tajweed-only install pays the race once after upgrading, before
+  the provider has written the marker.
+- `reportStatus`'s stale-sentinel deletion also drops that edition's memo — beyond the issue text, but
+  it is the same "keep the memoization semantics" requirement the issue lists.
+
+## Implementation Outcome (2026-08-27)
+
+Shipped exactly as planned — no deviations, no new files, no change to the SW message contract.
+
+| Check | Result |
+|---|---|
+| `npm run lint` / `npx tsc --noEmit` | clean |
+| `npm test` (Vitest) | 8 files, 93 tests passed |
+| `npm run build:local` | succeeds; 604 × 2 reader pages still prerendered |
+| `isDefaultPrecacheComplete` / `defaultPrecacheCompletePromise` in built `public/sw.js` | 0 occurrences — the hardcoded probe is gone |
+| Marker key agreement | `public/sw.js` and `.next/static/chunks/163-*.js` both emit `/__fq-active-mushaf` and resolve the cache name to `"fq-prefs-v".concat(1)` |
+| `request.mode === "navigate"` guard, `reader-html-` prefix | both still present in the built worker |
+
+The first `build:local` attempt failed on a transient `ETIMEDOUT` fetching IBM Plex Sans Arabic from
+Google Fonts (`next/font`, build-time). Unrelated to this change and clean on retry — worth knowing
+because the failure text names `app/layout.tsx`, which this diff does not touch.
+
+Not verified locally, deferred to the stg/device pass (user decision, 2026-08-27): the throttled Slow 3G
+cold-launch cases (a) default downloaded, (b) Tajweed-only downloaded, (c) nothing downloaded. Those need
+a real install plus a ~48 MB download per edition; the static evidence above was judged sufficient to
+merge on. The browser-level marker check (write on hydration, rewrite on edition switch, absent-marker
+fallback) was offered and skipped in the same decision.
