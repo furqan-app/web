@@ -302,7 +302,9 @@ test.describe("Search Result Selection, Navigation & Highlighting", () => {
 
   test("preserves reader base path when searching from reader pages", async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "In-reader top bar search is desktop-oriented");
+
     await page.goto("/ar/pages/1");
     await waitForReaderContent(page);
 
