@@ -49,7 +49,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # serwist service worker build output (generated from app/sw.ts)
 /public/sw.js
