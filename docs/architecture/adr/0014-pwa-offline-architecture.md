@@ -255,3 +255,88 @@ page into a row-1 hit for subsequent launches.
 the cache. Do not bulk-precache page HTML to avoid the tree entirely (~1.5 GB, rejected since ADR
 0028). Do not drop the `request.mode === "navigate"` matcher guard or the per-deploy auto-versioned
 cache name — both remain load-bearing from Addendum 4.
+
+## Addendum 7 (2026-08-27): The fallback shell becomes a build-time precache entry
+
+**Issue:** [#438](https://github.com/furqan-app/web/issues/438) (epic #375)
+
+**Supersedes:** Addendum 4's "Fallback document reconciliation" paragraph — the shell moves out of
+`READER_HTML_CACHE_NAME` again, this time into Serwist's own precache manifest rather than back into
+`pages-v{N}`. Everything else in Addendum 4 (the per-deploy cache name, the `activate` prefix cleanup,
+the `navigate` matcher guard, the update banner) is untouched.
+
+**Context.** Addendum 4 seeded the two fallback shells (`/ar/pages/1`, `/en/pages/1`) with a custom
+`install` handler calling `ensureCached()`, which swallows failures by design. So install could
+complete having cached neither shell, and `activate` then deleted the previous deploy's
+`reader-html-*` cache unconditionally. The resulting state — new worker active, empty reader-HTML
+cache, previous deploy's cache gone — makes Addendum 6's rows 1 **and** 2 both unreachable: every cold
+launch falls into row 3's 3 s race and then row 4's raw document fetch, and stays there for the whole
+deploy until some online visit to page 1 happens to repopulate the cache. That is the reported
+"downloaded the whole mushaf and it is still slow", and it is sticky rather than one-shot.
+
+**Decision.** Both shells become entries in the build-time precache manifest, appended by a
+`manifestTransforms` entry in `next.config.mjs`; `serveReaderFallbackShell()` and the reader branch of
+`setCatchHandler` resolve them with `serwist.matchPrecache()`, the same way `offline-{ar,en}.html`
+already does. The custom `install` handler is deleted as redundant.
+
+`globPublicPatterns` is deliberately **not** the mechanism, and stays app-shell-only. It is globbed
+inside the `webpack()` config phase, before Next generates any static HTML, so a build step emitting
+the shell into `public/` is always one build stale — and a stale shell carries the previous build's
+`/_next/static/chunks/*` URLs, which 404 after deploy. `additionalPrecacheEntries` is not the mechanism
+either: in `@serwist/next` it *replaces* the public glob rather than extending it, which would silently
+drop `launch.html`, the offline documents and the icons from the precache.
+
+**What this actually buys — atomicity, not "no network".** A precache entry is still fetched at install.
+The difference is that `PrecacheStrategy` refuses a non-cacheable response, so the worker cannot
+activate without its shell, and a failed install leaves the previous worker and all of its caches
+intact instead of tearing them down with nothing to replace them. Serving a hydratable Next document
+with zero install-time network is not reachable at all: the shell must carry the current build's chunk
+URLs, so it cannot be authored by hand or carried over from a previous deploy.
+
+**How a failed precache actually fails** (verified against the installed packages, 2026-08-27 — an
+earlier draft of this addendum said "throws, so the worker is discarded", which is imprecise).
+`PrecacheStrategy._handleInstall` does throw `bad-precaching-response`, but `Serwist.handleInstall`
+drives every entry through `@serwist/utils`' `parallel()`, whose worker lanes are
+`new Promise(async (res) => …)` with no `reject` captured — its own docblock says it "does not handle
+any error". A throw inside a lane therefore leaves that lane permanently unsettled, `Promise.all` never
+settles, and the promise handed to `event.waitUntil` hangs; the worker is discarded by the browser's
+install timeout rather than immediately. The guarantee this addendum rests on is unaffected — `activate`
+still never runs, so nothing is torn down and the previous worker keeps serving — but the shape is
+"stuck installing, then timed out", not "fails fast". This is upstream behavior that already applied to
+`launch.html`, the offline documents and the icons; what these two entries add is a URL served by a
+route that can 5xx, where the others are static files.
+
+Each entry's revision is a hash of the webpack manifest the transform receives, the same input class
+`READER_HTML_CACHE_NAME` already hashes — shell freshness and reader-HTML cache busting therefore move
+together by construction rather than by convention. It inherits that hash's blind spot too: a deploy
+that changes the shell's server-rendered HTML without moving any client asset hash (a server-resolved
+translation edit, say) leaves the revision equal and the stale shell in place until an unrelated deploy
+bumps a webpack asset.
+
+**Consequences**
+
+- **+** Row 2 becomes reliable: with a complete download, a cold launch to an unvisited page paints
+  from local storage with no document fetch on the critical path.
+- **+** A flaky install can no longer strand a device on rows 3/4 for a whole deploy.
+- **−** `PrecacheRoute` is registered ahead of `runtimeCaching`, so navigations to `/{locale}/pages/1`
+  now come from the precache and bypass the four-row tree entirely. Same bytes, no network — accepted.
+  RSC soft-navs to the same path are unaffected: Serwist's precache matcher only strips `utm_*`/`fbclid`
+  from the query, so the `?_rsc=` parameter Next appends prevents a match and those requests still fall
+  through to `defaultCache`'s RSC rule. This is the `request.mode === "navigate"` concern from Addendum
+  4 arriving at a different layer, and it must be re-verified in a production build, not assumed.
+- **−** The worker's update path is now coupled to that route's availability: a 5xx from
+  `/{locale}/pages/1` (its `revalidate = 300` re-render can hit the database) fails the install and
+  blocks the whole service-worker update until a later attempt succeeds — via the hang-then-timeout
+  path described above, so the block lasts as long as the browser's install timeout. Accepted
+  (2026-08-27): install is already atomic for `launch.html` and the icons, the browser retries on every
+  navigation update check, and the failure mode is "stay on the previous deploy", not "break".
+- **−** The shell's revision cannot see server-only content changes (see above). Bounded, not fixed:
+  the route is still `CacheFirst` under a per-deploy cache name for every page *other* than page 1, and
+  page 1's shell is a launch surface the pre-paint `jumpTo` corrects away from within the first frame.
+
+**What NOT to do:** do not widen `globPublicPatterns` to reach the shell, and do not add a post-build
+step that copies built HTML into `public/` — both are the stale-chunk trap above. Do not pass
+`additionalPrecacheEntries` to `withSerwistInit`. Do not keep the `install`-handler seed "as a backstop"
+alongside the precache entry — two shell locations to reason about, and the atomic entry is what the
+guarantee rests on. Do not make `activate` spare a stale `reader-html-*` cache in the hope of reusing
+last deploy's shell; those chunk URLs are gone.
