@@ -1001,13 +1001,27 @@ amends ADR 0024).
 
 ## CI: E2E Skip on Config-Only PRs
 
-**Decision:** `.github/workflows/e2e.yml` uses `on.pull_request.paths-ignore` (not an allowlist) to skip the suite when every changed file in a PR matches: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`. See `docs/plans/skip-e2e-config-changes.md`.
+**Decision:** `.github/workflows/e2e.yml` uses `on.pull_request.paths-ignore` (not an allowlist) to skip the suite when every changed file in a PR matches: `docs/**`, `.claude/**`, `.agents/**`, `.opencode/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`. See `docs/plans/skip-e2e-config-changes.md`.
 
 **Rationale:** An ignore-list defaults safe — any new/unrecognized path still triggers the suite. An allowlist would default unsafe, silently skipping e2e for new UI-affecting paths until someone remembers to add them.
 
 **Constraints:**
 - When adding a new top-level directory or root config file, decide explicitly whether it can affect rendered output before adding it to this ignore list — do not add out of convenience.
 - `.github/workflows/**` is deliberately not in the ignore list, so changes to the workflow itself (including this list) still get tested.
+
+---
+
+## CI: Quality Gate (Lint, Type-Check & Unit Tests)
+
+**Decision:** `.github/workflows/ci.yml` runs on every `pull_request` as a fast, database-free quality gate executing `npm run lint`, `npm run type-check` (`tsc --noEmit`), and `npm test` (`vitest run`) sequentially on a single runner. It uses `concurrency` cancellation and `on.pull_request.paths-ignore` for `docs/**`, `.claude/**`, `.agents/**`, `.opencode/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`. See `docs/plans/ci-quality-gate.md`.
+
+**Rationale:** Provides instant feedback on PRs without provisioning Docker containers or MySQL databases, while catching lint, TypeScript, and unit test regressions before merging.
+
+**Constraints:**
+- Do not ignore `.eslintrc.json` or `tsconfig.json` in `ci.yml` — configuration changes must trigger lint and type-checking.
+- Must not depend on running database containers; client generation is handled offline via `npm ci`'s `postinstall`.
+- `next-env.d.ts` is tracked in git (unignored) so `tsc --noEmit` runs deterministically without relying on prior `next lint` generation.
+- Quality steps run with `if: steps.install.outcome == 'success'` so all diagnostics run after successful install, but skip cleanly if dependency installation fails.
 
 ---
 
