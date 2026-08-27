@@ -458,3 +458,117 @@ entirely and disarms unconditionally, exactly as it already does for `NavOverflo
   written before `#313`'s `notifyNavigating` mechanism was discovered on `main` mid-task. The
   `setTimeout` version was never confirmed on-device; `notifyNavigating` is the established, root-caused
   fix for this exact race shape.
+
+## Addendum 3 (2026-08-24): the self-close echo path must arm the same reload-watch as the gesture path
+
+**Type:** bug
+**Status:** implemented (lint + `tsc --noEmit` clean; on-device verification pending — MANDATORY
+before release: the bug only reproduces after a browser-initiated reload on the installed PWA,
+`chrome://inspect` over adb per `docs/standards/pwa-testing.md`)
+**Issue:** [#418](https://github.com/furqan-app/web/issues/418)
+**ADR:** [0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md) (amended — see its Addendum)
+
+### Bug
+
+Installed Android PWA. After the browser has hard-reloaded the document once (e.g. the
+OS-initiated reload on network reconnect), **every** subsequent close of a guarded overlay
+(Settings sidebar et al.) via its X button / backdrop / Escape produces a full document reload —
+Chrome's own reload progress bar, full cold-reload waterfall. Before any browser reload, the same
+closes are clean.
+
+### Root cause
+
+ADR 0045 established (on-device ground truth) that Android Chrome fires a spurious hard-`reload`
+`navigate` event ~6ms after a back traversal, and its trigger "is not fully explained — likely
+something reacting to landing on `AndroidBackExitGuard`'s stacked guard entry, possibly Next's
+router failing to reconcile it." The **real back-gesture** path arms a 200ms `awaitingReload` watch
+(`RELOAD_WATCH_MS`) specifically to intercept that follow-up reload.
+
+The **self-close echo path** — the microtask cleanup that pops the guard's own entry via
+`window.history.back()` when the overlay closes via X/backdrop/Escape — intercepts its own echo
+traverse in the `selfClosingRef` branch but then **removes the navigate listener immediately**
+(`use-close-on-back-gesture.ts` ~line 136-142) and never arms the watch. When the spurious reload
+follows the echo traverse, nothing intercepts it → full document reload. The popstate fallback's
+echo path has the same gap and structurally cannot intercept a reload.
+
+Addendum 1's own Constraints anticipated echo-path danger ("Needs an equivalent to the popstate
+branch's `selfClosingRef` echo-swallow so that programmatic close doesn't get misread… or, worse,
+trip the exit-toast") but mandated only the echo-*swallow*, not the reload-watch — the gap this
+addendum closes.
+
+Why it only reproduces after a browser reload is not fully pinned (same unexplained-trigger
+admission as ADR 0045): post-reload, the history stack holds pre-reload document entries and Next's
+restored router state — plausibly the exact "router fails to reconcile the stacked guard entry"
+condition. The fix does not depend on resolving that question; interception is sufficient (ADR
+0045's own precedent). On-device `chrome://inspect` capture during implementation should record the
+event sequence for the record.
+
+### Decision Tree / Algorithm
+
+| Close path | Echo traverse (our own `back()`) | Spurious follow-up reload |
+|---|---|---|
+| Back gesture, Navigation API | intercepted (existing) | intercepted (existing `awaitingReload` watch) — **unchanged** |
+| X / backdrop / Escape, Navigation API | intercepted (existing `selfClosingRef` echo) | **NEW — arm the same `awaitingReload` + `RELOAD_WATCH_MS` watch instead of removing the listener immediately; intercept a `reload` (`!userInitiated`) arriving within the window** |
+| Any close, popstate fallback (iOS < 26.2) | swallowed via `popstate` echo | cannot intercept — accepted, identical to the gesture path's limitation on these browsers (ADR 0045 precedent) |
+
+Structural note (why this is simpler than the gesture path's watch): the echo path arms the watch
+*inside the async traverse handler*, after the effect cleanup has already returned — so the
+cleanup-interference problem the gesture path guards against (the `awaitingReload` first-line check
+in the cleanup, ADR 0045's Consequences) cannot occur here. The listener is removed by the watch
+timer's own callback or by an intercepted reload, never by a competing cleanup.
+
+### Verified Test Cases
+
+Walked through with the user (2026-08-24):
+
+1. **The reported repro:** post-browser-reload, open Settings sidebar → close via X → no document
+   reload, sidebar closes, history depth returns to pre-open state.
+2. Fresh session (no browser reload), open/close Settings via X → no reload, no regression.
+3. Real back-gesture close → unchanged (traverse + reload both intercepted, as shipped).
+4. `NavOverflowMenu` → "Settings" row (sibling opened in the same commit, menu's entry orphaned) →
+   close Settings via X → no reload; the id-matched top-of-stack check still pops only Settings'
+   own entry.
+5. Link navigation inside an overlay (`notifyNavigating` path) → unchanged; no watch armed, no
+   reload interception needed.
+6. iOS < 26.2 / no Navigation API → popstate fallback, behavior unchanged (accepted gap).
+7. Rapid open→close→open of the sidebar inside one 200ms window → the first close's watch expires
+   or intercepts without swallowing the second open's own `pushState` navigate event (the watch
+   only matches `navigationType === "reload"`, never `push`/`replace`/`traverse`).
+
+### Files to Change
+
+- `app/hooks/use-close-on-back-gesture.ts` — in the Navigation API branch's `selfClosingRef` echo
+  handling: replace the immediate `removeEventListener` with arming `awaitingReload` +
+  `reloadWatchTimer` (same constants and interception condition as the gesture path). Nothing else
+  in the file changes.
+
+### Constraints
+
+- The watch must only ever match `navigationType === "reload"` with `!e.userInitiated` within
+  `RELOAD_WATCH_MS` — identical filter to the gesture path; widening it risks swallowing real
+  navigations.
+- Keep the `selfClosingRef` echo semantics otherwise intact: `onClose` must not be re-invoked by
+  the echo traverse.
+- Do not arm the watch on the "entry no longer on top" branch (line ~200-203) — there is no echo
+  traverse to watch there.
+- On-device verification is mandatory before marking implemented — the bug only reproduces after a
+  browser-initiated reload on the installed PWA (`chrome://inspect` over adb; Serwist disabled in
+  dev per `docs/standards/pwa-testing.md`).
+
+### What NOT to Do
+
+- Do not "fix" this by skipping the echo `history.back()` (leaving the guard entry orphaned) —
+  that trades a reload for a permanently growing back-stack and breaks test case 1's history-depth
+  expectation.
+- Do not extend the change to `AndroidBackExitGuard.tsx` or `overlay-back-guard.ts` — ADR 0045's
+  scoping stands (isolated testing showed the exit guard doesn't exhibit the reload bug).
+- Do not attempt to intercept the reload on the popstate fallback — structurally impossible;
+  ADR 0045 already accepted this for iOS < 26.2.
+
+### Decisions Made
+
+- The echo path arms the identical watch rather than a bespoke mechanism — one interception
+  contract for both close paths, minimal diff (user-confirmed 2026-08-24).
+- The unexplained-trigger question (why only post-reload) is recorded, not blocking — same
+  stance ADR 0045 took for the original bug; interception fixes the symptom regardless of source
+  (user-confirmed 2026-08-24).

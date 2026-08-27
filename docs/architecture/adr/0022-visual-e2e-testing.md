@@ -52,3 +52,14 @@ The second half of the problem is that the comparison could not tell that failur
 The gate moves to `maxDiffPixelRatio: 0.002` (implemented in [#175](https://trello.com/c/BSX7EK3j)), with the per-pixel YIQ `threshold` left at its 0.2 default. Raising `threshold` was considered and rejected: it trades a well-understood pixel-count budget for exposure to font-rendering differences between CI runner images, which is a noisier failure mode than the one being fixed. 0.002 is affordable because, once the readiness wait is in place, the measured run-to-run floor is **exactly zero** — three warm runs and four at 8x CPU throttle with 300ms latency all produced byte-identical screenshots.
 
 Sequencing is deliberate and is part of the decision: the readiness wait plus a full baseline regeneration ship first, and the tightened gate follows only after several PRs have run green. Doing both at once would put the new value into effect without it ever having been exercised against a known-good baseline, so any anti-aliasing drift between the regeneration run and later runs would turn the whole suite red with no way to separate runner drift from a genuine regression. See `docs/plans/visual-e2e-testing.md` Addendum (2026-08-02), Trello [#174](https://trello.com/c/D4f3JMMH) and [#175](https://trello.com/c/BSX7EK3j).
+
+## Addendum (2026-08-27): Deprecate Visual Snapshots in Favor of Behavioral E2E Testing (#428)
+
+Visual screenshot comparisons (`toHaveScreenshot`) produced ongoing maintenance overhead and false-positive failures across benign typography, styling, and runner-environment shifts, while failing to assert critical interactive journeys (search execution, sidebar sheet mechanics, reading pagination, audio, and memorization marks).
+
+**Decision:**
+- All 36 static screenshot baseline PNGs and `toHaveScreenshot` calls are deleted.
+- Baseline update and gh-pages diff reporting workflows (`update-visual-baselines.yml`, `visual-e2e-report-cleanup.yml`) are removed.
+- Playwright is transitioned exclusively to functional/behavioral E2E tests executing against the ephemeral fixture database.
+- PR CI workflow (`.github/workflows/e2e.yml`) executes the functional E2E suite and uploads Playwright report artifacts upon failure without GitHub Pages dependencies.
+

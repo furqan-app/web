@@ -17,6 +17,7 @@ import {
   fetchChapters,
   fetchPageBounds,
   fetchReciters,
+  fetchRubFirstVerse,
   fetchStopPoint,
 } from "@/app/utils/recitation-api";
 import { fetchVersePages } from "@/app/hooks/use-verse-pages";
@@ -150,9 +151,30 @@ type RecitationContextType = {
   // floor for its page-type input, with no DB lookup needed.
   currentPageNumber: number | null;
   setCurrentPageNumber: (page: number | null) => void;
-  play: (startVerseKey: string, overrides?: PlaybackOverride) => void;
+  // Resolves a drafted Start From point (#393) to a concrete verse key.
+  // Page-type points need one edition-aware bounds fetch; the rest resolve
+  // synchronously from what's already in context.
+  resolveStartPoint: (
+    start: StartPoint,
+  ) => Promise<string>;
+  // Apply Changes with a moved start (#392 D3): seeks to `verseKey` and
+  // restarts the range from there — both repeat counters reset, stop target
+  // unchanged. No-op when idle (idle starts go through play()).
+  applyStartSeek: (verseKey: string, effectiveSettings?: RecitationSettings) => void;
+  play: (startVerseKey: string, overrides?: PlaybackOverride, effectiveSettings?: RecitationSettings) => void;
   togglePlayPause: () => void;
   stop: () => void;
+  // Repeat-cycle button (#391): zeroes the per-ayah repeat counter so the
+  // in-flight pass counts as repetition 1 of a fresh cycle. No seek — the
+  // audio keeps playing where it is. No-op when idle.
+  resetPerAyahRepeat: () => void;
+  // Range practice progress (#394), published as state ONLY where the
+  // underlying refs already mutate (verse boundaries, repeat transitions,
+  // session start/stop) — never per timeupdate tick. `rangeProgress` is null
+  // when unbounded ("none") or idle; `perAyahProgress` null when per-ayah
+  // repeat is off.
+  rangeProgress: { currentIndex: number; length: number } | null;
+  perAyahProgress: { done: number; target: number } | null;
   isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
@@ -170,12 +192,35 @@ type RecitationContextType = {
   playbackError: "offline-unavailable" | null;
 };
 
+// A drafted Start From point (#393). Per-session, never persisted — derived
+// fresh every time the settings sheet opens (Current Verse while playing,
+// Current Page while idle) and discarded on close. Unlike RangePoint (the
+// persisted "custom" stop target) there is no localStorage footprint.
+export type StartPoint =
+  | { type: "current-verse" }
+  | { type: "current-page" }
+  | { type: "surah-start" }
+  | { type: "rub-start" }
+  | { type: "verse"; surah: number; ayah: number }
+  | { type: "page"; page: number };
+
 const RecitationContext = createContext<RecitationContextType | undefined>(undefined);
 
 function getInitialSettings(): RecitationSettings {
+  // Only identity/preference fields survive a reload (#390 follow-up,
+  // confirmed with user): reciter and speed. Practice configuration
+  // (stopPoint/rangeTo/repeats/pause) deliberately resets to defaults — a
+  // month-old "custom 2:1→2:3 ×4" hijacking quick-play was judged a flow no
+  // user would consider normal.
   if (typeof window !== "undefined") {
     const stored = storage.get("recitationSettings");
-    if (stored) return { ...DEFAULT_RECITATION_SETTINGS, ...stored };
+    if (stored) {
+      return {
+        ...DEFAULT_RECITATION_SETTINGS,
+        reciterId: stored.reciterId ?? null,
+        playbackSpeed: stored.playbackSpeed ?? DEFAULT_RECITATION_SETTINGS.playbackSpeed,
+      };
+    }
   }
   return DEFAULT_RECITATION_SETTINGS;
 }
@@ -196,6 +241,17 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeOverride, setActiveOverride] = useState<ActiveOverride | null>(null);
   const [playbackError, setPlaybackError] = useState<"offline-unavailable" | null>(null);
+  // Published mirrors of the repeat/position refs (#394). Updated only at
+  // ref-mutation sites — see the context-type comment for the frequency
+  // contract.
+  const [rangeProgress, setRangeProgress] = useState<{
+    currentIndex: number;
+    length: number;
+  } | null>(null);
+  const [perAyahProgress, setPerAyahProgress] = useState<{
+    done: number;
+    target: number;
+  } | null>(null);
   const isOnline = useOnlineStatus();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -249,7 +305,19 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const updateSettings = useCallback((patch: Partial<RecitationSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...patch };
-      storage.set("recitationSettings", next);
+      // Only preference fields persist to localStorage; practice
+      // configuration (stopPoint/rangeTo/repeats/pause) is session-scoped —
+      // stop() resets it to defaults, so a stale range must never survive
+      // into a future session's quick-play.
+      storage.set("recitationSettings", {
+        reciterId: next.reciterId,
+        playbackSpeed: next.playbackSpeed,
+        stopPoint: next.stopPoint,
+        rangeTo: next.rangeTo,
+        perAyahRepeatCount: next.perAyahRepeatCount,
+        rangeRepeatCount: next.rangeRepeatCount,
+        pauseBetweenRepeatsMs: next.pauseBetweenRepeatsMs,
+      });
       return next;
     });
   }, []);
@@ -280,6 +348,17 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     setRecitedPage(null);
     rangeRepeatOverrideRef.current = null;
     setActiveOverride(null);
+    setRangeProgress(null);
+    setPerAyahProgress(null);
+    // Practice configuration is session-scoped: ending a session resets it
+    // so quick-play tomorrow never replays an old exercise. Reciter/speed
+    // are preferences and survive.
+    setSettings((prev) => ({
+      ...prev,
+      ...DEFAULT_RECITATION_SETTINGS,
+      reciterId: prev.reciterId,
+      playbackSpeed: prev.playbackSpeed,
+    }));
     clearHighlight();
   }, [clearHighlight]);
 
@@ -296,9 +375,43 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     return versePages;
   }, [mushafId]);
 
+  // Recomputes the published range progress (#394). Called only at
+  // ref-mutation sites: session start, verse advance, seek-backs. stop()
+  // clears the published state directly. currentIndex/length are positions
+  // within the whole range (start verse → stop verse; the surah*1000+ayah
+  // ordering makes cross-chapter ranges just arithmetic).
+  const publishRangeProgress = useCallback((currentVerseKeyArg: string | null) => {
+    const startKey = startVerseKeyRef.current;
+    const stopKey = stopVerseKeyRef.current;
+    if (!startKey || !stopKey || !currentVerseKeyArg) {
+      setRangeProgress(null);
+      return;
+    }
+    const [startS, startA] = startKey.split(":").map(Number);
+    const [stopS, stopA] = stopKey.split(":").map(Number);
+    const [curS, curA] = currentVerseKeyArg.split(":").map(Number);
+    const posOf = (s: number, a: number) => s * 1000 + a;
+    const startPos = posOf(startS, startA);
+    const stopPos = posOf(stopS, stopA);
+    const curPos = posOf(curS, curA);
+    const length = Math.max(stopPos - startPos + 1, 1);
+    const currentIndex = Math.min(Math.max(curPos - startPos + 1, 1), length);
+    setRangeProgress({ currentIndex, length });
+  }, []);
+
   const play = useCallback(
-    async (verseKey: string, overrides?: PlaybackOverride) => {
-      const reciterId = settings.reciterId ?? reciters[0]?.id;
+    async (
+      verseKey: string,
+      overrides?: PlaybackOverride,
+      // Explicit effective settings for callers that commit a draft and
+      // start in the same tick (#392): the closure `settings` still holds
+      // the pre-draft values until React re-renders, so resolveStopTarget /
+      // playbackRate / repeat targets would silently run against stale
+      // configuration. The sheet passes {...settings, ...draft}.
+      effectiveSettings?: RecitationSettings,
+    ) => {
+      const s = effectiveSettings ?? settings;
+      const reciterId = s.reciterId ?? reciters[0]?.id;
       if (!reciterId) return;
 
       const chapterId = parseChapterIdFromVerseKey(verseKey);
@@ -324,11 +437,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
             ? Promise.resolve({ verseKey: overrides.stopVerseKey, chapterId: overrides.stopChapterId })
             : resolveStopTarget(
                 verseKey,
-                settings.stopPoint,
+                s.stopPoint,
                 chapterAudioPromise,
                 chapterId,
                 mushafId,
-                settings.rangeTo,
+                s.rangeTo,
               ),
         ]);
 
@@ -354,9 +467,15 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         loadedReciterIdRef.current = reciterId;
         setCurrentVerseKey(verseKey);
         clearHighlight();
+        publishRangeProgress(verseKey);
+        setPerAyahProgress(
+          s.perAyahRepeatCount === 1
+            ? null
+            : { done: 1, target: resolveRepeatTarget(s.perAyahRepeatCount) },
+        );
 
         audio.src = chapterAudio.audioUrl;
-        audio.playbackRate = settings.playbackSpeed;
+        audio.playbackRate = s.playbackSpeed;
         audio.currentTime = startTiming.timestampFrom / 1000;
         await audio.play();
         setStatus("playing");
@@ -372,9 +491,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         if (!isOnline) setPlaybackError("offline-unavailable");
       }
     },
-    [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline],
+    [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline, publishRangeProgress],
   );
-
   const togglePlayPause = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -524,6 +642,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
           currentVerseKeyRef.current = startVerseKey;
           setCurrentVerseKey(startVerseKey);
           updateRecitedPage(startVerseKey);
+          publishRangeProgress(startVerseKey);
           scheduleSeek(startTiming.timestampFrom, pauseMs);
         }
         return;
@@ -534,7 +653,14 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       const reload = async () => {
         const ok = await loadChapter(reciterId, startChapterId, startVerseKey);
-        if (!ok) stop();
+        if (!ok) {
+          stop();
+          return;
+        }
+        // Cross-chapter branch must mirror the same-chapter branch's state
+        // publication (Addendum 7 + review finding #4) — loadChapter updates
+        // the refs, but the published badge state needs the explicit call.
+        publishRangeProgress(startVerseKey);
       };
 
       if (pauseMs > 0) {
@@ -547,7 +673,99 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         reload();
       }
     },
-    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
+    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage, publishRangeProgress],
+  );
+
+  // Resolves a drafted Start From point to a verse key. Presets resolve
+  // against the live reference context; page-type points need one bounds
+  // fetch. Throws on resolution failure — callers fall back to
+  // pageFirstVerseKey / currentVerseKey per the plan's idle-start rule.
+  const resolveStartPoint = useCallback(
+    async (start: StartPoint): Promise<string> => {
+      const referenceVerseKey = currentVerseKeyRef.current ?? startVerseKeyRef.current ?? pageFirstVerseKey;
+      switch (start.type) {
+        case "current-verse":
+          if (!referenceVerseKey) throw new Error("No reference verse");
+          return referenceVerseKey;
+        case "surah-start": {
+          if (!referenceVerseKey) throw new Error("No reference verse");
+          return `${parseChapterIdFromVerseKey(referenceVerseKey)}:1`;
+        }
+        case "rub-start":
+          if (!referenceVerseKey) throw new Error("No reference verse");
+          return (await fetchRubFirstVerse(referenceVerseKey)).verseKey;
+        case "current-page": {
+          const page = recitedPage ?? currentPageNumber;
+          if (!page) {
+            if (!referenceVerseKey) throw new Error("No reference position");
+            return referenceVerseKey;
+          }
+          return (await fetchPageBounds(page, mushafId)).firstVerseKey;
+        }
+        case "page":
+          return (await fetchPageBounds(start.page, mushafId)).firstVerseKey;
+        case "verse":
+          return `${start.surah}:${start.ayah}`;
+      }
+    },
+    [recitedPage, currentPageNumber, pageFirstVerseKey, mushafId],
+  );
+
+  // Apply Changes with a moved start (#392 D3): restart the range from
+  // `verseKey` without stopping — both repeat counters reset so the new range
+  // runs clean; the stop target stays exactly where the session resolved it.
+  // Same-chapter is an in-place seek (mirrors seekToRangeStart's same-chapter
+  // branch); cross-chapter reloads via loadChapter. effectiveSettings mirrors
+  // play()'s parameter: Apply may change reciter and start in one commit, and
+  // the closure would still hold the pre-draft reciter.
+  const applyStartSeek = useCallback(
+    async (verseKey: string, effectiveSettings?: RecitationSettings) => {
+      if (status === "idle") return;
+      const audio = audioRef.current;
+      if (!audio) return;
+      const s = effectiveSettings ?? settings;
+      const chapterId = parseChapterIdFromVerseKey(verseKey);
+
+      perAyahRepeatsDoneRef.current = 0;
+      rangeRepeatsDoneRef.current = 0;
+
+      if (chapterId === currentChapterIdRef.current) {
+        const timing = verseTimingsRef.current.find((vt) => vt.verseKey === verseKey);
+        if (!timing) return;
+        startVerseKeyRef.current = verseKey;
+        currentVerseKeyRef.current = verseKey;
+        setCurrentVerseKey(verseKey);
+        updateRecitedPage(verseKey);
+        publishRangeProgress(verseKey);
+        setPerAyahProgress(
+          s.perAyahRepeatCount === 1
+            ? null
+            : { done: 1, target: resolveRepeatTarget(s.perAyahRepeatCount) },
+        );
+        scheduleSeek(timing.timestampFrom, 0);
+        return;
+      }
+
+      const reciterId = s.reciterId ?? reciters[0]?.id;
+      if (!reciterId) return;
+      try {
+        startVerseKeyRef.current = verseKey;
+        const ok = await loadChapter(reciterId, chapterId, verseKey);
+        if (!ok) {
+          stop();
+          return;
+        }
+        publishRangeProgress(verseKey);
+        setPerAyahProgress(
+          s.perAyahRepeatCount === 1
+            ? null
+            : { done: 1, target: resolveRepeatTarget(s.perAyahRepeatCount) },
+        );
+      } catch {
+        stop();
+      }
+    },
+    [status, settings, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage, publishRangeProgress],
   );
 
   const handleTimeUpdate = useCallback(() => {
@@ -575,6 +793,10 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       if (previousTiming && perAyahRepeatsDoneRef.current + 1 < perAyahTarget) {
         perAyahRepeatsDoneRef.current += 1;
+        setPerAyahProgress({
+          done: perAyahRepeatsDoneRef.current + 1,
+          target: perAyahTarget,
+        });
         scheduleSeek(previousTiming.timestampFrom, settings.pauseBetweenRepeatsMs);
         return;
       }
@@ -600,6 +822,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       currentVerseKeyRef.current = activeTiming.verseKey;
       setCurrentVerseKey(activeTiming.verseKey);
       updateRecitedPage(activeTiming.verseKey);
+      publishRangeProgress(activeTiming.verseKey);
+      setPerAyahProgress(
+        perAyahTarget === 1
+          ? null
+          : { done: 1, target: perAyahTarget === Infinity ? Infinity : perAyahTarget },
+      );
     }
 
     // A tick matching no segment leaves the current word lit rather than
@@ -612,7 +840,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // highlight blink on every verse. Only stop()/clearHighlight() clears.
     const wordLocation = findActiveWordLocation(activeTiming, currentTimeMs);
     if (wordLocation) applyWordHighlight(wordLocation);
-  }, [settings, scheduleSeek, seekToRangeStart, stop, updateRecitedPage, applyWordHighlight]);
+  }, [settings, scheduleSeek, seekToRangeStart, stop, updateRecitedPage, applyWordHighlight, publishRangeProgress]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -769,6 +997,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.reciterId]);
 
+  const resetPerAyahRepeat = useCallback(() => {
+    if (status === "idle") return;
+    perAyahRepeatsDoneRef.current = 0;
+  }, [status]);
+
   const openSettings = useCallback(() => {
     setIsSettingsOpen(true);
   }, []);
@@ -794,11 +1027,16 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         play,
         togglePlayPause,
         stop,
+        resetPerAyahRepeat,
+        resolveStartPoint,
+        applyStartSeek,
         isSettingsOpen,
         openSettings,
         closeSettings,
         activeOverride,
         playbackError,
+        rangeProgress,
+        perAyahProgress,
       }}
     >
       {/* Mounted once above the reader's route tree so playback survives both

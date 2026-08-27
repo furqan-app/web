@@ -17,7 +17,8 @@
    - Read relevant standards in `docs/standards/`.
 
 3. **Branching in Cursor:**
-   - Work on a dedicated git branch inside the repo: `git checkout -b <type>/<issue-number>-<slug>`.
+   - Work on a dedicated git branch inside the repo (based on updated `origin/main` by default):
+     `git fetch origin && git checkout -b <type>/<issue-number>-<slug> origin/main`.
    - Do not create external worktrees outside the workspace.
 
 4. **Concise Responses:**

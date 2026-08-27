@@ -945,3 +945,381 @@ skeleton (React, target page loading) → target page.
 
 Not verified locally: the OS-initiated reconnect reload itself (needs a real device toggling
 wifi) — that is the stg device test against the user's exact repro.
+
+---
+
+# Addendum 8 (2026-08-27): Precache the reader fallback shell at build time
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `build:local` clean; injected manifest inspected in the
+built `public/sw.js` — both shells present with a revision, the public-glob entries all survived, no
+custom `install` listener remains. Runtime RSC soft-nav check deferred to stg — see Implementation
+Notes below.)
+**Issue:** https://github.com/furqan-app/web/issues/438 (epic #375)
+**ADR:** [0014 Addendum 7](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+A user with the mushaf fully downloaded still waits seconds on the OS splash after a deploy, because
+the fallback shell Addendum 5's row 2 depends on is seeded by a custom `install` handler calling
+`ensureCached()` — which swallows failures by design. Install can therefore complete having cached
+neither shell, while `activate` still deletes the previous deploy's `reader-html-*` cache. The two
+shells move into Serwist's build-time precache manifest instead, appended via `manifestTransforms` in
+`next.config.mjs` and resolved with `serwist.matchPrecache()`.
+
+## Root Cause / Approach
+
+The failure is not that the seed is slow — it is that it is **best-effort while the teardown next to
+it is unconditional**. Once install finishes with an empty `READER_HTML_CACHE_NAME` and the previous
+cache deleted, rows 1 *and* 2 are both unreachable: every cold launch runs row 3's 3 s race and then
+row 4's raw document fetch, for the rest of that deploy, until some online visit to page 1 happens to
+repopulate the cache. Sticky, not one-shot — which is why it reads to the user as "I downloaded
+everything and it is still slow".
+
+A precache entry is **still fetched at install**; "zero network dependency" as the issue words it is
+not reachable for a hydratable Next document, because the shell must carry the current build's
+`/_next/static/chunks/*` URLs. What the precache buys is the property that actually fixes this: a
+non-cacheable response is refused, so the worker cannot activate without its shell, and a failed
+install leaves the previous worker and every one of its caches intact. (Mechanically that failure is a
+hang rather than a rejection — `@serwist/utils`' `parallel()` never settles a lane whose callback
+throws — so the worker is discarded by the browser's install timeout. Same guarantee, slower. See
+ADR 0014 Addendum 7.)
+
+Mechanism verified against the installed packages before planning:
+
+- User `manifestTransforms` run before Serwist's own URL-rewrite transform and before the public-glob
+  entries are merged (`@serwist/build`'s `transformManifest`), so the transform sees exactly the
+  webpack build assets and appending to it leaves `globPublicPatterns` untouched.
+- `PrecacheRoute` is registered ahead of `runtimeCaching` (`serwist/dist/index.mjs:1334`), so
+  navigations to `/{locale}/pages/1` start being served from the precache, bypassing the four-row tree.
+- Serwist's precache matcher strips only `utm_*`/`fbclid` from the query, so the `?_rsc=` parameter
+  Next appends keeps RSC soft-navs to that same path out of the precache route.
+- Precache entries carrying a revision are fetched with `cache: "reload"`, bypassing the browser HTTP
+  cache (the CDN edge-staleness window from Addendum 4 is unchanged, neither better nor worse).
+
+Entry revision is a hash of the webpack manifest the transform receives — the same input class
+`READER_HTML_CACHE_NAME` already hashes, so shell freshness and reader-HTML cache busting move
+together by construction.
+
+## Decision Tree / Algorithm
+
+Behaviour of each path, before and after:
+
+| Situation | Today | After |
+|---|---|---|
+| Install, shell fetch succeeds | shell in `reader-html-{hash}` | shell in the precache, guaranteed present |
+| Install, shell fetch **fails** | install still "succeeds" → `activate` deletes previous `reader-html-*` → every launch this deploy hits row 3 then row 4 | install never completes → worker discarded on the browser's install timeout → previous worker + caches intact → launches keep working; retried on the next update check |
+| Cold launch, complete download, unvisited page | row 2 only if the seed happened to land | row 2 always — `matchPrecache` hit, zero document fetch |
+| Navigation to `/{locale}/pages/1` | row 1, or network on a miss | served by `PrecacheRoute` ahead of the tree |
+| RSC soft-nav to `/{locale}/pages/1` | `defaultCache`'s RSC rule | unchanged — `?_rsc=` defeats precache matching |
+| First-ever install while offline | install fails (`launch.html` is already atomic) | unchanged |
+
+Rows 1, 3 and 4 of Addendum 5's tree, the `navigate` matcher guard, `READER_HTML_CACHE_NAME` and its
+`activate` prefix cleanup are all unchanged. Row 4 becomes effectively unreachable, but stays.
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-08-27:
+
+1. Fresh deploy, Slow 3G, complete download, healthy previous install → old worker serves while the
+   new one precaches in the background; on success it activates with its shell guaranteed. Next cold
+   launch: `launch.html` (precached) → redirect → reader → row 1 miss → row 2 `matchPrecache` hit →
+   paints with no document fetch.
+2. Same, but a shell fetch fails mid-install → install never completes, worker discarded on the
+   browser's install timeout, previous worker and its `reader-html-*` cache survive, launches keep
+   working off the previous deploy. This is the case that is broken today and sticks for the whole
+   deploy.
+3. First-ever install, online → shells land with the rest of the precache; the very next offline or
+   slow launch has a shell immediately.
+4. First-ever install, offline → install fails, no worker. Unchanged (already the case, since
+   `launch.html` and the icons are precached atomically today).
+5. Online navigation straight to `/ar/pages/1` → served by `PrecacheRoute`. Same bytes, no network.
+6. Sidebar tap producing an RSC fetch to `/ar/pages/1` → no precache match, falls through to
+   `defaultCache`'s RSC rule, exactly as today. Must be re-verified in a production build rather than
+   assumed — this is Addendum 4's RSC-poisoning concern arriving at a different layer.
+
+## Files to Change
+
+- `next.config.mjs` — add a `manifestTransforms` entry to `withSerwistInit` appending
+  `{ url: "/ar/pages/1" }` and `{ url: "/en/pages/1" }`, each with a revision hashed from the incoming
+  manifest entries. `globPublicPatterns` untouched. Each appended entry must also carry a numeric
+  `size` — the transform's return value is schema-validated and the build fails without it. Zero is
+  correct here: the documents are prerendered after the webpack compile this transform runs in, so
+  their real size is unknowable at that point, `maximumFileSizeToCacheInBytes` is applied ahead of user
+  transforms and so can never drop these entries, and the only later reader of `size` sums it for the
+  build-log total before deleting the field.
+- `app/sw.ts` — `serveReaderFallbackShell()` resolves via `serwist.matchPrecache(fallbackDocumentUrl(locale))`
+  instead of opening `READER_HTML_CACHE_NAME`; the reader branch of `setCatchHandler` does the same;
+  delete the custom `install` listener and, if it has no other caller, `ensureCached`'s use for the
+  shell (the bulk precache still uses `ensureCached` — do not delete the function).
+- `app/constants/offline.ts` — comment-only: `fallbackDocumentUrl`'s doc block still says the document
+  is "precached at service-worker install"; correct it to name the build-time manifest.
+- No client-side changes. `ReaderPager`'s correction layout effect, the `fq-pending-jump` gate and
+  `launch.html` are all untouched and remain load-bearing.
+
+## Constraints
+
+- `globPublicPatterns` stays app-shell-only. Do not widen it to reach the shell, and do not add a
+  post-build step copying built HTML into `public/` — it is globbed during the `webpack()` config
+  phase, before Next generates HTML, so the copy is always one build stale and its chunk URLs 404.
+- Do not pass `additionalPrecacheEntries` to `withSerwistInit` — in `@serwist/next` it replaces the
+  public glob instead of extending it, silently dropping `launch.html`, `offline-{ar,en}.html` and the
+  icons from the precache.
+- The `request.mode === "navigate"` matcher guard, `READER_HTML_CACHE_NAME`'s per-deploy versioning
+  and the `activate` prefix cleanup all stay (ADR 0014 Addendum 4).
+- The fallback shell stays independent of the bulk 604-page download — it must work before that
+  download has ever run. Row 2's `isCacheComplete` probe gates *skipping the network*, never whether a
+  shell exists.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` (Serwist is disabled
+  in `npm run dev`), with DevTools Slow 3G. Confirm in the built `public/sw.js` that both shell URLs
+  appear in the injected manifest with a revision, and that a soft-nav to `/ar/pages/1` still returns
+  RSC data rather than HTML. Device verification of the real repro happens on stg.
+
+## What NOT to Do
+
+- Do not keep the `install`-handler seed as a backstop alongside the precache entry (user decision
+  2026-08-27) — two shell locations to reason about, and the atomic entry is what the guarantee rests on.
+- Do not introduce a dedicated content-free shell route (considered and rejected 2026-08-27): it would
+  dodge the 5xx coupling below, but it means a new route plus changes to `ReaderPage`/`ReaderPager`'s
+  initial-data contract and to Addendum 7's `fq-pending-jump` gate. Out of scope for this issue.
+- Do not make `activate` spare a stale `reader-html-*` cache to reuse the previous deploy's shell —
+  those chunk URLs are gone after deploy and the shell would boot into a blank app.
+- Do not attempt to inline the shell HTML into `sw.js` via `webpack` `DefinePlugin`. That injection
+  path is documented as silently non-functional in this build (ADR 0014 Addendum 4's implementation
+  note), and the shell cannot be known before the build that produces it anyway.
+- Do not bulk-precache page HTML (~1.5 GB, rejected since ADR 0028).
+- Do not touch the edition-awareness of row 2 or the 3 s timeout — those are #439, blocked on this.
+
+## Decisions Made
+
+- Reuse `/{locale}/pages/1` as the shell rather than adding a content-free shell route (user,
+  2026-08-27). Accepted consequence: a 5xx from that route at install (its `revalidate = 300`
+  re-render can reach the database) fails the install and blocks the service-worker update until a
+  later attempt succeeds. The browser retries on every navigation update check and the failure mode is
+  "stay on the previous deploy", not "break".
+- `manifestTransforms` is the injection point, chosen over both `globPublicPatterns` and
+  `additionalPrecacheEntries` for the reasons under Constraints.
+- The issue's "zero network dependency at install" framing is corrected to atomicity plus
+  no-teardown-before-replacement (user confirmed 2026-08-27); it is not reachable literally.
+
+## Implementation Notes (2026-08-27)
+
+Verified against the built `public/sw.js` after `npm run build:local`:
+
+| Check | Result |
+|---|---|
+| Both shells in the injected manifest | `/ar/pages/1` and `/en/pages/1`, revision `e3e270c446fb1462` |
+| Public-glob entries survived the transform | `launch.html`, `offline-{ar,en}.html`, all 8 icons, `quran/chapters.json` — 86 entries total |
+| Serwist's own URL transform left the shells alone | no prefix rewrite, no `%5B` escaping |
+| Custom `install` listener gone | the one remaining `addEventListener("install")` is Serwist's `addEventListeners()` |
+| Only `utm_*`/`fbclid` stripped from precache lookups | `ignoreURLParametersMatching:[/^utm_/,/^fbclid$/]` in the build — so `?_rsc=` still defeats a precache match |
+| Shell size added to the now-atomic install | 57.7 KB + 56.6 KB gzipped (542 KB / 538 KB raw) — the same two documents the deleted handler already fetched |
+
+Raised by the review pass (2026-08-27), verified in the installed packages, and resolved as
+documentation corrections rather than code changes — none of them weaken the fix:
+
+- The "install throws, worker is discarded" framing was imprecise. `@serwist/utils`' `parallel()`
+  builds its lanes as `new Promise(async (res) => …)` with no `reject` captured, so a lane whose
+  callback throws never settles and `Promise.all` hangs. The worker is discarded by the browser's
+  install timeout instead. `activate` still never runs, so the no-teardown-before-replacement guarantee
+  is intact; only the timing changes. Corrected in ADR 0014 Addendum 7 and above.
+- The shell's revision hashes webpack assets, so a change to the shell's server-rendered HTML that
+  moves no client asset hash leaves the entry looking unchanged. Inherited from the same hash
+  `READER_HTML_CACHE_NAME` uses; recorded as a bounded consequence in the ADR, not fixed here.
+- `READER_FALLBACK_SHELL_LOCALES` in `next.config.mjs` cannot be checked against `FALLBACK_LOCALES` at
+  build time (plain ESM, no TS path alias). Adding a locale to one and not the other ships that locale
+  with no precached shell and no build error. Left as a comment-level warning; a real guard would mean
+  moving the locale list into a plain-JS module both sides can import, which is out of scope for #438.
+
+Two things the plan did not anticipate:
+
+- The transform's return value is schema-validated and every entry needs a numeric `size`; the first
+  build failed on exactly that. See the `next.config.mjs` bullet under Files to Change for why `0` is
+  correct rather than merely tolerated.
+- `serveReaderFallbackShell` needs an explicit `Promise<Response | undefined>` return type. It reads
+  `serwist`, whose type is inferred from the `runtimeCaching` handler that calls it, and TypeScript
+  resolves that cycle to `any` (TS7022/TS7023) instead of erroring at the call sites.
+
+Still open: verified test case 6 (the RSC soft-nav). Deferred to the stg device pass by user decision
+(2026-08-27) — the static evidence above was judged sufficient to merge on. If a soft-nav to
+`/{locale}/pages/1` ever comes back as HTML instead of RSC flight data, `PrecacheRoute` is matching
+ahead of `defaultCache`'s RSC rule and this is the cause.
+
+---
+
+# Addendum 9 (2026-08-27): The instant-shell path follows the reader's active edition
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `npm test` + full `build:local` clean; built `public/sw.js`
+and the client chunk both inspected to confirm they resolve the same marker key — see Implementation
+Outcome. Throttled device pass still pending)
+**Issue:** https://github.com/furqan-app/web/issues/439 (epic #375)
+**ADR:** [0014 Addendum 8](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+Addendum 5's row 2 — "miss + bulk precache complete → serve the shell instantly, network untouched" —
+probes `isCacheComplete(cache, DEFAULT_MUSHAF_ID)` (`app/sw.ts:99`). Downloads have been per-edition
+since ADR 0014 Addendum 5 and page content per-edition since ADR 0033, so a reader who downloaded only
+the Tajweed edition never satisfies that probe: every cold launch to an unvisited page falls into row
+3's 3 s race despite having every byte needed to render that page already on disk. The fix is to probe
+the edition the reader is actually about to render.
+
+## Root Cause / Approach
+
+One hardcoded constant, plus the fact that the service worker has no way to know the active edition.
+`QuranMushafContext` holds it in `localStorage` (unreadable from a worker) and the reader URL is
+edition-agnostic on purpose (`/{locale}/pages/{id}`, ADR 0033 — an edition is a client-side choice, not
+a route). The fallback shell is edition-agnostic too, so row 2 is not choosing *what* to serve, only
+whether to skip the network — and skipping is correct exactly when the client can render the requested
+page locally, which needs the **active** edition's JSON and font.
+
+So the client mirrors its active edition into Cache Storage as a synthetic entry (the same idiom as the
+precache sentinel), and the worker reads it on the miss path.
+
+**Issue #439's "Hole 2" needs no separate work.** Row 2 already returns the shell with no timer
+(`app/sw.ts:186-191`), and Addendum 8 made the shell impossible to miss on an active worker (install is
+atomic), so the only surviving way for a fully-downloaded user to pay the 3 s race was the probe asking
+about the wrong edition. Fixing the probe closes both holes. Row 3's 3 s race stays exactly as-is for
+the genuine no-download case, where real SSR HTML is still worth a bounded wait.
+
+## Decision Tree / Algorithm
+
+Rows are unchanged; only row 2's condition moves.
+
+| Row | Situation | Behavior |
+|---|---|---|
+| 1 | HTML in `READER_HTML_CACHE_NAME` | Serve cached — unchanged |
+| 2 | Miss + **active** edition's precache complete | Serve the precached shell immediately, network untouched |
+| 3 | Miss otherwise | 3 s race vs the navigation-preloaded fetch — unchanged |
+| 4 | Shell missing from the precache | Network/error — unreachable since Addendum 8, kept as the contract |
+
+Active-edition resolution, read fresh on every miss:
+
+| Stored marker | Resolves to |
+|---|---|
+| Absent (fresh install, install predating this build, `caches` unavailable) | `DEFAULT_MUSHAF_ID` — today's behavior |
+| A registered id (2 or 19) | That id |
+| An unregistered id (written by an older/newer build) | `DEFAULT_MUSHAF_ID`, via `getMushafEdition(id).id` |
+| Read throws | `DEFAULT_MUSHAF_ID` |
+
+Memo lifecycle:
+
+| Event | Effect |
+|---|---|
+| First miss for edition X this worker lifetime | Probe runs, result memoized under X |
+| Any edition's bulk run completes | That edition's memo entry dropped (today: only the default's) |
+| `reportStatus` deletes a stale sentinel for X | X's memo entry dropped — a partially-evicted cache cannot stay falsely instant |
+| Marker read | Never memoized — a mid-session edition switch must land on the next navigation |
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-08-27:
+
+| # | State | Expected |
+|---|---|---|
+| 1 | Default downloaded, active = default, Slow 3G cold launch, unvisited page | Row 2 → instant (regression check against Addendum 5) |
+| 2 | **Tajweed-only downloaded, active = Tajweed** | Row 2 → instant — **the fix** |
+| 3 | Nothing downloaded | Row 3 → 3 s race, unchanged |
+| 4 | Both editions downloaded, active = either | Row 2 → instant |
+| 5 | Downloaded {Tajweed}, active = default | Row 3 → real SSR HTML (their edition) on a fast link; shell at 3 s on a slow one |
+| 6 | Fresh install, never launched | No marker → default probe → false → row 3, unchanged |
+| 7 | Existing **default** user upgrading, marker not yet written | No marker → default → probe true → row 2 instant, no regression |
+| 8 | Existing **Tajweed-only** user upgrading | First cold launch after the upgrade still pays the 3 s race; the provider writes the marker that session, every launch after is instant. Accepted — no client hook runs earlier than the provider |
+| 9 | Download finishes mid-session for edition X | Memo dropped → next miss re-probes → row 2 activates without a worker restart |
+| 10 | Partial eviction found by `reportStatus` | Memo dropped → row 3, not a false instant |
+
+## Files to Change
+
+- `app/constants/offline.ts` — add `PREFS_CACHE_VERSION`/`PREFS_CACHE_NAME` (`fq-prefs-v{N}`) and
+  `ACTIVE_MUSHAF_URL` (`/__fq-active-mushaf`), plus a guarded fire-and-forget `writeActiveMushafId(id)`
+  helper. Both sides import from here for the same reason `PAGES_CACHE_VERSION` lives here — a
+  duplicated literal would let the writer and the reader drift onto different keys.
+- `app/contexts/QuranMushafContext.tsx` — call `writeActiveMushafId` from the hydration effect (with
+  the resolved persisted id, not the initial default) and from `handleMushafIdChange`. Never awaited,
+  never blocking; a rejection is swallowed.
+- `app/sw.ts` — `defaultPrecacheCompletePromise` becomes a `Map<number, Promise<boolean>>`; add
+  `readActiveMushafId()` (unmemoized, normalizing through `getMushafEdition`) and
+  `isActivePrecacheComplete()`; row 2 calls the latter. Drop the `mushafId === DEFAULT_MUSHAF_ID` guard
+  on the run-completion invalidation (`app/sw.ts:495`) so any edition's completion clears its own entry,
+  and add the same invalidation where `reportStatus` deletes a stale sentinel. Update the row 2 comment
+  and the `READER_NAV_FALLBACK_TIMEOUT_MS` block, which both still say "default edition".
+
+No changes to `ReaderPager.tsx`, `next.config.mjs`, the manifest transform, `use-pwa-precache.ts`, or
+the `ClientToSwMessage`/`SwToClientMessage` contract. No new unit tests: every part of this is Cache
+Storage I/O inside a service worker, which the Vitest suite (pure logic under `app/lib/`) does not
+reach — verification is the throttled production-build pass below.
+
+## Constraints
+
+- The marker lives in its own cache. Not `pages-v{N}` (a deliberate `PAGES_CACHE_VERSION` bump discards
+  it along with the download that constant scopes) and not `reader-html-{hash}` (deleted every deploy by
+  `activate`). The `activate` cleanup filters on the `reader-html-` prefix, so a new cache name is
+  already safe from it — but re-check that filter if the prefix is ever generalized.
+- Absent/unreadable/unregistered marker must resolve to `DEFAULT_MUSHAF_ID`. That is today's behavior,
+  which is what keeps every existing install from regressing.
+- The marker read stays unmemoized; only the completeness probe is memoized, and per-edition.
+- Row 3's 3 s timeout, rows 1/3/4, the `request.mode === "navigate"` matcher guard, and the per-deploy
+  auto-versioned `READER_HTML_CACHE_NAME` are all untouched (ADR 0014 Addenda 4, 6).
+- Guard the client write on `caches` being defined — it is absent in insecure contexts and the provider
+  renders on every route.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` (Serwist is disabled in
+  `npm run dev`), DevTools Slow 3G, installed PWA, cold launch to an unvisited page, for each of
+  (a) default edition downloaded, (b) Tajweed-only downloaded, (c) nothing downloaded. (a) and (b) must
+  paint with no network wait; (c) must behave exactly as it does today.
+
+## What NOT to Do
+
+- Do not make row 2 fire when *any* registered edition is complete — considered and rejected
+  (user, 2026-08-27): it lets one edition's cached data stand in for another's readiness, which ADR 0033
+  forbids, and hands the shell to a reader who then fetches their own edition's JSON and font over the
+  slow link the fast path exists to avoid.
+- Do not use a cookie to carry the edition to the worker — rejected for the CDN cache-key exposure on
+  statically-generated routes (ADR 0035, `fix-rsc-cache-poisoning.md`).
+- Do not add a `SET_ACTIVE_MUSHAF` message to the SW message contract. That contract is scoped to
+  download runs (`runId`/`mushafId`, ADR 0014 Addendum 5); a message also cannot help the cold launch
+  this fixes, where the worker answers the navigation before any client exists to send one.
+- Do not lower, remove, or condition row 3's 3 s race for the no-download case (ADR 0014 Addendum 6
+  user decision, 2026-08-23 — merely-meh 4G should still land real HTML).
+- Do not treat "skip the 3 s timer" as separate work from the probe fix — row 2 already has no timer and
+  Addendum 8 already guarantees the shell; there is nothing else there.
+- Do not bulk-precache SSR HTML for all 604 pages (~1.5 GB, rejected since ADR 0028).
+- Do not widen this to non-reader routes or to the shared-mushaf grant reader
+  (`/{locale}/mushaf/{grant}/pages/{id}` does not match `isSelfReaderPage` at all) — out of scope.
+- Do not optimize the probe's `cache.keys()` enumeration cost here — a separate child of epic #375.
+
+## Decisions Made
+
+- The worker learns the active edition from a persisted Cache Storage marker written by
+  `QuranMushafProvider`, probing that one edition (user, 2026-08-27). Union-probe and cookie
+  alternatives rejected — see What NOT to Do.
+- The marker gets its own `fq-prefs-v{N}` cache rather than riding in `pages-v{N}`.
+- Issue #439's second hole (the 3 s race) needs no change of its own; the probe fix closes it
+  (confirmed with the user, 2026-08-27).
+- One-time cost accepted: an existing Tajweed-only install pays the race once after upgrading, before
+  the provider has written the marker.
+- `reportStatus`'s stale-sentinel deletion also drops that edition's memo — beyond the issue text, but
+  it is the same "keep the memoization semantics" requirement the issue lists.
+
+## Implementation Outcome (2026-08-27)
+
+Shipped exactly as planned — no deviations, no new files, no change to the SW message contract.
+
+| Check | Result |
+|---|---|
+| `npm run lint` / `npx tsc --noEmit` | clean |
+| `npm test` (Vitest) | 8 files, 93 tests passed |
+| `npm run build:local` | succeeds; 604 × 2 reader pages still prerendered |
+| `isDefaultPrecacheComplete` / `defaultPrecacheCompletePromise` in built `public/sw.js` | 0 occurrences — the hardcoded probe is gone |
+| Marker key agreement | `public/sw.js` and `.next/static/chunks/163-*.js` both emit `/__fq-active-mushaf` and resolve the cache name to `"fq-prefs-v".concat(1)` |
+| `request.mode === "navigate"` guard, `reader-html-` prefix | both still present in the built worker |
+
+The first `build:local` attempt failed on a transient `ETIMEDOUT` fetching IBM Plex Sans Arabic from
+Google Fonts (`next/font`, build-time). Unrelated to this change and clean on retry — worth knowing
+because the failure text names `app/layout.tsx`, which this diff does not touch.
+
+Not verified locally, deferred to the stg/device pass (user decision, 2026-08-27): the throttled Slow 3G
+cold-launch cases (a) default downloaded, (b) Tajweed-only downloaded, (c) nothing downloaded. Those need
+a real install plus a ~48 MB download per edition; the static evidence above was judged sufficient to
+merge on. The browser-level marker check (write on hydration, rewrite on edition switch, absent-marker
+fallback) was offered and skipped in the same decision.

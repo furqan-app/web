@@ -337,7 +337,22 @@
     "surahPlaceholder": "اختر سورة",
     "surahSearchPlaceholder": "ابحث عن سورة…",
     "surahEmpty": "لم يتم العثور على سورة.",
-    "offlineUnavailable": "غير متاح دون اتصال"
+    "offlineUnavailable": "غير متاح دون اتصال",
+    "repeatCycleOff": "بدون تكرار للآية",
+    "repeatCycleTimes": "تكرار الآية {n} مرة",
+    "repeatCycleInfinite": "تكرار الآية باستمرار",
+    "startFrom": "ابدأ من",
+    "startCurrentVerse": "الآية الحالية",
+    "startCurrentPage": "الصفحة الحالية",
+    "startSurahStart": "بداية السورة",
+    "startRubStart": "بداية الربع",
+    "startCustom": "مخصص",
+    "applyChanges": "تطبيق التغييرات",
+    "startRecitation": "ابدأ التلاوة",
+    "rangeProgressAyah": "الآية {index}/{length}",
+    "rangeProgressRepeat": "تكرار {done}/{target}",
+    "numberSearchPlaceholder": "ابحث…",
+    "numberEmpty": "لا يوجد تطابق."
   },
   "offlineRecitation": {
     "title": "التلاوة دون اتصال",

@@ -20,7 +20,7 @@ Use GitHub Actions' `on.pull_request.paths-ignore`, not an allowlist (`paths:`).
 | Changed path pattern | Affects rendered UI / e2e output? | Skip e2e? |
 |---|---|---|
 | `docs/**` | No — prose only | Yes |
-| `.claude/**` | No — assistant tooling, not shipped | Yes |
+| `.claude/**`, `.agents/**`, `.opencode/**` | No — assistant/IDE tooling, not shipped | Yes |
 | `**/*.md` (README, CLAUDE.md, any markdown) | No | Yes |
 | `.mcp.json`, `.mcp.json.example` | No — local MCP config | Yes |
 | `furqan-workflow.excalidraw` | No — design doc | Yes |
@@ -64,4 +64,4 @@ If a PR's changed files are a **mix** of ignored and non-ignored paths, GitHub A
 
 - Target only `visual-e2e.yml`; `protect-prod.yml`/`protect-stg.yml` already scoped correctly and are out of scope.
 - Use `paths-ignore`, not `paths` allowlist.
-- Final ignore list: `docs/**`, `.claude/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`.
+- Final ignore list: `docs/**`, `.claude/**`, `.agents/**`, `.opencode/**`, `**/*.md`, `.mcp.json`, `.mcp.json.example`, `furqan-workflow.excalidraw`, `.eslintrc.json`, `tsconfig.json`.

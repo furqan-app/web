@@ -4,9 +4,11 @@ import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { CacheFirst, RangeRequestsPlugin, Serwist } from "serwist";
 import {
+  ACTIVE_MUSHAF_URL,
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
+  PREFS_CACHE_NAME,
   RECITATION_AUDIO_HOST,
   RECITATION_DOWNLOAD_CACHE_NAME,
   fallbackDocumentUrl,
@@ -75,40 +77,89 @@ const isSelfReaderPage = (url: URL) =>
 // stall a cold launch for the full SSR document fetch — the catch handler only
 // fires on network error, never on slowness. The reader-page handler below is
 // therefore a four-row decision tree instead of a bare CacheFirst: cache hit →
-// serve; miss + bulk precache complete → serve the precached fallback shell
-// instantly, network untouched; miss otherwise → race the navigation-preloaded
-// fetch against this timeout, fallback wins → serve the shell while the fetch
-// continues in the background and is still cached under its real URL on
-// arrival. Slow 3G document loads take 5–20s; merely-meh 4G (~1s) should still
-// land real HTML, hence 3s and nothing lower.
+// serve; miss + the ACTIVE edition's bulk precache complete (Addendum 8) →
+// serve the precached fallback shell instantly, network untouched; miss
+// otherwise → race the navigation-preloaded fetch against this timeout,
+// fallback wins → serve the shell while the fetch continues in the background
+// and is still cached under its real URL on arrival. Slow 3G document loads
+// take 5–20s; merely-meh 4G (~1s) should still land real HTML, hence 3s and
+// nothing lower.
+//
+// This timeout is for the genuine no-download case only. Row 2 never reaches
+// it — it has no timer at all — so a fully-downloaded reader waiting 3s always
+// means the completeness probe answered about the wrong edition, which is the
+// defect Addendum 8 fixes. Do not add a second "skip the timer" branch.
 const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
 
 /**
- * Memoized completeness probe for row 2 — runs ONLY on a reader-HTML cache
- * miss, so one cold launch pays the ~604-entry `cache.keys()` walk at most
- * once per worker lifetime. Reset when a bulk precache run completes, so a
- * download finishing mid-session activates row 2 without waiting for the
- * worker to restart.
+ * Memoized completeness probe for row 2, keyed by edition — runs ONLY on a
+ * reader-HTML cache miss, so one cold launch pays the ~604-entry `cache.keys()`
+ * walk at most once per edition per worker lifetime. Entries are dropped when a
+ * bulk run completes (a download finishing mid-session activates row 2 without
+ * waiting for the worker to restart) and when reportStatus finds a cache that
+ * can no longer back its own sentinel (a partial eviction must not leave row 2
+ * falsely instant for the rest of the worker's life).
  */
-let defaultPrecacheCompletePromise: Promise<boolean> | undefined;
+const precacheCompleteByMushaf = new Map<number, Promise<boolean>>();
 
-function isDefaultPrecacheComplete(): Promise<boolean> {
-  if (!defaultPrecacheCompletePromise) {
-    defaultPrecacheCompletePromise = caches
+function isPrecacheComplete(mushafId: number): Promise<boolean> {
+  let probe = precacheCompleteByMushaf.get(mushafId);
+  if (!probe) {
+    probe = caches
       .open(PAGES_CACHE_NAME)
-      .then((cache) => isCacheComplete(cache, DEFAULT_MUSHAF_ID))
+      .then((cache) => isCacheComplete(cache, mushafId))
       .catch(() => false);
+    precacheCompleteByMushaf.set(mushafId, probe);
   }
-  return defaultPrecacheCompletePromise;
+  return probe;
 }
 
-async function serveReaderFallbackShell(url: URL) {
-  const locale =
-    FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
-    FALLBACK_LOCALES[0];
-  const cache = await caches.open(READER_HTML_CACHE_NAME);
-  return cache.match(fallbackDocumentUrl(locale));
+/**
+ * The edition the client is about to render, mirrored into Cache Storage by
+ * QuranMushafProvider (ADR 0014 Addendum 8) — a worker cannot read the
+ * localStorage that actually owns it, and the reader URL is edition-agnostic by
+ * design (ADR 0033). Every failure mode resolves to DEFAULT_MUSHAF_ID, which is
+ * this probe's pre-Addendum-8 behavior, so no existing install regresses:
+ * absent marker (fresh install, or one predating this build), an id no longer
+ * in the registry, and an unreadable cache all land there — the last via
+ * getMushafEdition's own fallback.
+ *
+ * Deliberately NOT memoized. It is one cache.match against a single-entry
+ * cache, and caching it would make an edition switch invisible to the handler
+ * until the worker restarted.
+ */
+async function readActiveMushafId(): Promise<number> {
+  try {
+    const cache = await caches.open(PREFS_CACHE_NAME);
+    const stored = await cache.match(ACTIVE_MUSHAF_URL);
+    if (!stored) return DEFAULT_MUSHAF_ID;
+    return getMushafEdition(Number(await stored.text())).id;
+  } catch {
+    return DEFAULT_MUSHAF_ID;
+  }
 }
+
+const isActivePrecacheComplete = async () =>
+  isPrecacheComplete(await readActiveMushafId());
+
+const fallbackLocale = (url: URL) =>
+  FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
+  FALLBACK_LOCALES[0];
+
+// ADR 0014 Addendum 7: the shell is a build-time precache entry (appended by
+// next.config.mjs's manifestTransforms), not a best-effort install-time fetch
+// into READER_HTML_CACHE_NAME. matchPrecache resolves it regardless of which
+// cache Serwist's own versioning stores the manifest under — same as
+// offlineFallbackUrl below. It cannot be missing on an active worker: install
+// is atomic, so a worker that failed to fetch a shell never activates and the
+// previous deploy's worker and caches stay intact. Callers still branch on
+// `undefined` — that is matchPrecache's contract, and row 4 of the tree below
+// is defined by it. The return type is annotated rather than inferred because
+// this reads `serwist`, whose own type is inferred from the runtimeCaching
+// handler that calls this: a cycle TypeScript silently resolves to `any`
+// (TS7022/TS7023) instead of flagging at the call sites.
+const serveReaderFallbackShell = (url: URL): Promise<Response | undefined> =>
+  serwist.matchPrecache(fallbackDocumentUrl(fallbackLocale(url)));
 
 const isPageFont = (url: URL) =>
   /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
@@ -168,11 +219,14 @@ const serwist = new Serwist({
           const cached = await cache.match(request);
           if (cached) return cached;
 
-          // Row 2 — complete precache means every page renders client-side
-          // from cached JSON + font once the shell mounts (the pre-paint
-          // jumpTo self-correction, ADR 0042), so SSR HTML adds nothing but
-          // the network wait.
-          if (await isDefaultPrecacheComplete()) {
+          // Row 2 — a complete precache OF THE EDITION ABOUT TO BE RENDERED
+          // means every page renders client-side from cached JSON + font once
+          // the shell mounts (the pre-paint jumpTo self-correction, ADR 0042),
+          // so SSR HTML adds nothing but the network wait. Scoped to the active
+          // edition, not any complete one: the shell is edition-agnostic, but
+          // the content it then loads is not (ADR 0033), so another edition's
+          // download says nothing about whether this page can render locally.
+          if (await isActivePrecacheComplete()) {
             const shell = await serveReaderFallbackShell(url);
             if (shell) return shell;
             // No shell cached (e.g. install never completed online) — fall
@@ -288,46 +342,19 @@ self.addEventListener("activate", (event: ExtendableEvent) => {
 // offline document instead (terminal state, not flash-then-corrects).
 serwist.setCatchHandler(async ({ request, url }) => {
   if (request.mode !== "navigate") return Response.error();
-  const locale =
-    FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
-    FALLBACK_LOCALES[0];
 
   if (isSelfReaderPage(url)) {
-    const cache = await caches.open(READER_HTML_CACHE_NAME);
-    const fallback = await cache.match(fallbackDocumentUrl(locale));
+    const fallback = await serveReaderFallbackShell(url);
     return fallback ?? Response.error();
   }
 
   // Precached via globPublicPatterns (next.config.mjs), same as launch.html —
   // matchPrecache resolves it regardless of which cache Serwist's own
   // versioning happens to store the precache manifest under.
-  const fallback = await serwist.matchPrecache(offlineFallbackUrl(locale));
-  return fallback ?? Response.error();
-});
-
-// Precache the reader fallback document itself — page 1's real reader-page
-// HTML for both locales — at install time, for every visitor. Independent of
-// the consent-gated bulk download (must work before that has ever run) and
-// tiny next to it, so no standalone/consent gate applies here, unlike the
-// page fonts and bulk JSON PAGES_CACHE_NAME holds. Best-effort: a failure
-// here (installing while offline) just means no fallback exists yet until a
-// later online visit. Lives in READER_HTML_CACHE_NAME, not PAGES_CACHE_NAME
-// (ADR 0014 Addendum 4) — it's reader HTML like any other, so it needs the
-// same per-deploy auto-refresh; the old shared cache location meant this one
-// document was fetched once at first install and never revalidated again,
-// its own smaller instance of the staleness class the rest of this addendum
-// fixes. It shares its cache key with isSelfReaderPage's own CacheFirst rule,
-// so any ordinary online visit to page 1 populates it too — this seed is only
-// for a visitor who is offline before ever reaching page 1 normally.
-self.addEventListener("install", (event: ExtendableEvent) => {
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(READER_HTML_CACHE_NAME);
-      await Promise.all(
-        FALLBACK_LOCALES.map((locale) => ensureCached(cache, fallbackDocumentUrl(locale))),
-      );
-    })(),
+  const fallback = await serwist.matchPrecache(
+    offlineFallbackUrl(fallbackLocale(url)),
   );
+  return fallback ?? Response.error();
 });
 
 // Bulk pre-cache, edition-parameterized (ADR 0014 Addendum 5) — any registered
@@ -507,8 +534,10 @@ async function precacheAllPages(mushafId: number) {
       );
       // A row-2 probe memoized before this run finished is stale-negative —
       // drop it so the next reader-page cache miss re-probes and activates
-      // the fast fallback path (ADR 0014 Addendum 6).
-      if (mushafId === DEFAULT_MUSHAF_ID) defaultPrecacheCompletePromise = undefined;
+      // the fast fallback path (ADR 0014 Addendum 6). Unconditional since
+      // Addendum 8: any edition can be the active one, so any edition's
+      // completion can be the one that unblocks row 2.
+      precacheCompleteByMushaf.delete(mushafId);
     }
     // Release the run BEFORE the awaited final report: a START arriving while
     // that postMessage was in flight used to be dropped silently, leaving a
@@ -528,8 +557,14 @@ async function reportStatus(mushafId: number) {
   // time, once per mounted hook instance.
   const complete = await isCacheComplete(cache, mushafId, cached);
   // Drop a sentinel the cache can no longer back up, so the next run rewrites it
-  // only once the missing pages are actually refetched.
-  if (!complete) await cache.delete(precacheSentinelUrl(mushafId));
+  // only once the missing pages are actually refetched. The row-2 memo goes with
+  // it: this is the only place a mid-session eviction is detected, and a probe
+  // memoized as `true` beforehand would otherwise keep serving the instant shell
+  // for pages this cache can no longer render (ADR 0014 Addendum 8).
+  if (!complete) {
+    await cache.delete(precacheSentinelUrl(mushafId));
+    precacheCompleteByMushaf.delete(mushafId);
+  }
   const activeRunId = activeRunIdByMushaf.get(mushafId) ?? null;
   await postToClients({
     type: "PRECACHE_STATUS",

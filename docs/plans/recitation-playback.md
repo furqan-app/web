@@ -809,3 +809,148 @@ dishonest-type problem the provider fix removes.
   `COMPONENTS.md`'s `RecitationContext` entry still described page auto-advance as `router.push`.
   Addendum 8 corrected exactly that claim in `DECISIONS.md` but missed this file; it now names
   `recitedPage` → `RecitationFollow` → `followTo`/`commitTo` per ADR 0028.
+
+---
+
+## Addendum 12: Controlled Recitation & Range Repeat UX (Issues #390–#394)
+
+**Date:** 2026-08-25
+**Status:** ready-to-implement
+**Type:** feature
+**GitHub:** epic #390; children #391, #392, #393, #394
+
+Four coordinated changes to controlled recitation practice:
+
+1. **#391 — Quick per-ayah repeat cycle button** on the player bar & rail.
+2. **#392 — Draft state + explicit "Apply / Start" action** in the settings sheet.
+3. **#393 — Symmetrical "Start from" scope + dual range picker** in the sheet. Blocked by #392.
+4. **#394 — Range-progress badge on the player bar.** MarkModal is explicitly NOT touched (user decision 2026-08-25 — the issue's original MarkModal scope was dropped). Blocked by #392/#393.
+
+Implementation order follows the dependency chain: #391 and #392 first (independent), then #393, then #394.
+
+### Decisions confirmed with user (2026-08-25)
+
+| # | Decision |
+|---|---|
+| D1 | #391 cycle order: `1 → 2 → 3 → ∞ → 1`. Tap mid-verse affects the **current verse**: reset `perAyahRepeatsDoneRef` only, **no seek** — the in-flight playthrough counts as repetition 1 of the new count. Idle tap just persists the setting. Allowed during override sessions (per-ayah repeat stays user-owned under an override). |
+| D2 | Draft covers everything *inside* the sheet. The two reciter triggers on `RecitationPlayerBar` itself stay instant-commit (outside the sheet, backed by the existing mid-session reciter-reload effect). Bar quick-play always starts at the current page's first verse and never consumes a stored start point. |
+| D3 | Mid-session Apply commits everything shown **including Start From**: seek to the drafted start verse, reset repeat counters, continue forward. |
+| D4 | Start From is **per-session, derived on every open, never persisted**: preset = Current Verse while playing/paused, Current Page while idle. No new localStorage key. |
+| D5 | Preset resolution: Current Verse → reference verse key (sync); Beginning of Surah → parse surah, ayah 1 (sync); Current Page → `fetchPageBounds().firstVerseKey` (endpoint already returns it); Beginning of Rub' → needs the reference verse's rub's first verse (**new endpoint support** — existing stop-point route resolves only last verses). Custom mirrors `CustomRangePicker`'s inputs with no floor (a start may be 1:1). |
+| D6 | Start ≤ End enforced by **mutual push-apart**, never an error state or disabled Apply: editing Start past End raises End; lowering End below Start lowers Start. Applies to custom inputs live; presets validated at selection time with the same push applied. Equality allowed (single-verse practice window). Start 1:1 + Stop "none" (114:6) legal. |
+| D7 | #394 badge is **bar-only** (the desktop rail is icons-only — chrome loses information as viewport narrows). Shows verse index/length + per-ayah repeat counter/target, published as state on change (rare), respecting the ~4Hz re-render constraint. Hidden when idle or `stopPoint === "none"`. |
+
+### Explicit supersessions
+
+- **Addendum 9's "no independent 'from' picker"** (confirmed 2026-07-30) is superseded for the settings-sheet path only: the sheet gains a Start From picker. The underlying principle survives everywhere else — bar quick-play and MarkModal "Play from here" still start wherever they launch; a stored start never overrides a launch position (nothing is stored — D4 makes this structural).
+- **Addendum 9's "displayed value always matches what `resolveStopTarget` will use"** invariant is deliberately broken inside the open sheet by the draft model (#392): between opening and Apply, displayed ≠ committed. Addendum 9's play-time guard (`resolveStopTarget`'s behind-chapter fallback) becomes more important, not less — it must keep working unchanged.
+- **Addendum 6 removed `openSettings(startVerseKey)` as dead code.** It is NOT reintroduced — MarkModal keeps its single instant-play button (user decision above).
+
+### #391 — Repeat cycle button
+
+**Placement:** `fq-rail-utils` zone of `RecitationPlayerBar`, left of the settings gear (bar form) / stacked above it (rail form). Visible whenever the bar renders (both idle-on-reader and playing) — pre-setting repeats before pressing play is the point.
+
+**Behavior:** click cycles `settings.perAyahRepeatCount` through `1 → 2 → 3 → ∞ → 1` via `updateSettings({ perAyahRepeatCount })`.
+
+Decision tree:
+
+| State | Tap action |
+|---|---|
+| Idle | Persist setting only (same code path — `updateSettings`; no session exists to affect) |
+| Playing/paused, mid-verse | `updateSettings(...)` **plus** context-exposed `resetPerAyahRepeat()`: sets `perAyahRepeatsDoneRef.current = 0`. No seek, no counter bump on the in-flight pass (it counts as rep 1) |
+| Override session active | Same as playing — per-ayah repeat is not part of the override contract |
+
+**Indicator:** the button shows its current value — numeral `2`/`3`, `∞` glyph, or a dimmed `1×`-style rest state — with distinct active styling when > 1. Full i18n tooltip/aria-label ("Repeat each ayah: 2 times", Arabic mirrored) in `messages/{en,ar}.json`. CSS: reuse `.fq-chrome-btn`; rail needs no new zone (joins existing `fq-rail-utils`). Rail layout invariant untouched (ADR 0021 / Desktop Reading Group constraints — one more icon in the existing utilities stack).
+
+### #392 — Draft state & Apply/Start
+
+`RecitationSettingsSheet` refactors from direct `updateSettings` per control to:
+
+- `const [draft, setDraft] = useState<RecitationSettings>` — initialized from committed `settings` each time the sheet **opens** (key the Sheet content on `isSettingsOpen` or re-seed via effect on open).
+- Every control reads/writes the draft. Nothing touches global state or localStorage until commit.
+- **Sticky footer** (outside the scroll area, pinned bottom of the sheet):
+  - status idle → primary button "Start Recitation" / ابدأ التلاوة: commits draft (`updateSettings(draft)`), then `play(resolvedStartVerseKey)` using the drafted Start From (D5/D6 resolution).
+  - status loading/playing/paused → primary button "Apply Changes" / تطبيق التغييرات: commits draft; the existing mid-session effects handle stop-target re-resolution, reciter reload, speed. Additionally, if the drafted Start From differs from the current position (D3): seek to the drafted start verse via a new context method (reuse `seekToRangeStart`'s mechanics but targeting the drafted key; reset both repeat counters), without stopping playback.
+  - Secondary close action (existing header X / back gesture) **discards the draft** — `useCloseOnBackGesture(isSettingsOpen, closeSettings)` contract preserved (ADR 0043); Radix portal-container ref contract for inner Popovers preserved (Addendum 5b).
+- Reciter field inside the sheet joins the draft: changing it in the sheet does NOT reload audio until Apply (differs from today). The bar's reciter triggers remain instant (D2).
+- The `activeOverride` read-only banner and its disable-gating of Stop-at/whole-range controls carry over unchanged (gating now applies to draft writes).
+
+### #393 — Start From picker
+
+Sheet section inserted directly **above** "Stop at" so the pair reads as one range unit.
+
+**Presets** (pill grid mirroring STOP_POINT_OPTIONS styling):
+
+| Preset | Resolves to | Cost |
+|---|---|---|
+| Current Verse (default) | `currentVerseKey ?? pageFirstVerseKey` | sync |
+| Current Page | page's first verse | `fetchPageBounds(page).firstVerseKey` |
+| Start of Surah | `${refSurah}:1` | sync |
+| Start of Rub' | first verse of ref verse's rub | new endpoint (below) |
+| Custom | page input OR surah combobox + ayah input (mirror `CustomRangePicker`) | sync/`fetchPageBounds` |
+
+**New endpoint:** extend `GET /api/quran/verses/[verseKey]/stop-point` with `?scope=rub-start` (or a sibling `rub-first` param) returning the FIRST verse of that rub instead of the last — `findFirst({ orderBy: { id: "asc" } })` on the verse's own `rub_el_hizb_number`. Same route pattern; `findFirst`, never `findUnique`; edition-independent like rub/hizb/juz (text division).
+
+**Reference derivation (per open, D4):** playing/paused → `currentVerseKey` (+ `recitedPage`); idle → `pageFirstVerseKey` (+ `currentPageNumber`). Never persisted.
+
+**Mutual push-apart (D6):** the drafted range is `{start: RangePoint, end: RangePoint}` compared as ordered verse keys (resolve both to comparable form synchronously where possible; page-type points resolve via `fetchPageBounds` — cache the resolution per draft edit). Editing any input pushes the opposing side so `start ≤ end` always holds; equality allowed. The existing End picker's floor switches from live-reference to drafted-start.
+
+**Cross-surah ranges:** engine unchanged (`decideChapterEnd`/`chainToNextChapter` already chain; custom stop already resolves cross-chapter). Only the UI floor logic reverses as above.
+
+**Idle "Start Recitation":** resolves the drafted start (Custom Page → `fetchPageBounds().firstVerseKey`; presets as the table above) then calls `play(resolvedKey)`. If resolution fails (offline, bad page), fall back to `pageFirstVerseKey` and surface nothing fancy — mirror `play()`'s existing failure path.
+
+### #394 — Progress badge
+
+- `RecitationContext` publishes two new state pairs, set ONLY where the refs already mutate (verse-transition branch of `handleTimeUpdate`, per-ayah repeat branch, `seekToRangeStart`, `loadChapter`, `stop`/`play` resets):
+  - `rangeProgress: { currentIndex: number; length: number } | null`
+  - `perAyahProgress: { done: number; target: number } | null`
+- Computed once per `play()` from `verseTimingsRef` (index of `startVerseKey` → index of resolved `stopVerseKey` within the loaded chapter, plus cross-chapter accumulation when chaining — length = total verses spanned, matching how `decideChapterEnd` walks chapters).
+- Badge markup in `RecitationPlayerBar`'s info block, under the verse-key line: `"Ayah {i}/{n} • Repeat {d}/{t}"`, tabular-nums, muted; hidden when `status === "idle"` or `rangeProgress == null` (covers `stopPoint: "none"` — no bounded range — and overrides are shown normally since they ARE bounded ranges). Bar-only; the rail hides `.fq-recitation-info` wholesale already.
+- i18n keys with numeric interpolation, ar + en.
+
+### Files to Change
+
+- `app/components/RecitationPlayerBar.tsx` — #391 cycle button (utils zone); #394 badge in info block.
+- `app/components/RecitationSettingsSheet.tsx` — #392 draft refactor + sticky footer CTA; #393 Start From section + push-apart logic.
+- `app/contexts/RecitationContext.tsx` — #391 `resetPerAyahRepeat()`; #392 apply-time seek-to-drafted-start method; #393 start-point resolution helpers consumed by the sheet; #394 progress state publication.
+- `app/api/quran/verses/[verseKey]/stop-point/route.ts` — #393 rub-first-verse scope.
+- `app/utils/recitation-api.ts` — fetch wrapper for the new scope.
+- `app/globals.css` — minor: active-state styling for the cycle button indicator; sticky-footer layout class for the sheet (or plain Tailwind in component — prefer Tailwind, add CSS only if the rail demands it).
+- `messages/en.json`, `messages/ar.json` — all new keys (cycle tooltips ×4 states, Start section labels + presets ×5, Apply/Start CTAs ×2, badge format strings).
+- `docs/architecture/DECISIONS.md` — Recitation Playback section: record the Addendum 9 supersession (sheet-only Start From picker, draft model breaking display==committed inside the open sheet) at implementation time.
+
+### Constraints
+
+- The ~4Hz constraint holds: progress state updates only on verse/repeat changes, never per tick; highlight mechanism (ADR 0021 2026-08-03 addendum) untouched.
+- `useCloseOnBackGesture` (ADR 0043) and the Popover-in-Sheet portal container (Addendum 5b / popover.tsx `container` prop) contracts preserved through the sheet refactor.
+- Rail invariants (Desktop Reading Group): the new button joins `fq-rail-utils`; no zone restructuring, no width change, no `!important` battles beyond the file's established patterns.
+- `findFirst` (never `findUnique`) for all verse_key/page_number lookups in the extended endpoint.
+- Draft discard on close must leave localStorage byte-identical when nothing was applied.
+- Override semantics unchanged: overrides still bypass resolveStopTarget; sheet gating during overrides applies to draft edits exactly as it did to direct edits.
+
+### What NOT to Do
+
+- Do NOT touch `MarkModal` — no second recitation button there (explicitly dropped from #394, user 2026-08-25). No reintroduction of `openSettings(startVerseKey)`.
+- Do NOT persist Start From anywhere — no localStorage key, no merge into `RecitationSettings` storage shape.
+- Do NOT make the bar's reciter triggers draft-based or remove them.
+- Do NOT let bar quick-play consume a stored/drafted start point — it always plays `pageFirstVerseKey`.
+- Do NOT validate ranges with error states or a disabled Apply — mutual push-apart only (D6).
+- Do NOT restart audio or seek when committing a draft whose Start From equals the current position (Apply should be a no-op audibly when nothing moved).
+- Do NOT show the badge on the rail or when unbounded (`stopPoint: "none"`).
+- Do NOT revive the deleted `recitation.play` i18n key pattern carelessly — new keys get used immediately by their components; prune-or-use is checked at review.
+
+### Verified test cases (agreed interactively 2026-08-25)
+
+1. Playing v5 of ×2 on pass 1, tap ×3 → counter resets; pass counts as 1/3; two more passes follow. (D1)
+2. Tap ∞ mid-loop from ×3 → finishes current pass, loops forever. (D1)
+3. Tap ∞→1 mid-loop → finishes pass, advances normally. (D1)
+4. Idle tap → persists only; next play uses it. (D1)
+5. Open sheet idle p20 (start=Current Page, stop=End of page) → Start plays p20 first→last verse. 
+6. Playing 3:15, open sheet → start preset reads Current Verse (3:15). (D4)
+7. Start=Start-of-Surah in s3, end unchanged unless pushed invalid. (D6)
+8. Custom end 5:5 with start 2:10 → chains 2→3→4→5, stops 5:5. (engine unchanged)
+9. Set custom start past drafted end → end auto-raises. (D6)
+10. Playing 2:100, draft start 2:255, Apply → seeks, counters reset, continues. (D3)
+11. Draft edits, dismiss via back gesture/X → committed settings byte-identical, playback untouched. (D2/Constraints)
+12. Range 2:10–2:27 at 2:12 pass 2/3 → badge "Ayah 3/18 • Repeat 2/3". (D7)
+13. `stopPoint: "none"` playing → no badge. Rail → no badge. (D7)

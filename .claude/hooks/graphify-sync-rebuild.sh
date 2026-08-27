@@ -8,13 +8,69 @@
 
 set -e
 
-_PYTHON_FILE="graphify-out/.graphify_python"
-if [ ! -f "$_PYTHON_FILE" ]; then
-    exit 0
+_GFY_PROBE="import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('graphify') else 1)"
+
+# Resolve Python interpreter. Tries multiple locations because
+# graphify-out/.graphify_python is gitignored (/graphify-out/.*) and therefore
+# absent in git worktrees — only the main checkout has it.
+GRAPHIFY_PYTHON=""
+
+# Probe 1: local graphify-out/.graphify_python (works in the main checkout).
+_LOCAL_PY_FILE="graphify-out/.graphify_python"
+if [ -f "$_LOCAL_PY_FILE" ]; then
+    _FROM_FILE=$(cat "$_LOCAL_PY_FILE" | tr -d '[:space:]')
+    if [ -n "$_FROM_FILE" ] && [ -x "$_FROM_FILE" ] && "$_FROM_FILE" -c "$_GFY_PROBE" 2>/dev/null; then
+        GRAPHIFY_PYTHON="$_FROM_FILE"
+    fi
 fi
-GRAPHIFY_PYTHON=$(cat "$_PYTHON_FILE" | tr -d '[:space:]')
-if [ -z "$GRAPHIFY_PYTHON" ] || [ ! -x "$GRAPHIFY_PYTHON" ]; then
-    exit 0
+
+# Probe 2: main repo's graphify-out/.graphify_python via git-common-dir.
+# In a worktree --git-common-dir points to the main repo's .git/; its parent
+# is the main checkout where .graphify_python was written by graphify hook install.
+if [ -z "$GRAPHIFY_PYTHON" ]; then
+    _GFY_COMMONDIR=$(cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd)
+    if [ -n "$_GFY_COMMONDIR" ]; then
+        _MAIN_PY_FILE="$(dirname "$_GFY_COMMONDIR")/graphify-out/.graphify_python"
+        if [ -f "$_MAIN_PY_FILE" ]; then
+            _FROM_FILE=$(cat "$_MAIN_PY_FILE" | tr -d '[:space:]')
+            if [ -n "$_FROM_FILE" ] && [ -x "$_FROM_FILE" ] && "$_FROM_FILE" -c "$_GFY_PROBE" 2>/dev/null; then
+                GRAPHIFY_PYTHON="$_FROM_FILE"
+            fi
+        fi
+    fi
+fi
+
+# Probe 3: graphify launcher on PATH — parse its shebang to find the interpreter.
+if [ -z "$GRAPHIFY_PYTHON" ]; then
+    GRAPHIFY_BIN=$(command -v graphify 2>/dev/null)
+    if [ -n "$GRAPHIFY_BIN" ]; then
+        _SHEBANG=$(head -c 256 "$GRAPHIFY_BIN" 2>/dev/null | tr -d '\000' | head -n 1 | sed 's/^#![[:space:]]*//')
+        case "$_SHEBANG" in
+            */env\ *) _CAND="${_SHEBANG#*/env }" ;;
+            *)        _CAND="$_SHEBANG" ;;
+        esac
+        case "$_CAND" in
+            *[!a-zA-Z0-9/_.@:\\-]*) _CAND="" ;;
+        esac
+        if [ -n "$_CAND" ] && "$_CAND" -c "$_GFY_PROBE" 2>/dev/null; then
+            GRAPHIFY_PYTHON="$_CAND"
+        fi
+    fi
+fi
+
+# Probe 4: python3 / python on PATH.
+if [ -z "$GRAPHIFY_PYTHON" ]; then
+    if command -v python3 >/dev/null 2>&1 && python3 -c "$_GFY_PROBE" 2>/dev/null; then
+        GRAPHIFY_PYTHON="python3"
+    elif command -v python >/dev/null 2>&1 && python -c "$_GFY_PROBE" 2>/dev/null; then
+        GRAPHIFY_PYTHON="python"
+    fi
+fi
+
+if [ -z "$GRAPHIFY_PYTHON" ]; then
+    echo "[graphify sync] ERROR: could not locate a Python with graphify installed; knowledge graph NOT updated." >&2
+    echo "[graphify sync] Re-run 'graphify hook install' from the env where graphify lives, then retry." >&2
+    exit 1
 fi
 
 CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)

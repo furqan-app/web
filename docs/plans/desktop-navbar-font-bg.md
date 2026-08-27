@@ -3,7 +3,7 @@
 **Type:** design
 **Date:** 2026-08-19
 **Status:** implemented
-**Issue:** [#337](https://github.com/furqan-app/web/issues/337)
+**Issue:** [#337](https://github.com/furqan-app/web/issues/337), [#430](https://github.com/furqan-app/web/issues/430)
 
 ## Summary
 
@@ -183,6 +183,52 @@ Restyle the `FurqanLogo` component:
 1. Render the logo silhouette in emerald green (`--primary`) via CSS mask on `logo-navbar-white.png`.
 2. Increase logo mark to 32px size (`size-[32px]`) for clear visibility.
 3. Remove the dark medallion background and gold rim, setting the background to match the navbar (`bg-transparent`).
+
+---
+
+## Addendum 5: Translucent Capsule Surah Toggler UX & Affordance (2026-08-26)
+
+**Status:** implemented
+**Issue:** [#430](https://github.com/furqan-app/web/issues/430)
+
+### Summary
+The desktop navbar's centered Surah + Juz/Hizb control currently renders with `md:bg-transparent md:border-transparent md:shadow-none`, making it appear as a static manuscript header rather than a clickable drawer toggle. Users do not discover that clicking it opens the Surah & Juz navigation drawer. This addendum encloses the centered metadata inside an intentional `rounded-full` translucent capsule with subtle hairline borders, clear hover surface highlight, active press micro-motion, and smooth 180° chevron rotation on toggle open, while preserving the flanking manuscript ornaments and calligraphic `font-surahnames` typography.
+
+### Approach & Changes
+
+1. **Capsule Container & At-Rest Affordance (`Nav.tsx`)**
+   - Enclose the desktop Surah title (`font-surahnames` in RTL / Latin in LTR) and Juz/Hizb metadata inside a distinct capsule container element:
+     ```tsx
+     <span className="flex flex-col items-center justify-center px-4 py-1 rounded-full bg-[var(--nav-tab-bg)] border border-border/70 group-hover:bg-muted/70 group-hover:border-border transition-all duration-150 shadow-sm">
+     ```
+   - Keep the flanking drawn manuscript ornaments (`.fq-nav-ornament` on both sides) anchored on the outside of the capsule so brand elegance is preserved.
+
+2. **Interactive Affordance & Micro-interactions**
+   - Add `group` styling to the parent button with tactile press feedback (`active:scale-[0.98]`).
+   - Add subtle hover feedback: background shifts to `group-hover:bg-muted/70` and border illuminates to `group-hover:border-border`.
+   - Update `ChevronDown` to animate smoothly with `transition-transform duration-200` and rotate 180° when `open` is true (`rotate-180`), eliminating static icon jumps.
+
+3. **Responsive & Typography Guardrails**
+   - Retain `md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:z-10` centering.
+   - Maintain `font-surahnames text-[26px]` for Arabic and `text-[17px] font-semibold` for Latin.
+   - Retain full accessibility attributes: `aria-expanded={open}`, `aria-label`, and `fq-focus-ring`.
+
+### Files Changed
+- `docs/plans/desktop-navbar-font-bg.md` — this plan addendum.
+- `app/components/nav/Nav.tsx` — desktop capsule container, hover/active classes, animated chevron rotation.
+
+### Verification Plan
+1. **Automated Verification:**
+   - `npm run lint` — verify zero ESLint errors.
+   - `npm test` — verify all unit tests pass.
+2. **Visual & Interactive Verification:**
+   - **At Rest:** Confirm the centered Surah + Juz/Hizb control is immediately identifiable as a clickable capsule across Light, Gold, and Dark themes.
+   - **Hover / Focus:** Confirm smooth surface transition on hover and proper focus-visible ring on keyboard tab.
+   - **Press / Click:** Confirm tactile press scaling (`active:scale-[0.98]`) and that clicking toggles the sidebar open/closed.
+   - **Open State:** Confirm `ChevronDown` rotates 180° smoothly when the sidebar drawer opens and rotates back when closed.
+   - **i18n & Fonts:** Test in Arabic (`ar`) with `font-surahnames` calligraphic glyphs and English (`en`) with Latin surah names.
+   - **Responsiveness:** Test at 768px (`md`), 1024px (`lg`), and 1280px+ (`xl`) to confirm no horizontal overlap with adjacent navbar elements.
+
 
 
 

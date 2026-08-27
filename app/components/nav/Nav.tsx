@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
-import { Maximize2, Minimize2, PanelLeftOpen, ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { Maximize2, Minimize2, PanelLeftOpen, ChevronDown, Settings } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
 import { ContinueReadingLink } from "./ContinueReadingLink";
 
@@ -71,49 +71,62 @@ export const Nav = () => {
             onClick={() => setOpen(!open)}
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
-            className="fq-nav-tab fq-focus-ring order-2 shrink-0 flex items-center justify-center gap-1.5 h-9 px-2.5 max-w-[8rem] md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:z-10 md:h-auto md:max-w-none md:gap-3 md:px-3 md:py-1 md:bg-transparent md:border-transparent md:shadow-none hover:opacity-85 cursor-pointer transition-opacity"
+            className="fq-focus-ring order-2 shrink-0 flex items-center justify-center gap-1.5 h-8 px-3 rounded-full bg-[var(--nav-tab-bg)] border border-border/70 shadow-sm md:border-transparent md:shadow-none md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:z-10 md:h-auto md:max-w-none md:gap-3 md:px-0 md:py-0 md:bg-transparent cursor-pointer transition-transform active:scale-[0.97] group"
           >
             {currentSurah ? (
               <>
-                {/* Mobile: compact single line */}
+                {/* Mobile: sleek single-line calligraphic pill */}
                 <span className="md:hidden flex items-center gap-1.5 min-w-0">
-                  <span className="text-xs font-medium text-muted-foreground shrink-0">
+                  <span className="text-[11px] font-medium text-muted-foreground shrink-0">
                     {toLocaleNumeral(currentSurah.id, locale)}
                   </span>
-                  <span className="text-xs font-medium truncate leading-none">
-                    {isRTL ? currentSurah.name_arabic : currentSurah.name_simple}
-                  </span>
-                  {open ? (
-                    <ChevronUp className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
+                  {isRTL ? (
+                    <span
+                      className="font-surahnames text-[19px] leading-none whitespace-nowrap text-foreground"
+                      translate="no"
+                    >
+                      {String(currentSurah.id).padStart(3, "0")}
+                    </span>
                   ) : (
-                    <ChevronDown className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
+                    <span className="text-xs font-semibold truncate leading-none text-foreground">
+                      {currentSurah.name_simple}
+                    </span>
                   )}
+                  <ChevronDown
+                    className={cn(
+                      "size-3 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform duration-200",
+                      open && "rotate-180",
+                    )}
+                    strokeWidth={2}
+                  />
                 </span>
-                {/* Desktop: drawn green ornaments flanking the surah name & metadata */}
+                {/* Desktop: drawn green ornaments flanking the translucent surah capsule */}
                 <span className="hidden md:flex md:items-center md:gap-3">
                   <span className="fq-nav-ornament" aria-hidden="true" />
-                  <span className="flex flex-col items-center gap-1">
+                  <span className="flex flex-col items-center justify-center px-8 py-2 rounded-full bg-[var(--nav-tab-bg)] border border-border/70 group-hover:bg-muted/70 group-hover:border-border transition-all duration-150 shadow-sm">
                     <span className="flex items-center gap-1.5">
                       {isRTL ? (
                         <span
-                          className="font-surahnames text-[26px] leading-none whitespace-nowrap text-foreground"
+                          className="font-surahnames text-[22px] leading-none whitespace-nowrap text-foreground"
                           translate="no"
                         >
                           {String(currentSurah.id).padStart(3, "0")}
                         </span>
                       ) : (
-                        <span className="text-[17px] font-semibold leading-none whitespace-nowrap text-foreground">
+                        <span className="text-[15px] font-semibold leading-none whitespace-nowrap text-foreground">
                           {currentSurah.name_simple}
                         </span>
                       )}
-                      {open ? (
-                        <ChevronUp className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
-                      ) : (
-                        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
-                      )}
+                      <ChevronDown
+                        className={cn(
+                          "size-3 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform duration-200",
+                          open && "rotate-180",
+                        )}
+                        strokeWidth={2}
+                      />
                     </span>
                     {currentJuzHizb && (
-                      <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground tracking-[0.06em] whitespace-nowrap">
+                      <span className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground tracking-[0.06em] whitespace-nowrap">
                         {t("juz", "Juz")} {toLocaleNumeral(currentJuzHizb.juz, locale)}
                         {/* Identity, not state: juz/hizb is the page's own
                             metadata — where you are — so the separator takes

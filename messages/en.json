@@ -336,7 +336,22 @@
     "surahPlaceholder": "Choose a surah",
     "surahSearchPlaceholder": "Search surahs…",
     "surahEmpty": "No surah found.",
-    "offlineUnavailable": "Not available offline"
+    "offlineUnavailable": "Not available offline",
+    "repeatCycleOff": "No ayah repetition",
+    "repeatCycleTimes": "Repeat current ayah {n} times",
+    "repeatCycleInfinite": "Repeat current ayah endlessly",
+    "startFrom": "Start from",
+    "startCurrentVerse": "Current verse",
+    "startCurrentPage": "Current page",
+    "startSurahStart": "Start of surah",
+    "startRubStart": "Start of rub'",
+    "startCustom": "Custom",
+    "applyChanges": "Apply changes",
+    "startRecitation": "Start recitation",
+    "rangeProgressAyah": "Ayah {index}/{length}",
+    "rangeProgressRepeat": "Repeat {done}/{target}",
+    "numberSearchPlaceholder": "Search…",
+    "numberEmpty": "No match."
   },
   "offlineRecitation": {
     "title": "Offline Recitation",
