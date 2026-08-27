@@ -28,6 +28,8 @@
     "e2e:build": "dotenv -e .env.e2e -- next build",
     "e2e:start": "dotenv -e .env.e2e -- next start",
     "e2e:test": "dotenv -e .env.e2e -- playwright test",
+    "test:unit": "vitest run",
+    "test:e2e": "dotenv -e .env.e2e -- playwright test",
     "test": "vitest run"
   },
   "dependencies": {
