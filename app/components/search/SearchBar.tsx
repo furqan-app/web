@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearch } from "@hooks/use-search";
 import { isSearchQueryValid } from "@/app/constants/search";
 import SearchQueryResults from "./SearchQueryResults";
@@ -41,6 +41,19 @@ export const SearchBar = () => {
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const { verses, chapters, isLoading } = useSearch(debouncedQuery);
     const [open, setOpen] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.repeat) return;
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                setOpen((prev) => !prev);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -76,6 +89,10 @@ export const SearchBar = () => {
                     hideDefaultClose
                     overlayClassName="!z-[52]"
                     className="!z-[52] h-screen p-0 flex flex-col"
+                    onOpenAutoFocus={(e) => {
+                        e.preventDefault();
+                        inputRef.current?.focus();
+                    }}
                 >
                     <SheetTitle className="sr-only">
                         {t("search.placeholder", "Search the Quran...")}
@@ -99,13 +116,12 @@ export const SearchBar = () => {
                                 </div>
                             )}
                             <Input
+                                ref={inputRef}
                                 type="text"
                                 value={query}
                                 onChange={(e) => handleQueryChange(e.target.value)}
                                 placeholder={t("search.placeholder", "Search the Quran...")}
                                 className="font-tajawal pe-9 bg-muted border-0 focus-visible:ring-0"
-                                // eslint-disable-next-line jsx-a11y/no-autofocus
-                                autoFocus
                             />
                         </div>
                     </div>

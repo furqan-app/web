@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { quranPrisma } from "../../../utils/db";
 import { isSearchQueryValid } from "../../../constants/search";
+import { normalizeDigits } from "../../../utils/arabic-search";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,11 +11,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] });
   }
 
+  const trimmed = query.trim();
+  const normalized = normalizeDigits(trimmed);
+  const numericId = /^\d+$/.test(normalized) ? parseInt(normalized, 10) : null;
+  const isIdInRange = numericId !== null && numericId >= 1 && numericId <= 114;
+
   const results = await quranPrisma.chapter.findMany({
     where: {
       OR: [
-        { name_arabic: { contains: query } },
-        { name_simple: { contains: query } }
+        ...(isIdInRange ? [{ id: numericId }] : []),
+        { name_arabic: { contains: trimmed } },
+        { name_simple: { contains: trimmed } }
       ]
     },
     select: {
