@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { storage } from "@/app/utils/storage";
+import { writeActiveMushafId } from "@/app/constants/offline";
 import {
   DEFAULT_MUSHAF_ID,
   MUSHAF_EDITIONS,
@@ -60,15 +61,24 @@ export function QuranMushafProvider({ children }: { children: ReactNode }) {
   const [mushafId, setMushafIdState] = useState<number>(DEFAULT_MUSHAF_ID);
   const [hydrated, setHydrated] = useState(false);
 
+  // The Cache Storage mirror travels with every localStorage write, from these
+  // two sites only — the service worker reads it on a reader-HTML cache miss to
+  // decide whether the requested page can render locally (ADR 0014 Addendum 8).
+  // Writing the *resolved* id here, not the initial default, is the point: on a
+  // cold launch the SW answers the navigation before any client exists, so what
+  // it reads is always the previous session's value.
   useEffect(() => {
-    setMushafIdState(getInitialMushafId());
+    const initial = getInitialMushafId();
+    setMushafIdState(initial);
     setHydrated(true);
+    writeActiveMushafId(initial);
   }, []);
 
   const handleMushafIdChange = (newMushafId: number) => {
     if (!MUSHAF_EDITIONS[newMushafId]) return;
     setMushafIdState(newMushafId);
     storage.set(STORAGE_KEY, newMushafId);
+    writeActiveMushafId(newMushafId);
   };
 
   return (
