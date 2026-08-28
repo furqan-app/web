@@ -208,7 +208,7 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
               aria-label={tSidebar("ayahInputPlaceholder")}
               dir={locale === "ar" ? "rtl" : "ltr" }
               className={cn(
-                "fq-focus-ring w-full h-10 rounded-xl border bg-card px-4 text-sm text-foreground",
+                "fq-focus-ring w-full h-10 rounded-xl border bg-card px-4 text-xs text-foreground",
                 "placeholder:text-muted-foreground transition-colors duration-150 outline-none",
                 outOfRange
                   ? "border-destructive/60"
@@ -235,7 +235,7 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
               aria-label={tSidebar("ayahPagePlaceholder")}
               dir={locale === "ar" ? "rtl" : "ltr" }
               className={cn(
-                "fq-focus-ring w-full h-10 rounded-xl border bg-card px-4 text-sm text-foreground",
+                "fq-focus-ring w-full h-10 rounded-xl border bg-card px-4 text-xs text-foreground",
                 "placeholder:text-muted-foreground transition-colors duration-150 outline-none",
                 pageOutOfRange
                   ? "border-destructive/60"

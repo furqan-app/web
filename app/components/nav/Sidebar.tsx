@@ -288,8 +288,8 @@ const Sidebar = ({ surahs, rubs }: Props) => {
                     ? tSidebar("filterPlaceholderSurahs")
                     : tSidebar("filterPlaceholderRubs")
                 }
-                dir="auto"
-                className="fq-focus-ring w-full h-10 rounded-xl border border-border bg-card ps-9 pe-10 text-sm text-foreground placeholder:text-muted-foreground font-tajawal transition-colors duration-150 hover:border-primary/40 focus:border-primary/60 outline-none"
+                dir={getLanguageDirection(locale)}
+                className="fq-focus-ring w-full h-10 rounded-xl border border-border bg-card ps-9 pe-10 text-xs text-foreground placeholder:text-muted-foreground font-tajawal transition-colors duration-150 hover:border-primary/40 focus:border-primary/60 outline-none"
               />
               {isFiltering && (
                 <button

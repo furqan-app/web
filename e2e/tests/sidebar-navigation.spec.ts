@@ -23,7 +23,7 @@ function getAyahsTab(sheet: import("@playwright/test").Locator) {
 }
 
 function getFilterInput(sheet: import("@playwright/test").Locator) {
-  return sheet.locator('input[placeholder*="ابحث"], input[placeholder*="Search"], input[placeholder*="رشّح"], input[placeholder*="Filter"]');
+  return sheet.locator('input[placeholder*="اسم السورة"], input[placeholder*="الجزء"], input[placeholder*="Surah name"], input[placeholder*="Juz"], input[placeholder*="ابحث"], input[placeholder*="Search"], input[placeholder*="رشّح"], input[placeholder*="Filter"]');
 }
 
 function getAyahInput(sheet: import("@playwright/test").Locator) {
