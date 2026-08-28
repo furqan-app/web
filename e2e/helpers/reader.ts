@@ -181,5 +181,60 @@ export async function openSettings(page: Page): Promise<Locator> {
   return sheet;
 }
 
+/**
+ * Triggers a touch long-press (>= 500ms) on a target element.
+ * Used for opening the mark modal in mobile/tablet overlay mode.
+ */
+export async function longPressWord(
+  page: Page,
+  wordSelector: string | Locator,
+  durationMs = 600
+) {
+  const locator =
+    typeof wordSelector === "string"
+      ? page.locator(wordSelector).first()
+      : wordSelector.first();
 
+  await locator.evaluate(async (el, duration) => {
+    const rect = el.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const touchId = Date.now();
 
+    const createTouch = () =>
+      new Touch({
+        identifier: touchId,
+        target: el,
+        clientX: x,
+        clientY: y,
+        pageX: x,
+        pageY: y,
+        screenX: x,
+        screenY: y,
+      });
+
+    const t0 = createTouch();
+    el.dispatchEvent(
+      new TouchEvent("touchstart", {
+        touches: [t0],
+        targetTouches: [t0],
+        changedTouches: [t0],
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, duration));
+
+    const tEnd = createTouch();
+    el.dispatchEvent(
+      new TouchEvent("touchend", {
+        touches: [],
+        targetTouches: [],
+        changedTouches: [tEnd],
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  }, durationMs);
+}
