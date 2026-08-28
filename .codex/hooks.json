@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node '/home/tahamohamed/Desktop/cs/non-work/projects/furqan/.codex/hooks/mujaz-mode.js'"
+            "command": "node .codex/hooks/mujaz-mode.js"
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node '/home/tahamohamed/Desktop/cs/non-work/projects/furqan/.codex/hooks/mujaz-mode.js'"
+            "command": "node .codex/hooks/mujaz-mode.js"
           }
         ]
       }
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node '/home/tahamohamed/Desktop/cs/non-work/projects/furqan/.codex/hooks/mujaz-stats.js'"
+            "command": "node .codex/hooks/mujaz-stats.js"
           }
         ]
       }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/home/tahamohamed/.local/bin/graphify hook-check"
+            "command": "graphify hook-check"
           }
         ]
       }
