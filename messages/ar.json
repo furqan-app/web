@@ -6,7 +6,20 @@
     "description": "اقرأ واستمع إلى القرآن",
     "recommendedSurahs": "السور الموصى بها",
     "continueReading": "تابع القراءة",
-    "resumeReading": "متابعة التلاوة"
+    "resumeReading": "متابعة التلاوة",
+    "searchLabel": "البحث التنقلي",
+    "searchPlaceholder": "ابحث بسورة (الكهف)، جزء (جزء ٢٠)، أو صفحة (صفحة ٥٠)...",
+    "searchClear": "مسح البحث",
+    "resultsCount": "{count} نتيجة",
+    "juzRow": "الجزء {n} · يبدأ في ص {page}",
+    "juzRowShort": "الجزء {n}",
+    "pageRow": "صفحة {n}",
+    "juzPrompt": "اكتب رقم الجزء ({min}–{max}) للانتقال السريع",
+    "pagePrompt": "اكتب رقم الصفحة ({min}–{max}) للانتقال السريع",
+    "juzRangeHint": "الأجزاء {min}–{max}",
+    "pageRangeHint": "الصفحات {min}–{max}",
+    "noMatches": "لا توجد نتائج",
+    "verseSearchHint": "تبحث عن آية؟ استخدم البحث في الشريط العلوي."
   },
   "revelation": {
     "makkah": "مكية",

@@ -6,7 +6,20 @@
     "description": "Read and Listen to Quran",
     "recommendedSurahs": "Recommended Surahs",
     "continueReading": "Continue Reading",
-    "resumeReading": "Resume Reading"
+    "resumeReading": "Resume Reading",
+    "searchLabel": "Navigation search",
+    "searchPlaceholder": "Search by surah (e.g. Mulk, 67), juz (juz 30), or page (page 50)...",
+    "searchClear": "Clear search",
+    "resultsCount": "{count} results",
+    "juzRow": "Juz {n} · starts p. {page}",
+    "juzRowShort": "Juz {n}",
+    "pageRow": "Page {n}",
+    "juzPrompt": "Enter juz number ({min}–{max}) to jump",
+    "pagePrompt": "Enter page number ({min}–{max}) to jump",
+    "juzRangeHint": "Juz {min}–{max}",
+    "pageRangeHint": "Pages {min}–{max}",
+    "noMatches": "No matches",
+    "verseSearchHint": "Looking for a verse? Use Search in the top bar."
   },
   "revelation": {
     "makkah": "Meccan",

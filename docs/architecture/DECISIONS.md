@@ -294,6 +294,8 @@ const user = extractUser(request); // { id, email, ... }
 
 **Arabic query normalization:** `Verse.text_imlaei_simple` is sourced from the upstream `qdc` API and is confirmed hamza-free across the entire table — it never contains `أ`/`إ`/`آ`, only bare `ا`. Verse search normalizes the incoming query (hamza-alif variants → bare alif) before the Prisma `contains` match; the column itself is never touched. See [ADR 0007](adr/0007-arabic-search-query-normalization.md).
 
+**Home navigation filter (2026-08-25, #363):** the home page's client-side surah filter (`app/utils/nav-search.ts`) folds hamza-on-alif forms on **both** sides at compare time — a deliberate divergence from the overlay's strict chapter `contains`, allowed because both sides are in-memory strings there (no DB column semantics involved). Do not port this fold into `/api/search/chapters`; that endpoint keeps strict matching and its accepted mismatch.
+
 **Constraints:**
 - `Chapter.name_arabic` is real Arabic text and is **not** hamza-free (e.g. `الأنعام`) — the query-only normalization used for verse search does not apply to chapter search. This is an accepted characteristic, not a defect: chapter names are a small (114), low-cardinality list users can select visually rather than type from memory. Do not assume chapter search shares verse search's normalization behavior.
 - Do not extend query-only normalization to any column that isn't verified hamza-free; check the actual DB data first (see ADR 0007 Option A vs B).

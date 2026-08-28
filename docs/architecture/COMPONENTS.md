@@ -41,10 +41,12 @@ Nav                          — top bar, always visible; single flat flex row, 
 ```
 (page)
   HomeHero                   — manuscript title with .fq-rule-mark flourishes, overline, and tagline
-  HomeRecommendedSurahs      — horizontal curated strip for high-frequency surahs (1, 18, 36, 55, 56, 67)
-  HomeContinueReadingCard    — living resumption card reading LastReadPageContext live with direct CTA
-  SurahList                  — 4-column responsive lattice grid of all 114 surahs
-    SurahListItem            — 8-pointed star medallion, Meccan/Medinan tags, starting page, calligraphic title
+  HomeSearchSection          — client boundary around the interactive band; holds the single query state; hides continue-reading + recommended while a query is active (idle state renders everything, matching SSR)
+    HomeContinueReadingCard  — living resumption card reading LastReadPageContext live with direct CTA
+    HomeRecommendedSurahs     — horizontal curated strip for high-frequency surahs (1, 18, 36, 55, 56, 67); spoken-name aria-label on RTL glyph-only pills
+    HomeSearch                — navigation search: static field above the grid (scrolls with the page — sticky rejected in live review, #363); live-filters the grid via app/utils/nav-search.ts (digit folding, juz/page/جزء/صفحة prefixes, hamza-folded BOTH-sides name matching — documented divergence from overlay chapter search); Juz/Page jump rows resolved edition-aware (juz-starts.json → verse-pages, both lazily fetched on first numeric intent); suggestions never auto-commit; Enter = first row else first card, Escape clears
+      SurahList               — filtered grid [SHARED — also used in sidebar]
+        SurahListItem         — surah card; spoken-name aria-label added so RTL glyph-only links stop announcing digits (#363)
 ```
 
 ## Zone: reader (`app/[locale]/pages/[id]/page.tsx` + `app/[locale]/mushaf/[grant]/pages/[id]/page.tsx`)
