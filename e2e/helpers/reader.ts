@@ -162,4 +162,24 @@ export async function revealNavOverlay(page: Page) {
   }
 }
 
+/**
+ * Reads a value from window.localStorage inside the page context.
+ */
+export async function getStorageItem(page: Page, key: string): Promise<string | null> {
+  return page.evaluate((k) => window.localStorage.getItem(k), key);
+}
+
+/**
+ * Opens the settings sidebar sheet from the Nav bar and returns its Locator.
+ */
+export async function openSettings(page: Page): Promise<Locator> {
+  await revealNavOverlay(page);
+  const settingsBtn = page.locator('nav button[aria-label="Settings"], nav button[aria-label="الإعدادات"]');
+  await settingsBtn.click();
+  const sheet = page.getByRole("dialog").filter({ hasText: /الإعدادات|Settings/ });
+  await sheet.waitFor({ state: "visible" });
+  return sheet;
+}
+
+
 
