@@ -105,7 +105,7 @@ export const HomeSearch = ({ surahs, query, onQueryChange }: Props) => {
             onKeyDown={handleKeyDown}
             placeholder={t("searchPlaceholder")}
             aria-label={t("searchPlaceholder")}
-            dir="auto"
+            dir={query ? "auto" : undefined}
             className="fq-focus-ring w-full h-10 rounded-xl border border-border bg-card ps-9 pe-10 text-sm text-foreground placeholder:text-muted-foreground font-tajawal transition-colors duration-150 hover:border-primary/40 focus:border-primary/60 outline-none"
           />
           {isFiltering && (
@@ -136,6 +136,21 @@ export const HomeSearch = ({ surahs, query, onQueryChange }: Props) => {
                   max: toLocaleNumeral(NAV_SEARCH.juzCount, locale),
                 })
               : t("pageRangeHint", {
+                  min: toLocaleNumeral(1, locale),
+                  max: toLocaleNumeral(NAV_SEARCH.lastPage, locale),
+                })}
+          </p>
+        )}
+
+        {/* Bare prefix guidance prompt ("جزء" → اكتب رقم الجزء (١–٣٠) للانتقال) */}
+        {parsed.barePrefix && (
+          <p className="mt-1.5 text-xs text-primary font-medium" role="status">
+            {parsed.barePrefix === "juz"
+              ? t("juzPrompt", {
+                  min: toLocaleNumeral(1, locale),
+                  max: toLocaleNumeral(NAV_SEARCH.juzCount, locale),
+                })
+              : t("pagePrompt", {
                   min: toLocaleNumeral(1, locale),
                   max: toLocaleNumeral(NAV_SEARCH.lastPage, locale),
                 })}
@@ -188,7 +203,7 @@ export const HomeSearch = ({ surahs, query, onQueryChange }: Props) => {
       {!showGrid ? null : filtered.length > 0 ? (
         <SurahList surahs={filtered} className="mt-4" />
       ) : (
-        isFiltering && (
+        isFiltering && !parsed.barePrefix && (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <span className="fq-well grid size-12 place-items-center rounded-2xl text-muted-foreground">
               <SearchX className="size-6" strokeWidth={1.6} />

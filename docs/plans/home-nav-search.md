@@ -106,3 +106,26 @@ From `/impeccable critique` on this surface (2026-08-25, snapshot `.impeccable/c
 - Hamza folding on both sides, client-side only — documented divergence from overlay chapter search; DECISIONS.md Search section gets a one-line amendment during implementation.
 - Remediation: minimal (aria labels + dead-class removal in scope); touch targets/h2/colophon deferred to a future issue.
 
+## Addendum 1 — Definite Article Prefixes, Bare Prefix Guidance & Instructional Placeholders (2026-08-28)
+
+**Motivation:**
+1. Queries with Arabic definite article `الـ` (e.g. `"الجزء 20"` or `"الصفحة 100"`) failed to match the strict `juz`/`page` regexes, falling through to full-text surah matching and returning 0 results.
+2. Typing a bare prefix word alone (`"جزء"`, `"الجزء"`, `"صفحة"`, `"الصفحة"`) without a number yet collapsed to a confusing "No results / لا توجد نتائج" state instead of guiding the user.
+3. Typing `"سورة الكهف"` or `"سورة 18"` failed because the dataset holds chapter names without the `"سورة "` prefix.
+4. The generic placeholder lacked concrete examples of valid input formats.
+
+**Changes:**
+- **`app/utils/nav-search.ts`:**
+  - Support `الـ` in prefix regexes: `JUZ_PREFIX = /^(?:juz|al-?juz|الجزء|جزء)\s*(\d+)$/i`, `PAGE_PREFIX = /^(?:page|p|الصفحة|صفحة)\s*(\d+)$/i`.
+  - Strip surah prefixes: `SURAH_PREFIX = /^(?:surah|سورة|السورة)\s*(.+)$/i` — if matched, parse the stripped remainder as text or number.
+  - Add `barePrefixPrompt(parsed)` helper that detects bare prefix keywords without numbers (`"جزء"`, `"الجزء"`, `"juz"`, `"صفحة"`, `"الصفحة"`, `"page"`).
+- **`app/components/home/HomeSearch.tsx`:**
+  - If a bare prefix prompt is active, render an inline guidance prompt (`"اكتب رقم الجزء (١–٣٠)"` / `"اكتب رقم الصفحة (١–٦٠٤)"`) instead of showing the "No matches" empty state.
+- **`messages/ar.json` + `messages/en.json`:**
+  - Update `searchPlaceholder` with instructional examples.
+  - Add `juzPrompt` and `pagePrompt` keys for bare prefix typing.
+- **`app/utils/nav-search.test.ts` & `e2e/tests/home-nav-search.spec.ts`:**
+  - Add unit tests for `الجزء N`, `الصفحة N`, `سورة N`, `سورة <Name>`, and bare prefix prompts.
+  - Update E2E assertions for new placeholders and definite article queries.
+
+

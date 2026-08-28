@@ -2,11 +2,16 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
+import { toLocaleNumeral } from "@/app/utils/i18n";
+import { REPEAT_COUNT_MAX } from "@/app/constants/recitation";
+import { RepeatCount } from "@/app/types/recitation";
 import {
   ChevronsUpDown,
   CircleUserRound,
   Pause,
   Play,
+  Repeat,
   Settings as SettingsIcon,
   Square,
 } from "lucide-react";
@@ -39,12 +44,18 @@ export const RecitationPlayerBar = () => {
     play,
     togglePlayPause,
     stop,
+    resetPerAyahRepeat,
     openSettings,
     playbackError,
+    rangeProgress,
+    perAyahProgress,
   } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
   const pathname = usePathname();
+  const locale = useLocale();
   const t = useTranslations();
+  const tRich = useNextIntlTranslations("recitation");
+  const rangeT = useNextIntlTranslations("recitation");
 
   const isOnReaderRoute = Boolean(pathname?.includes("/pages/"));
   const isIdle = status === "idle";
@@ -68,6 +79,54 @@ export const RecitationPlayerBar = () => {
       return;
     }
     togglePlayPause();
+  };
+
+  // Per-ayah repeat cycle (#391): 1 → 2 → … → REPEAT_COUNT_MAX → ∞ → 1,
+  // derived from the same shared ceiling the sheet's steppers use so bar and
+  // sheet always agree on one model. Persisted immediately
+  // via updateSettings (the engine reads the count live at each verse
+  // boundary); mid-session the reset makes the in-flight pass count as
+  // repetition 1 of the new cycle without seeking. The "1" rest state shows
+  // no badge — only >1 is a state worth signalling. The {n} key goes through
+  // next-intl's own useTranslations (not the project's value-less wrapper) —
+  // ICU placeholders silently render the raw key path through the wrapper,
+  // see docs/standards/i18n.md.
+  const PER_AYAH_CYCLE: RepeatCount[] = [
+    ...Array.from({ length: REPEAT_COUNT_MAX }, (_, i) => i + 1),
+    "infinite",
+  ];
+  const repeatValue = settings.perAyahRepeatCount;
+  const repeatActive = repeatValue !== 1;
+  const repeatLabel =
+    repeatValue === "infinite"
+      ? t("recitation.repeatCycleInfinite", "Repeat current ayah endlessly")
+      : repeatValue === 1
+        ? t("recitation.repeatCycleOff", "No ayah repetition")
+        : tRich("repeatCycleTimes", { n: toLocaleNumeral(repeatValue, locale) });
+  const handleRepeatCycle = () => {
+    const idx = PER_AYAH_CYCLE.indexOf(repeatValue);
+    const next = PER_AYAH_CYCLE[(idx + 1) % PER_AYAH_CYCLE.length];
+    updateSettings({ perAyahRepeatCount: next });
+    resetPerAyahRepeat();
+  };
+
+  // "Ayah 3/18 • Repeat 2/3" (#394). Both segments go through ICU keys with
+  // pre-localized numeral strings (never the value-less wrapper — see the
+  // i18n standard); the repeat segment is omitted when repeat is off.
+  const formatRangeProgress = (
+    range: { currentIndex: number; length: number },
+    perAyah: { done: number; target: number } | null,
+  ): string => {
+    const ayahPart = rangeT("rangeProgressAyah", {
+      index: toLocaleNumeral(range.currentIndex, locale),
+      length: toLocaleNumeral(range.length, locale),
+    });
+    if (!perAyah) return ayahPart;
+    return `${ayahPart} • ${rangeT("rangeProgressRepeat", {
+      done: toLocaleNumeral(perAyah.done, locale),
+      target:
+        perAyah.target === Infinity ? "∞" : toLocaleNumeral(perAyah.target, locale),
+    })}`;
   };
 
   return (
@@ -177,11 +236,40 @@ export const RecitationPlayerBar = () => {
               {t("recitation.offlineUnavailable", "Not available offline")}
             </p>
           ) : (
-            <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
+            <>
+              <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
+              {/* Range practice progress (#394) — bar only (the rail hides
+                  this whole info block). Hidden when unbounded or idle; the
+                  per-ayah segment only shows while repeat is engaged. Numbers
+                  pass through toLocaleNumeral for the Eastern Arabic policy. */}
+              {rangeProgress ? (
+                <p className="fq-recitation-range-progress truncate text-[10px] text-muted-foreground tabular-nums">
+                  {formatRangeProgress(rangeProgress, perAyahProgress)}
+                </p>
+              ) : null}
+            </>
           )}
         </div>
 
         <div className="fq-rail-zone fq-rail-utils">
+          <button
+            type="button"
+            aria-label={repeatLabel}
+            title={repeatLabel}
+            onClick={handleRepeatCycle}
+            className="fq-chrome-btn fq-focus-ring relative size-8"
+          >
+            <Repeat className="size-4" strokeWidth={1.8} />
+            {repeatActive ? (
+              <span
+                aria-hidden="true"
+                className="absolute -top-0.5 -end-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-primary px-0.5 text-[8px] font-semibold leading-none text-primary-foreground tabular-nums"
+              >
+                {repeatValue === "infinite" ? "∞" : repeatValue}
+              </span>
+            ) : null}
+          </button>
+
           <button
             type="button"
             aria-label={t("recitation.settingsTitle", "Recitation settings")}

@@ -56,7 +56,7 @@ async function main() {
     }
 
     fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
-    fs.writeFileSync(OUT_FILE, JSON.stringify(juzStarts));
+    fs.writeFileSync(OUT_FILE, JSON.stringify(juzStarts) + "\n");
     console.log(`Done — wrote ${juzStarts.length} juz starts.`);
   } finally {
     await prisma.$disconnect();

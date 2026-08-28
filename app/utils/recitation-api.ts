@@ -41,6 +41,19 @@ export const fetchStopPoint = async (
   return unwrap<{ verseKey: string; chapterId: number }>(res);
 };
 
+// FIRST verse of the reference verse's rub — the Start From picker's
+// "Start of Rub'" preset (recitation-playback.md Addendum 12). Rub' is a text
+// division, identical in every edition, so no mushafId param (same reasoning
+// as the rub/hizb/juz scopes above).
+export const fetchRubFirstVerse = async (
+  verseKey: string,
+): Promise<{ verseKey: string; chapterId: number }> => {
+  const res = await fetch(
+    `/api/quran/verses/${encodeURIComponent(verseKey)}/stop-point?scope=rub-first`,
+  );
+  return unwrap<{ verseKey: string; chapterId: number }>(res);
+};
+
 // A page is only meaningful relative to a mushaf edition (ADR 0033) — pageId
 // is resolved against mushafId's own pagination, not the default edition's.
 export const fetchPageBounds = async (

@@ -40,7 +40,7 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
       aria-label={
         isRTL
           ? `${t("surah", "سورة")} ${surah.name_arabic}`
-          : `Surah ${surah.name_simple}`
+          : `${t("surah", "Surah")} ${surah.name_simple}`
       }
       onClick={(e) => {
         notifyNavigating?.();
