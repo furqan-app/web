@@ -92,6 +92,7 @@ const Sidebar = ({ surahs, rubs }: Props) => {
       // Clear-first contract: only an empty field lets Escape close the sheet
       // (Radix Dialog closes on Escape by default, even from inside inputs).
       if (activeQuery.trim()) {
+        e.preventDefault();
         e.stopPropagation();
         setActiveQuery("");
       }
@@ -208,6 +209,12 @@ const Sidebar = ({ surahs, rubs }: Props) => {
         side={isRTL ? "right" : "left"}
         dir={getLanguageDirection(locale)}
         hideDefaultClose
+        onEscapeKeyDown={(e) => {
+          if (activeTab !== "ayahs" && activeQuery.trim()) {
+            e.preventDefault();
+            setActiveQuery("");
+          }
+        }}
         overlayStyle={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
         // top + bottom, never top + height: the height is left to resolve from the
         // initial containing block (ADR 0044). `calc(100dvh - …)` here went stale

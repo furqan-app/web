@@ -18,6 +18,30 @@ function getSidebarDialog(page: import("@playwright/test").Page) {
   return page.getByRole("dialog");
 }
 
+function getAyahsTab(sheet: import("@playwright/test").Locator) {
+  return sheet.getByRole("tab", { name: /الآيات|Ayahs/ });
+}
+
+function getFilterInput(sheet: import("@playwright/test").Locator) {
+  return sheet.locator('input[placeholder*="رشّح"], input[placeholder*="Filter"]');
+}
+
+function getAyahInput(sheet: import("@playwright/test").Locator) {
+  return sheet.locator('input[placeholder*="أدخل رقم الآية"], input[placeholder*="Ayah number"]');
+}
+
+function getPageInput(sheet: import("@playwright/test").Locator) {
+  return sheet.locator('input[placeholder*="رقم الصفحة"], input[placeholder*="page number"]');
+}
+
+function getSurahPickerTrigger(sheet: import("@playwright/test").Locator) {
+  return sheet.locator("button[aria-expanded]").first();
+}
+
+function getSurahPickerSearchInput(sheet: import("@playwright/test").Locator) {
+  return sheet.locator('input[placeholder*="اختر سورة"], input[placeholder*="Choose a surah"]');
+}
+
 test.describe("Sidebar Trigger: Presence & Layout Boundary", () => {
   test("renders Nav-mounted sidebar trigger on reader pages with active surah & juz metadata (Desktop)", async ({
     page,
@@ -110,7 +134,7 @@ test.describe("Sidebar Drawer: Open & Close Lifecycle", () => {
   });
 });
 
-test.describe("Sidebar Tabs: Surahs & Rubs Navigation", () => {
+test.describe("Sidebar Tabs: Surahs, Rubs & Ayahs Navigation", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/ar/pages/1");
     await waitForReaderContent(page);
@@ -119,12 +143,13 @@ test.describe("Sidebar Tabs: Surahs & Rubs Navigation", () => {
     await expect(getSidebarDialog(page)).toBeVisible();
   });
 
-  test("switches between Surahs and Rubs tabs displaying full list items", async ({
+  test("switches between Surahs, Rubs, and Ayahs tabs displaying corresponding content", async ({
     page,
   }) => {
     const sheet = getSidebarDialog(page);
     const surahsTab = sheet.getByRole("tab", { name: /السور|Surahs/ });
     const rubsTab = sheet.getByRole("tab", { name: /أرباع|Rubs/ });
+    const ayahsTab = getAyahsTab(sheet);
 
     // 1. Surahs tab is active by default
     await expect(surahsTab).toHaveAttribute("aria-selected", "true");
@@ -141,10 +166,278 @@ test.describe("Sidebar Tabs: Surahs & Rubs Navigation", () => {
     await expect(rubItems).toHaveCount(240);
     await expect(sheet.getByText(/جزء\s*١|Juz\s*1/).first()).toBeVisible();
 
-    // 3. Switch back to Surahs tab
+    // 3. Switch to Ayahs tab
+    await ayahsTab.click();
+    await expect(ayahsTab).toHaveAttribute("aria-selected", "true");
+    await expect(rubsTab).toHaveAttribute("aria-selected", "false");
+    await expect(sheet.getByRole("button", { name: /الفاتحة/ })).toBeVisible();
+
+    // 4. Switch back to Surahs tab
     await surahsTab.click();
     await expect(surahsTab).toHaveAttribute("aria-selected", "true");
     await expect(sheet.locator("[data-surah-id]")).toHaveCount(114);
+  });
+});
+
+test.describe("Sidebar Search Filters: Surahs & Rubs Tabs", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/ar/pages/1");
+    await waitForReaderContent(page);
+    await revealNavOverlay(page);
+    await getOpenTrigger(page).click();
+    await expect(getSidebarDialog(page)).toBeVisible();
+  });
+
+  test("filters surahs by Arabic name and Enter navigates to first result", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const filterInput = getFilterInput(sheet);
+    await expect(filterInput).toBeVisible();
+
+    await filterInput.fill("الكهف");
+    await expect(sheet.locator("[data-surah-id]")).toHaveCount(1);
+    await expect(sheet.locator('[data-surah-id="18"]')).toBeVisible();
+    await expect(sheet.getByRole("status")).toContainText("١ نتيجة");
+
+    // Press Enter to navigate to first result
+    await filterInput.press("Enter");
+    await expect(sheet).not.toBeVisible();
+    await expect(page).toHaveURL("/ar/pages/293");
+  });
+
+  test("filters surahs by exact number with Eastern Arabic numerals", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const filterInput = getFilterInput(sheet);
+
+    await filterInput.fill("٦٧");
+    await expect(sheet.locator("[data-surah-id]")).toHaveCount(1);
+    await expect(sheet.locator('[data-surah-id="67"]')).toBeVisible();
+  });
+
+  test("filters rubs by juz prefix and associated surah name", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    await sheet.getByRole("tab", { name: /أرباع|Rubs/ }).click();
+
+    const filterInput = getFilterInput(sheet);
+    await expect(filterInput).toBeVisible();
+
+    // 1. Filter by Juz 5 (rubs 33-40)
+    await filterInput.fill("جزء ٥");
+    await expect(sheet.locator("[data-rub-id]")).toHaveCount(8);
+    await expect(sheet.locator('[data-rub-id="33"]')).toBeVisible();
+    await expect(sheet.locator('[data-rub-id="40"]')).toBeVisible();
+
+    // 2. Filter by surah name Maryam
+    await filterInput.fill("مريم");
+    const maryamRubs = sheet.locator("[data-rub-id]");
+    await expect(maryamRubs).toHaveCount(2);
+  });
+
+  test("clear-first Escape contract: first Escape clears input, second Escape closes sheet", async ({
+    page,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "Keyboard escape testing");
+    const sheet = getSidebarDialog(page);
+    const filterInput = getFilterInput(sheet);
+
+    await filterInput.fill("الكهف");
+    await expect(sheet.locator("[data-surah-id]")).toHaveCount(1);
+
+    // 1st Escape: clears filter query, sheet remains open, all 114 restored
+    await page.keyboard.press("Escape");
+    await expect(filterInput).toHaveValue("");
+    await expect(sheet.locator("[data-surah-id]")).toHaveCount(114);
+    await expect(sheet).toBeVisible();
+
+    // 2nd Escape: closes sheet
+    await page.keyboard.press("Escape");
+    await expect(sheet).not.toBeVisible();
+  });
+
+  test("preserves independent query state across tab switches", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const filterInput = getFilterInput(sheet);
+
+    // 1. Filter Surahs by "الكهف"
+    await filterInput.fill("الكهف");
+    await expect(sheet.locator("[data-surah-id]")).toHaveCount(1);
+
+    // 2. Switch to Rubs tab and filter by "جزء ٢"
+    await sheet.getByRole("tab", { name: /أرباع|Rubs/ }).click();
+    await expect(filterInput).toHaveValue("");
+    await filterInput.fill("جزء ٢");
+    await expect(sheet.locator("[data-rub-id]")).toHaveCount(8);
+
+    // 3. Switch back to Surahs tab -> query is preserved
+    await sheet.getByRole("tab", { name: /السور|Surahs/ }).click();
+    await expect(filterInput).toHaveValue("الكهف");
+    await expect(sheet.locator("[data-surah-id]")).toHaveCount(1);
+
+    // 4. Switch back to Rubs tab -> query is preserved
+    await sheet.getByRole("tab", { name: /أرباع|Rubs/ }).click();
+    await expect(filterInput).toHaveValue("جزء ٢");
+    await expect(sheet.locator("[data-rub-id]")).toHaveCount(8);
+  });
+
+  test("shows empty state when no items match query", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const filterInput = getFilterInput(sheet);
+
+    await filterInput.fill("999");
+    await expect(sheet.getByText("لا توجد نتائج")).toBeVisible();
+    await expect(sheet.getByText("السور ١–١١٤")).toBeVisible();
+
+    await sheet.getByRole("tab", { name: /أرباع|Rubs/ }).click();
+    await filterInput.fill("999");
+    await expect(sheet.getByText("لا توجد نتائج")).toBeVisible();
+    await expect(sheet.getByText("الجزء ١–٣٠ · الحزب ١–٦٠ · الربع ١–٢٤٠")).toBeVisible();
+  });
+});
+
+test.describe("Sidebar Ayahs Tab & Ayah Picker", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/ar/pages/1");
+    await waitForReaderContent(page);
+    await revealNavOverlay(page);
+    await getOpenTrigger(page).click();
+    await expect(getSidebarDialog(page)).toBeVisible();
+    await getAyahsTab(getSidebarDialog(page)).click();
+  });
+
+  test("renders active surah header, ayah chips grid, and hides shared filter field", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+
+    // Shared filter field is hidden on Ayahs tab
+    await expect(getFilterInput(sheet)).toHaveCount(0);
+
+    // Header displays Surah Al-Fatihah and 7 verses
+    await expect(sheet.getByRole("button", { name: /الفاتحة/ })).toBeVisible();
+    await expect(sheet.getByText(/٧ آيات/)).toBeVisible();
+
+    // 7 ayah chips rendered for Al-Fatihah
+    const chips = sheet.locator('button[aria-label^="آية"]');
+    await expect(chips).toHaveCount(7);
+
+    // Chip 1 (on page 1) has the active highlight class
+    await expect(chips.first()).toHaveClass(/border-primary\/50/);
+  });
+
+  test("tapping an ayah chip jumps to target page, closes drawer, and adds highlight param", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+
+    // Tap Ayah 5 chip in Al-Fatihah
+    const chip5 = sheet.locator('button[aria-label="آية ٥"]');
+    await chip5.click();
+
+    // Drawer closes immediately
+    await expect(sheet).not.toBeVisible();
+
+    // URL contains highlight parameter
+    await expect(page).toHaveURL(/\/ar\/pages\/1\?highlight=1%3A5/);
+  });
+
+  test("typing ayah number and pressing Enter jumps to ayah with highlight", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const ayahInput = getAyahInput(sheet);
+
+    // Wait for verse pages map to load (chips become enabled)
+    await expect(sheet.locator('button[aria-label^="آية"]').first()).toBeEnabled();
+
+    await ayahInput.fill("6");
+    await ayahInput.press("Enter");
+
+    await expect(sheet).not.toBeVisible();
+    await expect(page).toHaveURL(/\/ar\/pages\/1\?highlight=1%3A6/);
+  });
+
+  test("typing out-of-range ayah shows range error hint and prevents jump", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const ayahInput = getAyahInput(sheet);
+
+    await ayahInput.fill("999");
+    await expect(sheet.getByRole("status")).toContainText("اختر رقمًا بين ١ و ٧");
+
+    await ayahInput.press("Enter");
+    await expect(sheet).toBeVisible();
+  });
+
+  test("typing page number and pressing Enter jumps directly to page without highlight", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const pageInput = getPageInput(sheet);
+
+    await pageInput.fill("200");
+    await pageInput.press("Enter");
+
+    await expect(sheet).not.toBeVisible();
+    await expect(page).toHaveURL("/ar/pages/200");
+  });
+
+  test("typing out-of-range page number shows range error hint and prevents jump", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+    const pageInput = getPageInput(sheet);
+
+    await pageInput.fill("700");
+    await expect(sheet.getByRole("status")).toContainText("اختر رقمًا بين ١ و ٦٠٤");
+
+    await pageInput.press("Enter");
+    await expect(sheet).toBeVisible();
+  });
+
+  test("retargets surah via inline searchable list and picks ayah from retargeted surah", async ({
+    page,
+  }) => {
+    const sheet = getSidebarDialog(page);
+
+    // 1. Click target selector to open inline surah list
+    const pickerTrigger = getSurahPickerTrigger(sheet);
+    await pickerTrigger.click();
+    await expect(pickerTrigger).toHaveAttribute("aria-expanded", "true");
+
+    // 2. Search for Al-Kahf (18)
+    const surahSearch = getSurahPickerSearchInput(sheet);
+    await expect(surahSearch).toBeVisible();
+    await surahSearch.fill("الكهف");
+
+    // 3. Select Al-Kahf
+    const kahfOption = sheet.getByRole("button", { name: /الكهف/ }).first();
+    await kahfOption.click();
+
+    // 4. Header is retargeted to Al-Kahf with 110 verses
+    await expect(sheet.getByRole("button", { name: /الكهف/ })).toBeVisible();
+    await expect(sheet.getByText(/١١٠ آيات/)).toBeVisible();
+
+    // 5. 110 chips rendered and enabled
+    const chips = sheet.locator('button[aria-label^="آية"]');
+    await expect(chips).toHaveCount(110);
+    await expect(chips.first()).toBeEnabled();
+
+    // 6. Click Ayah 50 chip -> jumps to page 299 with highlight
+    const chip50 = sheet.locator('button[aria-label="آية ٥٠"]');
+    await chip50.click();
+
+    await expect(sheet).not.toBeVisible();
+    await expect(page).toHaveURL(/\/ar\/pages\/299\?highlight=18%3A50/);
   });
 });
 
@@ -322,7 +615,15 @@ test.describe("Sidebar Locale & Bi-Directionality (RTL vs LTR)", () => {
     // English transliterated names are visible in list
     await expect(sheet.getByText("Al-Baqarah")).toBeVisible();
 
-    // Clicking Surah 2 navigates to /en/pages/2
+    // Verify Ayahs tab in English
+    const ayahsTab = getAyahsTab(sheet);
+    await expect(ayahsTab).toBeVisible();
+    await ayahsTab.click();
+    await expect(sheet.getByRole("button", { name: "Al-Fatihah" })).toBeVisible();
+    await expect(sheet.getByText(/7 ayahs/i)).toBeVisible();
+
+    // Switch back to Surahs tab and click Surah 2
+    await surahsTab.click();
     await sheet.locator('[data-surah-id="2"]').click();
     await expect(sheet).not.toBeVisible();
     await expect(page).toHaveURL("/en/pages/2");

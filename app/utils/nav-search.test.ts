@@ -3,6 +3,7 @@ import {
   foldDigits,
   jumpRows,
   juzStartPage,
+  matchesSurahName,
   pageOfVerseKey,
   parseAyahNumber,
   parseNavQuery,
@@ -289,11 +290,29 @@ describe("juz start resolution", () => {
   });
 });
 
+describe("matchesSurahName", () => {
+  const fatihah = surah(1, "Al-Fatihah", "الفاتحة");
+  const ikhlas = surah(112, "Al-Ikhlas", "الإخلاص");
+
+  it("matches Arabic name with hamza folding", () => {
+    expect(matchesSurahName(ikhlas, "الاخلاص")).toBe(true);
+    expect(matchesSurahName(ikhlas, "الإخلاص")).toBe(true);
+    expect(matchesSurahName(fatihah, "فاتحة")).toBe(true);
+  });
+
+  it("matches English simple name case-insensitively", () => {
+    expect(matchesSurahName(fatihah, "fatihah")).toBe(true);
+    expect(matchesSurahName(fatihah, "FAT")).toBe(true);
+    expect(matchesSurahName(fatihah, "baqarah")).toBe(false);
+  });
+});
+
 describe("parseAyahNumber (ayah picker input)", () => {
   it("accepts ASCII and Arabic-Indic whole numbers", () => {
     expect(parseAyahNumber("255")).toBe(255);
     expect(parseAyahNumber("٢٥٥")).toBe(255);
     expect(parseAyahNumber(" 7 ")).toBe(7);
+    expect(parseAyahNumber("0")).toBe(0);
   });
 
   it("rejects non-numeric and partial input", () => {

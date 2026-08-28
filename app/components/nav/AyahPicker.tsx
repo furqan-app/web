@@ -109,6 +109,7 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Escape") {
         if (value.trim()) {
+          e.preventDefault();
           e.stopPropagation();
           clear();
         }
