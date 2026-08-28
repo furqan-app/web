@@ -454,18 +454,5 @@
     "small": "صغير (٢٦)",
     "medium": "متوسط (٢٨)",
     "large": "كبير (٣٠)"
-  },
-  "overline": "",
-  "title": "",
-  "tagline": "",
-  "recommendedSurahs": "",
-  "searchLabel": "",
-  "searchPlaceholder": "",
-  "searchClear": "",
-  "noMatches": "",
-  "verseSearchHint": "",
-  "viewingChipGeneric": "",
-  "light": "فاتح",
-  "gold": "ذهبي",
-  "dark": "داكن"
+  }
 }
