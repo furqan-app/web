@@ -38,46 +38,65 @@ describe("foldDigits", () => {
 
 describe("parseNavQuery", () => {
   it("parses bare digits", () => {
-    expect(parseNavQuery("67")).toEqual({ text: "67", number: 67, prefix: null });
-    expect(parseNavQuery(" ٥ ")).toEqual({ text: "5", number: 5, prefix: null });
-    expect(parseNavQuery("0")).toEqual({ text: "0", number: 0, prefix: null });
+    expect(parseNavQuery("67")).toEqual({ text: "67", number: 67, prefix: null, barePrefix: null });
+    expect(parseNavQuery(" ٥ ")).toEqual({ text: "5", number: 5, prefix: null, barePrefix: null });
+    expect(parseNavQuery("0")).toEqual({ text: "0", number: 0, prefix: null, barePrefix: null });
   });
 
-  it("parses juz prefixes in both locales", () => {
-    expect(parseNavQuery("juz 5")).toEqual({ text: "juz 5", number: 5, prefix: "juz" });
-    expect(parseNavQuery("JUZ5")).toEqual({ text: "JUZ5", number: 5, prefix: "juz" });
-    expect(parseNavQuery("  juz   12  ")).toEqual({ text: "juz   12", number: 12, prefix: "juz" });
-    expect(parseNavQuery("جزء ٣٠")).toEqual({ text: "جزء 30", number: 30, prefix: "juz" });
-    expect(parseNavQuery("جزء۳۰")).toEqual({ text: "جزء30", number: 30, prefix: "juz" });
+  it("parses juz prefixes in both locales, including definite articles", () => {
+    expect(parseNavQuery("juz 5")).toEqual({ text: "juz 5", number: 5, prefix: "juz", barePrefix: null });
+    expect(parseNavQuery("JUZ5")).toEqual({ text: "JUZ5", number: 5, prefix: "juz", barePrefix: null });
+    expect(parseNavQuery("al-juz 20")).toEqual({ text: "al-juz 20", number: 20, prefix: "juz", barePrefix: null });
+    expect(parseNavQuery("  juz   12  ")).toEqual({ text: "juz   12", number: 12, prefix: "juz", barePrefix: null });
+    expect(parseNavQuery("جزء ٣٠")).toEqual({ text: "جزء 30", number: 30, prefix: "juz", barePrefix: null });
+    expect(parseNavQuery("جزء۳۰")).toEqual({ text: "جزء30", number: 30, prefix: "juz", barePrefix: null });
+    expect(parseNavQuery("الجزء 20")).toEqual({ text: "الجزء 20", number: 20, prefix: "juz", barePrefix: null });
+    expect(parseNavQuery("الجزء٢٠")).toEqual({ text: "الجزء20", number: 20, prefix: "juz", barePrefix: null });
   });
 
-  it("parses page prefixes in both locales", () => {
-    expect(parseNavQuery("page 562")).toEqual({ text: "page 562", number: 562, prefix: "page" });
-    expect(parseNavQuery("PAGE 100")).toEqual({ text: "PAGE 100", number: 100, prefix: "page" });
-    expect(parseNavQuery("صفحة ٥٦٢")).toEqual({ text: "صفحة 562", number: 562, prefix: "page" });
-    expect(parseNavQuery("صفحة٥٦٢")).toEqual({ text: "صفحة562", number: 562, prefix: "page" });
+  it("parses page prefixes in both locales, including definite articles", () => {
+    expect(parseNavQuery("page 562")).toEqual({ text: "page 562", number: 562, prefix: "page", barePrefix: null });
+    expect(parseNavQuery("PAGE 100")).toEqual({ text: "PAGE 100", number: 100, prefix: "page", barePrefix: null });
+    expect(parseNavQuery("p 50")).toEqual({ text: "p 50", number: 50, prefix: "page", barePrefix: null });
+    expect(parseNavQuery("صفحة ٥٦٢")).toEqual({ text: "صفحة 562", number: 562, prefix: "page", barePrefix: null });
+    expect(parseNavQuery("صفحة٥٦٢")).toEqual({ text: "صفحة562", number: 562, prefix: "page", barePrefix: null });
+    expect(parseNavQuery("الصفحة 200")).toEqual({ text: "الصفحة 200", number: 200, prefix: "page", barePrefix: null });
+    expect(parseNavQuery("الصفحة٢٠٠")).toEqual({ text: "الصفحة200", number: 200, prefix: "page", barePrefix: null });
   });
 
-  it("treats prefix without a number as text", () => {
-    expect(parseNavQuery("juz")).toEqual({ text: "juz", number: null, prefix: null });
-    expect(parseNavQuery("page abc")).toEqual({ text: "page abc", number: null, prefix: null });
-    expect(parseNavQuery("جزء")).toEqual({ text: "جزء", number: null, prefix: null });
-    expect(parseNavQuery("صفحة")).toEqual({ text: "صفحة", number: null, prefix: null });
+  it("detects bare prefix keywords without a number", () => {
+    expect(parseNavQuery("juz")).toEqual({ text: "juz", number: null, prefix: null, barePrefix: "juz" });
+    expect(parseNavQuery("al-juz")).toEqual({ text: "al-juz", number: null, prefix: null, barePrefix: "juz" });
+    expect(parseNavQuery("جزء")).toEqual({ text: "جزء", number: null, prefix: null, barePrefix: "juz" });
+    expect(parseNavQuery("الجزء")).toEqual({ text: "الجزء", number: null, prefix: null, barePrefix: "juz" });
+    expect(parseNavQuery("page")).toEqual({ text: "page", number: null, prefix: null, barePrefix: "page" });
+    expect(parseNavQuery("p")).toEqual({ text: "p", number: null, prefix: null, barePrefix: "page" });
+    expect(parseNavQuery("صفحة")).toEqual({ text: "صفحة", number: null, prefix: null, barePrefix: "page" });
+    expect(parseNavQuery("الصفحة")).toEqual({ text: "الصفحة", number: null, prefix: null, barePrefix: "page" });
+  });
+
+  it("strips surah / سورة / السورة prefixes cleanly", () => {
+    expect(parseNavQuery("surah 5")).toEqual({ text: "5", number: 5, prefix: null, barePrefix: null });
+    expect(parseNavQuery("surah mulk")).toEqual({ text: "mulk", number: null, prefix: null, barePrefix: null });
+    expect(parseNavQuery("سورة الكهف")).toEqual({ text: "الكهف", number: null, prefix: null, barePrefix: null });
+    expect(parseNavQuery("سورة 18")).toEqual({ text: "18", number: 18, prefix: null, barePrefix: null });
+    expect(parseNavQuery("السورة ١٨")).toEqual({ text: "18", number: 18, prefix: null, barePrefix: null });
   });
 
   it("treats non-prefix alphanumeric words as text", () => {
-    expect(parseNavQuery("surah 5")).toEqual({ text: "surah 5", number: null, prefix: null });
-    expect(parseNavQuery("ayah 12")).toEqual({ text: "ayah 12", number: null, prefix: null });
+    expect(parseNavQuery("page abc")).toEqual({ text: "page abc", number: null, prefix: null, barePrefix: null });
+    expect(parseNavQuery("ayah 12")).toEqual({ text: "ayah 12", number: null, prefix: null, barePrefix: null });
   });
 
   it("returns an empty parse for blank input", () => {
-    expect(parseNavQuery("   ")).toEqual({ text: "", number: null, prefix: null });
+    expect(parseNavQuery("   ")).toEqual({ text: "", number: null, prefix: null, barePrefix: null });
   });
 });
 
 describe("surahMatchesQuery", () => {
   const mulk = surah(67, "Al-Mulk", "الملك");
   const anam = surah(6, "Al-An'am", "الأنعام");
+  const kahf = surah(18, "Al-Kahf", "الكهف");
   const isra = surah(17, "Al-Isra", "الإسراء");
   const nas = surah(114, "An-Nas", "الناس");
 
@@ -85,6 +104,13 @@ describe("surahMatchesQuery", () => {
     expect(surahMatchesQuery(mulk, parseNavQuery("mulk"))).toBe(true);
     expect(surahMatchesQuery(mulk, parseNavQuery("MULK"))).toBe(true);
     expect(surahMatchesQuery(mulk, parseNavQuery("kahf"))).toBe(false);
+  });
+
+  it("matches names when prefixed with surah / سورة", () => {
+    expect(surahMatchesQuery(kahf, parseNavQuery("سورة الكهف"))).toBe(true);
+    expect(surahMatchesQuery(kahf, parseNavQuery("السورة 18"))).toBe(true);
+    expect(surahMatchesQuery(mulk, parseNavQuery("surah mulk"))).toBe(true);
+    expect(surahMatchesQuery(mulk, parseNavQuery("surah 67"))).toBe(true);
   });
 
   it("matches partial name substrings", () => {
@@ -115,10 +141,13 @@ describe("surahMatchesQuery", () => {
     expect(surahMatchesQuery(anam, parseNavQuery("٦"))).toBe(true);
   });
 
-  it("never matches cards on prefixed queries", () => {
+  it("never matches cards on prefixed or bare-prefix queries", () => {
     expect(surahMatchesQuery(surah(5, "Al-Ma'idah", "المائدة"), parseNavQuery("juz 5"))).toBe(false);
     expect(surahMatchesQuery(mulk, parseNavQuery("page 67"))).toBe(false);
     expect(surahMatchesQuery(mulk, parseNavQuery("صفحة ٦٧"))).toBe(false);
+    expect(surahMatchesQuery(mulk, parseNavQuery("جزء"))).toBe(false);
+    expect(surahMatchesQuery(mulk, parseNavQuery("الجزء"))).toBe(false);
+    expect(surahMatchesQuery(mulk, parseNavQuery("صفحة"))).toBe(false);
   });
 });
 

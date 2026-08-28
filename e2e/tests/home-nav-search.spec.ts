@@ -7,8 +7,8 @@ import { waitForReaderContent, skipNonDesktop } from "../helpers/reader";
 function getHomeSearchInput(page: Page, locale: "ar" | "en" = "ar") {
   const placeholder =
     locale === "ar"
-      ? "ابحث عن سورة أو جزء أو صفحة"
-      : "Find a surah, juz, or page";
+      ? "ابحث بسورة (الكهف)، جزء (جزء ٢٠)، أو صفحة (صفحة ٥٠)..."
+      : "Search by surah (e.g. Mulk, 67), juz (juz 30), or page (page 50)...";
   return page.getByPlaceholder(placeholder);
 }
 
@@ -40,7 +40,7 @@ test.describe("Home Navigation Search — Initial State & Rendering", () => {
 });
 
 test.describe("Home Navigation Search — Live Surah Filtering", () => {
-  test("filters by Arabic surah name with Hamza normalization", async ({
+  test("filters by Arabic surah name with Hamza normalization and surah prefix", async ({
     page,
   }) => {
     await page.goto("/ar");
@@ -60,6 +60,11 @@ test.describe("Home Navigation Search — Live Surah Filtering", () => {
     await searchInput.fill("الأنعام");
     await expect(page.locator("[data-surah-id]")).toHaveCount(1);
     await expect(page.locator('[data-surah-id="6"]')).toBeVisible();
+
+    // 4. "سورة الكهف" with surah prefix
+    await searchInput.fill("سورة الكهف");
+    await expect(page.locator("[data-surah-id]")).toHaveCount(1);
+    await expect(page.locator('[data-surah-id="18"]')).toBeVisible();
   });
 
   test("filters by English surah name and shows live results count in English", async ({
@@ -136,38 +141,65 @@ test.describe("Home Navigation Search — Numeric Queries & Jump Rows", () => {
     await expect(pageRow).toHaveAttribute("href", /\/ar\/pages\/200$/);
   });
 
-  test("prefixed query 'juz N' collapses grid and renders Juz jump row", async ({
+  test("prefixed query with definite article 'الجزء N' collapses grid and renders Juz jump row", async ({
     page,
   }) => {
     await page.goto("/ar");
     const searchInput = getHomeSearchInput(page, "ar");
 
-    await searchInput.fill("جزء ٣٠");
+    // Definite article "الجزء 20"
+    await searchInput.fill("الجزء 20");
 
     // Grid collapses
     await expect(page.locator("[data-surah-id]")).toHaveCount(0);
 
-    // Juz 30 jump row with starting page
-    const juzRow = page.getByRole("link", { name: /الجزء ٣٠ · يبدأ في ص ٥٨٢/ });
+    // Juz 20 jump row with starting page (page 382)
+    const juzRow = page.getByRole("link", { name: /الجزء ٢٠ · يبدأ في ص ٣٨٢/ });
     await expect(juzRow).toBeVisible();
-    await expect(juzRow).toHaveAttribute("href", /\/ar\/pages\/582$/);
+    await expect(juzRow).toHaveAttribute("href", /\/ar\/pages\/382$/);
+
+    // Indefinite with Eastern Arabic numeral "جزء ٣٠"
+    await searchInput.fill("جزء ٣٠");
+    const juzRow30 = page.getByRole("link", { name: /الجزء ٣٠ · يبدأ في ص ٥٨٢/ });
+    await expect(juzRow30).toBeVisible();
+    await expect(juzRow30).toHaveAttribute("href", /\/ar\/pages\/582$/);
   });
 
-  test("prefixed query 'page N' collapses grid and renders Page jump row", async ({
+  test("prefixed query with definite article 'الصفحة N' collapses grid and renders Page jump row", async ({
     page,
   }) => {
-    await page.goto("/en");
-    const searchInput = getHomeSearchInput(page, "en");
+    await page.goto("/ar");
+    const searchInput = getHomeSearchInput(page, "ar");
 
-    await searchInput.fill("page 50");
+    // Definite article "الصفحة 100"
+    await searchInput.fill("الصفحة 100");
 
     // Grid collapses
     await expect(page.locator("[data-surah-id]")).toHaveCount(0);
 
-    // Page 50 jump row
-    const pageRow = page.getByRole("link", { name: "Page 50" });
+    // Page 100 jump row
+    const pageRow = page.getByRole("link", { name: /صفحة ١٠٠/ });
     await expect(pageRow).toBeVisible();
-    await expect(pageRow).toHaveAttribute("href", /\/en\/pages\/50$/);
+    await expect(pageRow).toHaveAttribute("href", /\/ar\/pages\/100$/);
+  });
+
+  test("bare prefix keywords render inline guidance prompt and suppress empty state", async ({
+    page,
+  }) => {
+    await page.goto("/ar");
+    const searchInput = getHomeSearchInput(page, "ar");
+
+    // "جزء"
+    await searchInput.fill("جزء");
+    await expect(page.locator("[data-surah-id]")).toHaveCount(0);
+    await expect(page.getByRole("status")).toHaveText("اكتب رقم الجزء (١–٣٠) للانتقال السريع");
+    await expect(page.getByText("لا توجد نتائج")).toBeHidden();
+
+    // "الصفحة"
+    await searchInput.fill("الصفحة");
+    await expect(page.locator("[data-surah-id]")).toHaveCount(0);
+    await expect(page.getByRole("status")).toHaveText("اكتب رقم الصفحة (١–٦٠٤) للانتقال السريع");
+    await expect(page.getByText("لا توجد نتائج")).toBeHidden();
   });
 
   test("out-of-range prefixed queries render inline range hints", async ({

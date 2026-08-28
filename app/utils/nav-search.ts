@@ -21,24 +21,48 @@ export type ParsedNavQuery = {
   // Numeric value when the query is a bare number or a valid "juz/page <n>".
   number: number | null;
   prefix: "juz" | "page" | null;
+  // Non-null when query is just a prefix keyword ("جزء", "الجزء", "page", "صفحة") without a number.
+  barePrefix: "juz" | "page" | null;
 };
 
 const BARE_NUMBER = /^\d+$/;
-const JUZ_PREFIX = /^(?:juz|جزء)\s*(\d+)$/i;
-const PAGE_PREFIX = /^(?:page|صفحة)\s*(\d+)$/i;
+const JUZ_PREFIX = /^(?:al-?juz|juz|الجزء|جزء)\s*(\d+)$/i;
+const PAGE_PREFIX = /^(?:page|p|الصفحة|صفحة)\s*(\d+)$/i;
+const SURAH_PREFIX = /^(?:surah|سورة|السورة)\s*(.+)$/i;
+const BARE_JUZ = /^(?:al-?juz|juz|الجزء|جزء)$/i;
+const BARE_PAGE = /^(?:page|p|الصفحة|صفحة)$/i;
 
 export const parseNavQuery = (raw: string): ParsedNavQuery => {
   const text = foldDigits(raw.trim());
-  if (!text) return { text, number: null, prefix: null };
+  if (!text) return { text, number: null, prefix: null, barePrefix: null };
 
   const juz = JUZ_PREFIX.exec(text);
-  if (juz) return { text, number: parseInt(juz[1], 10), prefix: "juz" };
+  if (juz) return { text, number: parseInt(juz[1], 10), prefix: "juz", barePrefix: null };
+
   const page = PAGE_PREFIX.exec(text);
-  if (page) return { text, number: parseInt(page[1], 10), prefix: "page" };
-  if (BARE_NUMBER.test(text)) {
-    return { text, number: parseInt(text, 10), prefix: null };
+  if (page) return { text, number: parseInt(page[1], 10), prefix: "page", barePrefix: null };
+
+  if (BARE_JUZ.test(text)) {
+    return { text, number: null, prefix: null, barePrefix: "juz" };
   }
-  return { text, number: null, prefix: null };
+
+  if (BARE_PAGE.test(text)) {
+    return { text, number: null, prefix: null, barePrefix: "page" };
+  }
+
+  const surahMatch = SURAH_PREFIX.exec(text);
+  if (surahMatch) {
+    const stripped = surahMatch[1].trim();
+    if (BARE_NUMBER.test(stripped)) {
+      return { text: stripped, number: parseInt(stripped, 10), prefix: null, barePrefix: null };
+    }
+    return { text: stripped, number: null, prefix: null, barePrefix: null };
+  }
+
+  if (BARE_NUMBER.test(text)) {
+    return { text, number: parseInt(text, 10), prefix: null, barePrefix: null };
+  }
+  return { text, number: null, prefix: null, barePrefix: null };
 };
 
 // Chapter names are NOT hamza-free (DECISIONS.md / ADR 0007), so unlike verse
@@ -50,7 +74,7 @@ const matchName = (name: string, foldedQuery: string): boolean =>
   fold(name).includes(fold(foldedQuery));
 
 export const surahMatchesQuery = (surah: SurahResult, parsed: ParsedNavQuery): boolean => {
-  if (parsed.prefix) return false;
+  if (parsed.prefix || parsed.barePrefix) return false;
   if (parsed.number !== null) return surah.id === parsed.number;
   return matchName(surah.name_arabic, parsed.text) || matchName(surah.name_simple, parsed.text);
 };
