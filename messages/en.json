@@ -36,7 +36,22 @@
   },
   "sidebar": {
     "title": "Quran navigation",
-    "description": "Browse surahs and rubs to jump to a page."
+    "description": "Browse surahs and rubs to jump to a page.",
+    "close": "Close",
+    "filterPlaceholderSurahs": "Surah name or number...",
+    "filterPlaceholderRubs": "Juz, hizb, or rub...",
+    "filterClear": "Clear search",
+    "filterResultsCount": "{count, plural, one {{n} result} other {{n} results}}",
+    "filterNoMatches": "No matches",
+    "filterRangeSurahs": "Surahs 1–114",
+    "filterRangeRubs": "Juz 1–30 · Hizb 1–60 · Rub 1–240",
+    "tabAyahs": "Ayahs",
+    "ayahInputPlaceholder": "Ayah number…",
+    "ayahPickSurah": "Choose a surah…",
+    "ayahPagePlaceholder": "Or page number…",
+    "ayahCount": "{count, plural, one {{n} ayah} other {{n} ayahs}}",
+    "ayahRangeHint": "Pick a number between 1 and {max}",
+    "ayahChipLabel": "Ayah {n}"
   },
   "signInModal": {
     "description": "Sign in to mark words and verses in the Quran."
@@ -455,5 +470,18 @@
     "small": "Small (26)",
     "medium": "Medium (28)",
     "large": "Large (30)"
-  }
+  },
+  "light": "",
+  "gold": "",
+  "dark": "",
+  "overline": "",
+  "title": "",
+  "tagline": "",
+  "recommendedSurahs": "",
+  "searchLabel": "",
+  "searchPlaceholder": "",
+  "searchClear": "",
+  "noMatches": "",
+  "verseSearchHint": "",
+  "viewingChipGeneric": ""
 }

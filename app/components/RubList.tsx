@@ -16,6 +16,10 @@ type Props = {
   rubs: RubWithVerses[];
   surahs: SurahResult[];
   currentRubId?: number;
+  // Sidebar filter (#362): when set, rows/groups come from this subset while
+  // juz header pages still resolve from the FULL `rubs` prop — a filtered
+  // header must never show "page of first match" as the juz's start.
+  filteredRubs?: RubWithVerses[];
 };
 
 type JuzGroup = { juzNumber: number; rubs: RubWithVerses[] };
@@ -36,7 +40,7 @@ function buildJuzGroups(rubs: RubWithVerses[]): JuzGroup[] {
   return groups;
 }
 
-const RubList = ({ rubs, surahs, currentRubId }: Props) => {
+const RubList = ({ rubs, surahs, currentRubId, filteredRubs }: Props) => {
   const locale = useLocale();
   const t = useTranslations();
   const basePath = useReaderBasePath();
@@ -51,7 +55,13 @@ const RubList = ({ rubs, surahs, currentRubId }: Props) => {
   const pageOfVerse = (startVerse: { verse_key: string; page_number: number }) =>
     versePages?.[startVerse.verse_key] ?? startVerse.page_number;
 
-  const juzGroups = buildJuzGroups(rubs);
+  const shownRubs = filteredRubs ?? rubs;
+  const juzGroups = buildJuzGroups(shownRubs);
+
+  // True juz-start rub from the FULL list, keyed for header lookup — a filtered
+  // group's first row is not the juz boundary.
+  const juzStartRub = (juzNumber: number): RubWithVerses | undefined =>
+    rubs.find((r) => r.rub_number === (juzNumber - 1) * 8 + 1);
 
   return (
     <div>
@@ -67,7 +77,7 @@ const RubList = ({ rubs, surahs, currentRubId }: Props) => {
               {t("juz", "Juz")} {toLocaleNumeral(group.juzNumber, locale)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {t("page", "Page")} {toLocaleNumeral(pageOfVerse(group.rubs[0].startVerse), locale)}
+              {t("page", "Page")} {toLocaleNumeral(pageOfVerse((juzStartRub(group.juzNumber) ?? group.rubs[0]).startVerse), locale)}
             </span>
           </div>
 
