@@ -1,0 +1,52 @@
+name: CI
+
+# Fast PR quality gate: ESLint, TypeScript type-check, and Vitest unit tests.
+# Runs sequentially without database dependencies.
+
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - ".claude/**"
+      - ".agents/**"
+      - ".opencode/**"
+      - "**/*.md"
+      - ".mcp.json"
+      - ".mcp.json.example"
+      - "furqan-workflow.excalidraw"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Lint, Typecheck & Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        id: install
+        run: npm ci
+
+      - name: Lint
+        if: always() && steps.install.outcome == 'success'
+        run: npm run lint
+
+      - name: Type check
+        if: always() && steps.install.outcome == 'success'
+        run: npm run type-check
+
+      - name: Unit tests
+        if: always() && steps.install.outcome == 'success'
+        run: npm test

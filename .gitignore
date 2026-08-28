@@ -49,7 +49,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # serwist service worker build output (generated from app/sw.ts)
 /public/sw.js
@@ -62,8 +61,7 @@ next-env.d.ts
 # retrospect skill output — never committed
 /docs/retrospectives/
 
-# Playwright transient output (baseline screenshots under e2e/tests/__screenshots__/
-# are NOT ignored — those are committed on purpose, see docs/plans/visual-e2e-testing.md)
+# Playwright transient output
 /playwright-report/
 /test-results/
 

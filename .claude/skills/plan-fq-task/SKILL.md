@@ -36,14 +36,23 @@ Every task must have a GitHub issue on `furqan-app/web` before implementation st
 ## Step 6 — Create the worktree or branch
 
 Derive the slug from the planned filename (e.g. `fix-search-debounce`).
+Always fetch latest first: `git fetch origin`. Base new branches on updated `origin/main` by default (unless explicitly specified to start from another branch).
 
 **Environment check:**
 - **In Claude Code / CLI environments (supports external worktrees):**
   1. Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
   2. If none exists, derive branch `<type>/<issue-number>-<short-description>` and run:
      ```bash
-     git worktree add ../furqan-<slug> -b <branch-name>  # if branch does not exist
-     git worktree add ../furqan-<slug> <branch-name>     # if branch exists
+     # If branch does NOT exist yet (defaults to origin/main):
+     git fetch origin
+     git worktree add ../furqan-<slug> -b <branch-name> origin/main
+
+     # If starting from a specific base branch:
+     git fetch origin
+     git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
+
+     # If branch already exists:
+     git worktree add ../furqan-<slug> <branch-name>
      ```
   3. Record in `~/.claude/furqan-worktrees.json`:
      ```json
@@ -53,7 +62,16 @@ Derive the slug from the planned filename (e.g. `fix-search-debounce`).
 - **In AGY / IDE environments (workspace-confined):**
   1. Create or switch to the feature branch directly inside the workspace root:
      ```bash
-     git checkout -b <type>/<issue-number>-<short-description>
+     # If branch does NOT exist yet (defaults to origin/main):
+     git fetch origin
+     git checkout -b <type>/<issue-number>-<short-description> origin/main
+
+     # If starting from a specific base branch:
+     git fetch origin
+     git checkout -b <type>/<issue-number>-<short-description> <base-branch>
+
+     # If branch already exists:
+     git checkout <type>/<issue-number>-<short-description>
      ```
   2. The target path `<abs>` is the workspace root itself (`$(pwd)`).
 
@@ -161,8 +179,13 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
      1. Derive the branch name from the GitHub issue using the project convention: `<type>/<issue-number>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
      2. Check whether the branch already exists: `git branch --list <branch-name>`
         ```bash
-        # Branch does NOT exist yet:
-        git worktree add ../furqan-<slug> -b <branch-name>
+        # Branch does NOT exist yet (defaults to origin/main):
+        git fetch origin
+        git worktree add ../furqan-<slug> -b <branch-name> origin/main
+
+        # If starting from a specific base branch:
+        git fetch origin
+        git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
 
         # Branch already exists:
         git worktree add ../furqan-<slug> <branch-name>

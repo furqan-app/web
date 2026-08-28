@@ -9,6 +9,9 @@ import {
 // rub / hizb / juz are divisions of the TEXT, identical in every mushaf
 // edition, so they resolve from Verse columns. `page` is not — it is a property
 // of one printed edition — and is handled separately below. See ADR 0033.
+// `rub-first` returns the FIRST verse of the verse's rub instead of the last
+// (recitation-playback.md Addendum 12: the Start From picker's "Start of
+// Rub'" preset) — same edition-independence as the other text scopes.
 const SCOPE_FIELD = {
   rub: "rub_el_hizb_number",
   hizb: "hizb_number",
@@ -67,6 +70,26 @@ export async function GET(
 ) {
   const verseKey = decodeURIComponent(params.verseKey);
   const scope = request.nextUrl.searchParams.get("scope");
+
+  if (scope === "rub-first") {
+    // Verse.verse_key is not @unique — findFirst, never findUnique.
+    const startVerse = await quranPrisma.verse.findFirst({
+      where: { verse_key: verseKey },
+    });
+    if (!startVerse) {
+      return jsonResponse({ code: 404, message: "Verse not found" });
+    }
+    const firstVerse = await quranPrisma.verse.findFirst({
+      where: { rub_el_hizb_number: startVerse.rub_el_hizb_number },
+      orderBy: { id: "asc" },
+    });
+    if (!firstVerse) {
+      return jsonResponse({ code: 404, message: "Start verse not found" });
+    }
+    return jsonResponse({
+      data: { verseKey: firstVerse.verse_key, chapterId: firstVerse.chapter_id },
+    });
+  }
 
   if (!scope || (scope !== "page" && !isTextScope(scope))) {
     return jsonResponse({ code: 422, message: "Missing or invalid scope" });
