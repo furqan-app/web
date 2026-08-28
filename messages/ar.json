@@ -38,9 +38,9 @@
     "title": "التنقل في القرآن",
     "description": "تصفح السور والأرباع للانتقال إلى صفحة.",
     "close": "إغلاق",
-    "filterPlaceholderSurahs": "رشّح باسم السورة أو رقمها",
-    "filterPlaceholderRubs": "رشّح بالجزء أو الحزب أو الربع",
-    "filterClear": "مسح التصفية",
+    "filterPlaceholderSurahs": "ابحث بسورة (الكهف) أو رقمها (١٨)...",
+    "filterPlaceholderRubs": "ابحث بجزء (جزء ٢٠)، حزب، أو ربع...",
+    "filterClear": "مسح البحث",
     "filterResultsCount": "{count, plural, one {{n} نتيجة} two {نتيجتان} few {{n} نتائج} many {{n} نتيجة} other {{n} نتيجة}}",
     "filterNoMatches": "لا توجد نتائج",
     "filterRangeSurahs": "السور ١–١١٤",
@@ -471,5 +471,18 @@
     "small": "صغير (٢٦)",
     "medium": "متوسط (٢٨)",
     "large": "كبير (٣٠)"
-  }
+  },
+  "light": "فاتح",
+  "gold": "ذهبي",
+  "dark": "داكن",
+  "overline": "",
+  "title": "",
+  "tagline": "",
+  "recommendedSurahs": "",
+  "searchLabel": "",
+  "searchPlaceholder": "",
+  "searchClear": "",
+  "noMatches": "",
+  "verseSearchHint": "",
+  "viewingChipGeneric": ""
 }

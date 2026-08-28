@@ -38,9 +38,9 @@
     "title": "Quran navigation",
     "description": "Browse surahs and rubs to jump to a page.",
     "close": "Close",
-    "filterPlaceholderSurahs": "Filter by surah name or number",
-    "filterPlaceholderRubs": "Filter by juz, hizb, rub",
-    "filterClear": "Clear filter",
+    "filterPlaceholderSurahs": "Search by surah (e.g. Kahf, 18)...",
+    "filterPlaceholderRubs": "Search by juz (e.g. juz 20), hizb, or rub...",
+    "filterClear": "Clear search",
     "filterResultsCount": "{count, plural, one {{n} result} other {{n} results}}",
     "filterNoMatches": "No matches",
     "filterRangeSurahs": "Surahs 1–114",
@@ -470,5 +470,18 @@
     "small": "Small (26)",
     "medium": "Medium (28)",
     "large": "Large (30)"
-  }
+  },
+  "light": "فاتح",
+  "gold": "ذهبي",
+  "dark": "داكن",
+  "overline": "",
+  "title": "",
+  "tagline": "",
+  "recommendedSurahs": "",
+  "searchLabel": "",
+  "searchPlaceholder": "",
+  "searchClear": "",
+  "noMatches": "",
+  "verseSearchHint": "",
+  "viewingChipGeneric": ""
 }
