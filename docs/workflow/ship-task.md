@@ -32,14 +32,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 - `git add` the relevant files (never `git add -A` blindly — review what's staged)
 - Draft the commit message following [commit-message.md](commit-message.md)
-- Run `GRAPHIFY_SKIP_HOOK=1 git commit ...` (suppresses the async post-commit graph rebuild — step 3b replaces it with a synchronous one) — do not pause for confirmation
+- Run `git commit` — do not pause for confirmation
 - No AI signatures (see below)
-
-### 3b. Update the knowledge graph synchronously
-
-- Run `sh .claude/hooks/graphify-sync-rebuild.sh`
-- This rebuilds `graphify-out/` in the foreground against the commit just made, and — if anything changed — adds a follow-up `chore(graphify): update knowledge graph` commit
-- Do this before push so the graph in the PR always matches the shipped code (the plain async hook in `.git/hooks/post-commit` can finish after push and get left out)
 
 ### 4. Push
 
