@@ -2,7 +2,7 @@
 
 **Type:** copy / i18n
 **Date:** 2026-08-29
-**Status:** proposed
+**Status:** implemented
 
 ## Summary
 

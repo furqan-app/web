@@ -210,9 +210,12 @@ const Sidebar = ({ surahs, rubs }: Props) => {
         dir={getLanguageDirection(locale)}
         hideDefaultClose
         onEscapeKeyDown={(e) => {
-          if (activeTab !== "ayahs" && activeQuery.trim()) {
+          if (activeTab === "surahs" && surahQuery.trim()) {
             e.preventDefault();
-            setActiveQuery("");
+            setSurahQuery("");
+          } else if (activeTab === "rubs" && rubQuery.trim()) {
+            e.preventDefault();
+            setRubQuery("");
           }
         }}
         overlayStyle={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}

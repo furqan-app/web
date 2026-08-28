@@ -111,7 +111,7 @@ export const rubMatchesQuery = (
     );
   }
   if (parsed.prefix) return false;
-  const chapter = rub.rubVerseMappings[0]?.chapter_number;
+  const chapter = rub.rubVerseMappings?.[0]?.chapter_number;
   const surah = chapter !== undefined ? surahsById.get(chapter) : undefined;
   return surah ? matchesSurahName(surah, parsed.text) : false;
 };

@@ -21,9 +21,9 @@ export const ThemeToggle = () => {
   }
 
   const themeLabels: Record<string, string> = {
-    light: t("light", "فاتح"),
-    gold: t("gold", "ذهبي"),
-    dark: t("dark", "داكن"),
+    light: t("light"),
+    gold: t("gold"),
+    dark: t("dark"),
   };
 
   return (

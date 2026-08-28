@@ -75,24 +75,35 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
 
   const pageOfAyah = (ayah: number) => versePages?.[`${target.id}:${ayah}`];
 
+  const getDisplayName = (s: SurahResult) =>
+    locale === "ar" ? s.name_arabic : s.name_simple;
+
+  const navigate = (page: number, highlightAyah?: number) => {
+    if (!jumpTo) return;
+    jumpTo(page);
+    if (highlightAyah !== undefined) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("highlight", `${target.id}:${highlightAyah}`);
+      url.searchParams.set("highlight-type", "search");
+      window.history.replaceState(null, "", url.toString());
+    }
+    setOpen(false);
+  };
+
   const jumpToAyah = (ayah: number) => {
     if (!ready || !jumpTo) return;
     if (ayah < 1 || ayah > target.verses_count) return;
     const page = pageOfAyah(ayah);
-    if (!page) return;
-    jumpTo(page);
-    const url = new URL(window.location.href);
-    url.searchParams.set("highlight", `${target.id}:${ayah}`);
-    url.searchParams.set("highlight-type", "search");
-    window.history.replaceState(null, "", url.toString());
-    setOpen(false);
+    if (!page) {
+      console.warn(`[AyahPicker] Missing page mapping for ${target.id}:${ayah}`);
+      return;
+    }
+    navigate(page, ayah);
   };
 
   const jumpToPage = () => {
-    if (!jumpTo) return;
-    if (pageN === null || pageOutOfRange) return;
-    jumpTo(pageN);
-    setOpen(false);
+    if (!jumpTo || pageN === null || pageOutOfRange) return;
+    navigate(pageN);
   };
 
   const pickTarget = (s: SurahResult) => {
@@ -136,7 +147,7 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-medium truncate" dir="auto">
-            {locale === "ar" ? target.name_arabic : target.name_simple}
+            {getDisplayName(target)}
           </span>
         </span>
         <span className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
@@ -183,7 +194,7 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
                   )}
                 >
                   <span className="text-sm truncate flex-1" dir="auto">
-                    {locale === "ar" ? s.name_arabic : s.name_simple}
+                    {getDisplayName(s)}
                   </span>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {toLocaleNumeral(s.verses_count, locale)}
@@ -272,7 +283,7 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
                   disabled={!ready}
                   onClick={() => jumpToAyah(ayah)}
                   className={cn(
-                    "fq-focus-ring h-9 rounded-md text-sm tabular-nums border transition-colors duration-150",
+                    "fq-focus-ring h-9 rounded-md text-sm tabular-nums border transition-all duration-150 active:scale-95",
                     "disabled:opacity-40 disabled:pointer-events-none",
                     here
                       ? "border-primary/50 bg-[hsl(var(--primary)/0.08)] text-primary font-medium"

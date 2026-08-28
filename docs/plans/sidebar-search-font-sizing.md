@@ -2,7 +2,7 @@
 
 **Type:** copy / UI polish
 **Date:** 2026-08-29
-**Status:** proposed
+**Status:** implemented
 
 ## Summary
 
