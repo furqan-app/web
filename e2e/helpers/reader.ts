@@ -141,3 +141,25 @@ export async function swipeReader(
     { dx, startX, startY, steps }
   );
 }
+
+/**
+ * Ensures the reader nav bar is visible in mobile/tablet overlay mode.
+ * Clicks the reader viewport to reveal the nav if it is fixed off-screen.
+ */
+export async function revealNavOverlay(page: Page) {
+  const isOverlayHidden = await page.evaluate(() => {
+    const navEl = document.querySelector("nav.fq-nav-overlay-page");
+    if (!navEl) return false;
+    const style = window.getComputedStyle(navEl);
+    return style.position === "fixed" && !navEl.classList.contains("fq-nav-visible");
+  });
+  if (isOverlayHidden) {
+    await page.locator(".fq-reader-pager-viewport").click({ position: { x: 50, y: 50 } });
+    await page.waitForFunction(() => {
+      const navEl = document.querySelector("nav.fq-nav-overlay-page");
+      return !navEl || navEl.classList.contains("fq-nav-visible");
+    });
+  }
+}
+
+
