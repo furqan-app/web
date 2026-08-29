@@ -5,6 +5,7 @@ import {
   getStorageItem,
   skipNonDesktop,
   skipNonMobile,
+  revealNavOverlay,
 } from "../helpers/reader";
 
 test.describe("Settings Drawer: Open & Close Lifecycle", () => {
@@ -368,5 +369,43 @@ test.describe("Language Switcher & Bi-Directionality (RTL vs LTR)", () => {
 
     await expect(page).toHaveURL("/ar/pages/1");
     await waitForReaderContent(page);
+  });
+
+  test("persists language selection across reader navigation back to home page", async ({
+    page,
+  }) => {
+    // 1. Open homepage
+    await page.goto("/ar");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+    await expect(page.locator("body")).toHaveAttribute("dir", "rtl");
+
+    // 2. Go to any Quran page (page 50)
+    await page.goto("/ar/pages/50");
+    await waitForReaderContent(page);
+    await expect(page).toHaveURL("/ar/pages/50");
+
+    // 3. Change language from settings to English
+    const sheet = await openSettings(page);
+    const langTrigger = sheet.locator("button").filter({ hasText: /اللغة|Language/ });
+    await langTrigger.click();
+    const englishBtn = sheet.locator(".fq-section-drawer button").filter({ hasText: "English" });
+    await englishBtn.click();
+
+    // Verify reader updated to English
+    await expect(page).toHaveURL("/en/pages/50");
+    await waitForReaderContent(page);
+
+    // 4. Go to the home page (via Home link / logo in navbar)
+    await revealNavOverlay(page);
+    const homeLink = page.locator('nav a[aria-label="Home"]').first();
+    await homeLink.click();
+
+    // 5. Check the language again
+    await expect(page).toHaveURL("/en");
+    await expect(page.locator("div[dir='ltr']").first()).toBeVisible();
+    await expect(
+      page.getByPlaceholder("Search by surah (e.g. Mulk, 67), juz (juz 30), or page (page 50)...")
+    ).toBeVisible();
+    await expect(page.locator('nav button[aria-label="Settings"]')).toBeVisible();
   });
 });
