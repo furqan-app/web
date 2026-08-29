@@ -1,26 +1,5 @@
 import { TafsirSegment } from "@/app/types/tafsir";
-
-/**
- * Normalizes a verse key string into standard "${surah}:${ayah}" format without zero-padding.
- * Handles inputs like "002:005", "2:5", "2_5", " 2 : 5 ".
- * Returns null if the format is invalid or out of Quran bounds (surahs 1-114, ayahs 1-286).
- */
-export function normalizeVerseKey(key: string | null | undefined): string | null {
-  if (!key || typeof key !== "string") return null;
-
-  const match = key.trim().match(/^(\d{1,3})\s*[:_]\s*(\d{1,3})$/);
-  if (!match) return null;
-
-  const surah = parseInt(match[1], 10);
-  const ayah = parseInt(match[2], 10);
-
-  // Surah must be between 1 and 114; no Quranic surah has more than 286 ayahs
-  if (surah < 1 || surah > 114 || ayah < 1 || ayah > 286) {
-    return null;
-  }
-
-  return `${surah}:${ayah}`;
-}
+export { normalizeVerseKey } from "@/app/utils/quran-navigation";
 
 /**
  * Strips HTML entity encodings into plain text characters.
@@ -217,4 +196,17 @@ function escapeHtml(str: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+/**
+ * Truncates and formats verse text into an Uthmanic snippet with authentic ﴿...﴾ brackets.
+ */
+export function formatVerseSnippet(text: string | null | undefined, maxWords = 7): string | null {
+  if (!text) return null;
+  const cleaned = text.replace(/^[﴿{(«"“'\s]+|[﴾})»"”'\s]+$/g, "").trim();
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+  const isTruncated = words.length > maxWords;
+  const sliced = words.slice(0, maxWords).join(" ");
+  return isTruncated ? `﴿${sliced}…﴾` : `﴿${sliced}﴾`;
 }
