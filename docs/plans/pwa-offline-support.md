@@ -2,7 +2,7 @@
 
 **Type:** feature  
 **Date:** 2026-07-06  
-**Status:** implemented
+**Status:** implemented (all addenda through 10)
 
 ## Summary
 
@@ -1323,3 +1323,250 @@ cold-launch cases (a) default downloaded, (b) Tajweed-only downloaded, (c) nothi
 a real install plus a ~48 MB download per edition; the static evidence above was judged sufficient to
 merge on. The browser-level marker check (write on hydration, rewrite on edition switch, absent-marker
 fallback) was offered and skipped in the same decision.
+
+---
+
+# Addendum 10 (2026-08-29): Stop enumerating the page cache on the SW thread at launch
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `npm test` + full `build:local` clean; built `public/sw.js`
+inspected to confirm the row-2 probe compiles to two `cache.match` calls with the `cache.keys()` walk
+deferred behind a 5s `setTimeout` under `event.waitUntil`, the row-3 3s race untouched, and the
+`reader-html-`/`request.mode === "navigate"` invariants intact. Device/throttled-launch verification
+pending — see Implementation Notes below.)
+**Issue:** https://github.com/furqan-app/web/issues/440 (epic #375)
+**ADR:** [0014 Addendum 9](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+At cold launch the service worker enumerates the entire `pages-v{N}` cache up to three times before it
+can answer the requests the reader is waiting on — the enumeration Addendum 9 explicitly deferred
+("a separate child of epic #375"). `countCachedPages()` walks `cache.keys()` (~1,208 entries per
+downloaded edition, ~2,400 with two) running two regexes per entry, on the worker's single thread,
+ahead of every queued document/font/JSON request. Reached from: (1) row 2's completeness probe on the
+launch navigation's cache miss — memoized, but a cold launch is a fresh worker; (2)+(3) `reportStatus`
+answering the two `REQUEST_PRECACHE_STATUS` messages `usePwaPrecache` fires on mount from
+`OfflineSetupGate` and `OfflineInstallPrompt`, both always mounted in `app/[locale]/layout.tsx`, even
+when dismissed long ago and rendering nothing. The cost is CPU-bound, exists only for users who
+completed a download (no sentinel = early return before the walk), and is exactly the fully-downloaded
+population reporting slow launches.
+
+## Root Cause / Approach
+
+Two independent halves:
+
+**A. Worker — read completeness at launch, verify off the critical path.** Row 2's probe
+(`isPrecacheComplete`) stops calling `isCacheComplete`'s full walk. It reads: sentinel `cache.match` +
+verse-pages `cache.match` — two reads, zero enumeration. When that reads complete, schedule a
+**deferred verification** via `event.waitUntil`: after a short delay (past the launch burst), run the
+real `countCachedPages` walk once per edition per worker lifetime; on a short count, delete the stale
+sentinel and drop that edition's row-2 memo (the same healing `reportStatus` does). `isCacheComplete`
+keeps full-walk semantics for `reportStatus` and `precacheAllPages`' start-of-run short-circuit — a
+Download tap on an evicted cache must resume, not false-complete.
+
+**B. Client — no status request for a surface that renders nothing.** `usePwaPrecache` gains an
+opt-in deferral: when set, the mount-time `REQUEST_PRECACHE_STATUS` and the focus/visibility resync
+fire only while `dismissed` is false (re-firing if it ever flips false while mounted). Gate and
+install prompt opt in; `MushafLayoutRow` (Settings) keeps always-on requests — it displays live
+status regardless of the dismissed flag and is the resume/heal surface. Fully-downloaded users have
+`dismissed = true` (auto-dismiss on `done`), so their launches send zero status messages.
+
+## Decision Tree / Algorithm
+
+Row-2 launch probe, per reader-HTML cache miss (rows 1/3/4 of Addendum 5's tree unchanged):
+
+| Sentinel match | Verse-pages match | Probe result | Follow-up |
+|---|---|---|---|
+| absent | — | not complete → row 3 | none (same early return as today — no walk) |
+| present | absent | not complete → row 3 | none; `reportStatus` heals the sentinel when Settings next asks |
+| present | present | complete → row 2 instant shell | schedule deferred verification, once per edition per worker lifetime |
+
+Deferred verification (runs after the response is served, delayed ~5 s):
+
+| Walk result | Action |
+|---|---|
+| count == `pagesCount` | nothing; edition marked verified for this worker lifetime |
+| count short | delete sentinel, drop row-2 memo → next miss lands in row 3; next `reportStatus` shows the real `n/604`; next run resumes |
+
+Client status requests (mount + focus/visibility resync):
+
+| Caller | Mode | `dismissed` | Fires `REQUEST_PRECACHE_STATUS`? |
+|---|---|---|---|
+| `MushafLayoutRow` | always | any | yes |
+| `OfflineSetupGate` / `OfflineInstallPrompt` | deferred | true | no |
+| `OfflineSetupGate` / `OfflineInstallPrompt` | deferred | false (or flips false while mounted) | yes |
+
+Message listener stays attached unconditionally in every instance — broadcast `PRECACHE_PROGRESS`
+still reaches all mounted hooks during an active run.
+
+## Verified Test Cases
+
+Decisions delegated by the user (2026-08-29, "choose decisions for me"); cases walked against the
+code:
+
+1. Fully-downloaded install (either or both editions), cold launch, unvisited page → row 2 shell with
+   **zero** `cache.keys()` walks before the response; deferred walk runs seconds later; no SW-thread
+   stall ahead of font/JSON requests.
+2. Same user, dismissed flags set (the normal end state — auto-dismiss on `done`) → zero
+   `REQUEST_PRECACHE_STATUS` at launch → `reportStatus` never runs.
+3. iOS evicted entries since last session → first launch serves the shell (accepted one-launch
+   window); an evicted page falls through `CacheFirst` to network (online: slower but works; offline:
+   existing unavailable-offline notice); deferred walk deletes the sentinel + memo; later misses land
+   in row 3; Settings shows resume with the real count.
+4. Settings opened → `MushafLayoutRow` requests status → full walk → exact `n/604`, stale-sentinel
+   healing exactly as today.
+5. Run in flight while gate/prompt dismissed → broadcast progress still updates every mounted hook;
+   Settings row live. Cancel still names its `runId`.
+6. Fresh browser visitor, nothing cached, not dismissed → gate/prompt request status; the walk over a
+   near-empty cache is trivial; behavior unchanged.
+7. Download tapped on an evicted cache → `precacheAllPages`' full-walk short-circuit returns false →
+   run resumes and refetches only what is missing (no false `done`).
+8. Mid-session edition switch → marker read stays unmemoized (Addendum 9); the new edition's cheap
+   probe + its own deferred verification run on the next miss.
+
+## Files to Change
+
+- `app/sw.ts`
+  - New cheap probe (sentinel + verse-pages `cache.match` only) used by `isPrecacheComplete` for
+    row 2; `isCacheComplete` untouched for `reportStatus`/`precacheAllPages`.
+  - Deferred verification: per-edition once-per-worker-lifetime guard (e.g. a `Set<number>` beside
+    `precacheCompleteByMushaf`); scheduled with `event.waitUntil` from the row-2 handler after the
+    shell is served, delayed ~5 s; on short count `cache.delete(precacheSentinelUrl)` +
+    `precacheCompleteByMushaf.delete` + clear the verified guard so a later re-probe re-verifies.
+  - Run-completion and `reportStatus` stale-sentinel invalidation also clear the verified guard, so
+    memo and guard can never disagree.
+- `app/hooks/use-pwa-precache.ts` — options param (e.g.
+  `usePwaPrecache(mushafId, { deferStatusWhileDismissed?: boolean })`, default `false` = today's
+  behavior). Move the status request (and resync firing) into a `dismissed`-aware effect; the message
+  listener and dismissed-flag sync stay unconditional.
+- `app/components/offline/OfflineSetupGate.tsx`, `app/components/offline/OfflineInstallPrompt.tsx` —
+  pass `deferStatusWhileDismissed: true`.
+- `app/components/mushaf/MushafLayoutRow.tsx` — unchanged call (default keeps always-on requests).
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 9 (written during planning).
+- `docs/architecture/DECISIONS.md` — PWA section: Addendum 10 amendment + supersede the
+  "count on the critical path" letter of the sentinel-validation constraint (written during planning).
+
+No changes to `app/constants/offline.ts`, the SW message contract, `ReaderPager`, or any fallback
+document. No new unit tests: everything here is Cache Storage I/O inside the worker plus a hook's
+message timing — outside the Vitest suite's reach (same call as Addendum 9); verification is the
+throttled production-build pass below.
+
+## Constraints
+
+- `isCacheComplete`'s full-walk semantics stay for `reportStatus` and `precacheAllPages` — the cheap
+  probe is scoped to row 2 only. A Download tap on an evicted cache must resume, not short-circuit.
+- Deferred verification must perform the same healing as `reportStatus` (sentinel delete + memo drop)
+  and must run at most once per edition per worker lifetime; never persist its verdict across worker
+  lifetimes.
+- Everything stays per-edition: probe, memo, verified guard, sentinel, dismissed flag (ADR 0014
+  Addendum 5).
+- `dismissed` keeps initializing `true` (`use-pwa-precache.ts`) so no surface can flash before
+  localStorage is read — the deferral builds on that read, it must not reorder it.
+- No surface may auto-start a download (ADR 0014 Addendum 2) — untouched here.
+- The Settings rows must keep always-on status requests — they render counts regardless of dismissal
+  and are where a stale sentinel gets healed on demand.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` (Serwist disabled in
+  dev), installed PWA with both editions downloaded, CPU-throttled cold launch to an unvisited page —
+  no SW-thread stall before assets are served (issue #440's acceptance check). Confirm in DevTools
+  that no `REQUEST_PRECACHE_STATUS` fires at launch once dismissed, and that opening Settings still
+  shows exact counts.
+
+## What NOT to Do
+
+- Do not let `precacheAllPages` or `reportStatus` adopt the cheap probe — their full walk is now the
+  primary self-healing path and the source of exact counts.
+- Do not remove the deferred verification walk — that is the bare-sentinel reduction ADR 0014
+  Addendum 2 forbade; an evicted cache would report ready forever.
+- Do not sample-probe random pages as verification — probabilistic; misses exactly the partial
+  evictions it exists to catch.
+- Do not persist the verification verdict (e.g. "verified at T" in Cache Storage) across worker
+  lifetimes — eviction can happen any time; once per worker lifetime is the chosen balance
+  (delegated decision, 2026-08-29).
+- Do not defer the Settings rows' status requests, and do not gate them on `dismissed`.
+- Do not dedupe/relocate the gate and prompt mounts in `app/[locale]/layout.tsx` — out of scope; the
+  fix is not firing useless messages, not restructuring the surfaces.
+- Do not change what "complete" means or relax sentinel-plus-count validation semantics anywhere
+  outside row 2 (issue #440's out-of-scope list).
+- Do not touch Addendum 5's rows 1/3/4, the 3 s race, the `request.mode === "navigate"` guard, or the
+  active-edition marker mechanics (Addendum 9).
+
+## Decisions Made
+
+All delegated by the user (2026-08-29, "choose decisions for me, what I just need is to have a nice
+offline experience"):
+
+- **Deferred-verification trade-off accepted**: after an iOS eviction, the first cold launch may
+  serve the instant shell; the deferred walk corrects state seconds later in the same session. Delta
+  vs today is one shell serve — today's design caught it on the next launch's pre-serve probe.
+  Supersedes the letter (not the intent) of DECISIONS' "do not reduce back to a bare sentinel
+  `match()`" constraint; recorded in ADR 0014 Addendum 9.
+- **No persisted count entry / sentinel body stays empty** — the issue's "persisted count (or
+  equivalent)": the sentinel already is the persisted completeness assertion; a count in its body
+  adds nothing once verification is deferred, and a second synthetic entry adds drift risk.
+- **~5 s delay** before the deferred walk, clearing the launch request burst; scheduled under
+  `event.waitUntil` (a killed worker skips it harmlessly — the next launch re-probes).
+- **Hook option defaults to today's behavior** (always request); the two launch surfaces opt into
+  deferral explicitly — no silent behavior change for future callers.
+
+## Implementation Outcome (2026-08-29)
+
+Shipped exactly as planned — no deviations, no new files.
+
+- `app/sw.ts` — `hasCompletionMarkers` (2 `cache.match` calls) replaces the full walk inside
+  `isPrecacheComplete`'s row-2 probe. `scheduleDeferredVerification` (`verifiedByMushaf` guard +
+  `event.waitUntil` + 5s `setTimeout` + `isCacheComplete`'s real walk) fires once per edition per
+  worker lifetime when the cheap probe reads complete, healing exactly like `reportStatus` on a short
+  count. `isActivePrecacheComplete`/`isPrecacheComplete` now take the `FetchEvent`/`ExtendableEvent`
+  they schedule the deferred work on. Both invalidation sites (`precacheAllPages`'s completion,
+  `reportStatus`'s stale-sentinel deletion) drop `verifiedByMushaf` alongside the existing memo.
+  `reportStatus` and `precacheAllPages` untouched — still call the full-walk `isCacheComplete`.
+- `app/hooks/use-pwa-precache.ts` — `deferStatusWhileDismissed` option (default `false`). The status
+  request/resync moved into its own effect keyed on `statusEligible = !deferStatusWhileDismissed ||
+  !dismissed`; the message-listener/dismissed-sync effect is unchanged apart from losing the status
+  logic it used to also own.
+- `OfflineSetupGate.tsx`, `OfflineInstallPrompt.tsx` — pass `{ deferStatusWhileDismissed: true }`.
+  `MushafLayoutRow.tsx` untouched (default `false` preserves always-on requests).
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 9 (written during planning,
+  unchanged by implementation).
+- `docs/architecture/DECISIONS.md` — PWA section: Addendum 10 amendment; sentinel-validation
+  constraint rewritten to describe the split by call site (already done during planning).
+- `docs/architecture/COMPONENTS.md` — `OfflineSetupGate`/`OfflineInstallPrompt` entries note the new
+  `deferStatusWhileDismissed: true` call.
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | clean |
+| `npm run lint` | clean |
+| `npm test` (Vitest) | 9 files, 128 tests passed |
+| `npm run build:local` | succeeds |
+| Row-2 probe in built `public/sw.js` | compiles to `e.match(sentinel) && e.match(versePages)` — zero `cache.keys()` calls |
+| Deferred verification in built `public/sw.js` | `verifiedByMushaf`-equivalent `Set` guard → `event.waitUntil` → `setTimeout(…, 5e3)` → full-walk `isCacheComplete` → sentinel delete + memo/guard drop on failure, matching source |
+| Row-3 race timeout | `setTimeout(…, 3e3)` unchanged in the built worker |
+| `reader-html-` prefix / `request.mode === "navigate"` guard | both present, untouched |
+
+Not verified locally (needs a real install + a completed download; deferred per this task's own
+Verified Test Cases and consistent with every prior addendum's device-pass deferral): a CPU-throttled
+cold launch on an installed PWA with both editions downloaded, confirming no SW-thread stall before
+assets are served and that DevTools shows zero `REQUEST_PRECACHE_STATUS` messages at launch once
+dismissed.
+
+## Review Fixes (2026-08-29, Sonnet review pass)
+
+One fix applied, from a `/review-fq-work` pass before shipping:
+
+- `isCacheComplete` (`app/sw.ts`) called out its own sentinel + verse-pages `cache.match` checks
+  verbatim instead of reusing `hasCompletionMarkers`, duplicating exactly the two reads the row-2
+  probe was extracted to isolate — the drift risk DECISIONS.md's rewritten sentinel-validation
+  constraint explicitly warns against. `isCacheComplete` now calls `hasCompletionMarkers` internally;
+  `reportStatus`/`precacheAllPages` callers are unaffected (same return semantics, one fewer duplicated
+  code path). Re-verified clean after the change: `tsc --noEmit`, `lint`, `npm test` (128/128),
+  `build:local`.
+
+Not fixed, accepted as-is: `scheduleDeferredVerification`'s catch branch clears `verifiedByMushaf` but
+leaves `precacheCompleteByMushaf`'s memo untouched on a `caches.open`/`isCacheComplete` I/O failure —
+self-healing in practice (the guard clear lets the next miss retry the real walk; nothing serves
+provably-stale data), but a persistent I/O fault would reschedule that retry indefinitely with no
+backoff. Judged too narrow an edge case (transient Cache Storage I/O failure, not a normal eviction) to
+warrant added complexity before shipping. `reportStatus` also does not mark `verifiedByMushaf` on its
+own successful full walk, leaving a redundant deferred re-walk schedulable right after — a missed
+optimization, not a correctness issue, left for a future pass if it matters in practice.

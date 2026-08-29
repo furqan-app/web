@@ -71,8 +71,24 @@ const broadcastDismissed = (mushafId: number) => {
  * Never starts a download on its own: every surface requires an explicit tap
  * (ADR 0014 Addendum 2). `dismissed` starts `true` so a surface can never flash
  * before localStorage has been read.
+ *
+ * `deferStatusWhileDismissed` (ADR 0014 Addendum 9, #440): the gate and the
+ * install prompt render nothing while dismissed, yet both mount app-wide on
+ * every launch — their unconditional REQUEST_PRECACHE_STATUS was what made the
+ * worker walk `cache.keys()` twice at cold launch for users who long ago
+ * finished (and thereby auto-dismissed) the download. With the option set, the
+ * status request and its focus/visibility resync fire only while `dismissed`
+ * is false — re-firing if it ever flips false while mounted. Default `false`
+ * keeps always-on requests for surfaces that display status regardless of
+ * dismissal (the Settings Mushaf Layout rows, which are also where a stale
+ * sentinel gets healed on demand — do not defer them). The broadcast message
+ * listener stays attached either way, so an in-flight run's progress reaches
+ * every mounted instance.
  */
-export const usePwaPrecache = (mushafId: number) => {
+export const usePwaPrecache = (
+  mushafId: number,
+  { deferStatusWhileDismissed = false }: { deferStatusWhileDismissed?: boolean } = {},
+) => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [state, setState] = useState<PrecacheState>("unknown");
   const [cached, setCached] = useState(0);
@@ -120,6 +136,23 @@ export const usePwaPrecache = (mushafId: number) => {
     };
 
     navigator.serviceWorker.addEventListener("message", onMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+      window.removeEventListener(DISMISS_EVENT, syncDismissed);
+      window.removeEventListener("storage", syncDismissed);
+    };
+  }, [mushafId]);
+
+  // The status request lives in its own effect so it can key off `dismissed`:
+  // a deferring surface that is dismissed never wakes the worker (it renders
+  // nothing from the answer), and one whose flag flips false while mounted
+  // requests then. For non-deferring callers `statusEligible` is constant
+  // `true`, so the effect runs once per mushafId — exactly as before.
+  const statusEligible = !deferStatusWhileDismissed || !dismissed;
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !statusEligible) return;
+
     postToServiceWorker({ type: "REQUEST_PRECACHE_STATUS", mushafId });
 
     // A run lives inside the worker's `event.waitUntil`, and the browser can kill
@@ -135,13 +168,10 @@ export const usePwaPrecache = (mushafId: number) => {
     window.addEventListener("focus", resync);
 
     return () => {
-      navigator.serviceWorker.removeEventListener("message", onMessage);
-      window.removeEventListener(DISMISS_EVENT, syncDismissed);
-      window.removeEventListener("storage", syncDismissed);
       document.removeEventListener("visibilitychange", resync);
       window.removeEventListener("focus", resync);
     };
-  }, [mushafId]);
+  }, [mushafId, statusEligible]);
 
   // A completed cache needs no further prompting on any surface.
   useEffect(() => {

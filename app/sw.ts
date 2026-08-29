@@ -93,8 +93,14 @@ const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
 
 /**
  * Memoized completeness probe for row 2, keyed by edition — runs ONLY on a
- * reader-HTML cache miss, so one cold launch pays the ~604-entry `cache.keys()`
- * walk at most once per edition per worker lifetime. Entries are dropped when a
+ * reader-HTML cache miss. Since ADR 0014 Addendum 9 (#440) it READS
+ * completeness (sentinel + verse-pages, two cache.match calls) instead of
+ * re-deriving it with countCachedPages's `cache.keys()` walk: the worker has
+ * one thread, and at cold launch every queued document/font/JSON request sat
+ * behind that ~1,208-entry enumeration. The walk still happens — as a deferred
+ * verification scheduled AFTER the shell response is served (see
+ * scheduleDeferredVerification below) — so iOS's out-from-under eviction is
+ * still healed, just off the launch's critical path. Entries are dropped when a
  * bulk run completes (a download finishing mid-session activates row 2 without
  * waiting for the worker to restart) and when reportStatus finds a cache that
  * can no longer back its own sentinel (a partial eviction must not leave row 2
@@ -102,16 +108,76 @@ const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
  */
 const precacheCompleteByMushaf = new Map<number, Promise<boolean>>();
 
-function isPrecacheComplete(mushafId: number): Promise<boolean> {
+/**
+ * Sentinel + verse-pages presence only — no `cache.keys()` enumeration. The
+ * launch-path read half of Addendum 9's split; countCachedPages remains the
+ * verify half. Scoped to row 2: reportStatus and precacheAllPages keep the
+ * full-walk isCacheComplete — they need exact counts and must never
+ * false-complete a resumable run off a sentinel the cache can no longer back.
+ */
+async function hasCompletionMarkers(cache: Cache, mushafId: number) {
+  if (!(await cache.match(precacheSentinelUrl(mushafId)))) return false;
+  return Boolean(await cache.match(versePagesUrl(mushafId)));
+}
+
+// Clears the launch request burst before the verification walk occupies the
+// worker thread — nothing may queue behind it, which is the point of #440.
+const VERIFY_PRECACHE_DELAY_MS = 5000;
+
+/**
+ * Editions whose cheap row-2 probe has been backed by a real walk this worker
+ * lifetime. Never persisted across lifetimes — eviction can happen any time;
+ * once per lifetime is the chosen balance (ADR 0014 Addendum 9). Cleared
+ * wherever precacheCompleteByMushaf is invalidated, so memo and guard cannot
+ * disagree.
+ */
+const verifiedByMushaf = new Set<number>();
+
+/**
+ * The deferred verify half of Addendum 9's split: runs the full
+ * isCacheComplete walk once per edition per worker lifetime, after the shell
+ * response has already been served. A failed check performs the same healing
+ * as reportStatus — delete the stale sentinel, drop the row-2 memo — so the
+ * next miss lands in row 3 and the next run resumes instead of trusting the
+ * ghost. Runs under event.waitUntil; a worker killed before the delay elapses
+ * skips it harmlessly (the next lifetime re-probes).
+ */
+function scheduleDeferredVerification(mushafId: number, event: ExtendableEvent) {
+  if (verifiedByMushaf.has(mushafId)) return;
+  verifiedByMushaf.add(mushafId);
+  event.waitUntil(
+    (async () => {
+      await new Promise((resolve) => setTimeout(resolve, VERIFY_PRECACHE_DELAY_MS));
+      try {
+        const cache = await caches.open(PAGES_CACHE_NAME);
+        if (await isCacheComplete(cache, mushafId)) return;
+        await cache.delete(precacheSentinelUrl(mushafId));
+        precacheCompleteByMushaf.delete(mushafId);
+        verifiedByMushaf.delete(mushafId);
+      } catch {
+        // Cache Storage unreadable — deleting state on an I/O error heals
+        // nothing; clear the guard so a later probe can retry the walk.
+        verifiedByMushaf.delete(mushafId);
+      }
+    })(),
+  );
+}
+
+async function isPrecacheComplete(
+  mushafId: number,
+  event: ExtendableEvent,
+): Promise<boolean> {
   let probe = precacheCompleteByMushaf.get(mushafId);
   if (!probe) {
     probe = caches
       .open(PAGES_CACHE_NAME)
-      .then((cache) => isCacheComplete(cache, mushafId))
+      .then((cache) => hasCompletionMarkers(cache, mushafId))
       .catch(() => false);
     precacheCompleteByMushaf.set(mushafId, probe);
   }
-  return probe;
+  const complete = await probe;
+  if (complete) scheduleDeferredVerification(mushafId, event);
+  return complete;
 }
 
 /**
@@ -139,8 +205,8 @@ async function readActiveMushafId(): Promise<number> {
   }
 }
 
-const isActivePrecacheComplete = async () =>
-  isPrecacheComplete(await readActiveMushafId());
+const isActivePrecacheComplete = async (event: ExtendableEvent) =>
+  isPrecacheComplete(await readActiveMushafId(), event);
 
 const fallbackLocale = (url: URL) =>
   FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
@@ -231,7 +297,7 @@ const serwist = new Serwist({
           // edition, not any complete one: the shell is edition-agnostic, but
           // the content it then loads is not (ADR 0033), so another edition's
           // download says nothing about whether this page can render locally.
-          if (await isActivePrecacheComplete()) {
+          if (await isActivePrecacheComplete(event)) {
             const shell = await serveReaderFallbackShell(url);
             if (shell) return shell;
             // No shell cached (e.g. install never completed online) — fall
@@ -447,8 +513,7 @@ async function cachePage(cache: Cache, mushafId: number, id: number) {
  * avoids the 604-page re-walk this replaced (Trello #129).
  */
 async function isCacheComplete(cache: Cache, mushafId: number, knownCount?: number) {
-  if (!(await cache.match(precacheSentinelUrl(mushafId)))) return false;
-  if (!(await cache.match(versePagesUrl(mushafId)))) return false;
+  if (!(await hasCompletionMarkers(cache, mushafId))) return false;
   const cached = knownCount ?? (await countCachedPages(cache, mushafId));
   return cached === getMushafEdition(mushafId).pagesCount;
 }
@@ -541,8 +606,10 @@ async function precacheAllPages(mushafId: number) {
       // drop it so the next reader-page cache miss re-probes and activates
       // the fast fallback path (ADR 0014 Addendum 6). Unconditional since
       // Addendum 8: any edition can be the active one, so any edition's
-      // completion can be the one that unblocks row 2.
+      // completion can be the one that unblocks row 2. The verified guard
+      // goes with it (Addendum 9) — memo and guard must never disagree.
       precacheCompleteByMushaf.delete(mushafId);
+      verifiedByMushaf.delete(mushafId);
     }
     // Release the run BEFORE the awaited final report: a START arriving while
     // that postMessage was in flight used to be dropped silently, leaving a
@@ -562,13 +629,15 @@ async function reportStatus(mushafId: number) {
   // time, once per mounted hook instance.
   const complete = await isCacheComplete(cache, mushafId, cached);
   // Drop a sentinel the cache can no longer back up, so the next run rewrites it
-  // only once the missing pages are actually refetched. The row-2 memo goes with
-  // it: this is the only place a mid-session eviction is detected, and a probe
-  // memoized as `true` beforehand would otherwise keep serving the instant shell
-  // for pages this cache can no longer render (ADR 0014 Addendum 8).
+  // only once the missing pages are actually refetched. The row-2 memo and its
+  // verified guard go with it: an eviction is detected here and in the deferred
+  // row-2 verification (ADR 0014 Addendum 9), and a probe memoized as `true`
+  // beforehand would otherwise keep serving the instant shell for pages this
+  // cache can no longer render (ADR 0014 Addendum 8).
   if (!complete) {
     await cache.delete(precacheSentinelUrl(mushafId));
     precacheCompleteByMushaf.delete(mushafId);
+    verifiedByMushaf.delete(mushafId);
   }
   const activeRunId = activeRunIdByMushaf.get(mushafId) ?? null;
   await postToClients({

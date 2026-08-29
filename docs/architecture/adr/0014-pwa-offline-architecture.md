@@ -406,3 +406,74 @@ mid-session edition switch invisible until the worker restarted. A stale sentine
 Do not lower or remove row 3's 3 s race for the genuine no-download case — real SSR HTML is still worth a
 bounded wait there (Addendum 6). Rows 1, 3 and 4, the `request.mode === "navigate"` guard, and the
 per-deploy auto-versioned cache name all stay.
+
+## Addendum 9 (2026-08-29): Completeness is read at launch, verified off the critical path
+
+**Issue:** [#440](https://github.com/furqan-app/web/issues/440) (epic #375)
+
+**Amends:** the eviction-validation contract from Addendum 2 ("the sentinel is only trusted when a
+`cache.keys()`-derived page count also equals 604"), for the **row-2 launch probe only**. Supersedes
+the letter of the "do not reduce this back to a bare sentinel `match()`" constraint while keeping its
+intent: self-healing from iOS eviction survives, it just no longer runs ahead of the launch's queued
+requests.
+
+**Context.** A service worker has one thread, and at cold launch every queued document, font and
+page-JSON request sits behind whatever the worker is doing. `countCachedPages()` walks
+`cache.keys()` over `pages-v{N}` (~1,208 entries per downloaded edition, ~2,400 with two) running two
+regexes per entry, and the launch path reached it up to three times: once from row 2's completeness
+probe (memoized, but a cold launch is a fresh worker), and twice from `reportStatus` answering the
+`REQUEST_PRECACHE_STATUS` messages that `OfflineSetupGate` and `OfflineInstallPrompt` fire on mount in
+the root layout — even when both surfaces were dismissed long ago and render nothing from the answer.
+The cost is CPU-bound, exists only for users who completed a download (no sentinel = early return, no
+walk), and survives any network-side fix — precisely the fully-downloaded population reporting slow
+launches.
+
+**Decision — worker side.** Row 2's probe becomes a cheap read: sentinel `cache.match` plus
+verse-pages `cache.match`, no `keys()` enumeration. When that reads complete, the real validation —
+the full `countCachedPages` walk — is **deferred**: scheduled via `event.waitUntil` after the shell
+response is served, delayed a few seconds past the launch burst, and run at most once per edition per
+worker lifetime. A short count triggers the same healing actions `reportStatus` performs today:
+delete the stale sentinel and drop that edition's row-2 memo, so the next miss lands in row 3 and the
+next run resumes rather than trusting the ghost.
+
+`isCacheComplete` (sentinel + verse-pages + full count) keeps its exact semantics everywhere else:
+`reportStatus` still walks and heals on every status request, and `precacheAllPages`' start-of-run
+short-circuit still walks — a user tapping Download on an evicted cache must resume the download, not
+be told it is already done by a sentinel the cache can no longer back.
+
+**Decision — client side.** `usePwaPrecache` no longer fires `REQUEST_PRECACHE_STATUS` (on mount or
+on the focus/visibility resync) for a surface that is dismissed and will render nothing from the
+answer. The gate and the install prompt opt into this deferral; the Settings "Mushaf Layout" rows
+keep always-on requests — they display live status regardless of any dismissed flag, and they are the
+resume/heal surface. If `dismissed` ever flips false while mounted, the request fires then. Progress
+messages are broadcast by the worker to all clients, so an in-flight run still updates every mounted
+listener without any instance having requested status.
+
+**The accepted trade-off.** Eviction is invisible without enumeration, so "never report ready on a
+partially-evicted cache" cannot hold on a zero-walk critical path. The window is now: after iOS
+evicts entries, the **first** cold launch still serves the instant shell; the deferred walk corrects
+state seconds later in the same session. Under the old design the eviction was caught on the next
+launch's pre-serve probe — the delta is one shell serve. Worst visible case inside the window: an
+evicted page's JSON/font miss `CacheFirst` and fall through to the network (online: works, slower;
+offline: the existing unavailable-offline notice). Judged strictly better than taxing every launch of
+every healthy fully-downloaded install to catch a rare platform eviction slightly sooner.
+
+**Consequences**
+
+- **+** Cold launch of a fully-downloaded install performs zero `cache.keys()` enumerations before
+  assets are served — row 2 costs two `cache.match` reads.
+- **+** Dismissed launch surfaces stop waking the worker for status nobody renders; `reportStatus`
+  runs only for surfaces actually showing its answer.
+- **−** A partially-evicted cache can serve the instant shell for one launch before healing (see
+  trade-off above). Accepted (2026-08-29, decision delegated by the user).
+- **−** Two completeness code paths now exist (cheap read for row 2, full walk everywhere else);
+  changing one without the other reintroduces either the stall or the false-ready-forever bug.
+
+**What NOT to do:** do not let `precacheAllPages` or `reportStatus` adopt the cheap probe — their
+full walk is now the primary self-healing path and the source of exact `n/604` counts. Do not persist
+the deferred verification's verdict across worker lifetimes ("verified at T") — eviction can happen
+any time; once per worker lifetime is the chosen balance. Do not sample-probe a few random pages as
+"verification" — probabilistic, and misses exactly the partial evictions it exists to catch. Do not
+remove the deferred walk entirely — that is the bare-sentinel reduction Addendum 2 forbade, and it
+makes an evicted cache report ready forever. Do not make the Settings rows defer their status request
+— they are the surface that displays counts and heals stale sentinels on demand.
