@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, MouseEvent } from "react";
 import { useLocale } from "next-intl";
+import type { LucideIcon } from "lucide-react";
 import { Bookmark, Check, ChevronDown, List, MessageSquare, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
@@ -23,32 +24,50 @@ const commentPreview = (comment: string) =>
     ? `${comment.slice(0, COMMENT_PREVIEW_CHAR_LIMIT)}…`
     : comment;
 
-// Solid chip class per category key, for the row icon (a mark's colour comes
-// from its own category, independent of the active filter — matters in "All").
-const chipByCategory: Record<string, string> = Object.fromEntries(
-  MARK_CATEGORIES.map((c) => [c.key, c.chip])
+// Map categories by key for instant lookup of icon, badgeBg, and badgeText
+const categoryByKey = Object.fromEntries(
+  MARK_CATEGORIES.map((c) => [c.key, c])
 );
 
-// "All" + one filter per category. `chip: null` marks the All filter, which
-// renders a list icon instead of a colour dot.
+// "All" + one filter per category with distinct icon and badge styling.
 const FILTERS: Array<{
   key: string;
   labelKey: string;
   defaultLabel: string;
-  chip: string | null;
+  icon?: LucideIcon;
+  badgeBg?: string;
+  badgeText?: string;
 }> = [
-  { key: "all", labelKey: "marks.allLabel", defaultLabel: "All", chip: null },
+  { key: "all", labelKey: "marks.allLabel", defaultLabel: "All" },
   ...MARK_CATEGORIES.map((c) => ({
     key: c.key,
     labelKey: c.labelKey,
     defaultLabel: c.defaultLabel,
-    chip: c.chip,
+    icon: c.icon,
+    badgeBg: c.badgeBg,
+    badgeText: c.badgeText,
   })),
 ];
 
-const FilterDot = ({ chip }: { chip: string | null }) =>
-  chip ? (
-    <span className={cn("size-3 rounded-full flex-none", chip)} />
+const FilterIcon = ({
+  icon: Icon,
+  badgeBg,
+  badgeText,
+}: {
+  icon?: LucideIcon;
+  badgeBg?: string;
+  badgeText?: string;
+}) =>
+  Icon ? (
+    <span
+      className={cn(
+        "size-5 rounded-md flex items-center justify-center flex-none",
+        badgeBg,
+        badgeText
+      )}
+    >
+      <Icon className="size-3" strokeWidth={2} />
+    </span>
   ) : (
     <List className="size-3.5 flex-none" strokeWidth={1.8} />
   );
@@ -222,7 +241,11 @@ export const MyMarksList = () => {
             className="fq-focus-ring w-full flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground"
           >
             <span className="flex items-center gap-2">
-              <FilterDot chip={activeFilter.chip} />
+              <FilterIcon
+                icon={activeFilter.icon}
+                badgeBg={activeFilter.badgeBg}
+                badgeText={activeFilter.badgeText}
+              />
               {t(activeFilter.labelKey, activeFilter.defaultLabel)}
             </span>
             <ChevronDown className="size-4 text-muted-foreground flex-none" strokeWidth={1.8} />
@@ -237,7 +260,11 @@ export const MyMarksList = () => {
                 onSelect={() => setActive(f.key)}
                 className="gap-2"
               >
-                <FilterDot chip={f.chip} />
+                <FilterIcon
+                  icon={f.icon}
+                  badgeBg={f.badgeBg}
+                  badgeText={f.badgeText}
+                />
                 <span className="text-sm">{t(f.labelKey, f.defaultLabel)}</span>
                 {f.key === active ? (
                   <Check className="size-4 ms-auto text-primary flex-none" strokeWidth={2} />
@@ -248,9 +275,8 @@ export const MyMarksList = () => {
         </DropdownMenu>
       </div>
 
-      {/* Desktop: single-row pill chips; scrolls sideways if the labels
-          exceed the column width so none are clipped. */}
-      <div className="hidden md:flex flex-nowrap gap-2 mb-4 overflow-x-auto">
+      {/* Desktop: wrapping pill chips without horizontal scrolling */}
+      <div className="hidden md:flex flex-wrap items-center gap-2 mb-4">
         {FILTERS.map((f) => {
           const isActive = f.key === active;
           return (
@@ -261,13 +287,17 @@ export const MyMarksList = () => {
               // ones sit at the well's recessed value rather than --muted, so
               // one filter reads as chosen and the rest read as one group.
               className={cn(
-                "fq-focus-ring flex flex-none items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors",
+                "fq-focus-ring flex flex-none items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all duration-150 active:scale-[0.98]",
                 isActive
-                  ? "bg-primary/10 text-primary border-primary/30"
+                  ? "bg-primary/10 text-primary border-primary/30 ring-1 ring-primary/20"
                   : "border-transparent bg-[hsl(var(--well)/var(--well-alpha))] text-[hsl(var(--control-inert))] hover:text-[hsl(var(--control-live))]"
               )}
             >
-              <FilterDot chip={f.chip} />
+              <FilterIcon
+                icon={f.icon}
+                badgeBg={f.badgeBg}
+                badgeText={f.badgeText}
+              />
               {t(f.labelKey, f.defaultLabel)}
             </button>
           );
@@ -300,6 +330,8 @@ export const MyMarksList = () => {
                 const key = markKey(mark);
                 const isRemoving = removingKeys.has(key);
                 const hasFailed = failedKeys.has(key);
+                const categoryInfo = categoryByKey[mark.category];
+                const CategoryIcon = categoryInfo?.icon ?? Bookmark;
 
                 return (
                   <div
@@ -313,18 +345,13 @@ export const MyMarksList = () => {
                     >
                       <span
                         className={cn(
-                          "grid place-items-center size-6 rounded-md flex-none",
-                          // Unknown key → neutral chip, not slate (slate is the
-                          // real "Other" category). Not reachable today; keeps
-                          // the reader's "unknown → no highlight" spirit (ADR 0024).
-                          chipByCategory[mark.category] ?? "bg-muted-foreground/40"
+                          "grid place-items-center size-7 rounded-lg flex-none",
+                          categoryInfo
+                            ? cn(categoryInfo.badgeBg, categoryInfo.badgeText)
+                            : "bg-muted text-muted-foreground"
                         )}
                       >
-                        <Bookmark
-                          className="size-3.5 text-white"
-                          strokeWidth={2}
-                          fill="currentColor"
-                        />
+                        <CategoryIcon className="size-3.5" strokeWidth={2} />
                       </span>
 
                       <div className="flex-1 min-w-0">
