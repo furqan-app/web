@@ -19,6 +19,7 @@ const RECOMMENDED_SURAH_IDS = [1, 18, 36, 55, 56, 67];
 export const HomeRecommendedSurahs = ({ surahs, className }: Props) => {
   const locale = useLocale();
   const t = useTranslations("home");
+  const tGlobal = useTranslations();
   const basePath = useReaderBasePath();
   const { jumpTo } = useReaderNavigation();
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -49,6 +50,13 @@ export const HomeRecommendedSurahs = ({ surahs, className }: Props) => {
               key={surah.id}
               href={`${basePath}/${startingPage}`}
               locale={locale}
+              // RTL pills show only the glyph — same accessible-name fix as
+              // SurahListItem.
+              aria-label={
+                isRTL
+                  ? `${tGlobal("surah")} ${surah.name_arabic}`
+                  : `Surah ${surah.name_simple}`
+              }
               onClick={(e) => {
                 if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
                 e.preventDefault();

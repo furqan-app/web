@@ -1,5 +1,5 @@
 import { highlight } from "@utils/highlight";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { SurahResult, VerseResult } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { useLocale } from "next-intl";
@@ -42,7 +42,6 @@ export default function SearchQueryResults({
           </div>
           {chapters.map((chapter) => (
             <Link
-              locale={locale}
               key={chapter.id}
               href={`${basePath}/${chapter.pages.split("-")[0]}`}
               onClick={() => setIsOpen(false)}
@@ -73,7 +72,6 @@ export default function SearchQueryResults({
           </div>
           {verses.map((verse) => (
             <Link
-              locale={locale}
               key={verse.verse_key}
               href={highlight.addToUrl({
                 verseKey: verse.verse_key,

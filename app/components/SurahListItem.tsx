@@ -35,6 +35,13 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
     <Link
       locale={locale}
       href={`${basePath}/${surahStartingPage}`}
+      // RTL cards show only the calligraphic glyph — without this the link's
+      // accessible name is the digit string ("067"), not the surah.
+      aria-label={
+        isRTL
+          ? `${t("surah", "سورة")} ${surah.name_arabic}`
+          : `${t("surah", "Surah")} ${surah.name_simple}`
+      }
       onClick={(e) => {
         notifyNavigating?.();
         setOpen(false);

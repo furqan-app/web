@@ -1,14 +1,7 @@
-import { ChapterAudio, Reciter, VerseSegment, VerseTiming } from "@/app/types/recitation";
+import { ChapterAudio, VerseSegment, VerseTiming } from "@/app/types/recitation";
 import { RecitationProvider, RecitationProviderError } from "@/app/lib/recitation/provider";
 
 const QDC_BASE_URL = "https://api.qurancdn.com/api/qdc";
-
-type QdcReciter = {
-  id: number;
-  name: string;
-  translated_name?: { name: string; language_name: string } | null;
-  style?: { name: string; language_name: string; description: string } | null;
-};
 
 type QdcVerseTiming = {
   verse_key: string;
@@ -29,25 +22,6 @@ type QdcAudioFile = {
   duration: number;
   verse_timings: QdcVerseTiming[];
 };
-
-async function getReciters(language: string): Promise<Reciter[]> {
-  const res = await fetch(`${QDC_BASE_URL}/audio/reciters?language=${language}`, {
-    next: { revalidate: 86400 },
-  });
-
-  if (!res.ok) {
-    throw new RecitationProviderError("Failed to fetch reciters");
-  }
-
-  const { reciters } = (await res.json()) as { reciters: QdcReciter[] };
-
-  return reciters.map((r) => ({
-    id: r.id,
-    name: r.name,
-    translatedName: r.translated_name?.name ?? r.name,
-    style: r.style?.name ?? null,
-  }));
-}
 
 async function getChapterAudio(
   reciterId: number,
@@ -84,6 +58,5 @@ async function getChapterAudio(
 }
 
 export const qdcRecitationProvider: RecitationProvider = {
-  getReciters,
   getChapterAudio,
 };

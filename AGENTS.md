@@ -48,7 +48,8 @@ Stack: Next.js 14 App Router · TypeScript · Tailwind/shadcn (Radix) · next-in
 npm run dev              # dev server (port 3000)
 npm run build            # prisma migrate deploy (app DB) + production build
 npm run lint             # ESLint
-npm test                 # Vitest unit tests
+npm test                 # Vitest unit tests (fast logic & component verification, < 1s)
+npm run test:e2e         # Playwright functional e2e (uses dev server on :3000 locally, e2e:build on CI)
 npm run prisma-generate  # regenerate BOTH Prisma clients (quran + app)
 npm run quran-studio     # Prisma Studio for furqan_quran
 npm run app-studio       # Prisma Studio for furqan_app
@@ -64,9 +65,11 @@ Functional e2e (Playwright; uses dedicated e2e DBs from `compose.e2e.yml` — ne
 ```bash
 npm run e2e:db:up        # start e2e MySQL containers
 npm run e2e:setup        # load the e2e fixture
-npm run e2e:test         # build + start + run Playwright
+npm run e2e:test         # run Playwright (dev server locally; e2e:build & e2e:start in CI)
 npm run e2e:db:down      # tear down e2e DBs
 ```
+
+*Note on builds and tests:* Local `next build` / `e2e:build` concurrency is capped at 2 CPU workers in `next.config.mjs` to keep the machine responsive. Agents should always prefer fast unit tests (`npm test`) for business logic and components, and use Playwright against the local dev server for browser interactions. Full SSG builds are validated in CI.
 
 ## Documentation
 
@@ -103,7 +106,6 @@ When the user types `/graphify`, use the installed graphify skill or instruction
 
 Rules:
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

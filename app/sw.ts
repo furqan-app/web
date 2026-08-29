@@ -91,10 +91,41 @@ const isSelfReaderPage = (url: URL) =>
 // defect Addendum 8 fixes. Do not add a second "skip the timer" branch.
 const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
 
+// ADR 0049: RecitationProvider/SessionProvider both fire an unconditional
+// mount-time request in the root layout, and defaultCache's `/api/auth/.*`
+// rule gives `/api/auth/session` a 10s NetworkOnly({ networkTimeoutSeconds })
+// timeout — on a mobile connection (~6 concurrent connections per host) that
+// can hold a slot open for the full 10s on every launch, competing with the
+// reader's own fetches. Server-injecting the session was considered and
+// rejected (it would force getServerSession — and therefore dynamic
+// rendering — onto the root layout that wraps all 604 static Quran pages).
+//
+// Serwist's own `networkTimeoutSeconds` does NOT bound this: NetworkOnly's
+// `_handle` races `Promise.race([handler.fetch(request), timeout(ms)])` with
+// no AbortController anywhere in the chain (confirmed by reading
+// node_modules/serwist's NetworkOnly/StrategyHandler.fetch) — the SW's
+// promise to the page settles at the timeout, but the real fetch, and the
+// connection it holds, keeps running in the background regardless. Using the
+// built-in option here would only change when the page finds out, not
+// whether the connection is actually freed — the reader-page rule above hits
+// the same gap for the same reason and works around it with its own
+// hand-rolled race (see `network`/`timeout` there); this rule uses
+// AbortController directly instead, since there is no cache-fallback branch
+// to preserve. Every other /api/auth/* route (signin, callback, csrf) is
+// user-triggered, not launch-time, and stays on defaultCache's 10s
+// NetworkOnly default — unaffected by this rule or its gap.
+const AUTH_SESSION_NETWORK_TIMEOUT_MS = 3000;
+
 /**
  * Memoized completeness probe for row 2, keyed by edition — runs ONLY on a
- * reader-HTML cache miss, so one cold launch pays the ~604-entry `cache.keys()`
- * walk at most once per edition per worker lifetime. Entries are dropped when a
+ * reader-HTML cache miss. Since ADR 0014 Addendum 9 (#440) it READS
+ * completeness (sentinel + verse-pages, two cache.match calls) instead of
+ * re-deriving it with countCachedPages's `cache.keys()` walk: the worker has
+ * one thread, and at cold launch every queued document/font/JSON request sat
+ * behind that ~1,208-entry enumeration. The walk still happens — as a deferred
+ * verification scheduled AFTER the shell response is served (see
+ * scheduleDeferredVerification below) — so iOS's out-from-under eviction is
+ * still healed, just off the launch's critical path. Entries are dropped when a
  * bulk run completes (a download finishing mid-session activates row 2 without
  * waiting for the worker to restart) and when reportStatus finds a cache that
  * can no longer back its own sentinel (a partial eviction must not leave row 2
@@ -102,16 +133,76 @@ const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
  */
 const precacheCompleteByMushaf = new Map<number, Promise<boolean>>();
 
-function isPrecacheComplete(mushafId: number): Promise<boolean> {
+/**
+ * Sentinel + verse-pages presence only — no `cache.keys()` enumeration. The
+ * launch-path read half of Addendum 9's split; countCachedPages remains the
+ * verify half. Scoped to row 2: reportStatus and precacheAllPages keep the
+ * full-walk isCacheComplete — they need exact counts and must never
+ * false-complete a resumable run off a sentinel the cache can no longer back.
+ */
+async function hasCompletionMarkers(cache: Cache, mushafId: number) {
+  if (!(await cache.match(precacheSentinelUrl(mushafId)))) return false;
+  return Boolean(await cache.match(versePagesUrl(mushafId)));
+}
+
+// Clears the launch request burst before the verification walk occupies the
+// worker thread — nothing may queue behind it, which is the point of #440.
+const VERIFY_PRECACHE_DELAY_MS = 5000;
+
+/**
+ * Editions whose cheap row-2 probe has been backed by a real walk this worker
+ * lifetime. Never persisted across lifetimes — eviction can happen any time;
+ * once per lifetime is the chosen balance (ADR 0014 Addendum 9). Cleared
+ * wherever precacheCompleteByMushaf is invalidated, so memo and guard cannot
+ * disagree.
+ */
+const verifiedByMushaf = new Set<number>();
+
+/**
+ * The deferred verify half of Addendum 9's split: runs the full
+ * isCacheComplete walk once per edition per worker lifetime, after the shell
+ * response has already been served. A failed check performs the same healing
+ * as reportStatus — delete the stale sentinel, drop the row-2 memo — so the
+ * next miss lands in row 3 and the next run resumes instead of trusting the
+ * ghost. Runs under event.waitUntil; a worker killed before the delay elapses
+ * skips it harmlessly (the next lifetime re-probes).
+ */
+function scheduleDeferredVerification(mushafId: number, event: ExtendableEvent) {
+  if (verifiedByMushaf.has(mushafId)) return;
+  verifiedByMushaf.add(mushafId);
+  event.waitUntil(
+    (async () => {
+      await new Promise((resolve) => setTimeout(resolve, VERIFY_PRECACHE_DELAY_MS));
+      try {
+        const cache = await caches.open(PAGES_CACHE_NAME);
+        if (await isCacheComplete(cache, mushafId)) return;
+        await cache.delete(precacheSentinelUrl(mushafId));
+        precacheCompleteByMushaf.delete(mushafId);
+        verifiedByMushaf.delete(mushafId);
+      } catch {
+        // Cache Storage unreadable — deleting state on an I/O error heals
+        // nothing; clear the guard so a later probe can retry the walk.
+        verifiedByMushaf.delete(mushafId);
+      }
+    })(),
+  );
+}
+
+async function isPrecacheComplete(
+  mushafId: number,
+  event: ExtendableEvent,
+): Promise<boolean> {
   let probe = precacheCompleteByMushaf.get(mushafId);
   if (!probe) {
     probe = caches
       .open(PAGES_CACHE_NAME)
-      .then((cache) => isCacheComplete(cache, mushafId))
+      .then((cache) => hasCompletionMarkers(cache, mushafId))
       .catch(() => false);
     precacheCompleteByMushaf.set(mushafId, probe);
   }
-  return probe;
+  const complete = await probe;
+  if (complete) scheduleDeferredVerification(mushafId, event);
+  return complete;
 }
 
 /**
@@ -139,8 +230,8 @@ async function readActiveMushafId(): Promise<number> {
   }
 }
 
-const isActivePrecacheComplete = async () =>
-  isPrecacheComplete(await readActiveMushafId());
+const isActivePrecacheComplete = async (event: ExtendableEvent) =>
+  isPrecacheComplete(await readActiveMushafId(), event);
 
 const fallbackLocale = (url: URL) =>
   FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
@@ -175,6 +266,11 @@ const isPageJson = (url: URL) =>
 // default edition's page numbers when offline.
 const isVersePagesJson = (url: URL) =>
   /^\/quran\/verse-pages\/[0-9]+\.json$/.test(url.pathname);
+
+// Juz start positions — verse_key + default-edition start page per juz,
+// generated once from the rubs table. Immutable; same treatment as
+// verse-pages so home-page juz jump rows resolve offline (ADR 0033).
+const isJuzStartsJson = (url: URL) => url.pathname === "/quran/juz-starts.json";
 
 // Offline Recitation Audio (ADR 0046). The chapter-audio metadata route
 // RecitationContext.play() already calls — caching its exact response is what
@@ -226,7 +322,7 @@ const serwist = new Serwist({
           // edition, not any complete one: the shell is edition-agnostic, but
           // the content it then loads is not (ADR 0033), so another edition's
           // download says nothing about whether this page can render locally.
-          if (await isActivePrecacheComplete()) {
+          if (await isActivePrecacheComplete(event)) {
             const shell = await serveReaderFallbackShell(url);
             if (shell) return shell;
             // No shell cached (e.g. install never completed online) — fall
@@ -278,7 +374,7 @@ const serwist = new Serwist({
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     {
-      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url),
+      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url) || isJuzStartsJson(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     // Offline Recitation Audio (ADR 0046) — both immutable per reciter+chapter
@@ -295,6 +391,26 @@ const serwist = new Serwist({
         cacheName: RECITATION_DOWNLOAD_CACHE_NAME,
         plugins: [new RangeRequestsPlugin()],
       }),
+    },
+    // ADR 0049 — actually aborts the launch-time session fetch at 3s instead
+    // of defaultCache's 10s NetworkOnly (whose own networkTimeoutSeconds only
+    // races the SW's response to the page; it never cancels the underlying
+    // fetch — see AUTH_SESSION_NETWORK_TIMEOUT_MS above). Registered ahead of
+    // `...defaultCache` below, which still owns every other /api/auth/* route
+    // at its (uncancelled) 10s default.
+    {
+      matcher: ({ url }) => url.pathname === "/api/auth/session",
+      handler: {
+        handle: async ({ request }) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), AUTH_SESSION_NETWORK_TIMEOUT_MS);
+          try {
+            return await fetch(request, { signal: controller.signal });
+          } finally {
+            clearTimeout(timer);
+          }
+        },
+      },
     },
     ...defaultCache,
   ],
@@ -442,8 +558,7 @@ async function cachePage(cache: Cache, mushafId: number, id: number) {
  * avoids the 604-page re-walk this replaced (Trello #129).
  */
 async function isCacheComplete(cache: Cache, mushafId: number, knownCount?: number) {
-  if (!(await cache.match(precacheSentinelUrl(mushafId)))) return false;
-  if (!(await cache.match(versePagesUrl(mushafId)))) return false;
+  if (!(await hasCompletionMarkers(cache, mushafId))) return false;
   const cached = knownCount ?? (await countCachedPages(cache, mushafId));
   return cached === getMushafEdition(mushafId).pagesCount;
 }
@@ -536,8 +651,10 @@ async function precacheAllPages(mushafId: number) {
       // drop it so the next reader-page cache miss re-probes and activates
       // the fast fallback path (ADR 0014 Addendum 6). Unconditional since
       // Addendum 8: any edition can be the active one, so any edition's
-      // completion can be the one that unblocks row 2.
+      // completion can be the one that unblocks row 2. The verified guard
+      // goes with it (Addendum 9) — memo and guard must never disagree.
       precacheCompleteByMushaf.delete(mushafId);
+      verifiedByMushaf.delete(mushafId);
     }
     // Release the run BEFORE the awaited final report: a START arriving while
     // that postMessage was in flight used to be dropped silently, leaving a
@@ -557,13 +674,15 @@ async function reportStatus(mushafId: number) {
   // time, once per mounted hook instance.
   const complete = await isCacheComplete(cache, mushafId, cached);
   // Drop a sentinel the cache can no longer back up, so the next run rewrites it
-  // only once the missing pages are actually refetched. The row-2 memo goes with
-  // it: this is the only place a mid-session eviction is detected, and a probe
-  // memoized as `true` beforehand would otherwise keep serving the instant shell
-  // for pages this cache can no longer render (ADR 0014 Addendum 8).
+  // only once the missing pages are actually refetched. The row-2 memo and its
+  // verified guard go with it: an eviction is detected here and in the deferred
+  // row-2 verification (ADR 0014 Addendum 9), and a probe memoized as `true`
+  // beforehand would otherwise keep serving the instant shell for pages this
+  // cache can no longer render (ADR 0014 Addendum 8).
   if (!complete) {
     await cache.delete(precacheSentinelUrl(mushafId));
     precacheCompleteByMushaf.delete(mushafId);
+    verifiedByMushaf.delete(mushafId);
   }
   const activeRunId = activeRunIdByMushaf.get(mushafId) ?? null;
   await postToClients({

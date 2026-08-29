@@ -6,7 +6,20 @@
     "description": "اقرأ واستمع إلى القرآن",
     "recommendedSurahs": "السور الموصى بها",
     "continueReading": "تابع القراءة",
-    "resumeReading": "متابعة التلاوة"
+    "resumeReading": "متابعة التلاوة",
+    "searchLabel": "البحث التنقلي",
+    "searchPlaceholder": "ابحث بسورة (الكهف)، جزء (جزء ٢٠)، أو صفحة (صفحة ٥٠)...",
+    "searchClear": "مسح البحث",
+    "resultsCount": "{count} نتيجة",
+    "juzRow": "الجزء {n} · يبدأ في ص {page}",
+    "juzRowShort": "الجزء {n}",
+    "pageRow": "صفحة {n}",
+    "juzPrompt": "اكتب رقم الجزء ({min}–{max}) للانتقال السريع",
+    "pagePrompt": "اكتب رقم الصفحة ({min}–{max}) للانتقال السريع",
+    "juzRangeHint": "الأجزاء {min}–{max}",
+    "pageRangeHint": "الصفحات {min}–{max}",
+    "noMatches": "لا توجد نتائج",
+    "verseSearchHint": "تبحث عن آية؟ استخدم البحث في الشريط العلوي."
   },
   "revelation": {
     "makkah": "مكية",
@@ -23,7 +36,22 @@
   },
   "sidebar": {
     "title": "التنقل في القرآن",
-    "description": "تصفح السور والأرباع للانتقال إلى صفحة."
+    "description": "تصفح السور والأرباع للانتقال إلى صفحة.",
+    "close": "إغلاق",
+    "filterPlaceholderSurahs": "اسم السورة أو رقمها...",
+    "filterPlaceholderRubs": "الجزء أو الحزب أو الربع...",
+    "filterClear": "مسح البحث",
+    "filterResultsCount": "{count, plural, one {{n} نتيجة} two {نتيجتان} few {{n} نتائج} many {{n} نتيجة} other {{n} نتيجة}}",
+    "filterNoMatches": "لا توجد نتائج",
+    "filterRangeSurahs": "السور ١–١١٤",
+    "filterRangeRubs": "الجزء ١–٣٠ · الحزب ١–٦٠ · الربع ١–٢٤٠",
+    "tabAyahs": "الآيات",
+    "ayahInputPlaceholder": "أدخل رقم الآية…",
+    "ayahPickSurah": "اختر سورة…",
+    "ayahPagePlaceholder": "أو رقم الصفحة…",
+    "ayahCount": "{count, plural, one {آية واحدة} two {آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
+    "ayahRangeHint": "اختر رقمًا بين ١ و {max}",
+    "ayahChipLabel": "آية {n}"
   },
   "signInModal": {
     "description": "سجّل الدخول لتحديد الكلمات والآيات في القرآن."
@@ -443,5 +471,18 @@
     "small": "صغير (٢٦)",
     "medium": "متوسط (٢٨)",
     "large": "كبير (٣٠)"
-  }
+  },
+  "light": "",
+  "gold": "",
+  "dark": "",
+  "overline": "",
+  "title": "",
+  "tagline": "",
+  "recommendedSurahs": "",
+  "searchLabel": "",
+  "searchPlaceholder": "",
+  "searchClear": "",
+  "noMatches": "",
+  "verseSearchHint": "",
+  "viewingChipGeneric": ""
 }
