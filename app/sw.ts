@@ -91,6 +91,31 @@ const isSelfReaderPage = (url: URL) =>
 // defect Addendum 8 fixes. Do not add a second "skip the timer" branch.
 const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
 
+// ADR 0049: RecitationProvider/SessionProvider both fire an unconditional
+// mount-time request in the root layout, and defaultCache's `/api/auth/.*`
+// rule gives `/api/auth/session` a 10s NetworkOnly({ networkTimeoutSeconds })
+// timeout — on a mobile connection (~6 concurrent connections per host) that
+// can hold a slot open for the full 10s on every launch, competing with the
+// reader's own fetches. Server-injecting the session was considered and
+// rejected (it would force getServerSession — and therefore dynamic
+// rendering — onto the root layout that wraps all 604 static Quran pages).
+//
+// Serwist's own `networkTimeoutSeconds` does NOT bound this: NetworkOnly's
+// `_handle` races `Promise.race([handler.fetch(request), timeout(ms)])` with
+// no AbortController anywhere in the chain (confirmed by reading
+// node_modules/serwist's NetworkOnly/StrategyHandler.fetch) — the SW's
+// promise to the page settles at the timeout, but the real fetch, and the
+// connection it holds, keeps running in the background regardless. Using the
+// built-in option here would only change when the page finds out, not
+// whether the connection is actually freed — the reader-page rule above hits
+// the same gap for the same reason and works around it with its own
+// hand-rolled race (see `network`/`timeout` there); this rule uses
+// AbortController directly instead, since there is no cache-fallback branch
+// to preserve. Every other /api/auth/* route (signin, callback, csrf) is
+// user-triggered, not launch-time, and stays on defaultCache's 10s
+// NetworkOnly default — unaffected by this rule or its gap.
+const AUTH_SESSION_NETWORK_TIMEOUT_MS = 3000;
+
 /**
  * Memoized completeness probe for row 2, keyed by edition — runs ONLY on a
  * reader-HTML cache miss. Since ADR 0014 Addendum 9 (#440) it READS
@@ -366,6 +391,26 @@ const serwist = new Serwist({
         cacheName: RECITATION_DOWNLOAD_CACHE_NAME,
         plugins: [new RangeRequestsPlugin()],
       }),
+    },
+    // ADR 0049 — actually aborts the launch-time session fetch at 3s instead
+    // of defaultCache's 10s NetworkOnly (whose own networkTimeoutSeconds only
+    // races the SW's response to the page; it never cancels the underlying
+    // fetch — see AUTH_SESSION_NETWORK_TIMEOUT_MS above). Registered ahead of
+    // `...defaultCache` below, which still owns every other /api/auth/* route
+    // at its (uncancelled) 10s default.
+    {
+      matcher: ({ url }) => url.pathname === "/api/auth/session",
+      handler: {
+        handle: async ({ request }) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), AUTH_SESSION_NETWORK_TIMEOUT_MS);
+          try {
+            return await fetch(request, { signal: controller.signal });
+          } finally {
+            clearTimeout(timer);
+          }
+        },
+      },
     },
     ...defaultCache,
   ],

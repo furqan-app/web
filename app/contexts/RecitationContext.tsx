@@ -292,7 +292,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       .catch(() => setChapters([]));
   }, []);
 
-  // Default to the first reciter once the live list loads, if the user has
+  // Default to the first reciter once the list loads, if the user has
   // never explicitly chosen one — lets the header quick-play button start
   // instantly without forcing the settings sheet open first.
   useEffect(() => {
