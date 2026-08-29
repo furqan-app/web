@@ -127,6 +127,19 @@ Schemas live at `prisma/quran/schema.prisma` and `prisma/app/schema.prisma`; cli
 
 ---
 
+## Root-Layout Network Budget
+
+**Decision:** Any provider/context mounted in `app/[locale]/layout.tsx` (or another layout wrapping every route) must not fire an unconditional network request in a mount `useEffect`. It must be either a static/precached asset (e.g. `quran/chapters.json`, `quran/reciters-{ar,en}.json`) or gated behind real user intent via React Query's `enabled` (e.g. `useTafsir`'s `enabled: Boolean(verseKey)`, `useNotifications`'s `enabled: status === "authenticated"`) — never an eager fetch that fires for every visitor on every launch regardless of whether the feature is used.
+
+**Rationale:** Root-layout providers mount for every visitor on every launch. Mobile browsers cap concurrent connections per host at roughly six, and the App Router's own RSC prefetches compete for the same pool. An eager, unconditional fetch here holds a connection slot open for up to the matching runtime-caching rule's timeout (often 10s), starving genuinely launch-critical fetches. Found and fixed for `RecitationProvider`'s reciter list and next-auth's `SessionProvider` — see [ADR 0049](adr/0049-bound-launch-time-network-in-root-layout.md) and the concrete constraints under "Auth" and "PWA & Offline Quran Page Caching" below.
+
+**Constraints:**
+- Check this before adding any new root-mounted provider/context — RecitationProvider/SessionProvider are the two instances found so far, not the only ones the rule applies to.
+- Prefer static/precached when the data changes rarely (mirrors `chapters.json`'s build-time-generated + `globPublicPatterns` shape).
+- Prefer gated-on-intent when the data is per-user/session and can't be precomputed — default the query to off (`enabled: false`/a real condition), not `enabled: true` with cleanup bolted on after.
+
+---
+
 ## Auth
 
 **Decision:** Google OAuth via NextAuth. Session is stored server-side. For protected API routes, `auth-middleware` validates the NextAuth token and forwards it to the handler as a JSON-stringified `user` **request** header via `NextResponse.next({ request: { headers } })`. It first **strips any incoming `user` header** so a client can never forge one, and it does **not** set the token on the response (which the handler can't read and which would leak the decoded token to the browser).
