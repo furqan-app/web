@@ -191,21 +191,24 @@ export function MarkModal({
         dir={getLanguageDirection(locale)}
         className="fq-panel-cast w-full max-w-sm sm:max-w-md bg-card rounded-2xl overflow-hidden p-4 sm:p-5 gap-3"
       >
-        {/* In-flow header row: Surah/Ayah badge + Close Button */}
+        {/* In-flow header row: Surah/Ayah & type badge + Close Button */}
         <div className="flex items-center justify-between gap-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium tracking-tight">
-            <span>{surahName}</span>
+            <span>
+              {isWord
+                ? t("markModal.markWordLabel", "Mark word")
+                : t("markModal.markVerseLabel", "Mark verse")}
+            </span>
             <span className="opacity-40">·</span>
             <span>
-              {t("verse", "Verse")} {localizedAyah}
+              {surahName} {localizedAyah}
             </span>
           </div>
           <DialogClose
-            aria-label={t("sidebar.close", "Close")}
             className="fq-focus-ring rounded-full p-1.5 text-muted-foreground opacity-70 transition-[opacity,background-color,color] duration-150 hover:opacity-100 hover:bg-accent hover:text-accent-foreground active:scale-90 disabled:pointer-events-none"
           >
             <X className="h-4 w-4" />
-            <span className="sr-only">{t("sidebar.close", "Close")}</span>
+            <span className="sr-only">Close</span>
           </DialogClose>
         </div>
 
