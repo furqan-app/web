@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { Bookmark, Eraser, User, Volume1, Volume2, X } from "lucide-react";
+import { Bookmark, BookOpen, Eraser, User, Volume1, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
@@ -8,6 +8,7 @@ import { useMarks } from "../hooks/use-marks";
 import { useOnlineStatus } from "../hooks/use-online-status";
 import { VerseForMark, WordWithVerse } from "../types/prisma";
 import { useRecitation } from "@/app/contexts/RecitationContext";
+import { useTafsirModal } from "@/app/contexts/TafsirContext";
 import { getWordAudioUrl } from "../constants/word-audio";
 import { addPageMark } from "../server/actions/addPageMark";
 import { deletePageMark } from "../server/actions/deletePageMark";
@@ -90,6 +91,7 @@ export function MarkModal({
   const isOnline = useOnlineStatus();
   const isOffline = !isOnline;
   const { play, status: recitationStatus, togglePlayPause } = useRecitation();
+  const { openTafsir } = useTafsirModal();
   useCloseOnBackGesture(isOpen, close);
   const wordAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -100,6 +102,16 @@ export function MarkModal({
 
   const playFromHere = () => {
     play(markFor.verse_key);
+    close();
+  };
+
+  const viewTafsir = () => {
+    const snippet =
+      verseDisplayText ||
+      ("text_uthmani" in markFor && typeof markFor.text_uthmani === "string"
+        ? markFor.text_uthmani
+        : undefined);
+    openTafsir(markFor.verse_key, snippet);
     close();
   };
 
@@ -200,14 +212,24 @@ export function MarkModal({
               : t("markModal.markVerseLabel", "Mark verse")}
           </DialogDescription>
         </div>
-        <button
-          type="button"
-          onClick={playFromHere}
-          className="mb-3 w-full flex items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium border border-border text-foreground hover:bg-accent active:scale-[0.97] transition-[background-color,transform] duration-150"
-        >
-          <Volume2 className="w-4 h-4" strokeWidth={1.8} />
-          {t("markModal.playFromHere", "Play from here")}
-        </button>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <button
+            type="button"
+            onClick={playFromHere}
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-medium border border-border text-foreground hover:bg-accent active:scale-[0.97] transition-[background-color,transform] duration-150"
+          >
+            <Volume2 className="w-4 h-4 shrink-0" strokeWidth={1.8} />
+            <span className="truncate">{t("markModal.playFromHere", "Play from here")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={viewTafsir}
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-medium border border-border text-foreground hover:bg-accent active:scale-[0.97] transition-[background-color,transform] duration-150"
+          >
+            <BookOpen className="w-4 h-4 shrink-0" strokeWidth={1.8} />
+            <span className="truncate">{t("markModal.viewTafsir", "Tafsir")}</span>
+          </button>
+        </div>
 
         {isAuthenticated ? (
           <div className="rounded-xl bg-muted border border-border/60 p-2.5">
