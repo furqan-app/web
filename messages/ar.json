@@ -164,8 +164,9 @@
     "copyVerse": "نسخ الآية",
     "shareVerse": "مشاركة الآية",
     "copied": "تم النسخ",
-    "continueReading": "تابع القراءة",
     "shareViaLabel": "مشاركة عبر",
+    "shareVersePageTitle": "{surah} · {ayah}",
+    "shareVerseOpenReader": "افتح في المصحف",
     "saveMarkWithCategory": "حفظ: {category}",
     "updateMarkWithCategory": "تحديث: {category}",
     "close": "إغلاق لوحة العلامة"
