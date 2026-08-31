@@ -163,8 +163,9 @@
     "copyVerse": "Copy verse",
     "shareVerse": "Share verse",
     "copied": "Copied",
-    "continueReading": "Continue reading",
     "shareViaLabel": "Share via",
+    "shareVersePageTitle": "{surah} · {ayah}",
+    "shareVerseOpenReader": "Open in reader",
     "saveMarkWithCategory": "Save: {category}",
     "updateMarkWithCategory": "Update: {category}",
     "close": "Close mark panel"

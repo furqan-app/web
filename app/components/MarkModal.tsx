@@ -41,15 +41,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 import { formatVerseSharePayload } from "@/app/utils/share-verse";
-import { highlight } from "@/app/utils/highlight";
 import { MARK_CATEGORIES } from "@/app/constants/marks";
 
-// X/Twitter caps posts at 280 chars; t.co always shortens a link to 23 chars
-// regardless of its real length, plus the newline joining text and link.
-const X_CHAR_LIMIT = 280;
-const X_LINK_RESERVE = 23 + 1;
-
 const COMMENT_MAX_LENGTH = 500;
+
+// Shared styling for the cells of the modal's quiet utility rail (Play / Tafsir
+// / Copy / Share).
+const RAIL_BUTTON_CLASS =
+  "flex min-h-12 items-center justify-center gap-1.5 px-1.5 py-2 text-[11px] font-medium text-foreground transition-[background-color,color,transform] duration-150 hover:bg-accent active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 sm:text-xs";
 
 type ModalProps = {
   isOpen: boolean;
@@ -200,6 +199,22 @@ export function MarkModal({
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current); }, []);
   const [resolvedShareText, setResolvedShareText] = useState<string | null>(null);
+  // When the browser can open the OS share sheet, the Share button does that
+  // directly and the platform popover is not rendered (it stays as the
+  // fallback for desktop Firefox/Safari). Feature-detected after mount so SSR
+  // and first render agree.
+  const [canNativeShare, setCanNativeShare] = useState(false);
+  useEffect(() => {
+    setCanNativeShare(
+      typeof navigator !== "undefined" && typeof navigator.share === "function",
+    );
+  }, []);
+  const [isSharing, setIsSharing] = useState(false);
+  // Memoised verse-text resolution, so the native path can start fetching on
+  // pointer-intent and still have the text ready when the click fires (an
+  // await between the user gesture and navigator.share() loses activation on
+  // Safari).
+  const shareTextPromiseRef = useRef<Promise<string> | null>(null);
   // Popover portal target — nesting a Popover inside a Dialog must portal into
   // the Dialog's own content node, not document.body, or the Dialog's
   // FocusScope keeps yanking focus back into itself. See DECISIONS.md, "UI
@@ -212,6 +227,14 @@ export function MarkModal({
     setComment(currentComment ?? "");
     setError(false);
   }, [currentCategory, currentComment, isOpen]);
+
+  // Drop any verse text cached for a different verse/word — keyed on the mark
+  // identity, not the modal-open effect, so a comment edit doesn't reset it.
+  const markKey = "location" in markFor ? markFor.location : markFor.verse_key;
+  useEffect(() => {
+    shareTextPromiseRef.current = null;
+    setResolvedShareText(null);
+  }, [markKey]);
 
   const isWord = "location" in markFor;
   const selectedCategoryMeta = MARK_CATEGORIES.find(({ key }) => key === selectedCategory);
@@ -252,22 +275,47 @@ export function MarkModal({
     }
   };
 
-  // Canonical reader URL, extended with a highlight so the shared verse is
-  // pointed to on arrival. 'selection' — not the 'linking-mark' HighlightType,
-  // which is the persisted "linking" mark category's color (DECISIONS.md,
-  // "Color Marks Are Semantic Categories") and would collide with a real mark.
-  const buildPageUrl = (): string =>
-    `${window.location.origin}${highlight.addToUrl({
-      verseKey: normalizedVerseKey,
-      pageNumber: markFor.page_number,
-      type: "selection",
-      basePath: `/${locale}/pages`,
-    })}`;
+  // Per-verse share route (ADR 0050) — carries an Open Graph card and redirects
+  // to the canonical reader with the 'selection' highlight so the verse is
+  // pointed to on arrival. Every share target (native sheet, platform links,
+  // Copy) uses this URL.
+  const buildShareUrl = (): string =>
+    `${window.location.origin}/${locale}/share/verse/${surahNum}/${ayahNum}`;
+
+  const resolveShareText = (): Promise<string> => {
+    if (!shareTextPromiseRef.current) {
+      shareTextPromiseRef.current = resolveVerseText();
+    }
+    return shareTextPromiseRef.current;
+  };
 
   const buildPayload = async (): Promise<string> => {
-    const verseText = await resolveVerseText();
+    const verseText = await resolveShareText();
     const payload = formatVerseSharePayload({ verseText, surahName, ayahNum, locale });
-    return `${payload}\n${buildPageUrl()}`;
+    return `${payload}\n${buildShareUrl()}`;
+  };
+
+  const handleNativeShare = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
+    try {
+      const verseText = await resolveShareText();
+      const payload = formatVerseSharePayload({ verseText, surahName, ayahNum, locale });
+      await navigator.share({
+        title: `${surahName} · ${localizedAyah}`,
+        text: payload,
+        url: buildShareUrl(),
+      });
+    } catch (err) {
+      // AbortError = user dismissed the sheet — nothing to do. Any other
+      // rejection (e.g. NotAllowedError when the priming fetch outran the user
+      // gesture on Safari) means the sheet never opened — fall back to Copy so
+      // the button still does something.
+      if (!(err instanceof Error) || err.name === "AbortError") return;
+      await copyVerse();
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const markCopied = () => {
@@ -323,21 +371,14 @@ export function MarkModal({
   ] as const;
 
   const buildPlatformHref = (platform: string, verseText: string): string => {
-    const pageUrl = buildPageUrl();
-    // LinkedIn/Facebook ignore any text param and scrape Open Graph tags from
-    // 'pageUrl' instead — only 'url' is sent for those two.
-    const payload = formatVerseSharePayload(
-      platform === "x"
-        ? {
-            verseText,
-            surahName,
-            ayahNum,
-            locale,
-            maxLength: X_CHAR_LIMIT - X_LINK_RESERVE,
-            continueReadingLabel: t("markModal.continueReading", "Continue reading"),
-          }
-        : { verseText, surahName, ayahNum, locale },
-    );
+    const pageUrl = buildShareUrl();
+    // LinkedIn/Facebook ignore any text param and scrape the Open Graph card
+    // from 'pageUrl' (the /share/verse route) instead — only 'url' is sent for
+    // those two. The other platforms render their preview from the same card.
+    // The full verse text is always sent — X may open its composer over the
+    // 280-char limit for a handful of long verses; the user trims it, we never
+    // cut scripture.
+    const payload = formatVerseSharePayload({ verseText, surahName, ayahNum, locale });
     const full = `${payload}\n${pageUrl}`;
     switch (platform) {
       case "whatsapp":  return `https://wa.me/?text=${encodeURIComponent(full)}`;
@@ -351,8 +392,7 @@ export function MarkModal({
 
   const handleShareOpenChange = async (open: boolean) => {
     if (open && !resolvedShareText) {
-      const text = await resolveVerseText();
-      setResolvedShareText(text);
+      setResolvedShareText(await resolveShareText());
     }
   };
 
@@ -499,12 +539,19 @@ export function MarkModal({
             </DialogDescription>
           </div>
 
-          {/* The three supporting actions read as one quiet utility rail. */}
-          <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-border/80 bg-card/60 divide-x divide-border/70 rtl:divide-x-reverse">
+          {/* The supporting actions read as one quiet utility rail. When the OS
+              share sheet is available, Copy and Share each get their own cell
+              (4-up); otherwise Copy lives inside the Share popover (3-up). */}
+          <div
+            className={cn(
+              "grid overflow-hidden rounded-xl border border-border/80 bg-card/60 divide-x divide-border/70 rtl:divide-x-reverse",
+              canNativeShare ? "grid-cols-4" : "grid-cols-3",
+            )}
+          >
           <button
             type="button"
             onClick={playFromHere}
-            className="flex min-h-12 items-center justify-center gap-1.5 px-1.5 py-2 text-[11px] font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-accent active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 sm:text-xs"
+            className={RAIL_BUTTON_CLASS}
           >
             <Volume2 className="w-4 h-4 shrink-0 text-primary" strokeWidth={1.8} />
             <span className="truncate">{t("markModal.playFromHere", "Play from here")}</span>
@@ -512,17 +559,52 @@ export function MarkModal({
           <button
             type="button"
             onClick={viewTafsir}
-            className="flex min-h-12 items-center justify-center gap-1.5 px-1.5 py-2 text-[11px] font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-accent active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 sm:text-xs"
+            className={RAIL_BUTTON_CLASS}
           >
             <BookOpen className="w-4 h-4 shrink-0 text-primary" strokeWidth={1.8} />
             <span className="truncate">{t("markModal.viewTafsir", "Tafsir")}</span>
           </button>
+          {canNativeShare ? (
+            <>
+              <button
+                type="button"
+                onClick={copyVerse}
+                aria-label={isCopied ? t("markModal.copied", "Copied") : t("markModal.copyVerse", "Copy verse")}
+                className={cn(RAIL_BUTTON_CLASS, isCopied && "text-primary")}
+              >
+                {isCopied ? (
+                  <Check className="w-4 h-4 shrink-0 text-primary" strokeWidth={2} />
+                ) : (
+                  <Copy className="w-4 h-4 shrink-0 text-primary" strokeWidth={1.8} />
+                )}
+                <span className="truncate">
+                  {isCopied ? t("markModal.copied", "Copied") : t("markModal.copyVerse", "Copy verse")}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleNativeShare}
+                onPointerDown={() => { void resolveShareText(); }}
+                onFocus={() => { void resolveShareText(); }}
+                disabled={isSharing}
+                aria-label={t("markModal.shareVerse", "Share verse")}
+                className={cn(RAIL_BUTTON_CLASS, "disabled:opacity-60")}
+              >
+                {isSharing ? (
+                  <Loader2 className="w-4 h-4 shrink-0 animate-spin text-primary" />
+                ) : (
+                  <Share2 className="w-4 h-4 shrink-0 text-primary" strokeWidth={1.8} />
+                )}
+                <span className="truncate">{t("markModal.shareVerse", "Share verse")}</span>
+              </button>
+            </>
+          ) : (
           <Popover onOpenChange={handleShareOpenChange}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 aria-label={t("markModal.shareVerse", "Share verse")}
-                className="flex min-h-12 w-full items-center justify-center gap-1.5 px-1.5 py-2 text-[11px] font-medium text-foreground transition-[background-color,color,transform] duration-150 hover:bg-accent active:scale-[0.98] data-[state=open]:bg-primary/10 data-[state=open]:text-primary motion-reduce:transition-none motion-reduce:active:scale-100 sm:text-xs"
+                className={cn(RAIL_BUTTON_CLASS, "w-full data-[state=open]:bg-primary/10 data-[state=open]:text-primary")}
               >
                 <Share2 className="w-4 h-4 shrink-0 text-primary" strokeWidth={1.8} />
                 <span className="truncate">{t("markModal.shareVerse", "Share verse")}</span>
@@ -576,6 +658,7 @@ export function MarkModal({
               )}
             </PopoverContent>
           </Popover>
+          )}
           </div>
 
           {isAuthenticated ? (

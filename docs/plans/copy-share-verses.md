@@ -2,8 +2,8 @@
 
 **Type:** feature
 **Date:** 2026-08-30
-**Status:** implemented — category-grid refinement verified
-**Issues:** #396 (epic), #397 (API & formatting), #398 (UI & interaction)
+**Status:** implemented — Addendum (2026-08-31): per-verse OG share route + native share
+**Issues:** #396 (epic), #397 (API & formatting), #398 (UI & interaction), #486 (per-verse OG + native share)
 
 ## Revision (2026-08-30)
 
@@ -15,7 +15,7 @@ First pass added a share panel (WhatsApp/Telegram/X/Facebook/LinkedIn) to `MarkM
 
 Decisions made with the user:
 - Fix OG tags as part of this task (not split out) — it's blocking 2 of 5 share targets.
-- X: when verse + attribution would exceed the limit, truncate the verse text at a word boundary and append a "Continue reading" line + deep link, rather than silently cutting it off.
+- X: when verse + attribution would exceed the limit, truncate the verse text at a word boundary and append a "Continue reading" line + deep link, rather than silently cutting it off. _(Reverted in #486 — Addendum §5: full text always sent.)_
 - Redesign the platform badges as outline/monochrome (no color fill) — keep the badge shape, drop the brand-color background.
 
 ## Summary
@@ -38,15 +38,17 @@ The verse API endpoint at `GET /api/quran/verses/[verseKey]` already exists and 
 
 As actually implemented (deviates from the original spec below it: no `origin`/`pageNum` params — the deep link is built separately by the caller via `highlight.addToUrl()`, not concatenated inside the pure utility):
 
+_(Addendum §5: `maxLength`/`continueReadingLabel` were removed in #486 — the
+signature is now just `{ verseText, surahName, ayahNum, locale }`.)_
+
 ```
-formatVerseSharePayload({ verseText, surahName, ayahNum, locale, maxLength?, continueReadingLabel? })
+formatVerseSharePayload({ verseText, surahName, ayahNum, locale })
   → `﴿ ${verseText} ﴾\n${surahPrefix} ${surahName}: ${localizedAyah}`
 ```
 
 Where:
 - `surahPrefix` = `'سورة'` when `locale === 'ar'`, otherwise `'Surah'`
 - `localizedAyah` = `toLocaleNumeral(ayahNum, locale)`
-- `maxLength`/`continueReadingLabel` — new, optional (see "X/Twitter length handling" below); when both are provided and the assembled text would exceed `maxLength`, apply word-boundary truncation instead of the plain form above.
 
 The link itself is appended by the caller (`MarkModal`), one newline after this function's return value — keeps the utility pure and platform-agnostic (Copy/WhatsApp/Telegram append the plain page URL; X appends it after the truncation-aware payload; Facebook/LinkedIn don't use the text payload at all, only the URL).
 
@@ -82,7 +84,12 @@ highlight.addToUrl({ verseKey, pageNumber, type: 'selection', basePath: `/${loca
 
 This is still the canonical self-reader URL (never a grant URL, per the original decision) — it now also scrolls-into-highlight the shared verse on arrival via the existing `QuranWord.tsx` consumer, no new highlight machinery needed.
 
-### X/Twitter length handling
+### X/Twitter length handling — SUPERSEDED (see Addendum §5, 2026-08-31)
+
+_The X 280-char truncation below was removed in #486: the full verse text is now
+sent to every platform, and X opens its composer over-length for the handful of
+long verses so the user can trim. `formatVerseSharePayload` no longer takes
+`maxLength`/`continueReadingLabel`. The rest of this section is historical._
 
 X caps posts at 280 chars; t.co shortens any link to a flat 23 chars regardless of length, so budget the link separately from the text budget. Quranic text must never be silently cut off mid-word:
 
@@ -167,7 +174,7 @@ Loading state (`resolvedShareText === null`, while `resolveVerseText()` runs) st
 - Do not add custom image generation (out of scope per #396).
 - Do not add a new `HighlightType` — reuse the existing unused `'selection'` entry in `app/utils/highlight.ts`. Do not use `'linking-mark'` — that's the persisted `linking` mark category's color, not a generic pointer.
 - Do not build per-verse dynamic Open Graph metadata (e.g. `generateMetadata` reading `searchParams`) — static app-level `openGraph` on the root layout is enough to fix the LinkedIn/Facebook error; per-verse preview cards are a separate, unrequested feature.
-- Do not pass `maxLength`/truncation to any platform except X — WhatsApp/Telegram/Copy/Facebook/LinkedIn keep the full, untruncated verse text.
+- ~~Do not pass `maxLength`/truncation to any platform except X~~ — Addendum §5: truncation removed entirely, every platform gets the full verse text.
 - If using a `Popover` nested inside `MarkModal`'s `Dialog`, always pass its `container` prop pointed at `DialogContent`'s captured DOM node — omitting it puts the Popover's portal outside the Dialog's `FocusScope` and the Dialog yanks focus back on every interaction. Do not use `DropdownMenu` here (untested for this nesting case); `Popover` with `container` is the sanctioned pattern (DECISIONS.md, "UI Component Library").
 
 ## Decisions Made
@@ -177,7 +184,7 @@ Loading state (`resolvedShareText === null`, while `resolveVerseText()` runs) st
 - ~~2×2 quick-actions grid — four equal-weight actions, no visual hierarchy implied.~~ Superseded: 3-button grid (Play/Tafsir/Share), Copy moved into the Share popover as an icon alongside the platforms.
 - Canonical reader URL for deep link, extended with `highlight`/`highlight-type` params — grant URLs are session-specific and not shareable; highlighting the shared verse on arrival reuses existing, already-wired infrastructure.
 - `formatVerseSharePayload` is pure — enables vitest unit tests without mocking `window`.
-- X truncates at a word boundary with an explicit "Continue reading" line + link rather than cutting Quranic text off silently or letting X reject/overflow it unhandled.
+- ~~X truncates at a word boundary with an explicit "Continue reading" line + link~~ — Addendum §5: reverted, full text always sent, user trims in X's composer.
 - Root-layout static `openGraph`/`twitter` metadata (not per-page/per-verse) fixes LinkedIn/Facebook, in scope for this task since it directly blocks 2 of 5 share targets.
 - Platform badges go outline/monochrome instead of solid brand-color fill, per `docs/design/design-principles.md`'s ban on filled/circle-wrapped icons; badge shape and row layout otherwise unchanged.
 
@@ -269,3 +276,156 @@ for other callers. The responsive positioning belongs to `MarkModal` alone.
 - `/impeccable harden` → `app/components/MarkModal.tsx`, tests: cover the
   explicit save/update, existing-comment, offline, locale, focus, and
   mobile-keyboard states.
+
+## Addendum — Per-verse Open Graph share route + native share sheet (2026-08-31)
+
+**Status:** implemented
+**Issue:** #486 (Feature)
+**ADR:** [0050](../architecture/adr/0050-per-verse-open-graph-share-route.md)
+
+### Why
+
+After the feature shipped, sharing a verse to Facebook/LinkedIn showed only the
+bare link, not the verse text. This is not a bug: Facebook's `sharer.php` and
+LinkedIn's `share-offsite` accept only a `u`/`url` param and build the preview
+card by scraping Open Graph tags from that URL. The canonical reader URL carries
+only the app-wide static OG block (DECISIONS.md "Root-Layout Open Graph"), so the
+card is generic. WhatsApp/Telegram/X worked only because they honour a `text=`
+param — their scraped previews were generic too.
+
+This addendum **supersedes** two earlier constraints (see "What NOT to Do"
+updates below): no per-verse `generateMetadata`, no native-share action.
+Decisions confirmed with the user:
+
+1. Native share: when `navigator.share()` exists, one button opens the OS sheet;
+   the 5-platform popover is the fallback only (desktop Firefox/Safari). Copy
+   stays available in both paths.
+2. Per-verse OG lives on a **new dedicated route**, not the reader route — keeps
+   the Static Generation Strategy and "no `generateMetadata` on Quran routes"
+   intact (ADR 0050).
+3. **No per-verse OG image.** A `next/og` `ImageResponse` was built and then
+   removed: Satori cannot shape Arabic (tried UthmanicHafs1Ver18, Noto Naskh
+   Arabic, IBM Plex Sans Arabic — every one reversed word order or dropped
+   letter joins). The verse text is carried by `og:description`; `og:image`
+   falls back to the app icon (`twitter:card` = `summary`). A real verse-card
+   renderer (headless-browser screenshot or deploy-time pre-gen) is a separate
+   deferred task — the user chose to defer it, not block this one.
+4. **All** share targets link to the new route (not just FB/LinkedIn).
+5. **X 280-char truncation removed.** The full verse text is now sent to every
+   platform including X. For the handful of verses over the limit, X opens its
+   composer over-length and the user trims — we never cut scripture. This
+   reverts the `maxLength`/`continueReadingLabel` path added in #397 (see the
+   pre-Addendum "X/Twitter length handling" section — now historical).
+
+### New route — `app/[locale]/share/verse/[surah]/[ayah]/`
+
+| File | Responsibility |
+|---|---|
+| `verse-data.ts` | `getShareVerseData(surah, ayah)` — `normalizeVerseKey` guard, `getSurahMeta`, one `quranPrisma.verse.findFirst` (`text_uthmani`, `page_number`); returns `{ verseKey, surahNum, ayahNum, pageNumber, surahNameArabic, surahNameSimple, plainText }` or `null`. `plainText` = `text_uthmani` with `۞` stripped + whitespace collapsed. `parseSegment` validates a route segment (1–3 digits, >0). `import "server-only"`. |
+| `params.ts` | `parseSegment(raw)` — 1–3 digit positive int or `null`. Split out from `verse-data.ts` so the unit test doesn't pull in Prisma / `server-only`. |
+| `page.tsx` | `generateMetadata()` → `getShareVerseData`; returns `title`/`description` + `openGraph`/`twitter` (`title` = `markModal.shareVersePageTitle` = `{surah} · {ayah}`, `description` = `plainText`, `type: "article"`, `url`; `og:image`/`twitter:image` = `/icons/icon-512.png`, `twitter:card` = `summary`). Component renders (inside the inherited `[locale]` layout, so a `<main>` fragment, not `<html>`) `<meta httpEquiv="refresh" content="0;url=…">` + inline `<script>location.replace(…)` + a visible `<a>` fallback. Target: `/{locale}/pages/{pageNumber}?highlight={surah}:{ayah}&highlight-type=selection` via `highlight.addToUrl`. Invalid → `notFound()` in both functions. **Never `redirect()`** — 307 with no body strips the head before crawlers read OG tags (ADR 0050). |
+| route-level | `export const revalidate = 300;` `export const dynamicParams = true;` **No** `generateStaticParams` — on-demand only, no 6236×2 build pages (ADR 0035 bound reused). |
+
+Route params are the numeric `surah`/`ayah` (e.g. `/en/share/verse/2/255`), not a
+`2:255` key — cleaner URL. Validated by `parseSegment` then
+`normalizeVerseKey("${surah}:${ayah}")` (bounds surah 1–114, ayah vs
+`versesCount`) before the Prisma query.
+
+### MarkModal changes — `app/components/MarkModal.tsx`
+
+- **`buildShareUrl()`** replaces `buildPageUrl()` as the URL handed to every share
+  target: `${window.location.origin}/${locale}/share/verse/${surahNum}/${ayahNum}`.
+  `buildPageUrl()` is deleted; `buildPayload()` and `buildPlatformHref()` (all
+  five `case`s) use `buildShareUrl()`. The `highlight.addToUrl` call moves into
+  the new route's redirect target — MarkModal no longer imports `highlight`.
+- **Native share.** Feature-detect once, SSR-safe: `const [canNativeShare, setCanNativeShare] = useState(false)` + `useEffect(() => setCanNativeShare(typeof navigator !== "undefined" && !!navigator.share), [])`.
+  - When `canNativeShare`: the Share rail button is a plain `<button>` (no `Popover`). `shareTextPromiseRef` memoises `resolveVerseText()`; it is primed on the button's `onPointerDown`/`onFocus` so the fetch is usually done before `onClick`, which `await`s the ref then calls `navigator.share({ title, text: formatVerseSharePayload(...), url: buildShareUrl() })` inside `try/catch` (swallow `AbortError`). `isSharing` disables the button meanwhile. (An `await` between the user gesture and `navigator.share()` loses activation on Safari — priming keeps the gap near-zero.)
+  - When `!canNativeShare`: the existing `Popover` (Copy + 5 platforms) renders unchanged.
+- **Copy** stays a button in both paths. In the native path it sits next to the
+  Share button in the utility rail (small icon, same `copyVerse()` / `isCopied`
+  logic). Rail goes from 3 cells (Play / Tafsir / Share) to 4 (Play / Tafsir /
+  Copy / Share) **only** in the native path; popover path keeps 3 cells with Copy
+  inside the popover as today. Keep the hairline separators correct in RTL + LTR
+  for whichever cell count is active.
+- `handleShareOpenChange` / `resolvedShareText` loading spinner: unchanged for
+  the popover path; the native path awaits `resolveVerseText()` inline on click
+  (brief, no popover to show a spinner in — button can show a transient disabled
+  state).
+
+### Decision tree
+
+| `navigator.share` present? | Share button behaviour | Copy location | Rail cells |
+|---|---|---|---|
+| yes (all mobile, desktop Chrome/Edge) | opens OS share sheet with `{title, text, url}` | own rail cell | Play / Tafsir / Copy / Share |
+| no (desktop Firefox/Safari) | opens the existing `Popover` | inside the popover | Play / Tafsir / Share |
+
+| Route input | Result |
+|---|---|
+| valid `/{locale}/share/verse/{1..114}/{valid ayah}` | OG tags (`og:description` = verse) + meta-refresh/JS redirect to reader w/ highlight; `og:image` = app icon |
+| surah out of range, ayah out of range for surah, or verse not found | `notFound()` (404) from `generateMetadata` and the component |
+| crawler (no JS) hits the route | receives OG tags + visible `<a>` fallback; no redirect followed |
+| human hits the route | `location.replace` fires immediately → canonical reader, verse highlighted + scrolled into view via existing `QuranWord.tsx` consumer |
+
+### Verified test cases
+
+| Case | Input | Expected |
+|---|---|---|
+| Share verse 1:1, AR, native | mobile Chrome | OS sheet: title `الفاتحة · ١`, text = bracketed verse + attribution, url = `…/ar/share/verse/1/1` |
+| Share verse 2:255, EN, no native | desktop Firefox | popover with Copy + 5 platforms; FB link = `sharer.php?u=<enc(…/en/share/verse/2/255)>` |
+| FB/LinkedIn crawler fetches `/en/share/verse/2/255` | — | 200 HTML, `<title>` = `Al-Baqarah · 255`, `og:description` = Ayat al-Kursi text (U+06DE stripped), `og:image` = `/icons/icon-512.png` (curl-verified) |
+| Human opens `/en/share/verse/2/255` | — | meta-refresh + `location.replace` to `/en/pages/42?highlight=2:255&highlight-type=selection`, verse highlighted |
+| `/en/share/verse/2/300` (2 has 286 verses), `/en/share/verse/115/1`, `/en/share/verse/abc/1` | — | 404 (curl-verified) |
+
+Where the verse text lands per target: WhatsApp / Telegram / X / Copy / native
+sheet all carry it inline in the `text` payload; Facebook / LinkedIn get it from
+the route's `og:description`.
+
+### Files changed (as built)
+
+- `app/[locale]/share/verse/[surah]/[ayah]/verse-data.ts` — new: `getShareVerseData(surah, ayah)` (`cache()`-wrapped) — one `quranPrisma.verse.findFirst` + `getSurahMeta`, returns `{ verseKey, surahNum, ayahNum, pageNumber, surahNameArabic, surahNameSimple, plainText }` or `null`. `import "server-only"`.
+- `app/[locale]/share/verse/[surah]/[ayah]/params.ts` — new: `parseSegment` (split out so the unit test avoids Prisma / `server-only`; rejects leading zeros)
+- `app/[locale]/share/verse/[surah]/[ayah]/page.tsx` — new: `generateMetadata` (title/description/`robots: noindex`/openGraph/twitter, `og:image` = app icon; `notFound()` on invalid) + redirect-shim component (`<noscript>` meta-refresh + `location.replace` + `<a>`)
+- `app/components/MarkModal.tsx` — `buildShareUrl()` replaces `buildPageUrl()`; `canNativeShare` feature detect; native-share branch (rail 4-up with own Copy + Share cells) vs popover fallback (3-up); `RAIL_BUTTON_CLASS` extracted; `highlight` import dropped; `shareTextPromiseRef` memoises verse-text resolution and is cleared on modal open; `X_CHAR_LIMIT`/`X_LINK_RESERVE` + the X-only `maxLength`/`continueReadingLabel` args removed
+- `app/utils/share-verse.ts` — `formatVerseSharePayload` reduced to the unbounded form; `truncateAtWordBoundary` + `maxLength`/`continueReadingLabel` deleted; new `toVersePlainText(text_uthmani)` helper (strips ۞, collapses whitespace)
+- `app/utils/share-verse.test.ts` — truncation cases replaced with a "full text, no cap" case
+- `app/api/quran/verses/[verseKey]/route.ts` — `text_plain` now runs through `toVersePlainText` (was raw `verse.text_uthmani`), so the copy/share payload and the `og:description` use the identical string
+- `app/[locale]/share/verse/[surah]/[ayah]/verse-data.ts` — `getShareVerseData` wrapped in React `cache()` so `generateMetadata` + the component share one query; uses `toVersePlainText`
+- `app/[locale]/share/verse/[surah]/[ayah]/params.ts` / `params.test.ts` (renamed from `verse-data.test.ts`) — `parseSegment` rejects a leading zero (`/^[1-9]\d{0,2}$/`)
+- `messages/en.json` / `messages/ar.json` — added `markModal.shareVersePageTitle` (`{surah} · {ayah}`) + `markModal.shareVerseOpenReader`; removed the now-unused `markModal.continueReading`
+- `docs/architecture/DECISIONS.md` — amended "Root-Layout Open Graph" entry
+- `docs/architecture/adr/0050-per-verse-open-graph-share-route.md` — new
+- `app/[locale]/share/verse/[surah]/[ayah]/params.test.ts` — new: `parseSegment` incl. the leading-zero rejection (pure only — matches the repo's no-mock convention; `getShareVerseData` / route behaviour verified by curl)
+- `e2e/tests/word-marking.spec.ts` — unchanged; it does not exercise Share, and Chromium exposes no `navigator.share` so the popover path stays active
+
+### Constraints
+
+- `og:description` / `<meta name="description">` use `Verse.text_uthmani` with `۞` (U+06DE) stripped — matches `text_plain` from `app/api/quran/verses/[verseKey]/route.ts`. Never `text_imlaei_simple` (different orthography).
+- Route validation happens before the Prisma query: `parseSegment` (1–3 digits, >0) then `normalizeVerseKey("${surah}:${ayah}")` (already bounds-checks surah 1–114 and ayah against `versesCount`).
+- `revalidate = 300` on the route — do not remove it (ADR 0035 / ADR 0050); do not add `generateStaticParams`.
+- Redirect must be meta-refresh + script + `<a>` fallback. Never `redirect()` / `permanentRedirect()`.
+- Native share `catch` must swallow `AbortError` (user dismissed the sheet) silently — no error surface.
+- Keep the utility-rail hairline separators correct in both RTL and LTR for the active cell count (`divide-x` + `rtl:divide-x-reverse` already in place).
+
+### What NOT to Do (additions / supersessions)
+
+- **Superseded:** "Do not add a native-share action" (redesign addendum + original What NOT to Do) — now added, gated on `navigator.share` feature detection.
+- **Superseded:** "Do not build per-verse dynamic Open Graph metadata … per-verse preview cards are a separate, unrequested feature" — now built (metadata only), on a dedicated route per ADR 0050.
+- "Do not add custom image generation (out of scope per #396)" **still holds** — a `next/og` image was tried and removed. Satori cannot shape Arabic (verified: UthmanicHafs1Ver18, Noto Naskh Arabic, IBM Plex Sans Arabic all reverse word order / drop joins). A real verse card needs a renderer outside Satori — headless-browser screenshot of the existing mushaf components, or deploy-time pre-gen. Separate task; the user deferred it.
+- Do not re-add `opengraph-image.tsx` / a `next/og` image to this route.
+- Do not add per-verse `generateMetadata` to the reader route (`pages/[id]/page.tsx`) — the dedicated `/share/verse` route is the only place per-verse OG lives.
+- Do not `generateStaticParams` the share route — 6236×2 build pages; on-demand ISR only.
+- Do not use the server `redirect()` helper in the share route.
+- Do not change the root-layout static OG block — it stays the app-wide default for every other route.
+- Do not render the share route as a real landing page with the full reader chrome — it is a metadata-only redirect shim (Option A from planning, not a standalone verse view).
+- Do not switch only FB/LinkedIn to the new URL — all five platforms + native + Copy use `buildShareUrl()`.
+- Do not remove the platform `Popover` — it is the non-native fallback.
+
+### Decisions made
+
+- Dedicated route over per-verse reader metadata — protects the Static Generation Strategy (ADR 0050).
+- Native share replaces the popover entirely when available (Option A), rather than living as one more popover icon — the OS sheet is the better surface and covers every platform.
+- Numeric `/{locale}/share/verse/{surah}/{ayah}` path params, validated before query.
+- All share targets route through the new URL — every platform preview gets the verse (via `og:description`); mild redundancy on X accepted (matches Quran.com).
+- `notFound()` (404) for invalid verses, not a generic fallback card — bots should not cache a junk card under a junk URL.
+- Verse text is delivered via `og:description` (all platforms) plus the inline `text` payload (WhatsApp/Telegram/X/Copy/native). No rendered verse image — Satori can't shape Arabic; `og:image` falls back to the app icon; a real verse card is a deferred task.
+- Copy kept in both the native and popover paths.
