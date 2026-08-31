@@ -1,11 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   RotateCcw,
-  Copy,
-  Type,
+  GitCompareArrows,
+  ScanText,
   AudioWaveform,
   Link as LinkIcon,
-  Bookmark,
+  Ellipsis,
 } from "lucide-react";
 
 export type MarkCategory = {
@@ -33,7 +33,7 @@ export const MARK_CATEGORIES: MarkCategory[] = [
     chip: "bg-orange-500",
     badgeBg: "bg-orange-500/15 dark:bg-orange-500/20",
     badgeText: "text-orange-600 dark:text-orange-400",
-    icon: Copy,
+    icon: GitCompareArrows,
     labelKey: "markModal.similar",
     defaultLabel: "Similar",
   },
@@ -42,7 +42,7 @@ export const MARK_CATEGORIES: MarkCategory[] = [
     chip: "bg-amber-500",
     badgeBg: "bg-amber-500/15 dark:bg-amber-500/20",
     badgeText: "text-amber-600 dark:text-amber-400",
-    icon: Type,
+    icon: ScanText,
     labelKey: "markModal.tashkeelError",
     defaultLabel: "Tashkeel error",
   },
@@ -69,7 +69,7 @@ export const MARK_CATEGORIES: MarkCategory[] = [
     chip: "bg-slate-500",
     badgeBg: "bg-slate-500/15 dark:bg-slate-500/20",
     badgeText: "text-slate-600 dark:text-slate-400",
-    icon: Bookmark,
+    icon: Ellipsis,
     labelKey: "markModal.other",
     defaultLabel: "Other",
   },

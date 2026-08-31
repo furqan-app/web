@@ -20,14 +20,18 @@ export async function GET(
   // Per DECISIONS.md & docs/standards/quran-rendering.md:
   // Reconstruct verse text by joining word.qpc_uthmani_hafs filtered to char_type_name === 'word'
   // so it pairs with UthmanicHafs1Ver18 (font-uthmanic) without unrendered marker circles.
-  const words = await quranPrisma.word.findMany({
-    where: {
-      verse_key: normalizedKey,
-      char_type_name: "word",
-    },
-    orderBy: { position: "asc" },
-    select: { qpc_uthmani_hafs: true },
-  });
+  // text_plain fetches Verse.text_uthmani — standard Unicode Arabic, safe for sharing outside the app.
+  const [words, verse] = await Promise.all([
+    quranPrisma.word.findMany({
+      where: { verse_key: normalizedKey, char_type_name: "word" },
+      orderBy: { position: "asc" },
+      select: { qpc_uthmani_hafs: true },
+    }),
+    quranPrisma.verse.findFirst({
+      where: { verse_key: normalizedKey },
+      select: { text_uthmani: true },
+    }),
+  ]);
 
   if (!words.length) {
     return jsonResponse({ code: 404, message: "Verse not found" });
@@ -39,6 +43,7 @@ export async function GET(
     data: {
       verse_key: normalizedKey,
       text_uthmani,
+      text_plain: verse?.text_uthmani ?? text_uthmani,
     },
   });
 }

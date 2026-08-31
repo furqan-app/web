@@ -98,7 +98,7 @@ test.describe("Modal Lifecycle & Audio Actions", () => {
     // 1. Close via X button
     await firstWord.click();
     await expect(dialog).toBeVisible();
-    const closeBtn = dialog.getByRole("button", { name: "Close" });
+    const closeBtn = dialog.getByRole("button", { name: "إغلاق لوحة العلامة" });
     await closeBtn.click();
     await expect(dialog).toBeHidden();
 
@@ -165,22 +165,27 @@ test.describe("Word Mark Creation & Highlighting", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
+    await expect(dialog.getByText("ضع علامة للمراجعة")).toBeVisible();
+    const commentInput = dialog.getByPlaceholder(/أضف تعليقًا/);
+    await expect(commentInput).toBeEnabled();
+    await expect(commentInput).toHaveAttribute("dir", "rtl");
+
     const saveBtn = dialog.getByRole("button", { name: "حفظ العلامة" });
     await expect(saveBtn).toBeDisabled();
 
     // Select category "نسيان" (forgetting)
     const forgettingOption = dialog.locator('label[for="mark-color-forgetting"]');
     await forgettingOption.click();
+    await expect(forgettingOption).toHaveClass(/border-primary/);
 
-    await expect(saveBtn).toBeEnabled();
+    const selectedSaveBtn = dialog.getByRole("button", { name: "حفظ: نسيان" });
+    await expect(selectedSaveBtn).toBeEnabled();
 
-    // Add comment
-    const commentInput = dialog.getByPlaceholder(/أضف تعليقًا/);
-    await expect(commentInput).toBeEnabled();
+    // The optional comment is always available.
     await commentInput.fill("ملاحظة حفظ الكلمة الأولى");
 
     // Save mark
-    await saveBtn.click();
+    await selectedSaveBtn.click();
     await expect(dialog).toBeHidden();
 
     // Verify word element receives forgetting highlight styling (bg-red-400)
@@ -207,7 +212,7 @@ test.describe("Reload Persistence & Modal Edit Mode", () => {
     await initialDialog.locator('label[for="mark-color-forgetting"]').click();
     const commentInput = initialDialog.getByPlaceholder(/أضف تعليقًا/);
     await commentInput.fill("ملاحظة اختبار الثبات");
-    await initialDialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await initialDialog.getByRole("button", { name: "حفظ: نسيان" }).click();
     await expect(initialDialog).toBeHidden();
     await expect(firstWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
 
@@ -261,7 +266,7 @@ test.describe("Category Mutation & Deletion", () => {
     await firstWord.click();
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-forgetting"]').click();
-    await dialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await dialog.getByRole("button", { name: "حفظ: نسيان" }).click();
     await expect(dialog).toBeHidden();
     await expect(firstWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
 
@@ -269,7 +274,7 @@ test.describe("Category Mutation & Deletion", () => {
     await firstWord.click();
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-similar"]').click();
-    await dialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await dialog.getByRole("button", { name: "تحديث: متشابه" }).click();
     await expect(dialog).toBeHidden();
 
     // Verify class switched to similar highlight (bg-orange-300)
@@ -317,7 +322,7 @@ test.describe("Concurrent Marks", () => {
     await word1.click();
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-forgetting"]').click();
-    await dialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await dialog.getByRole("button", { name: "حفظ: نسيان" }).click();
     await expect(dialog).toBeHidden();
     await expect(word1).toHaveClass(/bg-red-400/, { timeout: 10000 });
 
@@ -325,7 +330,7 @@ test.describe("Concurrent Marks", () => {
     await word2.click();
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-linking"]').click();
-    await dialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
     await expect(dialog).toBeHidden();
 
     // Verify both words render independent classes concurrently
@@ -355,7 +360,7 @@ test.describe("Verse-Level Marking", () => {
 
     // Select tajweed-error and save
     await dialog.locator('label[for="mark-color-tajweed-error"]').click();
-    await dialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await dialog.getByRole("button", { name: "حفظ: خطأ تجويدي" }).click();
     await expect(dialog).toBeHidden();
 
     // Verify persistence across reload
@@ -391,7 +396,7 @@ test.describe("My Marks Management", () => {
     await dialog.locator('label[for="mark-color-forgetting"]').click();
     const commentInput = dialog.getByPlaceholder(/أضف تعليقًا/);
     await commentInput.fill("ملاحظة سورة الفاتحة");
-    await dialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await dialog.getByRole("button", { name: "حفظ: نسيان" }).click();
     await expect(dialog).toBeHidden();
 
     // 2. Navigate to /ar/marks
@@ -470,6 +475,8 @@ test.describe("Mobile Long-Press Interaction", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText("تحديد كلمة").first()).toBeVisible();
+    await expect(dialog).toHaveCSS("overflow-y", "visible");
+    await expect(dialog.getByRole("button", { name: "حفظ العلامة" })).toBeVisible();
   });
 });
 
@@ -491,11 +498,11 @@ test.describe("English Locale & Tajweed Edition Continuity", () => {
 
     // English labels
     await expect(dialog.getByText("Mark word").first()).toBeVisible();
-    await expect(dialog.getByText("Choose a category")).toBeVisible();
+    await expect(dialog.getByText("Add a review mark")).toBeVisible();
 
     // Select Forgetting and save
     await dialog.locator('label[for="mark-color-forgetting"]').click();
-    await dialog.getByRole("button", { name: "Save Mark" }).click();
+    await dialog.getByRole("button", { name: "Save: Forgetting" }).click();
     await expect(dialog).toBeHidden();
 
     // Visit /en/marks
@@ -522,7 +529,7 @@ test.describe("English Locale & Tajweed Edition Continuity", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-forgetting"]').click();
-    await dialog.getByRole("button", { name: "حفظ العلامة" }).click();
+    await dialog.getByRole("button", { name: "حفظ: نسيان" }).click();
     await expect(dialog).toBeHidden();
     await expect(firstWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
 
