@@ -452,6 +452,17 @@
   * {
     @apply border-border;
   }
+  html,
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -470,6 +481,29 @@
 @layer components {
   .hidden-scroll::-webkit-scrollbar {
     width: 0px;
+  }
+
+  /* Smooth, discreet scrollbar for reading sheets and panels */
+  .fq-scroll-nice {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  }
+  .fq-scroll-nice::-webkit-scrollbar {
+    width: 5px;
+  }
+  .fq-scroll-nice::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .fq-scroll-nice::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.22);
+    border-radius: 9999px;
+    transition: background 0.15s ease;
+  }
+  .fq-scroll-nice::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.45);
   }
 
   /* Marks the desktop nav search input as recessed into the bar, without a

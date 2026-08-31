@@ -396,20 +396,21 @@ export const QuranSafha = ({
   // Stable across marks re-renders (lines only changes on page navigation).
   const selectWord = useCallback(
     (word: WordWithVerse) => {
+      const allWords = Object.values(lines).flat();
+      const displayWords = allWords
+        .filter(
+          (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
+        )
+        .map((w) => w.qpc_uthmani_hafs);
+      const displayText =
+        displayWords.length > VERSE_SNIPPET_WORD_LIMIT
+          ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
+          : displayWords.join(" ");
+
       if (word.char_type_name === "word") {
         setSelectedForMark(word);
-        setVerseDisplayText(undefined);
+        setVerseDisplayText(displayText);
       } else if (word.char_type_name === "end") {
-        const allWords = Object.values(lines).flat();
-        const displayWords = allWords
-          .filter(
-            (w) => w.verse_key === word.verse_key && w.char_type_name === "word",
-          )
-          .map((w) => w.qpc_uthmani_hafs);
-        const displayText =
-          displayWords.length > VERSE_SNIPPET_WORD_LIMIT
-            ? `${displayWords.slice(0, VERSE_SNIPPET_WORD_LIMIT).join(" ")} ...`
-            : displayWords.join(" ");
         setSelectedForMark(word.verse);
         setVerseDisplayText(displayText);
       }
