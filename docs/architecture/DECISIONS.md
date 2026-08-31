@@ -197,6 +197,19 @@ const user = extractUser(request); // { id, email, ... }
 
 ---
 
+## Root-Layout Open Graph / Social Metadata
+
+**Decision:** `app/layout.tsx`'s root `metadata` export carries static `openGraph`/`twitter` fields (title, description, `icon-512.png` as the preview image) plus a `metadataBase: new URL("https://furqan.app")`. No route defines its own `generateMetadata`/per-page `openGraph` — this one static block is inherited app-wide.
+
+**Rationale:** LinkedIn's `sharing/share-offsite` and Facebook's `sharer.php` both stopped accepting title/text/summary URL params years ago — they scrape Open Graph tags from the target URL server-side and show an error/blank card when none exist. The app had zero OG tags anywhere before this, which is why LinkedIn sharing (added in `docs/plans/copy-share-verses.md`) errored. `metadataBase` is required for Next to resolve the image path to an absolute URL — without it, crawlers can't fetch the preview image. Static app-level branding (not a per-page or per-verse dynamic card) was judged sufficient to fix the error; per-verse `generateMetadata` reading `searchParams` was deliberately not built.
+
+**Constraints:**
+- Do not add per-route `generateMetadata` for Open Graph without checking whether the static root block already covers the need — a dynamic per-request metadata function on a page under the Static Generation Strategy (above) risks opting that route out of static rendering.
+- `metadataBase` must stay a real `https://furqan.app` URL — a relative or `localhost` base silently breaks absolute image URLs in production builds.
+- LinkedIn's crawler cannot reach `localhost`; OG/share-preview behavior for LinkedIn specifically can only be verified against a deployed/public URL, never local dev.
+
+---
+
 ## Sidebar Loading
 
 **Decision:** The `Sidebar` component is loaded via `next/dynamic` (deferred JS hydration) in `app/[locale]/pages/layout.tsx`. Sidebar data (surahs, rubs) is fetched server-side in that layout.
@@ -868,6 +881,15 @@ color is **derived** from the category via a single `MARK_CATEGORIES` table
 - The render path must fall back to **no highlight** for any unrecognized
   `category` — legacy `red`/`blue`/`green` rows are unknown keys. No data
   migration is written (test data is disposable); do not add one.
+- `highlight.ts`'s `HighlightType` union mixes two different meanings under one
+  type: the `${categoryKey}-mark` keys (`forgetting-mark`, `linking-mark`, etc.)
+  are colors for a **persisted** `Mark.category`, while `search`/`selection`/
+  `last-read` are **ephemeral, URL-param-driven** pointers with no DB row
+  behind them. Never reuse a `-mark` key for a temporary "point at this verse"
+  link (e.g. a shared-verse deep link) — it would make that temporary state
+  visually indistinguishable from someone's actual saved mark of that category
+  on an unrelated verse. Use `selection` (or add a new non-`-mark` type) for
+  anything that isn't backed by a real `Mark` row. Found via `docs/plans/copy-share-verses.md`'s share-verse deep link, which initially picked `linking-mark` by mistake.
 
 ---
 

@@ -4,11 +4,11 @@ import { getSurahMeta, normalizeVerseKey } from "@/app/utils/quran-navigation";
 import { getLanguageDirection, toLocaleNumeral } from "@/app/utils/i18n";
 import {
   RotateCcw,
-  Copy,
-  Type,
+  GitCompareArrows,
+  ScanText,
   AudioWaveform,
   Link as LinkIcon,
-  Bookmark,
+  Ellipsis,
 } from "lucide-react";
 
 describe("MarkModal & MarkerColorPicker Design Architecture", () => {
@@ -31,11 +31,11 @@ describe("MarkModal & MarkerColorPicker Design Architecture", () => {
       );
 
       expect(categoryMap["forgetting"]).toBe(RotateCcw);
-      expect(categoryMap["similar"]).toBe(Copy);
-      expect(categoryMap["tashkeel-error"]).toBe(Type);
+      expect(categoryMap["similar"]).toBe(GitCompareArrows);
+      expect(categoryMap["tashkeel-error"]).toBe(ScanText);
       expect(categoryMap["tajweed-error"]).toBe(AudioWaveform);
       expect(categoryMap["linking"]).toBe(LinkIcon);
-      expect(categoryMap["other"]).toBe(Bookmark);
+      expect(categoryMap["other"]).toBe(Ellipsis);
     });
 
     it("provides badge background and text tokens for all categories", () => {

@@ -5,9 +5,16 @@ import { getLanguageDirection } from "./utils/i18n";
 import localFont from "next/font/local";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 
+const TITLE = "Furqan";
+const DESCRIPTION = "The word focused Quran app";
+
 export const metadata: Metadata = {
-  title: "Furqan",
-  description: "The word focused Quran app",
+  // Required for Next to resolve openGraph/twitter image URLs to absolute
+  // ones — without it social-platform crawlers (LinkedIn, Facebook) can't
+  // fetch the preview image.
+  metadataBase: new URL("https://furqan.app"),
+  title: TITLE,
+  description: DESCRIPTION,
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -16,6 +23,24 @@ export const metadata: Metadata = {
       { url: "/icons/favicon-32.png", type: "image/png", sizes: "32x32" },
     ],
     apple: [{ url: "/icons/icon-apple-180.png", sizes: "180x180" }],
+  },
+  // Static, app-wide only — every route inherits this. No per-page/per-verse
+  // generateMetadata: LinkedIn/Facebook need *some* Open Graph tags to render
+  // a preview at all (they scrape the target URL, not any share-link text
+  // param), and that's the whole requirement here — see
+  // docs/plans/copy-share-verses.md "Open Graph metadata".
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: TITLE,
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/icons/icon-512.png"],
   },
   appleWebApp: {
     capable: true,

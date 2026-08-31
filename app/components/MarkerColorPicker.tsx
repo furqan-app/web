@@ -5,6 +5,7 @@ import { useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MARK_CATEGORIES } from "@/app/constants/marks";
+import { Check } from "lucide-react";
 
 type Props = {
   value?: string;
@@ -21,7 +22,7 @@ export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
       value={value}
       onValueChange={onChange}
       disabled={disabled}
-      className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+      className="grid grid-cols-2 gap-2"
       dir={getLanguageDirection(locale)}
     >
       {MARK_CATEGORIES.map(
@@ -34,10 +35,10 @@ export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
               key={key}
               htmlFor={`mark-color-${key}`}
               className={cn(
-                "flex items-center gap-2 rounded-xl border px-2.5 py-2 cursor-pointer transition-all duration-150 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 active:scale-[0.97]",
+                "relative flex min-h-12 items-center gap-2 rounded-lg border border-border/80 bg-card/60 px-3 py-2 cursor-pointer transition-[background-color,color,transform] duration-150 focus-within:ring-2 focus-within:ring-ring active:scale-[0.98]",
                 isSelected
-                  ? "border-primary bg-primary/10 ring-2 ring-primary/25 shadow-xs"
-                  : "border-border/80 bg-card/60 hover:bg-accent/60 hover:border-border",
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "text-foreground hover:bg-accent/60",
                 disabled && "opacity-50 cursor-not-allowed pointer-events-none",
               )}
             >
@@ -50,9 +51,12 @@ export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
               >
                 <Icon className="size-3.5" strokeWidth={2} />
               </span>
-              <span className="text-xs font-medium text-foreground truncate select-none">
+              <span className="text-xs font-medium truncate select-none">
                 {label}
               </span>
+              {isSelected ? (
+                <Check className="ms-auto size-3.5 shrink-0 text-primary" strokeWidth={2.2} />
+              ) : null}
               <RadioGroupItem
                 id={`mark-color-${key}`}
                 value={key}
@@ -66,4 +70,3 @@ export const MarkerColorPicker = ({ value, onChange, disabled }: Props) => {
     </RadioGroup>
   );
 };
-
