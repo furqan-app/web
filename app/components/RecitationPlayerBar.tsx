@@ -124,7 +124,12 @@ export const RecitationPlayerBar = () => {
         isOverlayMode && "transition-transform duration-300",
         isOverlayMode && !overlayVisible && "translate-y-full",
       )}
-      style={isOverlayMode ? { transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" } : undefined}
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
+        transitionTimingFunction: isOverlayMode ? "cubic-bezier(0.23, 1, 0.32, 1)" : undefined,
+      }}
     >
       {/* Three zones, mirroring the lab's rail: who is reciting, the transport,
           and the tertiary utilities. In bar form the wrappers are

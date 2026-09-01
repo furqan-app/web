@@ -158,3 +158,53 @@ Reciter switching itself needs no new logic — `RecitationContext`'s existing m
 - Do not reuse `w-[--radix-popover-trigger-width]` for the bar/rail popovers — their triggers are too narrow for a search input + reciter list; use a fixed `w-64` instead.
 - Do not add any new mid-playback reciter-switch logic — the existing effect already handles it.
 - Do not use `writing-mode: vertical-rl` for the rail's reciter name — a horizontal truncated label in the widened 96px rail was chosen instead (this supersedes the original plan's writing-mode prohibition only in the sense that there's now a name to consider at all; the prohibition itself is moot since the name is horizontal, not rotated).
+
+## Addendum: Mobile Recitation Bar Safe-Area Insets (2026-09-02, Issue #500)
+
+**Type:** bug  
+**Status:** implemented
+
+### Summary
+
+The mobile recitation player bar sits flush at `bottom: 0` without safe-area inset padding (`env(safe-area-inset-bottom)`). On iOS devices (where `viewport-fit: cover` is active and home indicator insets are ~21–34px), the system gesture bar overlaps the playback controls, settings buttons, and reciter label. This addendum adds bottom and lateral safe-area insets to `RecitationPlayerBar` while preserving the desktop vertical rail layout.
+
+### Approach
+
+1. In `app/components/RecitationPlayerBar.tsx`, add safe-area insets to the fixed outer wrapper's inline style:
+   - `paddingBottom: "env(safe-area-inset-bottom, 0px)"`
+   - `paddingLeft: "env(safe-area-inset-left, 0px)"`
+   - `paddingRight: "env(safe-area-inset-right, 0px)"`
+   - Combine with the existing `isOverlayMode ? { transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" } : undefined` transitions.
+2. In `app/globals.css`, ensure `.fq-recitation-bar-rail` carries `padding: 0 !important;` so the desktop vertical rail is completely isolated from inline safe-area padding.
+
+### Decision Tree / Algorithm
+
+| Context | Breakpoint | Inset Behavior |
+|---|---|---|
+| Mobile portrait (iOS / Notch) | `< 1024px` | Bottom padding increases by `env(safe-area-inset-bottom, 0px)` (~21–34px); controls lift above home indicator bar; chrome background bleeds to screen edge |
+| Mobile landscape (iOS / Notch) | `< 1024px` | Lateral padding increases by `env(safe-area-inset-left/right, 0px)` to avoid screen corners/notch |
+| Devices without insets (Desktop / Android no-inset) | Any | Insets evaluate to `0px`; layout padding remains default `py-2.5 px-4` |
+| Desktop Vertical Rail | `≥1367px + ≥800px` | Rail explicitly overrides padding via `padding: 0 !important;` |
+
+### Verified Test Cases
+
+- **iOS Safari / PWA portrait**: `env(safe-area-inset-bottom)` is 34px. Outer bar extends to bottom of screen; inner controls sit 34px + 10px (py-2.5) above screen floor, fully clear of home indicator.
+- **Overlay hide/show**: On tap in mobile reader, `translate-y-full` translates 100% of the bar's total height (including safe-area padding), cleanly leaving the viewport without leaving artifacts behind.
+- **Desktop Rail mode**: At `≥1367px × ≥800px`, vertical rail renders on right side with its distinct vertical zones and no bottom safe-area distortion.
+
+### Files to Change
+
+- `app/components/RecitationPlayerBar.tsx` — Add safe-area insets to outer container inline styles.
+- `app/globals.css` — Add `padding: 0 !important;` to `.fq-recitation-bar-rail`.
+
+### Constraints
+
+- Do not reduce or remove the inner container's `px-4 py-2.5` padding — safe-area insets must be additive so devices without insets keep their existing spacing.
+- Do not change `bottom: 0` or `fixed` positioning — the chrome bar surface must touch the physical viewport bottom so the background fills behind the gesture bar.
+- Do not disturb `isOverlayMode` transition timing or transforms.
+
+### What NOT to Do
+
+- Do not use a fixed hardcoded pixel padding (e.g. `pb-8`) — this would add unnecessary dead space on devices without home indicators.
+- Do not apply bottom safe-area padding to the inner flex container instead of the outer fixed bar — doing so would leave a visual gap beneath the bar background if the inner container background doesn't fill the screen.
+
