@@ -169,7 +169,7 @@ Every later subtask uses this to place a new element:
 
 ## 9. Type
 
-The **reading size contract is not restated here.** It is ADR 0038 and [`quran-rendering.md`](../standards/quran-rendering.md), it is a contract rather than an aesthetic, and no rule in this document may move it. Every band was verified against production to confirm the composition costs it nothing.
+The **reading size contract is not restated here.** It is ADR 0054 and [`quran-rendering.md`](../standards/quran-rendering.md), it is a contract rather than an aesthetic, and no rule in this document may move it. Every band was verified against production to confirm the composition costs it nothing.
 
 The interface scale is small, dense and quiet, so that nothing in the chrome competes with the page:
 

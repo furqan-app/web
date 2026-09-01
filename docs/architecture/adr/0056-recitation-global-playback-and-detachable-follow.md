@@ -1,4 +1,6 @@
-# ADR 0050: Recitation plays for the whole app; follow is a detachable attach/detach state
+# ADR 0056: Recitation plays for the whole app; follow is a detachable attach/detach state
+
+> Renumbered from 0050 (2026-09-02, #492) — the number collided with 0050 Per-Verse Open Graph Share Route.
 
 **Date:** 2026-09-01
 **Status:** Accepted

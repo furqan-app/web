@@ -1,4 +1,6 @@
-# ADR 0038: Reader size contracts are per-band, and tablet is always double-page
+# ADR 0054: Reader size contracts are per-band, and tablet is always double-page
+
+> Renumbered from 0038 (2026-09-02, #492) — the number collided with 0038 Plan Engine Per-Track Verse Unit.
 
 **Date:** 2026-08-11
 **Status:** Accepted

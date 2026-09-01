@@ -1,4 +1,6 @@
-# ADR 0017: Adopt Prisma versioned migrations for furqan_app; keep db push for furqan_quran
+# ADR 0051: Adopt Prisma versioned migrations for furqan_app; keep db push for furqan_quran
+
+> Renumbered from 0017 (2026-09-02, #492) — the number collided with 0017 Sentry Error Tracking.
 
 **Date:** 2026-07-08
 **Status:** Accepted — supersedes the "no migration history" stance in [ADR 0008](./0008-quran-app-database-split.md)

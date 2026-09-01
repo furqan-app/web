@@ -1,4 +1,6 @@
-# ADR 0022: Store word/verse comments as a new Mark.mark_type, with mark_value widened to TEXT
+# ADR 0053: Store word/verse comments as a new Mark.mark_type, with mark_value widened to TEXT
+
+> Renumbered from 0022 (2026-09-02, #492) — the number collided with 0022 Visual E2E Testing.
 
 **Date:** 2026-07-11
 **Status:** Accepted
