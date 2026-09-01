@@ -1,6 +1,9 @@
 import { QURAN_LAST_CHAPTER_ID } from "@/app/constants/recitation";
 import { RepeatCount, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
+import type { SurahResult } from "@/app/types";
+import { getPagePair } from "@/app/utils/quran-pages";
+import { toLocaleNumeral } from "@/app/utils/i18n";
 
 export type ChapterEndDecision =
   | { action: "repeat-range" }
@@ -71,6 +74,102 @@ export const findActiveWordLocation = (
     ([, startMs, endMs]) => currentTimeMs >= startMs && currentTimeMs < endMs,
   );
   return segment ? `${verseTiming.verseKey}:${segment[0]}` : null;
+};
+
+// ── Attach/detach follow (ADR 0050) ─────────────────────────────────────────
+// The RecitationFollow leaf's whole decision, as a pure function so it can be
+// tested exhaustively without a DOM (the codebase's unit tests never render).
+// The leaf feeds it the current + previous recitedPage/anchor and the current
+// isFollowing, and acts on the result:
+//   none   — do nothing
+//   attach — setIsFollowing(true)                    (reader is on the recited page)
+//   detach — setIsFollowing(false)                   (user navigated away by hand)
+//   follow — setIsFollowing(true) + onFollow(target) (pull the recited page into view)
+//
+// Convergence note: the leaf must NOT advance its `prevRecitedPage` ref on a
+// "follow" result — `onFollow` (ReaderPager.followTo) silently drops the request
+// while a drag/commit is in flight, so a stale `prevRecitedPage` is what lets the
+// next tick retry. `prevAnchor` always advances. See docs/plans/recitation-playback.md
+// Addendum 13 for the transition table.
+
+export type RecitationFollowInput = {
+  // null when no session is playing.
+  recitedPage: number | null;
+  anchor: number;
+  isDouble: boolean;
+  prevRecitedPage: number | null;
+  prevAnchor: number;
+  isFollowing: boolean;
+};
+
+export type RecitationFollowDecision =
+  | { action: "none" }
+  | { action: "attach" }
+  | { action: "detach" }
+  | { action: "follow"; target: number };
+
+export const decideRecitationFollow = ({
+  recitedPage,
+  anchor,
+  isDouble,
+  prevRecitedPage,
+  prevAnchor,
+  isFollowing,
+}: RecitationFollowInput): RecitationFollowDecision => {
+  if (recitedPage == null) return { action: "none" };
+
+  const { rightPage, leftPage } = getPagePair(anchor);
+  const visible = isDouble ? [rightPage, leftPage] : [anchor];
+  const followTarget = isDouble ? getPagePair(recitedPage).rightPage : recitedPage;
+
+  if (visible.includes(recitedPage)) {
+    // On the recited page (returned to it, or swiped back onto it) — attach.
+    return isFollowing ? { action: "none" } : { action: "attach" };
+  }
+
+  const recitedPageMoved = recitedPage !== prevRecitedPage;
+  const anchorMoved = anchor !== prevAnchor;
+
+  // Fresh session (idle → playing) whose start page isn't the one on screen —
+  // e.g. "play from here" on a mark several pages away. Centre on it, and the
+  // subsequent visible-window tick attaches.
+  if (prevRecitedPage == null) return { action: "follow", target: followTarget };
+
+  if (isFollowing) {
+    // A clean manual anchor move away from the recited page (swipe / arrows /
+    // sidebar jump) — the recited page did not move, only the reader did. Detach.
+    if (anchorMoved && !recitedPageMoved) return { action: "detach" };
+    // Otherwise the reader is still tracking: auto-advance moved the recited page
+    // across a boundary, or the visible window changed under us (double-view
+    // toggle, breakpoint cross). Pull the recited page back into view.
+    return { action: "follow", target: followTarget };
+  }
+
+  // Detached — the return panel owns the way back; nothing snaps.
+  return { action: "none" };
+};
+
+// ── Recited-verse label ─────────────────────────────────────────────────────
+// The player bar and RecitationReturnStrip both show *where* playback is. A bare
+// "7:145" is opaque; this resolves it to localized, pre-formatted parts for the
+// `recitation.recitedVerseLabel` ICU string ("آية {ayah} سورة {surah} صفحة {page}").
+// Returns null when the verse key / page / surah list isn't resolvable yet —
+// callers fall back to the bare verse key.
+export const recitedVerseLabelParts = (
+  verseKey: string | null,
+  page: number | null,
+  chapters: SurahResult[],
+  locale: string,
+): { ayah: string; surah: string; page: string } | null => {
+  if (!verseKey || page == null) return null;
+  const [surahId, ayah] = verseKey.split(":").map(Number);
+  const chapter = chapters.find((c) => c.id === surahId);
+  if (!chapter || !ayah) return null;
+  return {
+    ayah: toLocaleNumeral(ayah, locale),
+    surah: locale === "ar" ? chapter.name_arabic : chapter.name_simple,
+    page: toLocaleNumeral(page, locale),
+  };
 };
 
 // The verse_key of the first word on a page, used as the default start point

@@ -140,6 +140,14 @@ type RecitationContextType = {
   // persistent pager (ADR 0028) watches this to keep the recited page on screen —
   // navigation lives in the pager, not here.
   recitedPage: number | null;
+  // Attach/detach follow state (ADR 0050). true = the reader is showing the
+  // recited page and tracks it (auto-advance pulls the visible window forward);
+  // false = the user has navigated away on purpose (or left the reader route)
+  // and RecitationReturnPanel offers a way back. Owned here, decided entirely by
+  // the RecitationFollow leaf — ReaderPager never subscribes. Session state,
+  // never persisted. Reset to false by stop(); set true by play().
+  isFollowing: boolean;
+  setIsFollowing: (value: boolean) => void;
   // First verse_key of the currently displayed page, kept current by
   // RecitationPageSync — the voice panel's play button reads it as its
   // "play current Safha" start point (it cannot receive props from the pager).
@@ -168,13 +176,6 @@ type RecitationContextType = {
   // in-flight pass counts as repetition 1 of a fresh cycle. No seek — the
   // audio keeps playing where it is. No-op when idle.
   resetPerAyahRepeat: () => void;
-  // Range practice progress (#394), published as state ONLY where the
-  // underlying refs already mutate (verse boundaries, repeat transitions,
-  // session start/stop) — never per timeupdate tick. `rangeProgress` is null
-  // when unbounded ("none") or idle; `perAyahProgress` null when per-ayah
-  // repeat is off.
-  rangeProgress: { currentIndex: number; length: number } | null;
-  perAyahProgress: { done: number; target: number } | null;
   isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
@@ -236,22 +237,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
   const [recitedPage, setRecitedPage] = useState<number | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [currentPageNumber, setCurrentPageNumber] = useState<number | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeOverride, setActiveOverride] = useState<ActiveOverride | null>(null);
   const [playbackError, setPlaybackError] = useState<"offline-unavailable" | null>(null);
-  // Published mirrors of the repeat/position refs (#394). Updated only at
-  // ref-mutation sites — see the context-type comment for the frequency
-  // contract.
-  const [rangeProgress, setRangeProgress] = useState<{
-    currentIndex: number;
-    length: number;
-  } | null>(null);
-  const [perAyahProgress, setPerAyahProgress] = useState<{
-    done: number;
-    target: number;
-  } | null>(null);
   const isOnline = useOnlineStatus();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -346,10 +337,9 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     currentVerseKeyRef.current = null;
     setCurrentVerseKey(null);
     setRecitedPage(null);
+    setIsFollowing(false);
     rangeRepeatOverrideRef.current = null;
     setActiveOverride(null);
-    setRangeProgress(null);
-    setPerAyahProgress(null);
     // Practice configuration is session-scoped: ending a session resets it
     // so quick-play tomorrow never replays an old exercise. Reciter/speed
     // are preferences and survive.
@@ -374,30 +364,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     versePagesCacheRef.current.set(mushafId, versePages);
     return versePages;
   }, [mushafId]);
-
-  // Recomputes the published range progress (#394). Called only at
-  // ref-mutation sites: session start, verse advance, seek-backs. stop()
-  // clears the published state directly. currentIndex/length are positions
-  // within the whole range (start verse → stop verse; the surah*1000+ayah
-  // ordering makes cross-chapter ranges just arithmetic).
-  const publishRangeProgress = useCallback((currentVerseKeyArg: string | null) => {
-    const startKey = startVerseKeyRef.current;
-    const stopKey = stopVerseKeyRef.current;
-    if (!startKey || !stopKey || !currentVerseKeyArg) {
-      setRangeProgress(null);
-      return;
-    }
-    const [startS, startA] = startKey.split(":").map(Number);
-    const [stopS, stopA] = stopKey.split(":").map(Number);
-    const [curS, curA] = currentVerseKeyArg.split(":").map(Number);
-    const posOf = (s: number, a: number) => s * 1000 + a;
-    const startPos = posOf(startS, startA);
-    const stopPos = posOf(stopS, stopA);
-    const curPos = posOf(curS, curA);
-    const length = Math.max(stopPos - startPos + 1, 1);
-    const currentIndex = Math.min(Math.max(curPos - startPos + 1, 1), length);
-    setRangeProgress({ currentIndex, length });
-  }, []);
 
   const play = useCallback(
     async (
@@ -456,6 +422,23 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
         verseTimingsRef.current = chapterAudio.verseTimings;
         versePagesRef.current = versePages;
+        // Publish the recited page synchronously at session start. The mount-time
+        // [mushafId, getVersePages] effect below does not re-run on play(), and the
+        // first timeupdate tick is still the start verse so it skips
+        // updateRecitedPage — without this, recitedPage stays null until the first
+        // verse boundary, and RecitationFollow / RecitationReturnPanel need it from
+        // the first frame (ADR 0050).
+        {
+          const startPage = versePages[verseKey];
+          if (startPage != null) setRecitedPage(startPage);
+        }
+        // Note: isFollowing is NOT force-set here. Only RecitationFollow (mounted
+        // in the reader) can attach — a session started off-reader (a listening
+        // wird from /plans, an offline download from Settings) must stay
+        // "detached" so RecitationReturnPanel is the surface that can stop it or
+        // jump into the reader. On-reader, the leaf attaches within a tick (or
+        // pulls the reader to a far start verse — its prevRecitedPage == null
+        // branch). See ADR 0050.
         startVerseKeyRef.current = verseKey;
         stopVerseKeyRef.current = stopTarget.verseKey;
         stopChapterIdRef.current = stopTarget.chapterId;
@@ -467,12 +450,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         loadedReciterIdRef.current = reciterId;
         setCurrentVerseKey(verseKey);
         clearHighlight();
-        publishRangeProgress(verseKey);
-        setPerAyahProgress(
-          s.perAyahRepeatCount === 1
-            ? null
-            : { done: 1, target: resolveRepeatTarget(s.perAyahRepeatCount) },
-        );
 
         audio.src = chapterAudio.audioUrl;
         audio.playbackRate = s.playbackSpeed;
@@ -486,12 +463,13 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         setStatus("idle");
         rangeRepeatOverrideRef.current = null;
         setActiveOverride(null);
+        setIsFollowing(false);
         // Only a real "not downloaded" case, not e.g. an autoplay-policy
         // rejection while online.
         if (!isOnline) setPlaybackError("offline-unavailable");
       }
     },
-    [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline, publishRangeProgress],
+    [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline],
   );
   const togglePlayPause = useCallback(() => {
     const audio = audioRef.current;
@@ -642,7 +620,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
           currentVerseKeyRef.current = startVerseKey;
           setCurrentVerseKey(startVerseKey);
           updateRecitedPage(startVerseKey);
-          publishRangeProgress(startVerseKey);
           scheduleSeek(startTiming.timestampFrom, pauseMs);
         }
         return;
@@ -653,14 +630,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       const reload = async () => {
         const ok = await loadChapter(reciterId, startChapterId, startVerseKey);
-        if (!ok) {
-          stop();
-          return;
-        }
-        // Cross-chapter branch must mirror the same-chapter branch's state
-        // publication (Addendum 7 + review finding #4) — loadChapter updates
-        // the refs, but the published badge state needs the explicit call.
-        publishRangeProgress(startVerseKey);
+        if (!ok) stop();
       };
 
       if (pauseMs > 0) {
@@ -673,7 +643,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         reload();
       }
     },
-    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage, publishRangeProgress],
+    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
   );
 
   // Resolves a drafted Start From point to a verse key. Presets resolve
@@ -736,12 +706,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         currentVerseKeyRef.current = verseKey;
         setCurrentVerseKey(verseKey);
         updateRecitedPage(verseKey);
-        publishRangeProgress(verseKey);
-        setPerAyahProgress(
-          s.perAyahRepeatCount === 1
-            ? null
-            : { done: 1, target: resolveRepeatTarget(s.perAyahRepeatCount) },
-        );
         scheduleSeek(timing.timestampFrom, 0);
         return;
       }
@@ -751,21 +715,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       try {
         startVerseKeyRef.current = verseKey;
         const ok = await loadChapter(reciterId, chapterId, verseKey);
-        if (!ok) {
-          stop();
-          return;
-        }
-        publishRangeProgress(verseKey);
-        setPerAyahProgress(
-          s.perAyahRepeatCount === 1
-            ? null
-            : { done: 1, target: resolveRepeatTarget(s.perAyahRepeatCount) },
-        );
+        if (!ok) stop();
       } catch {
         stop();
       }
     },
-    [status, settings, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage, publishRangeProgress],
+    [status, settings, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
   );
 
   const handleTimeUpdate = useCallback(() => {
@@ -793,10 +748,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       if (previousTiming && perAyahRepeatsDoneRef.current + 1 < perAyahTarget) {
         perAyahRepeatsDoneRef.current += 1;
-        setPerAyahProgress({
-          done: perAyahRepeatsDoneRef.current + 1,
-          target: perAyahTarget,
-        });
         scheduleSeek(previousTiming.timestampFrom, settings.pauseBetweenRepeatsMs);
         return;
       }
@@ -822,12 +773,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       currentVerseKeyRef.current = activeTiming.verseKey;
       setCurrentVerseKey(activeTiming.verseKey);
       updateRecitedPage(activeTiming.verseKey);
-      publishRangeProgress(activeTiming.verseKey);
-      setPerAyahProgress(
-        perAyahTarget === 1
-          ? null
-          : { done: 1, target: perAyahTarget === Infinity ? Infinity : perAyahTarget },
-      );
     }
 
     // A tick matching no segment leaves the current word lit rather than
@@ -840,7 +785,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // highlight blink on every verse. Only stop()/clearHighlight() clears.
     const wordLocation = findActiveWordLocation(activeTiming, currentTimeMs);
     if (wordLocation) applyWordHighlight(wordLocation);
-  }, [settings, scheduleSeek, seekToRangeStart, stop, updateRecitedPage, applyWordHighlight, publishRangeProgress]);
+  }, [settings, scheduleSeek, seekToRangeStart, stop, updateRecitedPage, applyWordHighlight]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -1020,6 +965,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         status,
         currentVerseKey,
         recitedPage,
+        isFollowing,
+        setIsFollowing,
         pageFirstVerseKey,
         setPageFirstVerseKey,
         currentPageNumber,
@@ -1035,8 +982,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         closeSettings,
         activeOverride,
         playbackError,
-        rangeProgress,
-        perAyahProgress,
       }}
     >
       {/* Mounted once above the reader's route tree so playback survives both

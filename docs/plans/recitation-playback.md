@@ -534,7 +534,7 @@ Both constraints re-run whenever the reference (current verse/page) changes, so 
 ## Addendum 10: Stop recitation when leaving the reader (Trello #152)
 
 **Date:** 2026-08-02  
-**Status:** implemented
+**Status:** ~~implemented~~ **superseded 2026-09-01 by Addendum 13 / [ADR 0050](../architecture/adr/0050-recitation-global-playback-and-detachable-follow.md)** — the hard stop is removed, playback is app-wide again, and the bar-overlap this addendum reacted to is handled by making the "return to recitation" surface a second row of the nav (`RecitationReturnStrip`): it toggles with the nav overlay on mobile/tablet and pushes content down elsewhere, never floating over it. Everything below is retained for history; the "hard stop, not pause" contract and the "Do not call `togglePlayPause()` instead of `stop()`" guidance no longer apply.
 
 ### Problem
 
@@ -838,7 +838,7 @@ Implementation order follows the dependency chain: #391 and #392 first (independ
 | D4 | Start From is **per-session, derived on every open, never persisted**: preset = Current Verse while playing/paused, Current Page while idle. No new localStorage key. |
 | D5 | Preset resolution: Current Verse → reference verse key (sync); Beginning of Surah → parse surah, ayah 1 (sync); Current Page → `fetchPageBounds().firstVerseKey` (endpoint already returns it); Beginning of Rub' → needs the reference verse's rub's first verse (**new endpoint support** — existing stop-point route resolves only last verses). Custom mirrors `CustomRangePicker`'s inputs with no floor (a start may be 1:1). |
 | D6 | Start ≤ End enforced by **mutual push-apart**, never an error state or disabled Apply: editing Start past End raises End; lowering End below Start lowers Start. Applies to custom inputs live; presets validated at selection time with the same push applied. Equality allowed (single-verse practice window). Start 1:1 + Stop "none" (114:6) legal. |
-| D7 | #394 badge is **bar-only** (the desktop rail is icons-only — chrome loses information as viewport narrows). Shows verse index/length + per-ayah repeat counter/target, published as state on change (rare), respecting the ~4Hz re-render constraint. Hidden when idle or `stopPoint === "none"`. |
+| D7 | ~~#394 badge is **bar-only**… shows verse index/length + per-ayah repeat counter/target…~~ **Removed 2026-09-01 (Addendum 13)** — it duplicated a verse number next to the new location label. |
 
 ### Explicit supersessions
 
@@ -901,7 +901,15 @@ Sheet section inserted directly **above** "Stop at" so the pair reads as one ran
 
 ### #394 — Progress badge
 
-- `RecitationContext` publishes two new state pairs, set ONLY where the refs already mutate (verse-transition branch of `handleTimeUpdate`, per-ayah repeat branch, `seekToRangeStart`, `loadChapter`, `stop`/`play` resets):
+> **Removed 2026-09-01 (Addendum 13, user decision).** The `الآية ١/٦` badge read as a
+> second, conflicting verse number next to the new `آية … سورة … صفحة …` location label on
+> the bar, and it was the only consumer of `rangeProgress` / `perAyahProgress`. The two
+> state pairs, `publishRangeProgress`, every `setPerAyahProgress` call, the context-type
+> fields, the `rangeProgress*` i18n keys, and the badge markup are all deleted.
+> `perAyahRepeatsDoneRef` / `rangeRepeatsDoneRef` and `resolveRepeatTarget` stay — they
+> drive the actual repeat engine, not the badge.
+
+- ~~`RecitationContext` publishes two new state pairs, set ONLY where the refs already mutate (verse-transition branch of `handleTimeUpdate`, per-ayah repeat branch, `seekToRangeStart`, `loadChapter`, `stop`/`play` resets):~~
   - `rangeProgress: { currentIndex: number; length: number } | null`
   - `perAyahProgress: { done: number; target: number } | null`
 - Computed once per `play()` from `verseTimingsRef` (index of `startVerseKey` → index of resolved `stopVerseKey` within the loaded chapter, plus cross-chapter accumulation when chaining — length = total verses spanned, matching how `decideChapterEnd` walks chapters).
@@ -952,5 +960,274 @@ Sheet section inserted directly **above** "Stop at" so the pair reads as one ran
 9. Set custom start past drafted end → end auto-raises. (D6)
 10. Playing 2:100, draft start 2:255, Apply → seeks, counters reset, continues. (D3)
 11. Draft edits, dismiss via back gesture/X → committed settings byte-identical, playback untouched. (D2/Constraints)
-12. Range 2:10–2:27 at 2:12 pass 2/3 → badge "Ayah 3/18 • Repeat 2/3". (D7)
-13. `stopPoint: "none"` playing → no badge. Rail → no badge. (D7)
+12. ~~Range 2:10–2:27 at 2:12 pass 2/3 → badge "Ayah 3/18 • Repeat 2/3".~~ Badge removed (Addendum 13).
+13. ~~`stopPoint: "none"` playing → no badge. Rail → no badge.~~ Badge removed (Addendum 13).
+
+## Addendum 13: Global playback + detachable follow + return panel (Issue #467)
+
+**Status:** implemented (branch `feature/467-recitation-global-playback`). Supersedes
+Addendum 10 (ADR 0021's 2026-08-02 hard-stop) per user decision 2026-08-30. New
+[ADR 0050](../architecture/adr/0050-recitation-global-playback-and-detachable-follow.md).
+
+### Problem
+
+Two behaviors from the original recitation design were judged wrong in practice and both
+are reversed here:
+
+1. **Hard stop on route leave (Addendum 10 / ADR 0021 2026-08-02).** Leaving any `/pages/`
+   route kills playback. A user who taps Marks / Home / a notification mid-recitation loses
+   their place and the audio. The fix that motivated the hard stop (Trello #152 — the
+   full-width `RecitationPlayerBar` had no bottom-padding counterpart on non-reader pages and
+   overlapped their content) is addressed differently here: the way back to a detached
+   recitation is **a second row of the nav** (`RecitationReturnStrip`). On mobile/tablet it
+   toggles with the nav overlay; on desktop and every non-reader route it pushes content
+   down. It never floats over content.
+
+2. **Forced follow-snap on manual navigation (DECISIONS.md "Recitation Playback", the
+   "swiping away while playing snaps back" bullet).** While playing, the `RecitationFollow`
+   leaf pulls the visible window back to the recited page on *every* anchor change, so the
+   user cannot swipe/jump elsewhere to check a reference without being yanked back within a
+   frame. The deliberately-deferred trade-off noted in that same bullet ("change the follow
+   to trigger only when `recitedPage` advances, not on every anchor change") is now taken.
+
+### Behavior
+
+Playback has one lifecycle for the whole app: it starts, and it ends only when the user
+stops it, it finishes its range, or a hard error kills it. Navigation — page swipe, arrows,
+keyboard, sidebar/search jump, top-level route switch, closing the reader — never stops it.
+
+**Follow is a two-state attach/detach machine**, owned by `RecitationContext` as a single
+`isFollowing: boolean`:
+
+- **Attached** (`isFollowing === true`): the reader is showing the recited page and tracks
+  it. Auto-advance across a page boundary pulls the visible window forward (unchanged
+  `onFollow` → pager `followTo`). This is the state after the leaf sees the recited page in
+  the visible window, and after the user returns to it.
+- **Detached** (`isFollowing === false`): the user has navigated away from the recited page
+  on purpose, has left the reader route, or started the session off-reader entirely. The
+  reader does **not** snap back. Audio keeps playing on its own timeline. The **return
+  panel** appears.
+
+Transitions, all decided inside the `RecitationFollow` leaf via the pure
+`decideRecitationFollow` (no `ReaderPager` change — the pager must not subscribe to a context
+that ticks per recited verse):
+
+| From | Trigger | To |
+|---|---|---|
+| any | recited page is in the visible window (returned, or swiped back onto it) | attached |
+| fresh session, start page not on screen (`prevRecitedPage == null`) | — | `onFollow` pulls the reader to it, then attaches |
+| attached | `recitedPage` moved, anchor did not (auto-advance crossed a boundary) | stays attached, `onFollow` fires |
+| attached | visible window changed under the reader (double-view toggle, breakpoint) | stays attached, `onFollow` fires |
+| attached | anchor moved, `recitedPage` did not (a clean manual navigation) | detached |
+| attached | `RecitationFollow` unmounts (left the reader route) | detached |
+| — | `stop()` / a failed `play()` | `isFollowing` reset `false`; panel gone because `status === "idle"` |
+
+The leaf distinguishes "auto-advance moved the recited page" from "user moved the anchor" by
+diffing the previous `recitedPage` / `anchor` against the current via refs — the same values
+it already receives as props / context.
+
+### The "return to recited page" affordance — `RecitationReturnStrip`
+
+The way back to a detached recitation must **never float over content** (design-principles:
+"chrome reserves space, never overlaps the mushaf"). It is **a second row of the nav** — a
+new client component `RecitationReturnStrip`, rendered as the last child inside `<nav>`
+(`app/components/nav/Nav.tsx`), consuming `useRecitation()` / `useReaderNavigation()` itself
+so `Nav` doesn't re-render per recited verse.
+
+- **Renders iff** `status !== "idle" && !isFollowing && recitedPage != null`. One surface,
+  every route.
+- **Being a flow child of `<nav>`** is what makes it correct everywhere:
+  - **mobile/tablet reader** — the nav is a `position: fixed` overlay that hides with
+    `transform: translateY(-100%)` (its own height). A taller nav still hides completely, so
+    the strip **toggles with the chrome** exactly like the rest of the nav — visible only
+    when the reader chrome is revealed, floating over the mushaf header band then, gone while
+    reading. (This is the behaviour the user asked for.)
+  - **desktop reader + every non-reader route** — the nav is `relative` in flow, so the
+    strip **pushes content down**; it never covers it.
+- **`--fq-nav-extra`**: while mounted, the strip adds `.fq-recitation-strip-open` to `<html>`
+  (effect + cleanup). `:root { --fq-nav-extra: 0px }` → `2.75rem` when open. The desktop
+  reader's flow `min-height` (`.fq-reader-outer` at `@media (min-width: 1367px)`,
+  `calc(100dvh - 70px - var(--fq-nav-extra))`) and non-reader `<main>`
+  (`calc(100dvh - 3.5rem - var(--fq-nav-extra))`) subtract it, so a short page stays exactly
+  one screen — no sliver of scroll. Mobile/tablet reader is `position: fixed` and ignores it.
+- **Content:** the **Return** link is the only text — `RotateCcw` + one combined string
+  `recitation.returnToRecitedVerse` = `العودة إلى صفحة {page} · سورة {surah} · آية {ayah}`,
+  `text-[10px]`, `truncate`, `--primary` accent — plus a play/pause button (`togglePlayPause`,
+  shown while `playing`/`paused`) and a `fq-chrome-btn` **Stop**. Falls back to
+  `recitation.returnToRecitedPage` ("back to page {page}") until `chapters` resolves.
+  Inherits the nav's `.fq-chrome-bar` face; its own hairline is a Tailwind `border-t`.
+- **Return** → `<Link href={/pages/{recitedPage}}>` + the `jumpTo`-handoff-on-click
+  (`ContinueReadingLink` shape): reader mounted → `jumpTo(recitedPage)` (client-side, grant
+  reader too); reader unmounted → the `<Link>` navigates. Accepted limitation, identical to
+  `ContinueReadingLink`: an off-reader return lands on the **self** reader `/pages/…`.
+
+### Recited-verse label + badge removal
+
+- New pure helper `recitedVerseLabelParts(verseKey, page, chapters, locale)` in
+  `app/utils/recitation.ts` → `{ ayah, surah, page }` (pre-localized via `toLocaleNumeral`;
+  surah = `name_arabic` for `ar`, `name_simple` otherwise), or `null` until resolvable.
+- `RecitationPlayerBar`'s bare `currentVerseKey` line (and the strip's, folded into the
+  Return link above) becomes `recitation.recitedVerseLabel` =
+  `آية {ayah} سورة {surah} صفحة {page}`, dropped to `text-[10px]`. Both components now read
+  `recitedPage` + `chapters` from context.
+- **The #394 range-progress badge is removed** (see Addendum 12's struck section):
+  `rangeProgress` / `perAyahProgress` state + `publishRangeProgress` + every
+  `setPerAyahProgress` call + the context-type fields + `formatRangeProgress` +
+  `recitation.rangeProgress*` keys, all deleted. It duplicated a verse number next to the
+  new label. The repeat *engine* (`perAyahRepeatsDoneRef`, `rangeRepeatsDoneRef`,
+  `resolveRepeatTarget`) is untouched.
+
+### `RecitationContext` changes
+
+- New state `isFollowing` (init `false`) + stable `setIsFollowing`, added to the context
+  value. `stop()` and the `play()` failure path reset it `false`. **`play()` does NOT force
+  it `true`** — only `RecitationFollow` (reader-mounted) may attach. A session started
+  off-reader (a listening wird from `/plans`, an offline download from Settings) therefore
+  stays detached, so `RecitationReturnPanel` is the surface that can stop it or jump into the
+  reader. (An earlier draft force-attached in `play()`, which left an off-reader session with
+  *no* UI at all — worse than the old hard stop.)
+- `play()` resolves and publishes `recitedPage` **synchronously at session start**
+  (`const page = versePages[verseKey]; if (page != null) setRecitedPage(page)` right after
+  `versePagesRef.current = versePages`). Today `recitedPage` stays `null` until the first
+  verse *boundary* (the mount-time `[mushafId, getVersePages]` effect doesn't re-run on
+  `play`, and the first `timeupdate` tick is the same verse so it skips `updateRecitedPage`).
+  The panel and the leaf both need a correct `recitedPage` from the first frame of playback.
+
+### `RecitationFollow` changes
+
+Thin wrapper over `decideRecitationFollow` (`app/utils/recitation.ts`) — the whole decision
+is that pure function so it is exhaustively unit-tested without a DOM. The leaf holds
+`prevRecitedPage` / `prevAnchor` refs and applies the result:
+
+- `prevAnchor` advances every run; **`prevRecitedPage` does not advance on a `follow`** —
+  `onFollow` (`ReaderPager.followTo`) silently drops the request during a drag/commit, and a
+  stale `prevRecitedPage` is what makes the next tick retry until it lands.
+- `attach` / `follow` → `setIsFollowing(true)` (the `follow` case also fires `onFollow`);
+  `detach` → `setIsFollowing(false)`.
+- A `prevRecitedPage == null` (fresh session) whose start page isn't on screen resolves to
+  `follow`, so "play from here" on a far mark still pulls the reader — without `play()`
+  needing to force-attach.
+- `follow` also covers "the visible window changed under an attached reader" (double-view
+  toggle, breakpoint cross) — nothing moved but the recited page dropped out of view.
+- Mount-cleanup `useEffect(() => () => setIsFollowing(false), [setIsFollowing])` — leaving
+  the reader is a detach.
+
+### `RecitationPlayerBar` changes
+
+- **Delete** the hard-stop `useEffect` (`if (!isOnReaderRoute && !isIdle) stop()`).
+- Render gate → reader routes only (`if (!isOnReaderRoute) return null;` then
+  `if (isIdle && !pageFirstVerseKey) return null;`). Drop the now-dead `isOnReaderRoute`
+  branches. Nothing else — the bar does not carry the return affordance (an earlier
+  iteration put it in `fq-rail-utils`; the user found it too easy to miss).
+- Update the top-of-file comment block.
+
+### Files to Change
+
+- `app/contexts/RecitationContext.tsx` — `isFollowing` state + setter + context value;
+  `play()` publishes `recitedPage` synchronously (does NOT force `isFollowing` — only the
+  leaf attaches); `stop()` + the `play()` failure path reset `isFollowing`. **Deletes** the
+  #394 `rangeProgress` / `perAyahProgress` state, `publishRangeProgress`, every
+  `setPerAyahProgress` call, and the two context-type fields.
+- `app/components/reader/RecitationFollow.tsx` — attach/detach machine (thin wrapper over
+  `decideRecitationFollow`; keeps `prevRecitedPage` stale on a `follow`; unmount → detach).
+- `app/components/RecitationPlayerBar.tsx` — remove hard stop; reader-route-only render gate;
+  drop dead `isOnReaderRoute` branches; verse-key line → `recitedVerseLabel` at `text-[10px]`;
+  **delete** the #394 progress badge + `formatRangeProgress`; comments.
+- `app/components/recitation/RecitationReturnStrip.tsx` — **new**; the second nav row
+  (Return link carrying the combined `returnToRecitedVerse` string + play/pause + Stop),
+  toggles `.fq-recitation-strip-open` on `<html>` while mounted.
+- `app/components/nav/Nav.tsx` — render `<RecitationReturnStrip />` as the last child of `<nav>`.
+- `app/utils/recitation.ts` — `decideRecitationFollow` **and** `recitedVerseLabelParts`
+  helpers (+ `app/utils/recitation.test.ts`).
+- `app/hooks/use-is-reader-route.ts` — **new**; extracted the `pathname.includes("/pages/")`
+  predicate (now render-decision-load-bearing per ADR 0050). Migrated `RecitationPlayerBar`,
+  `Nav`, `PlansWidget` onto it too.
+- `app/components/reader/ReaderPager.tsx` — `followTo` comment only (now attached-follow-only,
+  and the retry story changed).
+- `app/globals.css` — `--fq-nav-extra` (0 → 2.75rem under `:root.fq-recitation-strip-open`);
+  subtract it in the desktop-reader `.fq-reader-outer` `min-height` and the non-reader
+  `main` `min-height` so a short page stays exactly one screen. Strip styling is Tailwind on
+  the component (it inherits the nav's `.fq-chrome-bar` face).
+- `app/[locale]/layout.tsx` — no new mount (the strip is inside `<Nav />`).
+- `e2e/tests/recitation-lifecycle.spec.ts` — **new**; the lifecycle suite (route-leave,
+  page-away, return, stop, pause/resume; a mobile overlay-toggle case; recitation APIs + a
+  silent-WAV data URI stubbed via `page.route`).
+- `messages/en.json`, `messages/ar.json` — **added** `recitation.recitedVerseLabel`,
+  `recitation.returnToRecitedVerse` (+ existing `returnToRecitedPage` as fallback);
+  **removed** `recitation.rangeProgressAyah` / `rangeProgressRepeat`. Strip controls reuse
+  `recitation.stop` / `pause` / `resume`.
+- `docs/architecture/DECISIONS.md` — Recitation Playback section: rewrite the "swiping away
+  snaps back" and "hard-stops when the user navigates away" bullets to the attach/detach +
+  global-playback model; link ADR 0050.
+- `docs/architecture/adr/0021-recitation-playback.md` — Addendum noting Addendum 10's
+  hard stop is itself superseded by ADR 0050.
+- `docs/plans/recitation-playback.md` — this addendum + a supersession banner on Addendum 10.
+
+### Constraints
+
+- **`ReaderPager` gains no `useRecitation()` call** — the ~4Hz / per-verse re-render
+  firewall (ADR 0028, DECISIONS.md) holds. All new follow logic lives in the leaf.
+- Highlight mechanism (ADR 0021 2026-08-03 addendum), font-readiness gating, and the
+  no-flicker recenter are untouched.
+- `onFollow` still routed through the pager's guarded `followTo`/`commitTo` — navigation
+  stays owned by the pager (ADR 0028). The leaf never navigates directly.
+- Auto-advance follow across page boundaries while attached is **unchanged** from today.
+- Edition switch mid-playback (`jumpTo` from an edition toggle): the anchor and the
+  re-resolved `recitedPage` update in separate renders. If the anchor lands first the leaf
+  briefly reads a clean anchor move → `detach`, flashing the return strip for a frame or two
+  before the `recitedPage` update re-attaches. Self-healing; accepted (the switch is rare and
+  the end state is correct).
+- Practice-config reset on `stop()` unchanged; `isFollowing` is session state, not persisted.
+
+### What NOT to Do
+
+- Do **not** add follow/detach state to `ReaderPager` or make it consume `RecitationContext`.
+- Do **not** pause audio on any navigation — playback runs on its own timeline (unchanged
+  standing decision).
+- Do **not** show the full `RecitationPlayerBar` off-reader.
+- Do **not** let any recitation surface float over content. The return strip is a nav row —
+  it toggles with the overlay on mobile/tablet, pushes content elsewhere. No fixed element
+  that isn't backed by reserved space.
+- Do **not** put the return affordance in `RecitationPlayerBar` (an earlier iteration did;
+  too easy to miss, and hidden with the bar on mobile/tablet).
+- Do **not** make `Nav` itself consume `useRecitation()` — the strip subcomponent does, so a
+  per-verse `currentVerseKey` change re-renders only the strip.
+- Do **not** persist `isFollowing`.
+- Do **not** reintroduce a per-word context subscription anywhere.
+
+### Known follow-ups (not this task)
+
+- The `<Link href={/pages/N}> + onClick → jumpTo(N)` client-handoff pattern is duplicated in
+  ~5 places (`ContinueReadingLink`, `SurahListItem`, `RubList`, `AyahPicker`, this strip).
+  Worth extracting a shared `<ReaderJumpLink>` — out of scope here.
+- `followTo` still silently drops a follow issued mid drag/commit; the stale-`prevRecitedPage`
+  retry covers the common case but a follow lost right before a sub-threshold drag-return can
+  leave the reader a page behind (no pill, playback fine) until the next page boundary.
+  Making `followTo` report back / self-retry is the real fix.
+
+### Verified test cases
+
+1. **Route leave keeps playback.** Play on p1 → tap a top-level nav item (Home/Marks) →
+   audio still playing (not paused), player bar gone, the return strip is a second nav row
+   with "back to page 1".
+2. **Return from off-route.** From (1), tap Return → lands on `/pages/1`, reader mounts,
+   strip gone, follow attached.
+3. **Page away in reader → no snap.** Play on p1 (stopPoint "page") → Next arrow → still on
+   p2 after 1s (no yank), the return strip appears under the nav → tap Return → back on p1,
+   attached.
+4. **Sidebar jump away → no snap.** Same as (3) via a surah/rub jump instead of the arrow.
+5. **Auto-advance still follows while attached.** Play mid-page-2 with stopPoint "surah",
+   cross into p3 → reader view advances to p3, no return strip.
+6. **Stop.** From a detached state → tap Stop in the strip → audio stops, strip gone.
+7. **Play from a mark on another page still pulls the reader** (regression) — `play("N:…")`
+   where N's page ≠ current → reader navigates to it (attached, `onFollow`).
+8. **Return re-attaches, then auto-advance resumes following** — detach on p5 while
+   reciting p2, tap Return → on p2 attached → cross to p3 → follows.
+9. **Off-reader session start is controllable.** Start a listening wird from `/plans` → go
+   to Home → strip visible (never auto-attached), Stop and Return both work.
+10. **Paused is not a dead end.** Pause from the strip → strip stays, play button resumes.
+11. **Nothing floats over content.** Non-reader route with the strip up, a short page stays
+    exactly one screen (`--fq-nav-extra`); a long page's last row is never covered.
+12. **Mobile/tablet reader: the strip toggles with the nav overlay.** Detached, chrome
+    revealed → strip on screen; dismiss the overlay → strip slides off with the nav; reveal
+    again → back.

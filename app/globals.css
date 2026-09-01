@@ -959,10 +959,13 @@ body,
 
   /* The fixed navigation paints at 57px (its 56px utility height plus the bottom
      border). The reader's JSX minimum uses 3.5rem/56px, which otherwise leaves a
-     one-pixel document overflow and an unnecessary desktop scrollbar. */
+     one-pixel document overflow and an unnecessary desktop scrollbar.
+     `--fq-nav-extra` (0px unless the recitation return strip is open — ADR 0050)
+     is subtracted too, so a second nav row shrinks the flow reader by the same
+     amount instead of adding a sliver of scroll. */
   @media (min-width: 1367px) {
     .fq-reader-outer {
-      min-height: calc(100dvh - 70px) !important;
+      min-height: calc(100dvh - 70px - var(--fq-nav-extra, 0px)) !important;
     }
   }
 
@@ -1259,6 +1262,13 @@ body,
        a thin desk margin instead of touching the nav and the viewport floor. */
     .fq-reader-outer {
       padding-bottom: 0 !important;
+    }
+    /* The recitation rail is `position: fixed; right: 0; top: 70px; width: 72px`,
+       so its top overlays the return strip (a second nav row that starts at
+       ~56px). Reserve the rail's physical column on the strip too — same
+       `padding-right: 72px` reasoning as the spread container above. */
+    .fq-recitation-return-strip {
+      padding-right: 72px;
     }
     .fq-reader-outer > .fq-reader-spread-container {
       padding-block: 64px;
@@ -2135,6 +2145,29 @@ body,
      the edge that faces the page. */
   .fq-chrome-bar-bottom::after {
     inset: 0 0 auto;
+  }
+
+  /* ADR 0050 — the "return to recitation" strip, a second row of the nav shown
+     while a session is parked away from the reader. It inherits the nav's opaque
+     `.fq-chrome-bar` face; only the hairline that separates it from the main row
+     is its own (a Tailwind `border-t` on the element). While it is mounted,
+     `RecitationReturnStrip` adds `.fq-recitation-strip-open` to <html> so the
+     desktop reader's flow `min-height` can give its band back and stay
+     scroll-free (mobile/tablet reader is `position: fixed` and unaffected). */
+  :root {
+    --fq-nav-extra: 0px;
+  }
+  :root.fq-recitation-strip-open {
+    --fq-nav-extra: 2.75rem;
+  }
+  /* Non-reader pages: `<main>` is a flow sibling under the `relative` nav, so the
+     strip pushes it down. Its `min-h-[calc(100dvh-3.5rem)]` would then run the
+     document past the viewport by the strip's height; subtract it back so a
+     short page stays exactly one screen. `!important` beats the Tailwind utility
+     from `@layer utilities`. The reader has no `<main>`, so this is non-reader
+     only. */
+  :root.fq-recitation-strip-open main {
+    min-height: calc(100dvh - 3.5rem - var(--fq-nav-extra, 0px)) !important;
   }
 
   /* The recitation transport's three zones — identity, transport, utilities.
