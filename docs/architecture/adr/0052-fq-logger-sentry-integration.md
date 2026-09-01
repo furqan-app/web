@@ -1,4 +1,6 @@
-# ADR 0019: fq-logger Wraps Pino and Forwards Error-Level Logs to Sentry
+# ADR 0052: fq-logger Wraps Pino and Forwards Error-Level Logs to Sentry
+
+> Renumbered from 0019 (2026-09-02, #492) — the number collided with 0019 sessionStorage Swipe Direction.
 
 **Date:** 2026-07-09
 **Status:** Accepted

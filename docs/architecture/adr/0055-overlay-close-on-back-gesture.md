@@ -1,4 +1,6 @@
-# ADR 0043: Overlays close on back-gesture via a shared history guard, coordinated with AndroidBackExitGuard
+# ADR 0055: Overlays close on back-gesture via a shared history guard, coordinated with AndroidBackExitGuard
+
+> Renumbered from 0043 (2026-09-02, #492) — the number collided with 0043 Breakpoint-Dependent Positioning Must Be CSS-Gated.
 
 **Date:** 2026-08-15
 **Status:** Accepted

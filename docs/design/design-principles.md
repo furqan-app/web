@@ -84,7 +84,7 @@ Ornament closes and frames; it never divides, never sits inside the reading colu
 
 ## Type
 
-The **reading size is a contract, not an aesthetic** — ADR 0038 and `docs/standards/quran-rendering.md`. No principle here may move it.
+The **reading size is a contract, not an aesthetic** — ADR 0054 and `docs/standards/quran-rendering.md`. No principle here may move it.
 
 The interface scale is small, dense and quiet so nothing in the chrome competes with the page: a bold wordmark, a semibold page-orientation line that truncates rather than wraps, small tracked-out muted secondary orientation, and the smallest heaviest-tracked step reserved for section overlines.
 
