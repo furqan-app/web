@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
 import { Maximize2, Minimize2, PanelLeftOpen, ChevronDown, Settings } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
@@ -14,6 +13,7 @@ import { FurqanLogo } from "./FurqanLogo";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useSidebar } from "@/app/contexts/SidebarContext";
 import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
+import { useIsReaderRoute } from "@/app/hooks/use-is-reader-route";
 import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
 import { getLanguageDirection, toLocaleNumeral } from "@/app/utils/i18n";
 import useTranslations from "@hooks/use-translations";
@@ -24,12 +24,9 @@ export const Nav = () => {
   const { overlayVisible } = useNavOverlay();
   const isDesktopUp = useIsDesktopUp();
   const { open, setOpen, currentSurah, currentJuzHizb } = useSidebar();
-  const pathname = usePathname();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
-  // Trailing slash required — a bare "/pages" substring match false-positives
-  // on any route containing that string (e.g. a hypothetical /pages-list).
-  const isOnPagesRoute = pathname?.includes("/pages/") ?? false;
+  const isOnPagesRoute = useIsReaderRoute();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenEnabled, setFullscreenEnabled] = useState(false);

@@ -386,7 +386,9 @@ export function ReaderPager({
 
   // Follow target for <RecitationFollow>. The recitation subscription lives in that
   // leaf so this pager never re-renders on a recited-word tick; the leaf calls this
-  // stable callback when the recited page leaves the visible window.
+  // stable callback only while follow is *attached* (ADR 0050) and the recited page
+  // has moved out of the visible window — a plain manual swipe away detaches
+  // instead and never reaches here.
   //
   // Deferred to a microtask, NOT run inline: the leaf's follow effect can fire
   // synchronously INSIDE commitTo's `flushSync` (which flushes passive effects), at
@@ -394,15 +396,15 @@ export function ReaderPager({
   // direct commitTo would nest one flushSync inside another. A microtask runs after
   // the outer flush unwinds, so the guards read final state and the commit is a
   // clean top-level flush. Skipped mid drag/commit so it never yanks the page from
-  // under the finger; the next recitedPage/anchor change re-checks. commitTo
-  // converges — once the recited page is visible the leaf stops calling this.
+  // under the finger — the leaf keeps its `prevRecitedPage` stale on a follow, so
+  // the next recitedPage/anchor change retries this until it lands.
   const followTo = useCallback(
     (target: number) => {
       queueMicrotask(() => {
         // Deliberately does NOT take over an in-flight turn the way user input
         // does: follow is automatic, and truncating a turn the reader started
-        // would have playback fighting the finger. It converges — the next
-        // recitedPage/anchor change re-checks.
+        // would have playback fighting the finger. The leaf retries on the next
+        // recitedPage/anchor change.
         if (isDragging.current || isCommitting.current) return;
         commitTo(target);
       });

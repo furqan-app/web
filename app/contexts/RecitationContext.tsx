@@ -140,6 +140,14 @@ type RecitationContextType = {
   // persistent pager (ADR 0028) watches this to keep the recited page on screen —
   // navigation lives in the pager, not here.
   recitedPage: number | null;
+  // Attach/detach follow state (ADR 0050). true = the reader is showing the
+  // recited page and tracks it (auto-advance pulls the visible window forward);
+  // false = the user has navigated away on purpose (or left the reader route)
+  // and RecitationReturnPanel offers a way back. Owned here, decided entirely by
+  // the RecitationFollow leaf — ReaderPager never subscribes. Session state,
+  // never persisted. Reset to false by stop(); set true by play().
+  isFollowing: boolean;
+  setIsFollowing: (value: boolean) => void;
   // First verse_key of the currently displayed page, kept current by
   // RecitationPageSync — the voice panel's play button reads it as its
   // "play current Safha" start point (it cannot receive props from the pager).
@@ -236,6 +244,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
   const [recitedPage, setRecitedPage] = useState<number | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [currentPageNumber, setCurrentPageNumber] = useState<number | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -346,6 +355,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     currentVerseKeyRef.current = null;
     setCurrentVerseKey(null);
     setRecitedPage(null);
+    setIsFollowing(false);
     rangeRepeatOverrideRef.current = null;
     setActiveOverride(null);
     setRangeProgress(null);
@@ -456,6 +466,23 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
         verseTimingsRef.current = chapterAudio.verseTimings;
         versePagesRef.current = versePages;
+        // Publish the recited page synchronously at session start. The mount-time
+        // [mushafId, getVersePages] effect below does not re-run on play(), and the
+        // first timeupdate tick is still the start verse so it skips
+        // updateRecitedPage — without this, recitedPage stays null until the first
+        // verse boundary, and RecitationFollow / RecitationReturnPanel need it from
+        // the first frame (ADR 0050).
+        {
+          const startPage = versePages[verseKey];
+          if (startPage != null) setRecitedPage(startPage);
+        }
+        // Note: isFollowing is NOT force-set here. Only RecitationFollow (mounted
+        // in the reader) can attach — a session started off-reader (a listening
+        // wird from /plans, an offline download from Settings) must stay
+        // "detached" so RecitationReturnPanel is the surface that can stop it or
+        // jump into the reader. On-reader, the leaf attaches within a tick (or
+        // pulls the reader to a far start verse — its prevRecitedPage == null
+        // branch). See ADR 0050.
         startVerseKeyRef.current = verseKey;
         stopVerseKeyRef.current = stopTarget.verseKey;
         stopChapterIdRef.current = stopTarget.chapterId;
@@ -486,6 +513,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         setStatus("idle");
         rangeRepeatOverrideRef.current = null;
         setActiveOverride(null);
+        setIsFollowing(false);
         // Only a real "not downloaded" case, not e.g. an autoplay-policy
         // rejection while online.
         if (!isOnline) setPlaybackError("offline-unavailable");
@@ -1020,6 +1048,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         status,
         currentVerseKey,
         recitedPage,
+        isFollowing,
+        setIsFollowing,
         pageFirstVerseKey,
         setPageFirstVerseKey,
         currentPageNumber,

@@ -389,7 +389,8 @@
     "rangeProgressAyah": "Ayah {index}/{length}",
     "rangeProgressRepeat": "Repeat {done}/{target}",
     "numberSearchPlaceholder": "Search…",
-    "numberEmpty": "No match."
+    "numberEmpty": "No match.",
+    "returnToRecitedPage": "Back to page {page}"
   },
   "offlineRecitation": {
     "title": "Offline Recitation",

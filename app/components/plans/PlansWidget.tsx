@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
@@ -10,6 +9,7 @@ import { useOnlineStatus } from "@hooks/use-online-status";
 import { useReaderPage } from "@/app/contexts/ReaderPageContext";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+import { useIsReaderRoute } from "@/app/hooks/use-is-reader-route";
 import { PLAN_TEMPLATE_UI } from "@constants/plan-ui";
 import type { TrackAssignment } from "@/app/lib/plans/engine";
 import { isPageInAssignmentRange } from "@/app/lib/plans/assignment-range";
@@ -49,9 +49,8 @@ const inRange = (
 export const PlansWidget = () => {
   const t = useTranslations();
   const locale = useLocale();
-  const pathname = usePathname();
   const { status: sessionStatus } = useSession();
-  const isOnReaderRoute = Boolean(pathname?.includes("/pages/"));
+  const isOnReaderRoute = useIsReaderRoute();
   const isSignedIn = sessionStatus === "authenticated";
 
   const { data: todayData, checkOff, uncheckOff } = useTodayAssignments({

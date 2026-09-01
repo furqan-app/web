@@ -390,7 +390,8 @@
     "rangeProgressAyah": "الآية {index}/{length}",
     "rangeProgressRepeat": "تكرار {done}/{target}",
     "numberSearchPlaceholder": "ابحث…",
-    "numberEmpty": "لا يوجد تطابق."
+    "numberEmpty": "لا يوجد تطابق.",
+    "returnToRecitedPage": "العودة إلى صفحة {page}"
   },
   "offlineRecitation": {
     "title": "التلاوة دون اتصال",

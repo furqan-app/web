@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import { toLocaleNumeral } from "@/app/utils/i18n";
 import { REPEAT_COUNT_MAX } from "@/app/constants/recitation";
@@ -17,6 +15,7 @@ import {
 } from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+import { useIsReaderRoute } from "@/app/hooks/use-is-reader-route";
 import useTranslations from "@/app/hooks/use-translations";
 import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
 import { cn } from "@/lib/utils";
@@ -24,9 +23,11 @@ import { cn } from "@/lib/utils";
 // Fixed bottom bar, mounted app-wide in app/[locale]/layout.tsx. On reader
 // routes (self + grant) it's a permanent fixture — even idle, so its play
 // button can start playback of the current Safha — mirroring the nav, which
-// it must always follow. Off the reader route, recitation is stopped (hard
-// stop, ADR 0021 Addendum 2026-08-02) so the bar never appears there. On tablet/mobile
-// reader routes it also mirrors the nav overlay's show/hide
+// it must always follow. Off the reader route it renders nothing: playback
+// keeps running (ADR 0050 — no more hard stop), but the only recitation
+// surface there is RecitationReturnPanel's centered pill — a pill, not a
+// full-width bar, so it cannot overlap page content the way this bar did
+// (Trello #152). On tablet/mobile reader routes it also mirrors the nav overlay's show/hide
 // (isOverlayMode/overlayVisible), same toggle, same transform pattern as
 // Nav.tsx — see docs/plans/tablet-nav-overlay.md Addendum "Sync voice panel
 // with nav overlay".
@@ -51,23 +52,18 @@ export const RecitationPlayerBar = () => {
     perAyahProgress,
   } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
-  const pathname = usePathname();
+  const isOnReaderRoute = useIsReaderRoute();
   const locale = useLocale();
   const t = useTranslations();
   const tRich = useNextIntlTranslations("recitation");
   const rangeT = useNextIntlTranslations("recitation");
 
-  const isOnReaderRoute = Boolean(pathname?.includes("/pages/"));
   const isIdle = status === "idle";
 
-  // Hard-stop recitation when the user navigates away from any reader route.
-  // Supersedes ADR 0021's background mini-player behavior (Trello #152).
-  // Must sit before the early return — React rules forbid hooks after conditionals.
-  useEffect(() => {
-    if (!isOnReaderRoute && !isIdle) stop();
-  }, [isOnReaderRoute, isIdle, stop]);
-
-  if (isIdle && !(isOnReaderRoute && pageFirstVerseKey)) return null;
+  // Reader-only chrome. Playback is app-wide now (ADR 0050) and never stops on
+  // navigation — off-reader, RecitationReturnPanel is the only surface.
+  if (!isOnReaderRoute) return null;
+  if (isIdle && !pageFirstVerseKey) return null;
 
   const reciter = reciters.find((r) => r.id === settings.reciterId);
   const isPlaying = status === "playing";
@@ -139,9 +135,9 @@ export const RecitationPlayerBar = () => {
         // rail transform below.
         "fq-recitation-bar fq-chrome-bar fq-chrome-bar-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border/50",
         // Reader-only marker: at >=1367px and >=800px tall, globals.css turns the
-        // bar into a vertical rail fixed to the screen-right. Off the reader route
-        // there is no spread to anchor to, so the bar keeps its full-width form.
-        isOnReaderRoute && "fq-recitation-bar-rail",
+        // bar into a vertical rail fixed to the screen-right. The bar only ever
+        // renders on the reader route now (early return above).
+        "fq-recitation-bar-rail",
         isOverlayMode && "transition-transform duration-300",
         isOverlayMode && !overlayVisible && "translate-y-full",
       )}
@@ -154,27 +150,25 @@ export const RecitationPlayerBar = () => {
           zones pinned to the rail's top, true midpoint and foot. */}
       <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5">
         <div className="fq-rail-zone fq-rail-lead">
-          {isOnReaderRoute ? (
-            <ReciterCombobox
-              reciters={reciters}
-              value={settings.reciterId}
-              onChange={(id) => updateSettings({ reciterId: id })}
-              portalContainer={null}
-              contentClassName="w-64 p-0"
-              side="left"
-              trigger={({ open }) => (
-                <button
-                  type="button"
-                  aria-expanded={open}
-                  aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                  title={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                  className="fq-recitation-rail-reciter fq-recitation-lead-btn fq-focus-ring relative hidden items-center justify-center rounded-full"
-                >
-                  <CircleUserRound className="size-[18px]" strokeWidth={1.6} />
-                </button>
-              )}
-            />
-          ) : null}
+          <ReciterCombobox
+            reciters={reciters}
+            value={settings.reciterId}
+            onChange={(id) => updateSettings({ reciterId: id })}
+            portalContainer={null}
+            contentClassName="w-64 p-0"
+            side="left"
+            trigger={({ open }) => (
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                title={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                className="fq-recitation-rail-reciter fq-recitation-lead-btn fq-focus-ring relative hidden items-center justify-center rounded-full"
+              >
+                <CircleUserRound className="size-[18px]" strokeWidth={1.6} />
+              </button>
+            )}
+          />
         </div>
 
         <div className="fq-rail-zone fq-rail-transport">
