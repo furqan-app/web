@@ -1309,6 +1309,7 @@ body,
       top: 70px;
       bottom: 0 !important;
       width: 72px;
+      padding: 0 !important;
       border-width: 0 !important;
       border-radius: 0;
       backdrop-filter: blur(14px);
