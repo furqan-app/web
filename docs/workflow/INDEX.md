@@ -17,6 +17,18 @@ Refine → Plan → Implement → Review → Ship → Retrospect
 
 ---
 
+## Architecture & decision records
+
+The AI-first docs system (adopted 2026-06-28): `CLAUDE.md` is a slim pointer, heavy context lives in `docs/` and is loaded on demand — never burned on every session.
+
+- **Active decisions:** [`../architecture/DECISIONS.md`](../architecture/DECISIONS.md) is a thin index. Load it always, then the 1–3 [`decisions/*.md`](../architecture/decisions/) domain files your task touches — never all of them ([ADR 0057](../architecture/adr/0057-decisions-split-by-domain.md)).
+- **ADR history:** `docs/architecture/adr/` — the audit trail for humans. A valid ADR names alternatives and records trade-offs; if there are none, add a `decisions/` entry or a standards doc instead. Use `adr/TEMPLATE.md`.
+- **`CLAUDE.md` stays a slim pointer** — never architecture detail, standards, or decisions.
+- Adding a new decision **domain file** → add its row to the Domains table in `DECISIONS.md` in the same commit.
+- Workflow / process decisions are recorded **here**, not in `decisions/`.
+
+---
+
 ## All Workflows
 
 ### Task Workflow
@@ -26,7 +38,7 @@ Refine → Plan → Implement → Review → Ship → Retrospect
 | `/refine-fq-task` | [refine-task.md](refine-task.md) | Break a big task into scoped issues (epic + children, `status:backlog`) — no implementation |
 | `/plan-fq-task` | [plan-task.md](plan-task.md) | Socratic planning → `docs/plans/<slug>.md` |
 | `/start-fq-task` | [start-task.md](start-task.md) | Implement from a plan, load all context |
-| `/check-fq-standards` | [check-fq-standards.md](check-fq-standards.md) | Pre/post-implementation guardrail vs DECISIONS.md + engineering bar |
+| `/check-fq-standards` | [check-fq-standards.md](check-fq-standards.md) | Pre/post-implementation guardrail vs the `decisions/*.md` files + engineering bar |
 | `/review-fq-work` | [review-work.md](review-work.md) | Code review on current branch diff |
 | `/ship-fq-task` | [ship-task.md](ship-task.md) | Commit → push → PR → ticket update |
 | `/retrospect` | [retrospect.md](retrospect.md) | End-of-session retrospective |

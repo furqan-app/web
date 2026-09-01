@@ -71,7 +71,7 @@ You are a senior code reviewer. Review the following branch diff across three di
 - Does the implementation match the plan in `docs/plans/`?
 - Are there TODOs or placeholders left in the code?
 - Are there any `docs/plans/` files that should now be marked `implemented` but aren't?
-- Does anything contradict `docs/architecture/DECISIONS.md`?
+- Does anything contradict `docs/architecture/DECISIONS.md`'s invariants or a `docs/architecture/decisions/*.md` entry for a touched domain?
 
 If a dimension has no findings, say "No issues found." Do not pad with filler observations. Number findings within each dimension (1., 2., 3., ...), continuing the count across dimensions rather than restarting at 1 for each one, so every finding has a stable reference number for follow-up discussion.
 

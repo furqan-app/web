@@ -13,13 +13,15 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 
 ### 2. Load context — mandatory gate, before writing any code
 
-- Read `docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
+- Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files matching this task's area (the index's Domains table maps them) — not every domain file. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
 - Read `docs/architecture/COMPONENTS.md`
 - Read the relevant standards file(s) from `docs/standards/` based on task type:
-  - UI/component work → `component-patterns.md` + `styling.md`
-  - API work → `api-conventions.md`
-  - DB work → `database.md`
-  - i18n work → `i18n.md`
+  - UI/component work → `component-patterns.md` + `styling.md` · decisions: `reader.md` / `nav.md` / `theming.md`
+  - API work → `api-conventions.md` · decisions: `api.md`
+  - DB work → `database.md` · decisions: `db.md`
+  - i18n work → `i18n.md` · decisions: `i18n.md`
+  - Reader / pager / swipe / mushaf → decisions: `reader.md` + `rendering.md`
+  - PWA / offline / service worker → decisions: `pwa.md`
   - Multiple domains → load all relevant files
 - **UI mode** — if the task involves components, pages, layout, or styling, also:
   - Read `docs/standards/styling.md` and `docs/standards/component-patterns.md` (if not already loaded above)
@@ -29,7 +31,7 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 
 ### 3. Pre-implementation guardrail check
 
-- Invoke the `check-fq-standards` skill in **pre-check** mode: list the files/components this task touches, then cross-reference `docs/architecture/DECISIONS.md`'s constraints and the general engineering bar for anything load-bearing. Do this before writing any code.
+- Invoke the `check-fq-standards` skill in **pre-check** mode: list the files/components this task touches, then cross-reference the relevant `docs/architecture/decisions/*.md` files' constraints and the general engineering bar for anything load-bearing. Do this before writing any code.
 
 ### 4. Implement
 
@@ -37,7 +39,7 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 - **Before editing, verify the current code matches what the plan/docs describe.** Open the files the plan names and confirm their present state lines up with the plan's assumptions — plans can go stale, and acting on a stale claim ("X is unchanged", "Y still renders here") is how documented behavior gets broken. If reality and the doc disagree, stop and reconcile with the user before changing anything.
 - Follow the plan exactly (the latest addendum's approach). If you discover the plan needs revision, pause and discuss — do not silently deviate.
 - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
-- Apply decisions from `DECISIONS.md` — do not re-litigate them.
+- Apply the decisions you loaded from `docs/architecture/decisions/` — do not re-litigate them.
 - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
 
 ### 5. Design remediation (if planned)
@@ -48,13 +50,13 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 
 ### 6. Post-implementation guardrail check
 
-- Invoke the `check-fq-standards` skill in **post-check** mode against the diff: walk its Regression Classes and General Engineering Bar checklists, and re-grep `DECISIONS.md` for constraints on every changed file. Fix any failing item before continuing — do not proceed to Report with a known open violation.
+- Invoke the `check-fq-standards` skill in **post-check** mode against the diff: walk its Regression Classes and General Engineering Bar checklists, and re-grep the `docs/architecture/decisions/*.md` files for the domains every changed file touches. Fix any failing item before continuing — do not proceed to Report with a known open violation.
 
 ### 7. Record decisions
 
 - If the task added, removed, or reorganised any components: update `docs/architecture/COMPONENTS.md` to reflect the new state.
 - After implementation, check: were any new architectural decisions made during implementation?
-- If yes, update `docs/architecture/DECISIONS.md`.
+- If yes, add a `## ` section (with `**Status:** active`) to the matching `docs/architecture/decisions/*.md` file — new domain → new file + a Domains-table row in `DECISIONS.md`; cross-cutting rule → also a one-liner in `DECISIONS.md`'s Non-negotiable Invariants block.
 - Mark the plan status as `implemented`.
 
 ### 8. Report
@@ -69,7 +71,7 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 ## Anti-patterns to avoid
 
 - Do not load all standards files when only one is relevant.
-- Do not start implementing before both gates are done: the whole plan read (all addenda, step 1) and DECISIONS.md + its linked ADRs loaded (step 2).
+- Do not start implementing before both gates are done: the whole plan read (all addenda, step 1) and the decisions index + task-domain `decisions/*.md` files + their linked ADRs loaded (step 2).
 - Do not implement an approach a later addendum revised or reverted — the newest addendum wins.
 - Do not act on a stale doc claim without checking the code first — verify current state before editing.
 - Do not undo or contradict an ADR, a `Constraints` item, or a `What NOT to Do` item as a side effect of the change.
