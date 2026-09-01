@@ -10,11 +10,13 @@ import {
   Pause,
   Play,
   Repeat,
+  RotateCcw,
   Settings as SettingsIcon,
   Square,
 } from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 import { useIsReaderRoute } from "@/app/hooks/use-is-reader-route";
 import useTranslations from "@/app/hooks/use-translations";
 import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
@@ -38,6 +40,8 @@ export const RecitationPlayerBar = () => {
   const {
     status,
     currentVerseKey,
+    recitedPage,
+    isFollowing,
     reciters,
     settings,
     updateSettings,
@@ -52,6 +56,7 @@ export const RecitationPlayerBar = () => {
     perAyahProgress,
   } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
+  const { jumpTo } = useReaderNavigation();
   const isOnReaderRoute = useIsReaderRoute();
   const locale = useLocale();
   const t = useTranslations();
@@ -68,6 +73,16 @@ export const RecitationPlayerBar = () => {
   const reciter = reciters.find((r) => r.id === settings.reciterId);
   const isPlaying = status === "playing";
   const isLoading = status === "loading";
+
+  // Detached follow (ADR 0050): the user paged/jumped away from the recited page
+  // while a session is live. The way back lives IN the bar — the bar's band is
+  // already reserved by the reader layout, so a control here never overlaps the
+  // mushaf the way a floating element would. Off-reader, RecitationReturnPanel
+  // carries the same affordance.
+  const showReturn = !isIdle && !isFollowing && recitedPage != null;
+  const returnLabel = tRich("returnToRecitedPage", {
+    page: toLocaleNumeral(recitedPage ?? 0, locale),
+  });
 
   const handlePlayPause = () => {
     if (isIdle) {
@@ -246,6 +261,18 @@ export const RecitationPlayerBar = () => {
         </div>
 
         <div className="fq-rail-zone fq-rail-utils">
+          {showReturn ? (
+            <button
+              type="button"
+              aria-label={returnLabel}
+              title={returnLabel}
+              onClick={() => recitedPage != null && jumpTo?.(recitedPage)}
+              className="fq-chrome-btn fq-focus-ring size-8 text-primary"
+            >
+              <RotateCcw className="size-4" strokeWidth={1.8} />
+            </button>
+          ) : null}
+
           <button
             type="button"
             aria-label={repeatLabel}

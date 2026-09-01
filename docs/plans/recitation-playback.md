@@ -534,7 +534,7 @@ Both constraints re-run whenever the reference (current verse/page) changes, so 
 ## Addendum 10: Stop recitation when leaving the reader (Trello #152)
 
 **Date:** 2026-08-02  
-**Status:** ~~implemented~~ **superseded 2026-09-01 by Addendum 13 / [ADR 0050](../architecture/adr/0050-recitation-global-playback-and-detachable-follow.md)** — the hard stop is removed, playback is app-wide again, and the bar-overlap this addendum reacted to is handled by making the off-reader surface a small centered pill (`RecitationReturnPanel`) instead of a full-width bar. Everything below is retained for history; the "hard stop, not pause" contract and the "Do not call `togglePlayPause()` instead of `stop()`" guidance no longer apply.
+**Status:** ~~implemented~~ **superseded 2026-09-01 by Addendum 13 / [ADR 0050](../architecture/adr/0050-recitation-global-playback-and-detachable-follow.md)** — the hard stop is removed, playback is app-wide again, and the bar-overlap this addendum reacted to is handled by keeping the recitation surface out of content's way: in `RecitationPlayerBar` on the reader (reserved band), and a small centered pill that reserves a flow spacer off the reader. Everything below is retained for history; the "hard stop, not pause" contract and the "Do not call `togglePlayPause()` instead of `stop()`" guidance no longer apply.
 
 ### Problem
 
@@ -970,9 +970,10 @@ are reversed here:
    route kills playback. A user who taps Marks / Home / a notification mid-recitation loses
    their place and the audio. The fix that motivated the hard stop (Trello #152 — the
    full-width `RecitationPlayerBar` had no bottom-padding counterpart on non-reader pages and
-   overlapped their content) is addressed differently here: off-reader, the player bar stays
-   hidden and a small **centered pill** (`RecitationReturnPanel`) is the only recitation
-   chrome — a pill, not a full-width bar, so it has nothing to overlap.
+   overlapped their content) is addressed differently here: the way back to a detached
+   recitation lives **inside `RecitationPlayerBar`** on the reader (whose band the layout
+   already reserves) and as `RecitationReturnPanel` — a small centered pill that renders a
+   flow spacer to reserve its own height — off the reader. Neither floats over content.
 
 2. **Forced follow-snap on manual navigation (DECISIONS.md "Recitation Playback", the
    "swiping away while playing snaps back" bullet).** While playing, the `RecitationFollow`
@@ -1017,42 +1018,39 @@ The leaf distinguishes "auto-advance moved the recited page" from "user moved th
 diffing the previous `recitedPage` / `anchor` against the current via refs — the same values
 it already receives as props / context.
 
-### Return panel — `RecitationReturnPanel`
+### The "return to recited page" affordance — split by route
 
-New client component, mounted app-wide in `app/[locale]/layout.tsx` immediately after
-`<RecitationPlayerBar />` (inside both `RecitationProvider` and `ReaderNavigationProvider`,
-so it can read playback state and call `jumpTo`).
+The way back to a detached recitation must **never float over content** (design-principles:
+"chrome reserves space, never overlaps the mushaf"). So it lives in different places on and
+off the reader:
 
-- **Visible iff** `status !== "idle" && !isFollowing && recitedPage != null`.
-- **Placement:** `position: fixed`, horizontally centered, near the **bottom** edge. On the
-  reader it floats above `RecitationPlayerBar` (`bottom` offset ≈ 5.5rem, clearing the ~76px
-  bar; the desktop right-rail form leaves the bottom clear so a slightly-high pill is
-  harmless); off-reader, where the bar is hidden, it drops to ≈1.25rem. A small **centered
-  pill**, never a full-width bar — that is what removes the Trello #152 content-overlap risk,
-  not the edge it sits on; the top edge was rejected because the non-reader nav lives there.
-  `z-40`, same layer as the player bar; mounted after it so it wins the stacking tie. The
-  outer wrapper is `pointer-events-none` (only the pill itself is interactive) so it never
-  blocks the page under it.
-- **Content:** a quiet rounded-full chrome pill — a muted label (`returnPillAtVerse` =
-  "تلاوة {verse}" using the live `currentVerseKey`, falling back to `returnPillParked` when
-  there is no verse yet), a **Return** link (`RotateCcw` icon + "العودة إلى صفحة {page}",
-  `page` via `toLocaleNumeral`) carrying the single `--primary` accent, and a quiet
-  `fq-chrome-btn` **Stop** icon button. Chrome face + top rim, no drop shadow
-  (design-principles "Depth" — floating dark chrome takes a rim, never a shadow).
-- **Return** navigates to the recited page:
-  - reader mounted (`useReaderNavigation().jumpTo` non-null) → `jumpTo(recitedPage)`
-    (client-side pager move; works for the grant reader too, since its own pager registered
-    that `jumpTo`). The leaf then re-attaches because the recited page is now visible.
-  - reader not mounted (`jumpTo` null, i.e. off-route) → a locale-aware `<Link>` to
-    `/{locale}/pages/{recitedPage}` does a real navigation; the reader mounts and the leaf
-    attaches. Same `<Link>` + `jumpTo`-handoff-on-click shape as `ContinueReadingLink`.
-    Accepted limitation, identical to `ContinueReadingLink`: an off-route return always lands
-    on the **self** reader `/pages/…`, never `/mushaf/{grant}/pages/…`. A user who left a
-    grant reader entirely and taps Return goes to the self reader.
-- **Stop** calls `stop()`; **play/pause** calls `togglePlayPause()` (shown while
-  `playing`/`paused` — a session paused off-reader would otherwise be a dead end, the bar
-  being hidden there).
-- Fades in on mount (160ms, collapses under `prefers-reduced-motion` — one declaration).
+**On the reader — inside `RecitationPlayerBar`.** When `!isIdle && !isFollowing &&
+recitedPage != null` the bar's utils zone (`fq-rail-utils`) gains a `RotateCcw` button,
+`--primary`-tinted (the one live action), `aria-label` "العودة إلى صفحة {page}". Click →
+`jumpTo(recitedPage)` (always registered while the reader is mounted). The reader layout
+already reserves the bar's band — 76px `padding-bottom` on `.fq-reader-outer` in the
+bottom-bar form, 72px `padding-right` on `.fq-reader-spread-container` in the desktop rail
+form — so a control here overlaps nothing. No floating element renders on the reader.
+
+**Off the reader — `RecitationReturnPanel`.** New client component mounted app-wide in
+`app/[locale]/layout.tsx` right after `<RecitationPlayerBar />` (inside `RecitationProvider`
+and `ReaderNavigationProvider`).
+
+- **Renders iff** `!isOnReaderRoute && status !== "idle" && !isFollowing && recitedPage != null`.
+- A small **centered pill** `position: fixed` at `bottom ≈ 1.25rem`, `z-40`, wrapper
+  `pointer-events-none` (only the pill is interactive). Chrome face + top rim, no drop
+  shadow; 160ms fade-in that collapses under `prefers-reduced-motion`.
+- **It also renders a flow-level spacer** — an `aria-hidden` block `≈ 4.5rem` tall, a
+  sibling of the page inside the app shell — so the document's scroll area grows by the
+  pill's footprint and page content never ends up behind it. The spacer appears/disappears
+  with the pill, no cleanup effect needed.
+- **Content:** play/pause (`togglePlayPause`, shown while `playing`/`paused` so a session
+  paused off-reader isn't a dead end), a muted label (`currentVerseKey`, falling back to
+  `recitation.nowPlaying`), a **Return** link carrying the single `--primary` accent, and a
+  quiet `fq-chrome-btn` **Stop**.
+- **Return** → `<Link href={/pages/{recitedPage}}>` (a real navigation; `jumpTo` is null
+  off-reader). Accepted limitation, identical to `ContinueReadingLink`: it always lands on
+  the **self** reader `/pages/…`, never `/mushaf/{grant}/pages/…`.
 
 ### `RecitationContext` changes
 
@@ -1092,11 +1090,14 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
 ### `RecitationPlayerBar` changes
 
 - **Delete** the hard-stop `useEffect` (`if (!isOnReaderRoute && !isIdle) stop()`).
-- Render gate becomes: `if (!isOnReaderRoute) return null;` then
-  `if (isIdle && !pageFirstVerseKey) return null;`. The bar is reader-only chrome again;
-  off-reader the return panel is the only surface. (Previously the bar could briefly render
-  off-route before the hard-stop effect ran — that path is gone, not merely disabled.)
-- Update the top-of-file comment block and the "Hard-stop recitation …" comment.
+- Render gate → reader routes only (`if (!isOnReaderRoute) return null;` then
+  `if (isIdle && !pageFirstVerseKey) return null;`). Drop the now-dead `isOnReaderRoute`
+  branches.
+- **Add the "return to recited page" button** to `fq-rail-utils`, shown when
+  `!isIdle && !isFollowing && recitedPage != null` — `RotateCcw`, `text-primary`, click →
+  `jumpTo(recitedPage)`. Consumes `recitedPage` / `isFollowing` from `RecitationContext` and
+  `jumpTo` from `useReaderNavigation`.
+- Update the top-of-file comment block.
 
 ### Files to Change
 
@@ -1105,9 +1106,10 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
   leaf attaches); `stop()` + the `play()` failure path reset `isFollowing`.
 - `app/components/reader/RecitationFollow.tsx` — attach/detach machine (thin wrapper over
   `decideRecitationFollow`; keeps `prevRecitedPage` stale on a `follow`; unmount → detach).
-- `app/components/RecitationPlayerBar.tsx` — remove hard stop; render gate → reader routes
-  only; drop the now-dead `isOnReaderRoute` branches; comments.
-- `app/components/recitation/RecitationReturnPanel.tsx` — **new** (play/pause + Return + Stop).
+- `app/components/RecitationPlayerBar.tsx` — remove hard stop; reader-route-only render gate;
+  drop dead `isOnReaderRoute` branches; **add the in-bar return button**; comments.
+- `app/components/recitation/RecitationReturnPanel.tsx` — **new**; off-reader only
+  (`isOnReaderRoute` → null). Centered pill + a flow-level spacer that reserves its height.
 - `app/[locale]/layout.tsx` — mount `<RecitationReturnPanel />` after `<RecitationPlayerBar />`.
 - `app/hooks/use-is-reader-route.ts` — **new**; extracted the `pathname.includes("/pages/")`
   predicate (4th copy, now render-decision-load-bearing per ADR 0050). Migrated
@@ -1115,8 +1117,8 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
 - `app/components/reader/ReaderPager.tsx` — `followTo` comment only (now attached-follow-only,
   and the retry story changed).
 - `app/globals.css` — `.fq-recitation-return-pill` (chrome face + top rim + a 160ms fade-in
-  that collapses under `prefers-reduced-motion`). Positioning stays in Tailwind on the
-  component.
+  that collapses under `prefers-reduced-motion`). Positioning + the spacer stay in Tailwind
+  on the component.
 - `app/utils/recitation.ts` — `decideRecitationFollow` pure helper (+ `app/utils/recitation.test.ts`).
 - `e2e/tests/recitation-lifecycle.spec.ts` — **new**; the lifecycle suite (route-leave,
   swipe-away, return, stop; desktop + one mobile swipe case; recitation APIs + a silent-WAV
@@ -1152,19 +1154,23 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
 - Do **not** add follow/detach state to `ReaderPager` or make it consume `RecitationContext`.
 - Do **not** pause audio on any navigation — playback runs on its own timeline (unchanged
   standing decision).
-- Do **not** show the full `RecitationPlayerBar` off-reader — the return pill is the only
-  off-reader surface (keeps the Trello #152 overlap fix intact).
-- Do **not** make the panel a full-width bar, and do **not** reserve bottom padding for it on
-  any page — it stays a narrow centered pill with a `pointer-events-none` wrapper.
+- Do **not** show the full `RecitationPlayerBar` off-reader.
+- Do **not** let any recitation surface float over content. On the reader the return
+  affordance goes in the bar (reserved band); off-reader the pill renders a flow spacer for
+  its own height. No fixed element that isn't backed by reserved space.
+- Do **not** render `RecitationReturnPanel` on the reader (`isOnReaderRoute` → null) — the
+  bar carries it there.
 - Do **not** persist `isFollowing`.
 - Do **not** reintroduce a per-word context subscription anywhere.
 
 ### Known follow-ups (not this task)
 
-- The `<Link href={/pages/N}> + onClick → jumpTo(N)` handoff is now duplicated in ~5 places
-  (`ContinueReadingLink`, `SurahListItem`, `RubList`, `AyahPicker`, and this pill). Worth
-  extracting a shared `<ReaderJumpLink page={n}>` — deliberately left out here to keep the PR
-  scoped to the lifecycle change.
+- The `<Link href={/pages/N}> + onClick → jumpTo(N)` client-handoff pattern is duplicated in
+  ~4 places (`ContinueReadingLink`, `SurahListItem`, `RubList`, `AyahPicker`). The pill
+  deliberately skips the handoff (it's off-reader only — `jumpTo` is always null there, and a
+  stale one calling into an unmounted pager would be a bug), so a plain `<Link>` is correct;
+  but the broader pattern is still worth extracting into a shared `<ReaderJumpLink>` — out of
+  scope here.
 - `followTo` still silently drops a follow issued mid drag/commit; the stale-`prevRecitedPage`
   retry covers the common case but a follow lost right before a sub-threshold drag-return can
   leave the reader a page behind (no pill, playback fine) until the next page boundary.
@@ -1173,21 +1179,25 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
 ### Verified test cases
 
 1. **Route leave keeps playback.** Play on p1 → tap a top-level nav item (Home/Marks) →
-   audio still playing (not paused), player bar gone, return pill visible with "page 1".
+   audio still playing (not paused), player bar gone, off-reader pill visible with "page 1".
 2. **Return from off-route.** From (1), tap Return → lands on `/pages/1`, reader mounts,
    pill gone, follow attached.
-3. **Swipe away in reader → no snap.** Play on p1 (stopPoint "page") → swipe to p2 → still
-   on p2 after 1s (no yank), pill visible → tap Return → back on p1, attached.
-4. **Sidebar jump away → no snap.** Same as (3) via a surah/rub jump instead of swipe.
+3. **Page away in reader → no snap, no float.** Play on p1 (stopPoint "page") → Next arrow →
+   still on p2 after 1s (no yank), **no floating pill on the reader**, the bar shows a
+   "return to page 1" button → tap it → back on p1, attached.
+4. **Sidebar jump away → no snap.** Same as (3) via a surah/rub jump instead of the arrow.
 5. **Auto-advance still follows while attached.** Play mid-page-2 with stopPoint "surah",
-   cross into p3 → reader view advances to p3, no pill.
-6. **Stop from pill.** From a detached state → tap Stop → audio stops, pill gone, player
-   bar (if on reader) shows idle/hidden per its own rules.
+   cross into p3 → reader view advances to p3, no return affordance.
+6. **Stop.** From a detached state → tap Stop (bar on reader / pill off-reader) → audio
+   stops, affordance gone.
 7. **Play from a mark on another page still pulls the reader** (regression) — `play("N:…")`
    where N's page ≠ current → reader navigates to it (attached, `onFollow`).
 8. **Return re-attaches, then auto-advance resumes following** — detach on p5 while
-   reciting p2, tap Return → on p2 attached → cross to p3 → follows.
+   reciting p2, tap the bar's return → on p2 attached → cross to p3 → follows.
 9. **Off-reader session start is controllable.** Start a listening wird from `/plans` → go
    to Home → pill visible (never auto-attached), Stop and Return both work.
 10. **Paused off-reader is not a dead end.** Pause from the pill off-reader → pill stays,
     play button resumes.
+11. **Nothing floats over content.** Off-reader with the pill up, scroll a long page
+    (`/marks`) to the end → the last row sits above the pill (flow spacer). On the reader,
+    detached, the mushaf's last line is never covered.

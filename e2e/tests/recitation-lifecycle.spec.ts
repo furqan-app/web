@@ -77,7 +77,11 @@ async function startRecitationOnPage1(page: Page, context: BrowserContext) {
   await page.waitForFunction(audioIsPlaying);
 }
 
+// Off-reader surface.
 const returnPill = (page: Page) => page.locator(".fq-recitation-return-pill");
+// On-reader, the "back to page N" affordance lives inside RecitationPlayerBar.
+const barReturnButton = (page: Page) =>
+  page.locator(".fq-recitation-bar").getByRole("button", { name: /العودة إلى صفحة/ });
 
 test.describe("Recitation lifecycle vs. navigation", () => {
   test("playback survives leaving the reader; the return pill brings it back", async ({
@@ -104,31 +108,36 @@ test.describe("Recitation lifecycle vs. navigation", () => {
     expect(await page.evaluate(audioIsPlaying)).toBe(true);
   });
 
-  test("swiping/paging away in the reader does not snap back; the pill returns", async ({
+  test("paging away in the reader does not snap back; the bar's return button re-attaches", async ({
     page,
     context,
   }, testInfo) => {
     skipNonDesktop(testInfo, "Audio interactions");
     await startRecitationOnPage1(page, context);
 
+    // On the recited page, no return affordance and no floating pill.
+    await expect(barReturnButton(page)).toBeHidden();
+    await expect(returnPill(page)).toBeHidden();
+
     // Page away from the recited page using the in-spread Next arrow.
     await getActivePanel(page).getByRole("link", { name: "Next page" }).click();
     await expect(page).not.toHaveURL("/ar/pages/1");
     await waitForReaderContent(page);
 
-    // No forced snap-back: still off page 1 a beat later, and the pill is shown.
-    await expect(returnPill(page)).toBeVisible();
+    // No forced snap-back, no floating pill on the reader — the way back is in
+    // the player bar, whose band the reader already reserves.
+    await expect(barReturnButton(page)).toBeVisible();
+    await expect(returnPill(page)).toBeHidden();
     await page.waitForTimeout(600);
     await expect(page).not.toHaveURL("/ar/pages/1");
     expect(await page.evaluate(audioIsPlaying)).toBe(true);
 
-    // Return re-attaches follow.
-    await returnPill(page).getByRole("link", { name: /العودة إلى صفحة/ }).click();
+    await barReturnButton(page).click();
     await expect(page).toHaveURL("/ar/pages/1");
-    await expect(returnPill(page)).toBeHidden();
+    await expect(barReturnButton(page)).toBeHidden();
   });
 
-  test("mobile: swiping away from the recited page shows the pill without snapping back", async ({
+  test("mobile: swiping away from the recited page does not snap back", async ({
     page,
     context,
   }, testInfo) => {
@@ -147,14 +156,14 @@ test.describe("Recitation lifecycle vs. navigation", () => {
     await expect(page).not.toHaveURL("/ar/pages/1");
     await waitForReaderContent(page);
 
-    await expect(returnPill(page)).toBeVisible();
+    await expect(barReturnButton(page)).toBeVisible();
     await page.waitForTimeout(600);
     await expect(page).not.toHaveURL("/ar/pages/1");
     expect(await page.evaluate(audioIsPlaying)).toBe(true);
 
-    await returnPill(page).getByRole("link", { name: /العودة إلى صفحة/ }).click();
+    await barReturnButton(page).click();
     await expect(page).toHaveURL("/ar/pages/1");
-    await expect(returnPill(page)).toBeHidden();
+    await expect(barReturnButton(page)).toBeHidden();
   });
 
   test("the pill's Stop ends playback", async ({ page, context }, testInfo) => {

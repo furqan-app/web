@@ -51,7 +51,7 @@ See `docs/plans/recitation-playback.md` Addendum 11.
 
 **Mechanism:** a `useEffect` in `RecitationPlayerBar` calls `stop()` when `isOnReaderRoute` transitions to `false` while not idle. See `docs/plans/recitation-playback.md` Addendum 10.
 
-> **Superseded 2026-09-01 by [ADR 0050](./0050-recitation-global-playback-and-detachable-follow.md).** The hard stop is removed: playback is app-wide and navigation never ends it. `RecitationPlayerBar` renders only on reader routes; off-reader, a small centered `RecitationReturnPanel` pill is the only recitation surface. It is a pill, not the full-width bar this addendum reacted to, so the content-overlap it fixed does not recur. Follow becomes a detachable attach/detach state — see `docs/plans/recitation-playback.md` Addendum 13.
+> **Superseded 2026-09-01 by [ADR 0050](./0050-recitation-global-playback-and-detachable-follow.md).** The hard stop is removed: playback is app-wide and navigation never ends it. `RecitationPlayerBar` renders only on reader routes (and grows an in-bar return button when follow detaches); off-reader, `RecitationReturnPanel` shows a small centered pill that reserves a flow spacer for its own height. Neither floats over content, so the overlap this addendum reacted to does not recur. Follow becomes a detachable attach/detach state — see `docs/plans/recitation-playback.md` Addendum 13.
 
 ---
 

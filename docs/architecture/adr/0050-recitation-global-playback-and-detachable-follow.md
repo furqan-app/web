@@ -34,8 +34,9 @@ just delayed, and it is hard to reason about.
 **Option C — global playback + a two-state attach/detach follow + a return affordance (chosen)**
 Playback ends only on stop / range-end / hard error. Follow is a single `isFollowing` boolean:
 attached tracks and auto-advances; detached leaves the reader wherever the user put it and
-shows a small centered return pill. The pill — not a full-width bar — is the only recitation
-chrome off-reader, so the bar-overlap problem cannot recur.
+surfaces a "return to recited page" affordance — inside `RecitationPlayerBar` on the reader
+(whose band the layout already reserves), and as a small centered pill that reserves a flow
+spacer off the reader. Neither floats over content, so the bar-overlap problem cannot recur.
 
 ## Decision
 
@@ -43,12 +44,11 @@ Option C. Recitation has one app-wide lifecycle and navigation never ends it. `R
 owns `isFollowing` (attached/detached); the `RecitationFollow` leaf is the sole decider of the
 transition (auto-advance keeps it attached, a manual anchor change or leaving the reader
 detaches it, returning to the recited page re-attaches it) and `ReaderPager` gains no
-recitation subscription. A new app-wide `RecitationReturnPanel` renders a fixed centered pill
-(above the player bar on the reader, near the bottom edge elsewhere) whenever
-`status !== "idle" && !isFollowing && recitedPage != null`, offering play/pause, "Return to
-recited page" (via the pager's `jumpTo`, or a `<Link>` to `/pages/{n}` when the reader is
-unmounted) and "Stop". `RecitationPlayerBar` drops its hard-stop effect and renders only on
-reader routes.
+recitation subscription. When `!isIdle && !isFollowing && recitedPage != null`, the way back
+to the recited page appears **in `RecitationPlayerBar`'s utils zone** on the reader, and as
+`RecitationReturnPanel` — a fixed centered pill that also renders an `aria-hidden` flow
+spacer so the document reserves its height — off the reader. `RecitationPlayerBar` drops its
+hard-stop effect and renders only on reader routes.
 
 ## Consequences
 
@@ -56,11 +56,10 @@ reader routes.
   (audio above the route tree) is finally used as intended, with no lifecycle guard fighting it.
 - **+** The reader is browsable during playback; auto-advance still follows while the user is
   on the recited page, so the common "just listen" flow is unchanged.
-- **+** The bar-overlap failure mode (Trello #152) is largely defused: off-reader chrome is
-  now a narrow centered pill with a `pointer-events-none` wrapper, not a full-width bar, so it
-  never blocks interaction and no page needs bottom-padding for it. It can still visually
-  cover the very bottom band of a scrolled page — far less disruptive than the bar, and
-  accepted.
+- **+** The bar-overlap failure mode (Trello #152) is gone: no recitation surface floats over
+  content. On the reader the affordance is in the bar (reserved band); off-reader the pill
+  renders a flow spacer that grows the scroll area by its own footprint, so page content
+  always ends above it.
 - **+** All new logic sits in the `RecitationFollow` leaf and a new leaf component; the pager's
   per-verse re-render firewall (ADR 0028) is preserved.
 - **−** A new persistent-ish UI surface (the pill) exists whenever the user is parked away
