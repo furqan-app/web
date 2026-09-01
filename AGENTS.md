@@ -16,7 +16,7 @@ Universal entry point for all AI coding agents working in this repository.
    - Do NOT jump straight to code edits or multi-file diffs.
    - Wait for explicit user confirmation on the plan before writing code.
 2. **Implement** — implement from that plan → see [`docs/workflow/start-task.md`](docs/workflow/start-task.md)
-   - Load `docs/architecture/DECISIONS.md` and relevant standards before editing.
+   - Load `docs/architecture/DECISIONS.md` (the index) + the 1–3 `docs/architecture/decisions/*.md` domain files your task touches + relevant standards, before editing.
    - Run `check-fq-standards` pre- and post-implementation.
 
 This applies to every change, no matter how small: one-liner fixes, font swaps, copy changes — everything. If you find yourself about to edit a file, stop and plan first.
@@ -75,7 +75,7 @@ npm run e2e:db:down      # tear down e2e DBs
 
 Load these before starting any task:
 
-- **Active decisions**: `docs/architecture/DECISIONS.md` — non-negotiable constraints; load before any task
+- **Active decisions**: `docs/architecture/DECISIONS.md` is a thin index — load it always (its Non-negotiable Invariants block), then the 1–3 `docs/architecture/decisions/*.md` domain files matching the task (Domains table maps them). Not every domain file. See ADR 0057.
 - **Product & design**: `PRODUCT.md`, `DESIGN.md`, `docs/design/design-principles.md`
 - **Standards** (load the file(s) matching the task domain):
   - `docs/standards/api-conventions.md` — route structure, response shape, auth

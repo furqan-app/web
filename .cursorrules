@@ -13,7 +13,7 @@
    - Wait for explicit user confirmation before writing or modifying any code.
 
 2. **ALWAYS load active architecture constraints:**
-   - Read `docs/architecture/DECISIONS.md` (and any referenced ADRs).
+   - Read `docs/architecture/DECISIONS.md` (the index) + the 1–3 `docs/architecture/decisions/*.md` domain files your task touches (and any referenced ADRs). Not every domain file.
    - Read relevant standards in `docs/standards/`.
 
 3. **Branching in Cursor:**

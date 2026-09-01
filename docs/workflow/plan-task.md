@@ -21,7 +21,7 @@ This check is a literal, mandatory action every time — it has been skipped bef
 
 ### 1. Load context — mandatory gate, before investigating or writing anything
 
-- Read `docs/architecture/DECISIONS.md` — its entries are your working set of active decisions. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat both as non-negotiable: the plan must not contradict them, and if it needs to, raise that with the user explicitly and supersede it — never override silently.
+- Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files whose area this task touches — not every domain file. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat all of it as non-negotiable: the plan must not contradict it, and if it needs to, raise that with the user explicitly and supersede it (flip the section's `**Status:**`) — never override silently.
 - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
 - **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches a later addendum revised or reverted are dead — never re-propose them. Your new addendum must stay consistent with every still-active constraint above it.
 
@@ -70,7 +70,7 @@ Ask yourself: did the investigation surface any non-obvious architectural decisi
 If yes:
 - Determine the next ADR number (`ls docs/architecture/adr/` to check)
 - Create `docs/architecture/adr/NNNN-<slug>.md` now, before writing the plan
-- Update `docs/architecture/DECISIONS.md` with a summary and a link to the ADR
+- Add the summary + ADR link as a `## ` section (with a `**Status:** active` line) in the matching `docs/architecture/decisions/*.md` domain file. If it introduces a whole new domain, create the file and add its row to the Domains table in `DECISIONS.md`. If it is a cross-cutting rule, also add a one-liner to `DECISIONS.md`'s Non-negotiable Invariants block.
 
 If no new decisions: skip this step.
 

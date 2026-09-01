@@ -2,19 +2,19 @@
 
 Guardrail run by `/start-fq-task` around every implementation: once *before* code is written (know what not to touch) and once *after* (verify nothing regressed), before the task is reported done. Also invocable standalone as `/check-fq-standards` against the current diff.
 
-This is not a replacement for `docs/architecture/DECISIONS.md` or the standards files — it is a gate that makes sure they were actually applied.
+This is not a replacement for `docs/architecture/decisions/*.md` or the standards files — it is a gate that makes sure they were actually applied.
 
 ## Pre-check (before writing code)
 
 1. From the plan, list the files/components/subsystems this task will touch.
-2. Grep `docs/architecture/DECISIONS.md` for `Constraints`, `Never`, `Do not`, `must not` lines whose section mentions any of those files/components/subsystems (by path, component name, or keyword). Read the **full decision block** for every hit, not just the constraint line — the rationale is what disambiguates edge cases.
+2. From the Domains table in `docs/architecture/DECISIONS.md`, pick the `decisions/*.md` file(s) covering those areas. Grep **those** files for `Constraints`, `Never`, `Do not`, `must not` lines whose section mentions any of the touched files/components/subsystems (by path, component name, or keyword). Read the **full decision block** for every hit, not just the constraint line — the rationale is what disambiguates edge cases. Also read the Non-negotiable Invariants block in the index.
 3. Note which invariants are load-bearing for this change. If the plan appears to require violating one, stop and raise it with the user — reinforces `start-task.md` Step 2's gate, before any code is touched.
 4. Skim "General Engineering Bar" below for the domains this task touches (Next.js / TypeScript / PWA / DB schema / clean code) and note which items apply.
 
 ## Post-check (after implementing, before reporting done)
 
 1. `git diff` against the base branch for everything changed.
-2. For every changed file, re-grep `DECISIONS.md` the same way as the pre-check — catches anything the plan didn't originally anticipate touching.
+2. For every changed file, re-grep the `decisions/*.md` file(s) for its domain the same way as the pre-check — catches anything the plan didn't originally anticipate touching.
 3. Walk "Regression Classes" below against the diff — each item is a concrete thing that must still hold.
 4. Walk "General Engineering Bar" below against the diff.
 5. Fix any failing item before reporting success. Never report a task done with a known open violation.
@@ -22,7 +22,7 @@ This is not a replacement for `docs/architecture/DECISIONS.md` or the standards 
 
 ## Regression Classes
 
-A static, highest-risk-first list (last reconciled against `DECISIONS.md` 2026-08-13). It is **not exhaustive** — the live grep in the pre/post-check steps above is the actual source of truth; this list exists so common regressions get caught even on a skim.
+A static, highest-risk-first list (last reconciled against the decisions 2026-08-13; split into `decisions/*.md` 2026-09-02). It is **not exhaustive** — the live grep in the pre/post-check steps above is the actual source of truth; this list exists so common regressions get caught even on a skim. Bracket tags name the source section (findable in its `decisions/*.md` file) and ADR.
 
 ### Swipe / reader flicker
 - Never mutate the text/content of a live `<style>` element carrying `@font-face` rules (rewrite or `appendChild`). Add fonts only as new immutable units — a registry `FontFace`, or a new keyed `<style>`. [Font System, ADR 0029]

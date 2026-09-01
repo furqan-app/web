@@ -1,6 +1,6 @@
 ---
 name: start-fq-task
-description: Context-aware implementation of a planned Furqan task. Loads DECISIONS.md + relevant standards + plan, then implements and records any new decisions.
+description: Context-aware implementation of a planned Furqan task. Loads the DECISIONS.md index + the task-domain decisions/*.md files + relevant standards + plan, then implements and records any new decisions.
 ---
 
 # /start-fq-task
@@ -101,7 +101,7 @@ Print: `Task dev server: http://localhost:<port>`
 ### Context paths (step 2 in the workflow doc)
 
 When loading context, use the worktree path (`<abs>/docs/...`) rather than the main repo's `docs/`:
-- `<abs>/docs/architecture/DECISIONS.md`
+- `<abs>/docs/architecture/DECISIONS.md` (the index) + the task-domain `<abs>/docs/architecture/decisions/*.md` files it routes to
 - `<abs>/docs/architecture/COMPONENTS.md`
 
 ---
@@ -189,7 +189,7 @@ Loads the right context (decisions + standards + plan), then implements the task
    10. Print clearly: `Task dev server: http://localhost:<port>`
 
 2. **Load context — mandatory gate, before writing any code**
-   - Read `../furqan-<slug>/docs/architecture/DECISIONS.md` — its entries are the active decisions to apply. When a decision the task touches (or the plan itself) links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant behind the summary. These are non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
+   - Read `../furqan-<slug>/docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block, plus the 1–3 `../furqan-<slug>/docs/architecture/decisions/*.md` domain files this task touches (the index's Domains table maps them). When a decision links an ADR in `docs/architecture/adr/`, open that ADR for the full invariant. Non-negotiable; if the plan appears to conflict with one, stop and raise it with the user rather than picking one silently.
    - Read `../furqan-<slug>/docs/architecture/COMPONENTS.md`
    - Read the relevant standards file(s) from `docs/standards/` based on task type:
      - UI/component work → `component-patterns.md` + `styling.md`
@@ -207,13 +207,13 @@ Loads the right context (decisions + standards + plan), then implements the task
    - **Before editing, verify the current code matches what the plan/docs describe.** Open the files the plan names and confirm their present state lines up with the plan's assumptions — plans can go stale, and acting on a stale claim ("X is unchanged", "Y still renders here") is how documented behavior gets broken. If reality and the doc disagree, stop and reconcile with the user before changing anything.
    - Follow the plan exactly (the latest addendum's approach). If you discover the plan needs revision, pause and discuss — do not silently deviate.
    - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
-   - Apply decisions from `DECISIONS.md` — do not re-litigate them.
+   - Apply the decisions you loaded from `docs/architecture/decisions/` — do not re-litigate them.
    - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
 
 4. **Record decisions**
    - If the task added, removed, or reorganised any components: update `docs/architecture/COMPONENTS.md` to reflect the new state.
    - After implementation, check: were any new architectural decisions made during implementation?
-   - If yes, update `docs/architecture/DECISIONS.md`.
+   - If yes, add a `## ` section (`**Status:** active`) to the matching `docs/architecture/decisions/*.md` file (new domain → new file + a `DECISIONS.md` Domains-table row; cross-cutting rule → also a `DECISIONS.md` invariant line).
    - Mark the plan status as `implemented`.
 
 5. **Report**
@@ -223,11 +223,11 @@ Loads the right context (decisions + standards + plan), then implements the task
 ## Anti-patterns to avoid
 
 - Do not load all standards files when only one is relevant.
-- Do not start implementing before both gates are done: the whole plan read (all addenda, Step 1) and DECISIONS.md + its linked ADRs loaded (Step 2).
+- Do not start implementing before both gates are done: the whole plan read (all addenda, Step 1) and the decisions index + task-domain `decisions/*.md` files + their linked ADRs loaded (Step 2).
 - Do not implement an approach a later addendum revised or reverted — the newest addendum wins.
 - Do not act on a stale doc claim without checking the code first — verify current state before editing.
 - Do not undo or contradict an ADR, a `Constraints` item, or a `What NOT to Do` item as a side effect of the change.
 - Do not skip the decisions check at the end.
 - Do not add features beyond what the plan specifies.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
-- Do not write documentation (plans, COMPONENTS.md, DECISIONS.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
+- Do not write documentation (plans, COMPONENTS.md, decisions/*.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

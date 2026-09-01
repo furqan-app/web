@@ -15,20 +15,20 @@ Read the current conversation history and extract:
 
 If nothing meaningful is found, say so clearly and stop — do not create a file.
 
-### 2 — Scan DECISIONS.md for stale entries
+### 2 — Scan the touched decisions for stale entries
 
-Read `docs/architecture/DECISIONS.md`. For each decision, ask:
+From the Domains table in `docs/architecture/DECISIONS.md`, identify the `decisions/*.md` files whose area this session touched. Read **only those** — not every domain file. For each decision in them, ask:
 - Has it been superseded or contradicted by something in this session?
 - Does it reference files, patterns, or conventions that no longer exist?
 
-Flag any stale decisions — do not edit the file yet.
+Flag any stale decisions (and note the file) — do not edit yet.
 
 ### 3 — Propose changes one at a time (review-before-write)
 
 Present each proposed change to the user individually and wait for approval before writing anything. Order:
 
-1. **Stale DECISIONS.md flags** — show which entries may be outdated and why; ask if they should be removed or updated
-2. **New DECISIONS.md additions** — show the proposed decision text; ask for approval
+1. **Stale decision flags** — name the `decisions/*.md` file + section, show why it may be outdated; ask if it should be removed, updated, or have its `**Status:**` flipped
+2. **New decision additions** — name the target `decisions/*.md` file, show the proposed section text; ask for approval
 3. **Workflow doc edits or flags** — name the doc in `docs/workflow/`, describe what's wrong or missing, propose the fix or ask if a new doc is needed
 4. **Memory saves** — show each proposed memory (type + content); ask for approval
 
@@ -38,7 +38,7 @@ Only write after each individual approval. Skip any category with nothing to pro
 
 After step 3's approvals are resolved (whether or not anything was actually proposed), ask the user explicitly: "Save a retrospective file for this session?"
 
-- If they decline, stop here. Anything already approved and written in step 3 (DECISIONS.md changes, doc edits, memory saves) stays as-is — only the snapshot file itself is skipped.
+- If they decline, stop here. Anything already approved and written in step 3 (decision-file changes, doc edits, memory saves) stays as-is — only the snapshot file itself is skipped.
 - If they agree, proceed to step 5.
 
 ### 5 — Save the retrospective file
@@ -55,7 +55,7 @@ Use the format below. Only include sections that have content.
 [1–2 sentences describing what the session covered]
 
 ## Changes Made
-- [x] Added decision to DECISIONS.md: …
+- [x] Added decision to decisions/<file>.md: …
 - [x] Updated workflow doc /foo: …
 - [x] Saved memory: …
 

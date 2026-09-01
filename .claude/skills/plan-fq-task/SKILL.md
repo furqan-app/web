@@ -80,7 +80,7 @@ Always fetch latest first: `git fetch origin`. Base new branches on updated `ori
 Write all plan-phase files into `<abs>`:
 - Plan: `<abs>/docs/plans/<slug>.md`
 - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
-- DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`
+- Decision entry (if any): the matching `<abs>/docs/architecture/decisions/*.md` file (and `<abs>/docs/architecture/DECISIONS.md` if a new domain row or invariant is needed)
 
 Use the plan file format from the workflow doc.
 
@@ -106,7 +106,7 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just run the `ls`/grep.
 
 1. **Load context — mandatory gate, before investigating or writing anything**
-   - Read `docs/architecture/DECISIONS.md` — its entries are your working set of active decisions. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat both as non-negotiable: the plan must not contradict them, and if it needs to, raise that with the user explicitly and supersede it — never override silently.
+   - Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files this task touches — not every one. When a decision links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint. Non-negotiable: the plan must not contradict it, and if it needs to, raise that with the user and supersede it (flip the section `**Status:**`) — never silently.
    - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
    - **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches a later addendum revised or reverted are dead — never re-propose them (that is where most past rework came from). Your new addendum must stay consistent with every still-active constraint above it.
 
@@ -151,7 +151,7 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    If yes:
    - Determine the next ADR number (`ls docs/architecture/adr/` to check)
    - Create `docs/architecture/adr/NNNN-<slug>.md` now, before writing the plan
-   - Update `docs/architecture/DECISIONS.md` with a summary and a link to the ADR
+   - Add a `## ` section (`**Status:** active`) in the matching `docs/architecture/decisions/*.md` file; new domain → new file + a Domains-table row in `DECISIONS.md`; cross-cutting rule → also a one-liner in `DECISIONS.md`'s Non-negotiable Invariants block
 
    If no new decisions: skip this step.
 
@@ -204,7 +204,7 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    - Write all plan-phase files into the worktree (at its resolved absolute path `<abs>`), not the main repo:
      - Plan: `<abs>/docs/plans/<slug>.md`
      - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
-     - DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`
+     - Decision entry (if any): the matching `<abs>/docs/architecture/decisions/*.md` file
    - Plan content:
      - What we're building / what the bug is
      - Root cause (bugs) or approach (features)
@@ -267,4 +267,4 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 - Do not write plan files into the main repo working tree — they must go into the worktree created in step 6, addressed by its resolved **absolute** path. Writing to the main repo leaves them absent from the feature branch; writing via the relative `../furqan-<slug>` form has created stray directories outside the repo.
 - Do not create the worktree before the GitHub issue exists — the branch name is derived from the issue number.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
-- Do not write documentation (plans, COMPONENTS.md, DECISIONS.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
+- Do not write documentation (plans, COMPONENTS.md, decisions/*.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

@@ -12,7 +12,7 @@ Read [`AGENTS.md`](../AGENTS.md) for all project rules and mandatory workflow re
    - Do NOT edit code until the user explicitly confirms the plan ("yes", "looks good", "proceed").
 
 2. **LOAD ARCHITECTURE INVARIANTS:**
-   - Before writing any code or proposing solutions, read [`docs/architecture/DECISIONS.md`](../docs/architecture/DECISIONS.md) and the relevant standards in `docs/standards/`.
+   - Before writing any code or proposing solutions, read [`docs/architecture/DECISIONS.md`](../docs/architecture/DECISIONS.md) (the index) plus the 1–3 `docs/architecture/decisions/*.md` domain files your task touches — not every domain file — and the relevant standards in `docs/standards/`.
 
 3. **CONCISE & TERSE RESPONSES:**
    - Follow [`docs/workflow/terse-mode.md`](../docs/workflow/terse-mode.md) — keep explanations concise and avoid conversational filler.
