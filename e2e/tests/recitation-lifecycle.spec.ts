@@ -10,8 +10,9 @@ import {
 import { authenticateAsUser } from "../helpers/auth";
 
 // Recitation lifecycle vs. active browsing & cross-route jumps (Issue #467 / ADR 0050).
-// Playback is app-wide: leaving the reader or navigating to another page never stops it.
-// A detached follow surfaces RecitationReturnPanel, which navigates back and can stop.
+// Playback is app-wide: leaving the reader or paging to another page never stops it.
+// A detached follow surfaces RecitationReturnStrip — a second nav row that navigates
+// back and can stop / pause the session.
 
 test.describe.configure({ mode: "serial" });
 
@@ -66,78 +67,78 @@ const audioIsPlaying = () => {
   const a = document.querySelector("audio");
   return !!a && !a.paused && !a.ended;
 };
+const audioIsPaused = () => {
+  const a = document.querySelector("audio");
+  return !a || a.paused;
+};
 
 async function startRecitationOnPage1(page: Page, context: BrowserContext) {
   await authenticateAsUser(context);
   await mockRecitationApis(page);
   await page.goto("/ar/pages/1");
   await waitForReaderContent(page);
-
   await page.getByRole("button", { name: "استماع" }).click();
   await page.waitForFunction(audioIsPlaying);
 }
 
-// Off-reader surface.
-const returnPill = (page: Page) => page.locator(".fq-recitation-return-pill");
-// On-reader, the "back to page N" affordance lives inside RecitationPlayerBar.
-const barReturnButton = (page: Page) =>
-  page.locator(".fq-recitation-bar").getByRole("button", { name: /العودة إلى صفحة/ });
+// One surface on every route: a second nav row.
+const returnStrip = (page: Page) => page.locator(".fq-recitation-return-strip");
+const returnLink = (page: Page) =>
+  returnStrip(page).getByRole("link", { name: /العودة إلى صفحة/ });
 
 test.describe("Recitation lifecycle vs. navigation", () => {
-  test("playback survives leaving the reader; the return pill brings it back", async ({
+  test("playback survives leaving the reader; the return strip brings it back", async ({
     page,
     context,
   }, testInfo) => {
     skipNonDesktop(testInfo, "Audio interactions");
     await startRecitationOnPage1(page, context);
+
+    // On the recited page: attached, no return strip, no floating chrome.
+    await expect(returnStrip(page)).toBeHidden();
 
     // Leave the reader route entirely, client-side (the logo → home).
     await page.getByRole("link", { name: "Home" }).click();
     await expect(page).toHaveURL("/ar");
 
-    // Playback did NOT stop, and the return pill has taken over.
+    // Playback did NOT stop; the return strip has appeared under the nav.
     expect(await page.evaluate(audioIsPlaying)).toBe(true);
-    await expect(returnPill(page)).toBeVisible();
+    await expect(returnStrip(page)).toBeVisible();
     await expect(page.locator(".fq-recitation-bar")).toHaveCount(0);
 
-    // Return → back on the recited page, pill gone, still playing.
-    await returnPill(page).getByRole("link", { name: /العودة إلى صفحة/ }).click();
+    // Return → back on the recited page, strip gone, still playing.
+    await returnLink(page).click();
     await expect(page).toHaveURL("/ar/pages/1");
     await waitForReaderContent(page);
-    await expect(returnPill(page)).toBeHidden();
+    await expect(returnStrip(page)).toBeHidden();
     expect(await page.evaluate(audioIsPlaying)).toBe(true);
   });
 
-  test("paging away in the reader does not snap back; the bar's return button re-attaches", async ({
+  test("paging away in the reader does not snap back; the return strip re-attaches", async ({
     page,
     context,
   }, testInfo) => {
     skipNonDesktop(testInfo, "Audio interactions");
     await startRecitationOnPage1(page, context);
-
-    // On the recited page, no return affordance and no floating pill.
-    await expect(barReturnButton(page)).toBeHidden();
-    await expect(returnPill(page)).toBeHidden();
+    await expect(returnStrip(page)).toBeHidden();
 
     // Page away from the recited page using the in-spread Next arrow.
     await getActivePanel(page).getByRole("link", { name: "Next page" }).click();
     await expect(page).not.toHaveURL("/ar/pages/1");
     await waitForReaderContent(page);
 
-    // No forced snap-back, no floating pill on the reader — the way back is in
-    // the player bar, whose band the reader already reserves.
-    await expect(barReturnButton(page)).toBeVisible();
-    await expect(returnPill(page)).toBeHidden();
+    // No forced snap-back; the strip (a nav row, not a floating pill) appears.
+    await expect(returnStrip(page)).toBeVisible();
     await page.waitForTimeout(600);
     await expect(page).not.toHaveURL("/ar/pages/1");
     expect(await page.evaluate(audioIsPlaying)).toBe(true);
 
-    await barReturnButton(page).click();
+    await returnLink(page).click();
     await expect(page).toHaveURL("/ar/pages/1");
-    await expect(barReturnButton(page)).toBeHidden();
+    await expect(returnStrip(page)).toBeHidden();
   });
 
-  test("mobile: swiping away from the recited page does not snap back", async ({
+  test("mobile: the return strip toggles with the nav overlay", async ({
     page,
     context,
   }, testInfo) => {
@@ -155,33 +156,36 @@ test.describe("Recitation lifecycle vs. navigation", () => {
     await swipeReader(page, 140);
     await expect(page).not.toHaveURL("/ar/pages/1");
     await waitForReaderContent(page);
-
-    await expect(barReturnButton(page)).toBeVisible();
-    await page.waitForTimeout(600);
-    await expect(page).not.toHaveURL("/ar/pages/1");
     expect(await page.evaluate(audioIsPlaying)).toBe(true);
 
-    await barReturnButton(page).click();
+    // It is a nav row, so it lives inside the overlay and toggles with it. With
+    // the chrome revealed it is on screen; dismiss the overlay and it slides off
+    // with the rest of the nav (Playwright still counts a translated element as
+    // "visible", so assert viewport intersection instead).
+    await revealNavOverlay(page);
+    await expect(returnStrip(page)).toBeInViewport();
+    await page.locator(".fq-reader-pager-viewport").click({ position: { x: 50, y: 400 } });
+    await expect(returnStrip(page)).not.toBeInViewport();
+
+    // Reveal again and return.
+    await revealNavOverlay(page);
+    await returnLink(page).click();
     await expect(page).toHaveURL("/ar/pages/1");
-    await expect(barReturnButton(page)).toBeHidden();
   });
 
-  test("the pill's Stop ends playback", async ({ page, context }, testInfo) => {
+  test("Stop from the return strip ends playback", async ({ page, context }, testInfo) => {
     skipNonDesktop(testInfo, "Audio interactions");
     await startRecitationOnPage1(page, context);
 
     await page.getByRole("link", { name: "Home" }).click();
-    await expect(returnPill(page)).toBeVisible();
+    await expect(returnStrip(page)).toBeVisible();
 
-    await returnPill(page).getByRole("button", { name: "إيقاف", exact: true }).click();
-    await expect(returnPill(page)).toBeHidden();
-    await page.waitForFunction(() => {
-      const a = document.querySelector("audio");
-      return !a || a.paused;
-    });
+    await returnStrip(page).getByRole("button", { name: "إيقاف", exact: true }).click();
+    await expect(returnStrip(page)).toBeHidden();
+    await page.waitForFunction(audioIsPaused);
   });
 
-  test("the pill can pause and resume an off-reader session", async ({
+  test("the return strip can pause and resume the session", async ({
     page,
     context,
   }, testInfo) => {
@@ -189,16 +193,16 @@ test.describe("Recitation lifecycle vs. navigation", () => {
     await startRecitationOnPage1(page, context);
 
     await page.getByRole("link", { name: "Home" }).click();
-    await expect(returnPill(page)).toBeVisible();
+    await expect(returnStrip(page)).toBeVisible();
 
-    await returnPill(page).getByRole("button", { name: "إيقاف مؤقت" }).click();
+    await returnStrip(page).getByRole("button", { name: "إيقاف مؤقت" }).click();
     await page.waitForFunction(() => {
       const a = document.querySelector("audio");
       return !!a && a.paused;
     });
-    await expect(returnPill(page)).toBeVisible();
+    await expect(returnStrip(page)).toBeVisible();
 
-    await returnPill(page).getByRole("button", { name: "متابعة" }).click();
+    await returnStrip(page).getByRole("button", { name: "متابعة" }).click();
     await page.waitForFunction(audioIsPlaying);
   });
 });

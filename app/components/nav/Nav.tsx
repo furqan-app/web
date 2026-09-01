@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocale } from "next-intl";
 import { Maximize2, Minimize2, PanelLeftOpen, ChevronDown, Settings } from "lucide-react";
 import { SearchBar } from "@components/search/SearchBar";
+import { RecitationReturnStrip } from "@components/recitation/RecitationReturnStrip";
 import { ContinueReadingLink } from "./ContinueReadingLink";
 
 import { UserMenu } from "./UserMenu";
@@ -190,6 +191,12 @@ export const Nav = () => {
           <UserMenu />
         </div>
       </div>
+
+      {/* A second nav row while a recitation is parked away from the reader.
+          Flow child of <nav>: it toggles with the overlay on mobile/tablet and
+          pushes content elsewhere — never floats over it (ADR 0050). */}
+      <RecitationReturnStrip />
+
       <SettingsSidebar open={settingsOpen} onOpenChange={setSettingsOpen} />
     </nav>
   );

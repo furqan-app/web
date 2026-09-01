@@ -10,13 +10,11 @@ import {
   Pause,
   Play,
   Repeat,
-  RotateCcw,
   Settings as SettingsIcon,
   Square,
 } from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
-import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 import { useIsReaderRoute } from "@/app/hooks/use-is-reader-route";
 import useTranslations from "@/app/hooks/use-translations";
 import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
@@ -26,10 +24,9 @@ import { cn } from "@/lib/utils";
 // routes (self + grant) it's a permanent fixture — even idle, so its play
 // button can start playback of the current Safha — mirroring the nav, which
 // it must always follow. Off the reader route it renders nothing: playback
-// keeps running (ADR 0050 — no more hard stop), but the only recitation
-// surface there is RecitationReturnPanel's centered pill — a pill, not a
-// full-width bar, so it cannot overlap page content the way this bar did
-// (Trello #152). On tablet/mobile reader routes it also mirrors the nav overlay's show/hide
+// keeps running (ADR 0050 — no more hard stop), and the way back to a detached
+// session lives in RecitationReturnStrip (a second nav row), not here.
+// On tablet/mobile reader routes it also mirrors the nav overlay's show/hide
 // (isOverlayMode/overlayVisible), same toggle, same transform pattern as
 // Nav.tsx — see docs/plans/tablet-nav-overlay.md Addendum "Sync voice panel
 // with nav overlay".
@@ -40,8 +37,6 @@ export const RecitationPlayerBar = () => {
   const {
     status,
     currentVerseKey,
-    recitedPage,
-    isFollowing,
     reciters,
     settings,
     updateSettings,
@@ -56,7 +51,6 @@ export const RecitationPlayerBar = () => {
     perAyahProgress,
   } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
-  const { jumpTo } = useReaderNavigation();
   const isOnReaderRoute = useIsReaderRoute();
   const locale = useLocale();
   const t = useTranslations();
@@ -66,23 +60,14 @@ export const RecitationPlayerBar = () => {
   const isIdle = status === "idle";
 
   // Reader-only chrome. Playback is app-wide now (ADR 0050) and never stops on
-  // navigation — off-reader, RecitationReturnPanel is the only surface.
+  // navigation — the "return to recited page" affordance for a detached session
+  // lives in RecitationReturnStrip (a second nav row), not here.
   if (!isOnReaderRoute) return null;
   if (isIdle && !pageFirstVerseKey) return null;
 
   const reciter = reciters.find((r) => r.id === settings.reciterId);
   const isPlaying = status === "playing";
   const isLoading = status === "loading";
-
-  // Detached follow (ADR 0050): the user paged/jumped away from the recited page
-  // while a session is live. The way back lives IN the bar — the bar's band is
-  // already reserved by the reader layout, so a control here never overlaps the
-  // mushaf the way a floating element would. Off-reader, RecitationReturnPanel
-  // carries the same affordance.
-  const showReturn = !isIdle && !isFollowing && recitedPage != null;
-  const returnLabel = tRich("returnToRecitedPage", {
-    page: toLocaleNumeral(recitedPage ?? 0, locale),
-  });
 
   const handlePlayPause = () => {
     if (isIdle) {
@@ -261,18 +246,6 @@ export const RecitationPlayerBar = () => {
         </div>
 
         <div className="fq-rail-zone fq-rail-utils">
-          {showReturn ? (
-            <button
-              type="button"
-              aria-label={returnLabel}
-              title={returnLabel}
-              onClick={() => recitedPage != null && jumpTo?.(recitedPage)}
-              className="fq-chrome-btn fq-focus-ring size-8 text-primary"
-            >
-              <RotateCcw className="size-4" strokeWidth={1.8} />
-            </button>
-          ) : null}
-
           <button
             type="button"
             aria-label={repeatLabel}

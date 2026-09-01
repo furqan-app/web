@@ -34,9 +34,9 @@ just delayed, and it is hard to reason about.
 **Option C — global playback + a two-state attach/detach follow + a return affordance (chosen)**
 Playback ends only on stop / range-end / hard error. Follow is a single `isFollowing` boolean:
 attached tracks and auto-advances; detached leaves the reader wherever the user put it and
-surfaces a "return to recited page" affordance — inside `RecitationPlayerBar` on the reader
-(whose band the layout already reserves), and as a small centered pill that reserves a flow
-spacer off the reader. Neither floats over content, so the bar-overlap problem cannot recur.
+surfaces `RecitationReturnStrip` — a second row of the nav. It toggles with the nav overlay
+on mobile/tablet and pushes content down on desktop / non-reader routes; it never floats
+over content, so the bar-overlap problem cannot recur.
 
 ## Decision
 
@@ -44,11 +44,14 @@ Option C. Recitation has one app-wide lifecycle and navigation never ends it. `R
 owns `isFollowing` (attached/detached); the `RecitationFollow` leaf is the sole decider of the
 transition (auto-advance keeps it attached, a manual anchor change or leaving the reader
 detaches it, returning to the recited page re-attaches it) and `ReaderPager` gains no
-recitation subscription. When `!isIdle && !isFollowing && recitedPage != null`, the way back
-to the recited page appears **in `RecitationPlayerBar`'s utils zone** on the reader, and as
-`RecitationReturnPanel` — a fixed centered pill that also renders an `aria-hidden` flow
-spacer so the document reserves its height — off the reader. `RecitationPlayerBar` drops its
-hard-stop effect and renders only on reader routes.
+recitation subscription. When `!isIdle && !isFollowing && recitedPage != null`,
+`RecitationReturnStrip` renders as the last child of `<nav>` — a second nav row with
+play/pause, "return to recited page" (`jumpTo` on the reader, `<Link>` off it), and stop.
+Being a flow child of the nav, it hides with `translateY(-100%)` alongside the mobile/tablet
+overlay and adds flow height (pushing content) everywhere else; while mounted it sets
+`--fq-nav-extra` on `<html>` so the desktop reader / non-reader `min-height` calcs give the
+band back and a short page stays one screen. `RecitationPlayerBar` drops its hard-stop effect
+and renders only on reader routes.
 
 ## Consequences
 
@@ -56,15 +59,18 @@ hard-stop effect and renders only on reader routes.
   (audio above the route tree) is finally used as intended, with no lifecycle guard fighting it.
 - **+** The reader is browsable during playback; auto-advance still follows while the user is
   on the recited page, so the common "just listen" flow is unchanged.
-- **+** The bar-overlap failure mode (Trello #152) is gone: no recitation surface floats over
-  content. On the reader the affordance is in the bar (reserved band); off-reader the pill
-  renders a flow spacer that grows the scroll area by its own footprint, so page content
-  always ends above it.
+- **+** The bar-overlap failure mode (Trello #152) is gone: the return surface is a nav row,
+  so it reserves its own space (flow) or rides the overlay transform — never a free-floating
+  element over content.
 - **+** All new logic sits in the `RecitationFollow` leaf and a new leaf component; the pager's
-  per-verse re-render firewall (ADR 0028) is preserved.
-- **−** A new persistent-ish UI surface (the pill) exists whenever the user is parked away
-  from a live recitation — one more thing that can feel in the way if the copy/placement is
-  wrong.
+  per-verse re-render firewall (ADR 0028) is preserved. `Nav` doesn't consume recitation —
+  only `RecitationReturnStrip` does.
+- **−** A new persistent-ish UI surface exists whenever the user is parked away from a live
+  recitation, and it changes the nav's height — a reflow on show/hide for desktop / non-reader,
+  and a `--fq-nav-extra` var that every future reader-height rule has to keep subtracting.
+- **−** On mobile/tablet reader the strip is only visible when the chrome is revealed (it
+  toggles with the nav) — a parked recitation has no always-on indicator there. Deliberate,
+  matches the player bar.
 - **−** `isFollowing` is a third piece of cross-cutting recitation state (with `recitedPage`
   and `status`) that every future navigation or reader-mount path must keep honest; the leaf's
   ref-diffing of `recitedPage` vs `anchor` to classify "who moved" is subtle.

@@ -17,7 +17,6 @@ import { LastReadPageProvider } from "@/app/contexts/LastReadPageContext";
 import { KeepScreenAwakeProvider } from "@/app/contexts/KeepScreenAwakeContext";
 import { TafsirProvider } from "@/app/contexts/TafsirContext";
 import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
-import { RecitationReturnPanel } from "@components/recitation/RecitationReturnPanel";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import { PlansWidget } from "@components/plans/PlansWidget";
 import { LastReadPageSync } from "@components/reader/LastReadPageSync";
@@ -72,7 +71,6 @@ export default async function LocaleLayout({
                                   <Nav />
                                   {children}
                                   <RecitationPlayerBar />
-                                  <RecitationReturnPanel />
                                   <RecitationSettingsSheet />
                                   <PlansWidget />
                                   <LastReadPageSync />
