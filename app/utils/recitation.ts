@@ -1,7 +1,9 @@
 import { QURAN_LAST_CHAPTER_ID } from "@/app/constants/recitation";
 import { RepeatCount, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
+import type { SurahResult } from "@/app/types";
 import { getPagePair } from "@/app/utils/quran-pages";
+import { toLocaleNumeral } from "@/app/utils/i18n";
 
 export type ChapterEndDecision =
   | { action: "repeat-range" }
@@ -145,6 +147,29 @@ export const decideRecitationFollow = ({
 
   // Detached — the return panel owns the way back; nothing snaps.
   return { action: "none" };
+};
+
+// ── Recited-verse label ─────────────────────────────────────────────────────
+// The player bar and RecitationReturnStrip both show *where* playback is. A bare
+// "7:145" is opaque; this resolves it to localized, pre-formatted parts for the
+// `recitation.recitedVerseLabel` ICU string ("آية {ayah} سورة {surah} صفحة {page}").
+// Returns null when the verse key / page / surah list isn't resolvable yet —
+// callers fall back to the bare verse key.
+export const recitedVerseLabelParts = (
+  verseKey: string | null,
+  page: number | null,
+  chapters: SurahResult[],
+  locale: string,
+): { ayah: string; surah: string; page: string } | null => {
+  if (!verseKey || page == null) return null;
+  const [surahId, ayah] = verseKey.split(":").map(Number);
+  const chapter = chapters.find((c) => c.id === surahId);
+  if (!chapter || !ayah) return null;
+  return {
+    ayah: toLocaleNumeral(ayah, locale),
+    surah: locale === "ar" ? chapter.name_arabic : chapter.name_simple,
+    page: toLocaleNumeral(page, locale),
+  };
 };
 
 // The verse_key of the first word on a page, used as the default start point

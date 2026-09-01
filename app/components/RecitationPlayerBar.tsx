@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import { toLocaleNumeral } from "@/app/utils/i18n";
+import { recitedVerseLabelParts } from "@/app/utils/recitation";
 import { REPEAT_COUNT_MAX } from "@/app/constants/recitation";
 import { RepeatCount } from "@/app/types/recitation";
 import {
@@ -37,6 +38,8 @@ export const RecitationPlayerBar = () => {
   const {
     status,
     currentVerseKey,
+    recitedPage,
+    chapters,
     reciters,
     settings,
     updateSettings,
@@ -47,15 +50,12 @@ export const RecitationPlayerBar = () => {
     resetPerAyahRepeat,
     openSettings,
     playbackError,
-    rangeProgress,
-    perAyahProgress,
   } = useRecitation();
   const { isOverlayMode, overlayVisible } = useNavOverlay();
   const isOnReaderRoute = useIsReaderRoute();
   const locale = useLocale();
   const t = useTranslations();
   const tRich = useNextIntlTranslations("recitation");
-  const rangeT = useNextIntlTranslations("recitation");
 
   const isIdle = status === "idle";
 
@@ -68,6 +68,8 @@ export const RecitationPlayerBar = () => {
   const reciter = reciters.find((r) => r.id === settings.reciterId);
   const isPlaying = status === "playing";
   const isLoading = status === "loading";
+
+  const verseLabelParts = recitedVerseLabelParts(currentVerseKey, recitedPage, chapters, locale);
 
   const handlePlayPause = () => {
     if (isIdle) {
@@ -104,25 +106,6 @@ export const RecitationPlayerBar = () => {
     const next = PER_AYAH_CYCLE[(idx + 1) % PER_AYAH_CYCLE.length];
     updateSettings({ perAyahRepeatCount: next });
     resetPerAyahRepeat();
-  };
-
-  // "Ayah 3/18 • Repeat 2/3" (#394). Both segments go through ICU keys with
-  // pre-localized numeral strings (never the value-less wrapper — see the
-  // i18n standard); the repeat segment is omitted when repeat is off.
-  const formatRangeProgress = (
-    range: { currentIndex: number; length: number },
-    perAyah: { done: number; target: number } | null,
-  ): string => {
-    const ayahPart = rangeT("rangeProgressAyah", {
-      index: toLocaleNumeral(range.currentIndex, locale),
-      length: toLocaleNumeral(range.length, locale),
-    });
-    if (!perAyah) return ayahPart;
-    return `${ayahPart} • ${rangeT("rangeProgressRepeat", {
-      done: toLocaleNumeral(perAyah.done, locale),
-      target:
-        perAyah.target === Infinity ? "∞" : toLocaleNumeral(perAyah.target, locale),
-    })}`;
   };
 
   return (
@@ -230,18 +213,11 @@ export const RecitationPlayerBar = () => {
               {t("recitation.offlineUnavailable", "Not available offline")}
             </p>
           ) : (
-            <>
-              <p className="fq-recitation-verse-key truncate text-xs text-muted-foreground">{currentVerseKey ?? ""}</p>
-              {/* Range practice progress (#394) — bar only (the rail hides
-                  this whole info block). Hidden when unbounded or idle; the
-                  per-ayah segment only shows while repeat is engaged. Numbers
-                  pass through toLocaleNumeral for the Eastern Arabic policy. */}
-              {rangeProgress ? (
-                <p className="fq-recitation-range-progress truncate text-[10px] text-muted-foreground tabular-nums">
-                  {formatRangeProgress(rangeProgress, perAyahProgress)}
-                </p>
-              ) : null}
-            </>
+            <p className="fq-recitation-verse-key truncate text-[10px] leading-tight text-muted-foreground">
+              {verseLabelParts
+                ? tRich("recitedVerseLabel", verseLabelParts)
+                : (currentVerseKey ?? "")}
+            </p>
           )}
         </div>
 

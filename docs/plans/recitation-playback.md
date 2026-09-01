@@ -838,7 +838,7 @@ Implementation order follows the dependency chain: #391 and #392 first (independ
 | D4 | Start From is **per-session, derived on every open, never persisted**: preset = Current Verse while playing/paused, Current Page while idle. No new localStorage key. |
 | D5 | Preset resolution: Current Verse → reference verse key (sync); Beginning of Surah → parse surah, ayah 1 (sync); Current Page → `fetchPageBounds().firstVerseKey` (endpoint already returns it); Beginning of Rub' → needs the reference verse's rub's first verse (**new endpoint support** — existing stop-point route resolves only last verses). Custom mirrors `CustomRangePicker`'s inputs with no floor (a start may be 1:1). |
 | D6 | Start ≤ End enforced by **mutual push-apart**, never an error state or disabled Apply: editing Start past End raises End; lowering End below Start lowers Start. Applies to custom inputs live; presets validated at selection time with the same push applied. Equality allowed (single-verse practice window). Start 1:1 + Stop "none" (114:6) legal. |
-| D7 | #394 badge is **bar-only** (the desktop rail is icons-only — chrome loses information as viewport narrows). Shows verse index/length + per-ayah repeat counter/target, published as state on change (rare), respecting the ~4Hz re-render constraint. Hidden when idle or `stopPoint === "none"`. |
+| D7 | ~~#394 badge is **bar-only**… shows verse index/length + per-ayah repeat counter/target…~~ **Removed 2026-09-01 (Addendum 13)** — it duplicated a verse number next to the new location label. |
 
 ### Explicit supersessions
 
@@ -901,7 +901,15 @@ Sheet section inserted directly **above** "Stop at" so the pair reads as one ran
 
 ### #394 — Progress badge
 
-- `RecitationContext` publishes two new state pairs, set ONLY where the refs already mutate (verse-transition branch of `handleTimeUpdate`, per-ayah repeat branch, `seekToRangeStart`, `loadChapter`, `stop`/`play` resets):
+> **Removed 2026-09-01 (Addendum 13, user decision).** The `الآية ١/٦` badge read as a
+> second, conflicting verse number next to the new `آية … سورة … صفحة …` location label on
+> the bar, and it was the only consumer of `rangeProgress` / `perAyahProgress`. The two
+> state pairs, `publishRangeProgress`, every `setPerAyahProgress` call, the context-type
+> fields, the `rangeProgress*` i18n keys, and the badge markup are all deleted.
+> `perAyahRepeatsDoneRef` / `rangeRepeatsDoneRef` and `resolveRepeatTarget` stay — they
+> drive the actual repeat engine, not the badge.
+
+- ~~`RecitationContext` publishes two new state pairs, set ONLY where the refs already mutate (verse-transition branch of `handleTimeUpdate`, per-ayah repeat branch, `seekToRangeStart`, `loadChapter`, `stop`/`play` resets):~~
   - `rangeProgress: { currentIndex: number; length: number } | null`
   - `perAyahProgress: { done: number; target: number } | null`
 - Computed once per `play()` from `verseTimingsRef` (index of `startVerseKey` → index of resolved `stopVerseKey` within the loaded chapter, plus cross-chapter accumulation when chaining — length = total verses spanned, matching how `decideChapterEnd` walks chapters).
@@ -952,8 +960,8 @@ Sheet section inserted directly **above** "Stop at" so the pair reads as one ran
 9. Set custom start past drafted end → end auto-raises. (D6)
 10. Playing 2:100, draft start 2:255, Apply → seeks, counters reset, continues. (D3)
 11. Draft edits, dismiss via back gesture/X → committed settings byte-identical, playback untouched. (D2/Constraints)
-12. Range 2:10–2:27 at 2:12 pass 2/3 → badge "Ayah 3/18 • Repeat 2/3". (D7)
-13. `stopPoint: "none"` playing → no badge. Rail → no badge. (D7)
+12. ~~Range 2:10–2:27 at 2:12 pass 2/3 → badge "Ayah 3/18 • Repeat 2/3".~~ Badge removed (Addendum 13).
+13. ~~`stopPoint: "none"` playing → no badge. Rail → no badge.~~ Badge removed (Addendum 13).
 
 ## Addendum 13: Global playback + detachable follow + return panel (Issue #467)
 
@@ -1042,15 +1050,32 @@ so `Nav` doesn't re-render per recited verse.
   `calc(100dvh - 70px - var(--fq-nav-extra))`) and non-reader `<main>`
   (`calc(100dvh - 3.5rem - var(--fq-nav-extra))`) subtract it, so a short page stays exactly
   one screen — no sliver of scroll. Mobile/tablet reader is `position: fixed` and ignores it.
-- **Content:** play/pause (`togglePlayPause`, shown while `playing`/`paused` so a paused
-  session isn't a dead end), a muted `currentVerseKey` (falling back to
-  `recitation.nowPlaying`), a **Return** link with the single `--primary` accent, a quiet
-  `fq-chrome-btn` **Stop**. Inherits the nav's `.fq-chrome-bar` face; its own hairline is a
-  Tailwind `border-t`.
+- **Content:** the **Return** link is the only text — `RotateCcw` + one combined string
+  `recitation.returnToRecitedVerse` = `العودة إلى صفحة {page} · سورة {surah} · آية {ayah}`,
+  `text-[10px]`, `truncate`, `--primary` accent — plus a play/pause button (`togglePlayPause`,
+  shown while `playing`/`paused`) and a `fq-chrome-btn` **Stop**. Falls back to
+  `recitation.returnToRecitedPage` ("back to page {page}") until `chapters` resolves.
+  Inherits the nav's `.fq-chrome-bar` face; its own hairline is a Tailwind `border-t`.
 - **Return** → `<Link href={/pages/{recitedPage}}>` + the `jumpTo`-handoff-on-click
   (`ContinueReadingLink` shape): reader mounted → `jumpTo(recitedPage)` (client-side, grant
   reader too); reader unmounted → the `<Link>` navigates. Accepted limitation, identical to
   `ContinueReadingLink`: an off-reader return lands on the **self** reader `/pages/…`.
+
+### Recited-verse label + badge removal
+
+- New pure helper `recitedVerseLabelParts(verseKey, page, chapters, locale)` in
+  `app/utils/recitation.ts` → `{ ayah, surah, page }` (pre-localized via `toLocaleNumeral`;
+  surah = `name_arabic` for `ar`, `name_simple` otherwise), or `null` until resolvable.
+- `RecitationPlayerBar`'s bare `currentVerseKey` line (and the strip's, folded into the
+  Return link above) becomes `recitation.recitedVerseLabel` =
+  `آية {ayah} سورة {surah} صفحة {page}`, dropped to `text-[10px]`. Both components now read
+  `recitedPage` + `chapters` from context.
+- **The #394 range-progress badge is removed** (see Addendum 12's struck section):
+  `rangeProgress` / `perAyahProgress` state + `publishRangeProgress` + every
+  `setPerAyahProgress` call + the context-type fields + `formatRangeProgress` +
+  `recitation.rangeProgress*` keys, all deleted. It duplicated a verse number next to the
+  new label. The repeat *engine* (`perAyahRepeatsDoneRef`, `rangeRepeatsDoneRef`,
+  `resolveRepeatTarget`) is untouched.
 
 ### `RecitationContext` changes
 
@@ -1100,14 +1125,20 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
 
 - `app/contexts/RecitationContext.tsx` — `isFollowing` state + setter + context value;
   `play()` publishes `recitedPage` synchronously (does NOT force `isFollowing` — only the
-  leaf attaches); `stop()` + the `play()` failure path reset `isFollowing`.
+  leaf attaches); `stop()` + the `play()` failure path reset `isFollowing`. **Deletes** the
+  #394 `rangeProgress` / `perAyahProgress` state, `publishRangeProgress`, every
+  `setPerAyahProgress` call, and the two context-type fields.
 - `app/components/reader/RecitationFollow.tsx` — attach/detach machine (thin wrapper over
   `decideRecitationFollow`; keeps `prevRecitedPage` stale on a `follow`; unmount → detach).
 - `app/components/RecitationPlayerBar.tsx` — remove hard stop; reader-route-only render gate;
-  drop dead `isOnReaderRoute` branches; comments.
+  drop dead `isOnReaderRoute` branches; verse-key line → `recitedVerseLabel` at `text-[10px]`;
+  **delete** the #394 progress badge + `formatRangeProgress`; comments.
 - `app/components/recitation/RecitationReturnStrip.tsx` — **new**; the second nav row
-  (play/pause + Return + Stop), toggles `.fq-recitation-strip-open` on `<html>` while mounted.
+  (Return link carrying the combined `returnToRecitedVerse` string + play/pause + Stop),
+  toggles `.fq-recitation-strip-open` on `<html>` while mounted.
 - `app/components/nav/Nav.tsx` — render `<RecitationReturnStrip />` as the last child of `<nav>`.
+- `app/utils/recitation.ts` — `decideRecitationFollow` **and** `recitedVerseLabelParts`
+  helpers (+ `app/utils/recitation.test.ts`).
 - `app/hooks/use-is-reader-route.ts` — **new**; extracted the `pathname.includes("/pages/")`
   predicate (now render-decision-load-bearing per ADR 0050). Migrated `RecitationPlayerBar`,
   `Nav`, `PlansWidget` onto it too.
@@ -1118,12 +1149,12 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
   `main` `min-height` so a short page stays exactly one screen. Strip styling is Tailwind on
   the component (it inherits the nav's `.fq-chrome-bar` face).
 - `app/[locale]/layout.tsx` — no new mount (the strip is inside `<Nav />`).
-- `app/utils/recitation.ts` — `decideRecitationFollow` pure helper (+ `app/utils/recitation.test.ts`).
 - `e2e/tests/recitation-lifecycle.spec.ts` — **new**; the lifecycle suite (route-leave,
   page-away, return, stop, pause/resume; a mobile overlay-toggle case; recitation APIs + a
   silent-WAV data URI stubbed via `page.route`).
-- `messages/en.json`, `messages/ar.json` — `recitation.returnToRecitedPage` ({page}); the
-  strip's status label reuses `recitation.nowPlaying`, and its controls reuse
+- `messages/en.json`, `messages/ar.json` — **added** `recitation.recitedVerseLabel`,
+  `recitation.returnToRecitedVerse` (+ existing `returnToRecitedPage` as fallback);
+  **removed** `recitation.rangeProgressAyah` / `rangeProgressRepeat`. Strip controls reuse
   `recitation.stop` / `pause` / `resume`.
 - `docs/architecture/DECISIONS.md` — Recitation Playback section: rewrite the "swiping away
   snaps back" and "hard-stops when the user navigates away" bullets to the attach/detach +

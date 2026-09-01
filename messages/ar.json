@@ -387,11 +387,11 @@
     "startCustom": "مخصص",
     "applyChanges": "تطبيق التغييرات",
     "startRecitation": "ابدأ التلاوة",
-    "rangeProgressAyah": "الآية {index}/{length}",
-    "rangeProgressRepeat": "تكرار {done}/{target}",
     "numberSearchPlaceholder": "ابحث…",
     "numberEmpty": "لا يوجد تطابق.",
-    "returnToRecitedPage": "العودة إلى صفحة {page}"
+    "returnToRecitedPage": "العودة إلى صفحة {page}",
+    "recitedVerseLabel": "آية {ayah} سورة {surah} صفحة {page}",
+    "returnToRecitedVerse": "العودة إلى صفحة {page} · سورة {surah} · آية {ayah}"
   },
   "offlineRecitation": {
     "title": "التلاوة دون اتصال",

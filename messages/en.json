@@ -386,11 +386,11 @@
     "startCustom": "Custom",
     "applyChanges": "Apply changes",
     "startRecitation": "Start recitation",
-    "rangeProgressAyah": "Ayah {index}/{length}",
-    "rangeProgressRepeat": "Repeat {done}/{target}",
     "numberSearchPlaceholder": "Search…",
     "numberEmpty": "No match.",
-    "returnToRecitedPage": "Back to page {page}"
+    "returnToRecitedPage": "Back to page {page}",
+    "recitedVerseLabel": "Ayah {ayah}, Surah {surah}, page {page}",
+    "returnToRecitedVerse": "Back to page {page} · Surah {surah} · Ayah {ayah}"
   },
   "offlineRecitation": {
     "title": "Offline Recitation",

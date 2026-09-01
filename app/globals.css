@@ -1263,6 +1263,13 @@ body,
     .fq-reader-outer {
       padding-bottom: 0 !important;
     }
+    /* The recitation rail is `position: fixed; right: 0; top: 70px; width: 72px`,
+       so its top overlays the return strip (a second nav row that starts at
+       ~56px). Reserve the rail's physical column on the strip too — same
+       `padding-right: 72px` reasoning as the spread container above. */
+    .fq-recitation-return-strip {
+      padding-right: 72px;
+    }
     .fq-reader-outer > .fq-reader-spread-container {
       padding-block: 64px;
       /* Chrome RESERVES space; it never overlaps the mushaf. The rail is a

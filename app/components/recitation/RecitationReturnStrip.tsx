@@ -5,6 +5,7 @@ import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl
 import { Pause, Play, RotateCcw, Square } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { toLocaleNumeral } from "@/app/utils/i18n";
+import { recitedVerseLabelParts } from "@/app/utils/recitation";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
 import useTranslations from "@/app/hooks/use-translations";
@@ -23,7 +24,7 @@ import useTranslations from "@/app/hooks/use-translations";
 // While shown it sets `--fq-nav-extra` on <html> so the desktop reader's
 // `min-height` calc can give back the strip's band and stay scroll-free.
 export function RecitationReturnStrip() {
-  const { status, currentVerseKey, recitedPage, isFollowing, stop, togglePlayPause } =
+  const { status, currentVerseKey, recitedPage, isFollowing, chapters, stop, togglePlayPause } =
     useRecitation();
   const { jumpTo } = useReaderNavigation();
   const locale = useLocale();
@@ -44,6 +45,8 @@ export function RecitationReturnStrip() {
   const isPlaying = status === "playing";
   const isPaused = status === "paused";
 
+  const labelParts = recitedVerseLabelParts(currentVerseKey, recitedPage, chapters, locale);
+
   const handleReturn = (e: MouseEvent) => {
     // Reader mounted → move its pager client-side (works for the grant reader
     // too). Off-reader `jumpTo` is null → let the <Link> navigate.
@@ -53,8 +56,24 @@ export function RecitationReturnStrip() {
     }
   };
 
+  const returnLabel = labelParts
+    ? tRich("returnToRecitedVerse", labelParts)
+    : tRich("returnToRecitedPage", { page: toLocaleNumeral(recitedPage, locale) });
+
   return (
-    <div className="fq-recitation-return-strip flex h-11 items-center gap-2 border-t border-border/60 text-xs">
+    <div className="fq-recitation-return-strip flex h-11 items-center gap-2 border-t border-border/60">
+      <Link
+        href={`/pages/${recitedPage}`}
+        locale={locale}
+        onClick={handleReturn}
+        className="fq-focus-ring inline-flex min-w-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-medium leading-tight text-primary transition-colors hover:bg-primary/15"
+      >
+        <RotateCcw className="size-3 shrink-0" strokeWidth={1.8} />
+        <span className="truncate">{returnLabel}</span>
+      </Link>
+
+      <div className="flex-1" />
+
       {(isPlaying || isPaused) && (
         <button
           type="button"
@@ -74,20 +93,6 @@ export function RecitationReturnStrip() {
           )}
         </button>
       )}
-
-      <span className="min-w-0 flex-1 truncate text-muted-foreground">
-        {currentVerseKey ?? t("recitation.nowPlaying", "Recitation")}
-      </span>
-
-      <Link
-        href={`/pages/${recitedPage}`}
-        locale={locale}
-        onClick={handleReturn}
-        className="fq-focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary transition-colors hover:bg-primary/15"
-      >
-        <RotateCcw className="size-3.5" strokeWidth={1.8} />
-        <span>{tRich("returnToRecitedPage", { page: toLocaleNumeral(recitedPage, locale) })}</span>
-      </Link>
 
       <button
         type="button"
