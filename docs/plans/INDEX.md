@@ -65,7 +65,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | observability | [fq-logger: Structured Logging & Observability](fq-logger.md) | implemented | feature |
 | observability | [Sentry Error Tracking](sentry-error-tracking.md) | implemented | feature |
 | observability | [Sentry-to-Slack Alerting via Relay Webhook](sentry-slack-alerts.md) | implemented | feature |
-| pwa | [Feature: Browser Fullscreen & PWA Status-Bar Focus Mode](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
+| pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [Keep Mobile/Tablet Screen Active While App Is Open](keep-screen-awake.md) | implemented | feature |
 | pwa | [PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit](pwa-app-stickiness.md) | implemented | feature |
