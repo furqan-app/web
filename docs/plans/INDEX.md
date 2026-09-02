@@ -89,7 +89,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Nocturnal Reader Lab — Desktop RTL](reader-lab-nocturnal-desktop.md) | implemented | feature |
 | reader | [Page Turn Blanks the Reader on Slow Networks](fix-page-turn-blank-slow-network.md) | implemented | bug |
 | reader | [Quran Safha: Fit Viewport With No Scroll (Default Font Scale)](quran-safha-viewport-fit.md) | implemented | bug |
-| reader | [Reader Rhythm: Claim the Unused Vertical Space Into Line Gaps (Desktop, Tablet)](reader-line-rhythm.md) | implemented | feature |
+| reader | [Reader Rhythm: Per-Band Size Contracts, Desktop Presets, Tablet Double View](reader-line-rhythm.md) | implemented | feature |
 | reader | [Reader Swipe Performance: Persistent Client Pager](reader-persistent-pager.md) | implemented | feature |
 | reader | [Remove Safha Card Background on Mobile](mobile-safha-remove-card-background.md) | implemented | feature |
 | reader | [Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression](tajweed-stylesheet-hover-suppression.md) | implemented | bug |
