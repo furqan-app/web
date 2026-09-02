@@ -3,6 +3,12 @@
 **Date:** 2026-08-21
 **Status:** Accepted
 
+> Note (2026-09-02, #494): the `/impeccable` review gate referenced in the Context and in
+> point 4 below no longer exists ([ADR 0041](./0041-wire-impeccable-into-fq-workflow.md) is
+> superseded). Design-language alignment is now a manual review concern — the "Design & UX"
+> checklist in `docs/workflow/check-fq-standards.md`. `DESIGN.md` is hand-maintained, not
+> generated. The decision itself is unchanged.
+
 ## Context
 
 The Nocturnal Reader Lab (`docs/plans/reader-lab-nocturnal-desktop.md`) was built as a sandbox to generate a new visual direction, and its language was approved. Migrating it is not a styling pass: the language contradicts `docs/design/design-principles.md`, which is the canonical design doc and generates root `DESIGN.md`, which in turn feeds `/impeccable` — wired into plan → implement → review by [ADR 0041](./0041-wire-impeccable-into-fq-workflow.md). The lab also derived every atmospheric move against dark's `(7,15,23)` background, and covers neither light, gold, small screens, nor live control states.

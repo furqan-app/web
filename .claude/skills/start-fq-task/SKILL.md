@@ -180,7 +180,7 @@ Loads the right context (decisions + standards + plan), then implements the task
      - Read `docs/standards/styling.md` and `docs/standards/component-patterns.md` (if not already loaded above)
      - Read `docs/architecture/APP_PURPOSE.md` for UX principles before making any layout decisions
      - Read `docs/design/design-principles.md` for aesthetic direction and component conventions
-     - If the task involves animation, transitions, or interactive states (press/hover/enter/exit), invoke the `ui-motion` skill for motion and polish guidance
+     - If the task involves animation, transitions, or interactive states (press/hover/enter/exit), read the Motion section of `docs/standards/styling.md`
 
 3. **Implement**
    - **Before editing, verify the current code matches what the plan/docs describe.** Open the files the plan names and confirm their present state lines up with the plan's assumptions — plans can go stale, and acting on a stale claim ("X is unchanged", "Y still renders here") is how documented behavior gets broken. If reality and the doc disagree, stop and reconcile with the user before changing anything.

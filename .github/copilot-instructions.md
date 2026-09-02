@@ -15,7 +15,7 @@ Read [`AGENTS.md`](../AGENTS.md) for all project rules and mandatory workflow re
    - Before writing any code or proposing solutions, read [`docs/architecture/DECISIONS.md`](../docs/architecture/DECISIONS.md) (the index) plus the 1–3 `docs/architecture/decisions/*.md` domain files your task touches — not every domain file — and the relevant standards in `docs/standards/`.
 
 3. **CONCISE & TERSE RESPONSES:**
-   - Follow [`docs/workflow/terse-mode.md`](../docs/workflow/terse-mode.md) — keep explanations concise and avoid conversational filler.
+   - Keep responses concise and direct — no conversational filler, no preamble, no tool-call narration.
 
 4. **ALL WORKFLOWS:**
    - For all step-by-step workflow command instructions, see [`docs/workflow/INDEX.md`](../docs/workflow/INDEX.md).

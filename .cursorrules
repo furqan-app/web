@@ -22,7 +22,7 @@
    - Do not create external worktrees outside the workspace.
 
 4. **Concise Responses:**
-   - Follow `docs/workflow/terse-mode.md` — direct, concise, no conversational fluff.
+   - Keep responses concise and direct — no conversational filler, no preamble, no tool-call narration.
 
 ## graphify
 

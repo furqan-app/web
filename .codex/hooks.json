@@ -1,35 +1,5 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .codex/hooks/mujaz-mode.js"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .codex/hooks/mujaz-mode.js"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .codex/hooks/mujaz-stats.js"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

@@ -58,11 +58,3 @@ The AI-first docs system (adopted 2026-06-28): `CLAUDE.md` is a slim pointer, he
 | `/cut-release <bump>` | [release.md](release.md) | Branch, bump version, tag, push, promote to `stg` (GitHub Action) |
 | `/promote-release` | [release.md](release.md) | Open+auto-merge release → `prod` PR, version auto-detected (GitHub Action) |
 | `/sync-main-from-prod` | [release.md](release.md) | Sync `prod` back into `main` after release |
-
-### Doc & UI Utilities
-
-| Trigger | Instructions | Description |
-|---|---|---|
-| `/compress-fq-docs` | [compress-docs.md](compress-docs.md) | Compress verbose `docs/plans/` and `docs/standards/` files |
-| `ui-motion` | [ui-motion.md](ui-motion.md) | Animation and interaction-polish guidelines |
-| Terse mode | [terse-mode.md](terse-mode.md) | Concise-response mode: concept, rules, Furqan vocabulary |

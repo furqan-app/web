@@ -171,8 +171,8 @@ payload; windowing removes the mass mount.
   transform from where the finger released, so `animateCommit` animates only when its `animate` arg
   is true (swipe); the in-spread arrows and the keyboard pass false and commit instantly via
   `commitTo`. Do not re-unify the three inputs onto the animated path — a click or keypress has no
-  transform in flight, so the slide reads as a phantom swipe, and the `ui-motion` skill rules out
-  animating keyboard-initiated and high-frequency actions outright. Gate this on **input source,
+  transform in flight, so the slide reads as a phantom swipe, and `docs/standards/styling.md`'s
+  Motion section rules out animating keyboard-initiated and high-frequency actions outright. Gate this on **input source,
   never on a breakpoint**: the arrows render from `md`, so an `isLgUp` gate leaves tablet arrow-taps
   sliding and kills swipe motion on a touch laptop. Because an instant commit clears `isCommitting`
   synchronously, the keyboard path also needs its own `e.repeat` guard — the slide's duration used to
