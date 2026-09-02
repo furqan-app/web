@@ -68,7 +68,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [Keep Mobile/Tablet Screen Active While App Is Open](keep-screen-awake.md) | implemented | feature |
-| pwa | [PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit](pwa-app-stickiness.md) | implemented | feature |
+| pwa | [PWA App-Launch Stickiness: Launch Into Last Page + Android Double-Back-to-Exit](pwa-app-stickiness.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
 | pwa | [PWA: Remove the Root Layout's Unconditional Reciters and Session Network Calls From the Launch Path](pwa-launch-network-calls.md) | implemented | bug |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
