@@ -1,3 +1,5 @@
+import { redirectToRemovedGrant } from "./mushaf/accessGrants";
+
 export type PageMark = {
   marked_id: string;
   category: string;
@@ -33,12 +35,28 @@ export const getPageMarks = async (
     : `/api/quran/pages/${page}/marks`;
 
   try {
-    const { data: marks, success }: { data: Array<ApiMark>; success: boolean } =
-      await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then((response) => response.json());
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (grantId && res.status === 403) {
+      redirectToRemovedGrant();
+      return {};
+    }
+
+    const json = await res.json();
+    const {
+      data: marks,
+      success,
+      code,
+    }: { data: Array<ApiMark>; success: boolean; code?: number } = json;
+
+    if (grantId && code === 403) {
+      redirectToRemovedGrant();
+      return {};
+    }
 
     if (!success || !marks?.length) {
       return {};

@@ -1,11 +1,14 @@
 import { setRequestLocale } from "next-intl/server";
 
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/options";
 import { ReaderPage } from "@/app/components/reader/ReaderPage";
 import { appPrisma } from "@/app/utils/db";
 import { Locale } from "@/app/types/config";
 
 // Dynamic per-grant view — deliberately NOT statically generated (unlike the
-// self reader). Access is guarded by the parent layout (ADR 0012).
+// self reader). Access is guarded by both layout and page (ADR 0012).
 type MushafGrantPageProps = {
   params: { id: string; locale: Locale; grant: string };
 };
@@ -15,18 +18,27 @@ const MushafGrantPage = async ({
 }: MushafGrantPageProps) => {
   setRequestLocale(locale);
 
-  // Whose mushaf is being viewed — for the in-header viewing indicator. The
-  // parent layout already guarded access; this is just the display name.
+  const session = await getServerSession(authOptions);
+  const viewerId = (session?.user as { id?: number } | undefined)?.id;
+
+  if (!viewerId) {
+    redirect(`/${locale}`);
+  }
+
+  // Guard access on every page request (essential for client-side Next.js child transitions)
   const grantRecord = await appPrisma.mushafAccessGrant.findUnique({
     where: { id: grant },
-    select: { owner_user: true },
+    select: { owner_user: true, viewer_user: true },
   });
-  const owner = grantRecord
-    ? await appPrisma.user.findUnique({
-        where: { id: grantRecord.owner_user },
-        select: { name: true },
-      })
-    : null;
+
+  if (!grantRecord || grantRecord.viewer_user !== viewerId) {
+    redirect(`/${locale}/mushaf?removed=1`);
+  }
+
+  const owner = await appPrisma.user.findUnique({
+    where: { id: grantRecord.owner_user },
+    select: { name: true },
+  });
 
   return (
     <ReaderPage
