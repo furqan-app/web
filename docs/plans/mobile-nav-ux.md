@@ -36,7 +36,7 @@ Remove the `fixed top-1/2 start-0 -translate-y-1/2` `<SheetTrigger>` button. Mak
 
 ### `app/components/nav/Nav.tsx`
 - `<FurqanLogo />` renders unconditionally as the first element of the leading `div`, before the sidebar trigger, in both LTR and RTL.
-- Sidebar trigger `Button` (all breakpoints, gated by `isOnPagesRoute`): `pathname?.includes("/pages/")` with trailing slash (no trailing slash matches false positives like `/ar/pages-list`). One `PanelLeftOpen` icon, `className={cn("size-5", isRTL && "rotate-180")}` — no duplicate RTL/LTR branches.
+- Sidebar trigger `Button` (all breakpoints, gated by `isOnPagesRoute`): `pathname?.includes("/pages/")` with trailing slash (no trailing slash matches false positives like `/ar/pages-list`). The trigger renders as a `rounded-full` pill — `h-8 px-3 py-1 bg-[var(--nav-tab-bg)] border border-border/70 shadow-sm`, `active:scale-[0.97]` press micro-motion — carrying a `ChevronDown` with `transition-transform duration-200` that rotates 180° while the sidebar is `open` (no static icon switching). In RTL it uses the `font-surahnames` glyph (`text-[19px]`, zero-padded `String(id).padStart(3,"0")`) with a `toLocaleNumeral` prefix; in LTR a plain `text-xs font-semibold` name. (The pill *content* — the current surah name/number rather than a bare icon — was introduced later by `sidebar-surah-indicator.md`; this section covers the pill styling only.)
 - `UserMenu`: `hidden md:flex` (folds into Settings sheet on mobile).
 
 ### `app/components/search/SearchBar.tsx`
@@ -66,6 +66,7 @@ Add `AccountCard` entry.
 - **Non-pages routes**: trigger hidden when `pathname` doesn't include `/pages/` (trailing slash required).
 - **Sheet stacking**: Sidebar, Settings, and mobile Search sheets are separate Radix portals — no z-index conflict.
 - **Logo**: fixed in leading `div` both locales. RTL-edge repositioning was implemented then reverted by the user; `isRTL` is retained only for icon rotation.
+- **Sidebar trigger pill**: `rounded-full` with `--nav-tab-bg` + hairline border, `active:scale-[0.97]`, rotating `ChevronDown` (no static icon swap); `font-surahnames` glyph + numeral prefix in RTL, plain text in LTR.
 
 ## Constraints
 
@@ -76,33 +77,6 @@ Add `AccountCard` entry.
 - Do not add a UserMenu icon to mobile nav or a bottom navigation bar.
 - Do not move Sidebar to root locale layout.
 
----
+## Revision History
 
-## Addendum 1: Sleek Calligraphic Surah Selector Pill UI Polish (2026-08-26)
-
-**Status:** implemented
-**Issue:** [#431](https://github.com/furqan-app/web/issues/431)
-
-### Summary
-The mobile navbar Surah toggle button currently renders as a basic rectangular block with plain sans-serif Arabic typography. This addendum elevates the mobile button to a sleek, `rounded-full` pill using `--nav-tab-bg` with a subtle hairline border, calligraphic `font-surahnames` for Arabic/RTL, a refined numeral prefix, smooth rotating chevron indicator, and tactile press micro-motion (`active:scale-[0.97]`).
-
-### Approach & Changes
-
-1. **Sleek Pill Container (`Nav.tsx`)**
-   - Refine the mobile button classes to use a `rounded-full` pill with `h-8 px-3 py-1 bg-[var(--nav-tab-bg)] border border-border/70 shadow-sm` and tactile press `active:scale-[0.97]`.
-2. **Typography & Arabic Calligraphy**
-   - In Arabic (`isRTL`): render `font-surahnames` glyph font at `text-[19px]` with zero-padded code `String(currentSurah.id).padStart(3, "0")`, paired with a subtle numeral prefix (`toLocaleNumeral(currentSurah.id, locale)`).
-   - In English: clean `text-xs font-semibold` (`currentSurah.name_simple`).
-3. **Animated Chevron Indicator**
-   - Use `ChevronDown` with `transition-transform duration-200` and `open && "rotate-180"`, removing static icon switching.
-
-### Files Changed
-- `docs/plans/mobile-nav-ux.md` — this plan addendum.
-- `app/components/nav/Nav.tsx` — mobile pill markup and styling.
-
-### Verification Plan
-1. `npm run lint` && `npm test`
-2. Visual check in mobile viewport:
-   - Arabic layout with `font-surahnames` calligraphic glyph.
-   - English layout with clean typography.
-   - Drawer toggle and chevron rotation.
+- 2026-08-26 — folded Addendum 1 (#431): mobile sidebar trigger restyled from a bare `PanelLeftOpen` icon to a `rounded-full` calligraphic pill with a rotating chevron and press micro-motion.
