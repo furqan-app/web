@@ -302,6 +302,60 @@ const tailwindFontUtility = [
   "md:text-[max(24px,4.9vh)]",
 ];
 
+type MarkWordRestorerProps = {
+  hasContent: boolean;
+  lines: Record<string, WordWithVerse[]>;
+  selectWord: (word: WordWithVerse) => void;
+};
+
+const MarkWordRestorer = ({
+  hasContent,
+  lines,
+  selectWord,
+}: MarkWordRestorerProps) => {
+  const searchParams = useSearchParams();
+  const markWordParam = searchParams.get("markWord");
+  const restoredMarkRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!markWordParam || !hasContent || restoredMarkRef.current === markWordParam) {
+      return;
+    }
+
+    const allWords = Object.values(lines).flat();
+    if (allWords.length === 0) return;
+
+    const segments = markWordParam.split(":");
+    let matchedWord: WordWithVerse | undefined;
+
+    if (segments.length === 3) {
+      matchedWord = allWords.find(
+        (w) => w.location === markWordParam && w.char_type_name === "word",
+      );
+    } else if (segments.length === 2) {
+      matchedWord = allWords.find(
+        (w) => w.verse_key === markWordParam && w.char_type_name === "end",
+      );
+      if (!matchedWord) {
+        matchedWord = allWords.find((w) => w.verse_key === markWordParam);
+      }
+    }
+
+    if (matchedWord) {
+      restoredMarkRef.current = markWordParam;
+      selectWord(matchedWord);
+
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("markWord");
+        window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
+      }
+    }
+  }, [markWordParam, hasContent, lines, selectWord]);
+
+  return null;
+};
+
 export const QuranSafha = ({
   page,
   lines: linesProp,
@@ -439,45 +493,7 @@ export const QuranSafha = ({
     setSelectedForMark(null);
   };
 
-  const searchParams = useSearchParams();
-  const markWordParam = searchParams.get("markWord");
-  const restoredMarkRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!markWordParam || !hasContent || restoredMarkRef.current === markWordParam) {
-      return;
-    }
-
-    const allWords = Object.values(lines).flat();
-    if (allWords.length === 0) return;
-
-    const segments = markWordParam.split(":");
-    let matchedWord: WordWithVerse | undefined;
-
-    if (segments.length === 3) {
-      matchedWord = allWords.find(
-        (w) => w.location === markWordParam && w.char_type_name === "word",
-      );
-    } else if (segments.length === 2) {
-      matchedWord = allWords.find(
-        (w) => w.verse_key === markWordParam && w.char_type_name === "end",
-      );
-      if (!matchedWord) {
-        matchedWord = allWords.find((w) => w.verse_key === markWordParam);
-      }
-    }
-
-    if (matchedWord) {
-      restoredMarkRef.current = markWordParam;
-      selectWord(matchedWord);
-
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("markWord");
-        window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
-      }
-    }
-  }, [markWordParam, hasContent, lines, selectWord]);
 
   const getCurrentMarkMeta = (markFor: WordWithVerse | VerseForMark) => {
     const markedId = "location" in markFor ? markFor.location : markFor.verse_key;
@@ -621,6 +637,13 @@ export const QuranSafha = ({
 
   return (
     <>
+      <Suspense fallback={null}>
+        <MarkWordRestorer
+          hasContent={hasContent}
+          lines={lines}
+          selectWord={selectWord}
+        />
+      </Suspense>
       {selectedForMark ? (
         (() => {
           const markMeta = getCurrentMarkMeta(
