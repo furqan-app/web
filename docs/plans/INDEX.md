@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-158 plans.
+159 plans.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
