@@ -16,7 +16,7 @@ gh issue comment <issue-number> --repo furqan-app/web --body "PR: <pr-url>
 <short summary>"
 gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:in-progress" --add-label "status:in-review"
 ```
-The PR body (step 5) must reference the issue as `Refs #<issue-number>` — **not** `Fixes #<issue-number>` or `Closes #<issue-number>`. Merging into `main` is not the same as shipping a release here; using `Fixes`/`Closes` would let GitHub auto-close the issue on merge, before the release that actually ships it. A GitHub Action (`.github/workflows/issue-status-on-merge.yml`) reads the `Refs #N` reference on merge and advances the issue from `status:in-review` to `status:to-be-released` automatically — `/cut-release` is what finally closes it.
+The PR body (step 5) must reference the issue as `Refs #<issue-number>` — **not** `Fixes #<issue-number>` or `Closes #<issue-number>`. Merging into `main` is not the same as shipping a release here; using `Fixes`/`Closes` would let GitHub auto-close the issue on merge, before the release that actually ships it. A GitHub Action (`.github/workflows/issue-status-on-merge.yml`) reads the `Refs #N` reference on merge and advances the issue from `status:in-review` to `status:to-be-released` automatically — `/release promote` is what finally marks it `status:done` and closes it when the version reaches `prod` (`/release cut` only milestones it).
 
 ### Step 7 — Clean up the worktree (mandatory — always run, even if step 6 was skipped)
 

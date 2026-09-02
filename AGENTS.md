@@ -101,7 +101,7 @@ The workflow tracks tasks as GitHub Issues on `furqan-app/web` — no MCP setup 
 
 ## Releases
 
-Branching model: work ships from feature branches → `main` (via `/ship-fq-task`); releases cut from `main` → release branch → promoted `stg` → `prod` via `/release <major|minor|patch>` (GitHub Actions under the hood). Deploy target is Hostinger.
+Branching model: work ships from feature branches → `main` (via `/ship-fq-task`). `/release <major|minor|patch>` then cuts `release/x.y.z` from `main`, refreshes `stg` from `main`, promotes the release branch to `prod`, and syncs `prod` back into `main` — GitHub Actions under the hood. Single phase: `/release cut <bump>`, `/release promote`, `/release sync`. Deploy target is Hostinger.
 
 ## graphify
 

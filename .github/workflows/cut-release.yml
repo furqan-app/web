@@ -98,8 +98,8 @@ jobs:
               title="${rest%%|*}"
               url="${rest##*|}"
               gh issue edit "$n" --repo "${{ github.repository }}" --milestone "$version"
-              # Keep the issue open and labeled status:to-be-released — /promote-release
-              # marks it done and closes it when the version reaches prod.
+              # Keep the issue open and labeled status:to-be-released — promote-release.yml
+              # (/release promote) marks it done and closes it when the version reaches prod.
               body+="- $title ($url)\n"
             done
           fi
@@ -124,7 +124,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pr_url=$(gh pr create --repo "${{ github.repository }}" --base stg --head main --title "Staging update" --body "Promoting main to stg as part of cutting v${{ steps.version.outputs.new_version }}.")
+          version="v${{ steps.version.outputs.new_version }}"
+          # The stg PR body renders the same release manifest as the GitHub Release
+          # notes and (at promote) the release → prod PR body — keep all three in sync
+          # if you edit one. Correct only while one release is in flight at a time: the
+          # issue list is "open status:to-be-released", i.e. merged to main since the
+          # last promote. See ADR 0058.
+          body="Promoting main to stg as part of cutting $version."$'\n\n'"## Included"$'\n'"${{ steps.issues.outputs.body }}"
+          if [[ -n "${{ steps.db_flags.outputs.notes }}" ]]; then
+            body+=$'\n'"## Manual Action Required"$'\n'"${{ steps.db_flags.outputs.notes }}"
+          fi
+          pr_url=$(gh pr create --repo "${{ github.repository }}" --base stg --head main --title "Staging update ($version)" --body "$body")
           # stg has no required status checks, so it's always immediately mergeable —
           # enablePullRequestAutoMerge rejects that with "Pull request is in clean status".
           # Merge directly instead of via --auto. Use a merge commit (not squash) so main's
