@@ -1,10 +1,12 @@
+---
+title: Delete My Marks
+type: feature
+date: 2026-07-03
+status: implemented
+area: marks
+---
+
 # Delete My Marks
-
-**Type:** feature  
-**Date:** 2026-07-03  
-**Status:** implemented (incl. Addendum)
-
-Trello: [#43](https://trello.com/c/y22VYd4M/43-delete-my-marks)
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Consolidate Suspense Boundaries in QuranLine / QuranSafha
+---
+title: Consolidate Suspense Boundaries in QuranLine / QuranSafha
+type: bug
+date: 2026-07-09
+status: implemented
+area: reader
+---
 
-**Type:** bug  
-**Date:** 2026-07-09  
-**Status:** implemented
+# Consolidate Suspense Boundaries in QuranLine / QuranSafha
 
 ## Root Cause
 

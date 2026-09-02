@@ -1,8 +1,12 @@
-# Quran Font Size: Minimum Floor for Short Viewports
+---
+title: "Quran Font Size: Minimum Floor for Short Viewports"
+type: bug
+date: 2026-07-01
+status: implemented
+area: rendering
+---
 
-**Type:** bug  
-**Date:** 2026-07-01  
-**Status:** implemented
+# Quran Font Size: Minimum Floor for Short Viewports
 
 ## Summary
 

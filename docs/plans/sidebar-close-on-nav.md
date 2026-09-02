@@ -1,8 +1,12 @@
-# Close Surah Sidebar on Link Click
+---
+title: Close Surah Sidebar on Link Click
+type: bug
+date: 2026-08-03
+status: implemented
+area: nav
+---
 
-**Type:** bug
-**Date:** 2026-08-03
-**Status:** implemented
+# Close Surah Sidebar on Link Click
 
 ## Summary
 

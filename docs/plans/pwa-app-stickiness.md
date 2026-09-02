@@ -1,10 +1,13 @@
-# PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit
+---
+title: "PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit"
+type: feature
+date: 2026-08-12
+status: implemented
+area: pwa
+issue: 288
+---
 
-**Type:** feature
-**Date:** 2026-08-12
-**Status:** implemented
-**Trello:** #201 https://trello.com/c/yxgElmek
-**GitHub:** [#288](https://github.com/furqan-app/web/issues/288), [#290](https://github.com/furqan-app/web/issues/290) (see addenda)
+# PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit
 
 ## Summary
 

@@ -1,10 +1,13 @@
-# Shared Mushaf Access ("My teacher can access my mushaf")
+---
+title: Shared Mushaf Access ("My teacher can access my mushaf")
+type: feature
+date: 2026-07-04
+status: implemented
+area: marks
+adr: [0012]
+---
 
-**Type:** feature
-**Date:** 2026-07-04
-**Status:** implemented
-**Trello:** https://trello.com/c/UhEDDKgA/41-my-teacher-can-access-my-mushaf
-**ADR:** [0012 — Shared mushaf access](../architecture/adr/0012-shared-mushaf-access.md)
+# Shared Mushaf Access ("My teacher can access my mushaf")
 
 ## Summary
 

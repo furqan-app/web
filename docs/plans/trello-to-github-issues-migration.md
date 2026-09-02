@@ -1,3 +1,11 @@
+---
+title: Trello → GitHub Issues Migration Plan
+type: feature
+date: 2026-08-13
+status: implemented
+area: workflow
+---
+
 # Trello → GitHub Issues Migration Plan
 
 ## Status

@@ -1,8 +1,13 @@
+---
+title: "Complex E2E & Fix: Word Marking, Auth Gates & 'My Marks' Round-Trip Jumps"
+type: feature
+date: 2026-09-02
+status: implemented
+area: marks
+---
+
 # Complex E2E & Fix: Word Marking, Auth Gates & 'My Marks' Round-Trip Jumps
 
-**Type:** feature
-**Date:** 2026-09-02
-**Status:** implemented
 **GitHub Issue:** [#468](https://github.com/furqan-app/web/issues/468)
 **Parent Epic:** [#466](https://github.com/furqan-app/web/issues/466)
 

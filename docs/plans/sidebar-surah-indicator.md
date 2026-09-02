@@ -1,9 +1,12 @@
-# Sidebar Surah Indicator & Active Scroll
+---
+title: Sidebar Surah Indicator & Active Scroll
+type: feature
+date: 2026-08-12
+status: implemented
+area: nav
+---
 
-**Type:** feature  
-**Date:** 2026-08-12  
-**Status:** implemented  
-**Trello:** [#196](https://trello.com/c/UoGWL2UK/196-the-surah-sidebar-toggler-icon-should-be-replaced-with-page-indicator)
+# Sidebar Surah Indicator & Active Scroll
 
 ## Summary
 

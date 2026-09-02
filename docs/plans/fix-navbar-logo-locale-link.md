@@ -1,9 +1,12 @@
-# Fix Navbar Logo Locale Link
+---
+title: Fix Navbar Logo Locale Link
+type: bug
+date: 2026-08-29
+status: implemented
+area: nav
+---
 
-**Type:** bug  
-**Date:** 2026-08-29  
-**Status:** implemented  
-**Issue:** https://github.com/furqan-app/web/issues/463  
+# Fix Navbar Logo Locale Link
 
 ## Summary
 

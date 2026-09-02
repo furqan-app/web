@@ -1,8 +1,14 @@
+---
+title: Reading-desk depth for light & gold — and de-duplicating the reader CSS
+type: feature
+date: 2026-07-29
+status: implemented
+area: theming
+supersedes: [dark-theme-mushaf-unification]
+---
+
 # Reading-desk depth for light & gold — and de-duplicating the reader CSS
 
-**Status:** implemented
-**Trello:** [#154](https://trello.com/c/3ZaGY47k)
-**Predecessor:** `docs/plans/dark-theme-mushaf-unification.md` (#148, merged as `4cdf129`)
 **Brief:** `docs/plans/theme-depth-unification-HANDOFF.md`
 
 ## Goal

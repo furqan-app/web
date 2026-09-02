@@ -1,8 +1,12 @@
-# UI Workflow Enhancements
+---
+title: UI Workflow Enhancements
+type: feature
+date: 2026-06-30
+status: implemented
+area: workflow
+---
 
-**Type:** feature
-**Date:** 2026-06-30
-**Status:** implemented
+# UI Workflow Enhancements
 
 ## Summary
 

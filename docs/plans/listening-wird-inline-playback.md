@@ -1,9 +1,12 @@
-# Listening Wird: Inline Playback on Assignment Rows
+---
+title: "Listening Wird: Inline Playback on Assignment Rows"
+type: feature
+date: 2026-07-30
+status: implemented
+area: recitation
+---
 
-**Type:** feature
-**Date:** 2026-07-30
-**Status:** implemented
-**Trello:** #162 — https://trello.com/c/20TSoSGg
+# Listening Wird: Inline Playback on Assignment Rows
 
 ## Summary
 

@@ -1,9 +1,13 @@
+---
+title: Arrow Controls on Desktop
+type: feature
+date: 2026-07-27
+status: implemented
+area: reader
+---
+
 # Arrow Controls on Desktop
 
-**Type:** feature
-**Date:** 2026-07-27
-**Status:** ready-to-implement (Addendum 1 below; the original feature is implemented)
-**Trello:** #92 https://trello.com/c/rHb2aJxd/92-arrow-controls-on-desktop
 **Trello (Addendum 1):** #156 https://trello.com/c/YtVG0F3M/156-bug-arrow-keyboard-page-nav-replays-the-swipe-slide-animation
 
 ## Summary

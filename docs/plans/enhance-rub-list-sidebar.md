@@ -1,8 +1,12 @@
-# Enhanced RubList Sidebar
+---
+title: Enhanced RubList Sidebar
+type: feature
+date: 2026-07-04
+status: implemented
+area: nav
+---
 
-**Type:** feature
-**Date:** 2026-07-04
-**Status:** implemented
+# Enhanced RubList Sidebar
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Mark Modal Redesign, Distinct Category Icons & Typography Polish
+---
+title: Mark Modal Redesign, Distinct Category Icons & Typography Polish
+type: feature
+date: 2026-08-30
+status: implemented
+area: marks
+---
 
-**Type:** feature  
-**Date:** 2026-08-30  
-**Status:** implemented
+# Mark Modal Redesign, Distinct Category Icons & Typography Polish
 
 ## Summary
 

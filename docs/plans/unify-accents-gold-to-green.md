@@ -1,8 +1,12 @@
-# Unify Accents: Replace Gold Accents and Ornaments with Emerald Green
+---
+title: "Unify Accents: Replace Gold Accents and Ornaments with Emerald Green"
+type: feature
+date: 2026-08-22
+status: implemented
+area: theming
+---
 
-**Type:** design
-**Date:** 2026-08-22
-**Status:** implemented
+# Unify Accents: Replace Gold Accents and Ornaments with Emerald Green
 
 ## Summary
 

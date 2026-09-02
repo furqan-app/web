@@ -1,8 +1,12 @@
-# Release-Branch Deployment Workflow
+---
+title: Release-Branch Deployment Workflow
+type: feature
+date: 2026-07-06
+status: implemented
+area: release
+---
 
-**Type:** feature  
-**Date:** 2026-07-06  
-**Status:** implemented
+# Release-Branch Deployment Workflow
 
 ## Summary
 

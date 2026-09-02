@@ -1,3 +1,11 @@
+---
+title: "Plan: Set `font-tajawal` globally on app root & Tailwind `sans`"
+type: feature
+date: 2026-08-20
+status: implemented
+area: theming
+---
+
 # Plan: Set `font-tajawal` globally on app root & Tailwind `sans`
 
 ## Goal Description

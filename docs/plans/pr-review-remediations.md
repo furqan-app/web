@@ -1,8 +1,12 @@
-# PR Review Remediations for Feature 433
+---
+title: PR Review Remediations for Feature 433
+type: feature
+date: 2026-08-29
+status: implemented
+area: workflow
+---
 
-**Type:** refactor / bugfix / cleanup
-**Date:** 2026-08-29
-**Status:** implemented
+# PR Review Remediations for Feature 433
 
 ## Summary
 

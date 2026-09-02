@@ -1,8 +1,13 @@
+---
+title: "Fix: Surah Banner Placement and Standalone Line Sizing"
+type: bug
+date: 2026-07-07
+status: implemented
+area: surah-layout
+---
+
 # Fix: Surah Banner Placement and Standalone Line Sizing
 
-**Type:** bug
-**Date:** 2026-07-07
-**Status:** implemented (Addendum 12)
 **Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf
 **Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread
 **Trello #133:** https://trello.com/c/eFWXR9ca — surah name frame, full text width (Addendum 8)

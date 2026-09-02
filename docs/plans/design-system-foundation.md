@@ -1,9 +1,12 @@
-# Design System Foundation
+---
+title: Design System Foundation
+type: feature
+date: 2026-06-29
+status: implemented
+area: theming
+---
 
-**Type:** feature  
-**Date:** 2026-06-29  
-**Status:** implemented  
-**Trello:** https://trello.com/c/RnqCBh4Q/34-create-a-design-system
+# Design System Foundation
 
 ## Summary
 

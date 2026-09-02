@@ -1,8 +1,13 @@
+---
+title: "Functional E2E: Sidebar Drawer & Navigation Tabs"
+type: feature
+date: 2026-08-27
+status: implemented
+area: nav
+---
+
 # Functional E2E: Sidebar Drawer & Navigation Tabs
 
-**Type:** feature  
-**Date:** 2026-08-27  
-**Status:** implemented  
 **GitHub Issue:** [#425](https://github.com/furqan-app/web/issues/425)  
 **Parent Epic:** [#421](https://github.com/furqan-app/web/issues/421)  
 

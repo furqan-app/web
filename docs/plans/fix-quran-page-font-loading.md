@@ -1,9 +1,12 @@
-# Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle
+---
+title: "Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle"
+type: bug
+date: 2026-07-18
+status: implemented
+area: rendering
+---
 
-**Type:** bug  
-**Date:** 2026-07-18  
-**Status:** implemented  
-**Trello:** https://trello.com/c/YVdrjhtl/119
+# Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle
 
 ## Summary
 

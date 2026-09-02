@@ -1,8 +1,12 @@
-# CI Quality Gate: PR Lint, Typecheck & Vitest Workflow
+---
+title: "CI Quality Gate: PR Lint, Typecheck & Vitest Workflow"
+type: feature
+date: 2026-08-27
+status: implemented
+area: ci
+---
 
-**Type:** task  
-**Date:** 2026-08-27  
-**Status:** implemented  
+# CI Quality Gate: PR Lint, Typecheck & Vitest Workflow
 
 ## Summary
 

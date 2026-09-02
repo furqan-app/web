@@ -1,8 +1,12 @@
-# Fix Reader Navigation Infinite Render Loop
+---
+title: Fix Reader Navigation Infinite Render Loop
+type: bug
+date: 2026-08-12
+status: implemented
+area: reader
+---
 
-**Type:** bug
-**Date:** 2026-08-12
-**Status:** implemented
+# Fix Reader Navigation Infinite Render Loop
 
 ## Summary
 

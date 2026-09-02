@@ -1,8 +1,12 @@
-# Mobile Swipe Page Animation
+---
+title: Mobile Swipe Page Animation
+type: feature
+date: 2026-07-08
+status: implemented
+area: reader
+---
 
-**Type:** feature
-**Date:** 2026-07-08
-**Status:** implemented
+# Mobile Swipe Page Animation
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Restructure Navigation for Clean UX
+---
+title: Restructure Navigation for Clean UX
+type: feature
+date: 2026-08-19
+status: implemented
+area: nav
+---
 
-**Type:** feature
-**Date:** 2026-08-19
-**Status:** implemented
+# Restructure Navigation for Clean UX
 
 ## Summary
 The mobile and desktop navigation bars were restructured to solve layout crowding and improve UX. Previously, the mobile navbar exceeded its visual constraints, causing 6+ elements to squash together with no spacing. A generic hamburger menu (`NavOverflowMenu`) lacked intent and duplicated functionality. The solution establishes a "User Portal" pattern where the User Avatar acts as the primary hub for secondary actions on mobile, while keeping the desktop layout fully unspooled.

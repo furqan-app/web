@@ -1,9 +1,14 @@
-# Homepage Design & UX Elevation
+---
+title: Homepage Design & UX Elevation
+type: feature
+date: 2026-08-22
+status: implemented
+area: theming
+issue: 360
+adr: [0047]
+---
 
-**Type:** feature (design & UX)  
-**Date:** 2026-08-22  
-**Status:** implemented  
-**Parent:** [INDEX.md](INDEX.md) · **Issue:** #360 · **ADR:** [0047](../../architecture/adr/0047-adopt-reader-lab-design-language.md)
+# Homepage Design & UX Elevation
 
 ## Summary
 

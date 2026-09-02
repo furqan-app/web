@@ -12,12 +12,12 @@ Socratic planning and investigation for features and bugs. Output: `docs/plans/<
 
 ### 0. Check for an existing related plan — before anything else
 
-Run `ls docs/plans/` and scan for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
+Read [`docs/plans/INDEX.md`](../plans/INDEX.md) — one row per plan (area, title, status, type) — and scan the rows in the same `area` as this task for one touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
 
-- If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its `Status` to `ready-to-implement` if it had been marked `implemented`.
+- If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its frontmatter `status` to `ready-to-implement` if it was `implemented`, then regenerate `INDEX.md` (`.claude/skills/scripts/gen-plans-index.sh`).
 - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
 
-This check is a literal, mandatory action every time — it has been skipped before despite being documented, so run the `ls`/grep; don't rely on memory.
+This check is a literal, mandatory action every time — it has been skipped before despite being documented, so read `INDEX.md`; don't rely on memory.
 
 ### 1. Load context — mandatory gate, before investigating or writing anything
 
@@ -80,18 +80,31 @@ Every task should have a ticket in your project management system before impleme
 
 ### 6. Write the plan
 
-Write `docs/plans/<slug>.md` (or the addendum if extending an existing plan) with the content below.
+Write `docs/plans/<slug>.md` (or the addendum if extending an existing plan) with the content below, then regenerate the index: `.claude/skills/scripts/gen-plans-index.sh`. Stage `INDEX.md` alongside the plan.
 
 ---
 
 ## Plan file format
 
+Every plan opens with a YAML frontmatter block ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)) — this is what `INDEX.md` is generated from:
+
+```yaml
+---
+title: <matches the # H1>
+type: bug | feature | chore
+date: YYYY-MM-DD
+status: ready-to-implement    # ready-to-implement | in-progress | implemented | superseded | unknown
+area: <one value>             # see the vocabulary in ADR 0059 — mirrors decisions/ domains + workflow/infra
+supersedes: [<slug>]          # other plan slugs this replaces; omit if none
+issue: <bare number>          # omit if none
+adr: [<NNNN>]                 # omit if none
+---
+```
+
+`area` must be one of the fixed vocabulary in ADR 0059 (`rendering`, `reader`, `nav`, `marks`, `recitation`, `pwa`, `db`, `api`, `search`, `theming`, `awrad`, `a11y`, `ci`, `release`, `workflow`, `observability`, `seeder`, `surah-layout`, `tafsir`) — never free text.
+
 ```markdown
 # <Task Title>
-
-**Type:** feature | bug
-**Date:** YYYY-MM-DD
-**Status:** ready-to-implement
 
 ## Summary
 One paragraph.
@@ -125,5 +138,6 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 
 ## Anti-patterns to avoid
 
-- Do not create a new plan file without first checking `docs/plans/` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not create a new plan file without first checking `docs/plans/INDEX.md` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not hand-edit `docs/plans/INDEX.md` — it is generated. Change a plan's frontmatter, then run `gen-plans-index.sh`.
 - Do not write a plan that contradicts an ADR or a still-active constraint/`What NOT to Do` item in the plan you are extending. If the task genuinely requires overriding one, surface it to the user and supersede it explicitly — never silently.

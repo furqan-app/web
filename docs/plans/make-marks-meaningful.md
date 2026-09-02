@@ -1,11 +1,13 @@
-# Unify Marks: Category + Optional Comment
+---
+title: "Unify Marks: Category + Optional Comment"
+type: feature
+date: 2026-07-13
+status: implemented
+area: marks
+adr: [0025]
+---
 
-**Type:** feature
-**Date:** 2026-07-13
-**Status:** implemented
-**Trello:** [#53 Make marks meaningful](https://trello.com/c/h2QcIsJH/53-make-marks-meaningful)
-**ADR:** [0025 — A mark is one row: a category plus an optional comment](../architecture/adr/0025-mark-is-category-plus-comment.md)
-(supersedes [0022](../architecture/adr/0022-verse-word-comments-as-mark-type.md), amends [0024](../architecture/adr/0024-color-marks-encode-category.md))
+# Unify Marks: Category + Optional Comment
 
 ## Summary
 Marks and comments are currently **two independent `Mark` rows** on the same
@@ -16,7 +18,7 @@ category is the escape hatch for "I just want to comment." The schema drops
 `mark_type` and `mark_value`, gaining `category` (VARCHAR) + `comment`
 (nullable TEXT); the modal drops its Bookmarks/Notes tabs for a single
 picker-then-comment flow. Test data is disposable — a versioned Prisma
-migration reshapes the table (App DB uses migrations, not `db push` — ADR 0017).
+migration reshapes the table (App DB uses migrations, not `db push` — ADR 0051).
 The migration's **first statement is `DELETE FROM marks;`** so `migrate deploy`
 runs cleanly on any environment: no NOT-NULL backfill for `category`, and the
 new `[marked_type, marked_id, to_user]` unique index can't collide with legacy
@@ -62,7 +64,7 @@ except from a DB backup.
   (ADR 0024 fallback preserved). No comment indicator.
 - **Shared mushaf**: viewer editing an owner's mark overwrites category+comment
   and sets `from_user = viewer` (last-author-wins, single author per mark — the
-  per-`mark_type` split authorship of ADR 0022/0012 is gone by design).
+  per-`mark_type` split authorship of ADR 0053/0012 is gone by design).
 
 ## Verified Test Cases
 - **New: pick `similar`, no comment** → row `category:"similar", comment:null`;
@@ -99,7 +101,7 @@ regression from the 3–4 tab layout. Fix, plus two requested improvements:
   full-width rows. (Follow-on section above.)
 - `prisma/app/schema.prisma` — swap `mark_type`/`mark_value` for
   `category`/`comment`; new unique key. Generate + apply a Prisma migration
-  (`app-migrate-dev`, ADR 0017) + `prisma-generate`.
+  (`app-migrate-dev`, ADR 0051) + `prisma-generate`.
 - `app/api/mushaf/access.ts` — `MarkBody` → `{ marked_type, marked_id, category, comment? }`;
   `upsertMark` requires category, writes comment (null when blank), keys on the
   3-field unique key; `deleteMark` keys on `[marked_type, marked_id, to_user]`.
@@ -129,7 +131,7 @@ regression from the 3–4 tab layout. Fix, plus two requested improvements:
   and any single-flow labels; keep the six category keys. Run
   `npm run extract-translations`.
 - `docs/architecture/adr/0025-mark-is-category-plus-comment.md` — new ADR.
-- `docs/architecture/DECISIONS.md` — mark the "Verse/Word Comments" (ADR 0022)
+- `docs/architecture/DECISIONS.md` — mark the "Verse/Word Comments" (ADR 0053)
   section superseded; update the ADR 0024 "Color Marks" section (no more
   `mark_type`, new unique key); add the ADR 0025 summary.
 
@@ -140,9 +142,9 @@ regression from the 3–4 tab layout. Fix, plus two requested improvements:
   model/FK (ADR 0008). Highlight + chip class sets stay literal Tailwind strings
   keyed by category (ADR 0024).
 - Comment textarea + My Marks comment preview keep `dir="auto"` on exactly one
-  element in the chain (free-text direction rule, DECISIONS.md ADR 0022 note —
+  element in the chain (free-text direction rule, DECISIONS.md ADR 0053 note —
   carry this forward even though 0022 is superseded).
-- No data-preserving migration; the App DB migration (ADR 0017) drops old rows.
+- No data-preserving migration; the App DB migration (ADR 0051) drops old rows.
 
 ## What NOT to Do
 - Do not keep a vestigial `mark_type` column — it is dropped entirely.
@@ -156,5 +158,5 @@ regression from the 3–4 tab layout. Fix, plus two requested improvements:
 - One author per mark; per-`mark_type` split authorship dropped (Q2).
 - `mark_type` column dropped; category + comment in one row (Q3).
 - Highlight only on the reader page; no comment cue (Q4).
-- Data is disposable — reshape via an App DB migration (ADR 0017); old rows
+- Data is disposable — reshape via an App DB migration (ADR 0051); old rows
   cleared, not data-migrated.

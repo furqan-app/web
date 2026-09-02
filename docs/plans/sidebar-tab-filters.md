@@ -1,9 +1,13 @@
-# Sidebar: per-tab search filters (Surahs + Rubs tabs)
+---
+title: "Sidebar: per-tab search filters (Surahs + Rubs tabs)"
+type: feature
+date: 2026-08-25
+status: implemented
+area: nav
+issue: 362
+---
 
-**Type:** feature
-**Date:** 2026-08-25
-**Status:** implemented
-**Issue:** [#362](https://github.com/furqan-app/web/issues/362) (part of epic #361; sibling #363 home search already shipped in PR #420)
+# Sidebar: per-tab search filters (Surahs + Rubs tabs)
 
 ## Summary
 

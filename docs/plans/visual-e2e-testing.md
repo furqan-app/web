@@ -1,8 +1,12 @@
-# Visual E2E Testing in the Workflow
+---
+title: Visual E2E Testing in the Workflow
+type: feature
+date: 2026-07-07
+status: implemented
+area: ci
+---
 
-**Type:** feature
-**Date:** 2026-07-07
-**Status:** implemented
+# Visual E2E Testing in the Workflow
 
 ## Summary
 

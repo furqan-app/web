@@ -1,8 +1,12 @@
-# QuranSafha Header — Surah Name Glyph Font
+---
+title: QuranSafha Header — Surah Name Glyph Font
+type: feature
+date: 2026-07-01
+status: implemented
+area: rendering
+---
 
-**Type:** feature  
-**Date:** 2026-07-01  
-**Status:** implemented
+# QuranSafha Header — Surah Name Glyph Font
 
 ## Summary
 

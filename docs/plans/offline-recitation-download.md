@@ -1,10 +1,13 @@
-# Offline Recitation Audio Download
+---
+title: Offline Recitation Audio Download
+type: feature
+date: 2026-08-17
+status: implemented
+area: recitation
+adr: [0046]
+---
 
-**Type:** feature
-**Date:** 2026-08-17
-**Status:** implemented
-**Issue:** https://github.com/furqan-app/web/issues/325
-**ADR:** [0046](../architecture/adr/0046-offline-recitation-audio.md)
+# Offline Recitation Audio Download
 
 ## Summary
 

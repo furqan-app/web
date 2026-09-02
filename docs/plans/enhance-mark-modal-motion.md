@@ -1,8 +1,12 @@
-# Enhance MarkModal Motion & Polish
+---
+title: Enhance MarkModal Motion & Polish
+type: feature
+date: 2026-07-03
+status: implemented
+area: marks
+---
 
-**Type:** feature  
-**Date:** 2026-07-03  
-**Status:** implemented (incl. Addendum 3)
+# Enhance MarkModal Motion & Polish
 
 ## Summary
 

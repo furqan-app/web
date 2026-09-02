@@ -1,8 +1,12 @@
-# Quran Page Mushaf Design Enhancement
+---
+title: Quran Page Mushaf Design Enhancement
+type: feature
+date: 2026-07-01
+status: implemented
+area: rendering
+---
 
-**Type:** feature  
-**Date:** 2026-07-01  
-**Status:** implemented
+# Quran Page Mushaf Design Enhancement
 
 ## Summary
 

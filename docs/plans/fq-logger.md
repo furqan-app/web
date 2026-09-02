@@ -1,14 +1,16 @@
+---
+title: "fq-logger: Structured Logging & Observability"
+type: feature
+date: 2026-07-09
+status: implemented
+area: observability
+---
+
 # fq-logger: Structured Logging & Observability
-
-**Type:** feature
-**Date:** 2026-07-09
-**Status:** implemented
-
-Trello: [#84 Create a logging lib wrapper](https://trello.com/c/5eDRKAl6/84-create-a-logging-lib-wrapper)
 
 ## Summary
 
-`pino`-based structured logging wrapper. Instruments server-side code: existing `console.*` call sites plus new log points in auth flows, API routes, server actions, and the Sentry-Slack webhook relay. `logger.error()` also reports to Sentry — bridging the two (ADR 0019). See [ADR 0019](../architecture/adr/0019-fq-logger-sentry-integration.md).
+`pino`-based structured logging wrapper. Instruments server-side code: existing `console.*` call sites plus new log points in auth flows, API routes, server actions, and the Sentry-Slack webhook relay. `logger.error()` also reports to Sentry — bridging the two (ADR 0052). See [ADR 0052](../architecture/adr/0052-fq-logger-sentry-integration.md).
 
 ## Library & Runtime Split
 
@@ -68,7 +70,7 @@ log.error("mark.create.failed", { err: e, userId });
 
 ## Files to Change
 
-**New:** `lib/fq-logger/index.ts`, `node.ts`, `edge.ts`, `types.ts`, `redact.ts`, `sentry-bridge.ts`; `app/middlewares/request-id-middleware.ts`; `docs/architecture/adr/0019-fq-logger-sentry-integration.md`.
+**New:** `lib/fq-logger/index.ts`, `node.ts`, `edge.ts`, `types.ts`, `redact.ts`, `sentry-bridge.ts`; `app/middlewares/request-id-middleware.ts`; `docs/architecture/adr/0052-fq-logger-sentry-integration.md`.
 
 **Modified:** `middleware.ts` (add `withRequestId`); `app/middlewares/auth-middleware.ts` (`.warn()` on auth denials, Edge shim); `app/api/auth/options.ts` (`.warn()` on callback failures); API routes (`.warn()` on 401/422); `app/api/webhooks/sentry/route.ts` (`.warn()` on sig failures, `.info()` on dropped resource types); `package.json` (`pino`, `pino-pretty` dev); `.env.example`/`.env.local` (document `LOG_LEVEL`).
 

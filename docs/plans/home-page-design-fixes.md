@@ -1,8 +1,12 @@
-# Home Page Design Fixes
+---
+title: Home Page Design Fixes
+type: feature
+date: 2026-08-13
+status: implemented
+area: theming
+---
 
-**Type:** bug + feature (design)
-**Date:** 2026-08-13
-**Status:** implemented
+# Home Page Design Fixes
 
 ## Summary
 

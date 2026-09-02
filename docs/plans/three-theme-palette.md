@@ -1,8 +1,12 @@
-# Three Theme Palette
+---
+title: Three Theme Palette
+type: feature
+date: 2026-06-30
+status: implemented
+area: theming
+---
 
-**Type:** feature
-**Date:** 2026-06-30
-**Status:** implemented
+# Three Theme Palette
 
 ## Summary
 

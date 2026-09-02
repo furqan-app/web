@@ -1,9 +1,13 @@
-# Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation
+---
+title: "Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation"
+type: feature
+date: 2026-08-19
+status: implemented
+area: nav
+issue: 337
+---
 
-**Type:** design
-**Date:** 2026-08-19
-**Status:** implemented
-**Issue:** [#337](https://github.com/furqan-app/web/issues/337), [#430](https://github.com/furqan-app/web/issues/430)
+# Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation
 
 ## Summary
 

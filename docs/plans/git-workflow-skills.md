@@ -1,8 +1,12 @@
-# Git Workflow Skills (commit/push gating + confirm-dangerous-git)
+---
+title: Git Workflow Skills (commit/push gating + confirm-dangerous-git)
+type: feature
+date: 2026-07-03
+status: implemented
+area: workflow
+---
 
-**Type:** feature  
-**Date:** 2026-07-03  
-**Status:** implemented (backfilled — work was done directly as `.claude/` tooling, not through `/plan-fq-task`)
+# Git Workflow Skills (commit/push gating + confirm-dangerous-git)
 
 ## Summary
 

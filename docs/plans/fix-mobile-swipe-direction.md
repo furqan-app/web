@@ -1,8 +1,12 @@
-# Fix Reversed Mobile Swipe Navigation Direction
+---
+title: Fix Reversed Mobile Swipe Navigation Direction
+type: bug
+date: 2026-07-03
+status: implemented
+area: reader
+---
 
-**Type:** bug  
-**Date:** 2026-07-03  
-**Status:** implemented
+# Fix Reversed Mobile Swipe Navigation Direction
 
 ## Root Cause
 

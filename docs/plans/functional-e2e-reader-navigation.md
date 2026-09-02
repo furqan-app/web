@@ -1,8 +1,13 @@
+---
+title: "Functional E2E: Reader Navigation & Page Controls"
+type: feature
+date: 2026-08-27
+status: implemented
+area: reader
+---
+
 # Functional E2E: Reader Navigation & Page Controls
 
-**Type:** feature  
-**Date:** 2026-08-27  
-**Status:** implemented  
 **GitHub Issue:** [#423](https://github.com/furqan-app/web/issues/423)  
 **Parent Epic:** [#421](https://github.com/furqan-app/web/issues/421)  
 

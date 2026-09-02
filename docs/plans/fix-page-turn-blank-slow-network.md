@@ -1,10 +1,14 @@
+---
+title: Page Turn Blanks the Reader on Slow Networks
+type: bug
+date: 2026-07-30
+status: implemented
+area: reader
+adr: [0034]
+---
+
 # Page Turn Blanks the Reader on Slow Networks
 
-**Type:** bug
-**Date:** 2026-07-30
-**Status:** implemented (Addendum 1 — tajweed lookahead; browser verification pending)
-**Trello:** #159 https://trello.com/c/iVramC8c
-**ADR:** [0034](../architecture/adr/0034-page-turn-readiness-on-slow-networks.md)
 **Related:** ADR 0028 (persistent pager), ADR 0029 (immutable font registry),
 `docs/plans/reader-persistent-pager.md`, `docs/plans/fix-panel-placeholder-reflow.md` (#157),
 `docs/plans/fix-quran-page-font-loading.md` (the skeleton this reuses)

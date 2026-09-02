@@ -1,8 +1,12 @@
-# Fix MarkModal Auth Gate — Allow Recitation Without Sign-in
+---
+title: Fix MarkModal Auth Gate — Allow Recitation Without Sign-in
+type: bug
+date: 2026-07-14
+status: implemented
+area: marks
+---
 
-**Type:** bug  
-**Date:** 2026-07-14  
-**Status:** implemented
+# Fix MarkModal Auth Gate — Allow Recitation Without Sign-in
 
 ## Summary
 

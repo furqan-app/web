@@ -1,8 +1,12 @@
-# Recitation Bar: Vertical Rail (Desktop)
+---
+title: "Recitation Bar: Vertical Rail (Desktop)"
+type: feature
+date: 2026-08-02
+status: implemented
+area: recitation
+---
 
-**Type:** feature  
-**Date:** 2026-08-02  
-**Status:** implemented
+# Recitation Bar: Vertical Rail (Desktop)
 
 ## Summary
 

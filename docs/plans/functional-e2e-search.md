@@ -1,8 +1,13 @@
+---
+title: "Functional E2E: Search & Discovery Flows"
+type: feature
+date: 2026-08-27
+status: implemented
+area: search
+---
+
 # Functional E2E: Search & Discovery Flows
 
-**Type:** feature  
-**Date:** 2026-08-27  
-**Status:** implemented  
 **GitHub Issue:** [#424](https://github.com/furqan-app/web/issues/424)  
 **Parent Epic:** [#421](https://github.com/furqan-app/web/issues/421)  
 

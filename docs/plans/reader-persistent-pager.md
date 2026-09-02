@@ -1,10 +1,13 @@
-# Reader Swipe Performance: Persistent Client Pager
+---
+title: "Reader Swipe Performance: Persistent Client Pager"
+type: feature
+date: 2026-07-23
+status: implemented
+area: reader
+adr: [0028]
+---
 
-**Type:** feature (performance re-architecture)
-**Date:** 2026-07-23
-**Status:** implemented (rapid-swipe drop, Trello #153, 2026-08-11 — see the final addendum for what is and is not verified; earlier scopes implemented, and the sixth session's live browser check is still recorded as pending below)
-**Trello:** #137 https://trello.com/c/sEA3hgtz
-**ADR:** [0028](../architecture/adr/0028-reader-persistent-pager.md)
+# Reader Swipe Performance: Persistent Client Pager
 
 ## Summary
 

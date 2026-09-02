@@ -1,8 +1,12 @@
-# Fix Tajweed Mushaf Font Size to Match Regular Mushaf
+---
+title: Fix Tajweed Mushaf Font Size to Match Regular Mushaf
+type: bug
+date: 2026-07-14
+status: implemented
+area: rendering
+---
 
-**Type:** bug  
-**Date:** 2026-07-14  
-**Status:** implemented (Addendum 5)
+# Fix Tajweed Mushaf Font Size to Match Regular Mushaf
 
 ## Summary
 

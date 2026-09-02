@@ -1,8 +1,12 @@
-# Shrink MarkModal & Hide Radio Dot
+---
+title: Shrink MarkModal & Hide Radio Dot
+type: bug
+date: 2026-07-04
+status: implemented
+area: marks
+---
 
-**Type:** bug  
-**Date:** 2026-07-04  
-**Status:** implemented (incl. Addendum 3)
+# Shrink MarkModal & Hide Radio Dot
 
 ## Summary
 

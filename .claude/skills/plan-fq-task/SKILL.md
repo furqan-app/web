@@ -61,9 +61,11 @@ Always fetch latest first: `git fetch origin`. Base new branches on updated `ori
 ## Step 7 — Write the plan
 
 Write all plan-phase files into `<abs>`:
-- Plan: `<abs>/docs/plans/<slug>.md`
+- Plan: `<abs>/docs/plans/<slug>.md` — opens with the YAML frontmatter block (see the plan file format in the workflow doc / [ADR 0059](../../../docs/architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md))
 - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
 - Decision entry (if any): the matching `<abs>/docs/architecture/decisions/*.md` file (and `<abs>/docs/architecture/DECISIONS.md` if a new domain row or invariant is needed)
+
+Then regenerate the plans index: `bash <abs>/.claude/skills/scripts/gen-plans-index.sh` and stage `<abs>/docs/plans/INDEX.md` with the plan.
 
 Use the plan file format from the workflow doc.
 
@@ -83,10 +85,10 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 ## Steps
 
 0. **Check for an existing related plan — before anything else**
-   - Run `ls docs/plans/` and scan for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
-   - If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its `Status` to `ready-to-implement` if it had been marked `implemented`.
+   - Read `docs/plans/INDEX.md` (one row per plan: area, title, status, type) and scan the rows in this task's `area` for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
+   - If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its frontmatter `status` to `ready-to-implement` if it was `implemented`, then regenerate `INDEX.md`.
    - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
-   - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just run the `ls`/grep.
+   - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just read `INDEX.md`.
 
 1. **Load context — mandatory gate, before investigating or writing anything**
    - Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files this task touches — not every one. When a decision links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint. Non-negotiable: the plan must not contradict it, and if it needs to, raise that with the user and supersede it (flip the section `**Status:**`) — never silently.
@@ -200,12 +202,23 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 
 ## Plan file format
 
+Every plan opens with a YAML frontmatter block ([ADR 0059](../../../docs/architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)) — `INDEX.md` is generated from it. `area` is one value from the fixed vocabulary in ADR 0059, never free text.
+
+```yaml
+---
+title: <matches the # H1>
+type: bug | feature | chore
+date: YYYY-MM-DD
+status: ready-to-implement    # | in-progress | implemented | superseded | unknown
+area: <one value>             # ADR 0059 vocabulary
+supersedes: [<slug>]          # omit if none
+issue: <bare number>          # omit if none
+adr: [<NNNN>]                 # omit if none
+---
+```
+
 ```markdown
 # <Task Title>
-
-**Type:** feature | bug  
-**Date:** YYYY-MM-DD  
-**Status:** ready-to-implement
 
 ## Summary
 One paragraph.
@@ -237,7 +250,8 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 
 ## Anti-patterns to avoid
 
-- Do not create a new plan file without first checking `docs/plans/` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not create a new plan file without first checking `docs/plans/INDEX.md` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not hand-edit `docs/plans/INDEX.md` — it is generated from plan frontmatter by `gen-plans-index.sh`.
 - Do not write a plan that contradicts an ADR or a still-active constraint/`What NOT to Do` item in the plan you are extending. If the task genuinely requires overriding one, surface it to the user and supersede it explicitly — never silently.
 - Do not re-propose an approach that a later addendum already revised or reverted.
 - Do not ask multiple questions at once — one at a time, always.

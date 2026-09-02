@@ -1,6 +1,13 @@
+---
+title: Session Handoff — Dark Theme Mushaf Unification
+type: feature
+date: 2026-07-28
+status: superseded
+area: theming
+---
+
 # Session Handoff — Dark Theme Mushaf Unification
 
-**Date:** 2026-07-28
 **Branch:** `feature/148-dark-theme-mushaf-unification`
 **Worktree:** `/home/tahamohamed/Desktop/cs/non-work/projects/furqan-dark-theme-mushaf-unification`
 **Dev server:** http://localhost:7001 (port **7001** — see `~/.claude/furqan-worktrees.json`, key `dark-theme-mushaf-unification`). If down: `PORT=7001 npm run dev` in the worktree.

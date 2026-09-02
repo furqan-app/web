@@ -1,9 +1,13 @@
-# Remove 5 workflow skills (impeccable, visualize-fq-design, compress-fq-docs, mujaz, ui-motion)
+---
+title: Remove 5 workflow skills (impeccable, visualize-fq-design, compress-fq-docs, mujaz, ui-motion)
+type: feature
+date: 2026-09-02
+status: implemented
+area: workflow
+issue: 494
+---
 
-**Type:** feature (tooling/meta)
-**Date:** 2026-09-02
-**Status:** implemented
-**Issue:** [furqan-app/web#494](https://github.com/furqan-app/web/issues/494) — T1.3 of epic #491
+# Remove 5 workflow skills (impeccable, visualize-fq-design, compress-fq-docs, mujaz, ui-motion)
 
 ## Summary
 

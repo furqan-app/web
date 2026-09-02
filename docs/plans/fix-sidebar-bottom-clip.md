@@ -1,8 +1,12 @@
-# Fix Sidebar Bottom Clip
+---
+title: Fix Sidebar Bottom Clip
+type: bug
+date: 2026-08-15
+status: implemented
+area: nav
+---
 
-**Type:** bug
-**Date:** 2026-08-15
-**Status:** implemented
+# Fix Sidebar Bottom Clip
 
 ## Summary
 

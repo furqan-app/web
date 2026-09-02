@@ -1,8 +1,12 @@
-# Tafsir: Responsive Sheet Component & Reader Integration (Issues #459 & #460)
+---
+title: "Tafsir: Responsive Sheet Component & Reader Integration (Issues #459 & #460)"
+type: feature
+date: 2026-08-29
+status: implemented
+area: tafsir
+---
 
-**Type:** feature  
-**Date:** 2026-08-29  
-**Status:** implemented
+# Tafsir: Responsive Sheet Component & Reader Integration (Issues #459 & #460)
 
 ## Summary
 

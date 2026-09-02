@@ -1,8 +1,12 @@
-# Git Worktrees Workflow Integration
+---
+title: Git Worktrees Workflow Integration
+type: feature
+date: 2026-07-08
+status: implemented
+area: workflow
+---
 
-**Type:** feature  
-**Date:** 2026-07-08  
-**Status:** implemented
+# Git Worktrees Workflow Integration
 
 ## Summary
 

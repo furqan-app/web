@@ -1,8 +1,12 @@
-# Sentry-to-Slack Alerting via Relay Webhook
+---
+title: Sentry-to-Slack Alerting via Relay Webhook
+type: feature
+date: 2026-07-08
+status: implemented
+area: observability
+---
 
-**Type:** feature  
-**Date:** 2026-07-08  
-**Status:** implemented
+# Sentry-to-Slack Alerting via Relay Webhook
 
 ## Summary
 

@@ -1,9 +1,12 @@
-# Homepage Surah Card: Direction-Based Name Display
+---
+title: "Homepage Surah Card: Direction-Based Name Display"
+type: feature
+date: 2026-08-04
+status: implemented
+area: rendering
+---
 
-**Type:** feature
-**Date:** 2026-08-04
-**Status:** implemented
-**Trello:** [#185](https://trello.com/c/Y2UHvcmY/185-enhance-the-home-page)
+# Homepage Surah Card: Direction-Based Name Display
 
 ## Summary
 
