@@ -2,7 +2,7 @@
 title: Fold the 29 addendum-bearing plans into single coherent specs
 type: chore
 date: 2026-09-02
-status: in-progress
+status: implemented
 area: workflow
 issue: 510
 supersedes: []

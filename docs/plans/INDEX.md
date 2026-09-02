@@ -149,9 +149,9 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
 | theming | [Handoff — Reading-Desk Depth for Light & Gold (and de-duplicating the reader CSS)](theme-depth-unification-HANDOFF.md) | superseded | feature |
 | theming | [Session Handoff — Dark Theme Mushaf Unification](dark-theme-mushaf-unification-HANDOFF.md) | superseded | feature |
-| workflow | [Fold the 29 addendum-bearing plans into single coherent specs](fold-plan-addenda.md) | in-progress | chore |
 | workflow | [Configure Project-Local Trello MCP for Codex](configure-project-trello-mcp.md) | implemented | feature |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |
+| workflow | [Fold the 29 addendum-bearing plans into single coherent specs](fold-plan-addenda.md) | implemented | chore |
 | workflow | [Git Workflow Skills (commit/push gating + confirm-dangerous-git)](git-workflow-skills.md) | implemented | feature |
 | workflow | [Git Worktrees Workflow Integration](git-worktrees-workflow.md) | implemented | feature |
 | workflow | [Plan lifecycle — YAML frontmatter, generated INDEX.md, fold-addenda-on-ship](plan-lifecycle-index.md) | implemented | chore |
