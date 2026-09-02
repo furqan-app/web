@@ -7,7 +7,7 @@ description: Toggle mujaz (terse-response) mode on or off for this repo. Use whe
 
 Read and follow [`docs/workflow/terse-mode.md`](../../../docs/workflow/terse-mode.md) for the concept.
 
-## Claude implementation
+## Toggle command
 
 Toggle by running:
 ```bash

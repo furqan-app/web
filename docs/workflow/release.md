@@ -1,6 +1,6 @@
 # Release Workflow
 
-Release mechanics run as GitHub Actions (`workflow_dispatch`), not as Claude-executed git/gh steps. Claude's job is to trigger the right workflow, poll it to completion, and relay the result — see ADR 0015 addendum. See also `docs/plans/release-branch-workflow.md`, ADR 0015, and ADR 0026.
+Release mechanics run as GitHub Actions (`workflow_dispatch`), not as agent-executed git/gh steps. The agent's job is to trigger the right workflow, poll it to completion, and relay the result — see ADR 0015 addendum. See also `docs/plans/release-branch-workflow.md`, ADR 0015, and ADR 0026.
 
 ## Full Release Orchestration (`/release <bump>`)
 

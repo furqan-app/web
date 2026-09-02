@@ -7,9 +7,7 @@ description: Context-aware implementation of a planned Furqan task. Loads the DE
 
 Read and follow [`docs/workflow/start-task.md`](../../../docs/workflow/start-task.md).
 
-## Claude-specific additions
-
-### Step 1 — GitHub issue integration
+## Step 1 — GitHub issue integration
 
 When the workflow doc says "move the task to In Progress in your project management system":
 ```bash
@@ -17,26 +15,7 @@ gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:todo" 
 ```
 One call — `@me` resolves to the authenticated `gh` account, no separate identity lookup needed.
 
-### Step 1b — Worktree / Branch setup (runs before step 2 in the workflow doc)
-
-**In AGY / workspace-confined IDEs:**
-- Verify you are on the task branch: `git branch --show-current`
-- If not:
-  ```bash
-  # If branch does not exist yet (defaults to updated origin/main):
-  git fetch origin
-  git checkout -b <type>/<issue-number>-<short-description> origin/main
-
-  # If starting from a specific base branch:
-  git fetch origin
-  git checkout -b <type>/<issue-number>-<short-description> <base-branch>
-
-  # If branch already exists:
-  git checkout <type>/<issue-number>-<short-description>
-  ```
-- `<abs>` is the repo root (`$(pwd)`). Skip worktree and external dev server port allocation; use normal local dev workflow (`npm run dev` on port 3000 if needed).
-
-**In Claude Code / CLI (external worktrees):**
+## Step 1b — Worktree / Branch setup (runs before step 2 in the workflow doc)
 
 **Check for an existing worktree first:**
 - Run `git worktree list` and look for a path ending in `furqan-<slug>`
