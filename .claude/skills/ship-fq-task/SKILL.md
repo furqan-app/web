@@ -63,7 +63,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 0. **Resolve ambiguity upfront — ask once, then proceed without further confirmation**
    - Identify the GitHub issue from: the plan file, the current branch name, or context from the conversation. If there is any ambiguity about which issue this work belongs to, ask now and only now — do not ask again mid-flow.
    - **Offer a review pass:** ask once whether the user wants to run `/review-fq-work` on the branch before shipping. If yes, **also ask which model to run the review with** — present the list Opus (recommended, most thorough), Sonnet (faster/cheaper), Haiku (fastest, light sanity check) — then run `/review-fq-work` with the chosen model and let the user act on the findings. Do **not** continue to step 1 until they say to ship. If no (or already reviewed this session), proceed. Ask this together with the ticket question so there is a single upfront pause.
-   - Once the ticket is confirmed and the review offer is answered, execute steps 1–7 in sequence without pausing for approval. Step 7 (worktree cleanup) is mandatory — do not skip it.
+   - **Offer a retrospect pass:** in that same pause, ask whether to run `/retrospect` — unless it already ran this session. It runs *before* the commit so any `decisions/*.md` or workflow-doc edits it produces are staged into this PR (step 3), not stranded after step 7 tears down the worktree.
+   - Once the ticket is confirmed and both offers are answered, execute steps 1–7 in sequence without pausing for approval. Step 7 (worktree cleanup) is mandatory — do not skip it.
 
 1. **Sync with main**
    - `git fetch origin`
@@ -75,7 +76,7 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
    - `git checkout -b <branch-name>`
 
 3. **Commit**
-   - `git add` the relevant files (never `git add -A` blindly — review what's staged)
+   - `git add` the relevant files (never `git add -A` blindly — review what's staged) — include any `decisions/*.md` or workflow-doc edits `/retrospect` produced in step 0
    - Invoke `commit-staged` to draft the message
    - Run `git commit` immediately — do not pause for confirmation
    - See "No AI signatures" section — no AI attribution anywhere in this flow

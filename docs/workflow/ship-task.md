@@ -15,7 +15,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 - Identify the task ticket from: the plan file, the current branch name, or context from the conversation. If there is any ambiguity about which ticket this work belongs to, ask now and only now — do not ask again mid-flow.
 - **Offer a review pass:** ask once whether the user wants to run a code review on the branch before shipping (see [review-work.md](review-work.md)). If yes, run the review and let the user act on the findings — do not continue to step 1 until they say to ship. If no (or already reviewed this session), proceed.
-- Once the ticket is confirmed and the review offer is answered, execute steps 1–6 in sequence without pausing for approval.
+- **Offer a retrospect pass:** in the same upfront pause, ask whether to run `/retrospect` (see [retrospect.md](retrospect.md)) — unless it already ran this session. Retro runs *here*, before the commit, so any `decisions/*.md` or workflow-doc edits it produces are staged into this PR rather than produced after it is open.
+- Once the ticket is confirmed and both offers are answered, execute steps 1–6 in sequence without pausing for approval.
 
 ### 1. Sync with main
 
@@ -30,7 +31,7 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 ### 3. Commit
 
-- `git add` the relevant files (never `git add -A` blindly — review what's staged)
+- `git add` the relevant files (never `git add -A` blindly — review what's staged) — include any `decisions/*.md` or workflow-doc edits `/retrospect` produced in step 0
 - Draft the commit message following [commit-message.md](commit-message.md)
 - Run `git commit` — do not pause for confirmation
 - No AI signatures (see below)
