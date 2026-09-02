@@ -73,6 +73,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | pwa | [PWA: Remove the Root Layout's Unconditional Reciters and Session Network Calls From the Launch Path](pwa-launch-network-calls.md) | implemented | bug |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
 | reader | [Arrow Controls on Desktop](arrow-controls-desktop.md) | implemented | feature |
+| reader | [Complex E2E & Fix: Deep Links, Highlight Parameter Lifecycle & View Mode Transitions](deep-links-highlight-view-modes.md) | implemented | feature |
 | reader | [Consolidate Mobile Safha Sizing Docs](consolidate-mobile-safha-docs.md) | implemented | feature |
 | reader | [Consolidate Suspense Boundaries in QuranLine / QuranSafha](consolidate-suspense-boundaries.md) | implemented | bug |
 | reader | [Fix Desktop Search Dropdown Hidden by Reader Stacking Context](fix-desktop-search.md) | implemented | bug |

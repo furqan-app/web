@@ -1,4 +1,4 @@
-import { type Page, type Locator, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Locator, type TestInfo } from "@playwright/test";
 
 /**
  * Returns the active visible center panel in ReaderPager.
@@ -237,4 +237,28 @@ export async function longPressWord(
       })
     );
   }, durationMs);
+}
+
+/**
+ * Opens the navbar search dialog and returns dialog and search input locators.
+ */
+export async function openSearch(page: Page, locale: "ar" | "en" = "ar") {
+  await expect(page.locator("nav")).toBeVisible();
+
+  const triggerName =
+    locale === "ar"
+      ? "ابحث عن السورة بالاسم أو الرقم"
+      : "Search surah by name or number";
+
+  const searchTrigger = page.getByRole("button", { name: triggerName });
+  await expect(searchTrigger).toBeVisible();
+  await searchTrigger.click();
+
+  const searchDialog = page.getByRole("dialog");
+  await expect(searchDialog).toBeVisible();
+
+  const searchInput = searchDialog.getByPlaceholder(triggerName);
+  await expect(searchInput).toBeVisible();
+
+  return { searchDialog, searchInput };
 }
