@@ -7,9 +7,7 @@ description: The only sanctioned way to commit and push in this project. Syncs w
 
 Read and follow [`docs/workflow/ship-task.md`](../../../docs/workflow/ship-task.md).
 
-## Claude-specific additions
-
-### Step 6 — GitHub issue integration
+## Step 6 — GitHub issue integration
 
 When the workflow doc says "update the task ticket":
 ```bash
@@ -126,7 +124,7 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 ## No AI signatures — anywhere
 
-Never add any AI attribution in this flow: no `Co-Authored-By: Claude` in commit messages, no "Generated with Claude Code" or similar in PR titles, bodies, or comments, no AI footer/trailer anywhere.
+Never add any AI attribution in this flow: no `Co-Authored-By: ...` in commit messages, no "Generated with AI" or similar in PR titles, bodies, or comments, no AI footer/trailer anywhere.
 
 ## What NOT to do
 

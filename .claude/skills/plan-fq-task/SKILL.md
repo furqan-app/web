@@ -7,7 +7,7 @@ description: Socratic planning and investigation for Furqan features and bugs. P
 
 Read and follow [`docs/workflow/plan-task.md`](../../../docs/workflow/plan-task.md).
 
-After completing the ADR check (step 4 in the workflow doc), do these Claude-specific steps before writing the plan:
+After completing the ADR check (step 4 in the workflow doc), do these steps before writing the plan:
 
 ## Step 5 — Ensure a GitHub issue
 
@@ -33,47 +33,30 @@ Every task must have a GitHub issue on `furqan-app/web` before implementation st
   Type IDs for this org (`furqan-app`): Task `IT_kwDOCyJLuM4BcAGi`, Bug `IT_kwDOCyJLuM4BcAGj`, Feature `IT_kwDOCyJLuM4BcAGk`. Use Bug/Feature matching the plan's `Type`; anything else stays `Task`.
 - Note the issue number/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
 
-## Step 6 — Create the worktree or branch
+## Step 6 — Create the worktree
 
 Derive the slug from the planned filename (e.g. `fix-search-debounce`).
 Always fetch latest first: `git fetch origin`. Base new branches on updated `origin/main` by default (unless explicitly specified to start from another branch).
 
-**Environment check:**
-- **In Claude Code / CLI environments (supports external worktrees):**
-  1. Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
-  2. If none exists, derive branch `<type>/<issue-number>-<short-description>` and run:
-     ```bash
-     # If branch does NOT exist yet (defaults to origin/main):
-     git fetch origin
-     git worktree add ../furqan-<slug> -b <branch-name> origin/main
+1. Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
+2. If none exists, derive branch `<type>/<issue-number>-<short-description>` and run:
+   ```bash
+   # If branch does NOT exist yet (defaults to origin/main):
+   git fetch origin
+   git worktree add ../furqan-<slug> -b <branch-name> origin/main
 
-     # If starting from a specific base branch:
-     git fetch origin
-     git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
+   # If starting from a specific base branch:
+   git fetch origin
+   git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
 
-     # If branch already exists:
-     git worktree add ../furqan-<slug> <branch-name>
-     ```
-  3. Record in `~/.claude/furqan-worktrees.json`:
-     ```json
-     { "<slug>": { "worktreePath": "../furqan-<slug>", "branch": "<branch-name>" } }
-     ```
-  4. Resolve absolute path `<abs>` via `git worktree list | grep furqan-<slug> | awk '{print $1}'`.
-- **In AGY / IDE environments (workspace-confined):**
-  1. Create or switch to the feature branch directly inside the workspace root:
-     ```bash
-     # If branch does NOT exist yet (defaults to origin/main):
-     git fetch origin
-     git checkout -b <type>/<issue-number>-<short-description> origin/main
-
-     # If starting from a specific base branch:
-     git fetch origin
-     git checkout -b <type>/<issue-number>-<short-description> <base-branch>
-
-     # If branch already exists:
-     git checkout <type>/<issue-number>-<short-description>
-     ```
-  2. The target path `<abs>` is the workspace root itself (`$(pwd)`).
+   # If branch already exists:
+   git worktree add ../furqan-<slug> <branch-name>
+   ```
+3. Record in `~/.claude/furqan-worktrees.json`:
+   ```json
+   { "<slug>": { "worktreePath": "../furqan-<slug>", "branch": "<branch-name>" } }
+   ```
+4. Resolve absolute path `<abs>` via `git worktree list | grep furqan-<slug> | awk '{print $1}'`.
 
 ## Step 7 — Write the plan
 
