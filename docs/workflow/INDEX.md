@@ -30,6 +30,22 @@ The AI-first docs system (adopted 2026-06-28): `CLAUDE.md` is a slim pointer, he
 
 ---
 
+## Agent instruction surfaces
+
+`AGENTS.md` is the **single canonical** agent-instruction file — mandatory workflow, architecture-constraint loading, response style, and the graphify rules all live there. Every other surface is a **thin pointer to `AGENTS.md` + this index plus only its own tool-specific delta** — never a re-statement of the shared rules (that only drifts):
+
+| Surface | Tool | Delta it carries |
+|---|---|---|
+| `CLAUDE.md` | Claude Code | Skill shortcuts (`/plan-fq-task`, …), hooks, `../furqan-<slug>` worktree flow |
+| `GEMINI.md` | Antigravity | Planning override (no internal AGY plan artifacts); progressive disclosure via `docs/workflow/*.md` |
+| `.cursorrules` | Cursor | In-repo branch, not an external worktree |
+| `.github/copilot-instructions.md` | GitHub Copilot | `/graphify` in Copilot Chat builds/updates the graph |
+| `.agents/rules/graphify.md`, `.agents/workflows/graphify.md` | Antigravity | Always-on graphify rule + `/graphify` workflow |
+
+When a shared rule changes, edit `AGENTS.md` only. Do not re-bloat the pointer files.
+
+---
+
 ## All Workflows
 
 ### Task Workflow
