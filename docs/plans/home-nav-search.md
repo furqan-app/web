@@ -27,7 +27,12 @@ Add a navigation search field to the statically rendered home page. One input, s
 Per keystroke, synchronous (no debounce):
 
 1. Trim. Fold Eastern Arabic digits (`٠-٩` U+0660–0669) and Extended (`۰-۹` U+06F0–06F9) to ASCII.
-2. Prefix detection, case-insensitive: `juz`/`جزء` → juz intent; `page`/`صفحة` → page intent. Intent holds only if the remainder after the prefix is pure digits; otherwise the whole string is text.
+2. Prefix detection, case-insensitive, definite article optional:
+   - `JUZ_PREFIX = /^(?:juz|al-?juz|الجزء|جزء)\s*(\d+)$/i` → juz intent
+   - `PAGE_PREFIX = /^(?:page|p|الصفحة|صفحة)\s*(\d+)$/i` → page intent
+   - `SURAH_PREFIX = /^(?:surah|سورة|السورة)\s*(.+)$/i` → strip the prefix, parse the remainder as text or number (the dataset holds bare chapter names, no `"سورة "`)
+   - An intent holds only if the remainder after the prefix is pure digits; otherwise the whole string is text.
+   - `barePrefixPrompt` — a bare prefix keyword with no number yet (`جزء`, `الجزء`, `juz`, `صفحة`, `الصفحة`, `page`) → guidance prompt, not the empty state.
 3. Grid filter (cards shown):
    - Text: lowercase + hamza-folded substring against `name_simple` OR `name_arabic`.
    - Pure digits ≤114: exact surah-id match (single card).
@@ -37,6 +42,7 @@ Per keystroke, synchronous (no debounce):
    - Prefixed: exactly that row if in range (juz 1–30, page 1–604); out-of-range renders an inline hint under the field ("Juz 1–30" / "Pages 1–604") instead of a row.
 5. Render rules:
    - Rows exist → render them above the grid.
+   - Bare prefix keyword, no number → inline guidance prompt (`"اكتب رقم الجزء (١–٣٠)"` / `"اكتب رقم الصفحة (١–٦٠٤)"`, keys `home.juzPrompt` / `home.pagePrompt`) instead of the empty state.
    - Cards = 0 AND rows ≥ 1 → collapse the grid region entirely (never show an empty grid beside a hit).
    - Cards = 0 AND rows = 0 AND query non-empty → unified empty state with cross-link: "Looking for a verse? Use Search" (text link only; do not programmatically open the overlay in this task).
    - Cards > 0 → live count ("٢٣ surahs") next to the field.
@@ -53,6 +59,9 @@ Per keystroke, synchronous (no debounce):
 | `200` | *(grid collapsed)* | `Page 200` | 0 cards + ≥1 row |
 | `juz ٣٠` / `جزء ۳۰` | *(collapsed)* | `Juz 30 · p. …` | prefixed intent, no surah filter |
 | `page 999` | *(collapsed)* | inline hint "Pages 1–604" | out-of-range |
+| `الجزء ٢٠` / `الصفحة 100` | *(collapsed)* | that juz/page row | definite article `الـ` accepted |
+| `سورة الكهف` / `سورة 18` | Al-Kahf card | — | `سورة`/`السورة` prefix stripped, remainder parsed as text or number |
+| bare `جزء` / `الصفحة` (no number) | *(no empty state)* | inline guidance prompt | `home.juzPrompt` / `home.pagePrompt` |
 | `xyzzy` | unified empty state + verse-search cross-link | — | |
 | `a` | every name containing 'a' + count | — | 1-char allowed: local instant filter; the API's 2-char gate (`isSearchQueryValid`) is a payload cap, not applicable |
 | Escape after any of the above | full page restored | — | |
@@ -66,16 +75,17 @@ From `/impeccable critique` on this surface (2026-08-25, snapshot `.impeccable/c
 - `scripts/quran-juz-starts/generate.js` — new. Manual generator modeled on `scripts/quran-chapters/generate.js` (same `db-connection` helpers). Query rubs, keep rows where `rub_number % 8 === 1`, map to `{ juz, verse_key: startVerse.verse_key, defaultPage: startVerse.page_number }`, write `public/quran/juz-starts.json`. Header comment notes it must stay in sync with RubList's `Math.ceil(rub_number / 8)` juz arithmetic.
 - `package.json` — add `"generate:quran-juz-starts"` mirroring `generate:quran-chapters` (dotenv -e .env.local).
 - `public/quran/juz-starts.json` — new, committed (run the generator once against local dev DB during implementation).
-- `app/utils/nav-search.ts` — new. Pure functions, no React imports: digit folding (Eastern + Extended → ASCII), `parseNavQuery(raw)` → `{ kind: "text" | "surah" | "juz" | "page" | "none", n? }`, hamza fold (same mapping style as `app/utils/arabic-search.ts`), `matchSurah(surah, query)` (folded/lowercased contains on both names).
-- `app/utils/nav-search.test.ts` — new. Vitest cases covering the entire Verified Test Cases table plus edge cases (mixed `جزء ٣٠`, trailing spaces, bare `juz` with no number → text path).
-- `app/components/home/HomeSearch.tsx` — new client component (field, parse, jump rows, range hints, live count, empty state, keyboard handling, sticky wrapper). Renders the filtered `<SurahList>` internally.
+- `app/utils/nav-search.ts` — new. Pure functions, no React imports: digit folding (Eastern + Extended → ASCII); `parseNavQuery(raw)` → `{ kind: "text" | "surah" | "juz" | "page" | "none", n? }` using `JUZ_PREFIX` / `PAGE_PREFIX` / `SURAH_PREFIX` (all accept the definite article `الـ`; `SURAH_PREFIX` strips `سورة`/`السورة` and re-parses the remainder); hamza fold (same mapping style as `app/utils/arabic-search.ts`); `matchSurah(surah, query)` (folded/lowercased contains on both names); `barePrefixPrompt(parsed)` detecting a bare prefix keyword with no number.
+- `app/utils/nav-search.test.ts` — new. Vitest cases covering the entire Verified Test Cases table plus `الجزء N`, `الصفحة N`, `سورة N`, `سورة <Name>`, bare-prefix prompts, mixed `جزء ٣٠`, trailing spaces.
+- `app/components/home/HomeSearch.tsx` — new client component (field, parse, jump rows, range hints, live count, empty state, keyboard handling). Renders the filtered `<SurahList>` internally. When `barePrefixPrompt` is active, render the inline guidance prompt instead of the "No matches" empty state.
 - `app/components/home/HomeSearchSection.tsx` — new client boundary wrapping ContinueReadingCard + RecommendedSurahs + HomeSearch; holds the single query state; hides extras when query is non-empty.
 - `app/[locale]/page.tsx` — replace the three direct children after the hero with `<HomeSearchSection surahs={surahs} />`. Hero unchanged. `revalidate = 300` untouched.
 - `app/hooks/use-juz-starts.ts` — new tiny hook reading `/quran/juz-starts.json` via React Query (`staleTime: Infinity`, `networkMode: "always"` per the useVersePages precedent), lazily enabled when a juz intent first appears.
 - `app/components/SurahListItem.tsx` — add `aria-label` with the spoken name (Arabic name in RTL, "Surah {name_simple}" in LTR) so glyph-only links stop announcing digits.
 - `app/components/home/HomeRecommendedSurahs.tsx` — same `aria-label` on RTL chip links.
 - `app/components/home/HomeContinueReadingCard.tsx` — delete dead `sm:p-4.5` class (no such step in Tailwind 3.4.1; generates no CSS).
-- `messages/ar.json` + `messages/en.json` — keys under `home.`: searchPlaceholder, searchClear, resultsCount, juzRow, pageRow, juzRangeHint, pageRangeHint, noMatches, verseSearchHint. Run `npm run extract-translations`.
+- `messages/ar.json` + `messages/en.json` — keys under `home.`: searchPlaceholder (with instructional examples of valid input), searchClear, resultsCount, juzRow, pageRow, juzRangeHint, pageRangeHint, juzPrompt, pagePrompt, noMatches, verseSearchHint. Run `npm run extract-translations`.
+- `e2e/tests/home-nav-search.spec.ts` — new. Behavioral coverage of the placeholder, definite-article queries, and bare-prefix guidance.
 
 ## Constraints
 
@@ -109,27 +119,10 @@ From `/impeccable critique` on this surface (2026-08-25, snapshot `.impeccable/c
 - Juz data: static `juz-starts.json` via manual generator (ADR 0028 convention), edition-corrected client-side through `verse-pages`.
 - Hamza folding on both sides, client-side only — documented divergence from overlay chapter search; DECISIONS.md Search section gets a one-line amendment during implementation.
 - Remediation: minimal (aria labels + dead-class removal in scope); touch targets/h2/colophon deferred to a future issue.
+- Query parsing accepts the Arabic definite article `الـ` on juz/page prefixes and strips a `سورة`/`السورة` prefix before matching (the dataset holds bare chapter names); a bare prefix keyword shows a guidance prompt rather than the empty state.
 
-## Addendum 1 — Definite Article Prefixes, Bare Prefix Guidance & Instructional Placeholders (2026-08-28)
+## Revision History
 
-**Motivation:**
-1. Queries with Arabic definite article `الـ` (e.g. `"الجزء 20"` or `"الصفحة 100"`) failed to match the strict `juz`/`page` regexes, falling through to full-text surah matching and returning 0 results.
-2. Typing a bare prefix word alone (`"جزء"`, `"الجزء"`, `"صفحة"`, `"الصفحة"`) without a number yet collapsed to a confusing "No results / لا توجد نتائج" state instead of guiding the user.
-3. Typing `"سورة الكهف"` or `"سورة 18"` failed because the dataset holds chapter names without the `"سورة "` prefix.
-4. The generic placeholder lacked concrete examples of valid input formats.
-
-**Changes:**
-- **`app/utils/nav-search.ts`:**
-  - Support `الـ` in prefix regexes: `JUZ_PREFIX = /^(?:juz|al-?juz|الجزء|جزء)\s*(\d+)$/i`, `PAGE_PREFIX = /^(?:page|p|الصفحة|صفحة)\s*(\d+)$/i`.
-  - Strip surah prefixes: `SURAH_PREFIX = /^(?:surah|سورة|السورة)\s*(.+)$/i` — if matched, parse the stripped remainder as text or number.
-  - Add `barePrefixPrompt(parsed)` helper that detects bare prefix keywords without numbers (`"جزء"`, `"الجزء"`, `"juz"`, `"صفحة"`, `"الصفحة"`, `"page"`).
-- **`app/components/home/HomeSearch.tsx`:**
-  - If a bare prefix prompt is active, render an inline guidance prompt (`"اكتب رقم الجزء (١–٣٠)"` / `"اكتب رقم الصفحة (١–٦٠٤)"`) instead of showing the "No matches" empty state.
-- **`messages/ar.json` + `messages/en.json`:**
-  - Update `searchPlaceholder` with instructional examples.
-  - Add `juzPrompt` and `pagePrompt` keys for bare prefix typing.
-- **`app/utils/nav-search.test.ts` & `e2e/tests/home-nav-search.spec.ts`:**
-  - Add unit tests for `الجزء N`, `الصفحة N`, `سورة N`, `سورة <Name>`, and bare prefix prompts.
-  - Update E2E assertions for new placeholders and definite article queries.
+- 2026-08-28 — folded Addendum 1: `الـ` definite-article prefixes on juz/page queries, `سورة`/`السورة` prefix stripping, bare-prefix guidance prompts (`home.juzPrompt` / `home.pagePrompt`) in place of the empty state, and instructional-example placeholders.
 
 
