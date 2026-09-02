@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import {
   Bookmark,
@@ -184,6 +185,7 @@ export function MarkModal({
   const t = useTranslations();
   const markT = useNextIntlTranslations("markModal");
   const locale = useLocale();
+  const pathname = usePathname();
   const [error, setError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(currentCategory);
   const [comment, setComment] = useState(currentComment ?? "");
@@ -695,7 +697,7 @@ export function MarkModal({
             </p>
             <Button
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6"
-              onClick={() => signIn()}
+              onClick={() => signIn("google", { callbackUrl: `${pathname}?markWord=${encodeURIComponent(markKey)}` })}
             >
               {t("signIn", "Sign in")}
             </Button>
