@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-155 plans.
+156 plans.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
@@ -148,6 +148,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
 | theming | [Handoff — Reading-Desk Depth for Light & Gold (and de-duplicating the reader CSS)](theme-depth-unification-HANDOFF.md) | superseded | feature |
 | theming | [Session Handoff — Dark Theme Mushaf Unification](dark-theme-mushaf-unification-HANDOFF.md) | superseded | feature |
+| workflow | [Fold the 29 addendum-bearing plans into single coherent specs](fold-plan-addenda.md) | in-progress | chore |
 | workflow | [Configure Project-Local Trello MCP for Codex](configure-project-trello-mcp.md) | implemented | feature |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |
 | workflow | [Git Workflow Skills (commit/push gating + confirm-dangerous-git)](git-workflow-skills.md) | implemented | feature |
