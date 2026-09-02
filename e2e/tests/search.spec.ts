@@ -1,32 +1,12 @@
-import { test, expect, type Page } from "@playwright/test";
-import { waitForReaderContent, skipNonDesktop, skipNonMobile } from "../helpers/reader";
+import { test, expect } from "@playwright/test";
+import {
+  waitForReaderContent,
+  openSearch,
+  skipNonDesktop,
+  skipNonMobile,
+} from "../helpers/reader";
 
 const DEBOUNCE_TIMEOUT = 10000;
-
-/**
- * Helper to open the search dialog and wait for the input to become interactive.
- */
-async function openSearch(page: Page, locale: "ar" | "en" = "ar") {
-  // Ensure page navigation and hydration before interacting with controls
-  await expect(page.locator("nav")).toBeVisible();
-
-  const triggerName =
-    locale === "ar"
-      ? "ابحث عن السورة بالاسم أو الرقم"
-      : "Search surah by name or number";
-
-  const searchTrigger = page.getByRole("button", { name: triggerName });
-  await expect(searchTrigger).toBeVisible();
-  await searchTrigger.click();
-
-  const searchDialog = page.getByRole("dialog");
-  await expect(searchDialog).toBeVisible();
-
-  const searchInput = searchDialog.getByPlaceholder(triggerName);
-  await expect(searchInput).toBeVisible();
-
-  return { searchDialog, searchInput };
-}
 
 test.describe("Search Overlay Triggers & Dismissal", () => {
   test("keyboard shortcut (Cmd+K / Ctrl+K) toggles search dialog on desktop", async ({
