@@ -54,6 +54,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Home Page Navigation Search (surah name, juz, page)](home-nav-search.md) | implemented | feature |
 | nav | [Mobile Navigation UX](mobile-nav-ux.md) | implemented | feature |
 | nav | [Nav: Dedupe NavPillLink classNames into Shared Component](dedupe-nav-pill-link.md) | implemented | bug |
+| nav | [Reader Nav Overlay (mobile + tablet)](tablet-nav-overlay.md) | implemented | feature |
 | nav | [Restructure Navigation for Clean UX](restructure-navigation.md) | implemented | feature |
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Search Placeholder & Typography Compactness](sidebar-search-font-sizing.md) | implemented | feature |
@@ -61,7 +62,6 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | nav | [Sidebar: Current-Surah Ayah Picker Tab](sidebar-ayah-picker.md) | implemented | feature |
 | nav | [Sidebar: per-tab search filters (Surahs + Rubs tabs)](sidebar-tab-filters.md) | implemented | feature |
-| nav | [Tablet Nav Overlay Effect](tablet-nav-overlay.md) | implemented | feature |
 | observability | [fq-logger: Structured Logging & Observability](fq-logger.md) | implemented | feature |
 | observability | [Sentry Error Tracking](sentry-error-tracking.md) | implemented | feature |
 | observability | [Sentry-to-Slack Alerting via Relay Webhook](sentry-slack-alerts.md) | implemented | feature |
