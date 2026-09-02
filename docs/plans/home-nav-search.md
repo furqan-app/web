@@ -1,9 +1,13 @@
-# Home Page Navigation Search (surah name, juz, page)
+---
+title: Home Page Navigation Search (surah name, juz, page)
+type: feature
+date: 2026-08-25
+status: implemented
+area: nav
+issue: 363
+---
 
-**Type:** feature
-**Date:** 2026-08-25
-**Status:** implemented
-**Issue:** [#363](https://github.com/furqan-app/web/issues/363) (part of epic #361; sibling #362 sidebar filters is out of scope here)
+# Home Page Navigation Search (surah name, juz, page)
 
 ## Summary
 

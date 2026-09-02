@@ -1,9 +1,12 @@
-# Daily Awrad UI
+---
+title: Daily Awrad UI
+type: feature
+date: 2026-07-27
+status: implemented
+area: awrad
+---
 
-**Type:** feature
-**Date:** 2026-07-27
-**Status:** implemented
-**Trello:** #149 — https://trello.com/c/lOqrIG3L
+# Daily Awrad UI
 
 ## Summary
 

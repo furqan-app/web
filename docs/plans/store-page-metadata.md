@@ -1,6 +1,12 @@
-# Store Static Page Metadata in Database
+---
+title: Store Static Page Metadata in Database
+type: feature
+date: 2026-06-28
+status: implemented
+area: db
+---
 
-**Status:** implemented
+# Store Static Page Metadata in Database
 
 ## Summary
 

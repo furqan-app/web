@@ -1,8 +1,12 @@
-# Fix: Ayah Font Not Rendering in Search Results and Mark Modal
+---
+title: "Fix: Ayah Font Not Rendering in Search Results and Mark Modal"
+type: bug
+date: 2026-06-28
+status: implemented
+area: rendering
+---
 
-**Type:** bug  
-**Date:** 2026-06-28 / revised 2026-07-01  
-**Status:** implemented
+# Fix: Ayah Font Not Rendering in Search Results and Mark Modal
 
 ## Font-Encoding Contract (final)
 

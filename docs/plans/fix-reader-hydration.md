@@ -1,9 +1,12 @@
-# Fix Reader Hydration Mismatch (ReaderPage style injection)
+---
+title: Fix Reader Hydration Mismatch (ReaderPage style injection)
+type: bug
+date: 2026-07-10
+status: implemented
+area: reader
+---
 
-**Type:** bug  
-**Date:** 2026-07-10  
-**Status:** implemented  
-**Trello:** #79 https://trello.com/c/L6UWbBKe
+# Fix Reader Hydration Mismatch (ReaderPage style injection)
 
 ## Root Cause
 

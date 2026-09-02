@@ -1,11 +1,16 @@
+---
+title: "Complex E2E & Fix: Shared Mushaf Access & Mid-Session Revocation Navigation"
+type: feature
+date: 2026-09-02
+status: implemented
+area: marks
+issue: 469
+adr: [0012]
+---
+
 # Complex E2E & Fix: Shared Mushaf Access & Mid-Session Revocation Navigation
 
-**Type:** task  
-**Date:** 2026-09-02  
-**Status:** implemented  
-**GitHub Issue:** [#469](https://github.com/furqan-app/web/issues/469)  
-**Parent Epic:** [#466](https://github.com/furqan-app/web/issues/466)  
-**ADR Reference:** [ADR 0012 — Shared mushaf access](../architecture/adr/0012-shared-mushaf-access.md)
+**Parent Epic:** [#466](https://github.com/furqan-app/web/issues/466)
 
 ## Summary
 

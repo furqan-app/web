@@ -1,10 +1,13 @@
-# Split the Quran database from the application database
+---
+title: Split the Quran database from the application database
+type: feature
+date: 2026-07-02
+status: implemented
+area: db
+adr: [0008]
+---
 
-**Type:** feature
-**Date:** 2026-07-02
-**Status:** implemented
-**Trello:** https://trello.com/c/YKSgr36O
-**ADR:** [0008-quran-app-database-split](../architecture/adr/0008-quran-app-database-split.md)
+# Split the Quran database from the application database
 
 ## Summary
 

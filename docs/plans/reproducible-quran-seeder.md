@@ -1,9 +1,13 @@
-# Reproducible Quran Database Seeder
+---
+title: Reproducible Quran Database Seeder
+type: chore
+date: 2026-07-02
+status: implemented
+area: seeder
+adr: [0009]
+---
 
-**Type:** bug  
-**Date:** 2026-07-02  
-**Status:** implemented  
-**ADR:** [0009-reproducible-quran-seeder](../architecture/adr/0009-reproducible-quran-seeder.md)
+# Reproducible Quran Database Seeder
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Play Audio for Individual Words
+---
+title: Play Audio for Individual Words
+type: feature
+date: 2026-07-11
+status: implemented
+area: recitation
+---
 
-**Type:** feature  
-**Date:** 2026-07-11  
-**Status:** implemented
+# Play Audio for Individual Words
 
 ## Summary
 

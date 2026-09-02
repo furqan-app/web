@@ -1,9 +1,12 @@
-# Fix Homepage CDN Cache Poisoning (Hostinger Edge)
+---
+title: Fix Homepage CDN Cache Poisoning (Hostinger Edge)
+type: bug
+date: 2026-07-31
+status: implemented
+area: api
+---
 
-**Type:** bug
-**Date:** 2026-07-31
-**Status:** implemented
-**Trello:** #164 https://trello.com/c/RqQZGpJx
+# Fix Homepage CDN Cache Poisoning (Hostinger Edge)
 
 ## Summary
 

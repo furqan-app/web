@@ -1,8 +1,12 @@
-# Nav: Dedupe NavPillLink classNames into Shared Component
+---
+title: "Nav: Dedupe NavPillLink classNames into Shared Component"
+type: bug
+date: 2026-08-13
+status: implemented
+area: nav
+---
 
-**Type:** bug
-**Date:** 2026-08-13
-**Status:** implemented
+# Nav: Dedupe NavPillLink classNames into Shared Component
 
 ## Summary
 `app/components/nav/ContinueReadingLink.tsx` and `app/components/nav/SharedMushafLink.tsx` both hardcode the identical pill-button className string. `app/components/nav/UserMenu.tsx`'s dropdown trigger `<button>` duplicates the same string with one extra modifier (`md:border md:border-border`). The class has already drifted once (UserMenu's copy). Extract a single source of truth so future style changes land in one place.

@@ -1,8 +1,12 @@
-# Add Tajweed color-coded mushaf mode
+---
+title: Add Tajweed color-coded mushaf mode
+type: feature
+date: 2026-07-11
+status: implemented
+area: rendering
+---
 
-**Type:** feature
-**Date:** 2026-07-11
-**Status:** implemented (Addendum 14 — per-edition word placement; verified in browser 2026-07-30)
+# Add Tajweed color-coded mushaf mode
 
 ## Summary
 
@@ -401,7 +405,7 @@ Reseeded: `words=83665`, `mushaf_word_layouts=167330` (2=83665, 19=83665), `mush
   }
   ```
   Add `MushafPageMetadata` with `mushaf_id` + the existing `PageMetadata` fields, unique on `[mushaf_id, page_number]`.
-- **There is no migration for this DB — corrected during implementation.** ADR 0017's versioned Prisma migrations cover `furqan_app` only. `furqan_quran` is owned by the seeder, which runs `prisma db push --force-reset` and rebuilds from scratch (ADR 0009, `docs/standards/database.md`). Applying this task therefore means a **destructive full reseed**: `npm run seed:quran -- --force`, refetching 604 pages of verses/words plus 604 pages per edition of layout from QDC. No migration files exist or should be created here.
+- **There is no migration for this DB — corrected during implementation.** ADR 0051's versioned Prisma migrations cover `furqan_app` only. `furqan_quran` is owned by the seeder, which runs `prisma db push --force-reset` and rebuilds from scratch (ADR 0009, `docs/standards/database.md`). Applying this task therefore means a **destructive full reseed**: `npm run seed:quran -- --force`, refetching 604 pages of verses/words plus 604 pages per edition of layout from QDC. No migration files exist or should be created here.
 - **Task 1 is additive, so the branch stays green — decided during implementation.** `PageMetadata` has 11 consumer files (including `app/lib/plans/resolve-units.ts` and `scripts/e2e-fixture/generate.js`, neither anticipated when this plan was written) and the reader's data layer does not move until Tasks 2–3. So Task 1 adds `MushafWordLayout` and `MushafPageMetadata` and leaves `PageMetadata` in place, seeded with the default edition's values. Tasks 2–3 migrate the consumers; the last of them deletes `PageMetadata`.
 - Keep the `Word.mushafLayouts` **relation field name** when renaming the model, so `get-page-words.ts` and `scripts/quran-json/generate.js` keep compiling untouched through Task 1. They still read only `line_number`, so the app behaves exactly as it does today — the bug is still present after Task 1 and is fixed by Task 3.
 - `scripts/quran-seed/tajweed-layout.js` → replaced by `scripts/quran-seed/mushaf-layout.js`, an edition-generic fetch capturing **both** `page_number` and `line_number`, plus the verse→page map each edition needs for its page summary.

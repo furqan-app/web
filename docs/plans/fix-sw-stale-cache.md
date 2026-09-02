@@ -1,8 +1,12 @@
-# Fix: Users See Stale App After Deployment (Service Worker Cache)
+---
+title: "Fix: Users See Stale App After Deployment (Service Worker Cache)"
+type: bug
+date: 2026-07-24
+status: implemented
+area: pwa
+---
 
-**Type:** bug
-**Date:** 2026-07-24
-**Status:** implemented
+# Fix: Users See Stale App After Deployment (Service Worker Cache)
 
 ## Summary
 

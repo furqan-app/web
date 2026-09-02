@@ -1,8 +1,12 @@
-# Fix Stale connection_limit Documentation
+---
+title: Fix Stale connection_limit Documentation
+type: bug
+date: 2026-07-03
+status: implemented
+area: db
+---
 
-**Type:** bug  
-**Date:** 2026-07-03  
-**Status:** implemented
+# Fix Stale connection_limit Documentation
 
 ## Summary
 

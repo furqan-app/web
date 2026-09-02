@@ -1,8 +1,12 @@
-# Sidebar Search Placeholders Alignment with Homepage Copy
+---
+title: Sidebar Search Placeholders Alignment with Homepage Copy
+type: feature
+date: 2026-08-29
+status: implemented
+area: nav
+---
 
-**Type:** copy / i18n
-**Date:** 2026-08-29
-**Status:** implemented
+# Sidebar Search Placeholders Alignment with Homepage Copy
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Consolidate Mobile Safha Sizing Docs
+---
+title: Consolidate Mobile Safha Sizing Docs
+type: feature
+date: 2026-07-03
+status: implemented
+area: reader
+---
 
-**Type:** docs  
-**Date:** 2026-07-03  
-**Status:** implemented
+# Consolidate Mobile Safha Sizing Docs
 
 ## Summary
 

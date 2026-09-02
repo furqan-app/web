@@ -1,6 +1,12 @@
-# Base Notification System
+---
+title: Base Notification System
+type: feature
+date: 2026-08-03
+status: implemented
+area: api
+---
 
-**Status:** implemented, review findings fixed (2026-08-03)
+# Base Notification System
 
 ## Post-Review Fix Plan (2026-08-03)
 

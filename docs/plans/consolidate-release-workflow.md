@@ -1,8 +1,12 @@
-# Consolidate the release workflow: 4 skills → 1, staging PR carries the changelog
+---
+title: "Consolidate the release workflow: 4 skills → 1, staging PR carries the changelog"
+type: feature
+date: 2026-09-02
+status: implemented
+area: release
+---
 
-**Type:** feature
-**Date:** 2026-09-02
-**Status:** implemented
+# Consolidate the release workflow: 4 skills → 1, staging PR carries the changelog
 
 GitHub issue: furqan-app/web#496 (T1.5, part of epic #491)
 

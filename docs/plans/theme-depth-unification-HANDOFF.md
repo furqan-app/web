@@ -1,8 +1,17 @@
+---
+title: Handoff — Reading-Desk Depth for Light & Gold (and de-duplicating the reader CSS)
+type: feature
+date: 2026-07-28
+status: superseded
+area: theming
+---
+
 # Handoff — Reading-Desk Depth for Light & Gold (and de-duplicating the reader CSS)
 
 **Written:** 2026-07-28, at the end of the dark-theme session
 **Predecessor:** `docs/plans/dark-theme-mushaf-unification.md` (implemented, committed as `71e1540`)
-**Status:** CONSUMED — implemented by Trello #154, see `docs/plans/theme-depth-unification.md`
+
+> Superseded — consumed by `docs/plans/theme-depth-unification.md` (Trello #154).
 
 ## Goal
 

@@ -1,9 +1,13 @@
-# Mobile Navigation UX
+---
+title: Mobile Navigation UX
+type: feature
+date: 2026-07-01
+status: implemented
+area: nav
+issue: 431
+---
 
-**Type:** feature  
-**Date:** 2026-07-01  
-**Status:** implemented
-**Issue:** [#431](https://github.com/furqan-app/web/issues/431)
+# Mobile Navigation UX
 
 ## Summary
 

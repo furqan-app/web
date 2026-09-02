@@ -1,8 +1,12 @@
-# Fix: Verse Rendering Outside the Quran Page
+---
+title: "Fix: Verse Rendering Outside the Quran Page"
+type: bug
+date: 2026-07-01
+status: implemented
+area: rendering
+---
 
-**Type:** bug  
-**Date:** 2026-07-01  
-**Status:** implemented
+# Fix: Verse Rendering Outside the Quran Page
 
 ## Root Cause
 

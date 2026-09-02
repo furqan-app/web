@@ -1,10 +1,12 @@
+---
+title: Paginate My Marks
+type: feature
+date: 2026-07-17
+status: implemented
+area: marks
+---
+
 # Paginate My Marks
-
-**Type:** feature
-**Date:** 2026-07-17
-**Status:** implemented
-
-Trello: [#107 Paginate my marks](https://trello.com/c/gK0IIgfk/107-paginate-my-marks)
 
 ## Summary
 

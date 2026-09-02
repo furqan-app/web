@@ -76,6 +76,7 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
    - `git checkout -b <branch-name>`
 
 3. **Commit**
+   - **Fold plan addenda first** — if the diff touches any `docs/plans/**/*.md` with a `## Addendum` section, merge it into the body, drop the heading, add a dated `## Revision History` line, re-derive frontmatter `status`/`date`, regenerate `INDEX.md`. See `docs/workflow/ship-task.md` step 3.
    - `git add` the relevant files (never `git add -A` blindly — review what's staged) — include any `decisions/*.md` or workflow-doc edits `/retrospect` produced in step 0
    - Invoke `commit-staged` to draft the message
    - Run `git commit` immediately — do not pause for confirmation

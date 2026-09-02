@@ -1,9 +1,12 @@
-# Reader Rhythm: Claim the Unused Vertical Space Into Line Gaps (Desktop, Tablet)
+---
+title: "Reader Rhythm: Claim the Unused Vertical Space Into Line Gaps (Desktop, Tablet)"
+type: feature
+date: 2026-08-02
+status: implemented
+area: reader
+---
 
-**Type:** feature
-**Date:** 2026-08-02
-**Status:** implemented
-**Trello:** [#172](https://trello.com/c/C12euyK1/172-reader-rhythm-claim-the-unused-vertical-space-into-line-gaps-desktop-tablet)
+# Reader Rhythm: Claim the Unused Vertical Space Into Line Gaps (Desktop, Tablet)
 
 ## Summary
 
@@ -96,7 +99,7 @@ Other surfaces checked at 1440×900: single-page view identical to double; surah
 
 ### Summary
 
-Replace the shared 1–10 `FONT_V1` viewport-height scale with clear per-band contracts. Mobile stays byte-for-byte visually unchanged. Tablet remains responsive but is always a double-page spread, sizing its text from the smaller width/height cap multiplied by `0.96`. Desktop gains Small/Medium/Large presets of 26/28/30px, defaulting to Small; each resolved size controls both the Quran ink and the physical page width so smaller text never floats in an old-width card. See ADR 0038.
+Replace the shared 1–10 `FONT_V1` viewport-height scale with clear per-band contracts. Mobile stays byte-for-byte visually unchanged. Tablet remains responsive but is always a double-page spread, sizing its text from the smaller width/height cap multiplied by `0.96`. Desktop gains Small/Medium/Large presets of 26/28/30px, defaulting to Small; each resolved size controls both the Quran ink and the physical page width so smaller text never floats in an old-width card. See ADR 0054.
 
 ### Root Cause / Approach
 
@@ -134,7 +137,7 @@ Use one resolved CSS value per active surface. Desktop preset values drive ink, 
 - `app/components/QuranSafha.tsx` — resolved desktop/card variables and the frame+Bismillah sibling clearance while preserving skeleton and fixed opening-page slot parity.
 - `app/components/reader/QuranSpread.tsx`, `app/components/reader/ReaderPager.tsx` — forced tablet pair navigation while retaining desktop’s saved view preference and toggle.
 - `app/globals.css` — consolidate responsive size variables, replace stale `0.417`/`2.417` caps with values derived from each active contract, apply tablet’s `0.96` factor, and remove the tablet-visible view-toggle path without changing mobile rules.
-- `docs/architecture/DECISIONS.md`, `docs/architecture/adr/0038-reader-size-contracts-and-tablet-double-view.md` — record the final implementation and superseded constraints.
+- `docs/architecture/DECISIONS.md`, `docs/architecture/adr/0054-reader-size-contracts-and-tablet-double-view.md` — record the final implementation and superseded constraints.
 
 ### Constraints
 

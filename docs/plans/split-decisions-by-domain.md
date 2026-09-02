@@ -1,11 +1,15 @@
+---
+title: Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index
+type: feature
+date: 2026-09-02
+status: implemented
+area: workflow
+supersedes: [ai-docs-workflow-system]
+issue: 493
+adr: [0057]
+---
+
 # Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index
-
-**Type:** feature
-**Date:** 2026-09-02
-**Status:** implemented
-
-**Issue:** furqan-app/web#493 · **Epic:** #491 (T1.2) · **ADR:** [0057](../architecture/adr/0057-decisions-split-by-domain.md)
-**Lineage:** re-architects the `DECISIONS.md` living-file decision from `docs/plans/ai-docs-workflow-system.md` (2026-06-28).
 
 ## Summary
 

@@ -1,9 +1,12 @@
-# Fix: Invalid Font MIME Type in Preload Hint
+---
+title: "Fix: Invalid Font MIME Type in Preload Hint"
+type: bug
+date: 2026-07-10
+status: implemented
+area: api
+---
 
-**Type:** bug  
-**Date:** 2026-07-10  
-**Status:** implemented  
-**Trello:** https://trello.com/c/w18DepnV/89
+# Fix: Invalid Font MIME Type in Preload Hint
 
 ## Summary
 

@@ -1,9 +1,13 @@
+---
+title: Loading Placeholder Toggles the Scrollbar, Reflowing the Whole Document
+type: bug
+date: 2026-07-30
+status: implemented
+area: reader
+---
+
 # Loading Placeholder Toggles the Scrollbar, Reflowing the Whole Document
 
-**Type:** bug
-**Date:** 2026-07-30
-**Status:** ready-to-implement
-**Trello:** #157 https://trello.com/c/AyKqCjdY/157-bug-loading-placeholder-toggles-the-scrollbar-reflowing-the-whole-document-on-every-page-turn
 **Related:** ADR 0028 (persistent pager), `docs/plans/reader-persistent-pager.md`, `docs/plans/arrow-controls-desktop.md` (#156 depends on this)
 
 ## Summary

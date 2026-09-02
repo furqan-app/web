@@ -1,8 +1,12 @@
-# Remove Safha Card Background on Mobile
+---
+title: Remove Safha Card Background on Mobile
+type: feature
+date: 2026-07-03
+status: implemented
+area: reader
+---
 
-**Type:** bug/polish  
-**Date:** 2026-07-03  
-**Status:** implemented
+# Remove Safha Card Background on Mobile
 
 ## Summary
 

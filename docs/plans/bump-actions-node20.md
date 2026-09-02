@@ -1,8 +1,12 @@
-# CI: Bump actions/* off deprecated Node 20
+---
+title: "CI: Bump actions/* off deprecated Node 20"
+type: chore
+date: 2026-08-02
+status: implemented
+area: ci
+---
 
-**Type:** chore
-**Date:** 2026-08-02
-**Status:** ready-to-implement
+# CI: Bump actions/* off deprecated Node 20
 
 ## Summary
 

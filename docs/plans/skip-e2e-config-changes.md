@@ -1,9 +1,12 @@
-# Skip visual e2e on config-only PRs
+---
+title: Skip visual e2e on config-only PRs
+type: feature
+date: 2026-07-24
+status: implemented
+area: ci
+---
 
-**Type:** feature
-**Date:** 2026-07-24
-**Status:** implemented
-**Trello:** https://trello.com/c/3T4tbYj4/139-avoid-running-the-pr-pipelines-on-config-changes
+# Skip visual e2e on config-only PRs
 
 ## Summary
 

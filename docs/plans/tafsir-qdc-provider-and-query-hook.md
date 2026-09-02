@@ -1,8 +1,12 @@
-# Tafsir: Direct QDC Client Provider & Query Hook
+---
+title: "Tafsir: Direct QDC Client Provider & Query Hook"
+type: feature
+date: 2026-08-29
+status: implemented
+area: tafsir
+---
 
-**Type:** feature  
-**Date:** 2026-08-29  
-**Status:** implemented
+# Tafsir: Direct QDC Client Provider & Query Hook
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression
+---
+title: Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression
+type: bug
+date: 2026-08-23
+status: implemented
+area: reader
+---
 
-**Type:** bug
-**Date:** 2026-08-23
-**Status:** implemented
+# Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression
 
 ## Summary
 

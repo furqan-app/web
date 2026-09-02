@@ -1,8 +1,13 @@
+---
+title: "Functional E2E: Word Marking & Memorization Flow"
+type: feature
+date: 2026-08-28
+status: implemented
+area: marks
+---
+
 # Functional E2E: Word Marking & Memorization Flow
 
-**Type:** feature  
-**Date:** 2026-08-28  
-**Status:** implemented  
 **GitHub Issue:** [#427](https://github.com/furqan-app/web/issues/427)  
 **Parent Epic:** [#421](https://github.com/furqan-app/web/issues/421)  
 

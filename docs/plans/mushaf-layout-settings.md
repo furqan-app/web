@@ -1,10 +1,14 @@
-# Unify Tajweed toggle + offline downloads into one Mushaf Layout setting
+---
+title: Unify Tajweed toggle + offline downloads into one Mushaf Layout setting
+type: feature
+date: 2026-08-17
+status: implemented
+area: rendering
+issue: 256
+adr: [0014, 0023]
+---
 
-**Type:** feature
-**Date:** 2026-08-17
-**Status:** implemented
-**Issue:** [#256](https://github.com/furqan-app/web/issues/256) (expanded from "Add a Download tajweed mushaf row to Settings offline access")
-**ADRs:** [0014 Addendum 5](../architecture/adr/0014-pwa-offline-architecture.md), [0023 Addendum 7](../architecture/adr/0023-tajweed-mushaf-mode.md)
+# Unify Tajweed toggle + offline downloads into one Mushaf Layout setting
 
 ## Summary
 

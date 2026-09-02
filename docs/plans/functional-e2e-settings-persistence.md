@@ -1,14 +1,19 @@
+---
+title: "Functional E2E: Settings & Preferences Persistence"
+type: feature
+date: 2026-08-28
+status: implemented
+area: ci
+---
+
 # Functional E2E: Settings & Preferences Persistence
 
-**Type:** feature  
-**Date:** 2026-08-28  
-**Status:** implemented  
 **GitHub Issue:** [#426](https://github.com/furqan-app/web/issues/426)  
 **Parent Epic:** [#421](https://github.com/furqan-app/web/issues/421)  
 
 ## Summary
 
-Implement a deterministic behavioral Playwright end-to-end test suite (`e2e/tests/settings-persistence.spec.ts`) validating the reader Settings sheet drawer (`SettingsSidebar.tsx`), drawer open/close lifecycle and dismissal mechanisms across desktop and mobile, theme switching (Light, Gold/Sepia, Dark) with DOM class application (`<html>`) and `localStorage` persistence, desktop Quran font size presets (`small` 26px, `medium` 28px, `large` 30px per ADR 0038) and `--fq-desktop-word` CSS property application on the reader, Mushaf layout edition selection (Default ID 2 vs Tajweed ID 19 per ADR 0033 and `mushaf-editions.ts`), page view mode toggle (`single` vs `double` with `<html data-safha-view="...">`), mobile/tablet device wake-lock toggle (`keepScreenAwake`), and language switching with bi-directional (RTL/LTR) sheet layout across 7 test suites (13 test cases, 26 browser project runs across Desktop and Mobile).
+Implement a deterministic behavioral Playwright end-to-end test suite (`e2e/tests/settings-persistence.spec.ts`) validating the reader Settings sheet drawer (`SettingsSidebar.tsx`), drawer open/close lifecycle and dismissal mechanisms across desktop and mobile, theme switching (Light, Gold/Sepia, Dark) with DOM class application (`<html>`) and `localStorage` persistence, desktop Quran font size presets (`small` 26px, `medium` 28px, `large` 30px per ADR 0054) and `--fq-desktop-word` CSS property application on the reader, Mushaf layout edition selection (Default ID 2 vs Tajweed ID 19 per ADR 0033 and `mushaf-editions.ts`), page view mode toggle (`single` vs `double` with `<html data-safha-view="...">`), mobile/tablet device wake-lock toggle (`keepScreenAwake`), and language switching with bi-directional (RTL/LTR) sheet layout across 7 test suites (13 test cases, 26 browser project runs across Desktop and Mobile).
 
 ## Approach
 
@@ -26,7 +31,7 @@ Implement a deterministic behavioral Playwright end-to-end test suite (`e2e/test
    - Clicking `light`: `<html>` has class `theme-light`, `localStorage.getItem("theme")` is `"\"light\""`, and the light radio is `aria-checked="true"`.
    - **Reload Persistence**: Set theme to `dark`, trigger `page.reload()`, and verify `<html>` immediately renders `dark theme-dark` classes before and after hydration, with the dark radio checked upon re-opening Settings.
 
-3. **Desktop Quran Font Size Presets (ADR 0038)**:
+3. **Desktop Quran Font Size Presets (ADR 0054)**:
    - `DesktopQuranFontSizeControls` (desktop-only) provides semantic presets: `small` (26px, default), `medium` (28px), and `large` (30px).
    - Expanding the accordion and selecting `medium`:
      - Updates `localStorage.getItem("desktopQuranFontSize")` to `"\"medium\""`.
@@ -79,7 +84,7 @@ Implement a deterministic behavioral Playwright end-to-end test suite (`e2e/test
 | | Close via Escape Key | Desktop, `/ar/pages/1` | Open Settings -> Press `Escape` key | Sheet closes immediately. |
 | **Theme Switching & Persistence** | Toggle Light, Gold, Dark | Desktop & Mobile, `/ar/pages/1` | 1. Click "ذهبي" (Gold)<br>2. Click "داكن" (Dark)<br>3. Click "فاتح" (Light) | 1. `<html>` gets `theme-gold` class; `localStorage.getItem("theme") === '"gold"'`<br>2. `<html>` gets `dark theme-dark` classes; `localStorage.getItem("theme") === '"dark"'`<br>3. `<html>` gets `theme-light` class; `localStorage.getItem("theme") === '"light"'` |
 | | Theme Persistence on Reload | Desktop, `/ar/pages/1` | Set theme to `dark` -> `page.reload()` | `<html>` retains `dark theme-dark` classes; opening Settings shows Dark radio `aria-checked="true"`. |
-| **Desktop Font Size Presets (ADR 0038)** | Adjust Presets (Small 26px, Medium 28px, Large 30px) | Desktop, `/ar/pages/1` | Expand Font Size accordion -> Select `medium`, then `large`, then `small` | `localStorage.getItem("desktopQuranFontSize")` updates to `"medium"`, `"large"`, `"small"`; `.fq-quran-safha` inline style `--fq-desktop-word` dynamically reflects `28px`, `30px`, `26px`. |
+| **Desktop Font Size Presets (ADR 0054)** | Adjust Presets (Small 26px, Medium 28px, Large 30px) | Desktop, `/ar/pages/1` | Expand Font Size accordion -> Select `medium`, then `large`, then `small` | `localStorage.getItem("desktopQuranFontSize")` updates to `"medium"`, `"large"`, `"small"`; `.fq-quran-safha` inline style `--fq-desktop-word` dynamically reflects `28px`, `30px`, `26px`. |
 | | Font Size Persistence on Reload | Desktop, `/ar/pages/1` | Set preset to `large` -> `page.reload()` | `localStorage` retains `"large"`; `--fq-desktop-word` on safha remains `30px`. |
 | **Mushaf Edition Mode** | Toggle Tajweed vs Default Edition | Desktop & Mobile, `/ar/pages/1` | Expand Mushaf Layout accordion -> Click `Tajweed` (ID 19), then click `Default` (ID 2) | 1. `localStorage.getItem("quranMushafId") === "19"`, Tajweed row radio checked.<br>2. `localStorage.getItem("quranMushafId") === "2"`, Default row radio checked. |
 | | Mushaf Edition Persistence on Reload | Desktop, `/ar/pages/1` | Select `Tajweed` -> `page.reload()` | `localStorage` retains `quranMushafId: 19`; Tajweed row remains selected. |
@@ -122,7 +127,7 @@ Implement a deterministic behavioral Playwright end-to-end test suite (`e2e/test
 
 - E2E tests must be strictly functional/behavioral and deterministic against the local fixture environment.
 - No visual screenshot pixel diffing (out of scope).
-- Presets must follow ADR 0038 (`desktopQuranFontSize` values: `small`, `medium`, `large`).
+- Presets must follow ADR 0054 (`desktopQuranFontSize` values: `small`, `medium`, `large`).
 - Theme, font size, view, and wake lock values stored in `localStorage` must match `app/utils/storage.ts` JSON serialization (`JSON.stringify(val)`).
 - Desktop-only settings (`DesktopQuranFontSizeControls`, `QuranSafhaViewToggle`) must skip execution under the `mobile` project using `skipNonDesktop`.
 - Mobile/Tablet settings (`KeepScreenAwake`) must skip execution under `desktop` using `skipNonMobile`.
@@ -136,5 +141,5 @@ Implement a deterministic behavioral Playwright end-to-end test suite (`e2e/test
 
 ## Decisions Made
 
-- Group tests into clear logical `test.describe` blocks matching the settings taxonomy: Drawer Lifecycle, Theme Switching & Persistence, Desktop Quran Font Size Presets (ADR 0038), Mushaf Layout Edition, Page View Mode, Keep Screen Awake, and Language / Direction.
+- Group tests into clear logical `test.describe` blocks matching the settings taxonomy: Drawer Lifecycle, Theme Switching & Persistence, Desktop Quran Font Size Presets (ADR 0054), Mushaf Layout Edition, Page View Mode, Keep Screen Awake, and Language / Direction.
 - Use `page.reload()` within persistence test cases to ensure full end-to-end browser session survival across hard reloads.

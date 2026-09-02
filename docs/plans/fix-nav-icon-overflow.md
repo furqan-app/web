@@ -1,9 +1,12 @@
-# Fix Navbar Icon Overflow on Mobile/Tablet
+---
+title: Fix Navbar Icon Overflow on Mobile/Tablet
+type: bug
+date: 2026-08-05
+status: implemented
+area: nav
+---
 
-**Type:** bug
-**Date:** 2026-08-05
-**Status:** implemented
-**Trello:** #186 https://trello.com/c/1FbYzcRq
+# Fix Navbar Icon Overflow on Mobile/Tablet
 
 ## Summary
 

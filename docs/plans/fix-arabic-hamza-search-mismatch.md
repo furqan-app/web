@@ -1,8 +1,12 @@
-# Fix: Hamza-Alif Mismatch in Verse Search
+---
+title: "Fix: Hamza-Alif Mismatch in Verse Search"
+type: bug
+date: 2026-07-02
+status: implemented
+area: rendering
+---
 
-**Type:** bug  
-**Date:** 2026-07-02  
-**Status:** implemented
+# Fix: Hamza-Alif Mismatch in Verse Search
 
 ## Root Cause
 

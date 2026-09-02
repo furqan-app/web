@@ -1,8 +1,12 @@
-# Quran Safha: Fit Viewport With No Scroll (Default Font Scale)
+---
+title: "Quran Safha: Fit Viewport With No Scroll (Default Font Scale)"
+type: bug
+date: 2026-07-01
+status: implemented
+area: reader
+---
 
-**Type:** bug  
-**Date:** 2026-07-01  
-**Status:** implemented
+# Quran Safha: Fit Viewport With No Scroll (Default Font Scale)
 
 ## Root Cause
 

@@ -1,8 +1,12 @@
-# Mobile Safha: Full-Screen Sizing (Width-Driven Font + Flexbox Fill)
+---
+title: "Mobile Safha: Full-Screen Sizing (Width-Driven Font + Flexbox Fill)"
+type: feature
+date: 2026-07-03
+status: implemented
+area: reader
+---
 
-**Type:** feature
-**Date:** 2026-07-03
-**Status:** implemented
+# Mobile Safha: Full-Screen Sizing (Width-Driven Font + Flexbox Fill)
 
 ## Summary
 

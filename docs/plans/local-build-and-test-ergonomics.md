@@ -1,8 +1,13 @@
+---
+title: "Dev Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit"
+type: feature
+date: 2026-08-27
+status: implemented
+area: ci
+---
+
 # Dev Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit
 
-**Type:** task  
-**Date:** 2026-08-27  
-**Status:** implemented  
 **GitHub Issue:** [#450](https://github.com/furqan-app/web/issues/450)  
 
 ## Summary

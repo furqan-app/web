@@ -1,8 +1,12 @@
-# Fix Hostinger Auto-Deploy Build Failures
+---
+title: Fix Hostinger Auto-Deploy Build Failures
+type: bug
+date: 2026-07-02
+status: implemented
+area: ci
+---
 
-**Type:** bug  
-**Date:** 2026-07-02  
-**Status:** implemented
+# Fix Hostinger Auto-Deploy Build Failures
 
 ## Root Cause
 

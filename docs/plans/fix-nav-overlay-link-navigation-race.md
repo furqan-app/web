@@ -1,10 +1,14 @@
-# Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA)
+---
+title: Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA)
+type: bug
+date: 2026-08-16
+status: implemented
+area: nav
+issue: 313
+adr: [0043]
+---
 
-**Type:** bug
-**Date:** 2026-08-16
-**Status:** implemented
-**GitHub:** [#313](https://github.com/furqan-app/web/issues/313)
-**ADR:** [0043](../architecture/adr/0043-overlay-close-on-back-gesture.md) (2026-08-16 addendum)
+# Fix Nav Overlay Link Navigation Race (My Marks / My Plans / Shared Mushaf Do Nothing on Android PWA)
 
 ## Summary
 
@@ -16,7 +20,7 @@ and browser tabs are unaffected (the guard this bug lives in never arms there).
 ## Root Cause
 
 `NavOverflowMenu` arms `useCloseOnBackGesture(open, closeMenu)` while its Sheet is open
-(`app/components/nav/NavOverflowMenu.tsx:68`) — a shared hook (ADR 0043) that pushes a history guard
+(`app/components/nav/NavOverflowMenu.tsx:68`) — a shared hook (ADR 0055) that pushes a history guard
 entry on open, mobile/tablet standalone only, so a real back-gesture closes the sheet instead of
 navigating the underlying page.
 
@@ -26,7 +30,7 @@ fires two things from the same click: the Link's `onClick={onNavigate}` closes t
 
 `useCloseOnBackGesture`'s cleanup effect (runs when `open` flips to `false`) decides whether to call
 `history.back()` to remove its own now-unneeded guard entry, via a `queueMicrotask`-deferred check
-(`app/hooks/use-close-on-back-gesture.ts:78-112`) added in ADR 0043's 2026-08-15 addendum to survive a
+(`app/hooks/use-close-on-back-gesture.ts:78-112`) added in ADR 0055's 2026-08-15 addendum to survive a
 **sibling overlay's** `pushState` landing in the same React commit. That addendum's fix (defer to a
 microtask, compare by unique id) is sufficient for a sibling's `pushState`, which is guaranteed to land
 within the same commit's effects and therefore the same microtask flush.
@@ -39,7 +43,7 @@ button," and calls `history.back()` — cancelling the in-flight navigation. The
 closes (the `setOpen(false)` React state update is unaffected by any of this), which is exactly the
 reported symptom: menu closes, nothing else happens.
 
-This is a different failure from the one ADR 0043's base decision already accepted as a trade-off
+This is a different failure from the one ADR 0055's base decision already accepted as a trade-off
 ("entry left as a harmless orphan when a navigation wins the race") — that trade-off describes the
 guard correctly staying out of the way. This bug is the guard **winning** a race it should never have
 been entered into, because it has no way to know a navigation is already happening.
@@ -84,7 +88,7 @@ Walked through with the user (2026-08-16):
   `SharedMushafLink` and `UserMenu` (both currently `onNavigate={closeMenu}`) into a single
   `closeMenuAndNotify = () => { notifyNavigating(); closeMenu(); }`. The Settings row's own
   `onClick` (which calls `closeMenu()` directly, not via the `onNavigate` prop) stays unchanged.
-- `docs/architecture/adr/0043-overlay-close-on-back-gesture.md` — addendum (written during planning).
+- `docs/architecture/adr/0055-overlay-close-on-back-gesture.md` — addendum (written during planning).
 - `docs/architecture/DECISIONS.md` — new constraint under "Overlay close-on-back-gesture" (written
   during planning).
 
@@ -122,7 +126,7 @@ wire an `onNavigate` prop; only what `NavOverflowMenu` passes into that prop cha
 ## Decisions Made
 
 - Root cause is a race between the overlay guard's timing-based cleanup check and Next's own
-  (not-guaranteed-synchronous) `router.push`, distinct from the sibling-overlay race ADR 0043's prior
+  (not-guaranteed-synchronous) `router.push`, distinct from the sibling-overlay race ADR 0055's prior
   addendum already fixed (user-confirmed via the decision tree walkthrough).
 - Fix via an explicit `notifyNavigating()` signal from the caller, not a longer timing window
   (user-confirmed as the lower-risk approach, proceeding without on-device log confirmation).

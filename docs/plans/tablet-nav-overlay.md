@@ -1,8 +1,12 @@
-# Tablet Nav Overlay Effect
+---
+title: Tablet Nav Overlay Effect
+type: feature
+date: 2026-07-20
+status: implemented
+area: nav
+---
 
-**Type:** feature  
-**Date:** 2026-07-20  
-**Status:** implemented (see latest addendum below)
+# Tablet Nav Overlay Effect
 
 ## Summary
 

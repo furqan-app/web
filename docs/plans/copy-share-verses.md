@@ -1,9 +1,13 @@
-# Copy and Share Verses from Mark Modal
+---
+title: Copy and Share Verses from Mark Modal
+type: feature
+date: 2026-08-30
+status: implemented
+area: marks
+issue: 396
+---
 
-**Type:** feature
-**Date:** 2026-08-30
-**Status:** implemented — Addendum (2026-08-31): per-verse OG share route + native share
-**Issues:** #396 (epic), #397 (API & formatting), #398 (UI & interaction), #486 (per-verse OG + native share)
+# Copy and Share Verses from Mark Modal
 
 ## Revision (2026-08-30)
 

@@ -1,9 +1,12 @@
-# Replace Dynamic Surah List with Static JSON at Build Time
+---
+title: Replace Dynamic Surah List with Static JSON at Build Time
+type: feature
+date: 2026-07-26
+status: implemented
+area: rendering
+---
 
-**Type:** feature
-**Date:** 2026-07-26
-**Status:** implemented
-**Trello:** [#31](https://trello.com/c/ht99Qt53/31-replace-dynamic-surah-list-with-static-json-at-build-time)
+# Replace Dynamic Surah List with Static JSON at Build Time
 
 ## Summary
 

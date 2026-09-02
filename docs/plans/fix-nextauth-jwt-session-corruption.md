@@ -1,8 +1,12 @@
-# Fix NextAuth JWT/Session Corruption on Transient DB Error
+---
+title: Fix NextAuth JWT/Session Corruption on Transient DB Error
+type: bug
+date: 2026-07-07
+status: implemented
+area: api
+---
 
-**Type:** bug  
-**Date:** 2026-07-07  
-**Status:** implemented
+# Fix NextAuth JWT/Session Corruption on Transient DB Error
 
 ## Root Cause
 

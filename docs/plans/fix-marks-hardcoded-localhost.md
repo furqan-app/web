@@ -1,8 +1,12 @@
-# Fix Marks Broken by Hardcoded localhost URL
+---
+title: Fix Marks Broken by Hardcoded localhost URL
+type: bug
+date: 2026-07-03
+status: implemented
+area: marks
+---
 
-**Type:** bug  
-**Date:** 2026-07-03  
-**Status:** implemented
+# Fix Marks Broken by Hardcoded localhost URL
 
 ## Root Cause
 

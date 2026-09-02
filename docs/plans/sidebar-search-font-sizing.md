@@ -1,8 +1,12 @@
-# Sidebar Search Placeholder & Typography Compactness
+---
+title: Sidebar Search Placeholder & Typography Compactness
+type: feature
+date: 2026-08-29
+status: implemented
+area: nav
+---
 
-**Type:** copy / UI polish
-**Date:** 2026-08-29
-**Status:** implemented
+# Sidebar Search Placeholder & Typography Compactness
 
 ## Summary
 

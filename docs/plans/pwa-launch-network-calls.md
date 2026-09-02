@@ -1,8 +1,12 @@
-# PWA: Remove the Root Layout's Unconditional Reciters and Session Network Calls From the Launch Path
+---
+title: "PWA: Remove the Root Layout's Unconditional Reciters and Session Network Calls From the Launch Path"
+type: bug
+date: 2026-08-29
+status: implemented
+area: pwa
+---
 
-**Type:** bug
-**Date:** 2026-08-29
-**Status:** implemented
+# PWA: Remove the Root Layout's Unconditional Reciters and Session Network Calls From the Launch Path
 
 ## Summary
 

@@ -8,7 +8,7 @@ Each refined issue later flows through the plan workflow on its own when picked 
 
 ### 0. Check for existing coverage — before anything else
 
-- Run `ls docs/plans/` and scan for plans that already decompose this area.
+- Read `docs/plans/INDEX.md` and scan the rows in this task's `area` for plans that already decompose it.
 - Search the tracker for open issues overlapping the big task; link or fold them in rather than creating duplicates.
 
 ### 1. Load context — mandatory gate, before investigating or writing anything

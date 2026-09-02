@@ -1,9 +1,13 @@
+---
+title: Listening Wird Inline Playback — Review Fix Plan
+type: bug
+date: 2026-07-31
+status: implemented
+area: recitation
+---
+
 # Listening Wird Inline Playback — Review Fix Plan
 
-**Type:** bug
-**Date:** 2026-07-31
-**Status:** implemented
-**Trello:** #162 — https://trello.com/c/20TSoSGg
 **Source:** /review-fq-work findings on feature/162-listening-wird-inline-playback
 
 ## Summary

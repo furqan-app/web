@@ -1,10 +1,12 @@
+---
+title: My Marks Page
+type: feature
+date: 2026-07-09
+status: implemented
+area: marks
+---
+
 # My Marks Page
-
-**Type:** feature
-**Date:** 2026-07-09
-**Status:** implemented
-
-Trello: [#40 A page to see my marks](https://trello.com/c/t9mODskH/40-a-page-to-see-my-marks)
 
 ## Summary
 

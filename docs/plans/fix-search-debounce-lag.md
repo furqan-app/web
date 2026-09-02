@@ -1,9 +1,12 @@
-# Fix Search Debounce Lag
+---
+title: Fix Search Debounce Lag
+type: bug
+date: 2026-07-02
+status: implemented
+area: search
+---
 
-**Type:** bug  
-**Date:** 2026-07-02  
-**Status:** implemented  
-**Trello:** https://trello.com/c/UEquTEG1/35-fix-the-search-debouncing
+# Fix Search Debounce Lag
 
 ## Root Cause
 

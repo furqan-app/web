@@ -1,9 +1,12 @@
-# System-wide Eastern Arabic Numerals for ar Locale
+---
+title: System-wide Eastern Arabic Numerals for ar Locale
+type: feature
+date: 2026-07-08
+status: implemented
+area: rendering
+---
 
-**Type:** feature  
-**Date:** 2026-07-08  
-**Status:** implemented  
-**Trello:** https://trello.com/c/RIhNMoYj/61-system-wide-eastern-arabic-numerals-for-ar-locale
+# System-wide Eastern Arabic Numerals for ar Locale
 
 ## Summary
 

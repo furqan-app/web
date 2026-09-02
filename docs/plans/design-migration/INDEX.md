@@ -1,12 +1,18 @@
+---
+title: Design Migration — reader-lab language, app-wide
+type: feature
+date: 2026-08-21
+status: in-progress
+area: theming
+issue: 360
+adr: [0047]
+---
+
 # Design Migration — reader-lab language, app-wide
 
-**Type:** feature
-**Date:** 2026-08-21
 **Status:** complete — all phases landed. Remaining before merge: reconcile `DESIGN.md` by hand with the migrated tokens (and delete its banner), and regenerate visual baselines via the `workflow_dispatch` CI job.
 
 > Note (#494, 2026-09-02): the `/impeccable` review gate referenced throughout this programme no longer exists. `DESIGN.md` is hand-maintained (no `/impeccable document`), and design-language alignment is a manual review concern — see `docs/plans/remove-workflow-skills.md`. The phase records below are unchanged.
-**Issue:** https://github.com/furqan-app/web/issues/360
-**ADR:** [0047](../../architecture/adr/0047-adopt-reader-lab-design-language.md)
 
 ## Summary
 

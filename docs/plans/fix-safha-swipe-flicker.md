@@ -1,8 +1,12 @@
-# Fix QuranSafha Swipe Flicker (font-ready flash + mark re-renders)
+---
+title: Fix QuranSafha Swipe Flicker (font-ready flash + mark re-renders)
+type: bug
+date: 2026-07-22
+status: implemented
+area: reader
+---
 
-**Type:** bug  
-**Date:** 2026-07-22  
-**Status:** implemented (Addendum — 2026-08-23)
+# Fix QuranSafha Swipe Flicker (font-ready flash + mark re-renders)
 
 ## Summary
 

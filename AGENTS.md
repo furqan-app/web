@@ -90,7 +90,7 @@ Load these before starting any task:
   - `docs/standards/styling.md` — Tailwind tokens, themes, RTL/LTR
   - `docs/standards/quran-rendering.md` — column–font contract for Quran text
   - `docs/standards/pwa-testing.md` — exercising PWA-gated behavior in the browser
-- **Task plans**: `docs/plans/`
+- **Task plans**: `docs/plans/` — start from the generated `docs/plans/INDEX.md` (area / status / type per plan)
 - **ADR history**: `docs/architecture/adr/`
 - **Deployment**: `docs/deployment/hostinger.md`
 - **All AI workflows**: [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md)

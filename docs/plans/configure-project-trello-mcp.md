@@ -1,8 +1,12 @@
-# Configure Project-Local Trello MCP for Codex
+---
+title: Configure Project-Local Trello MCP for Codex
+type: feature
+date: 2026-08-11
+status: implemented
+area: workflow
+---
 
-**Type:** feature
-**Date:** 2026-08-11
-**Status:** implemented
+# Configure Project-Local Trello MCP for Codex
 
 ## Summary
 

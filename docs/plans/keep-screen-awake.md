@@ -1,8 +1,12 @@
-# Keep Mobile/Tablet Screen Active While App Is Open
+---
+title: Keep Mobile/Tablet Screen Active While App Is Open
+type: feature
+date: 2026-08-12
+status: implemented
+area: pwa
+---
 
-**Type:** feature
-**Date:** 2026-08-12
-**Status:** ready-to-implement
+# Keep Mobile/Tablet Screen Active While App Is Open
 
 ## Summary
 

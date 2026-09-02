@@ -1,8 +1,12 @@
-# Add Quran Recitation Playback with Reciter Selection
+---
+title: Add Quran Recitation Playback with Reciter Selection
+type: feature
+date: 2026-07-10
+status: implemented
+area: recitation
+---
 
-**Type:** feature
-**Date:** 2026-07-10
-**Status:** implemented
+# Add Quran Recitation Playback with Reciter Selection
 
 ## Summary
 
@@ -534,7 +538,7 @@ Both constraints re-run whenever the reference (current verse/page) changes, so 
 ## Addendum 10: Stop recitation when leaving the reader (Trello #152)
 
 **Date:** 2026-08-02  
-**Status:** ~~implemented~~ **superseded 2026-09-01 by Addendum 13 / [ADR 0050](../architecture/adr/0050-recitation-global-playback-and-detachable-follow.md)** — the hard stop is removed, playback is app-wide again, and the bar-overlap this addendum reacted to is handled by making the "return to recitation" surface a second row of the nav (`RecitationReturnStrip`): it toggles with the nav overlay on mobile/tablet and pushes content down elsewhere, never floating over it. Everything below is retained for history; the "hard stop, not pause" contract and the "Do not call `togglePlayPause()` instead of `stop()`" guidance no longer apply.
+**Status:** ~~implemented~~ **superseded 2026-09-01 by Addendum 13 / [ADR 0056](../architecture/adr/0056-recitation-global-playback-and-detachable-follow.md)** — the hard stop is removed, playback is app-wide again, and the bar-overlap this addendum reacted to is handled by making the "return to recitation" surface a second row of the nav (`RecitationReturnStrip`): it toggles with the nav overlay on mobile/tablet and pushes content down elsewhere, never floating over it. Everything below is retained for history; the "hard stop, not pause" contract and the "Do not call `togglePlayPause()` instead of `stop()`" guidance no longer apply.
 
 ### Problem
 
@@ -871,7 +875,7 @@ Decision tree:
 - **Sticky footer** (outside the scroll area, pinned bottom of the sheet):
   - status idle → primary button "Start Recitation" / ابدأ التلاوة: commits draft (`updateSettings(draft)`), then `play(resolvedStartVerseKey)` using the drafted Start From (D5/D6 resolution).
   - status loading/playing/paused → primary button "Apply Changes" / تطبيق التغييرات: commits draft; the existing mid-session effects handle stop-target re-resolution, reciter reload, speed. Additionally, if the drafted Start From differs from the current position (D3): seek to the drafted start verse via a new context method (reuse `seekToRangeStart`'s mechanics but targeting the drafted key; reset both repeat counters), without stopping playback.
-  - Secondary close action (existing header X / back gesture) **discards the draft** — `useCloseOnBackGesture(isSettingsOpen, closeSettings)` contract preserved (ADR 0043); Radix portal-container ref contract for inner Popovers preserved (Addendum 5b).
+  - Secondary close action (existing header X / back gesture) **discards the draft** — `useCloseOnBackGesture(isSettingsOpen, closeSettings)` contract preserved (ADR 0055); Radix portal-container ref contract for inner Popovers preserved (Addendum 5b).
 - Reciter field inside the sheet joins the draft: changing it in the sheet does NOT reload audio until Apply (differs from today). The bar's reciter triggers remain instant (D2).
 - The `activeOverride` read-only banner and its disable-gating of Stop-at/whole-range controls carry over unchanged (gating now applies to draft writes).
 
@@ -930,7 +934,7 @@ Sheet section inserted directly **above** "Stop at" so the pair reads as one ran
 ### Constraints
 
 - The ~4Hz constraint holds: progress state updates only on verse/repeat changes, never per tick; highlight mechanism (ADR 0021 2026-08-03 addendum) untouched.
-- `useCloseOnBackGesture` (ADR 0043) and the Popover-in-Sheet portal container (Addendum 5b / popover.tsx `container` prop) contracts preserved through the sheet refactor.
+- `useCloseOnBackGesture` (ADR 0055) and the Popover-in-Sheet portal container (Addendum 5b / popover.tsx `container` prop) contracts preserved through the sheet refactor.
 - Rail invariants (Desktop Reading Group): the new button joins `fq-rail-utils`; no zone restructuring, no width change, no `!important` battles beyond the file's established patterns.
 - `findFirst` (never `findUnique`) for all verse_key/page_number lookups in the extended endpoint.
 - Draft discard on close must leave localStorage byte-identical when nothing was applied.
@@ -967,7 +971,7 @@ Sheet section inserted directly **above** "Stop at" so the pair reads as one ran
 
 **Status:** implemented (branch `feature/467-recitation-global-playback`). Supersedes
 Addendum 10 (ADR 0021's 2026-08-02 hard-stop) per user decision 2026-08-30. New
-[ADR 0050](../architecture/adr/0050-recitation-global-playback-and-detachable-follow.md).
+[ADR 0056](../architecture/adr/0056-recitation-global-playback-and-detachable-follow.md).
 
 ### Problem
 
@@ -1140,7 +1144,7 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
 - `app/utils/recitation.ts` — `decideRecitationFollow` **and** `recitedVerseLabelParts`
   helpers (+ `app/utils/recitation.test.ts`).
 - `app/hooks/use-is-reader-route.ts` — **new**; extracted the `pathname.includes("/pages/")`
-  predicate (now render-decision-load-bearing per ADR 0050). Migrated `RecitationPlayerBar`,
+  predicate (now render-decision-load-bearing per ADR 0056). Migrated `RecitationPlayerBar`,
   `Nav`, `PlansWidget` onto it too.
 - `app/components/reader/ReaderPager.tsx` — `followTo` comment only (now attached-follow-only,
   and the retry story changed).
@@ -1158,9 +1162,9 @@ is that pure function so it is exhaustively unit-tested without a DOM. The leaf 
   `recitation.stop` / `pause` / `resume`.
 - `docs/architecture/DECISIONS.md` — Recitation Playback section: rewrite the "swiping away
   snaps back" and "hard-stops when the user navigates away" bullets to the attach/detach +
-  global-playback model; link ADR 0050.
+  global-playback model; link ADR 0056.
 - `docs/architecture/adr/0021-recitation-playback.md` — Addendum noting Addendum 10's
-  hard stop is itself superseded by ADR 0050.
+  hard stop is itself superseded by ADR 0056.
 - `docs/plans/recitation-playback.md` — this addendum + a supersession banner on Addendum 10.
 
 ### Constraints

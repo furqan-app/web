@@ -1,8 +1,12 @@
-# Wire /impeccable into the plan/implement/review workflow
+---
+title: Wire /impeccable into the plan/implement/review workflow
+type: feature
+date: 2026-08-13
+status: superseded
+area: workflow
+---
 
-**Type:** feature
-**Date:** 2026-08-13
-**Status:** superseded by #494 (2026-09-02) — the `/impeccable` skill and this wiring were removed; see `docs/plans/remove-workflow-skills.md`
+# Wire /impeccable into the plan/implement/review workflow
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Sentry Error Tracking
+---
+title: Sentry Error Tracking
+type: feature
+date: 2026-07-07
+status: implemented
+area: observability
+---
 
-**Type:** feature  
-**Date:** 2026-07-07  
-**Status:** implemented
+# Sentry Error Tracking
 
 ## Summary
 

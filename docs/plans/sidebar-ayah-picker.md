@@ -1,9 +1,13 @@
-# Sidebar: Current-Surah Ayah Picker Tab
+---
+title: "Sidebar: Current-Surah Ayah Picker Tab"
+type: feature
+date: 2026-08-26
+status: implemented
+area: nav
+issue: 433
+---
 
-**Type:** feature
-**Date:** 2026-08-26
-**Status:** implemented
-**Issue:** furqan-app/web#433
+# Sidebar: Current-Surah Ayah Picker Tab
 
 ## Summary
 

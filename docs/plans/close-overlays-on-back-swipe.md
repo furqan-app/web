@@ -1,11 +1,14 @@
-# Close Overlays on Back-Swipe (Mobile/Tablet PWA)
+---
+title: Close Overlays on Back-Swipe (Mobile/Tablet PWA)
+type: bug
+date: 2026-08-15
+status: implemented
+area: nav
+issue: 297
+adr: [0055, 0045]
+---
 
-**Type:** bug
-**Date:** 2026-08-15
-**Status:** implemented (code + lint + tests verified; on-device confirmation of the Navigation-API
-branch pending — needs a staging deploy, see the addendum's Constraints)
-**GitHub:** [#297](https://github.com/furqan-app/web/issues/297), Addendum: [#309](https://github.com/furqan-app/web/issues/309)
-**ADR:** [0043](../architecture/adr/0043-overlay-close-on-back-gesture.md), Addendum: [0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md)
+# Close Overlays on Back-Swipe (Mobile/Tablet PWA)
 
 ## Summary
 
@@ -152,7 +155,7 @@ Walked through with the user (2026-08-15):
   guard independently via its own component.
 - `app/components/RecitationSettingsSheet.tsx` — `useCloseOnBackGesture(isSettingsOpen,
   closeSettings)`, both from `useRecitation()` (`RecitationContext.tsx`).
-- `docs/architecture/adr/0043-overlay-close-on-back-gesture.md` — new (written during planning).
+- `docs/architecture/adr/0055-overlay-close-on-back-gesture.md` — new (written during planning).
 - `docs/architecture/DECISIONS.md` — new "Overlay close-on-back-gesture" entry under "App Launch &
   Back Navigation (Android PWA)" (written during planning).
 
@@ -180,7 +183,7 @@ Walked through with the user (2026-08-15):
 ## What NOT to Do
 
 - Do not give each overlay its own independent `popstate` listener with no coordination — rejected in
-  ADR 0043 (Option A) for producing undefined precedence against `AndroidBackExitGuard` on a reader
+  ADR 0055 (Option A) for producing undefined precedence against `AndroidBackExitGuard` on a reader
   page.
 - Do not build stacking/priority logic for multiple simultaneously-open overlays — investigation
   confirmed all five are modal (block interaction with whatever's behind them) and never nest, so at
@@ -233,7 +236,7 @@ back-swipes on an installed Android PWA — not desktop simulation):
   isn't a one-off.
 - A single, isolated swipe-back with **nothing open** (`AndroidBackExitGuard`'s exit-toast path, ADR
   0040) was clean: `popstate` fires, the toast shows, and it auto-dismisses ~2s later exactly matching
-  `ARM_WINDOW_MS`. No reload. **This narrows the bug to `useCloseOnBackGesture` (ADR 0043) specifically
+  `ARM_WINDOW_MS`. No reload. **This narrows the bug to `useCloseOnBackGesture` (ADR 0055) specifically
   — `AndroidBackExitGuard` does not reproduce it.** [#296](https://github.com/furqan-app/web/issues/296)
   may need its own re-verification; it is not the same bug as this one.
 
@@ -398,7 +401,7 @@ Exactly the bug `#313` already fixed for `NavOverflowMenu`'s `<Link>` rows (My M
 Shared mushaf), just at a call site that fix didn't cover. `useCloseOnBackGesture`'s cleanup effect
 decides whether to pop its own guard entry via a `queueMicrotask`-deferred check of
 `window.history.state`. That check is correct for a sibling overlay's `pushState` (guaranteed to land
-within the same commit's effects, and therefore the same microtask flush — ADR 0043's 2026-08-15
+within the same commit's effects, and therefore the same microtask flush — ADR 0055's 2026-08-15
 addendum), but not for a competing navigation whose own history write isn't guaranteed to land before
 that microtask runs.
 

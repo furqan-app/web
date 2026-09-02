@@ -31,6 +31,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 ### 3. Commit
 
+**First, fold plan addenda.** If the branch diff touches any `docs/plans/**/*.md` that still contains a `## Addendum` section: for each such plan, merge the addendum's content into the body sections it revises (decision tree, files-to-change, constraints) so the plan reads as one current spec, then delete the `## Addendum` heading(s). Record each fold as a dated one-line entry under a `## Revision History` section at the file bottom. Re-derive the frontmatter `status` and `date`. Then regenerate the index (`.claude/skills/scripts/gen-plans-index.sh`) and stage `INDEX.md` with the plan. This applies to any plan in the diff carrying an unfolded addendum, not only ones this branch added.
+
 - `git add` the relevant files (never `git add -A` blindly — review what's staged) — include any `decisions/*.md` or workflow-doc edits `/retrospect` produced in step 0
 - Draft the commit message following [commit-message.md](commit-message.md)
 - Run `git commit` — do not pause for confirmation
@@ -60,5 +62,6 @@ Never add any AI attribution in this flow: no `Co-Authored-By: Claude` (or any A
 
 - Do not run `git commit` or `git push` from any other workflow or ad hoc request — redirect here.
 - Do not skip the ticket check — if there's no ticket, stop and create one before touching git.
+- Do not ship a plan diff that leaves a `## Addendum` heading in place — fold it into the body first (step 3).
 - Do not force-push, reset --hard, or otherwise rewrite history as part of this flow — that's covered separately by [confirm-dangerous-git.md](confirm-dangerous-git.md).
 - Do not merge the PR — this workflow only opens it; merging is a separate, explicit user action.

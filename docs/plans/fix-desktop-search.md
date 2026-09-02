@@ -1,9 +1,12 @@
-# Fix Desktop Search Dropdown Hidden by Reader Stacking Context
+---
+title: Fix Desktop Search Dropdown Hidden by Reader Stacking Context
+type: bug
+date: 2026-08-02
+status: implemented
+area: reader
+---
 
-**Type:** bug  
-**Date:** 2026-08-02  
-**Status:** implemented  
-**Trello:** https://trello.com/c/3qDeICxN/180-the-searchbar-doesnt-work-on-desktop
+# Fix Desktop Search Dropdown Hidden by Reader Stacking Context
 
 ## Summary
 

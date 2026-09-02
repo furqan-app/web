@@ -1,9 +1,12 @@
-# Feature: Browser Fullscreen & PWA Status-Bar Focus Mode
+---
+title: "Feature: Browser Fullscreen & PWA Status-Bar Focus Mode"
+type: feature
+date: 2026-07-31
+status: implemented
+area: pwa
+---
 
-**Type:** feature  
-**Date:** 2026-07-31  
-**Status:** implemented  
-**Trello:** #136 https://trello.com/c/wwxdYFNn
+# Feature: Browser Fullscreen & PWA Status-Bar Focus Mode
 
 ## Summary
 
