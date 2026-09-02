@@ -3,6 +3,8 @@
 **Date:** 2026-06-28  
 **Status:** Implemented (extended 2026-06-29 with /retrospect and /review-fq-work)
 
+> Point-in-time snapshot — later superseded in parts. Notably: DECISIONS.md is now a thin per-domain index (#493), Trello is fully replaced by GitHub issues, and `/retrospect` no longer writes `docs/retrospectives/` files or saves memories (#495) — it edits only `decisions/*.md` and `docs/workflow/` docs. `docs/workflow/INDEX.md` is the current source of truth for the cycle.
+
 ## Goal
 
 Eliminate AI context loss between sessions, ensure all contributors follow the same conventions, and enforce discipline around decisions — without a maintenance burden heavier than the work itself.

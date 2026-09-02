@@ -78,3 +78,7 @@ If a dimension has no findings, say "No issues found." Do not pad with filler ob
 ### 3 — Design & UX dimension (UI-touching diffs only)
 
 If step 1 found UI-relevant files in the diff, run `/impeccable critique` directly (not via the review subagent — a direct Skill call, same mechanism as `/start-fq-task`'s Design Remediation step, ADR 0041) against those changed files. Fold its findings in as **Dimension 4 — Design & UX**, renumbered to continue sequentially after the review subagent's last finding number (e.g. if the subagent's 3 dimensions ended at finding 7, Dimension 4 starts at 8). No UI files in the diff: omit Dimension 4 entirely — don't print an empty "No issues found" for a dimension that doesn't apply.
+
+### 4 — Next step
+
+Once the findings are resolved, run `/retrospect` **before** `/ship-fq-task` — its `decisions/*.md` and workflow-doc edits must be committed inside this PR, not produced after ship opens it. See [retrospect.md](retrospect.md).

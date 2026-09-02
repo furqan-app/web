@@ -58,9 +58,6 @@ yarn-error.log*
 
 # local docs/plans
 
-# retrospect skill output — never committed
-/docs/retrospectives/
-
 # Playwright transient output
 /playwright-report/
 /test-results/

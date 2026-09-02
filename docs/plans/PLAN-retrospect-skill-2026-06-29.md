@@ -1,7 +1,9 @@
 # Plan: /retrospect skill
 
 **Date:** 2026-06-29  
-**Status:** implemented
+**Status:** implemented (Phase 3 + memory saves later removed — see below)
+
+> Amended by #495 (2026-09-02): Phase 3 (dated retrospective file) and the memory-save output were removed. `/retrospect` now edits only `decisions/*.md` and `docs/workflow/` docs; personal cross-session recall is each agent's own memory mechanism, not this skill. `docs/workflow/retrospect.md` is the source of truth.
 
 ## Goal
 

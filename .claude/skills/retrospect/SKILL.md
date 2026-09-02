@@ -1,6 +1,6 @@
 ---
 name: retrospect
-description: End-of-session retrospective. Reads conversation history, scans the decisions/*.md files the session touched for stale entries, proposes workflow improvements (decisions, skill edits, memories) review-before-write, then saves a dated file to docs/retrospectives/.
+description: End-of-session retrospective. Reads conversation history, scans the decisions/*.md files the session touched for stale entries, and proposes edits to decisions/*.md and docs/workflow/ docs review-before-write. Runs after /review-fq-work, before /ship-fq-task's commit.
 ---
 
 # /retrospect

@@ -2,7 +2,9 @@
 
 **Type:** bug  
 **Date:** 2026-07-02  
-**Status:** implemented
+**Status:** superseded
+
+> Superseded by #495 (2026-09-02): the retrospective file step was removed entirely — `/retrospect` now only edits version-controlled `decisions/*.md` and `docs/workflow/` docs, so there is no file-save gate to confirm.
 
 ## Summary
 
