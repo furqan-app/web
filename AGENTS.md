@@ -3,7 +3,7 @@
 Universal entry point for all AI coding agents working in this repository.
 
 > Claude Code: see `CLAUDE.md` for skill shortcuts and hooks.
-> Antigravity (AGY): see `GEMINI.md` and `.agents/skills/`.
+> Antigravity (AGY): see `GEMINI.md`.
 > GitHub Copilot: see `.github/copilot-instructions.md`.
 > Cursor: see `.cursorrules`.
 
