@@ -54,7 +54,5 @@ The AI-first docs system (adopted 2026-06-28): `CLAUDE.md` is a slim pointer, he
 
 | Trigger | Instructions | Description |
 |---|---|---|
-| `/release <bump>` | [release.md](release.md) | Full orchestration: cut → staging → prod → sync |
-| `/cut-release <bump>` | [release.md](release.md) | Branch, bump version, tag, push, promote to `stg` (GitHub Action) |
-| `/promote-release` | [release.md](release.md) | Open+auto-merge release → `prod` PR, version auto-detected (GitHub Action) |
-| `/sync-main-from-prod` | [release.md](release.md) | Sync `prod` back into `main` after release |
+| `/release <bump>` | [release.md](release.md) | Full orchestration: cut → staging → prod → sync (GitHub Actions) |
+| `/release cut <bump>` \| `promote` \| `sync` | [release.md](release.md) | Single phase — cut off `main`, promote release → `prod`, or sync `prod` → `main` |
