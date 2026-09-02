@@ -1,3 +1,5 @@
+import { redirectToRemovedGrant } from "./mushaf/accessGrants";
+
 export type DeleteMarkData = {
   page_number: number;
   marked_type: string;
@@ -16,13 +18,25 @@ export const deletePageMark = async (data: DeleteMarkData, grantId?: string) => 
     : `/api/quran/pages/${page_number}/marks`;
 
   try {
-    const response = await fetch(url, {
+    const res = await fetch(url, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
       },
       body,
-    }).then((res) => res.json());
+    });
+
+    if (grantId && res.status === 403) {
+      redirectToRemovedGrant();
+      return false;
+    }
+
+    const response = await res.json();
+
+    if (grantId && response.code === 403) {
+      redirectToRemovedGrant();
+      return false;
+    }
 
     return !!response.success;
   } catch (e) {

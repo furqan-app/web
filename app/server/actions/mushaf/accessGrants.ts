@@ -83,3 +83,15 @@ export const revokeGrant = async (grantId: string): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Redirects the client to `/{locale}/mushaf?removed=1` when an active grant
+ * has been revoked mid-session (ADR 0012).
+ */
+export const redirectToRemovedGrant = (): void => {
+  if (typeof window === "undefined") return;
+  const match = window.location.pathname.match(/^\/([a-z]{2})(?:\/|$)/);
+  const locale = match ? match[1] : "ar";
+  window.location.replace(`/${locale}/mushaf?removed=1`);
+};
+
