@@ -42,7 +42,7 @@ This check is a literal, mandatory action every time — it has been skipped bef
 - Questions should surface: scope ambiguity, edge cases, mobile/RTL behavior, interaction with existing systems, timing concerns
 - If the task removes or relocates an existing UI trigger/control, explicitly verify every breakpoint and route that used it still has equivalent access before writing "unchanged" anywhere in the plan — check what else depends on it, don't assume.
 
-**UI-mode design pass.** If the task involves components, pages, layout, or styling, run `/impeccable critique` (or `audit` for a technical-quality-leaning task) against the files under investigation. If it returns findings with suggested commands, carry them into a `## Design Remediation` section in the plan (see Plan file format below) — `command → target file(s)`, taken verbatim from each finding's suggested command. No findings, or a non-UI task: skip the section (ADR 0041).
+**UI tasks.** If the task involves components, pages, layout, or styling, consult `docs/design/design-principles.md` and `docs/standards/styling.md` (including its Motion section) during investigation, and list any UI/UX concerns — contrast, hierarchy, spacing scale, RTL/LTR parity, touch targets, reduced motion — directly in the plan.
 
 ### 3. Verify the solution together — before writing anything
 
@@ -104,9 +104,6 @@ The verified if/then logic or classification table agreed with the user in step 
 
 ## Verified Test Cases
 The concrete examples walked through in step 3 and what the algorithm produces for each.
-
-## Design Remediation
-(UI tasks only, omit entirely otherwise) `command → target file(s)` pairs from the Step 2 `/impeccable critique`/`audit` pass, for `/start-fq-task` to execute after implementation (ADR 0041).
 
 ## Files to Change
 - `path/to/file.ts` — what changes and why

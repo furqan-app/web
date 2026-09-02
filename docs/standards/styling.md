@@ -37,11 +37,21 @@ Standard Tailwind breakpoints apply. The app is primarily a reading app — mobi
 
 Use the CSS variable tokens: `rounded-lg`, `rounded-md`, `rounded-sm` (mapped to `--radius`, `--radius - 2px`, `--radius - 4px`).
 
-## Animation
+## Motion
 
-Tailwind `animate-accordion-down` / `animate-accordion-up` are defined for accordion components. Do not add custom keyframes unless no Tailwind equivalent exists.
+Stack: Tailwind + shadcn + Radix, CSS transitions only — no JS animation library. If a task genuinely needs JS-driven physics (drag-to-dismiss, momentum), stop and confirm before adding a dependency.
 
-The `tailwindcss-animate` plugin (`animate-in`, `fade-in-0`, `zoom-in-95`, `slide-in-from-*`, etc.) is **not installed** — those classes are inert no-ops even though they appear in some shadcn docs examples and older component scaffolds. For enter/exit transitions, use Radix's `data-[state=open]`/`data-[state=closed]` attributes directly with `transition-*` utilities (see `components/ui/dialog.tsx`). Use the built-in `motion-reduce:` variant to respect `prefers-reduced-motion` — see the `ui-motion` skill for full animation guidance.
+**Should it animate at all?** Never animate keyboard-initiated actions (arrow-key verse/page nav) or anything the user triggers dozens of times a day — those must feel instant. Reserve animation for occasional transitions (dialogs, dropdowns, toasts, sheets) and first-time/rare moments. Every animation needs a real purpose — spatial continuity, state indication, feedback — not decoration.
+
+**Easing & duration.** Tailwind's default `ease-in`/`ease-out` are weak; define stronger curves as CSS vars in `globals.css` and reference them (`--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` for entering, `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)` for in-place movement). Entering/exiting → `ease-out`; moving in place → `ease-in-out`; hover/colour → `ease`. **Never `ease-in`.** Button feedback 100–160ms · tooltips 125–200ms · dropdowns/dialogs 150–250ms · sheets 200–500ms. Stay under 300ms for anything that isn't a full-screen modal; exit faster than enter.
+
+**Component states.** Pressables compress on press: `active:scale-[0.97]` with `transition-transform duration-150`. Never enter from `scale(0)` — start at `scale-95` + `opacity-0`. For Radix popovers/dropdowns set `transform-origin: var(--radix-<primitive>-content-transform-origin)` so they scale from their trigger; `Dialog` is the exception (keep `center`). Prefer `transition-*` over `@keyframes` for anything that can retrigger rapidly — transitions retarget mid-flight, keyframes restart.
+
+**Performance.** Animate only `transform` and `opacity`. Don't put an animated custom property on a parent with many children — it forces a style recalc on every descendant.
+
+**Accessibility.** Honour `prefers-reduced-motion` (the `motion-reduce:` variant, or an `@media` block that keeps opacity/colour and drops transform/position movement). Gate hover-only affordances behind `@media (hover: hover) and (pointer: fine)` — Tailwind's `hover:` is not gated, so on touch a tap can leave a stuck hover state.
+
+**Legacy note.** `tailwindcss-animate` (`animate-in`, `fade-in-0`, `zoom-in-95`, `slide-in-from-*`) is **not installed** — those classes are inert no-ops despite appearing in some shadcn scaffolds. Use Radix `data-[state=open]`/`data-[state=closed]` with `transition-*` (see `components/ui/dialog.tsx`). Tailwind `animate-accordion-down`/`-up` are defined for accordions; don't add custom keyframes unless there is no Tailwind equivalent.
 
 ## Fonts
 

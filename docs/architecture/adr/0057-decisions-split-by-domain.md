@@ -27,7 +27,7 @@ Every moved section gains an explicit `**Status:** active` / `**Status:** supers
 
 `check-fq-standards`'s pre/post grep retargets from `DECISIONS.md` to the `decisions/*.md` files for the task's domain — narrower and cheaper than grepping one 233 KB file.
 
-The two meta sections ("Documentation & Workflow System", "Impeccable Design Workflow Integration") move to `docs/workflow/`, out of the decisions tree entirely.
+The two meta sections ("Documentation & Workflow System", "Impeccable Design Workflow Integration") move to `docs/workflow/`, out of the decisions tree entirely. (The latter file, `docs/workflow/impeccable-integration.md`, was deleted by #494 when the `/impeccable` skill was removed.)
 
 The split lands in **one commit** that also updates every file referencing `DECISIONS.md`, so no branch ever sees a half-migrated state. Open worktrees are drained/merged first: a worktree branched before the split whose `check-fq-standards` greps the now-thin `DECISIONS.md` would find nothing and pass vacuously, which is worse than failing — so `DECISIONS.md` keeps enough structure (the routing table) that a stale grep obviously misses rather than silently succeeds.
 

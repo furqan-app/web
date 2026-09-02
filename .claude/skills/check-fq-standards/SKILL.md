@@ -1,6 +1,6 @@
 ---
 name: check-fq-standards
-description: Pre/post-implementation guardrail for Furqan tasks — checks a change against the docs/architecture/decisions/*.md invariants (swipe/flicker, performance, navigation, mushaf layout, DB schema, PWA, theming) plus a general Next.js/TypeScript/PWA/DB-schema/clean-code bar. Invoked automatically by /start-fq-task before and after implementation; also invocable standalone as /check-fq-standards.
+description: Pre/post-implementation guardrail for Furqan tasks — checks a change against the docs/architecture/decisions/*.md invariants (swipe/flicker, performance, navigation, mushaf layout, DB schema, PWA, theming), a general Next.js/TypeScript/PWA/DB-schema/clean-code bar, and design/UX basics (contrast, hierarchy, spacing, RTL parity, touch targets, reduced-motion). Invoked automatically by /start-fq-task before and after implementation; also invocable standalone as /check-fq-standards.
 ---
 
 # /check-fq-standards

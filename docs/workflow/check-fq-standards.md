@@ -74,6 +74,14 @@ A static, highest-risk-first list (last reconciled against the decisions 2026-08
 - Read the authenticated user via `extractUser(request)` in API routes, never `getServerSession` there (layouts/pages are the documented exception).
 - `dir="auto"` is reserved for genuine free-text user content (notes, comments) — UI chrome and Quran text keep their locale-locked or Quran-locked `dir`.
 
+### Design & UX (any diff touching components, pages, or `globals.css`)
+- Text/background pairs meet WCAG AA (4.5:1 body, 3:1 large/UI) — against the actual theme token values, checked in all three themes.
+- Visual hierarchy is intentional: one primary action per view; size, weight, and colour track importance, not convenience.
+- Spacing uses the scale in `docs/design/design-principles.md` / `styling.md` — no arbitrary one-off `px` gaps.
+- RTL/LTR parity: `ps-`/`pe-`/`ms-`/`me-` and `start`/`end`, never `left`/`right`, for anything that mirrors; verify the surface in `/ar`.
+- Interactive targets are ≥ 44×44px (or have an equivalent hit area) on touch.
+- Motion honours `prefers-reduced-motion` and follows the `styling.md` Motion rules (no animation on keyboard/high-frequency actions, transform/opacity only).
+
 ## General Engineering Bar
 
 Apply on every task, scoped to the domains actually touched.

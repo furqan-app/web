@@ -2,7 +2,7 @@
 
 **Type:** feature
 **Date:** 2026-08-13
-**Status:** implemented
+**Status:** superseded by #494 (2026-09-02) — the `/impeccable` skill and this wiring were removed; see `docs/plans/remove-workflow-skills.md`
 
 ## Summary
 

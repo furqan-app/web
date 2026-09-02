@@ -3,12 +3,6 @@
 > All project rules, mandatory workflow, and documentation references are in [`AGENTS.md`](AGENTS.md). Read that first.
 > This file contains Claude Code-specific additions only.
 
-## Hooks
-
-The mujaz (موجز, "concise") system injects terse-response rules each turn when active.
-See `docs/workflow/terse-mode.md` for the concept and Furqan vocabulary.
-Claude-specific implementation: `.claude/hooks/`.
-
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

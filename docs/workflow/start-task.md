@@ -27,7 +27,7 @@ Context-aware implementation of a planned task. Loads the right context (decisio
   - Read `docs/standards/styling.md` and `docs/standards/component-patterns.md` (if not already loaded above)
   - Read `docs/architecture/APP_PURPOSE.md` for UX principles before making any layout decisions
   - Read `docs/design/design-principles.md` for aesthetic direction and component conventions
-  - If the task involves animation, transitions, or interactive states (press/hover/enter/exit), load `docs/workflow/ui-motion.md` for motion and polish guidance
+  - If the task involves animation, transitions, or interactive states (press/hover/enter/exit), read the Motion section of `docs/standards/styling.md`
 
 ### 3. Pre-implementation guardrail check
 
@@ -42,28 +42,21 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 - Apply the decisions you loaded from `docs/architecture/decisions/` — do not re-litigate them.
 - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
 
-### 5. Design remediation (if planned)
-
-- If the plan has a `## Design Remediation` section, verify the functional implementation from Step 4 is working first, then execute each entry via a direct `/impeccable` Skill call (command + the exact target file(s) listed) — never a subprocess or sub-agent. Run only commands the plan named; do not decide mid-implementation to run one it didn't (ADR 0041).
-- If a listed target no longer matches what the plan describes, reconcile with the user before running the command — same stale-plan rule Step 4 applies to functional changes.
-- No `## Design Remediation` section: skip this step.
-
-### 6. Post-implementation guardrail check
+### 5. Post-implementation guardrail check
 
 - Invoke the `check-fq-standards` skill in **post-check** mode against the diff: walk its Regression Classes and General Engineering Bar checklists, and re-grep the `docs/architecture/decisions/*.md` files for the domains every changed file touches. Fix any failing item before continuing — do not proceed to Report with a known open violation.
 
-### 7. Record decisions
+### 6. Record decisions
 
 - If the task added, removed, or reorganised any components: update `docs/architecture/COMPONENTS.md` to reflect the new state.
 - After implementation, check: were any new architectural decisions made during implementation?
 - If yes, add a `## ` section (with `**Status:** active`) to the matching `docs/architecture/decisions/*.md` file — new domain → new file + a Domains-table row in `DECISIONS.md`; cross-cutting rule → also a one-liner in `DECISIONS.md`'s Non-negotiable Invariants block.
 - Mark the plan status as `implemented`.
 
-### 8. Report
+### 7. Report
 
 - Summary of what changed (files modified, decisions made).
 - Which `check-fq-standards` checklist items were relevant and confirmed OK (not a bare "all good").
-- Which `## Design Remediation` commands ran, if any.
 - Anything the user should verify manually.
 
 ---
@@ -77,7 +70,6 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 - Do not undo or contradict an ADR, a `Constraints` item, or a `What NOT to Do` item as a side effect of the change.
 - Do not skip the decisions check at the end.
 - Do not skip the pre- or post-implementation `check-fq-standards` guardrail — a plan that looks straightforward can still touch a load-bearing invariant it didn't call out.
-- Do not run an `/impeccable` command that isn't listed in the plan's `## Design Remediation` section, and never via CLI shell-out or a sub-agent — direct Skill call on plan-named commands only (ADR 0041).
 - Do not add features beyond what the plan specifies.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
