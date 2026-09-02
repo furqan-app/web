@@ -93,6 +93,21 @@ This ordering is structural, not timing-dependent: `AndroidBackExitGuard` always
 can open any overlay on top of it, so its `popstate` listener is always registered first and always
 runs first for the same event.
 
+### Navigation API branch (where supported — ADR 0045)
+
+`popstate` fires only *after* the browser has already dispatched the traversal, so it cannot stop the browser's own follow-up: on-device capture (Android installed PWA, `chrome://inspect`) showed a real back-swipe closing an overlay fires a clean same-document `traverse`, then ~6ms later a **separate `navigationType: "reload"`, `userInitiated: false` `navigate` event** — a genuine hard reload (full cold-reload waterfall = the "loading app logo" flash). `AndroidBackExitGuard` does **not** reproduce this; the bug is scoped to `useCloseOnBackGesture`.
+
+Where `window.navigation` + `event.intercept()` exist (Baseline Jan 2026; Safari iOS **26.2+** only, older iOS none), the hook uses a `navigate` listener instead of `popstate`:
+
+| Condition | Mechanism |
+|---|---|
+| Navigation API supported | `navigate` listener: intercept the closing `traverse` (matched by `navigationType === "traverse"` + `navigation.currentEntry.key` — read at fire time, which for a `traverse` is still the entry being **left**, not `destination`; matched by `.key`, not custom state, because `NavigationHistoryEntry.getState()` did not reliably round-trip the pushed object on-device), **and** intercept any `navigationType === "reload"` (`!userInitiated`) arriving within `RELOAD_WATCH_MS` (200ms) of this guard's own traverse. Use `event.intercept()`, never `event.preventDefault()`. |
+| Not supported (iOS < 26.2, older Android WebView, desktop) | The `popstate`/`pushState` guard above, unchanged. |
+
+The **self-close echo path** (X / backdrop / Escape → the microtask cleanup's own `history.back()`) must arm the *same* `awaitingReload` + `RELOAD_WATCH_MS` watch, not just swallow its echo traverse and remove the listener — after a browser has hard-reloaded the document once, every subsequent X/backdrop/Escape close also triggers the spurious reload, and nothing intercepts it otherwise (#418). The echo path arms the watch *inside* the async traverse handler, after the effect cleanup has returned, so the cleanup-interference guard the gesture path needs doesn't apply here.
+
+The guard entry is still pushed via `history.pushState` (Next-patched, ADR 0040) — never `navigation.navigate()`, which bypasses Next's router-tree patching.
+
 ## Verified Test Cases
 
 Walked through with the user (2026-08-15):
@@ -149,15 +164,18 @@ Walked through with the user (2026-08-15):
   the component's own uncontrolled trigger branch (`!controlled &&` at SettingsSidebar.tsx:57) is
   currently unused in practice but left as-is — out of scope here.
 - `app/components/nav/Sidebar.tsx` — `useCloseOnBackGesture(open, () => setOpen(false))`, using the
-  existing `open`/`setOpen` from `useSidebar()`.
+  existing `open`/`setOpen` from `useSidebar()`. Also capture `{ notifyNavigating }` from that call, hold it in a ref, and register a **stable wrapper** into `SidebarContext` via `useEffect`/cleanup (the `navRef`-style pattern `ReaderPager` uses for `onArrowNavigate` — the hook returns a fresh closure every render, so registering it raw re-triggers `fix-reader-nav-infinite-loop.md`).
+- `app/contexts/SidebarContext.tsx` — add `notifyNavigating: (() => void) | null` + `setNotifyNavigating` (mirroring `ReaderNavigationContext`'s `jumpTo`/`setJumpTo`, including the double-wrap pitfall: call `setNotifyNavigating` with the raw function).
+- `app/components/SurahListItem.tsx` — call `notifyNavigating?.()` **synchronously, immediately before `setOpen(false)`**, then `jumpTo` as before (no `setTimeout`/`rAF` defer). Without this the microtask cleanup's timing-based `history.state` check races `jumpTo`'s `replaceState` and the reader keeps the old page until the next swipe (#321 — same race #313 fixed for `NavOverflowMenu`'s links).
+- `app/hooks/use-close-on-back-gesture.ts` — Navigation API feature detection (`supportsNavigationApi`); a `navigate` listener when supported, keeping the `popstate`/`pushState` implementation as the mutually-exclusive fallback in the same effect. Public signature `useCloseOnBackGesture(open, onClose)` unchanged; it also returns `notifyNavigating` (shipped for #313). The `selfClosingRef` echo path arms the same `awaitingReload` + `RELOAD_WATCH_MS` watch as the gesture path (#418).
+- `package.json` — `@types/dom-navigation` devDependency (this repo's `lib.dom.d.ts` has no `Navigation`/`NavigateEvent` types).
 - `app/components/nav/NavOverflowMenu.tsx` — `useCloseOnBackGesture(open, () => setOpen(false))` for
   its own Sheet only (`open`/`setOpen` at NavOverflowMenu.tsx:63). `SettingsSidebar` gets its own
   guard independently via its own component.
 - `app/components/RecitationSettingsSheet.tsx` — `useCloseOnBackGesture(isSettingsOpen,
   closeSettings)`, both from `useRecitation()` (`RecitationContext.tsx`).
-- `docs/architecture/adr/0055-overlay-close-on-back-gesture.md` — new (written during planning).
-- `docs/architecture/DECISIONS.md` — new "Overlay close-on-back-gesture" entry under "App Launch &
-  Back Navigation (Android PWA)" (written during planning).
+- `docs/architecture/adr/0055-overlay-close-on-back-gesture.md` — new; `docs/architecture/adr/0045-navigation-api-for-overlay-close-guard.md` — new (+ its own Addendum for #418).
+- `docs/architecture/DECISIONS.md` — new "Overlay close-on-back-gesture" entry under "App Launch & Back Navigation (Android PWA)".
 
 ## Constraints
 
@@ -177,8 +195,9 @@ Walked through with the user (2026-08-15):
 - The cleanup's "is my entry still on top" check must be deferred to a microtask, and must compare by
   the pushed entry's unique id (`fqOverlayGuardId`), not just the shared `fqOverlayGuard` shape.
   Checking synchronously, or checking shape only, both reintroduce the same-commit race where one
-  overlay's cleanup pops a sibling overlay's freshly-pushed entry instead of its own (found in review,
-  reproduced via `NavOverflowMenu`'s Settings row).
+  overlay's cleanup pops a sibling overlay's freshly-pushed entry instead of its own.
+- **Navigation API branch:** use `event.intercept()`, never `event.preventDefault()` (the latter leaves the guard entry in place, so the microtask cleanup's `history.back()` pops it a second time). Keep the `popstate` fallback — Navigation API support is not universal (iOS < 26.2). The `navigate` listener fires for *every* navigation including this hook's own `pushState` — filter to `traverse` + matching `currentEntry.key`, or `reload` within `RELOAD_WATCH_MS`, or the overlay closes itself the instant it opens. Disarm must be idempotent and deferred past the current event dispatch (not inside the synchronous `navigate` handler) so `AndroidBackExitGuard` reliably sees the guard as armed whether or not `popstate` also fires. The echo-path reload-watch listener must survive the effect's own cleanup (an `awaitingReload` first-line check), and only ever match `navigationType === "reload"` with `!userInitiated`. Do not arm the watch on the "entry no longer on top" branch.
+- **`notifyNavigating()` must be called synchronously, before `setOpen(false)`** — its ref must read `true` by the time the cleanup effect's check runs. Do not modify `use-close-on-back-gesture.ts`'s `notifyNavigating` (shipped for #313, correct as-is). Do not reintroduce a `setTimeout`/`rAF` defer in `SurahListItem`.
 
 ## What NOT to Do
 
@@ -195,383 +214,24 @@ Walked through with the user (2026-08-15):
   device-instrumented investigation.
 - Do not refactor `SettingsSidebar`'s unused uncontrolled-trigger branch as part of this change — not
   exercised by any current call site, out of scope.
+- Do not attempt to fix the reload flash by changing timing/ordering within the `popstate` handler (running it earlier, `stopImmediatePropagation`) — the browser's default navigation is already underway before any `popstate` listener runs.
+- Do not switch to the Navigation API unconditionally without the `popstate` fallback — regresses overlay-close-on-back for iOS < 26.2.
+- Do not touch `AndroidBackExitGuard.tsx` / `overlay-back-guard.ts` for any of the Navigation-API / reload / #321 / #418 work — isolated on-device testing confirmed the exit guard doesn't exhibit these bugs.
+- Do not "fix" #418 by skipping the echo `history.back()` — that trades a reload for a permanently growing back-stack.
+- Do not extend the `notifyNavigating` wiring to `RubList`/`ContinueReadingLink` without a matching reported symptom.
 
 ## Decisions Made
 
-- Scope is mobile/tablet installed PWA, Android **and** iOS, not desktop (user-confirmed) — broader
-  than `AndroidBackExitGuard`'s Android-only gate, since the underlying mechanism (history guard +
-  popstate) doesn't depend on Android specifically, only `AndroidBackExitGuard`'s own exit-toast half
-  does.
-- On a link-navigation-while-open edge case, accept a harmless orphaned history entry (one future
-  no-op back press) rather than risk undoing the real navigation (user-confirmed).
-- The pre-existing `AndroidBackExitGuard` flicker/skipped-toast bug is split into its own GitHub issue
-  and explicitly out of scope here (user-confirmed).
+- Scope is mobile/tablet installed PWA, Android **and** iOS, not desktop (user-confirmed).
+- On a link-navigation-while-open edge case, accept a harmless orphaned history entry rather than risk undoing the real navigation (user-confirmed).
+- The pre-existing `AndroidBackExitGuard` flicker/skipped-toast bug is split into its own GitHub issue (#296) and explicitly out of scope.
+- Where the Navigation API exists, intercept the closing `traverse` and the spurious follow-up `reload`; keep the `popstate` guard as the iOS < 26.2 / older-WebView fallback and accept its inability to intercept the reload there (ADR 0045, user-confirmed 2026-08-15).
+- The `#418` echo-path reload arms the *identical* watch as the gesture path — one interception contract for both close paths, minimal diff (user-confirmed 2026-08-24).
+- `#321` is fixed by wiring the already-shipped `notifyNavigating()` from `Sidebar` → `SidebarContext` → `SurahListItem`, superseding this addendum's own first-draft `setTimeout(fn, 0)` defer (written before `#313`'s mechanism was found on main).
+
+## Revision History
+
+- 2026-08-15 — folded Addendum "`popstate` can't stop the browser's own hard reload" (#309, [ADR 0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md)). On-device capture showed a real back-swipe closing an overlay fires a clean `traverse` and then a *separate* spurious hard `reload` navigate event (the "loading app logo" flash). `popstate` runs too late to stop either. **Adds a Navigation API branch** (`navigate` + `event.intercept()`) that intercepts the `traverse` (matched by `NavigationHistoryEntry.key`, not custom state) and any follow-up `reload` within 200ms; `popstate`/`pushState` stays as the iOS < 26.2 / older-WebView fallback. `AndroidBackExitGuard` untouched (doesn't reproduce it).
+- 2026-08-16 — folded Addendum "surah Sidebar was missed by the notifyNavigating fix" (#321). `SurahListItem`'s tap (`setOpen(false)` + `jumpTo` → `replaceState` in one handler) raced the microtask cleanup — the same shape #313 fixed for `NavOverflowMenu`'s links, at a call site that fix didn't cover. Fix: wire the already-shipped `notifyNavigating()` from `Sidebar` through `SidebarContext` to `SurahListItem`, called synchronously before `setOpen(false)`. **Supersedes this addendum's own first-draft `setTimeout(fn, 0)` defer.**
+- 2026-08-24 — folded Addendum 3 "the self-close echo path must arm the same reload-watch" (#418). After the browser has hard-reloaded once, every subsequent X/backdrop/Escape close of a guarded overlay triggers the spurious reload — the echo path swallowed its traverse but removed the listener immediately without arming the `awaitingReload` watch. Fix: the echo path arms the identical `awaitingReload` + `RELOAD_WATCH_MS` watch as the gesture path. Popstate fallback still can't intercept a reload (accepted, ADR 0045).
 
-## Addendum — 2026-08-15: `popstate` can't stop the browser's own hard reload; use the Navigation API where available
-
-**Status:** implemented. GitHub: [#309](https://github.com/furqan-app/web/issues/309). ADR:
-[0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md).
-
-### What was reported
-
-After this plan shipped (PR #299, merged), the user reported that swiping back to close an overlay
-shows a "loading app logo" flash and the reader visibly rerenders — even though the overlay does
-close correctly. The same flash was suspected (but not confirmed) to also affect the plain exit-toast
-swipe (`AndroidBackExitGuard`, tracked separately as
-[#296](https://github.com/furqan-app/web/issues/296)).
-
-### Investigation
-
-Confirmed via on-device Chrome remote debugging (`chrome://inspect` over `adb`, real physical
-back-swipes on an installed Android PWA — not desktop simulation):
-
-- A single, isolated swipe-back to close an open overlay (`NavOverflowMenu`) produces a genuine
-  top-level document `GET` request for the current URL, **0.03s before** this plan's own `popstate`
-  handler even runs — confirmed by timestamped console markers and a `Page.frameNavigated` CDP event.
-  It's followed by a full cold-reload waterfall: every JS chunk, font, CSS file, the manifest,
-  favicon, Sentry init, and every data API refetched from scratch. That full reload is the "loading
-  app logo" flash — not a React rerender, an actual fresh page load.
-- The same swipe, repeated across two earlier (less isolated) test sessions, twice landed on a real
-  hard reload — once of the current reader URL, once of the home route (`/ar`) — confirming this
-  isn't a one-off.
-- A single, isolated swipe-back with **nothing open** (`AndroidBackExitGuard`'s exit-toast path, ADR
-  0040) was clean: `popstate` fires, the toast shows, and it auto-dismisses ~2s later exactly matching
-  `ARM_WINDOW_MS`. No reload. **This narrows the bug to `useCloseOnBackGesture` (ADR 0055) specifically
-  — `AndroidBackExitGuard` does not reproduce it.** [#296](https://github.com/furqan-app/web/issues/296)
-  may need its own re-verification; it is not the same bug as this one.
-
-### Root cause
-
-Confirmed precisely via a second on-device round, instrumented directly through the Navigation API's
-own `navigate`/`currententrychange` event log (ground truth, not inference — a fully isolated
-single-swipe test, opening `NavOverflowMenu` then one swipe-back). **Two separate `navigate` events
-fire ~6ms apart:**
-
-1. `navigationType: "traverse"`, same-document, same URL (index 3→2) — the overlay's guard entry
-   popping correctly. **This part was never broken** — it lands on whatever entry sits beneath the
-   overlay's, which in practice is `AndroidBackExitGuard`'s own pushed guard entry (confirmed: the
-   `popstate` fired with `historyState: {"fqExitGuard": true}`).
-2. A **second, separate** `navigate` event: `navigationType: "reload"`, `userInitiated: false`,
-   `destination.sameDocument: false` — a genuine, programmatically-triggered hard reload. This is what
-   produces the cold-reload network waterfall (every chunk/font/CSS/manifest/API refetched) and the
-   "loading app logo" flash — not the traversal, not Chrome's gesture handling racing ahead of the
-   JS as first suspected. The `reload` event's exact trigger isn't fully explained (candidate: something
-   reacting to landing back on `AndroidBackExitGuard`'s stacked entry, possibly Next.js's own router
-   failing to reconcile it) — intercepting it is sufficient to fix the symptom regardless of source.
-
-`popstate` cannot prevent either event: it only fires after the browser has already dispatched the
-traversal (confirmed: it fired *after* the `reload` event in this capture, not before), so no
-`popstate`/`pushState`-based code can act before either commits. The Navigation API's `navigate`
-event, via `event.intercept()`, runs *before* the browser commits to a given navigation's default
-action and is documented to prevent it — and it applies per-event, so it can intercept the `reload`
-event too, not just the `traverse`. Reached Baseline support in January 2026; Safari on iOS starts at
-**26.2 specifically** (older iOS has no support at all). Confirmed present (`"navigation" in window`)
-on the Android device used for this investigation.
-
-### Decision Tree
-
-| Condition | Mechanism |
-|---|---|
-| `window.navigation` + `intercept` supported | `navigate` event listener: intercept the closing `traverse` (matched by `navigationType === "traverse"` + `navigation.currentEntry.key`, read at fire time — see identity-matching note below), **and** intercept any `navigationType === "reload"` event that follows within `RELOAD_WATCH_MS` — that second event is what actually causes the flash |
-| Not supported (iOS < 26.2, older Android WebView, desktop) | Unchanged: today's `popstate`/`pushState` guard, exactly as implemented in this plan's original body |
-
-**Identity-matching correction (found during implementation, 2026-08-15):** the original plan assumed
-matching by the pushed `fqOverlayGuardId` via `NavigationHistoryEntry.getState()`, mirroring the
-popstate branch's `fqOverlayGuardId`. On-device capture showed `getState()` did not reliably return
-the object passed to `history.pushState` — even in the same capture where the legacy `history.state`
-correctly carried it. The implementation matches by `NavigationHistoryEntry.key` instead (a
-platform-guaranteed-unique identifier not dependent on custom state round-tripping): captured via
-`navigation.currentEntry.key` immediately after the guard's `history.pushState` call (synchronously
-the just-pushed entry), then compared against `navigation.currentEntry.key` read again inside the
-`navigate` handler — which at fire time for a `traverse` is still the entry being LEFT, not the
-`destination` (confirmed on-device: `destination.index` was the target, `currentEntry`/fire-time index
-was still the guard's own entry).
-
-Everything else — pushing a fresh, uniquely-id'd guard entry on open, the microtask-deferred
-"is my entry still on top" cleanup check, coordination with `AndroidBackExitGuard` via the shared
-armed-count — stays as specified above. Only the detection/interception mechanism for "a real back
-gesture landed on my entry" changes, and only on the feature-detected branch. `AndroidBackExitGuard`
-itself is unmodified — it does not exhibit this bug.
-
-### Verified Test Cases (new)
-
-Confirmed on-device, 2026-08-15 (Android, installed PWA, `chrome://inspect` over `adb`):
-
-11. Single isolated swipe-back closing `NavOverflowMenu`: real `GET` to current URL fires, followed by
-    a full cold-reload waterfall. Reproduces the reported flash. This is the case the Navigation API
-    branch must fix.
-12. Single isolated swipe-back with nothing open (exit-toast path): clean — `popstate` fires, toast
-    shows, auto-dismisses at ~2s, no reload. Confirms `AndroidBackExitGuard` is unaffected and must
-    stay untouched.
-13. Same isolated swipe as case 11, this time instrumented through `window.navigation` directly (not
-    just `popstate`/network): shows the `traverse` completing cleanly (same-document, same URL) followed
-    ~6ms later by a distinct `navigationType: "reload"` event (`userInitiated: false`,
-    `sameDocument: false`) that is the actual source of the reload — not the traversal itself. Pinpoints
-    exactly what the Navigation-API branch must intercept.
-
-### Files to Change
-
-- `app/hooks/use-close-on-back-gesture.ts` — Navigation API feature detection (`supportsNavigationApi`);
-  branches to a `navigate` event listener when supported, keeps the existing `popstate`/`pushState`
-  implementation as the fallback (both live in the same effect, mutually exclusive). No change to the
-  hook's public signature (`useCloseOnBackGesture(open, onClose)`).
-- `package.json` — added `@types/dom-navigation` (devDependency) — this repo's `lib.dom.d.ts` (TS
-  5.6.3) has no `Navigation`/`NavigateEvent`/`Window.navigation` types.
-- No other runtime files change — `AndroidBackExitGuard.tsx` and `overlay-back-guard.ts` are untouched,
-  though the Navigation-API branch's interaction with the shared armed-count needs care (see
-  Constraints) even without editing those files.
-
-### Constraints
-
-- Do not drop the `popstate`/`pushState` fallback — Navigation API support is not universal (notably
-  iOS < 26.2), and this hook must not regress below what shipped in this plan's original body for
-  those browsers.
-- The `navigate` listener fires for *every* navigation, including this hook's own opening `pushState`
-  call, any sibling overlay's push, and `AndroidBackExitGuard`'s re-push. It must filter to
-  `navigationType === "traverse"` with a matching `navigation.currentEntry.key` (for the close case,
-  read at fire time — see the identity-matching correction above) or `navigationType === "reload"`
-  occurring within `RELOAD_WATCH_MS` of this guard's own traverse (for the flash case) — without this
-  filter the overlay would close itself the instant it opens.
-- The reload-watch timer/listener started when a real gesture closes the overlay must survive the
-  effect's own cleanup — React runs that cleanup essentially immediately once `onCloseRef.current()`
-  flips `open` to `false`, well inside the watch window. The implementation guards this explicitly
-  (an `awaitingReload` check as the cleanup's first line) rather than letting the normal
-  microtask-deferred "is my entry still on top" cleanup path run in that case — found and fixed during
-  implementation; an earlier draft let the cleanup unconditionally clear the reload-watch timer,
-  silently defeating the whole fix.
-- Use `event.intercept()`, never `event.preventDefault()` — `preventDefault()` leaves the guard entry
-  in place, which would make the existing microtask cleanup's `history.back()` pop it a second time.
-- `navigate` fires *before* `popstate` (confirmed on-device: `popstate` for the traversal landed after
-  the `reload` event in the capture, not before). `AndroidBackExitGuard`'s coordination via
-  `isOverlayBackGuardArmed()` assumes its own `popstate` listener runs after the overlay's listener has
-  already disarmed — on the Navigation-API branch, disarming inside the `navigate` handler risks the
-  exit guard seeing `armed === 0` if `popstate` still fires for the same gesture, wrongly showing "press
-  back again to exit" on an overlay close. Disarm must be idempotent and deferred past the current event
-  dispatch (not inside the synchronous `navigate` handler) so the exit guard reliably sees the guard as
-  armed for that traversal either way.
-- The non-back close paths (X button, Escape, in-overlay link) still call `history.back()` from the
-  existing microtask cleanup, which fires a `navigate` event on the Navigation-API branch too. Needs an
-  equivalent to the `popstate` branch's `selfClosingRef` echo-swallow so that programmatic close doesn't
-  get misread as a real back gesture — or, worse, trip the exit-toast.
-- Keep pushing the guard entry via `history.pushState` (patched by Next, per ADR 0040) — do not switch
-  to `navigation.navigate()` to create it; that would bypass Next's router-tree patching entirely
-  (the exact failure class behind issue #288).
-- Whether calling `intercept()` on the `traverse` event specifically suppresses the `popstate` that
-  otherwise follows it is still unconfirmed — the implementation does not assume either way (the
-  `AndroidBackExitGuard` coordination above is written to be correct regardless), but this still needs
-  an on-device pass once deployed, since the Navigation API branch cannot be exercised against the
-  installed PWA from a local dev server (Serwist/service-worker behavior — and the installed PWA's
-  origin generally — differ from `npm run dev`; see `docs/standards/pwa-testing.md`).
-- Do not touch `AndroidBackExitGuard.tsx` or `overlay-back-guard.ts` — isolated on-device testing
-  confirmed they don't exhibit this bug; keep the fix scoped to `useCloseOnBackGesture`.
-
-### What NOT to Do (new)
-
-- Do not attempt to fix this by changing timing/ordering within the existing `popstate` handler (e.g.
-  running it earlier, `stopImmediatePropagation`) — the browser's default navigation is already
-  underway by the time any `popstate` listener runs; no listener-ordering trick can prevent it.
-- Do not switch to the Navigation API unconditionally without the `popstate` fallback — this would
-  regress overlay-close-on-back-swipe entirely for iOS < 26.2, a functional regression versus what
-  shipped in PR #299.
-- Do not extend this fix to `AndroidBackExitGuard` — it does not reproduce the bug; leave ADR 0040's
-  mechanism as-is.
-
-### Decisions Made (new)
-
-- Accept the current, imperfect `popstate`-based behavior for iOS < 26.2 users on the overlay-close
-  case rather than delaying the fix until usage data is available (user-confirmed 2026-08-15).
-
-## Addendum — surah Sidebar was missed by the notifyNavigating fix (2026-08-16)
-
-**Type:** bug
-**Issue:** [#321](https://github.com/furqan-app/web/issues/321)
-**Related:** [#313](https://github.com/furqan-app/web/issues/313) /
-`docs/plans/fix-nav-overlay-link-navigation-race.md` (same root cause, different call site)
-
-### Bug
-
-Android standalone PWA only. Tapping a surah in the sidebar (`SurahListItem`) sometimes leaves the
-reader's visible content on the old page; it only shows the target page after a subsequent swipe.
-Distinct from #320 (the surah-name badge bug, same branch) — here the actual rendered Quran text is
-wrong, not just the label.
-
-### Root cause
-
-Exactly the bug `#313` already fixed for `NavOverflowMenu`'s `<Link>` rows (My Marks / My Plans /
-Shared mushaf), just at a call site that fix didn't cover. `useCloseOnBackGesture`'s cleanup effect
-decides whether to pop its own guard entry via a `queueMicrotask`-deferred check of
-`window.history.state`. That check is correct for a sibling overlay's `pushState` (guaranteed to land
-within the same commit's effects, and therefore the same microtask flush — ADR 0055's 2026-08-15
-addendum), but not for a competing navigation whose own history write isn't guaranteed to land before
-that microtask runs.
-
-`SurahListItem`'s click is exactly that shape: `setOpen(false)` (arms the cleanup) and, in the same
-handler, `jumpTo(surahStartingPage)` — which calls `window.history.replaceState` for the target page.
-`Sidebar` is wired to `useCloseOnBackGesture(open, () => setOpen(false))` the same way `NavOverflowMenu`
-is; `#313`'s fix added a `notifyNavigating()` escape hatch to the hook and wired it into
-`NavOverflowMenu`'s `<Link>` rows, but `Sidebar`/`SurahListItem` — a different consumer of the same
-hook, not audited as part of that investigation — never got it. This resolves the "speculative,
-unconfirmed" hypothesis from this addendum's first draft (a `setTimeout` defer, since reverted): the
-real mechanism is the same race `#313` already root-caused and fixed elsewhere, not a novel one.
-
-### Approach
-
-Wire the existing `notifyNavigating()` (returned by `useCloseOnBackGesture`, already shipped) from
-`Sidebar` through `SidebarContext` to `SurahListItem`, mirroring how `ReaderNavigationContext` exposes
-`jumpTo` from `ReaderPager` to the same caller. `SurahListItem` calls it synchronously, immediately
-before `setOpen(false)` — the cleanup effect then skips its timing-based `history.state` check
-entirely and disarms unconditionally, exactly as it already does for `NavOverflowMenu`'s links.
-
-### Files to Change
-
-- `app/contexts/SidebarContext.tsx` — add `notifyNavigating: (() => void) | null` and
-  `setNotifyNavigating`, mirroring `ReaderNavigationContext`'s `jumpTo`/`setJumpTo` shape (including the
-  same double-wrap pitfall documented there: `setNotifyNavigating` must be called with the raw function,
-  never wrapped again at the call site).
-- `app/components/nav/Sidebar.tsx` — capture `{ notifyNavigating }` from the existing
-  `useCloseOnBackGesture(open, () => setOpen(false))` call. Since the hook returns a fresh closure every
-  render (not `useCallback`-memoized), hold it in a ref and register a stable wrapper into
-  `SidebarContext` via `useEffect`/cleanup — the same `navRef`-style stable-wrapper pattern
-  `ReaderPager.tsx` already uses for `onArrowNavigate`, not a second copy of the infinite-loop bug
-  `docs/plans/fix-reader-nav-infinite-loop.md` fixed once.
-- `app/components/SurahListItem.tsx` — revert the `setTimeout` defer from this addendum's first draft;
-  call `notifyNavigating?.()` synchronously immediately before `setOpen(false)`, then call `jumpTo`
-  synchronously as before (no artificial delay).
-
-### Constraints
-
-- `notifyNavigating()` must be called before `setOpen(false)`, synchronously — same constraint `#313`
-  already documented; the ref it sets must be `true` by the time the cleanup effect's check runs.
-- Do not modify `use-close-on-back-gesture.ts` itself — `notifyNavigating` already exists and is
-  correct (shipped for `#313`); this addendum only wires an existing, unrelated consumer to it.
-- Do not reintroduce the `setTimeout`/`requestAnimationFrame` defer — `notifyNavigating` makes it
-  unnecessary, and the prior draft's own reasoning (rAF stalls when not compositing) is moot once the
-  guard is told explicitly rather than timed around.
-
-### What NOT to Do
-
-- Do not extend this specific wiring to `RubList`/`ContinueReadingLink` without a matching reported
-  symptom — same scoping call as this addendum's first draft, unchanged rationale.
-- Do not re-litigate `#313`'s own fix (`use-close-on-back-gesture.ts`, `NavOverflowMenu.tsx`) — this
-  addendum only adds a second, independent consumer of the same already-shipped API.
-
-### Decisions Made
-
-- Superseded this addendum's own first-draft fix (`setTimeout(fn, 0)` defer in `SurahListItem`),
-  written before `#313`'s `notifyNavigating` mechanism was discovered on `main` mid-task. The
-  `setTimeout` version was never confirmed on-device; `notifyNavigating` is the established, root-caused
-  fix for this exact race shape.
-
-## Addendum 3 (2026-08-24): the self-close echo path must arm the same reload-watch as the gesture path
-
-**Type:** bug
-**Status:** implemented (lint + `tsc --noEmit` clean; on-device verification pending — MANDATORY
-before release: the bug only reproduces after a browser-initiated reload on the installed PWA,
-`chrome://inspect` over adb per `docs/standards/pwa-testing.md`)
-**Issue:** [#418](https://github.com/furqan-app/web/issues/418)
-**ADR:** [0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md) (amended — see its Addendum)
-
-### Bug
-
-Installed Android PWA. After the browser has hard-reloaded the document once (e.g. the
-OS-initiated reload on network reconnect), **every** subsequent close of a guarded overlay
-(Settings sidebar et al.) via its X button / backdrop / Escape produces a full document reload —
-Chrome's own reload progress bar, full cold-reload waterfall. Before any browser reload, the same
-closes are clean.
-
-### Root cause
-
-ADR 0045 established (on-device ground truth) that Android Chrome fires a spurious hard-`reload`
-`navigate` event ~6ms after a back traversal, and its trigger "is not fully explained — likely
-something reacting to landing on `AndroidBackExitGuard`'s stacked guard entry, possibly Next's
-router failing to reconcile it." The **real back-gesture** path arms a 200ms `awaitingReload` watch
-(`RELOAD_WATCH_MS`) specifically to intercept that follow-up reload.
-
-The **self-close echo path** — the microtask cleanup that pops the guard's own entry via
-`window.history.back()` when the overlay closes via X/backdrop/Escape — intercepts its own echo
-traverse in the `selfClosingRef` branch but then **removes the navigate listener immediately**
-(`use-close-on-back-gesture.ts` ~line 136-142) and never arms the watch. When the spurious reload
-follows the echo traverse, nothing intercepts it → full document reload. The popstate fallback's
-echo path has the same gap and structurally cannot intercept a reload.
-
-Addendum 1's own Constraints anticipated echo-path danger ("Needs an equivalent to the popstate
-branch's `selfClosingRef` echo-swallow so that programmatic close doesn't get misread… or, worse,
-trip the exit-toast") but mandated only the echo-*swallow*, not the reload-watch — the gap this
-addendum closes.
-
-Why it only reproduces after a browser reload is not fully pinned (same unexplained-trigger
-admission as ADR 0045): post-reload, the history stack holds pre-reload document entries and Next's
-restored router state — plausibly the exact "router fails to reconcile the stacked guard entry"
-condition. The fix does not depend on resolving that question; interception is sufficient (ADR
-0045's own precedent). On-device `chrome://inspect` capture during implementation should record the
-event sequence for the record.
-
-### Decision Tree / Algorithm
-
-| Close path | Echo traverse (our own `back()`) | Spurious follow-up reload |
-|---|---|---|
-| Back gesture, Navigation API | intercepted (existing) | intercepted (existing `awaitingReload` watch) — **unchanged** |
-| X / backdrop / Escape, Navigation API | intercepted (existing `selfClosingRef` echo) | **NEW — arm the same `awaitingReload` + `RELOAD_WATCH_MS` watch instead of removing the listener immediately; intercept a `reload` (`!userInitiated`) arriving within the window** |
-| Any close, popstate fallback (iOS < 26.2) | swallowed via `popstate` echo | cannot intercept — accepted, identical to the gesture path's limitation on these browsers (ADR 0045 precedent) |
-
-Structural note (why this is simpler than the gesture path's watch): the echo path arms the watch
-*inside the async traverse handler*, after the effect cleanup has already returned — so the
-cleanup-interference problem the gesture path guards against (the `awaitingReload` first-line check
-in the cleanup, ADR 0045's Consequences) cannot occur here. The listener is removed by the watch
-timer's own callback or by an intercepted reload, never by a competing cleanup.
-
-### Verified Test Cases
-
-Walked through with the user (2026-08-24):
-
-1. **The reported repro:** post-browser-reload, open Settings sidebar → close via X → no document
-   reload, sidebar closes, history depth returns to pre-open state.
-2. Fresh session (no browser reload), open/close Settings via X → no reload, no regression.
-3. Real back-gesture close → unchanged (traverse + reload both intercepted, as shipped).
-4. `NavOverflowMenu` → "Settings" row (sibling opened in the same commit, menu's entry orphaned) →
-   close Settings via X → no reload; the id-matched top-of-stack check still pops only Settings'
-   own entry.
-5. Link navigation inside an overlay (`notifyNavigating` path) → unchanged; no watch armed, no
-   reload interception needed.
-6. iOS < 26.2 / no Navigation API → popstate fallback, behavior unchanged (accepted gap).
-7. Rapid open→close→open of the sidebar inside one 200ms window → the first close's watch expires
-   or intercepts without swallowing the second open's own `pushState` navigate event (the watch
-   only matches `navigationType === "reload"`, never `push`/`replace`/`traverse`).
-
-### Files to Change
-
-- `app/hooks/use-close-on-back-gesture.ts` — in the Navigation API branch's `selfClosingRef` echo
-  handling: replace the immediate `removeEventListener` with arming `awaitingReload` +
-  `reloadWatchTimer` (same constants and interception condition as the gesture path). Nothing else
-  in the file changes.
-
-### Constraints
-
-- The watch must only ever match `navigationType === "reload"` with `!e.userInitiated` within
-  `RELOAD_WATCH_MS` — identical filter to the gesture path; widening it risks swallowing real
-  navigations.
-- Keep the `selfClosingRef` echo semantics otherwise intact: `onClose` must not be re-invoked by
-  the echo traverse.
-- Do not arm the watch on the "entry no longer on top" branch (line ~200-203) — there is no echo
-  traverse to watch there.
-- On-device verification is mandatory before marking implemented — the bug only reproduces after a
-  browser-initiated reload on the installed PWA (`chrome://inspect` over adb; Serwist disabled in
-  dev per `docs/standards/pwa-testing.md`).
-
-### What NOT to Do
-
-- Do not "fix" this by skipping the echo `history.back()` (leaving the guard entry orphaned) —
-  that trades a reload for a permanently growing back-stack and breaks test case 1's history-depth
-  expectation.
-- Do not extend the change to `AndroidBackExitGuard.tsx` or `overlay-back-guard.ts` — ADR 0045's
-  scoping stands (isolated testing showed the exit guard doesn't exhibit the reload bug).
-- Do not attempt to intercept the reload on the popstate fallback — structurally impossible;
-  ADR 0045 already accepted this for iOS < 26.2.
-
-### Decisions Made
-
-- The echo path arms the identical watch rather than a bespoke mechanism — one interception
-  contract for both close paths, minimal diff (user-confirmed 2026-08-24).
-- The unexplained-trigger question (why only post-reload) is recorded, not blocking — same
-  stance ADR 0045 took for the original bug; interception fixes the symptom regardless of source
-  (user-confirmed 2026-08-24).

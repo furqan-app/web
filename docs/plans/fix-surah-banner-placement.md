@@ -8,751 +8,132 @@ area: surah-layout
 
 # Fix: Surah Banner Placement and Standalone Line Sizing
 
-**Trello #93:** https://trello.com/c/W0rsfojh/93-add-a-frame-for-the-surah-name-in-the-mushaf
-**Trello #123:** https://trello.com/c/tYOF9J1l/123-fix-surah-banner-frame-height-causing-unequal-page-heights-in-spread
-**Trello #133:** https://trello.com/c/eFWXR9ca — surah name frame, full text width (Addendum 8)
-**Trello #135:** https://trello.com/c/UzotHxvn/135-on-the-first-2-pages-there-should-be-a-space-between-the-surah-frame-and-bismillah-svg (Addendum 10)
-**Trello #188:** https://trello.com/c/4sQ8ybEs/188-fix-surah-frame-collision-with-adjacent-lines-tashkeel (Addendum 11)
-**Trello:** https://trello.com/c/sRC6NhMS/72-surah-name-banners-render-at-end-of-page-madani-layout
-
 ## Summary
 
-Two bugs shipped together (Bug 2's fix is a prerequisite for Bug 1's correctness):
+Surah name banners were rendered inline at the first word of verse 1, causing wrong positioning and unequal page heights in the double-page spread. The fix derives banner and bismillah positions from **`line_number` gaps** in the `lines` prop — no DB changes — and lands them as real, `1em`-tall standalone line slots. The banner "frame" art is the authentic KFGQPC surah-header glyph, rendered full-width at a **DOM-measured** width and revealed only once that measurement has settled.
 
-**Bug 1:** Surah name banners rendered inline at the first word of verse 1, causing wrong positioning and unequal page heights in the double-page spread.
+## Approach
 
-**Bug 2:** Glyph + bismillah crammed into a single `--fq-heading-h` block using fractional sizes. As standalone 1-slot lines they must use `1em` (the only token that tracks correctly across mobile, single, and double-page modes).
+### Gap-based placement
 
-**Root cause:** `QuranLine` renders the surah header inline at `verseNumber === 1 && wordNumber === 1` with no page-level slot awareness.
-
-**Final approach (Addendum 4):** Banner positions derived from `line_number` gaps in the `lines` prop. No DB changes. See Addendum 4 for the implemented algorithm.
-
-## Files to Change
-
-- `app/components/QuranSafha.tsx` — banner position derivation from `lineKeys` gaps; `SurahBannerLine`/`BismillahLine` helpers; `suppressInlineHeaderForSurahId` prop to `QuranLine`
-- `app/components/QuranLine.tsx` — `suppressInlineHeaderForSurahId?: number` prop; guard `shouldRenderSurahHeader` against it
-- `app/globals.css` — desktop spread spacing rules (Addendum 1/3)
-- `app/components/reader/QuranSpread.tsx` — `md:h-full md:items-stretch` (Addendum 1)
-- `app/components/reader/ReaderPage.tsx` — remove `md:h-[calc(100dvh-3.5rem)]` (Addendum 2)
-
-No changes to Prisma schema, DB, seeder, `getPageWords`, `PageMetadata`.
-
-## Constraints
-
-- Banner elements must be direct children of `.fq-quran-safha`.
-- Use `1em` for banner/bismillah heights — never `var(--fq-word-base)` or `--fq-heading-h` fractions.
-- `leading-none` required on banner outer divs (prevents 1.5em strut from Tailwind body `line-height`).
-- `lineKeys` must be sorted numerically — `Object.keys()` doesn't guarantee order.
-- `endBannerSurahId = endingSurahId + 1`, guarded by `endingSurahId < 114`.
-- Do not suppress the inline header unless a banner was actually rendered for that surah.
-- ADR 0016 is superseded — the approach uses `line_number` gaps, not `PageMetadata` fields.
-
-## Reference
-
-- ADR 0016: superseded
-- Trello #72: https://trello.com/c/sRC6NhMS
-
----
-
-## Addendum 1/2 — Equal-height spread (content-driven)
-
-**Goal:** Make both pages in the double-page spread equal height, adaptive to font size.
-
-**Final approach:** `.fq-spread` already has `items-stretch`. The equalizer is letting the row size to its taller child — `items-stretch` then stretches the shorter wrapper. The `h-full` chain below the wrapper (`fq-full-safha` → relative wrapper → card → `fq-content`) resolves because a stretched flex item has a definite cross-size.
-
-**Key gotcha (found in Addendum 2):** Addendum 1 initially added `md:h-[calc(100dvh-3.5rem)]` to ReaderPage (viewport pin), which broke font-scale adaptivity and forced opening pages (Al-Fatiha) to full viewport height. Fix: remove the viewport pin, keep `min-h`. Also: page-wrapper divs must NOT have `md:h-full` — an explicit `height: 100%` on a flex item is NOT stretched by `align-items: stretch` and collapses the shorter page to content height instead.
-
-**Final files:**
-- `app/components/QuranSafha.tsx` — `fq-full-safha: md:h-full`; relative wrapper: `md:h-full`; card: `md:h-full`; `fq-content`: remove `md:block md:h-auto`.
-- `app/components/reader/QuranSpread.tsx` — root: `md:h-full md:items-stretch`; `.fq-spread` div: `md:h-full`; page-wrapper divs: **no** `md:h-full` (let `items-stretch` do the equalizing).
-- `app/components/reader/ReaderPage.tsx` — keep `min-h-[calc(100dvh-3.5rem)]`; remove `md:h-[calc(100dvh-3.5rem)]` and `md:flex-1 md:min-h-0` from row div.
-- `app/globals.css` — `@media (min-width: 768px) .fq-spread .fq-quran-safha { flex:1 1 0%; min-height:0; display:flex; flex-direction:column; align-items:center; padding-block:0.5em; }` + `> * { margin-bottom:0 !important }`. Also `.fq-spread .fq-quran-safha.fq-safha-center { justify-content:center; gap:0.55em; }` for short opening pages. All scoped to `.fq-spread` — standalone `QuranSafha` unaffected.
-
-**Verified (Playwright, 1440×900):** pages 75/76 = 565px equal (content-driven); page 1/2 = 518px equal (58% viewport, not stretched full height); at `quranFontScale=8`, 75/76 = 764px both equal.
-
-**Note:** The first attempt also implemented the banner algorithm from the base plan, which was immediately reverted (wrong banners). Surah names fell back to inline rendering until Addendum 4.
-
----
-
-## Addendum 3 — Restore inter-line spacing (regression from equal-height spread)
-
-`space-between` with zeroed margins (from Addendum 1/2) only produces gaps when the container is taller than its children. After Addendum 2 made the spread content-driven, full 15-line pages had ≈0 surplus and lines touched. (Mobile unaffected — its card is viewport-pinned and taller than the text.)
-
-**Fix:** In the `@media (min-width: 768px) .fq-spread .fq-quran-safha` rule: add `gap: var(--fq-line-gap)` and change `justify-content: space-between` → `flex-start`. Surplus collects at bottom of the shorter (stretched) page — "uniform gap, top-aligned." Do not touch mobile (keeps `space-between`). `--fq-line-gap` resolves per breakpoint automatically.
-
-**Files:** `app/globals.css` — that one rule. **Verified:** 75/76 = 728px equal, `gap: 11.61px` between rows.
-
----
-
-## Addendum 4 — Gap-based surah banner placement (the implemented approach)
-
-Banner positions derived from `line_number` gaps in `lines` (`Record<string, WordWithVerse[]>` keyed by `line_number` 1–15). Missing slot numbers are exactly where surah-name/bismillah lines belong.
-
-### Algorithm
+`lines` is `Record<string, WordWithVerse[]>` keyed by `line_number` (1–15). The **missing** slot numbers are exactly where surah-name / bismillah lines belong.
 
 ```ts
-// Step 1: find gaps
-const occupiedSet = new Set(lineKeys.map(Number));
-const missing = Array.from({ length: 15 }, (_, i) => i + 1).filter(n => !occupiedSet.has(n));
-
-// Step 2: group consecutive missing slots → [{start, end}, ...]
-
-// Step 3: classify each gap group
+const occupied = new Set(lineKeys.map(Number));
+const missing  = [1..15].filter(n => !occupied.has(n));       // → consecutive gap groups [{start,end}]
 ```
 
 | Gap classification | Condition | Render |
 |---|---|---|
-| Start/mid banner | Line exists AFTER gap AND its first word is `surahId:1:1` | see table below |
-| End banner | No line after gap AND last word before gap ends its surah (`verseNum === chapter.verses_count`) | `SurahBannerLine` for `surahId + 1` |
+| Start / mid banner | a line exists **after** the gap and its first word is `surahId:1:1` | per the size table below |
+| End banner | no line after the gap, and the last word before it ends its surah (`verseNum === chapter.verses_count`) | `SurahBannerLine` for `surahId + 1` (guarded `endingSurahId < 114`) |
 
 | Gap size | Bismillah? | Render |
 |---|---|---|
 | 2 | yes | `SurahBannerLine` at `gap.start`, `BismillahLine` at `gap.start + 1` |
-| 1 | yes | `BismillahLine` only (surah name was on previous page's end banner) |
+| 1 | yes | `BismillahLine` only (the name was on the previous page's end banner) |
 | 1 | no | `SurahBannerLine` |
 
-```ts
-// Step 4: build ordered render list, sort by slot, render in one pass
-type RenderItem =
-  | { type: "words"; slot: number; lineKey: string; suppressSurahId?: number }
-  | { type: "surahBanner"; slot: number; surahId: number }
-  | { type: "bismillah"; slot: number };
-```
+Build an ordered `RenderItem[]` — `{ type: "words" | "surahBanner" | "bismillah" | "blank"; slot; … }` — sort by slot, render in one pass. `QuranLine` gets a `suppressInlineHeaderForSurahId?: number` prop (`shouldRenderSurahHeader = v===1 && w===1 && surahId !== suppressInlineHeaderForSurahId`) — the inline header is suppressed **only** when a banner was actually rendered for that surah.
 
-Pages 1 and 2 handled by the general algorithm (no special-casing): page 1 has an 8-slot gap → SurahBannerLine at slot 1, slots 2–8 render nothing (mushaf decorative opening); page 2 has a 9-slot gap → SurahBannerLine + BismillahLine.
+Verified **114/114** surahs on 604/604 pages (re-confirmed under the correct per-edition composition, `tajweed-mushaf-mode.md` Addendum 14). `line_type` ingestion is permanently unnecessary — gap detection derives the same information.
 
-### Component helpers (local to QuranSafha)
+### Pages 1–2: a fixed 15-slot template (not gap-derived)
 
-```tsx
-const SurahBannerLine = ({ surahId }: { surahId: number }) => (
-  <div className="leading-none text-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)" }}>
-    <span translate="no"
-      style={{ fontFamily: "var(--surah-names)", fontSize: "1em", lineHeight: 1 }}>
-      {`${surahId}`.padStart(3, "0")}
-    </span>
-  </div>
-);
-
-const BismillahLine = () => (
-  <div className="leading-none flex justify-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)" }}>
-    <BismillahSVG style={{ height: "1em", width: "auto" }} />
-  </div>
-);
-```
-
-`leading-none` on both outer divs prevents the 1.5em strut from Tailwind's body `line-height`. Banner elements are direct children of `.fq-quran-safha` → `gap: var(--fq-line-gap)` (Addendum 3) + `space-between` (mobile) treat them as real slots automatically.
-
-### QuranLine change
-
-```tsx
-const shouldRenderSurahHeader =
-  verseNumber === 1 && wordNumber === 1 && surahId !== suppressInlineHeaderForSurahId;
-```
-
-**Files:** `QuranSafha.tsx` (gap algorithm, `RenderItem[]` rendering, helpers), `QuranLine.tsx` (`suppressInlineHeaderForSurahId` prop). No changes to schema, DB, seeder, `globals.css`, `QuranSpread.tsx`, `ReaderPage.tsx`.
-
----
-
-## Addendum 5 — Decorative surah name frame (Trello #93)
-
-**Date:** 2026-07-19  
-**Branch:** `feature/93-surah-banner-frame`
-
-### What
-
-Wrap `SurahBannerLine`'s surah name glyph inside a full-width decorative frame matching the printed Madani mushaf style — an ornate pill-shaped border with arabesque medallions on each side and an inner pointed-arch crown decoration.
-
-### Source asset
-
-`/home/tahamohamed/Pictures/surah_banner1.svg` — a mobile-scale SVG (`viewBox="0 0 373 39"`) that includes both left and right ornaments and the full inner arch decoration. Contains exactly 3 fill colors:
-
-| Original hex | Role | Theme mapping |
-|---|---|---|
-| `#404c6e` | Frame body fill (dark blue) | `hsl(var(--card))` — matches card bg per theme |
-| `#fff` | Border lines + inner arch decoration | `var(--surah-frame-line)` — dark on light/gold, light on dark |
-| `#cdad80` | Gold arabesque detail | `var(--surah-frame-gold)` — warm gold, varies slightly per theme |
-
-The rectangle also has `stroke="#fff"` → replace with `stroke: var(--surah-frame-line)`.
-
-### Algorithm
-
-No changes to the gap detection or render-item algorithm from Addendum 4. Only `SurahBannerLine` changes visually.
-
-### Decision tree
-
-| Theme | `--surah-frame-line` | `--surah-frame-gold` |
-|---|---|---|
-| `.theme-light` | `hsl(39 35% 25%)` (warm dark brown) | `#cdad80` |
-| `.theme-gold` | `hsl(39 45% 20%)` (rich deep brown) | `#b8924a` |
-| `.theme-dark` | `hsl(209 51% 88%)` (matches `--card-foreground`) | `#cdad80` |
-
-### Files to change
-
-- `app/surah-frame.svg` — **new file**: the source SVG with fixed `width`/`height` removed, `width="100%"` added, and all fills replaced with CSS class selectors (`.fb`, `.fl`, `.fg`) + an inline `<style>` block referencing `--surah-frame-*` vars. The `stroke` on the rect also uses `var(--surah-frame-line)`.
-- `app/globals.css` — add `--surah-frame-line` and `--surah-frame-gold` to each of `.theme-light`, `.theme-gold`, `.theme-dark` (`.theme-dark.dark` too). Do NOT add `--surah-frame-body` — use `hsl(var(--card))` directly in the SVG.
-- `app/components/QuranSafha.tsx` — update `SurahBannerLine`:
-  - Import `SurahFrameSVG from "@/app/surah-frame.svg"`
-  - Render `SurahFrameSVG` at `width: 100%`, height auto (preserves aspect ratio)
-  - Overlay the surah name glyph with `position: absolute; inset: 0; display: flex; align-items: center; justify-content: center`
-  - Outer div: `position: relative; leading-none` (keep existing `marginBottom: var(--fq-line-gap)`)
-  - Glyph font-size: `0.85em` (slightly smaller than frame height so it sits comfortably inside)
-  - Glyph color: keep `text-black dark:text-white` (existing pattern)
-
-### What NOT to do
-
-- Do not use `preserveAspectRatio="none"` — distorts the medallion ornaments.
-- Do not add a decorative frame to `BismillahLine` — only `SurahBannerLine` gets the frame.
-- Do not set a fixed `height` on the SVG — let it scale proportionally from `width: 100%`. The natural height (≈ viewBox ratio 39/373 × container width) will be slightly taller than `1em` at full page width; this is correct and matches the printed mushaf proportions.
-- Do not hardcode colors in `surah-frame.svg` — all three color roles must go through CSS vars for theme support.
-- Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
-
----
-
-## Addendum 6 — Fix frame height causing unequal page heights (Trello #123)
-
-**Date:** 2026-07-20  
-**Branch:** `fix/123-surah-banner-frame-height`
-
-### Root cause
-
-`SurahBannerLine` renders the SVG with `width: 100%` + `aspectRatio: "373/39"` (ratio 9.56:1), so its layout height = `container_width × (39/373)`. At typical desktop mushaf card widths (~450px) this produces ~47px — about 50–80% taller than `1em`. The page with the banner becomes taller than its 15-line neighbor, causing visible white space at the bottom of the shorter page in the double-page spread.
-
-### Fix: reshape the SVG to match the line-width aspect ratio
-
-Rather than clipping or shrinking the frame, the SVG itself was modified so its natural aspect ratio matches `QURAN_LINE_WIDTH_RATIO` (14.41:1). With `height: 1em; width: 100%` the frame then renders at exactly `1em` tall and spans the Quran text content width without distortion, clipping, or overflow.
-
-**`app/surah-frame.svg` changes:**
-
-| What | Before | After |
-|---|---|---|
-| `viewBox` | `0 0 373 39` | `0 0 562 39` |
-| Rect width | `304` (x=35→339) | `491` (x=35→526) |
-| Right medallion | inline paths at x=337–373 | `<g transform="translate(187.15,0)">` → x=524–560 |
-| Central arch | `<g transform="translate(94.5,0)">` | unchanged (spans frame interior) |
-| Inner left ornament cluster | part of central group, rendered at x≈186 | `<g transform="translate(8.24,0)">` → left frame edge x≈38–115 |
-| Inner right ornament cluster | part of central group, rendered at x≈369 | `<g transform="translate(177.89,0)">` → right frame edge x≈446–523 |
-
-The inner ornament clusters (the knot/diamond shapes) were split out of the central arch group and given independent translates so they sit flush at the left and right ends of the frame rect, mirroring the printed Madani mushaf design.
-
-**`app/components/QuranSafha.tsx` — `SurahBannerLine`:**
-
-```tsx
-const SurahBannerLine = ({ surahId }: { surahId: number }) => (
-  <div
-    className="leading-none relative w-full"
-    style={{ marginBottom: "var(--fq-line-gap)", color: "hsl(var(--card))" }}
-  >
-    <SurahFrameSVG style={{ display: "block", width: "100%", height: "1em" }} />
-    <span
-      className="absolute inset-0 flex items-center justify-center text-black dark:text-white"
-      translate="no"
-      style={{ fontFamily: "var(--surah-names)", fontSize: "0.85em", lineHeight: 1 }}
-    >
-      {`${surahId}`.padStart(3, "0")}
-    </span>
-  </div>
-);
-```
-
-SVG is in-flow at `height: 1em` — no absolute positioning, no overflow, no clipping. The glyph overlays via `position: absolute; inset: 0`.
-
-**Verified:** both safha elements measure identical height (`692.328125px`) on page 50.
-
-### What NOT to do
-
-- Do not use `preserveAspectRatio="none"` — distorts the medallion ornaments.
-- Do not use `height: 1em; width: auto` on the SVG — frame no longer spans full width.
-- Do not use `overflow: hidden` on the outer div — the correct height comes from the SVG viewBox ratio, not clipping.
-- Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
-
----
-
-## Addendum 7 — Fix bismillah SVG appearing smaller than Quran text
-
-**Date:** 2026-07-20  
-**Branch:** `fix/123-surah-banner-frame-height`
-
-### Root cause
-
-`bismillah.svg` has `viewBox="0 0 176 36"` but the glyph content doesn't fill the full viewBox height — there's internal top padding of ~4 units (~11%). At `height: 1em`, the rendered glyph is effectively ~0.89em tall, making it visibly smaller than the surrounding Quran text lines.
-
-### Fix
-
-Same pattern as the surah frame: keep the outer div at `height: 1em` (layout slot unchanged), render the SVG absolutely centered at `height: 1.2em`. The SVG overflows visually but contributes zero to layout height.
-
-```tsx
-const BismillahLine = () => (
-  <div
-    className="leading-none relative flex justify-center text-black dark:text-white"
-    style={{ marginBottom: "var(--fq-line-gap)", height: "1em" }}
-  >
-    <BismillahSVG style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "1.2em", width: "auto" }} />
-  </div>
-);
-```
-
-### What NOT to do
-
-- Do not increase `height` without `position: absolute` — that would make the line slot taller than `1em` and break equal-height spread pages.
-- Do not modify the SVG file to crop its viewBox — the internal padding is part of the original asset.
-
----
-
-## Addendum 8 — Replace the frame with the authentic KFGQPC glyph (Trello #133)
-
-**Date:** 2026-08-01
-**Branch:** `fix/133-surah-name-frame`
-**Trello #133:** https://trello.com/c/eFWXR9ca — "تغيير فريم اسم السورة في نسخة التجويد" / "محتاج برضو تخليه بعرض الكلام"
-
-The card names the tajweed edition, but `SurahBannerLine` is shared, so the fix lands in both editions.
-
-### Problem
-
-Three complaints, one root cause plus one independent one.
-
-**Root cause A — the art is stretched.** The source asset was natively **8.05:1**. Addendum 6 forced it to `QURAN_LINE_WIDTH_RATIO` by widening the rect `304 → 491` and *translating* the medallion and knot clusters outward at their original scale, rather than redrawing at the new ratio. The result is small ornaments with a dead run of empty rule between them and the end knots. That is the "height is bad" and "decoration is not good" complaint — it is one defect, not two.
-
-**Root cause B — the colour model is over-specified.** The current SVG carries three colour roles (`--surah-frame-line`, `--surah-frame-gold`, `hsl(var(--card))`) defined across four theme blocks and then overridden again in two banded groups: the desktop `.fq-spread` group (`globals.css` ~585–605) and the tablet `[data-safha-view="double"] .fq-spread` group (~1135–1170). One of those overrides exists purely to force the frame monochrome in dark — its own comment reads "leaving the frame two-tone; force it to the ornament gold too." Three roles that all have to be collapsed to one in most bands is the "colours are inconsistent" complaint.
-
-### Source: extract glyph U+E000 from QUL `quran-common.ttf`
-
-`https://static-cdn.tarteel.ai/qul/fonts/common/quran-common.ttf?v=3.3` (Quranic Universal Library, Tarteel). Glyph **U+E000** is the authentic KFGQPC surah header band.
-
-This is a **path extraction, not a trace** — the source is already vector, so there is no rasterisation, quantisation or hand cleanup. Measured facts:
-
-| Property | Value |
-|---|---|
-| `unitsPerEm` | 1024 |
-| advance | 8240 |
-| ink bbox | `(0, -188) → (8240, 828)` — 8240 × 1016 |
-| **native ratio** | **8.1102 : 1** |
-| colour tables | none — no `COLR`/`CPAL`/`SVG `, so a **single fill** |
-| سورة | **absent** — the cartouche is empty; QUL renders سورة as a separate `surah-icon` element |
-| cartouche interior | 48.9% of width × 74.4% of height → **7.19em × 1.35em** at final scale |
-
-Extraction recipe (fontTools + `SVGPathPen`), producing a y-flipped viewBox that renders upright:
-
-```py
-pen = SVGPathPen(font.getGlyphSet()); font.getGlyphSet()["uniE000"].draw(pen)
-# <svg viewBox="0 -828 8240 1016"><path transform="scale(1,-1)" d="..." fill="currentColor"/></svg>
-```
-
-`fill="currentColor"` — the single fill is driven by one `color` declaration on the parent, so no frame-specific colour token is needed at all.
-
-### Ground truth for the geometry (measured, not assumed)
-
-Taken live from QUL's own renderer of **KFGQPC V1 (1405H)** — the same layout our seeded line numbers come from — at `qul.tarteel.ai/resources/mushaf-layout/15`:
-
-| Element | Measured |
-|---|---|
-| body text | `font-size: 30px`, line pitch `55.5px` |
-| `.quran-icon.surah-header` | `font-size: 70px` (2.33× body) |
-| frame rendered width | `563.3px` — **identical to the line width** |
-| frame ink height | `69.4px` = 1.25× a normal line pitch |
-| name glyph (`surah-name-v4`) | `font-size: 50px` = 0.714 × the frame's |
-
-`8.05em × 70px = 563.5px`. QUL sizes the frame so its natural advance equals the line width. **The authentic frame is full-width and undistorted.** Any "render it at half width" option is therefore wrong and is ruled out below.
-
-### Decision: option B — full width, undistorted, 1em layout slot
-
-The three properties *full width*, *exactly 1em tall*, and *undistorted* cannot hold at once, because the art is 8.11:1 and the slot is 14.7:1. Options put to the user:
-
-| Option | Width | Slot height | Ink height | Distortion | Verdict |
-|---|---|---|---|---|---|
-| A | full (14.7em) | 1em | 1em | **1.81× horizontal smear** | rejected — reproduces the current defect |
-| **B** | **full (14.7em)** | **1em** | **1.81em, overflows into gaps** | **none** | **chosen** |
-| C | 8.11em (55%) | 1em | 1em | none | rejected — not full width, and contradicts the measured print layout |
-
-Under B the **layout slot stays exactly `1em`**, so the banner is indistinguishable from any other line as far as layout is concerned — 15-slot budget (ADR 0004), equal-height spread (Addenda 1–3, 6) and the gap-detection algorithm (Addendum 4) are all untouched. Only the ornament *ink* reaches into the empty gap above and below, which is what the printed mushaf does.
-
-This is the same mechanism Addendum 7 already uses for `BismillahLine` at `1.2em`.
-
-### Computed values
-
-| Quantity | Derivation | Value |
-|---|---|---|
-| Frame ink height | `QURAN_LINE_WIDTH_RATIO / 8.1102` = `14.7 / 8.1102` | **1.81em** |
-| Overflow per side | `(1.81 − 1) / 2` | **0.405em** |
-| Desktop line gap | `--fq-line-gap` = `var(--fq-word-base) * 0.5607` (`globals.css:621`) | 0.5607em |
-| Desktop clearance | `0.5607 − 0.405` | **0.156em** — clears |
-| Name glyph size | height-bound by tallest surah glyph `uniE106` (ink 0.92em) filling 80% of the 1.35em interior | **1.18em** (was 0.85em) |
-
-Name glyph width is not binding: the widest glyph `uniE029` (ink 2.28em) renders 2.69em wide inside a 7.19em interior. Cross-check on the size: ours works out to `1.18 / 1.826` = 0.65 of the frame's own scale, against QUL's 0.714 — same neighbourhood, the difference being `sura_names.ttf` v1 metrics vs QUL's `surah-name-v4`.
-
-### Files to change
-
-- `app/surah-frame.svg` — **replace wholly**. New content is the extracted U+E000 path, `viewBox="0 -828 8240 1016"`, single `fill="currentColor"`. The `.fb`/`.fl`/`.fg` classes and the inline `<style>` block from Addendum 5 all go.
-- `app/components/QuranSafha.tsx` — `SurahBannerLine` only: SVG becomes `position: absolute`, vertically centred, `width: 100%`, `height: 1.81em`; outer div keeps `height: 1em` and `marginBottom: var(--fq-line-gap)`; drop the `color: "hsl(var(--card))"` inline style and set the ornament colour instead; name glyph `fontSize` `0.85em → 1.18em`.
-- `app/globals.css` — remove `--surah-frame-gold` from all four theme blocks (lines ~34, 99, 171, 260) and both `.fq-spread` override groups (~590, ~1143). Reduce `--surah-frame-line` to a single ornament colour per theme, or retire it in favour of `--mushaf-ornament` directly. Delete the dark-theme "force it to the ornament gold too" overrides (~598, ~1166) — with one fill they have nothing left to fix.
-- `docs/architecture/DECISIONS.md` — update the frame constraints under "Surah Banner Placement" (see below).
-
-No change to: the gap-detection algorithm, `RenderItem[]`, `QuranLine.tsx`, `BismillahLine`, Prisma schema, DB, seeder, `QuranSpread.tsx`, `ReaderPage.tsx`.
-
-### Implementation corrections (2026-08-01)
-
-Two planned values were wrong and were corrected during implementation. Both are recorded because each was a real trap.
-
-**1. Do not hardcode the frame's height in `em`.** The plan specified `height: 1.81em` (from `14.7 / 8.1102`). Implemented that way, the rendered ratio measured **7.87:1** against the true **8.11:1** — a 3% vertical stretch, i.e. the exact distortion this addendum exists to remove. The rendered column width is not reliably `QURAN_LINE_WIDTH_RATIO` em (that constant is the card's `minWidth` floor, and the double-view cap can shrink the reading font beneath it), so any fixed `em` height fights the real box.
-
-**Correct form:** `width: var(--fq-surah-frame-w, 100%); height: auto`, absolutely positioned and centred on both axes. Height then follows the viewBox and the ratio is exact everywhere — measured **8.111–8.113** across 7 viewports, 6 pages, 2 font scales, 2 editions and 3 themes. The `--fq-surah-frame-w` variable is the clearance lever: shrinking width scales height with it, so the art can never be distorted to buy room.
-
-**2. The mobile-collision risk was backwards.** Precondition 2 predicted mobile as the tight case. Measured ink-to-ink clearance to the following bismillah line:
-
-| Viewport | Clearance |
-|---|---|
-| 360×640 | +1.68px |
-| 390×667 | +0.26px |
-| 390×844, 430×932 | comfortably positive |
-| 768×1024 | −3.38px (box), 1 clean pixel row of real ink separation |
-| 1440×900 | −2.97px (box), 1 clean pixel row |
-| 1920×1080 | −3.56px (box) |
-
-Mobile is fine; **desktop and tablet are the tight band**. The negative numbers are *box* overlap absorbed by `bismillah.svg`'s documented internal padding (Addendum 7) — a pixel scan of the rendered page shows the frame's bottom rule ending at row 188 and the bismillah's first ink at row 190, i.e. a clean separating row. Verified visually at 4× magnification. No width cap was needed; `--fq-surah-frame-w` stays at its `100%` default.
-
-Do not "fix" the negative box numbers by shrinking the frame — they do not correspond to visible collision, and the fix would cost the full-width requirement.
-
-**3. The frame's width must track the text block, not the card.** First implemented as `w-full`, which is the card's content box. Those coincide only when the text fills the card — on mobile and tablet the font hits its 28px cap first (ADR 0011), so lines sit narrower and centre while a `w-full` frame kept stretching to the card edge. Reported as "it takes the full quran page width".
-
-Fixed by giving the frame a line-shaped box: `width: ${QURAN_MAX_LINE_WIDTH_RATIO}em; maxWidth: 100%` with `mx-auto`.
-
-`QURAN_MAX_LINE_WIDTH_RATIO = 14.42` is a **new constant, deliberately distinct from `QURAN_LINE_WIDTH_RATIO = 14.7`**. The latter is a padded *floor* for the card's width and intentionally exceeds every real line; the former is the widest line/font ratio actually measured across all 604 pages (range 14.13–14.42, page 580 worst — recorded in DECISIONS' mobile sizing entry). Using 14.7 for the frame left it overhanging the longest line by 15–20px. With 14.42 the overhang is 7.4–8.8px and the frame is still never narrower than a line on any page. **Do not unify the two constants** — they answer different questions, and collapsing them reintroduces this defect.
-
-Measured after the fix (page 151): frame 14.42em at 390×844 / 768×1024 / 1440×900 / 1920×1080, overhang 7.4–8.8px, ratio 8.110–8.112, slot 1em, inside the card at every size.
-
-### Preconditions — both must be resolved before this ships
-
-1. **Licence gate (blocking — investigated 2026-08-01, NOT cleared).** Checked four places: the `TarteelAI/quranic-universal-library` repo `LICENSE` (**MIT**, but that covers the application code), the font listing page (no terms), the individual font resource pages (no terms), and the QUL FAQ. The FAQ **explicitly declines a blanket licence**: resources "vary in their copyright status… some are in the public domain, while others may be subject to specific licenses", and for commercial use "review the licensing terms for each resource." QUL's own materials state the fonts were supplied by KFGQPC, so the terms are not Tarteel's to grant via the repo's MIT licence.
-
-   **Status: unresolved, needs a human decision — do not merge on the MIT repo licence alone.** Practical path: this project already ships KFGQPC assets (the QCF page fonts, `code_v1`), so whatever basis covers those covers this glyph — same publisher. Settle it once and record it for both rather than per-asset. If it turns out restrictive, this addendum is void and the frame must be redrawn natively.
-2. ~~**Mobile clearance (must measure).**~~ **Resolved 2026-08-01.** Measured across 7 viewports — see "Implementation corrections" above. The prediction was backwards: mobile clears comfortably, the tight band is desktop/tablet, and real ink separation there is still positive. No width cap applied; `--fq-surah-frame-w` remains `100%`.
-
-### Verification
-
-- Both safha elements in a spread measure identical height on a page with a banner (the Addendum 6 check — page 50).
-- Banner spans the full text column width, ornaments undistorted, at font scales 1 and 10.
-- No collision with adjacent lines on mobile at several viewport heights (precondition 2).
-- All four themes × both editions (default, tajweed) × both bands (`.fq-spread` desktop, `[data-safha-view="double"]` tablet) render the frame in one colour with no two-tone artefact.
-- Surah name glyph centred and inside the cartouche for the widest (`uniE029`) and tallest (`uniE106`) glyphs.
-
-### What NOT to do
-
-- Do not stretch the art to 14.7:1 by any means — no `preserveAspectRatio="none"`, no viewBox widening, no translating ornaments outward at fixed scale. That is precisely the Addendum 6 mistake being reverted here.
-- Do not render the frame at `height: 1em` in flow — at its native ratio that yields 55% of the line width, which contradicts the measured KFGQPC layout.
-- Do not let the outer div exceed `height: 1em`. The overflow must come from absolute positioning only, or equal-height spread and the 15-slot budget break (same rule as Addendum 7).
-- Do not reintroduce a second or third frame colour token. The glyph has one fill; keep it that way.
-- Do not trace a raster source. Two were evaluated and rejected: the surahapp PNG (`web.surahapp.com/_nuxt/img/top.*.png` — 7.53:1, another product's build asset, ~6 quantised colours, سورة baked into the leafwork) and a photo of a printed page (paper texture and lighting become paths). The QUL glyph is already vector.
-- Do not switch the surah name font to QUL's `surah-name-v4` as part of this change — `sura_names.ttf` v1 is the integrated font (DECISIONS.md Font System) and swapping it is a separate decision.
-- Do not change the gap detection algorithm or `RenderItem[]` types from Addendum 4.
-
-### Decisions made
-
-- Frame art comes from a font glyph, extracted losslessly — not traced from an image.
-- The banner's **layout** slot is 1em; its **ink** is 1.81em. These are deliberately different.
-- The cartouche interior stays unfilled so `--mushaf-paper` shows through, as in print. This removes the `hsl(var(--card))` body fill.
-- Full width beats exact ink height, on the evidence of the measured KFGQPC layout.
-
----
-
-## Addendum 9 — Fix frame width in tajweed mode (Trello #179)
-
-**Date:** 2026-08-02
-**Branch:** `bug/179-surah-frame-tajweed-width`
-**Trello #179:** https://trello.com/c/PDRUYUAr/179-surah-frame-in-tajweed-is-not-full-width
-
-### Root cause
-
-`SurahBannerLine`'s outer div has `width: ${QURAN_MAX_LINE_WIDTH_RATIO}em` (= `14.42em`). The `em` unit resolves against the **parent's computed `font-size`** — `.fq-quran-safha`. In tajweed mode, CSS overrides that `font-size` to a scaled-down value:
-
-- Mobile (`≤767px`): `font-size: calc(var(--fq-mobile-font) * 0.88)`
-- Desktop single (`≥768px`): `font-size: calc(var(--fq-word-base) * 0.85)`
-- Desktop double: `calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.85)`
-- Tablet double: `calc(var(--fq-t-word) * 0.85)`
-
-So in tajweed mode `14.42em` resolves to `14.42 × 0.85 × base ≈ 12.26 × base` on desktop — **83% of the intended width**. The card is still `≥ 14.7 × base` wide, so the frame is visibly narrower than the text column.
-
-In non-tajweed mode `.fq-quran-safha`'s font-size IS the base, so `14.42em` was correct there.
-
-### Fix
-
-Introduce a `--fq-safha-font` CSS custom property on `.fq-quran-safha` at each breakpoint, holding the **base reading font before any mode-specific scaling**. The tajweed overrides only touch `font-size`, not this property, so it remains stable across modes.
-
-Replace `width: ${QURAN_MAX_LINE_WIDTH_RATIO}em` in the JSX with `width: calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))`.
-
-### Decision tree
-
-| Breakpoint | `--fq-safha-font` value | Frame width |
-|---|---|---|
-| Mobile (`≤767px`) | `var(--fq-mobile-font)` | `14.42 × --fq-mobile-font` |
-| Desktop single (`≥768px`) | `var(--fq-word-base)` | `14.42 × --fq-word-base` |
-| Desktop double (`≥1024px` + `data-safha-view=double`) | `min(var(--fq-word-base), var(--fq-dv-word))` | `14.42 × min(base, dv-cap)` |
-| Tablet double (`1024–1366px` + `data-safha-view=double`) | `var(--fq-t-word)` | `14.42 × --fq-t-word` |
-
-### Verified cases
-
-| Context | Before (broken) | After (fix) |
-|---|---|---|
-| Desktop tajweed | `14.42 × 0.85 × base ≈ 12.26 × base` | `14.42 × base` |
-| Mobile tajweed | `14.42 × 0.88 × mobile ≈ 12.69 × mobile` | `14.42 × mobile` |
-| Desktop double tajweed | `14.42 × 0.85 × min(base, dv)` | `14.42 × min(base, dv)` |
-| Non-tajweed (all) | unchanged — `em` already resolved to base | unchanged |
-
-### Files to change
-
-- `app/globals.css` — add `--fq-safha-font: <value>` to each `.fq-quran-safha` rule at the four breakpoints (mobile, desktop single, desktop double, tablet double). Each value mirrors the corresponding non-tajweed `font-size` that already exists in those rules.
-- `app/components/QuranSafha.tsx` — `SurahBannerLine`: change `width: \`${QURAN_MAX_LINE_WIDTH_RATIO}em\`` → `width: \`calc(${QURAN_MAX_LINE_WIDTH_RATIO} * var(--fq-safha-font))\``
-
-No change to: gap algorithm, `RenderItem[]`, `BismillahLine`, `QuranLine.tsx`, SVG, schema, DB.
-
-### What NOT to do
-
-- Do not compensate by dividing out the scaling factor in CSS (`calc(14.42 / 0.85 * 1em)`) — duplicates the `0.85`/`0.88` magic numbers from the tajweed scale definitions; changing one requires changing the other.
-- Do not change `maxWidth: "100%"` — it remains as a clip guard for narrow viewports.
-- Do not remove the `--fq-safha-font` property from non-tajweed breakpoints — it is also used in non-tajweed mode (the result happens to equal what `em` previously produced, but the custom property is the correct source going forward).
-
----
-
-## Addendum 10 — Fixed line-slot template for pages 1–2 (Trello #135)
-
-**Date:** 2026-08-03
-**Branch:** `bug/135-opening-page-line-slots`
-**Trello #135:** https://trello.com/c/UzotHxvn — "On the first 2 pages there should be a space between the surah frame and bismillah svg"
-
-### Supersedes
-
-Addendum 4's claim that "Pages 1 and 2 handled by the general algorithm (no special-casing)" and the matching DECISIONS.md line ("Surah Banner Placement — IMPLEMENTED (gap-derived)"). This addendum adds a page-specific override for pages 1–2 **only** — the gap-detection algorithm from Addendum 4 is untouched for every other surah-opening page (112 others, verified 114/114 in DECISIONS.md).
-
-### Problem
-
-Pages 1 (Fatiha) and 2 (opening of Baqara) place the banner/Bismillah at the start of the missing-slot run and drop the rest of the gap (7 slots on both pages), then paper over the resulting cramped spacing with the `.fq-safha-center` CSS special case (`justify-content: center; gap: 0.55em`), which centers the compact block and fakes symmetric top/bottom whitespace instead of reproducing a real slot layout. Reported: no real breathing room between the surah-name frame and the Bismillah SVG.
-
-### Root cause
-
-`QuranSafha.tsx`'s gap-group loop (Addendum 4) treats the missing 1–15 slots before the first real content line as one run, consumes only 1–2 slots for banner/bismillah, and silently discards the remainder instead of rendering them as blank line elements.
-
-### Ground truth (measured, not assumed)
-
-Per-word `line_number` values from `public/quran/pages/2/1.json` and `.../2/2.json` (mushaf id 2, default/Hafs edition):
-
-| Page | Real content line range | Content lines | Bismillah source |
-|---|---|---|---|
-| 1 (Fatiha) | 9–15 | 7 | verse 1:1 itself (real text — surah 1 is in `CHAPTERS_WITHOUT_BISMILLAH`, no SVG) |
-| 2 (Baqara) | 10–15 | 6 | not in verse data — needs `BismillahLine` SVG |
-
-Both pages end flush at slot 15 (no trailing content slack). The fix does not use these `line_number` values for placement — they only confirm the content-line *counts* (7 and 6) match the fixed template below regardless of the pages' differing raw gap sizes (8 vs 9 missing slots).
-
-### Decision tree — fixed 15-slot template, `page <= 2` only
+Pages 1 (Fatiha) and 2 (Baqara opening) use a hardcoded template, `page <= 2` only — the general algorithm runs unchanged for the other 112 surah-opening pages:
 
 | slot | page 1 | page 2 |
 |---|---|---|
 | 1–3 | blank | blank |
 | 4 | `SurahBannerLine` (surah 1) | `SurahBannerLine` (surah 2) |
 | 5 | blank | blank |
-| 6 | 1st content line (Bismillah is verse 1:1, rendered inline as real text) | `BismillahLine` (SVG) |
-| 7–12 | — (page 1's 7 content lines fill 6–12) | content lines 1–6, sequential |
-| 6–12 | content lines 1–7, sequential | — |
+| 6 | 1st content line (surah 1 has no bismillah SVG — verse 1:1 *is* the Basmala, real text) | `BismillahLine` (SVG) |
+| 6/7–12 | 7 content lines, sequential | 6 content lines, sequential |
 | 13–15 | blank | blank |
 
-Every page <=2 slot renders as a real flex child (`1em` height, `leading-none`) — blank slots included. No CSS centering trick; pages 1–2 use the identical `justify-between`/`space-between` flex rhythm every other page already uses.
+Every slot is a real flex child (`1em` height, `leading-none`) — blanks included — using the same `justify-between` / `space-between` rhythm every other page uses. The `.fq-safha-center` CSS special case (centred block + fixed `0.55em` gap) is **removed entirely**, not layered. The loading skeleton for pages 1–2 uses the standard 15-slot shape (`SKELETON_LINE_COUNT_SHORT` removed) so the skeleton→content transition doesn't jump (ADR 0034).
 
-### Verified test cases
+### The frame
 
-- **Page 1:** blank×3 (1–3), banner (4), blank (5), 7 content lines sequential (6–12, first line carries the real Bismillah verse text), blank×3 (13–15). Total 15 slots.
-- **Page 2:** blank×3 (1–3), banner (4), blank (5), Bismillah SVG (6), 6 content lines sequential (7–12), blank×3 (13–15). Total 15 slots.
+`SurahBannerLine`'s art is the authentic KFGQPC surah-header band — glyph **U+E000**, extracted **losslessly** (path extraction via fontTools `SVGPathPen`, not a trace) from QUL's `quran-common.ttf`. Single `fill="currentColor"` (no `COLR`/`CPAL` — one colour, driven by one `color` declaration on the parent, so **no frame-specific colour token**); `viewBox="0 -828 8240 1016"`; native ratio **8.1102 : 1**; the cartouche is empty (سورة is rendered separately as the name glyph).
 
-### Files to Change
+- **Full width, undistorted, `height: auto`** — never a fixed `em` height (that stretched the art ~3%, the exact defect being removed). Absolutely positioned, centred on both axes. The layout **slot stays `1em`** — the ornament *ink* (~1.81em) overflows into the empty gaps above/below, exactly as print does — so the 15-slot budget, equal-height spread, and gap detection are untouched.
+- **Width is DOM-measured, not a ratio.** After mount and on `ResizeObserver`, the component takes the **max rendered width of every `.fq-safha-row`** in its own `.fq-quran-safha` (max-of-all, so a short adjacent line doesn't make the frame look undersized) and sets that exact px value. Mode/breakpoint/edition-agnostic by construction — it reads what rendered instead of predicting it. `QURAN_MAX_LINE_WIDTH_RATIO = 14.42` (deliberately **distinct** from `QURAN_LINE_WIDTH_RATIO = 14.7`, the card's padded minWidth *floor* — real line width varies 14.13–14.42em page to page) survives only as the SSR / first-paint fallback.
+- **Clearance above the frame is an explicit `marginTop: 0.3em`**, on top of the standard `--fq-line-gap` (`marginBottom` stays `var(--fq-line-gap)` so the existing `> * { margin-bottom: 0 !important }` still zeroes it and the container `gap`/`space-between` supplies one gap). Nothing zeroes `margin-top`, so this is a real, additional, width-independent gap. Worst-case ink-to-ink clearance measured at **6.84px** across 122 samples (was 0.25px).
+- **Reveal is gated on the banner's own `measured` flag**, independent of the container's `fontReady`. `measure()` updates `lineWidth` from every trigger; a separate `reveal()` wrapper — called **only** from the double-`requestAnimationFrame` callback and the 150ms fallback timer (the first reliable point to read final row boxes) — flips `measured`. `visibility: measured ? "visible" : "hidden"`. Gating on any successful `measure()` still snapped, because the untrusted immediate / `ResizeObserver` call can return a stale width. Trade-off (user-confirmed): the banner reveals 1–2 frames after the page text on *every* surah-opening load, not just cached revisits — no cold-load-vs-revisit branching.
+- Name glyph `fontSize: 0.9em`.
 
-- `app/components/QuranSafha.tsx`:
-  - Add a `page <= 2` branch before the general gap-detection loop: build `renderItems` directly from the fixed template (banner@4, bismillah@6 for page 2 only, content lines re-sequenced starting at slot 6/page 1 or 7/page 2, blank items for 1–3/5/13–15). The general Addendum 4 algorithm (lines ~332–393) runs unchanged for `page > 2`.
-  - Add a `blank` `RenderItem` variant (`{ type: "blank"; slot: number }`) and a bare 1em-height div to render it — same sizing rule as `SurahBannerLine`/`BismillahLine` (`height: 1em`, `leading-none`, no margin — spacing comes from the flex `gap`/`space-between`, not inline margin).
-  - Remove `page <= 2 ? "fq-safha-center" : ""` from the `fq-quran-safha` className (line 495).
-  - Remove `SKELETON_LINE_COUNT_SHORT` (line 40) and the `page <= 2` skeleton branching (lines 513, 516, 521) — skeleton always uses `SKELETON_LINE_COUNT` (15) with the standard `fq-skeleton-lines justify-between` shape, matching the real 15-slot layout pages 1–2 now use.
-- `app/globals.css` — remove all four `.fq-safha-center` rules and their surrounding comments: mobile (line 446), desktop-spread (line 641), the `min-height:800px` override (line 705), and tablet/desktop-double (line 1274–1278).
-- `docs/architecture/DECISIONS.md` — amend "Surah Banner Placement — IMPLEMENTED (gap-derived)": note that pages 1–2 are a fixed-template exception (banner@4, bismillah@6 for page 2), not gap-derived, and reference this addendum.
+`BismillahLine` renders `BismillahSVG` at ~`1.2em` ink in a `1em` slot (same overflow mechanism), `leading-none`.
 
-### Constraints
+### Equal-height spread
 
-- Only `page <= 2` uses the fixed template. Every other surah-opening page keeps the untouched Addendum 4 gap-detection algorithm — do not touch that code path or its `RenderItem` shapes beyond adding the new `blank` variant.
-- Blank/banner/bismillah slots stay at `1em` height (existing DECISIONS.md constraint) — no exceptions for the new blank slots.
-- The loading skeleton for pages 1–2 must match the new real 15-slot layout exactly, or the skeleton→content transition jumps (ADR 0034 — content and skeleton must occupy identical geometry).
+`.fq-spread` carries `items-stretch`; the row sizes to its taller child and stretches the shorter wrapper (which then has a definite cross-size for the `h-full` chain). **No viewport pin** on `ReaderPage` (`md:h-[calc(100dvh-3.5rem)]` broke font-scale adaptivity and forced Al-Fatiha to full height) — keep `min-h-[calc(100dvh-3.5rem)]`. Page-wrapper divs must **not** have `md:h-full` — an explicit `height: 100%` on a flex item is not stretched by `align-items: stretch` and collapses the shorter page to content height. Inter-line spacing on desktop: `gap: var(--fq-line-gap)` + `justify-content: flex-start` (surplus collects top-aligned at the bottom of the shorter page); mobile keeps `space-between`.
 
-### What NOT to Do
+## Verified Test Cases
 
-- Do not derive the pages 1–2 slot positions from real `line_number` data — the template is fixed regardless of source data (confirmed: it works for both pages despite their differing raw missing-slot counts, 8 vs 9).
-- Do not keep `.fq-safha-center`/`gap: 0.55em` as a fallback alongside the new template — it is fully replaced, not layered.
-- Do not change the gap-detection algorithm, existing `RenderItem` variants, or `QuranLine.tsx` for pages other than 1–2.
-- Do not reintroduce `SKELETON_LINE_COUNT_SHORT` or any short-skeleton branch for pages 1–2.
+- p595 slots 2–3: banner(91) + bismillah (was bismillah only, سورة الشمس missing). p597: banner(95) + bismillah. p594: banner(90) + bismillah at 6–7, سورة الشمس correctly at the top of p595.
+- Page 1: blank×3, banner@4, blank@5, 7 content lines (6–12, first carries the real Basmala text), blank×3. Page 2: blank×3, banner@4, blank@5, bismillah@6, 6 content lines (7–12), blank×3.
+- Frame width vs the page's own widest real line: exact match across 7 viewports / 6 pages / 2 font scales / **2 editions** / 3 themes; ratio measured 8.110–8.113. Frame stays inside the card at every size; overhang of the longest line 7.4–8.8px.
+- Worst-case gap above/below the frame: 6.84px minimum, all positive (17 mid-page surah-opening pages × 4 viewports × both sides).
+- Cold load: frame starts `visibility:hidden` at the SSR fallback width, settles ~2s later to `visible` at the measured width — never seen visible at the wrong width. Cached revisit: style written twice (`224px` while hidden → `364px` on reveal) — the reveal always carries the final width.
+- Equal-height spread: pages 75/76 measure identical height (content-driven); dark + tajweed page 106, all 6 `.fq-quran-safha` in view exactly equal.
 
-### Decisions Made
+## Files to Change
 
-- Pages 1–2 get a fixed, hardcoded 15-slot template — not derived from `line_number` gap data — because both pages' real content-line counts (7 and 6) happen to fit the same slot assignment regardless of their differing raw gap sizes.
-- The `.fq-safha-center` CSS mechanism (centered block + fixed `0.55em` gap) is removed entirely, not kept as a fallback.
-- The general gap-detection algorithm (Addendum 4) is preserved unmodified for all 112 other surah-opening pages.
+- `app/components/QuranSafha.tsx` — the gap algorithm + `page <= 2` fixed-template branch + `RenderItem[]` one-pass render; `SurahBannerLine` (extracted-glyph SVG, `useRef`/`useLayoutEffect`/`ResizeObserver` width measurement, `measured` state + `reveal()` wrapper, `marginTop: 0.3em`, glyph `0.9em`); `BismillahLine`; `blank` slot div; remove `page <= 2 ? "fq-safha-center"` and `SKELETON_LINE_COUNT_SHORT`.
+- `app/components/QuranLine.tsx` — `suppressInlineHeaderForSurahId?: number` prop.
+- `app/surah-frame.svg` — the extracted U+E000 path, single `fill="currentColor"` (the Addendum-5 `.fb`/`.fl`/`.fg` classes + inline `<style>` removed).
+- `app/components/reader/QuranSpread.tsx` — root `md:h-full md:items-stretch`, `.fq-spread` div `md:h-full`, page-wrapper divs **no** `md:h-full`.
+- `app/components/reader/ReaderPage.tsx` — keep `min-h-[calc(100dvh-3.5rem)]`, remove `md:h-[calc(100dvh-3.5rem)]`.
+- `app/globals.css` — desktop `.fq-spread .fq-quran-safha` spacing (`gap: var(--fq-line-gap)`, `flex-start`); remove all `.fq-safha-center` rules, `--surah-frame-*` colour tokens, the dark-theme "force it gold" frame overrides, the `--fq-surah-frame-w` / `--fq-safha-font` frame-width machinery.
+- `docs/architecture/DECISIONS.md` — "Surah Banner Placement" as IMPLEMENTED (gap-derived; pages 1–2 fixed-template exception; frame is a losslessly-extracted glyph, DOM-measured width, `marginTop` clearance, measurement-gated reveal).
 
----
+No changes to Prisma schema, DB, seeder, `getPageWords`, `PageMetadata`.
 
-## Addendum 11 — Measure real line width instead of guessing a ratio; explicit gap margin (Trello #188)
+## Constraints
 
-**Date:** 2026-08-10
-**Branch:** `bug/188-surah-frame-tashkeel-overlap`
-**Trello #188:** https://trello.com/c/4sQ8ybEs
+- Banner / bismillah / blank elements are direct children of `.fq-quran-safha`, `1em` layout height, `leading-none` (no exceptions for blank slots). Ornament ink overflow comes from **absolute positioning only** — the outer div must never exceed `1em`, or equal-height spread and the 15-slot budget break.
+- `lineKeys` must be sorted numerically (`Object.keys()` doesn't guarantee order). `endBannerSurahId = endingSurahId + 1`, guarded `endingSurahId < 114`.
+- Do not suppress the inline header unless a banner was actually rendered for that surah.
+- Only `page <= 2` uses the fixed template — the general gap algorithm and its `RenderItem` shapes are untouched for every other page (beyond adding the `blank` variant).
+- Frame width is DOM-measured — never a fixed em ratio (tried twice, both needed a further correction once real per-page/per-mode variation showed up). `QURAN_MAX_LINE_WIDTH_RATIO` survives only as the SSR fallback; do not unify it with `QURAN_LINE_WIDTH_RATIO`.
+- Keep the `ResizeObserver` — the measured width goes stale on font-scale changes and single/double toggles otherwise.
+- `measured` must be set in the same call as `lineWidth` and only from the trusted double-RAF / 150ms callbacks — never gate visibility on `lineWidth != null` (its fallback is never `null`, making the gate a no-op).
+- Measure the **max** across all `.fq-safha-row` in the container, not just the adjacent line.
+- Frame art comes from a font glyph, extracted losslessly — never traced from a raster (the surahapp PNG and a page photo were both evaluated and rejected). One fill; no second/third colour token.
+- Do not stretch the art to the line ratio by any means (`preserveAspectRatio="none"`, viewBox widening, translating ornaments outward) — that is the Addendum-6 mistake this reverts.
+- ADR 0016 is superseded — the approach uses `line_number` gaps, not `PageMetadata` fields.
 
-### Problem
+## What NOT to Do
 
-Three reports, from the same underlying frame:
-1. On desktop/tablet, the surah-name frame's top border visibly overlaps the tashkeel (diacritics) of the last word of the preceding line — e.g. page 106 (Al-Ma'idah opening), the frame's top rule cuts through the tanween of `عَلِيمٌ`.
-2. The frame's width doesn't track a real line's width — it looks wrong relative to the surrounding text, in both editions and both desktop/tablet.
-3. The surah-name glyph inside the frame renders too large.
+- Do not render the surah header inline at `verse 1 word 1` without page-level slot awareness — the original bug.
+- Do not derive pages 1–2 slot positions from real `line_number` data, or keep `.fq-safha-center` / `gap: 0.55em` as a fallback alongside the template.
+- Do not go back to a fixed em ratio for the frame width, or remove the `marginTop` clearance to "simplify" — width and gap are two separate independently-verified concerns.
+- Do not gate the banner's visibility on the container's `fontReady` alone, or special-case cold-load vs revisit for the gate.
+- Do not render the frame at `height: 1em` in flow (that's 55% of the line width, contradicting the measured KFGQPC layout), or let the outer div exceed `1em`.
+- Do not switch the surah-name font to QUL's `surah-name-v4` — `sura_names.ttf` v1 is the integrated font (a separate decision).
+- Do not change the gap-detection algorithm or `RenderItem[]` for pages other than 1–2, or add `md:h-full` to a page-wrapper div (collapses the shorter page).
+- Do not reintroduce a viewport pin (`md:h-[calc(100dvh-3.5rem)]`) on `ReaderPage`.
 
-### Root cause
+## Constraints on licensing
 
-`SurahFrameSVG` renders at `height: auto` against a fixed 8.1102:1 aspect ratio (Addendum 8), so ink height is directly tied to width. The frame's width was always a **guessed constant** — first `QURAN_MAX_LINE_WIDTH_RATIO` (14.42, the single widest line measured across all 604 pages), which by construction overhangs every other page's real line; a first pass at this addendum tried shrinking that constant by a flat 85%, which fixed the height-driven collision but then undershot real line width on some pages and overshot on others, since real line width genuinely varies **14.13–14.42em** page to page (kashida justification, not a fixed box). No fixed em ratio can equal "the real line" everywhere — only measuring the real line can.
+The U+E000 glyph comes from QUL's `quran-common.ttf`; QUL's FAQ explicitly declines a blanket licence for its fonts (supplied by KFGQPC). This project already ships KFGQPC assets (the QCF page fonts, `code_v1`) from the same publisher — settle the basis once and record it for both. If it turns out restrictive, the frame must be redrawn natively.
 
-Separately, Addendum 8's clearance math only ever checked ink-to-ink against the line *below* the frame (the bismillah SVG, a fixed asset with its own internal padding, Addendum 7) — never against the line *above*, arbitrary verse text with no such padding. Net clearance there was only ever a few px, live-measured as low as **0.25px** (viewports shorter than 800px — common laptop content heights — get none of the extra gap the `bde5a78` reader-rhythm boost hands to taller viewports).
+## Decisions Made
 
-### Fix
+- Banner positions are derived from `line_number` gaps in `lines` — no DB fields, no `line_type` ingestion (ever).
+- Pages 1–2 get a fixed hardcoded 15-slot template (their content-line counts, 7 and 6, fit the same assignment regardless of raw gap size); `.fq-safha-center` removed entirely.
+- The frame is a losslessly-extracted KFGQPC glyph (U+E000), single fill, full-width, undistorted, `1em` layout slot with ink overflow — full width beats exact ink height, on the measured KFGQPC layout.
+- Frame width is DOM-measured at runtime from real `.fq-safha-row` elements; clearance above is a width-independent explicit `marginTop: 0.3em`; the reveal is gated on the banner's own `measured` flag.
+- Equal-height spread is content-driven via `items-stretch` (no viewport pin); desktop inter-line spacing is `gap` + `flex-start`, mobile keeps `space-between`.
 
-Two independent changes to `SurahBannerLine` (`app/components/QuranSafha.tsx`):
+## Revision History
 
-**1. Width is measured from the DOM, not computed from a ratio.** After mount (and on resize, via `ResizeObserver`), the component finds every real `.fq-safha-row` inside its own `.fq-quran-safha` and takes the max rendered width, then sets that exact px value as its own width. This is mode/breakpoint/edition-agnostic by construction — the same code measures correctly whether the page is tajweed or default, single or double, desktop or tablet, because it reads what actually rendered instead of predicting it. `QURAN_MAX_LINE_WIDTH_RATIO` is kept only as the SSR/first-paint fallback until the effect runs once. `--fq-surah-frame-w` and the `app/globals.css` breakpoint override from the first pass at this addendum are removed — no longer needed.
-
-**2. An explicit `marginTop: 0.3em` is added, on top of (not instead of) the standard `--fq-line-gap`.** `marginBottom` stays `var(--fq-line-gap)`, identical to every other row, so it still gets zeroed by the existing `.fq-spread .fq-quran-safha > * { margin-bottom: 0 !important }` rule (mobile has the equivalent) and the container's own `gap`/`space-between` still supplies one `--fq-line-gap` between the frame and its neighbours either way. Nothing zeroes `margin-top` anywhere, so this 0.3em is a real, additional, visible gap above the frame in every mode — independent of width, and independent of the ink-overflow mechanics entirely.
-
-**3. Glyph `fontSize` reduced from `1.18em` to `0.9em`.**
-
-### Verified (Playwright, live measurement + visual)
-
-| Check | Result |
-|---|---|
-| Frame width vs. real line width, page 106, tajweed, 1440×900 | **385px vs 385px — exact match** |
-| Frame width vs. real line width, page 106, default, 1440×900 / 1440×750 / 1024×900 | 401/398, 342/341, 485/468 — matches the page's own widest line (max-of-all-rows, not just the adjacent one, so a short adjacent line doesn't make the frame look undersized) |
-| Worst-case gap (17 mid-page surah-opening pages × 4 viewports × both sides, 122 samples) | **6.84px minimum, all positive** — was 0.25px before this addendum |
-| Page 580's `أَلِيمَا` (heaviest tashkeel in the mushaf) at 1440×750 (shortest tested viewport) | Clean, visually confirmed |
-| Dark theme + tajweed, equal-height spread (page 106) | All 6 `.fq-quran-safha` elements in view still exactly equal height (616px) |
-| Mobile (390×844) | Unaffected, still generously clear |
-
-### Files Changed
-
-- `app/components/QuranSafha.tsx` — `SurahBannerLine`: added `useRef`/`useLayoutEffect`/`ResizeObserver`-based width measurement; `marginTop: "0.3em"` added alongside the existing `marginBottom: "var(--fq-line-gap)"`; glyph `fontSize` `1.18em → 0.9em`; SVG `width` simplified from `var(--fq-surah-frame-w, 100%)` to plain `100%` (now redundant since the outer div's own width is the measured value).
-- `app/globals.css` — the `--fq-surah-frame-w: 85%` override added earlier in this addendum's first pass is removed; no CSS changes remain from this addendum.
-- `docs/architecture/DECISIONS.md` — "Frame art" constraints updated: width is DOM-measured, not ratio-computed; the explicit `marginTop` clearance mechanism is recorded.
-
-No change to: the gap-detection algorithm, `RenderItem[]`, `QuranLine.tsx`, `SurahFrameSVG`'s viewBox/aspect ratio, `BismillahLine`, `QURAN_LINE_WIDTH_RATIO` (still the card's own minWidth floor, unrelated), schema, DB.
-
-### What NOT to Do
-
-- Do not go back to a fixed em ratio (neither `QURAN_MAX_LINE_WIDTH_RATIO` nor any percentage of it) for the frame's width — real line width varies 14.13–14.42em page to page and no constant matches all of them. This was tried twice (Addendum 9's tajweed fix, and this addendum's own first pass) and both times needed a further correction once real per-page/per-mode variation showed up.
-- Do not remove the `marginTop` clearance margin to "simplify" — it is what makes the top gap survive independently of whatever the measured width happens to be on a given page. Width and gap are now two separate, independently-verified concerns; don't collapse them back into one lever.
-- Do not measure only the immediately adjacent line — a page's adjacent line can be short (e.g. the last line of a surah) while a later line is the page's actual widest; measuring the max across the whole `.fq-quran-safha` is what makes the frame look right against the page as a whole, not just its neighbour.
-- Do not skip the `ResizeObserver` — without it the measured width goes stale on font-scale changes and single/double view toggles, silently reintroducing the old over/under-hang bug on the next resize instead of at first paint.
-
-### Decisions Made
-
-- Frame width is measured from real rendered `.fq-safha-row` elements at runtime, not computed from any fixed ratio constant. `QURAN_MAX_LINE_WIDTH_RATIO` survives only as the SSR fallback.
-- Frame clearance (both sides) is bought by an explicit `marginTop`, independent of width — not by shrinking the art, and not by relying on ink overflow eating into the ambient `--fq-line-gap`.
-
-## Addendum 12 — Hide the banner until its own width is measured (Issue #373)
-
-**Date:** 2026-08-23
-**Issue:** [#373](https://github.com/furqan-app/web/issues/373) (part of #371)
-
-### Problem
-
-Confirmed via a headless Playwright trace (real compositing — the in-app preview browsers available
-during planning don't reliably composite frames, see the plan's investigation notes): on a page
-revisit, `.fq-surah-frame`'s `width` was written twice while fully visible — `224.25px`, then
-`364px` 38ms later — a visible ~140px snap. This happens after the container (`.fq-quran-safha`)
-becomes visible (`fontReady` true) but before `SurahBannerLine`'s own `lineWidth` measurement has
-settled.
-
-### Root cause
-
-Addendum 11 established that `document.fonts` can report ready before Chromium/WebKit commit the new
-glyph metrics to layout — `SurahBannerLine`'s effect already accounts for this with a double-
-`requestAnimationFrame` plus a 150ms fallback timer. But the banner's *visibility* was never gated on
-that same measurement completing — it inherits visibility purely from the parent container's
-`fontReady` state. So whenever the container reveals before the frame's own measurement lands (the
-lag Addendum 11 already proved exists), the frame paints at its stale/fallback width first and snaps
-once the delayed measurement corrects it — visibly, because the container is already showing it.
-
-### Fix
-
-`SurahBannerLine` gates its own visibility on a new local `measured` boolean, independent of the
-parent's `fontReady`. **The first implementation attempt flipped `measured` inside the shared
-`measure()` function** — called from every trigger (the immediate call, `ResizeObserver`,
-`document.fonts.ready`) — and a live Playwright trace showed the jump was still fully reproducible:
-the untrusted immediate/`ResizeObserver` call can itself return a stale width and reveal on it, before
-the later "actually reliable" correction lands. The fix separates the two concerns: `measure()` still
-updates `lineWidth` from every trigger (for genuine post-reveal resize tracking), but only a `reveal()`
-wrapper — called exclusively from the double-RAF callback and the 150ms fallback timer, the two points
-the existing code comments already call "the first reliable point to read the final row boxes" —
-flips `measured`:
-
-```
-const measure = () => { /* updates lineWidth only, from every trigger */ };
-const reveal = () => { measure(); setMeasured(true); };
-// wired to: requestAnimationFrame(() => requestAnimationFrame(reveal))
-//       and: window.setTimeout(reveal, 150)
-```
-
-`measured` resets to `false` at the top of the effect (defensive — in practice a mounted instance's
-`fontReady` prop only ever transitions false→true once, never back, since a loaded font stays loaded
-for the component's lifetime; see the `fontReady` addendum in `fix-safha-swipe-flicker.md`). The
-outer div's `visibility` becomes `measured ? "visible" : "hidden"`, independent of the container's
-own visibility.
-
-**Trade-off, confirmed with the user:** the banner now reveals 1-2 frames after the rest of the
-page's text on *every* surah-opening page load, not just the cached-revisit case this issue reports —
-branching the gate to apply only on remounts was considered and rejected as unnecessary complexity
-for a barely-perceptible delay.
-
-### Verified Test Cases
-
-Confirmed with a headless Playwright trace (`MutationObserver` on `.fq-surah-frame`/`.fq-quran-safha`
-style attributes, real compositing):
-
-1. **Cold load** (fresh hard navigation to a surah-opening tajweed page): frame starts
-   `visibility:hidden` at the SSR fallback width (`calc(14.42 * var(--fq-safha-font))`), settles ~2s
-   later to `visibility:visible` at the real measured width (`364px` in the trace) — never observed
-   visible at the wrong width.
-2. **Cached revisit** (page revisited after leaving the pager's live window, font/content already
-   warm): frame's style attribute was written twice — `width: 224.25px` while still `hidden`, then
-   `width: 364px` when it flipped `visible` — the reveal always carried the final width, no jump.
-   **This is the exact case that exposed a flaw in the first implementation attempt**: an earlier
-   version flipped `measured` from the untrusted `measure()` calls (immediate/ResizeObserver/
-   `fonts.ready`) and the SAME trace showed `width: 224.25px` revealed as `visible`, then silently
-   corrected to `364px` — confirming the fix must gate on the double-RAF/150ms "trusted" callbacks
-   specifically, not on any successful measurement.
-3. Pages 1-2 (fixed-template banner slot): same component, same gate — no special-casing needed
-   (not independently re-traced; identical code path to case 1/2 above).
-
-### Files to Change
-
-- `app/components/QuranSafha.tsx` — `SurahBannerLine`: add `measured` state, set alongside
-  `lineWidth` in `measure()`, gate the outer div's `visibility` on it.
-- `docs/architecture/DECISIONS.md` — add a bullet to the Surah Banner Placement decision: the frame's
-  reveal is gated on its own measurement completing, independent of the container's `fontReady`.
-
-### Constraints
-
-- `measured` must be set in the *same* `measure()` call as `lineWidth` — never gate visibility on
-  `lineWidth != null` directly, since `lineWidth`'s SSR/first-paint fallback value
-  (`QURAN_MAX_LINE_WIDTH_RATIO`) is never `null`, which would make the gate a no-op.
-- Keep the existing double-RAF + 150ms fallback timer — this addendum changes what the measurement's
-  success *reveals*, not how the measurement itself is obtained.
-
-### What NOT to Do
-
-- Do not gate the banner's visibility on the container's `fontReady` alone (today's behavior) —
-  that's exactly what allows the container to reveal before the banner's own measurement lands,
-  which is the jump this addendum fixes.
-- Do not special-case cold-load vs. revisit paths for this gate — confirmed with the user that a
-  small, consistent reveal lag on every load is preferable to the added branching.
-
-### Decisions Made
-
-- The surah banner's visibility is decoupled from the container's `fontReady` and gated on its own
-  `measured` flag instead — the container can reveal its text before the banner is ready without
-  producing a visible banner-width jump.
-- The frame's clearance budget must account for the line *above* as well as the line below — the bismillah-only check in Addendum 8 was incomplete, not wrong.
+- Addenda 1–3 (equal-height spread + inter-line spacing): `.fq-spread` `items-stretch` equalises to the taller page; a first pass added `md:h-[calc(100dvh-3.5rem)]` which broke font-scale adaptivity and was removed (keep `min-h`); page-wrapper divs must not carry `md:h-full`; desktop rhythm became `gap: var(--fq-line-gap)` + `flex-start` (mobile keeps `space-between`). **The base plan's first banner-algorithm attempt was reverted (wrong banners); surah names fell back to inline rendering until Addendum 4.**
+- Addendum 4 (2026-07) — the implemented gap-based placement (algorithm above). **Supersedes ADR 0016** (`PageMetadata`-field approach).
+- Addenda 5–7 — a decorative SVG frame (Addendum 5, PNG-derived), reshaped to the line ratio (Addendum 6), bismillah SVG sizing (Addendum 7, `1.2em` ink / `1em` slot). **Addendum 6's ratio-forcing was itself the distortion Addendum 8 reverts.**
+- Addendum 8 (2026-08-01) — **replaces the SVG/PNG frame with the losslessly-extracted KFGQPC glyph U+E000** (QUL `quran-common.ttf`), single `fill="currentColor"`, full-width undistorted, `1em` layout slot / ~1.81em ink overflow. Implementation corrections: `height: auto` (never a fixed `em` — measured a 3% stretch); the frame's width must track the *text block* not the *card* (`QURAN_MAX_LINE_WIDTH_RATIO = 14.42`, distinct from `QURAN_LINE_WIDTH_RATIO`); the tight clearance band is desktop/tablet, not mobile. Removed all `--surah-frame-*` colour tokens and the dark-theme "force it gold" overrides. Licence gate flagged (unresolved — see above).
+- Addendum 9 (2026-08-02) — tajweed frame width: the `14.42em` outer-div width resolved against `.fq-quran-safha`'s tajweed-scaled `font-size` (×0.85/×0.88), so the frame was ~83% width. Fixed with a `--fq-safha-font` custom property holding the pre-scale base font. **Later removed** — Addendum 11's DOM measurement makes the whole em-ratio approach unnecessary.
+- Addendum 10 (2026-08-03) — the fixed 15-slot template for pages 1–2 (above). **Supersedes Addendum 4's "pages 1–2 handled by the general algorithm"** and removes the `.fq-safha-center` CSS mechanism.
+- Addendum 11 (2026-08-10) — **frame width is DOM-measured, not a ratio** (`ResizeObserver`, max of all `.fq-safha-row`); an explicit `marginTop: 0.3em` clears the line above independent of width (the ratio-guessing tried twice — Addendum 9 and this addendum's own first pass — both needed correction); glyph `fontSize` `1.18em → 0.9em`; `--fq-surah-frame-w` / `--fq-safha-font` machinery removed.
+- Addendum 12 (2026-08-23) — **the frame's reveal is gated on its own `measured` flag** (Issue #373), independent of the container's `fontReady`, and `measured` is flipped only from the trusted double-RAF / 150ms callbacks (gating on any successful `measure()` still snapped, because the untrusted immediate / `ResizeObserver` call can return a stale width).

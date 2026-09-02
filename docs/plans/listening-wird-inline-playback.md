@@ -14,7 +14,7 @@ area: recitation
 
 The completion nudge (toast inviting a check-off once playback finishes) is explicitly out of scope — tracked separately as Trello #161, since no toast/notification system exists in the repo yet and that's its own decision to make.
 
-**Settings-sheet indicator (added after manual testing, 2026-07-30):** the override never touched `settings`, so `RecitationSettingsSheet` — which only ever renders the user's own persisted `settings` — looked completely disconnected from an active wird session: opening it mid-playback showed unrelated, possibly stale values (e.g. a leftover "custom" stop point from earlier testing) with nothing indicating a wird override was actually driving playback. This closes that gap with a small read-only banner in the sheet, without touching the plan's original "settings sheet stays fully editable, no disabled states" constraint (still holds — see Constraints).
+**Settings-sheet indicator (added after manual testing, 2026-07-30):** the override never touched `settings`, so `RecitationSettingsSheet` — which only ever renders the user's own persisted `settings` — looked completely disconnected from an active wird session: opening it mid-playback showed unrelated, possibly stale values (e.g. a leftover "custom" stop point from earlier testing) with nothing indicating a wird override was actually driving playback. This is closed with a small read-only banner in the sheet **plus** disabling the two controls the override actually supersedes (Stop-at and Repeat-whole-range) while it is active — the banner alone did not read as strong enough differentiation (2026-08-01, deliberate reversal of the original "fully editable, no disabled states" constraint — see Constraints and Revision History).
 
 ## Approach
 
@@ -24,7 +24,9 @@ The completion nudge (toast inviting a check-off once playback finishes) is expl
 
 **`RecitationContext.play` gains an optional override.** `play(verseKey, overrides?)` where `overrides: PlaybackOverride` (`app/types/recitation.ts`) — `{ stopVerseKey: string; stopChapterId: number; rangeRepeatCount: number; id: string; label: string }`. When present, `play` skips `resolveStopTarget` entirely and uses the given stop target directly; a new `rangeRepeatOverrideRef` holds the repeat count. Both existing `resolveRepeatTarget(settings.rangeRepeatCount)` call sites (`handleTimeUpdate`, `handleChapterEnded`) become `resolveRepeatTarget(rangeRepeatOverrideRef.current ?? settings.rangeRepeatCount)`. Existing callers (`RecitationPlayButton`, `MarkModal`) call `play(verseKey)` with no second argument — unaffected. `decideChapterEnd` (`app/utils/recitation.ts`) takes an `isRepeatableRange: boolean` rather than the raw `settings.stopPoint`, computed at the `handleChapterEnded` call site as `rangeRepeatOverrideRef.current != null || settings.stopPoint !== "none"` — an active override is always a bounded, repeatable range regardless of the user's persisted stop-point, and this is byte-identical to the original rule for non-override sessions (fixes a bug where a husun tahdeer override with `repetitions: 10` silently played once and stopped if the user's persisted `stopPoint` happened to be `"none"`).
 
-Two separate mid-session effects end an override's framing, kept deliberately apart because they have different side effects. The existing "stop-point changed" effect (keyed on `settings.stopPoint`/`settings.rangeTo`) re-resolves the stop target from the currently-playing verse *and* clears `rangeRepeatOverrideRef.current = null`. A new effect keyed only on `settings.rangeRepeatCount` clears the override but does **not** re-resolve the stop target — editing "Repeat whole range" mid-wird must fall back to the user's own repeat count without silently moving where the range ends. Either way this satisfies the decision that the settings sheet stays fully editable during a wird session: touching either control simply ends the wird framing for that session.
+Two separate mid-session effects end an override's framing, kept deliberately apart because they have different side effects. The existing "stop-point changed" effect (keyed on `settings.stopPoint`/`settings.rangeTo`) re-resolves the stop target from the currently-playing verse *and* clears `rangeRepeatOverrideRef.current = null`. A second effect keyed only on `settings.rangeRepeatCount` clears the override without re-resolving the stop target. **Since 2026-08-01 the sheet disables the Stop-at and Repeat-whole-range controls while an override is active, so neither effect can fire from the UI any more** — they stay as a defensive backstop against any future non-sheet caller of `updateSettings` for those keys, and removing them buys nothing.
+
+**Disabled controls during an override.** While `activeOverride != null`, `RecitationSettingsSheet` disables exactly the two controls the override supersedes: the "Stop at" `RadioGroup` (all 6 pills; `disabled` cascades from the Radix root, and each pill's `<label>` className branch adds the disabled visual state), `CustomRangePicker`'s four controls when `stopPoint === "custom"` was already selected (Page/Verse toggle, page `Input`, `SurahCombobox` trigger, ayah `Input` — via a new `disabled?: boolean` prop), and the "Repeat whole range" `RepeatStepper` (new `disabled?: boolean` prop on both `+`/`-` buttons). Reciter, "Repeat each ayah", playback speed, and pause-between-repeats stay interactive — none touch `rangeRepeatOverrideRef`/`stopVerseKeyRef`. With these disabled, **Stop is the only way to end an override session** (confirmed with the user; no "release" affordance, no explanatory microcopy beyond the existing banner).
 
 **Row UI.** For `activity === "listen"` rows only, the leading icon slot becomes a tappable button (pulled outside the `Link`, mirroring how the check-off button already sits outside the `Link` on the trailing side) showing play/pause/loading state. Non-listen rows are unchanged. The row label continues to link to `/pages/{rangeStart}`.
 
@@ -100,7 +102,7 @@ Walked through with the user (2026-07-30):
   - `stop()`: clears `rangeRepeatOverrideRef.current = null; setActiveOverride(null);`.
   - `RecitationContextType`: `play` typed with `PlaybackOverride`; `activeOverride: ActiveOverride | null`.
 - `app/lib/plans/assignment-range.ts` (new) — `isPageInAssignmentRange(assignment, page)` (shared with `PlansWidget`'s `inRange`) and `planPlaybackSessionId(planId, trackKey)`.
-- `app/components/RecitationSettingsSheet.tsx`: read `activeOverride` from `useRecitation()`; when non-null, render a small read-only banner (icon + `activeOverride.label`) directly under `SheetTitle`/`SheetDescription`, above the Reciter section. No other control in the sheet changes.
+- `app/components/RecitationSettingsSheet.tsx`: read `activeOverride` from `useRecitation()`; when non-null, render a small read-only banner (icon + `activeOverride.label`) directly under `SheetTitle`/`SheetDescription`, above the Reciter section. **Also, when `activeOverride != null`:** pass `disabled` to the "Stop at" `RadioGroup` (each pill's className branch adds the disabled visual state); thread a new `disabled?: boolean` prop through `CustomRangePicker` (Page/Verse toggle, page `Input`, `SurahCombobox` trigger, ayah `Input`) and through `RepeatStepper` (both buttons), passing it only at the "Repeat whole range" call site, not "Repeat each ayah". Reciter / speed / pause-between-repeats unchanged.
 - `app/components/plans/PlanAssignmentRow.tsx`:
   - New required `planId: number` prop; `sessionId = planPlaybackSessionId(planId, assignment.trackKey)`.
   - For `assignment.activity === "listen"`, prefetch `usePageVerseBounds(assignment.rangeStart, { enabled: true })` and, when `rangeEnd !== rangeStart`, `usePageVerseBounds(assignment.rangeEnd, { enabled: true })`; a single `bounds` object plus `boundsError`/`boundsLoading` distinguish pending from failed, with a retry affordance on error.
@@ -110,27 +112,29 @@ Walked through with the user (2026-07-30):
 - `app/components/plans/PlansWidget.tsx` / `PlansTodayHero.tsx` / `MyPlansList.tsx` — pass `planId` to `PlanAssignmentRow`; `PlansWidget`'s `inRange` uses the shared `isPageInAssignmentRange`.
 - `messages/ar.json` / `messages/en.json` — aria-labels for the new play/pause/loading/retry button states (mirrors the existing check-off button's `aria-label` pattern), plus copy for the settings-sheet indicator banner.
 - `.gitignore` — `/app/generated/` → `/app/generated` (trailing slash only matches a directory, not the worktree symlink of that name).
+- `docs/architecture/DECISIONS.md` — the Recitation Playback decision's override paragraph: the sheet disables Stop-at + Repeat-whole-range (+ `CustomRangePicker`) during an active override; Stop is the only way out.
 
 ## Constraints
 
 - No toast/nudge/check-off-on-completion logic in this task — tracked as Trello #161.
 - `rangeRepeatOverrideRef` must never leak into a plain (non-override) `play()` call — always reset to `null` when `play()` is called without `overrides`.
-- The settings sheet (`RecitationSettingsSheet`) stays fully editable at all times — no new disabled states, no new "following your wird" copy in this task.
+- While `activeOverride != null` the sheet disables exactly the Stop-at `RadioGroup`, `CustomRangePicker`'s four controls, and the Repeat-whole-range stepper — nothing else. Stop is the only way out of an override session. No new "following your wird" microcopy beyond the existing "Playing: {label}" banner. (This reverses the original "fully editable, no disabled states" constraint — see Revision History.)
 - "Is this row active" is an identity check (`activeOverride?.id === planPlaybackSessionId(planId, trackKey)`), not a page-range comparison — a page overlap alone doesn't mean this row launched the session (revised 2026-07-31, see Verified Test Case 8). `PlansWidget`'s separate `inRange` highlight is a progress hint and legitimately stays page-based; the shared page-range comparison it uses lives in `app/lib/plans/assignment-range.ts` — do not re-inline it.
 - Bounds resolution always passes `DEFAULT_MUSHAF_ID` to `fetchPageBounds`/the `/bounds` route — never the reader's currently-active edition — since plan assignments are page-canonical against the default edition only (predates ADR 0033).
 - Bounds queries are prefetched only for listen-activity rows, not every row — avoid firing 2 extra requests per non-listening track.
-- The indicator banner is read-only/informational only — it must not add any disabled state, tooltip-blocking, or other interaction change to the Stop-at/Repeat controls it sits above. Touching them still silently ends the override, exactly as before.
+- The indicator banner is read-only/informational — it must not add tooltips or any interaction change beyond the deliberate disabling of the Stop-at and Repeat-whole-range controls described above.
 
 ## What NOT to Do
 
 - Do not build a completion nudge/toast, or add a toast library, in this task — deferred to Trello #161.
-- Do not disable or hide the settings sheet's stop-point/range-repeat controls during a wird session — confirmed with the user to leave them fully editable, ending the wird framing on change instead.
 - Do not invent a new "range playback" concept/context separate from `RecitationContext` — extend the existing `play()` with an optional override, reusing all existing chaining/repeat machinery.
 - Do not resolve page bounds by reusing the existing verseKey-driven `/api/quran/verses/[verseKey]/stop-point` route — it requires a starting verse, not a bare page number; `/pages/[pageId]/bounds` is the page-number-only lookup.
 - Do not resolve page bounds against `Verse.page_number` directly — that column only reflects the default edition (ADR 0033); always resolve through `mushaf_word_layouts` (the `/bounds` route already does this).
 - Do not treat husun's `tahdeer` repetitions as per-ayah repeat — confirmed whole-range repeat (play start→end once per pass, repeat the whole pass N times).
-- Do not disable, gray out, or otherwise change the interactivity of Stop-at/Repeat controls when the indicator is showing — informational banner only, per the original "fully editable" constraint above.
-- Do not add a warning/note about what happens if the user touches those controls (considered and explicitly declined) — the banner disappearing when they do is enough signal.
+- Do not disable Reciter, "Repeat each ayah", playback speed, or pause-between-repeats during an override — none of them conflict with it.
+- Do not add a "release"/"take over" affordance — Stop is the only way out of an override session (confirmed with the user).
+- Do not add explanatory copy next to the disabled controls — the existing "Playing: {label}" banner is the only context.
+- Do not remove the two "clears the override" effects — since the sheet no longer lets those settings change while an override is live, they can't fire from the UI, but they stay as a defensive backstop, not dead code.
 
 ## Decisions Made
 
@@ -138,43 +142,11 @@ Walked through with the user (2026-07-30):
 - `assignment.repetitions` (when set) means whole-range repeat, not per-verse repeat.
 - Page-bounds resolution (extending the existing edition-aware `/bounds` route, fixed to `DEFAULT_MUSHAF_ID`) + `play()` override mechanism, rather than a new parallel playback API — reuses all of `RecitationContext`'s existing chaining/repeat logic.
 - Reconciled 2026-07-30 (merge with `main`): `main` had gained ADR 0033 (mushaf editions) since this plan was written. The originally-planned standalone `verse-bounds` route was dropped in favor of extending the pre-existing `/bounds` route — see "Page-bounds resolution" in Approach.
-- Settings sheet stays fully editable during a wird playback session; touching stop-point/range-repeat controls simply ends the wird framing for that session (no disabled states, no special UI treatment).
+- During an active override the sheet disables exactly the Stop-at and Repeat-whole-range controls (and `CustomRangePicker` when `stopPoint === "custom"`); everything else stays interactive. Stop is the only way to end an override session. (2026-08-01 — deliberate reversal of the original "fully editable, no disabled states" decision, confirmed with the user; the read-only banner alone was not enough differentiation.)
 - Completion nudge/toast deferred to a separate ticket (Trello #161) since no toast system exists yet and picking one is its own decision.
 - Settings-sheet indicator: track name + page range (e.g. "Listening · Page 1–5"), placed as a banner directly under the sheet title, informational only — no change to control interactivity or a warning note (2026-07-30, prompted by manual testing surfacing the disconnect).
 - Review fixes (2026-07-31, see `docs/plans/listening-wird-inline-playback-fixes.md`): overrides carry a stable `id` (`activeOverride: { id, label } | null`) so a row's "active" state is an identity check, not a page-range comparison; `decideChapterEnd` takes `isRepeatableRange` instead of the raw `stopPoint` so an override's whole-range repeat is never silently gated by an unrelated persisted `"none"` setting; editing "Repeat whole range" mid-session now clears the override via its own effect (separate from the stop-point effect, so it never re-resolves the stop target); `activeOverride` is set optimistically before the network awaits in `play()` and cleared on both its failure paths, fixing a stale banner leak; `PlanAssignmentRow`'s bounds handling distinguishes pending from failed with a retry affordance, and honors the row's `disabled` prop for starting (not pausing) playback; the page-range comparison duplicated between `PlanAssignmentRow` and `PlansWidget` is now shared via `app/lib/plans/assignment-range.ts`.
 
-## Addendum — Disable Stop-at/Repeat During an Override (2026-08-01)
+## Revision History
 
-**Supersedes:** the Constraints/What-NOT-to-Do items above saying "the settings sheet stays fully editable at all times, no new disabled states" — that decision is explicitly reversed here, not silently violated. The read-only banner alone didn't read as strong enough visual differentiation; disabling the two controls the override actually supersedes makes it unambiguous.
-
-**Scope — exactly two controls, nothing else.** While `activeOverride != null`, `RecitationSettingsSheet` disables:
-- The "Stop at" `RadioGroup` (all 6 pills) — pass `disabled={activeOverride != null}` to the `RadioGroup` root; Radix cascades `disabled` to every `RadioGroupItem`, and a `disabled` radio input ignores its associated `<label>` click natively. Add the same boolean to each pill's className branch so the visible label looks disabled too (opacity/cursor), since the pills render their own styled `<label>` around a `sr-only` input rather than relying on the input's own visual state.
-- `CustomRangePicker`'s own controls, when `settings.stopPoint === "custom"` was already selected before the override started: the Page/Verse toggle buttons, the page number `Input`, `SurahCombobox`'s trigger `Button`, and the ayah number `Input`. `CustomRangePicker` gains a `disabled?: boolean` prop threaded to all four.
-- The "Repeat whole range" `RepeatStepper` — `RepeatStepper` gains a `disabled?: boolean` prop threaded to both its `+`/`-` `Button`s (shadcn `Button`'s base classes already style `disabled:pointer-events-none disabled:opacity-50`, no new styling needed there).
-
-**Left alone, deliberately:** Reciter (`ReciterCombobox`), "Repeat each ayah" (the other `RepeatStepper` call), Playback speed, Pause between repeats. None of these interact with `rangeRepeatOverrideRef`/`stopVerseKeyRef` — they already apply on top of an override session unchanged (reciter swap reloads the current chapter's audio at the same position; per-ayah repeat, speed, and pause-between-repeats are read directly off `settings` by `handleTimeUpdate`/`scheduleSeek` regardless of override state).
-
-**No new escape hatch, no new copy.** Previously, touching Stop-at/Repeat while an override was live silently ended the wird framing (fell back to plain settings-driven playback) — that was the *only* non-Stop way out of an override session. With those controls disabled, Stop is now the only way to end one. This is intentional (confirmed with the user) — no replacement "release" affordance is added. No explanatory microcopy is added next to the disabled controls either — the existing "Playing: {label}" banner above them is the only context, per the same "no new 'following your wird' copy" spirit the original constraint already established (even though the constraint's "no disabled states" half is reversed, its "no extra copy" half still holds).
-
-**The two "clears the override" effects (stop-point-changed, rangeRepeatCount-changed) are left in place, unused-but-harmless.** Since the sheet no longer lets the user change `settings.stopPoint`/`settings.rangeTo`/`settings.rangeRepeatCount` while an override is active, those effects can no longer fire from this UI — but they stay as a defensive backstop against any future non-sheet caller of `updateSettings` for those keys, and removing them buys nothing.
-
-### Files to Change (this addendum)
-
-- `app/components/RecitationSettingsSheet.tsx`:
-  - `RadioGroup` (Stop at): add `disabled={activeOverride != null}`; each pill's `<label>` className branch adds a disabled visual state.
-  - `CustomRangePicker`: new `disabled?: boolean` prop (default `false`), threaded to the Page/Verse toggle buttons, page `Input`, `SurahCombobox` trigger, and ayah `Input`; call site passes `disabled={activeOverride != null}`.
-  - `RepeatStepper`: new `disabled?: boolean` prop (default `false`), threaded to both stepper `Button`s; only the "Repeat whole range" call site passes `disabled={activeOverride != null}` — the "Repeat each ayah" call site does not.
-- `docs/architecture/DECISIONS.md` — update the Recitation Playback decision's override paragraph: replace "the sheet gains no disabled states" with the reversed rule and a pointer to this addendum.
-
-### What NOT to Do (this addendum)
-
-- Do not disable Reciter, "Repeat each ayah", Playback speed, or Pause between repeats — none of them conflict with an active override.
-- Do not add a "release"/"take over" affordance — Stop is the only way out, confirmed with the user.
-- Do not add explanatory copy next to the disabled controls — the existing top banner is the only context.
-- Do not remove the two "clears the override" effects — they're a harmless defensive backstop, not dead code to clean up.
-
-### Decisions Made (this addendum)
-
-- Disabling Stop-at + Repeat-whole-range during an active override supersedes the original "fully editable, no disabled states" constraint — confirmed with the user as a deliberate reversal, not an oversight.
-- Scope is exactly those two controls; everything else in the sheet stays interactive since it doesn't interact with the override.
-- No escape hatch beyond Stop; no new explanatory copy beyond the existing banner.
+- 2026-08-01 — folded Addendum "Disable Stop-at/Repeat During an Override". **Supersedes the original "settings sheet stays fully editable at all times, no new disabled states" constraint** — the read-only banner alone was not enough visual differentiation. While `activeOverride != null` the sheet now disables the "Stop at" `RadioGroup`, `CustomRangePicker`'s four controls (when `stopPoint === "custom"`), and the "Repeat whole range" `RepeatStepper` — via a new `disabled?: boolean` prop on `CustomRangePicker` and `RepeatStepper`. Reciter, "Repeat each ayah", speed, and pause-between-repeats stay interactive. Stop becomes the only way to end an override session; no "release" affordance, no explanatory microcopy. The two "clears the override" effects can no longer fire from the sheet but stay as a defensive backstop.

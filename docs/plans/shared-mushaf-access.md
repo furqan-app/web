@@ -198,13 +198,7 @@ rendering client sub-components for the dynamic lists (React Query). Container
 
 ### Viewing indicator (grant reader)
 
-The reader's viewport-fit math is `min-h-[calc(100dvh-3.5rem)]` and assumes
-**only** the 56px nav (ADR 0004/0011). Do **not** add a stacked banner row — it
-would eat the safha budget and reintroduce scroll. Instead render a **floating
-overlay chip**: fixed, top-centre (or top-`start`), `z`-above content,
-`bg-card/95 backdrop-blur border shadow-sm rounded-full`, small `Eye` icon +
-"Viewing {owner}'s mushaf" + an `X`/"Exit" link back to `/[locale]/pages/1` (or
-Home). `pointer-events` only on the chip. RTL-aware placement.
+The reader's viewport-fit math is `min-h-[calc(100dvh-3.5rem)]` and assumes **only** the 56px nav (ADR 0004/0011), so no stacked banner row. **Final form** (after four iterations — fixed pill → collapsible → inline expandable → static eye): `app/components/reader/ViewingChip.tsx` is a `size-4` static pulsing `Eye` (bespoke `flicker` keyframe in `tailwind.config.ts`, one dip per 3s, `motion-reduce:animate-none`) — **no interactivity, no visible label, no Exit link**. Owner name via `title`/`aria-label` only (`mushaf.viewingChip`). Rendered in `QuranSafha`'s header start cell when `grantId` is present; falls back to `mushaf.viewingChipGeneric` ("Viewing another user's mushaf") when the owner name is null/empty (gate on `grantId`, never on the name — an empty name must not drop the only grant indicator). Exit is via `SharedMushafLink` in the navbar. Component lives under `app/components/reader/` (imported by `QuranSafha`), not the grant route folder.
 
 ### Mark attribution (`MarkModal`)
 
@@ -215,13 +209,7 @@ reader too (owner sees teacher-made marks attributed). No layout shift when abse
 
 ### Navbar link
 
-Follow the existing nav ghost-icon idiom (like the sidebar trigger / settings),
-not the circular page-nav buttons (those are reading-view only). Icon: `Users`.
-- **Desktop**: an entry in `UserMenu` dropdown (and/or an icon-link in the nav end
-  cluster), signed-in only.
-- **Mobile**: `UserMenu` is `hidden md:flex`, so add a reachable entry on the
-  mobile surface too — in `SettingsSidebar` near `AccountCard`. Verify both
-  breakpoints have access (cf. DECISIONS "Sidebar Trigger" incident).
+A single `app/components/nav/SharedMushafLink.tsx` in the Nav end cluster — ghost-idiom `Link` to `/mushaf`, `Users` icon, icon+label on desktop / icon-only on mobile (`hidden md:inline` on the label), visible signed-in or out. Not a `UserMenu` dropdown entry and not a `SettingsSidebar` entry — the two-surface approach was replaced by this one always-visible link.
 
 ## Build Order (phased — mirrors the Trello checklist)
 
@@ -256,17 +244,25 @@ across RTL, mobile, and dark; `npm run lint` + `npm run build`.
 - `app/hooks/use-marks.ts` — optional `grantId`, include in query key.
 - `app/components/QuranSafha.tsx` — accept + thread `grantId`.
 - `app/components/MarkModal.tsx` — thread `grantId`; render "Marked by {name}".
-- `app/[locale]/mushaf/layout.tsx`? (only if the hub needs the shell) / `app/[locale]/mushaf/page.tsx` — hub.
-- `app/[locale]/mushaf/[grant]/layout.tsx` — grant guard + sidebar + banner.
-- `app/[locale]/mushaf/[grant]/pages/[id]/page.tsx` — grant reader (no static params).
-- `app/components/reader/ViewingChip.tsx` (client) — in-header viewing-indicator eye (moved from `[locale]/mushaf/[grant]/` — see Addendum 3).
+- `app/[locale]/mushaf/page.tsx` — hub; also reads `searchParams.removed` and renders `AccessRemovedBanner` when `?removed=1`.
+- `app/[locale]/mushaf/[grant]/layout.tsx` — grant guard: `if (!viewerId) redirect(`/${locale}`)` (logout → locale home, full reload so the theme applies); `if (!grantRecord || grantRecord.viewer_user !== viewerId) redirect(`/${locale}/mushaf?removed=1`)` (revoked/wrong-viewer → hub with banner, **not** `notFound()` — a layout `notFound()` renders the unthemed root 404).
+- `app/[locale]/mushaf/[grant]/pages/[id]/page.tsx` — grant reader (no static params); resolves the owner name and passes `viewingOwnerName` to `ReaderPage` → `QuranSafha`.
+- `app/not-found.tsx` — themed root 404: theme tokens (`bg-background`/`text-foreground`/`text-primary`), plain `<a>` links (not `next/link` — client nav from the root-layout 404 can arrive before the locale CSS chunk), a Shared Mushaf link. (`app/[locale]/not-found.tsx` only fires for `notFound()` in a *page*, not a layout.)
+- `app/components/mushaf/AccessRemovedBanner.tsx` — **new**, dismissible, amber `AlertTriangle` style; generic copy ("You no longer have access to this mushaf." — no owner name; naming the owner in the wrong-viewer case leaks identity, ADR 0012). No "request access" button.
+- `app/components/reader/ViewingChip.tsx` (client) — in-header `size-4` static pulsing eye; `ownerName?: string | null` with generic fallback; gate on `grantId`.
+- `app/components/nav/SharedMushafLink.tsx` — **new**, single always-visible nav link (replaces the `UserMenu` + `SettingsSidebar` entries).
 - `app/components/mushaf/*` — hub client sub-components: `GenerateCodeCard`, `RedeemCodeCard`, `AccessibleMushafList`, `GrantedViewersList` (+ shared empty-state/row bits).
 - `app/hooks/use-access-grants.ts` — React Query: list grants, generate code, redeem code, revoke grant (invalidate on mutate).
 - `app/server/actions/mushaf/*` — fetch wrappers for the `/api/mushaf/*` endpoints (mirror the `getPageMarks`/`addPageMark` style).
 - `components/ui/input.tsx` — add via `npx shadcn@latest add input` if not present (redeem field).
 - Navigation components (`NavigationArrow` in `pages/[id]/page.tsx`, `QuranSwipeNav`, `Sidebar`) — accept `readerBasePath`.
-- `app/components/nav/UserMenu.tsx` + `app/components/SettingsSidebar.tsx` (mobile surface) — "Shared mushaf" link, signed-in only.
-- `messages/ar.json`, `messages/en.json` — new keys (`mushaf.*`, `markModal.markedBy`).
+- `app/api/mushaf/grants/route.ts` + `app/server/actions/mushaf/accessGrants.ts` + hub list components — **do not** select or return `email` (ADR 0012: no email exposure).
+- `app/api/mushaf/codes/redeem/route.ts` — redeem is transactional (`appPrisma.$transaction` wrapping the code-spend `updateMany` + the grant `upsert`), so a failed upsert never permanently strands a spent code.
+- `app/middlewares/auth-middleware.ts` — set the trusted `user` token on the **request** headers passed into the handler (`new Headers(req.headers)` → `delete("user")` → `set("user", …)` → `NextResponse.next({ request: { headers } })`), never on the response header. A response header lets clients forge the `user` request header and leaks the token to the browser. Update DECISIONS.md "Auth" + ADR 0012 consequence.
+- `app/api/mushaf/access.ts` — shared `upsertMark`/`deleteMark` helpers used by both the grant and self marks routes; `withAuthorNames` short-circuits (filter to foreign `from_user` ids, skip `user.findMany` when all marks are own — the common path on every page turn).
+- `app/server/actions/mushaf/*` — the share-code action is `requestShareCode` (renamed from `generateShareCode` — collided with the crypto util in `app/utils/share-code.ts`).
+- Grant marks route — `Number(context.params.pageId)` consistently (was mixing `parseInt`/`Number`).
+- `messages/ar.json`, `messages/en.json` — `mushaf.*` (incl. `viewingChip`, `viewingChipGeneric`, `accessRemoved*`), `markModal.markedBy`.
 
 ## Constraints (discovered)
 
@@ -286,6 +282,11 @@ across RTL, mobile, and dark; `npm run lint` + `npm run build`.
 - **Static self-reader untouched.** The grant reader is a separate dynamic route;
   do not add dynamic rendering or `grantId` handling to `/[locale]/pages/[id]`
   (Static Generation Strategy).
+- **The trusted `user` token is set on request headers, never response headers** — a response header is client-forgeable and leaks to the browser (Addendum 5 security fix; DECISIONS.md "Auth").
+- **No `email` anywhere in the grant/hub surface** (ADR 0012).
+- **The grant layout redirects, never `notFound()`s** — `!viewerId` → `/{locale}`, revoked/wrong-viewer → `/{locale}/mushaf?removed=1`. A layout `notFound()` renders the unthemed root 404.
+- **`AccessRemovedBanner` copy is generic** — never names the owner (naming them in the wrong-viewer case leaks identity, ADR 0012).
+- **`ViewingChip` is gated on `grantId`, not the owner name** — a null/empty name must not drop the indicator.
 
 ## Decisions Made (from planning Q&A)
 
@@ -298,61 +299,10 @@ across RTL, mobile, and dark; `npm run lint` + `npm run build`.
 - **Viewer entry:** dedicated `/mushaf/[grant]/pages/[id]` route (not a `?owner=`
   param on the self reader).
 - **Powers:** granted viewer can view **and** edit marks (writes attributed to them).
-
-## Addendum 1 — Navbar link: single always-visible entry + ViewingChip evolution (2026-07-05)
-
-**Navbar link (shipped):** Replace the two-surface link (UserMenu dropdown + SettingsSidebar) with a single `SharedMushafLink.tsx` in the Nav end cluster — ghost-idiom `Link` to `/mushaf`, `Users` icon, icon+label on desktop / icon-only on mobile (`hidden md:inline`), visible signed-in or out. Remove the link from `UserMenu.tsx` and `SettingsSidebar.tsx`.
-
-**ViewingChip final state (after 4 iterations: fixed pill → collapsible → inline expandable → static eye):** `app/components/reader/ViewingChip.tsx` is a `size-4` static pulsing eye (bespoke `flicker` keyframe in `tailwind.config.ts` — a single dip per 3s cycle, `motion-reduce:animate-none`), no interactivity, no label, no Exit link. Owner name via `title`/`aria-label` only (`mushaf.viewingChip`: "Viewing {name}'s mushaf" / "تتصفح مصحف {name}"). Rendered in `QuranSafha`'s header start cell when `viewingOwnerName` is set; self reader has no chip. Exit available through `SharedMushafLink` in the navbar.
-
-Component location: moved from `app/[locale]/mushaf/[grant]/ViewingChip.tsx` → `app/components/reader/ViewingChip.tsx` (reader component, imported by `QuranSafha`). Grant `layout.tsx` no longer renders it; grant `pages/[id]/page.tsx` resolves the owner name and passes it as `viewingOwnerName` to `ReaderPage` → `QuranSafha`.
-
-## Addendum 5 — Review fixes from /review-fq-work (2026-07-05)
-
-**Security:**
-1. Drop `email` from `grants/route.ts` select (ADR 0012: "no email exposure") — remove from `GrantUser` type and hub list components.
-2. Make redeem transactional — `appPrisma.$transaction` wrapping `updateMany` (spend) + `upsert` (grant) so a failed upsert doesn't permanently strand a spent code.
-3. Gate `<ViewingChip>` on `grantId` (not `viewingOwnerName`) — a null/empty owner name shouldn't drop the only grant-view indicator. `ViewingChip` gets `ownerName?: string | null`; falls back to `mushaf.viewingChipGeneric` ("Viewing another user's mushaf").
-4. **Harden the `user` auth header** — `auth-middleware.ts` was setting the trusted token on the response header; handlers reading it from the request means (a) clients could forge a `user` request header and (b) the token leaked to the browser. Fix:
-   ```ts
-   const requestHeaders = new Headers(req.headers);
-   requestHeaders.delete("user");
-   requestHeaders.set("user", JSON.stringify(token));
-   return middleware(req, event, NextResponse.next({ request: { headers: requestHeaders } }));
-   ```
-   Update DECISIONS.md "Auth" section + add consequence to ADR 0012.
-
-**Code quality:**
-5. Rename `generateShareCode` action → `requestShareCode` (name collision with the crypto util in `app/utils/share-code.ts`).
-6. Extract `upsertMark`/`deleteMark` shared helpers to `app/api/mushaf/access.ts`; both marks routes use them. Grant route keeps its `getGrantForViewer` pre-check; self route keeps `to_user = from_user = self`.
-7. Short-circuit `withAuthorNames` — filter to foreign `from_user` ids only; skip the `user.findMany` entirely when all marks are own (common path on every page turn).
-8. Standardize `Number(context.params.pageId)` in grant marks route (was mixing `parseInt`/`Number`).
-
-**Files to change:** `grants/route.ts` (#1), `accessGrants.ts` (#1, #5), hub list components (#1), `redeem/route.ts` (#2), `page.tsx` (#3), `QuranSafha.tsx` (#3), `ViewingChip.tsx` (#3), `auth-middleware.ts` (#4), `access.ts` (#6, #7), grant marks route (#6, #8), self marks route (#6), messages (#3), `DECISIONS.md` + ADR 0012 (#4).
-
-## Addendum 6 — Logout on a grant page 404s (2026-07-05)
-
-**Bug:** Logging out while on `/{locale}/mushaf/{grant}/pages/{n}` showed a bare 404. Root cause: the grant layout called `notFound()` for unauthenticated users; on logout `signOut()` reloads the grant URL, finds no session, and `notFound()` renders the **root** `app/not-found.tsx` (above `[locale]`, no theme providers). The colorless home was a side effect of this root 404 on soft-nav — not a theme bug.
-
-**Fix:** `app/[locale]/mushaf/[grant]/layout.tsx` — distinguish unauthenticated from wrong-viewer:
-```ts
-if (!viewerId) redirect(`/${locale}`);          // logout → locale home (full reload → theme applied)
-if (!grantRecord || grantRecord.viewer_user !== viewerId) notFound(); // genuine 404
-```
-
-## Addendum 7 — Revoked access shows unstyled 404 (2026-07-05)
-
-**Bug:** Reload after grant revocation shows a bare, unstyled 404. Root causes: (1) grant layout called `notFound()` on missing/wrong-viewer; (2) all `notFound()` calls (and unmatched URLs) route to the **root** `app/not-found.tsx` above `[locale]` — no theme providers, no app CSS. Note: `app/[locale]/not-found.tsx` only fires for `notFound()` in a *page*, not a layout — the root file must be fixed.
-
-**Fix A — Themed root 404:** Rewrite `app/not-found.tsx` to use theme tokens (`bg-background`/`text-foreground`/`text-primary`) and plain `<a>` links (not `next/link` — client nav from the root-layout 404 can arrive before the locale CSS chunk loads). Add a Shared Mushaf link with the `◆` header treatment.
-
-**Fix B — Revoked viewer → hub with banner:** Replace `notFound()` on missing/wrong-viewer with:
-```ts
-redirect(`/${locale}/mushaf?removed=1`);
-```
-Hub reads `searchParams.removed` and renders a dismissible `AccessRemovedBanner` ("You no longer have access to this mushaf." — generic, no owner name: row is deleted on revoke; naming the owner in the wrong-viewer case would leak identity per ADR 0012). Hub is the right landing: shows current access, where user would redeem a new code.
-
-**Files:** `app/not-found.tsx` (Fix A), `[grant]/layout.tsx` (Fix B redirect), `mushaf/page.tsx` (render banner), `AccessRemovedBanner.tsx` (new, dismissible, amber `AlertTriangle` style), messages, DECISIONS.md + COMPONENTS.md. No "request access" button — no approval flow in ADR 0012.
+- **ViewingChip** (Addendum 1, after 4 iterations): a `size-4` static pulsing eye, no interactivity/label/Exit link; owner via `title`/`aria-label`; lives in `app/components/reader/`.
+- **Navbar link** (Addendum 1): one always-visible `SharedMushafLink.tsx` in the Nav end cluster — not a `UserMenu`/`SettingsSidebar` pair.
+- **Redeem is transactional; the `user` auth token is request-header-only; no email exposure; `requestShareCode` not `generateShareCode`; shared `upsertMark`/`deleteMark` helpers; `withAuthorNames` short-circuits** (Addendum 5).
+- **Grant layout redirects (never `notFound()`); root 404 is themed; revoked viewer → hub `?removed=1` + generic `AccessRemovedBanner`** (Addenda 6, 7).
 
 ## What NOT to do
 
@@ -362,3 +312,18 @@ Hub reads `searchParams.removed` and renders a dismissible `AccessRemovedBanner`
 - Do not add relations between the new tables and `User`/`Mark`.
 - Do not make `/[locale]/pages/[id]` dynamic or owner-aware.
 - Do not trust the grant id from the URL without the server-side viewer check.
+- Do not set the trusted `user` token on a **response** header — request headers only (forgeable + leaks otherwise).
+- Do not `notFound()` from the grant layout — redirect (`app/[locale]/not-found.tsx` only catches page-level `notFound()`, not layout).
+- Do not name the owner in `AccessRemovedBanner` or any wrong-viewer message (ADR 0012 identity leak).
+- Do not gate `ViewingChip` on the owner name — gate on `grantId`.
+- Do not give `ViewingChip` a label, Exit link, or any interactivity — the navbar `SharedMushafLink` is the exit.
+- Do not select `email` in any grant/hub query or type.
+- Do not add a "request access" button to the removed-access banner — there is no approval flow.
+
+## Revision History
+
+- 2026-07-05 — folded Addendum 1: `SharedMushafLink.tsx` replaces the `UserMenu` + `SettingsSidebar` two-surface link with one always-visible nav entry; `ViewingChip` **supersedes the base plan's interactive floating "Exit" chip** — after four iterations it is a non-interactive `size-4` pulsing eye in `QuranSafha`'s header, owner name via `aria-label` only, moved to `app/components/reader/`.
+- 2026-07-05 — folded Addendum 5 (`/review-fq-work`): drop `email` from grant selects; transactional redeem; gate `ViewingChip` on `grantId` not owner name; **harden the `user` auth header to request-headers-only** (a response header is forgeable and leaks to the browser); rename `generateShareCode` → `requestShareCode`; extract shared `upsertMark`/`deleteMark`; short-circuit `withAuthorNames`; standardize `Number(pageId)`.
+- 2026-07-05 — folded Addendum 6: logging out on a grant page 404'd (layout `notFound()` for unauthenticated). Fix: `if (!viewerId) redirect(`/${locale}`)`.
+- 2026-07-05 — folded Addendum 7: reload after revocation showed an unstyled root 404. Fix: themed `app/not-found.tsx` (theme tokens, plain `<a>`); the grant layout redirects revoked/wrong-viewer to `/{locale}/mushaf?removed=1`, where the hub renders a generic dismissible `AccessRemovedBanner` (no owner name — ADR 0012).
+

@@ -2,7 +2,7 @@
 title: Fold the 29 addendum-bearing plans into single coherent specs
 type: chore
 date: 2026-09-02
-status: in-progress
+status: implemented
 area: workflow
 issue: 510
 supersedes: []
@@ -52,20 +52,22 @@ The step-3 fold bullet currently says "merge the addendum's content into the bod
 
 An addendum count of 1 does **not** mean a small fold — several single addenda are total supersessions (`reader-line-rhythm` → ADR 0054 replaces the whole `FONT_V1` model; `fix-safha-swipe-flicker` → the `loadedFonts` Set was removed; `arrow-controls-desktop` → arrow nav must not animate). Batch by *fold effort*, not addendum count, and keep each PR reviewable.
 
+All 29 folded across 3 merged PRs (#512 batch 1, #514 batch 2a, and one PR carrying batches 2b–8):
+
 | PR | Plans | Notes |
 |---|---|---|
-| 1 | `mobile-nav-ux`, `word-audio-playback`, `sidebar-surah-indicator`, `home-nav-search` | ✅ merged (#512). Also added the fidelity bar to `ship-task.md`. |
-| 2a | `arrow-controls-desktop`, `fix-safha-swipe-flicker`, `reader-line-rhythm` | Reader supersession folds — each addendum replaces the base plan's core mechanism. |
-| 2b | `fix-page-turn-blank-slow-network`, `feature-pwa-fullscreen-focus-mode`, `listening-wird-inline-playback`, `design-migration/1.1-rewrite-design-principles` | Remaining lighter single-addendum plans. |
-| 2c | `copy-share-verses` | Solo — carries a top `## Revision`, a mid-file `## Approved … Redesign` section, a `## Design Remediation`, and the `## Addendum`; reconcile all of it. |
-| 3 | `home-page-design-fixes`, `pwa-app-stickiness`, `recitation-bar-vertical-rail`, `verse-word-comments`, `design-migration/4.3-screens-search-settings` | 2 addenda each. |
-| 4 | `close-overlays-on-back-swipe`, `release-branch-workflow`, `design-migration/5.1-page-face-and-reader`, `desktop-navbar-font-bg`, `my-marks-page`, `shared-mushaf-access` | 3–4 addenda each. |
-| 5 | `fix-tajweed-font-size`, `tajweed-mushaf-mode`, `visual-e2e-testing` | 5 each — later addenda begin superseding earlier ones. |
-| 6 | `tablet-nav-overlay` | 6. Solo. |
-| 7 | `fix-surah-banner-placement` | 11. Solo. |
-| 8 | `recitation-playback` | 13. Solo. Addendum 12 carries an "Explicit supersessions" list; Addendum 13 supersedes Addendum 10. Reconstruct, do not merge blindly. |
+| 1 | `mobile-nav-ux`, `word-audio-playback`, `sidebar-surah-indicator`, `home-nav-search` | ✅ #512. Also added the fidelity bar to `ship-task.md`. |
+| 2a | `arrow-controls-desktop`, `fix-safha-swipe-flicker`, `reader-line-rhythm` | ✅ #514. Reader supersession folds. |
+| 2b | `fix-page-turn-blank-slow-network`, `feature-pwa-fullscreen-focus-mode`, `listening-wird-inline-playback`, `design-migration/1.1-rewrite-design-principles` | ✅ |
+| 2c | `copy-share-verses` | ✅ Top `## Revision` + mid-file redesign + `## Design Remediation` + `## Addendum` all reconciled. |
+| 3 | `home-page-design-fixes`, `pwa-app-stickiness`, `recitation-bar-vertical-rail`, `verse-word-comments`, `design-migration/4.3-screens-search-settings` | ✅ |
+| 4 | `close-overlays-on-back-swipe`, `release-branch-workflow`, `design-migration/5.1-page-face-and-reader`, `desktop-navbar-font-bg`, `my-marks-page`, `shared-mushaf-access` | ✅ |
+| 5 | `fix-tajweed-font-size`, `tajweed-mushaf-mode`, `visual-e2e-testing` | ✅ First deep stack — `tajweed-mushaf-mode` base superseded by ADR 0033; `visual-e2e-testing` deprecated by #428. |
+| 6 | `tablet-nav-overlay` | ✅ Base overlay/carousel/printed-mushaf all superseded (ADR 0028/0043/0044/0054, design-migration/5.1). |
+| 7 | `fix-surah-banner-placement` | ✅ Gap detection core; frame = extracted KFGQPC glyph, DOM-measured, measurement-gated reveal. |
+| 8 | `recitation-playback` | ✅ Reconstructed from all 13; global playback + attach/detach (ADR 0056) supersedes the hard stop. |
 
-**Issue reference:** intermediate batch PRs must not contain the string `#510` at all — any `#N` mention makes `issue-status-on-merge.yml` add `status:to-be-released` (this happened on PR #512 and had to be reverted). Reference the plan file, or write "issue 510" without the sigil. Only the **final** batch PR uses `Refs #510` to close the umbrella issue. `#510` stays `status:in-progress` until then. No child issues.
+**Issue reference:** intermediate batch PRs must not contain the string `#510` at all — any `#N` mention makes `issue-status-on-merge.yml` add `status:to-be-released` (this happened on PR #512 and had to be reverted). The final batch PR uses `Refs #510` to close the umbrella issue. No child issues.
 
 ## Decision Tree / Algorithm
 

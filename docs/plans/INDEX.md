@@ -54,6 +54,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Home Page Navigation Search (surah name, juz, page)](home-nav-search.md) | implemented | feature |
 | nav | [Mobile Navigation UX](mobile-nav-ux.md) | implemented | feature |
 | nav | [Nav: Dedupe NavPillLink classNames into Shared Component](dedupe-nav-pill-link.md) | implemented | bug |
+| nav | [Reader Nav Overlay (mobile + tablet)](tablet-nav-overlay.md) | implemented | feature |
 | nav | [Restructure Navigation for Clean UX](restructure-navigation.md) | implemented | feature |
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Search Placeholder & Typography Compactness](sidebar-search-font-sizing.md) | implemented | feature |
@@ -61,14 +62,13 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | nav | [Sidebar: Current-Surah Ayah Picker Tab](sidebar-ayah-picker.md) | implemented | feature |
 | nav | [Sidebar: per-tab search filters (Surahs + Rubs tabs)](sidebar-tab-filters.md) | implemented | feature |
-| nav | [Tablet Nav Overlay Effect](tablet-nav-overlay.md) | implemented | feature |
 | observability | [fq-logger: Structured Logging & Observability](fq-logger.md) | implemented | feature |
 | observability | [Sentry Error Tracking](sentry-error-tracking.md) | implemented | feature |
 | observability | [Sentry-to-Slack Alerting via Relay Webhook](sentry-slack-alerts.md) | implemented | feature |
-| pwa | [Feature: Browser Fullscreen & PWA Status-Bar Focus Mode](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
+| pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [Keep Mobile/Tablet Screen Active While App Is Open](keep-screen-awake.md) | implemented | feature |
-| pwa | [PWA App-Launch Stickiness: Auto-Open Last Page + Android Double-Back-to-Exit](pwa-app-stickiness.md) | implemented | feature |
+| pwa | [PWA App-Launch Stickiness: Launch Into Last Page + Android Double-Back-to-Exit](pwa-app-stickiness.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
 | pwa | [PWA: Remove the Root Layout's Unconditional Reciters and Session Network Calls From the Launch Path](pwa-launch-network-calls.md) | implemented | bug |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
@@ -149,9 +149,9 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
 | theming | [Handoff — Reading-Desk Depth for Light & Gold (and de-duplicating the reader CSS)](theme-depth-unification-HANDOFF.md) | superseded | feature |
 | theming | [Session Handoff — Dark Theme Mushaf Unification](dark-theme-mushaf-unification-HANDOFF.md) | superseded | feature |
-| workflow | [Fold the 29 addendum-bearing plans into single coherent specs](fold-plan-addenda.md) | in-progress | chore |
 | workflow | [Configure Project-Local Trello MCP for Codex](configure-project-trello-mcp.md) | implemented | feature |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |
+| workflow | [Fold the 29 addendum-bearing plans into single coherent specs](fold-plan-addenda.md) | implemented | chore |
 | workflow | [Git Workflow Skills (commit/push gating + confirm-dangerous-git)](git-workflow-skills.md) | implemented | feature |
 | workflow | [Git Worktrees Workflow Integration](git-worktrees-workflow.md) | implemented | feature |
 | workflow | [Plan lifecycle — YAML frontmatter, generated INDEX.md, fold-addenda-on-ship](plan-lifecycle-index.md) | implemented | chore |
