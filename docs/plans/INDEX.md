@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-155 plans.
+156 plans.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
@@ -121,6 +121,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | search | [Functional E2E: Search & Discovery Flows](functional-e2e-search.md) | implemented | feature |
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
+| tafsir | [Complex E2E & Fix: Tafsir Sheet Interplay with Page Boundaries & Recitation](e2e-tafsir-page-boundaries-recitation.md) | implemented | feature |
 | tafsir | [Tafsir: Direct QDC Client Provider & Query Hook](tafsir-qdc-provider-and-query-hook.md) | implemented | feature |
 | tafsir | [Tafsir: Responsive Sheet Component & Reader Integration (Issues #459 & #460)](tafsir-responsive-sheet-component.md) | implemented | feature |
 | theming | [Design Migration — reader-lab language, app-wide](design-migration/INDEX.md) | in-progress | feature |
