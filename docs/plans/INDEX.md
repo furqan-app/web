@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-59 active plans.
+60 active plans.
 
 103 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -23,6 +23,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | marks | [Copy and Share Verses from Mark Modal](copy-share-verses.md) | implemented | feature |
 | marks | [Verse/Word Comments](verse-word-comments.md) | implemented | feature |
 | nav | [Close Overlays on Back-Swipe (Mobile/Tablet PWA)](close-overlays-on-back-swipe.md) | implemented | bug |
+| nav | [Complex E2E & Fix: Multi-Layer Overlay Stacks, Gesture Interrupts & History Traversal](e2e-overlay-stacks-history.md) | implemented | feature |
 | nav | [Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation](desktop-navbar-font-bg.md) | implemented | feature |
 | nav | [Fix Sidebar Bottom Clip](fix-sidebar-bottom-clip.md) | implemented | bug |
 | nav | [Mobile Navigation UX](mobile-nav-ux.md) | implemented | feature |

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import { SurahResult } from "@types";
 import { toLocaleNumeral } from "@/app/utils/i18n";
@@ -15,6 +15,7 @@ import {
 } from "@utils/nav-search";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 
 type Props = {
   // The surah the reader is currently in (Sidebar's activeSurah — pin-aware);
@@ -52,6 +53,35 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
   const [target, setTarget] = useState(surah);
   const [picking, setPicking] = useState(false);
   const [listQuery, setListQuery] = useState("");
+  const pickingRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useCloseOnBackGesture(picking, () => setPicking(false));
+
+  const wasPickingRef = useRef(picking);
+  useEffect(() => {
+    if (wasPickingRef.current && !picking) {
+      triggerRef.current?.focus();
+    }
+    wasPickingRef.current = picking;
+  }, [picking]);
+
+  useEffect(() => {
+    if (!picking) return;
+    const el = pickingRef.current;
+    if (!el) return;
+
+    const handleEscape = () => {
+      if (listQuery.trim()) {
+        setListQuery("");
+      } else {
+        setPicking(false);
+      }
+    };
+
+    el.addEventListener("fq:ayah-picker-escape", handleEscape);
+    return () => el.removeEventListener("fq:ayah-picker-escape", handleEscape);
+  }, [picking, listQuery]);
 
   // Shared grammar with tab 1's filter: hamza-folded names AND bare surah
   // numbers ("18" finds الكهف).
@@ -140,6 +170,7 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
     <div className="px-4 py-3">
       {/* Target selector — tapping swaps the body to the searchable surah list */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setPicking((p) => !p)}
         aria-expanded={picking}
@@ -160,14 +191,31 @@ const AyahPicker = ({ surah, surahs, currentPage }: Props) => {
       </button>
 
       {picking ? (
-        <div className="mt-2.5">
+        <div
+          ref={pickingRef}
+          data-ayah-picker-picking="true"
+          className="mt-2.5"
+        >
           <input
             type="text"
             value={listQuery}
             onChange={(e) => setListQuery(e.target.value)}
-            onKeyDown={makeKeyDown(listQuery, () => setListQuery(""), () => {
-              if (filteredList.length > 0) pickTarget(filteredList[0]);
-            })}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                e.stopPropagation();
+                if (listQuery.trim()) {
+                  setListQuery("");
+                } else {
+                  setPicking(false);
+                }
+                return;
+              }
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (filteredList.length > 0) pickTarget(filteredList[0]);
+              }
+            }}
             placeholder={tSidebar("ayahPickSurah")}
             aria-label={tSidebar("ayahPickSurah")}
             dir={locale === "ar" ? "rtl" : "ltr" }

@@ -62,3 +62,17 @@ Active decisions for nav chrome & overlays — sidebar loading/trigger, sheet si
 **Constraints:**
 - The mount-only-`useEffect`-read-from-`localStorage` pattern (as used by `QuranMushafContext`/`QuranSafhaViewContext`/`QuranFontScaleContext`) is still correct for state that's only ever changed by a user action *inside the component that owns it* (a settings toggle, a font-scale slider) — those components re-render on their own write, so staleness never occurs. It is **not** safe for state written by a *different*, independently-mounted component (e.g. a reader-side sync effect writing a value a separate nav link displays).
 - When state crosses that boundary — written by one always-mounted piece, displayed by another — route both through a shared context whose setter updates React state and `localStorage` together, so every consumer re-renders live. See `LastReadPageContext` for the reference shape.
+
+---
+
+## Multi-Layer Overlay Stacks & Cascading LIFO Dismissal
+
+**Status:** active
+
+**Decision:** When multiple overlay layers or in-sheet sub-layers are active (e.g. `Sidebar` → `AyahPicker` search list; `RecitationSettingsSheet` → `ReciterCombobox` popover; `MarkModal` → `TafsirSheet`), dismissal via both keyboard (Escape) and mobile back gestures follows strict LIFO (Last-In, First-Out) order:
+
+1. **Escape Keydown Hierarchy:** An enclosing Radix `SheetContent` checks for nested active sub-layers or popovers (`[data-radix-popover-content]`, `[data-ayah-picker-picking]`) during `onEscapeKeyDown`. When a nested layer is active, the sheet prevents default dismissal (`e.preventDefault()`) and dispatches a dismissal event to the nested layer so it collapses first.
+2. **Mobile Back Gesture LIFO Stack:** `overlay-back-guard.ts` maintains an active `guardStack: OverlayGuardEntry[]`. On `popstate`, only the topmost entry in the stack (`getTopOverlayGuard()`) handles the event and invokes its `onClose` callback. Lower guards and `AndroidBackExitGuard` remain armed and intact.
+3. **In-Sheet Sub-Layers:** Expandable nested sub-layers inside sheets (such as `AyahPicker`'s inline surah picker list) integrate with `useCloseOnBackGesture`, ensuring back swipes collapse the sub-layer before the parent sheet can close.
+
+**Rationale:** Independent overlay and popover layers mounted in separate Radix contexts cannot rely solely on DOM hierarchy or uncoordinated `popstate` listeners. Explicit LIFO stacking prevents multi-layer tearing, accidental parent closure, or unexpected reader exit toasts. See ADR 0055 and issue #472.

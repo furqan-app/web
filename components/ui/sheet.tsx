@@ -67,12 +67,23 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, hideDefaultClose = false, overlayClassName, overlayStyle, ...props }, ref) => (
+>(({ side = "right", className, children, hideDefaultClose = false, overlayClassName, overlayStyle, onEscapeKeyDown, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay className={overlayClassName} style={overlayStyle} />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
+      onEscapeKeyDown={(e) => {
+        // If an open nested Popover exists (e.g. ReciterCombobox, TafsirEditionSelect),
+        // let the popover handle Escape first rather than closing the entire sheet.
+        const hasOpenPopover = document.querySelector("[data-radix-popover-content]");
+        if (hasOpenPopover) {
+          e.preventDefault();
+          hasOpenPopover.dispatchEvent(new CustomEvent("fq:dismiss-popover"));
+          return;
+        }
+        onEscapeKeyDown?.(e);
+      }}
       {...props}
     >
       {children}
