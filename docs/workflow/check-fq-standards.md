@@ -113,5 +113,6 @@ Apply on every task, scoped to the domains actually touched.
 - Don't add error handling for states that can't occur here (e.g. re-validating what middleware already guarantees) — validate only at real boundaries.
 
 **Testing & verification**
-- Verify business logic, helpers, and components with fast unit tests (`npm test` / Vitest).
-- Never run uncapped full-suite Playwright commands locally; scope browser checks to specific test files, run against `npm run e2e:serve` (a production build started once and reused) — E2E does not use `next dev`.
+- Do not run full test suites or local E2E by default (CI runs lint, type-check, unit tests, and Playwright automatically on PRs).
+- Run targeted unit tests (`npx vitest run <file>`) only when adding or modifying pure business logic, calculations, or utilities that have unit tests.
+- Never run uncapped full-suite Playwright commands locally; local E2E is reserved for when specifically working on E2E specs or requested by the user, run targeted against `npm run e2e:serve` (never `next dev`).
