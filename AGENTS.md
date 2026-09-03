@@ -54,7 +54,7 @@ npm run dev              # dev server (port 3000)
 npm run build            # prisma migrate deploy (app DB) + production build
 npm run lint             # ESLint
 npm test                 # Vitest unit tests (fast logic & component verification, < 1s)
-npm run test:e2e         # Playwright functional e2e (uses dev server on :3000 locally, e2e:build on CI)
+npm run test:e2e         # Playwright functional e2e (against a production build on :3000; see e2e:serve below)
 npm run prisma-generate  # regenerate BOTH Prisma clients (quran + app)
 npm run quran-studio     # Prisma Studio for furqan_quran
 npm run app-studio       # Prisma Studio for furqan_app
@@ -70,11 +70,12 @@ Functional e2e (Playwright; uses dedicated e2e DBs from `compose.e2e.yml` — ne
 ```bash
 npm run e2e:db:up        # start e2e MySQL containers
 npm run e2e:setup        # load the e2e fixture
-npm run e2e:test         # run Playwright (dev server locally; e2e:build & e2e:start in CI)
+npm run e2e:serve        # build once + serve on :3000 — start this before running specs
+npm run e2e:test         # run Playwright against the running server (e2e:build & e2e:start fresh in CI)
 npm run e2e:db:down      # tear down e2e DBs
 ```
 
-*Note on builds and tests:* Local `next build` / `e2e:build` concurrency is capped at 2 CPU workers in `next.config.mjs` to keep the machine responsive. Agents should always prefer fast unit tests (`npm test`) for business logic and components, and use Playwright against the local dev server for browser interactions. Full SSG builds are validated in CI.
+*Note on builds and tests:* E2E runs against a production build (`e2e:build && e2e:start`), locally and in CI — `next dev` is not used (its on-demand route compilation is slower, ~16 GB heavier per spec file, and times out). Locally, `npm run e2e:serve` builds once (~4 min, capped at 2 CPU workers via `next.config.mjs`) and stays up; every later `e2e:test` / `npx playwright test <spec>` reuses it. Playwright local workers default to 2 (`PLAYWRIGHT_WORKERS` to change). Prefer fast unit tests (`npm test`) for business logic and components. Full-suite runs are CI-only.
 
 ## Documentation
 

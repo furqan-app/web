@@ -39,11 +39,13 @@ One call — `@me` resolves to the authenticated `gh` account, no separate ident
    # If branch already exists:
    git worktree add ../furqan-<slug> <branch-name>
    ```
-3. Symlink shared dependencies:
+3. Symlink `node_modules` and generate the Prisma client:
    ```bash
    ln -s $(pwd)/node_modules ../furqan-<slug>/node_modules
-   ln -s $(pwd)/app/generated ../furqan-<slug>/app/generated
+   (cd ../furqan-<slug> && npm run postinstall)   # prisma generate for both schemas -> app/generated
    ```
+   Do not symlink `app/generated` from another worktree — it breaks `next build`
+   (`Module not found: @/app/generated/app-client`), which local E2E now relies on.
 
 **Determine whether a dev server is needed** — scan the plan's "Files to Change" section:
 - If **every** listed path is under `docs/` or `.claude/` → docs/tooling task; skip dev server steps.
@@ -128,12 +130,12 @@ Loads the right context (decisions + standards + plan), then implements the task
       git worktree add ../furqan-<slug> <branch-name>
       ```
       Use `git branch --list <branch-name>` to decide which form to run.
-   3. Symlink shared dependencies into the worktree:
+   3. Symlink `node_modules` and generate the Prisma client into the worktree:
       ```bash
       ln -s $(pwd)/node_modules ../furqan-<slug>/node_modules
-      ln -s $(pwd)/app/generated ../furqan-<slug>/app/generated
+      (cd ../furqan-<slug> && npm run postinstall)
       ```
-      The `app/generated` symlink is required — it holds the Prisma client, which the dev server needs at startup. Missing it causes Prisma import errors before the first page loads.
+      `npm run postinstall` runs `prisma generate` for both schemas, producing a complete local `app/generated`. Do **not** symlink `app/generated` from another worktree — it holds the Prisma client, and a symlink resolves inconsistently under `next build` (`Module not found: @/app/generated/app-client`, often surfacing as a misleading `not-found.tsx doesn't have a root layout`). Local E2E now runs a build, so the worktree must be buildable.
    4. **Determine whether a dev server is needed** — scan the plan's "Files to Change" section:
       - If **every** listed path is under `docs/` or `.claude/` → this is a docs/tooling task; skip steps 5–8 (no port, no state file entry, no dev server)
       - If **any** path is under `app/`, `components/`, `lib/`, `prisma/`, or other app directories → proceed with steps 5–8
@@ -188,7 +190,7 @@ Loads the right context (decisions + standards + plan), then implements the task
    - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
    - Apply the decisions you loaded from `docs/architecture/decisions/` — do not re-litigate them.
    - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
-   - Run fast unit tests for logic and components: `npm test` (Vitest, < 1s). If browser verification is necessary, never run the uncapped full suite; target the specific spec against the task dev server with at most 2 workers (`npx playwright test e2e/tests/<spec>.spec.ts --project=desktop --workers=2`). Full-suite and SSG builds are reserved for CI.
+   - Run fast unit tests for logic and components: `npm test` (Vitest, < 1s). If browser verification is necessary, never run the uncapped full suite. Once per session: `npm run e2e:db:up && npm run e2e:setup`, then `npm run e2e:serve` in a separate terminal (one ~4 min production build, then it stays up). Then run the targeted spec against it: `npx playwright test e2e/tests/<spec>.spec.ts --project=desktop` — repeat freely, it reuses that server. E2E does not use `next dev` (on-demand compilation is slower, ~16 GB heavier, and times out). Full-suite runs are reserved for CI.
 
 4. **Record decisions**
    - If the task added, removed, or reorganised any components: update `docs/architecture/COMPONENTS.md` to reflect the new state.
@@ -211,4 +213,4 @@ Loads the right context (decisions + standards + plan), then implements the task
 - Do not add features beyond what the plan specifies.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation (plans, COMPONENTS.md, decisions/*.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
-- Do not run uncapped full-suite Playwright E2E tests locally — prefer `npm test` (Vitest) for logic and components, and scope browser checks to specific test files with `--workers=2`.
+- Do not run uncapped full-suite Playwright E2E tests locally — prefer `npm test` (Vitest) for logic and components, and scope browser checks to specific test files run against `npm run e2e:serve` (never `next dev`).

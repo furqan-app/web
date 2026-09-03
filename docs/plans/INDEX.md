@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-58 active plans.
+59 active plans.
 
 103 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -15,6 +15,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | awrad | [Verse & Fractional-Page Granularity for Awrad](awrad-verse-granularity.md) | implemented | feature |
 | ci | [CI Quality Gate: PR Lint, Typecheck & Vitest Workflow](ci-quality-gate.md) | implemented | feature |
 | ci | [Dev Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit](local-build-and-test-ergonomics.md) | implemented | feature |
+| ci | [Local E2E runs against a production build, like CI](local-e2e-build-path.md) | implemented | chore |
 | ci | [Skip visual e2e on config-only PRs](skip-e2e-config-changes.md) | implemented | feature |
 | ci | [Visual E2E Testing in the Workflow](visual-e2e-testing.md) | implemented | feature |
 | db | [Adopt Prisma Migrations for furqan_app](adopt-prisma-migrations.md) | implemented | feature |
