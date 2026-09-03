@@ -50,15 +50,17 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 
 ---
 
-## Developer Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit
+## Developer Ergonomics: Local Dev Server for Playwright & Worker Concurrency Limits
 
 **Status:** active
 
-**Decision (2026-08-27):** Playwright is configured in `playwright.config.ts` to use `next dev` locally (reusing `http://localhost:3000`), completely bypassing the heavy 1,208-page static compilation during local testing. In CI, it executes `npm run e2e:build && npm run e2e:start` for full SSG validation. Next.js build concurrency (`experimental.cpus`) in `next.config.mjs` is capped at 2 CPU workers locally (overrideable via `NEXT_BUILD_CPUS`) to keep host machines responsive during `npm run build` and `e2e:build`. See `docs/plans/local-build-and-test-ergonomics.md` (Issue #450).
+**Decision (2026-08-27, updated 2026-09-03):** Playwright is configured in `playwright.config.ts` to use `next dev` locally (reusing `http://localhost:3000`), completely bypassing the heavy 1,208-page static compilation during local testing. In CI, it executes `npm run e2e:build && npm run e2e:start` for full SSG validation. Next.js build concurrency (`experimental.cpus`) in `next.config.mjs` is capped at 2 CPU workers locally (overrideable via `NEXT_BUILD_CPUS`), and local Playwright worker concurrency (`workers`) in `playwright.config.ts` is capped at 2 workers (overrideable via `PLAYWRIGHT_WORKERS`). In CI, both remain unconstrained. See `docs/plans/local-build-and-test-ergonomics.md` (Issues #450, #516).
 
-**Rationale:** Generating all 604 mushaf pages across 2 locales (1,208 pages) during production builds maxes out CPU and memory, freezing local development machines. Dev-server execution and CPU worker caps allow instant local test execution and unconstrained CI validation.
+**Rationale:** Generating all 604 mushaf pages across 2 locales (1,208 pages) during production builds maxes out CPU and memory, freezing local development machines. Furthermore, uncapped local Playwright runs spawn parallel Chromium instances that overwhelm `next dev` with concurrent on-demand compilation bursts, thrashing memory and swap. Dev-server execution, CPU worker caps, and Playwright worker concurrency limits allow responsive local development while preserving unconstrained CI validation.
 
 **Constraints:**
 - Local Playwright tests target the dev server (`http://localhost:3000`) and must support `reuseExistingServer: true`.
 - CI must keep running `npm run e2e:build && npm run e2e:start` to validate full SSG static generation before merging.
 - Local `next build` worker count defaults to 2 cores unless overridden by `NEXT_BUILD_CPUS`.
+- Local Playwright worker count defaults to 2 workers unless overridden by `PLAYWRIGHT_WORKERS`.
+- Agents must use `npm test` (Vitest) as their fast primary verification loop, and scope local Playwright executions to targeted test files with at most 2 workers.

@@ -10,6 +10,11 @@ export default defineConfig({
   testDir: "./e2e/tests",
   timeout: 60 * 1000,
   fullyParallel: true,
+  workers: process.env.CI
+    ? undefined
+    : process.env.PLAYWRIGHT_WORKERS
+      ? Number(process.env.PLAYWRIGHT_WORKERS)
+      : 2,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["html", { open: "never" }]] : "list",
