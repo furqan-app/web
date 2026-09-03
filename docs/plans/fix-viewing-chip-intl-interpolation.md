@@ -1,8 +1,12 @@
-# Fix ViewingChip IntlError: missing {name} interpolation variable
+---
+title: "Fix ViewingChip IntlError: missing {name} interpolation variable"
+type: bug
+date: 2026-07-07
+status: implemented
+area: rendering
+---
 
-**Type:** bug  
-**Date:** 2026-07-07  
-**Status:** implemented
+# Fix ViewingChip IntlError: missing {name} interpolation variable
 
 ## Root Cause
 

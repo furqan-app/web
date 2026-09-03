@@ -553,3 +553,162 @@ test.describe("English Locale & Tajweed Edition Continuity", () => {
     await expect(wordInTajweed).toHaveClass(/bg-red-400/, { timeout: 10000 });
   });
 });
+
+test.describe("Auth Gate Redirect Restoration", () => {
+  test("restores word mark modal after OAuth redirect via markWord search param", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "Auth redirect modal restore");
+    await clearAuth(context);
+    await clearUserMarks();
+
+    // 1. Visit signed out and click word
+    await page.goto("/ar/pages/1");
+    await waitForReaderContent(page);
+
+    const firstWord = getActivePanel(page)
+      .locator('[data-fq-word="1:1:1"]')
+      .first();
+    await firstWord.click();
+
+    const signedOutDialog = page.getByRole("dialog");
+    await expect(signedOutDialog).toBeVisible();
+    await expect(signedOutDialog.getByRole("button", { name: "تسجيل الدخول" })).toBeVisible();
+
+    // 2. Simulate post-OAuth return: authenticate session and navigate with ?markWord=1:1:1
+    await authenticateAsUser(context);
+    await page.goto("/ar/pages/1?markWord=1:1:1");
+    await waitForReaderContent(page);
+
+    // 3. Verify modal automatically opens in authenticated state
+    const restoredDialog = page.getByRole("dialog");
+    await expect(restoredDialog).toBeVisible({ timeout: 10000 });
+    await expect(restoredDialog.getByText("تحديد كلمة").first()).toBeVisible();
+    await expect(restoredDialog.getByText(/الفاتحة/)).toBeVisible();
+    await expect(restoredDialog.getByRole("button", { name: "حفظ العلامة" })).toBeVisible();
+    await expect(restoredDialog.locator('label[for="mark-color-forgetting"]')).toBeVisible();
+
+    // 4. Verify markWord param was cleaned from URL
+    await expect(page).not.toHaveURL(/markWord=/);
+
+    await page.keyboard.press("Escape");
+    await expect(restoredDialog).toBeHidden();
+  });
+
+  test("restores verse mark modal after OAuth redirect via markWord search param", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "Verse auth redirect modal restore");
+    await clearAuth(context);
+    await clearUserMarks();
+
+    await authenticateAsUser(context);
+    await page.goto("/ar/pages/1?markWord=1:1");
+    await waitForReaderContent(page);
+
+    const restoredDialog = page.getByRole("dialog");
+    await expect(restoredDialog).toBeVisible({ timeout: 10000 });
+    await expect(restoredDialog.getByText("تحديد آية").first()).toBeVisible();
+    await expect(restoredDialog.locator('label[for="mark-color-tajweed-error"]')).toBeVisible();
+    await expect(page).not.toHaveURL(/markWord=/);
+
+    await page.keyboard.press("Escape");
+    await expect(restoredDialog).toBeHidden();
+  });
+});
+
+test.describe("Reader to My Marks Round-Trip", () => {
+  test("navigating across pages, viewing in My Marks, and jumping back shows mark highlights intact", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "Reader to My Marks round trip");
+    await setupReaderSession(page, context, 1);
+
+    // 1. Mark word 1:1:1 on page 1 as forgetting (red)
+    const wordP1 = getActivePanel(page).locator('[data-fq-word="1:1:1"]').first();
+    await wordP1.click();
+    const dialog1 = page.getByRole("dialog");
+    await expect(dialog1).toBeVisible();
+    await dialog1.locator('label[for="mark-color-forgetting"]').click();
+    await dialog1.getByRole("button", { name: "حفظ: نسيان" }).click();
+    await expect(dialog1).toBeHidden();
+    await expect(wordP1).toHaveClass(/bg-red-400/, { timeout: 10000 });
+
+    // 2. Navigate to page 2 and mark word 2:1:1 as linking (blue)
+    await page.goto("/ar/pages/2");
+    await waitForReaderContent(page);
+    const wordP2 = getActivePanel(page).locator('[data-fq-word="2:1:1"]').first();
+    await wordP2.click();
+    const dialog2 = page.getByRole("dialog");
+    await expect(dialog2).toBeVisible();
+    await dialog2.locator('label[for="mark-color-linking"]').click();
+    await dialog2.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await expect(dialog2).toBeHidden();
+    await expect(wordP2).toHaveClass(/bg-blue-300/, { timeout: 10000 });
+
+    // 3. Navigate to /ar/marks and jump back to page 2
+    await page.goto("/ar/marks");
+    await expect(page.locator("main")).toBeVisible();
+    await expect(page.getByText("البقرة - ١").first()).toBeVisible({ timeout: 10000 });
+
+    const page2Link = page.locator('a[href*="/pages/2"]').first();
+    await page2Link.click();
+    await expect(page).toHaveURL(/\/ar\/pages\/2/);
+    await waitForReaderContent(page);
+
+    const reloadedWordP2 = getActivePanel(page).locator('[data-fq-word="2:1:1"]').first();
+    await expect(reloadedWordP2).toHaveClass(/bg-blue-300/, { timeout: 10000 });
+
+    // 4. Navigate to /ar/marks and jump back to page 1
+    await page.goto("/ar/marks");
+    await expect(page.locator("main")).toBeVisible();
+    await expect(page.getByText("الفاتحة - ١").first()).toBeVisible({ timeout: 10000 });
+
+    const page1Link = page.locator('a[href*="/pages/1"]').first();
+    await page1Link.click();
+    await expect(page).toHaveURL(/\/ar\/pages\/1/);
+    await waitForReaderContent(page);
+
+    const reloadedWordP1 = getActivePanel(page).locator('[data-fq-word="1:1:1"]').first();
+    await expect(reloadedWordP1).toHaveClass(/bg-red-400/, { timeout: 10000 });
+  });
+});
+
+test.describe("My Marks Deletion Cache Freshness", () => {
+  test("deleting a mark from My Marks immediately removes highlight from reader on return", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "Deletion cache freshness");
+    await setupReaderSession(page, context, 1);
+
+    // 1. Mark word 1:1:1 as forgetting
+    const firstWord = getActivePanel(page).locator('[data-fq-word="1:1:1"]').first();
+    await firstWord.click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.locator('label[for="mark-color-forgetting"]').click();
+    await dialog.getByRole("button", { name: "حفظ: نسيان" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(firstWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
+
+    // 2. Go to /ar/marks and delete the mark
+    await page.goto("/ar/marks");
+    await expect(page.locator("main")).toBeVisible();
+    await expect(page.getByText("الفاتحة - ١").first()).toBeVisible({ timeout: 10000 });
+
+    const deleteBtn = page.getByRole("button", { name: "إزالة العلامة" }).first();
+    await deleteBtn.click();
+    await expect(page.getByText("لا توجد علامات بعد.")).toBeVisible({ timeout: 10000 });
+
+    // 3. Return to reader without hard reload — verify highlight is gone
+    await page.goto("/ar/pages/1");
+    await waitForReaderContent(page);
+
+    const returnedWord = getActivePanel(page).locator('[data-fq-word="1:1:1"]').first();
+    await expect(returnedWord).not.toHaveClass(/bg-red-400/, { timeout: 10000 });
+  });
+});

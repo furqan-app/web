@@ -1,0 +1,7 @@
+# Agent-tooling directories — implementation detail, not app architecture.
+# Keep these out of the graphify knowledge graph (T1.7 / issue #498).
+.claude/skills/scripts/
+.claude/skills/*/scripts/
+.agents/
+.codex/
+.opencode/

@@ -5,7 +5,7 @@
 
 ## Context
 
-`useCloseOnBackGesture` (ADR 0043) closes an open overlay on a back-swipe by pushing a history entry
+`useCloseOnBackGesture` (ADR 0055) closes an open overlay on a back-swipe by pushing a history entry
 and reacting to `popstate`. On-device testing (Android, installed PWA), instrumented directly through
 the Navigation API's own `navigate`/`currententrychange` event log (ground truth, not inference), found
 two distinct events fire ~6ms apart on a single swipe-back that closes an overlay: first, a clean
@@ -35,12 +35,12 @@ navigation — the flicker/reload bug stays unfixed by design, not by oversight.
 **Option B — Switch to the Navigation API unconditionally**
 Simplest code path, but drops overlay-close-on-back-swipe support entirely for iOS < 26.2 and any
 other browser without Navigation API support — a functional regression for those users versus what
-ADR 0043 already ships today.
+ADR 0055 already ships today.
 
 **Option C — Feature-detect the Navigation API; use `navigate` + `intercept()` where available, fall
 back to the existing `popstate`/`pushState` guard everywhere else**
 Fixes the hard-reload bug wherever the API is available, and never regresses behavior below what ADR
-0043 already ships on unsupported browsers.
+0055 already ships on unsupported browsers.
 
 ## Decision
 
@@ -48,7 +48,7 @@ Option C. `useCloseOnBackGesture` feature-detects `window.navigation` support; i
 for `navigate` and calls `event.intercept()` on **both** the closing `traverse` event **and** any
 `navigationType === "reload"` event that follows within `RELOAD_WATCH_MS` of it, since on-device
 evidence shows the reload is what actually produces the hard-refresh flash, not the traversal. If the
-API is absent, it keeps ADR 0043's `popstate`/`pushState` guard exactly as implemented today.
+API is absent, it keeps ADR 0055's `popstate`/`pushState` guard exactly as implemented today.
 `AndroidBackExitGuard` (ADR 0040) is untouched — it does not exhibit the hard-reload bug in isolated
 on-device testing, so it is out of scope here.
 

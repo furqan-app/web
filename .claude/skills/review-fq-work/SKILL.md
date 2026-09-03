@@ -1,24 +1,19 @@
 ---
 name: review-fq-work
-description: Quality gate for the current branch. Spawns a review subagent (model of your choice — Opus by default) to review the branch diff vs main across three dimensions: bugs & correctness, code quality & duplication, and plan consistency (stale docs/plans). Adds a 4th dimension, design & UX via /impeccable critique, when the diff touches UI files.
+description: >-
+  Quality gate for the current branch. Spawns a review subagent (model of your choice — Opus by default) to review the branch diff vs main across three dimensions: bugs and correctness, code quality and duplication, and plan consistency (stale docs/plans).
 ---
 
 # /review-fq-work
 
 Read and follow [`docs/workflow/review-work.md`](../../../docs/workflow/review-work.md).
 
-## Claude-specific: spawning the reviewer
+## Spawning the reviewer
 
-Spawn the review using `runSubagent` with `model` set to the chosen value:
-- Opus → `Claude Opus 4 (Anthropic)`
-- Sonnet → `Claude Sonnet 4.5 (Anthropic)`
-- Haiku → `Claude Haiku 3.5 (Anthropic)`
-
-Default: Opus.
-
-## Claude-specific: Dimension 4 (Design & UX)
-
-When the diff touches UI files (per `docs/workflow/review-work.md` step 3), invoke the `impeccable` Skill directly with `critique` and the changed UI file(s) as target — do not fold this into the subagent prompt above; it runs as a separate direct Skill call (ADR 0041).
+Spawn the review subagent (e.g. using `runSubagent` or subagent capability):
+- Opus / Frontier model (most thorough, default)
+- Sonnet / Fast reasoning model
+- Haiku / Lightweight model
 
 ---
 <!-- original content preserved below this line for reference only -->
@@ -91,7 +86,7 @@ You are a senior code reviewer. Review the following branch diff across three di
 - Does the implementation match the plan in `docs/plans/`?
 - Are there TODOs or placeholders left in the code?
 - Are there any `docs/plans/` files that should now be marked `implemented` but aren't?
-- Does anything contradict `docs/architecture/DECISIONS.md`?
+- Does anything contradict `docs/architecture/DECISIONS.md`'s invariants or a `docs/architecture/decisions/*.md` entry for a touched domain?
 
 If a dimension has no findings, say "No issues found." Do not pad with filler observations. Number findings within each dimension (1., 2., 3., ...), continuing the count across dimensions rather than restarting at 1 for each one, so every finding has a stable reference number for follow-up discussion.
 

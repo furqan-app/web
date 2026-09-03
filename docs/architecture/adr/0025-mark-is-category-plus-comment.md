@@ -2,12 +2,12 @@
 
 **Status:** Accepted
 **Date:** 2026-07-13
-**Supersedes:** [0022](0022-verse-word-comments-as-mark-type.md)
+**Supersedes:** [0053](0053-verse-word-comments-as-mark-type.md)
 **Amends:** [0024](0024-color-marks-encode-category.md)
 
 ## Context
 
-ADR 0022 modelled comments as a second, independent `Mark` row
+ADR 0053 modelled comments as a second, independent `Mark` row
 (`mark_type: "note"`) sitting alongside a `"color"` row on the same spot — two
 rows, two lifecycles, two authors possible on a shared mushaf. ADR 0024 then
 made the `"color"` row's value a semantic **category** key and kept
@@ -31,7 +31,7 @@ The unique key becomes `[marked_type, marked_id, to_user]` — **one mark per
 spot per mushaf**. `category` is required on every row; `comment` is optional.
 Saving writes both together; removing deletes the row (comment included). On a
 shared mushaf a mark has a single `from_user` (last-author-wins) — the
-per-`mark_type` split authorship of ADR 0022/0012 no longer applies.
+per-`mark_type` split authorship of ADR 0053/0012 no longer applies.
 
 The category → color derivation of ADR 0024 is unchanged (colors derived from
 `MARK_CATEGORIES`, never persisted; unknown category → no highlight). Only the
@@ -47,7 +47,7 @@ column that holds the key (`mark_value` → `category`) and the retention of
 - **Nullable category + nullable comment (allow comment-only rows).** Rejected:
   the product wants every mark to carry a meaning; `other` already covers
   comment-only intent without a special case or a "at least one is set" rule.
-- **Separate `Comment` model.** Same rejection as ADR 0022 Option A — duplicates
+- **Separate `Comment` model.** Same rejection as ADR 0053 Option A — duplicates
   the whole marks path for a positionally identical record.
 
 ## Consequences
@@ -62,4 +62,4 @@ column that holds the key (`mark_value` → `category`) and the retention of
 - **−** A word/verse can no longer carry a color and a note from two different
   authors. Accepted: the merge is the point.
 - The `dir="auto"` free-text rules for the comment field and My Marks preview
-  (DECISIONS.md, originally ADR 0022) still apply and carry forward.
+  (DECISIONS.md, originally ADR 0053) still apply and carry forward.

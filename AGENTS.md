@@ -3,7 +3,7 @@
 Universal entry point for all AI coding agents working in this repository.
 
 > Claude Code: see `CLAUDE.md` for skill shortcuts and hooks.
-> Antigravity (AGY): see `GEMINI.md` and `.agents/skills/`.
+> Antigravity (AGY): see `GEMINI.md`.
 > GitHub Copilot: see `.github/copilot-instructions.md`.
 > Cursor: see `.cursorrules`.
 
@@ -16,20 +16,25 @@ Universal entry point for all AI coding agents working in this repository.
    - Do NOT jump straight to code edits or multi-file diffs.
    - Wait for explicit user confirmation on the plan before writing code.
 2. **Implement** — implement from that plan → see [`docs/workflow/start-task.md`](docs/workflow/start-task.md)
-   - Load `docs/architecture/DECISIONS.md` and relevant standards before editing.
+   - Load `docs/architecture/DECISIONS.md` (the index) + the 1–3 `docs/architecture/decisions/*.md` domain files your task touches + relevant standards, before editing.
    - Run `check-fq-standards` pre- and post-implementation.
 
 This applies to every change, no matter how small: one-liner fixes, font swaps, copy changes — everything. If you find yourself about to edit a file, stop and plan first.
 
-**Workspace vs. Worktree:**
-- If your environment supports external worktrees (Claude Code CLI, AGY), use `../furqan-<slug>` (created from updated `origin/main` by default).
-- If your environment is workspace-confined (Copilot, Cursor, OpenCode), work on a local branch directly inside the repository (`git fetch origin && git checkout -b <type>/<issue>-<slug> origin/main`).
+**Worktrees:**
+Every task runs in an isolated worktree at `../furqan-<slug>` (created from updated `origin/main` by default).
 
 **This is not limited to file edits.** It applies equally to operational, data, and infrastructure actions: running scripts (seeders, scrapers, one-off Node scripts), seeding or mutating any database, `prisma db push` / migrations, importing SQL dumps, Docker/`compose` changes, and anything that touches the environment, containers, or running services. Plan first, every time.
 
 When in doubt, ask. Never act unilaterally. Don't make any changes until you have 95% confidence in what we need to build. Ask follow-up questions until you reach that confidence.
 
 **Scope — AI tooling files are exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/` (excluding `docs/workflow/`), translation files, and config that affects the running app. Changes to AI agent tooling — `.claude/`, `.agents/`, `docs/workflow/`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules` — are meta/infra and do not require the plan → implement flow. Still confirm with the user before making tooling changes.
+
+## Response style
+
+Keep responses concise and direct — no filler, no preamble, no tool-call narration.
+
+Project terminology: use "surah" (not "chapter"), "verse" (not "ayah"), "word-level" for word-granularity marking, "mushaf" for the page/layout view. Match the casing and terms already used in `docs/standards/` and the Prisma schema (`Chapter`/`Verse`/`Word` models, but "surah"/"verse" in prose).
 
 ## Project
 
@@ -49,7 +54,7 @@ npm run dev              # dev server (port 3000)
 npm run build            # prisma migrate deploy (app DB) + production build
 npm run lint             # ESLint
 npm test                 # Vitest unit tests (fast logic & component verification, < 1s)
-npm run test:e2e         # Playwright functional e2e (uses dev server on :3000 locally, e2e:build on CI)
+npm run test:e2e         # Playwright functional e2e (against a production build on :3000; see e2e:serve below)
 npm run prisma-generate  # regenerate BOTH Prisma clients (quran + app)
 npm run quran-studio     # Prisma Studio for furqan_quran
 npm run app-studio       # Prisma Studio for furqan_app
@@ -65,17 +70,18 @@ Functional e2e (Playwright; uses dedicated e2e DBs from `compose.e2e.yml` — ne
 ```bash
 npm run e2e:db:up        # start e2e MySQL containers
 npm run e2e:setup        # load the e2e fixture
-npm run e2e:test         # run Playwright (dev server locally; e2e:build & e2e:start in CI)
+npm run e2e:serve        # build once + serve on :3000 — start this before running specs
+npm run e2e:test         # run Playwright against the running server (e2e:build & e2e:start fresh in CI)
 npm run e2e:db:down      # tear down e2e DBs
 ```
 
-*Note on builds and tests:* Local `next build` / `e2e:build` concurrency is capped at 2 CPU workers in `next.config.mjs` to keep the machine responsive. Agents should always prefer fast unit tests (`npm test`) for business logic and components, and use Playwright against the local dev server for browser interactions. Full SSG builds are validated in CI.
+*Note on builds and tests:* Agents do not run test suites locally by default — running tests locally wastes time and resources. GitHub Actions CI automatically runs lint, type-check, unit tests (`npm test`), and Playwright E2E on every PR. Locally, agents run targeted unit tests (`npx vitest run <path>`) only when modifying pure logic/utilities with tests, and do not run local E2E unless working on an E2E spec or explicitly requested. For local E2E when needed: E2E runs against a production build (`e2e:build && e2e:start`), never `next dev`. `npm run e2e:serve` builds once (~4 min, capped at 2 CPU workers via `next.config.mjs`) and stays up; every later `e2e:test` / `npx playwright test <spec>` reuses it. Playwright local workers default to 2 (`PLAYWRIGHT_WORKERS` to change). Full-suite runs are CI-only.
 
 ## Documentation
 
 Load these before starting any task:
 
-- **Active decisions**: `docs/architecture/DECISIONS.md` — non-negotiable constraints; load before any task
+- **Active decisions**: `docs/architecture/DECISIONS.md` is a thin index — load it always (its Non-negotiable Invariants block), then the 1–3 `docs/architecture/decisions/*.md` domain files matching the task (Domains table maps them). Not every domain file. See ADR 0057.
 - **Product & design**: `PRODUCT.md`, `DESIGN.md`, `docs/design/design-principles.md`
 - **Standards** (load the file(s) matching the task domain):
   - `docs/standards/api-conventions.md` — route structure, response shape, auth
@@ -85,7 +91,7 @@ Load these before starting any task:
   - `docs/standards/styling.md` — Tailwind tokens, themes, RTL/LTR
   - `docs/standards/quran-rendering.md` — column–font contract for Quran text
   - `docs/standards/pwa-testing.md` — exercising PWA-gated behavior in the browser
-- **Task plans**: `docs/plans/`
+- **Task plans**: `docs/plans/` — start from the generated `docs/plans/INDEX.md` (area / status / type per active plan). Finished plans live in `docs/plans/archive/` — never load one for background context; its durable content is in `docs/architecture/decisions/*.md` + ADRs. Read a plan file in full only when planning-from or implementing that specific plan.
 - **ADR history**: `docs/architecture/adr/`
 - **Deployment**: `docs/deployment/hostinger.md`
 - **All AI workflows**: [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md)
@@ -96,7 +102,7 @@ The workflow tracks tasks as GitHub Issues on `furqan-app/web` — no MCP setup 
 
 ## Releases
 
-Branching model: work ships from feature branches → `main` (via `/ship-fq-task`); releases cut from `main` → release branch → promoted `stg` → `prod` via `/release <major|minor|patch>` (GitHub Actions under the hood). Deploy target is Hostinger.
+Branching model: work ships from feature branches → `main` (via `/ship-fq-task`). `/release <major|minor|patch>` then cuts `release/x.y.z` from `main`, refreshes `stg` from `main`, promotes the release branch to `prod`, and syncs `prod` back into `main` — GitHub Actions under the hood. Single phase: `/release cut <bump>`, `/release promote`, `/release sync`. Deploy target is Hostinger.
 
 ## graphify
 
@@ -110,14 +116,6 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
-## impeccable
+## Design & UX
 
-`/impeccable` is this project's standing authority for UI/UX design work — nobody on the team is a designer, so lean on it rather than freehand design judgment.
-
-Use it for:
-- Implementing new design or UI
-- Any back-and-forth on design or UX, including casual questions ("should this be bigger?", "does this color work?") — not just explicit `/impeccable` invocations
-- Critiquing an existing design or surface
-- Reviewing work that includes UI/UX (see `/review-fq-work`'s Design & UX dimension)
-
-Inside the plan/implement/review workflow it's wired in at three points (ADR 0041): `/plan-fq-task` runs `/impeccable critique` during UI-mode investigation and records findings as a plan's `## Design Remediation` section; `/start-fq-task` executes those entries during implementation; `/review-fq-work` runs `/impeccable critique` as a 4th dimension when a diff touches UI files. Outside that workflow — a standalone design question, a critique request, an ad hoc "what do you think of this" — invoke `/impeccable` directly; its own skill description already routes these automatically, this note just makes the expectation explicit.
+Nobody on the team is a designer. For UI work, consult `docs/design/design-principles.md` (aesthetic direction) and `docs/standards/styling.md` (tokens, RTL/LTR, the Motion section) before making layout or visual decisions, and list any UI/UX concerns in the plan. `/review-fq-work` and `check-fq-standards` carry a Design & UX checklist (contrast, hierarchy, spacing scale, RTL parity, touch-target size, reduced-motion).

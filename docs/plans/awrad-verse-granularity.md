@@ -1,9 +1,12 @@
-# Verse & Fractional-Page Granularity for Awrad
+---
+title: Verse & Fractional-Page Granularity for Awrad
+type: feature
+date: 2026-08-02
+status: implemented
+area: awrad
+---
 
-**Type:** feature
-**Date:** 2026-08-02
-**Status:** implemented
-**Trello:** #181 — https://trello.com/c/ZJEicZhz
+# Verse & Fractional-Page Granularity for Awrad
 
 ## Summary
 

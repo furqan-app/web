@@ -386,10 +386,11 @@
     "startCustom": "Custom",
     "applyChanges": "Apply changes",
     "startRecitation": "Start recitation",
-    "rangeProgressAyah": "Ayah {index}/{length}",
-    "rangeProgressRepeat": "Repeat {done}/{target}",
     "numberSearchPlaceholder": "Search…",
-    "numberEmpty": "No match."
+    "numberEmpty": "No match.",
+    "returnToRecitedPage": "Back to page {page}",
+    "recitedVerseLabel": "Ayah {ayah}, Surah {surah}, page {page}",
+    "returnToRecitedVerse": "Back to page {page} · Surah {surah} · Ayah {ayah}"
   },
   "offlineRecitation": {
     "title": "Offline Recitation",
@@ -493,7 +494,8 @@
     "error": "Failed to load commentary. Please check your connection and try again.",
     "retry": "Retry",
     "empty": "No commentary available for this verse in the selected edition.",
-    "close": "Close"
+    "close": "Close",
+    "availableOffline": "Available offline"
   },
   "light": "",
   "gold": "",
@@ -507,5 +509,19 @@
   "searchClear": "",
   "noMatches": "",
   "verseSearchHint": "",
-  "viewingChipGeneric": ""
+  "viewingChipGeneric": "",
+  "offlineTafsir": {
+    "title": "Offline Tafsir",
+    "description": "Download a full commentary edition for offline reading.",
+    "download": "Download",
+    "retry": "Retry",
+    "delete": "Delete",
+    "offlineNotice": "Connect to the internet to download.",
+    "sizeMb": "{size} MB",
+    "progress": "{cached} of {total} surahs",
+    "spaceAvailable": "{size} MB available",
+    "notEnoughSpace": "Not enough storage space for this edition.",
+    "alsoMushafLabel": "Also download the mushaf pages",
+    "alsoMushafHint": "The commentary sheet opens over the mushaf page — download it too (~{size} MB) so the page renders offline."
+  }
 }

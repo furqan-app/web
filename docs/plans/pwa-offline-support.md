@@ -1,8 +1,12 @@
-# PWA Conversion + Offline Quran Page Reading
+---
+title: PWA Conversion + Offline Quran Page Reading
+type: feature
+date: 2026-07-06
+status: implemented
+area: pwa
+---
 
-**Type:** feature  
-**Date:** 2026-07-06  
-**Status:** implemented (all addenda through 10)
+# PWA Conversion + Offline Quran Page Reading
 
 ## Summary
 

@@ -1,4 +1,4 @@
-import { type Page, type Locator, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Locator, type TestInfo } from "@playwright/test";
 
 /**
  * Returns the active visible center panel in ReaderPager.
@@ -41,6 +41,46 @@ export async function waitForReaderContent(page: Page) {
     const safhas = Array.from(document.querySelectorAll(".fq-quran-safha"));
     return safhas.length > 0 && safhas.every((el) => el.querySelector(".fq-safha-row"));
   });
+}
+
+/**
+ * Blocks until the active visible center panel in ReaderPager has painted its word rows (.fq-safha-row).
+ * Uses :visible because single-safha mode on even pages renders a hidden partner (.fq-safha-partner)
+ * as the first DOM child, which causes bare .first() to hang waiting for an intentionally hidden row.
+ */
+export async function waitForActivePanelContent(page: Page) {
+  const panel = getActivePanel(page);
+  await expect(panel.locator(".fq-safha-row:visible").first()).toBeVisible({ timeout: 15000 });
+}
+
+/**
+ * Spoofs PWA standalone display mode before first paint and optionally dismisses
+ * first-run offline setup gates for the provided editions (defaults to [1, 2]).
+ */
+export async function withStandaloneDisplayMode(
+  page: Page,
+  dismissedEditions: number[] = [1, 2]
+) {
+  await page.addInitScript((editions) => {
+    try {
+      for (const id of editions) {
+        window.localStorage.setItem(`fq-offline-prompt-dismissed-v2-${id}`, "1");
+      }
+    } catch {}
+
+    const realMatchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) =>
+      query.includes("display-mode")
+        ? ({
+            matches: true,
+            media: query,
+            addListener() {},
+            removeListener() {},
+            addEventListener() {},
+            removeEventListener() {},
+          } as any)
+        : realMatchMedia(query);
+  }, dismissedEditions);
 }
 
 /**
@@ -237,4 +277,28 @@ export async function longPressWord(
       })
     );
   }, durationMs);
+}
+
+/**
+ * Opens the navbar search dialog and returns dialog and search input locators.
+ */
+export async function openSearch(page: Page, locale: "ar" | "en" = "ar") {
+  await expect(page.locator("nav")).toBeVisible();
+
+  const triggerName =
+    locale === "ar"
+      ? "ابحث عن السورة بالاسم أو الرقم"
+      : "Search surah by name or number";
+
+  const searchTrigger = page.getByRole("button", { name: triggerName });
+  await expect(searchTrigger).toBeVisible();
+  await searchTrigger.click();
+
+  const searchDialog = page.getByRole("dialog");
+  await expect(searchDialog).toBeVisible();
+
+  const searchInput = searchDialog.getByPlaceholder(triggerName);
+  await expect(searchInput).toBeVisible();
+
+  return { searchDialog, searchInput };
 }

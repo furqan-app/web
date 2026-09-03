@@ -15,7 +15,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 - Identify the task ticket from: the plan file, the current branch name, or context from the conversation. If there is any ambiguity about which ticket this work belongs to, ask now and only now — do not ask again mid-flow.
 - **Offer a review pass:** ask once whether the user wants to run a code review on the branch before shipping (see [review-work.md](review-work.md)). If yes, run the review and let the user act on the findings — do not continue to step 1 until they say to ship. If no (or already reviewed this session), proceed.
-- Once the ticket is confirmed and the review offer is answered, execute steps 1–6 in sequence without pausing for approval.
+- **Offer a retrospect pass:** in the same upfront pause, ask whether to run `/retrospect` (see [retrospect.md](retrospect.md)) — unless it already ran this session. Retro runs *here*, before the commit, so any `decisions/*.md` or workflow-doc edits it produces are staged into this PR rather than produced after it is open.
+- Once the ticket is confirmed and both offers are answered, execute steps 1–6 in sequence without pausing for approval.
 
 ### 1. Sync with main
 
@@ -30,7 +31,13 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 ### 3. Commit
 
-- `git add` the relevant files (never `git add -A` blindly — review what's staged)
+**First, fold plan addenda.** Addenda are rare — every existing one was folded in #510 and new ones are only added when returning to merged work on a fresh branch — but the rule still applies: if the branch diff touches any `docs/plans/**/*.md` that still contains a `## Addendum` section, for each such plan read the whole stack newest-first, establish the feature's current truth (a later addendum's decision always wins), then merge the addendum content into the body sections it revises (Summary, Approach, Decision Tree, Files to Change, Verified Test Cases) so the plan reads as one current spec, and delete every `## Addendum` heading and its body.
+
+**Fidelity bar:** every still-active `Constraints`, `What NOT to Do`, and `Decisions Made` item from every addendum must survive into the corresponding section of the folded plan. An item is superseded only where a later addendum says so explicitly — record that in `## Revision History`, in bold, and remove it from the active sections. Nothing else may be dropped. Before staging, list every bullet under those three headings across the pre-fold body and all addenda, subtract the explicitly-superseded ones, and confirm the folded plan carries the rest.
+
+Record each fold as a one-line entry under a `## Revision History` section at the file bottom — dated with the **addendum's own date**, supersessions called out in bold. Re-derive the frontmatter `status` / `date` only if the stack shows the feature is not actually in the state the frontmatter claims. Then regenerate the index (`.claude/skills/scripts/gen-plans-index.sh`) and stage `INDEX.md` with the plan. This applies to any plan in the diff carrying an unfolded addendum, not only ones this branch added.
+
+- `git add` the relevant files (never `git add -A` blindly — review what's staged) — include any `decisions/*.md` or workflow-doc edits `/retrospect` produced in step 0
 - Draft the commit message following [commit-message.md](commit-message.md)
 - Run `git commit` — do not pause for confirmation
 - No AI signatures (see below)
@@ -59,5 +66,6 @@ Never add any AI attribution in this flow: no `Co-Authored-By: Claude` (or any A
 
 - Do not run `git commit` or `git push` from any other workflow or ad hoc request — redirect here.
 - Do not skip the ticket check — if there's no ticket, stop and create one before touching git.
+- Do not ship a plan diff that leaves a `## Addendum` heading in place — fold it into the body first (step 3).
 - Do not force-push, reset --hard, or otherwise rewrite history as part of this flow — that's covered separately by [confirm-dangerous-git.md](confirm-dangerous-git.md).
 - Do not merge the PR — this workflow only opens it; merging is a separate, explicit user action.

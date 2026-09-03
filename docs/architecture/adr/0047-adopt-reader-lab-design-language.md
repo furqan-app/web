@@ -3,6 +3,12 @@
 **Date:** 2026-08-21
 **Status:** Accepted
 
+> Note (2026-09-02, #494): the `/impeccable` review gate referenced in the Context and in
+> point 4 below no longer exists ([ADR 0041](./0041-wire-impeccable-into-fq-workflow.md) is
+> superseded). Design-language alignment is now a manual review concern — the "Design & UX"
+> checklist in `docs/workflow/check-fq-standards.md`. `DESIGN.md` is hand-maintained, not
+> generated. The decision itself is unchanged.
+
 ## Context
 
 The Nocturnal Reader Lab (`docs/plans/reader-lab-nocturnal-desktop.md`) was built as a sandbox to generate a new visual direction, and its language was approved. Migrating it is not a styling pass: the language contradicts `docs/design/design-principles.md`, which is the canonical design doc and generates root `DESIGN.md`, which in turn feeds `/impeccable` — wired into plan → implement → review by [ADR 0041](./0041-wire-impeccable-into-fq-workflow.md). The lab also derived every atmospheric move against dark's `(7,15,23)` background, and covers neither light, gold, small screens, nor live control states.
@@ -112,7 +118,7 @@ A portrait tablet is a tablet, and it gets the compact composition at full width
 
 The transport stays pinned to the bar's true midpoint, exactly as it is pinned to the rail's on desk — the same rule, one axis rotated. Laying it out in flow instead let `space-between` push the primary control into a corner at 375px.
 
-**4. The bar reserves 60px rather than overlaying, which is a deliberate deviation from "tablet is 100dvh edge-to-edge".** Chrome covering Qur'an lines defeats the reason edge-to-edge exists, so the vertical edge is given up and the horizontal one kept. This is safe against the reading-size contract and was verified rather than assumed: reading size is **identical to production at every band** (375 → 23.88px, 768 → 26px, 1024 and 1366 → 29.97px, 1367 → 26px). The reserve costs card height only, and the height cap is not the binding constraint in those bands. Had the font moved, the reserve would have had to go — ADR 0038's contract outranks the composition.
+**4. The bar reserves 60px rather than overlaying, which is a deliberate deviation from "tablet is 100dvh edge-to-edge".** Chrome covering Qur'an lines defeats the reason edge-to-edge exists, so the vertical edge is given up and the horizontal one kept. This is safe against the reading-size contract and was verified rather than assumed: reading size is **identical to production at every band** (375 → 23.88px, 768 → 26px, 1024 and 1366 → 29.97px, 1367 → 26px). The reserve costs card height only, and the height cap is not the binding constraint in those bands. Had the font moved, the reserve would have had to go — ADR 0054's contract outranks the composition.
 
 **5. Chrome loses information as the viewport narrows; the mushaf never loses reading size.** Dropped in order of how much each element earns its width: ornaments below 1367, then the wordmark, lab badge and inert icon well below 1024, then the juz/hizb line and the rail's five tertiary utilities below 768. The identity medallion and the one live control survive every band. No band changes type size to make chrome fit.
 
@@ -134,4 +140,4 @@ The language is now on every production surface. Five findings that are conseque
 
 **5. The layout traps in this codebase are silent, and they all look like content.** Three separate arrangements of the folio cap produced the *same* 654px content height in every theme at every viewport size: a percentage height inside a flex-grown box (ADR 0036), an auto cross-axis margin, and `align-items: center` — the last two cancel `align-items: stretch` outright. Separately, a word-overlap probe reported 374 escapes on a page that renders perfectly, because the pager mounts three spreads side by side and a flat `querySelectorAll` compared off-screen rows against the first card's rectangle. None of the four is visible in the declaration or in the probe's own logic; all four were caught by measuring a rendered box.
 
-**Carried forward untouched:** `--mushaf-text`. 0.2 declined to change the ink and nothing in Phases 3–5 overrode that. Word placement, page dimension maths, the font files and ADR 0038's size contract are likewise unmodified — verified as 0 word overlaps and 0 escapes across pages 1, 2, 187, 528 and 604, at four viewport widths, in both themes.
+**Carried forward untouched:** `--mushaf-text`. 0.2 declined to change the ink and nothing in Phases 3–5 overrode that. Word placement, page dimension maths, the font files and ADR 0054's size contract are likewise unmodified — verified as 0 word overlaps and 0 escapes across pages 1, 2, 187, 528 and 604, at four viewport widths, in both themes.

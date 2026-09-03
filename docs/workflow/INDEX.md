@@ -5,15 +5,44 @@ All AI workflow instructions for this project. Load the relevant file when a wor
 ## Core Cycle
 
 ```
-Refine → Plan → Implement → Review → Ship → Retrospect
+Refine → Plan → Implement → Review → Retrospect → Ship
 ```
 
 0. **[Refine a task](refine-task.md)** — break a big/vague task into scoped issues (epic + children); no implementation
 1. **[Plan a task](plan-task.md)** — investigate, clarify, write a spec in `docs/plans/`
 2. **[Implement a task](start-task.md)** — load context, implement from the plan
 3. **[Review work](review-work.md)** — check for bugs, quality issues, plan drift
-4. **[Ship a task](ship-task.md)** — sync, branch, commit, PR, ticket update
-5. **[Retrospect](retrospect.md)** — end-of-session feedback loop
+4. **[Retrospect](retrospect.md)** — reconcile `decisions/*.md` + workflow docs with what the session learned; runs *before* ship so its edits are committed inside the PR
+5. **[Ship a task](ship-task.md)** — sync, branch, commit, PR, ticket update
+
+---
+
+## Architecture & decision records
+
+The AI-first docs system (adopted 2026-06-28): `CLAUDE.md` is a slim pointer, heavy context lives in `docs/` and is loaded on demand — never burned on every session.
+
+- **Active decisions:** [`../architecture/DECISIONS.md`](../architecture/DECISIONS.md) is a thin index. Load it always, then the 1–3 [`decisions/*.md`](../architecture/decisions/) domain files your task touches — never all of them ([ADR 0057](../architecture/adr/0057-decisions-split-by-domain.md)).
+- **ADR history:** `docs/architecture/adr/` — the audit trail for humans. A valid ADR names alternatives and records trade-offs; if there are none, add a `decisions/` entry or a standards doc instead. Use `adr/TEMPLATE.md`.
+- **`CLAUDE.md` stays a slim pointer** — never architecture detail, standards, or decisions.
+- Adding a new decision **domain file** → add its row to the Domains table in `DECISIONS.md` in the same commit.
+- Workflow / process decisions are recorded **here**, not in `decisions/`.
+- **Task plans** live in [`../plans/`](../plans/), each opening with a YAML frontmatter block; [`../plans/INDEX.md`](../plans/INDEX.md) is generated from that frontmatter by `.claude/skills/scripts/gen-plans-index.sh` and is what `/plan-fq-task` step 0 reads ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Finished, uncited plans are swept into [`../plans/archive/`](../plans/archive/INDEX.md) by `.claude/skills/scripts/sweep-archived-plans.sh` (explicitly invoked, never automatic) — archived plans are history, not task context.
+
+---
+
+## Agent instruction surfaces
+
+`AGENTS.md` is the **single canonical** agent-instruction file — mandatory workflow, architecture-constraint loading, response style, and the graphify rules all live there. Every other surface is a **thin pointer to `AGENTS.md` + this index plus only its own tool-specific delta** — never a re-statement of the shared rules (that only drifts):
+
+| Surface | Tool | Delta it carries |
+|---|---|---|
+| `CLAUDE.md` | Claude Code | Skill shortcuts (`/plan-fq-task`, …), hooks, `../furqan-<slug>` worktree flow |
+| `GEMINI.md` | Antigravity | Planning override (no internal AGY plan artifacts); progressive disclosure via `docs/workflow/*.md` |
+| `.cursorrules` | Cursor | In-repo branch, not an external worktree |
+| `.github/copilot-instructions.md` | GitHub Copilot | `/graphify` in Copilot Chat builds/updates the graph |
+| `.agents/rules/graphify.md`, `.agents/workflows/graphify.md` | Antigravity | Always-on graphify rule + `/graphify` workflow |
+
+When a shared rule changes, edit `AGENTS.md` only. Do not re-bloat the pointer files.
 
 ---
 
@@ -26,10 +55,10 @@ Refine → Plan → Implement → Review → Ship → Retrospect
 | `/refine-fq-task` | [refine-task.md](refine-task.md) | Break a big task into scoped issues (epic + children, `status:backlog`) — no implementation |
 | `/plan-fq-task` | [plan-task.md](plan-task.md) | Socratic planning → `docs/plans/<slug>.md` |
 | `/start-fq-task` | [start-task.md](start-task.md) | Implement from a plan, load all context |
-| `/check-fq-standards` | [check-fq-standards.md](check-fq-standards.md) | Pre/post-implementation guardrail vs DECISIONS.md + engineering bar |
+| `/check-fq-standards` | [check-fq-standards.md](check-fq-standards.md) | Pre/post-implementation guardrail vs the `decisions/*.md` files + engineering bar |
 | `/review-fq-work` | [review-work.md](review-work.md) | Code review on current branch diff |
+| `/retrospect` | [retrospect.md](retrospect.md) | Feedback loop — run after review, before ship |
 | `/ship-fq-task` | [ship-task.md](ship-task.md) | Commit → push → PR → ticket update |
-| `/retrospect` | [retrospect.md](retrospect.md) | End-of-session retrospective |
 
 ### Git Utilities
 
@@ -42,15 +71,5 @@ Refine → Plan → Implement → Review → Ship → Retrospect
 
 | Trigger | Instructions | Description |
 |---|---|---|
-| `/release <bump>` | [release.md](release.md) | Full orchestration: cut → staging → prod → sync |
-| `/cut-release <bump>` | [release.md](release.md) | Branch, bump version, tag, push, promote to `stg` (GitHub Action) |
-| `/promote-release` | [release.md](release.md) | Open+auto-merge release → `prod` PR, version auto-detected (GitHub Action) |
-| `/sync-main-from-prod` | [release.md](release.md) | Sync `prod` back into `main` after release |
-
-### Doc & UI Utilities
-
-| Trigger | Instructions | Description |
-|---|---|---|
-| `/compress-fq-docs` | [compress-docs.md](compress-docs.md) | Compress verbose `docs/plans/` and `docs/standards/` files |
-| `ui-motion` | [ui-motion.md](ui-motion.md) | Animation and interaction-polish guidelines |
-| Terse mode | [terse-mode.md](terse-mode.md) | Concise-response mode: concept, rules, Furqan vocabulary |
+| `/release <bump>` | [release.md](release.md) | Full orchestration: cut → staging → prod → sync (GitHub Actions) |
+| `/release cut <bump>` \| `promote` \| `sync` | [release.md](release.md) | Single phase — cut off `main`, promote release → `prod`, or sync `prod` → `main` |

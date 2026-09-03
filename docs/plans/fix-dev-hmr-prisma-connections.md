@@ -1,8 +1,12 @@
-# Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload
+---
+title: Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload
+type: bug
+date: 2026-07-03
+status: implemented
+area: db
+---
 
-**Type:** bug  
-**Date:** 2026-07-03  
-**Status:** implemented
+# Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload
 
 ## Root Cause
 

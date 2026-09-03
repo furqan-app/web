@@ -1,9 +1,12 @@
-# Save Last Read Page + Navbar Link to Resume
+---
+title: Save Last Read Page + Navbar Link to Resume
+type: feature
+date: 2026-07-31
+status: implemented
+area: nav
+---
 
-**Type:** feature
-**Date:** 2026-07-31
-**Status:** implemented
-**Trello:** #64 https://trello.com/c/VyjOZyfn (merged from #63, archived)
+# Save Last Read Page + Navbar Link to Resume
 
 ## Summary
 

@@ -1,8 +1,12 @@
-# Protect prod Branch: Enforce Merges from release/* Only
+---
+title: "Protect prod Branch: Enforce Merges from release/* Only"
+type: feature
+date: 2026-07-05
+status: implemented
+area: release
+---
 
-**Type:** feature  
-**Date:** 2026-07-05  
-**Status:** implemented
+# Protect prod Branch: Enforce Merges from release/* Only
 
 ## Summary
 

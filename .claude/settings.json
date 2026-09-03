@@ -1,35 +1,5 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/mujaz-mode.js"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/mujaz-mode.js"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/mujaz-stats.js"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash|Grep",
@@ -50,9 +20,5 @@
         ]
       }
     ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "bash .claude/hooks/mujaz-statusline.sh"
   }
 }

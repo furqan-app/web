@@ -5,8 +5,11 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
-app*
-!app
+# root-level build/scratch artifacts prefixed "app" (keep the app/ source tree).
+# Anchored to root — a bare `app*` matched at every depth and silently ignored
+# files like docs/plans/app-*.md (issue #519).
+/app*
+!/app/
 
 # testing
 /coverage
@@ -57,9 +60,6 @@ yarn-error.log*
 /public/swe-worker-*.js.map
 
 # local docs/plans
-
-# retrospect skill output — never committed
-/docs/retrospectives/
 
 # Playwright transient output
 /playwright-report/

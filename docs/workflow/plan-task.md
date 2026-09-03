@@ -12,18 +12,18 @@ Socratic planning and investigation for features and bugs. Output: `docs/plans/<
 
 ### 0. Check for an existing related plan — before anything else
 
-Run `ls docs/plans/` and scan for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
+Read [`docs/plans/INDEX.md`](../plans/INDEX.md) — one row per active plan (area, title, status, type) — and scan the rows in the same `area` as this task for one touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
 
-- If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its `Status` to `ready-to-implement` if it had been marked `implemented`.
+- If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its frontmatter `status` to `ready-to-implement` if it was `implemented`, then regenerate `INDEX.md` (`.claude/skills/scripts/gen-plans-index.sh`).
 - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
 
-This check is a literal, mandatory action every time — it has been skipped before despite being documented, so run the `ls`/grep; don't rely on memory.
+This check is a literal, mandatory action every time — it has been skipped before despite being documented, so read `INDEX.md`; don't rely on memory. `INDEX.md` lists only active plans; the ~100 finished plans in [`docs/plans/archive/`](../plans/archive/INDEX.md) are history — never open one for context, its durable content is in `docs/architecture/decisions/*.md` + ADRs. Reading a full plan file at all is only for the one active plan you are extending here (or, in `/start-fq-task`, implementing).
 
 ### 1. Load context — mandatory gate, before investigating or writing anything
 
-- Read `docs/architecture/DECISIONS.md` — its entries are your working set of active decisions. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat both as non-negotiable: the plan must not contradict them, and if it needs to, raise that with the user explicitly and supersede it — never override silently.
+- Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files whose area this task touches — not every domain file. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat all of it as non-negotiable: the plan must not contradict it, and if it needs to, raise that with the user explicitly and supersede it (flip the section's `**Status:**`) — never override silently.
 - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
-- **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches a later addendum revised or reverted are dead — never re-propose them. Your new addendum must stay consistent with every still-active constraint above it.
+- **If step 0 found an existing plan to extend, read that plan in full — especially its `Constraints` and `What NOT to Do` sections.** If it still carries a `## Addendum` (rare — addenda are folded into the body on ship), the newest one is the current source of truth and approaches a later addendum revised are dead. Your new addendum must stay consistent with every still-active constraint above it.
 
 ### 2. Investigate (bugs) or clarify (features)
 
@@ -42,7 +42,7 @@ This check is a literal, mandatory action every time — it has been skipped bef
 - Questions should surface: scope ambiguity, edge cases, mobile/RTL behavior, interaction with existing systems, timing concerns
 - If the task removes or relocates an existing UI trigger/control, explicitly verify every breakpoint and route that used it still has equivalent access before writing "unchanged" anywhere in the plan — check what else depends on it, don't assume.
 
-**UI-mode design pass.** If the task involves components, pages, layout, or styling, run `/impeccable critique` (or `audit` for a technical-quality-leaning task) against the files under investigation. If it returns findings with suggested commands, carry them into a `## Design Remediation` section in the plan (see Plan file format below) — `command → target file(s)`, taken verbatim from each finding's suggested command. No findings, or a non-UI task: skip the section (ADR 0041).
+**UI tasks.** If the task involves components, pages, layout, or styling, consult `docs/design/design-principles.md` and `docs/standards/styling.md` (including its Motion section) during investigation, and list any UI/UX concerns — contrast, hierarchy, spacing scale, RTL/LTR parity, touch targets, reduced motion — directly in the plan.
 
 ### 3. Verify the solution together — before writing anything
 
@@ -70,7 +70,7 @@ Ask yourself: did the investigation surface any non-obvious architectural decisi
 If yes:
 - Determine the next ADR number (`ls docs/architecture/adr/` to check)
 - Create `docs/architecture/adr/NNNN-<slug>.md` now, before writing the plan
-- Update `docs/architecture/DECISIONS.md` with a summary and a link to the ADR
+- Add the summary + ADR link as a `## ` section (with a `**Status:** active` line) in the matching `docs/architecture/decisions/*.md` domain file. If it introduces a whole new domain, create the file and add its row to the Domains table in `DECISIONS.md`. If it is a cross-cutting rule, also add a one-liner to `DECISIONS.md`'s Non-negotiable Invariants block.
 
 If no new decisions: skip this step.
 
@@ -80,18 +80,31 @@ Every task should have a ticket in your project management system before impleme
 
 ### 6. Write the plan
 
-Write `docs/plans/<slug>.md` (or the addendum if extending an existing plan) with the content below.
+Write `docs/plans/<slug>.md` (or the addendum if extending an existing plan) with the content below, then regenerate the index: `.claude/skills/scripts/gen-plans-index.sh`. Stage `INDEX.md` alongside the plan.
 
 ---
 
 ## Plan file format
 
+Every plan opens with a YAML frontmatter block ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)) — this is what `INDEX.md` is generated from:
+
+```yaml
+---
+title: <matches the # H1>
+type: bug | feature | chore
+date: YYYY-MM-DD
+status: ready-to-implement    # ready-to-implement | in-progress | implemented | superseded | unknown
+area: <one value>             # see the vocabulary in ADR 0059 — mirrors decisions/ domains + workflow/infra
+supersedes: [<slug>]          # other plan slugs this replaces; omit if none
+issue: <bare number>          # omit if none
+adr: [<NNNN>]                 # omit if none
+---
+```
+
+`area` must be one of the fixed vocabulary in ADR 0059 (`rendering`, `reader`, `nav`, `marks`, `recitation`, `pwa`, `db`, `api`, `search`, `theming`, `awrad`, `a11y`, `ci`, `release`, `workflow`, `observability`, `seeder`, `surah-layout`, `tafsir`) — never free text.
+
 ```markdown
 # <Task Title>
-
-**Type:** feature | bug
-**Date:** YYYY-MM-DD
-**Status:** ready-to-implement
 
 ## Summary
 One paragraph.
@@ -104,9 +117,6 @@ The verified if/then logic or classification table agreed with the user in step 
 
 ## Verified Test Cases
 The concrete examples walked through in step 3 and what the algorithm produces for each.
-
-## Design Remediation
-(UI tasks only, omit entirely otherwise) `command → target file(s)` pairs from the Step 2 `/impeccable critique`/`audit` pass, for `/start-fq-task` to execute after implementation (ADR 0041).
 
 ## Files to Change
 - `path/to/file.ts` — what changes and why
@@ -128,5 +138,6 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 
 ## Anti-patterns to avoid
 
-- Do not create a new plan file without first checking `docs/plans/` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not create a new plan file without first checking `docs/plans/INDEX.md` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not hand-edit `docs/plans/INDEX.md` — it is generated. Change a plan's frontmatter, then run `gen-plans-index.sh`.
 - Do not write a plan that contradicts an ADR or a still-active constraint/`What NOT to Do` item in the plan you are extending. If the task genuinely requires overriding one, surface it to the user and supersede it explicitly — never silently.

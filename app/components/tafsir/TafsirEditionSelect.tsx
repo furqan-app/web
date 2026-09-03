@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { BookOpen, Check, ChevronsUpDown } from "lucide-react";
+import { BookOpen, Check, ChevronsUpDown, CloudCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TAFSIR_EDITIONS, getTafsirEdition } from "@/app/constants/tafsir";
+import { useTafsirDownloads } from "@/app/hooks/use-tafsir-download";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface TafsirEditionSelectProps {
@@ -20,6 +21,7 @@ export function TafsirEditionSelect({
   disabled = false,
 }: TafsirEditionSelectProps) {
   const t = useTranslations("tafsir");
+  const { isDownloaded } = useTafsirDownloads();
   const [open, setOpen] = useState(false);
 
   const selectedEdition = getTafsirEdition(selectedId) ?? TAFSIR_EDITIONS[0];
@@ -50,6 +52,7 @@ export function TafsirEditionSelect({
         sideOffset={6}
         avoidCollisions={false}
         container={portalContainer}
+        onEscapeKeyDown={() => setOpen(false)}
       >
         <div className="flex flex-col gap-0.5 p-0.5">
           {TAFSIR_EDITIONS.map((edition) => {
@@ -65,8 +68,18 @@ export function TafsirEditionSelect({
                 className="flex items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-start transition-colors hover:bg-accent/40 active:bg-accent/60 w-full"
               >
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-xs sm:text-sm font-medium text-foreground leading-snug truncate">
-                    {edition.name}
+                  <span className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground leading-snug">
+                    <span className="truncate">{edition.name}</span>
+                    {isDownloaded(edition.id) ? (
+                      <>
+                        <CloudCheck
+                          className="size-3.5 shrink-0 text-primary"
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">{t("availableOffline")}</span>
+                      </>
+                    ) : null}
                   </span>
                   <span className="text-[11px] text-muted-foreground leading-tight truncate mt-0.5">
                     {edition.authorName}

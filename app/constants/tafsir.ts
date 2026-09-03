@@ -4,7 +4,10 @@ export const DEFAULT_TAFSIR_ID = 16;
 
 /**
  * Curated catalog of primary Arabic Quran commentaries supported in Furqan.
- * Verified against Quran.com QDC API v4.
+ * Verified against Quran.com QDC API v4. `downloadSizeMb` is the approximate
+ * stored size of a full 114-surah offline download (ADR 0060), measured
+ * 2026-09-03 by summing every `by_chapter?per_page=300` response body —
+ * re-measure if QDC's payloads change materially.
  */
 export const TAFSIR_EDITIONS: TafsirEdition[] = [
   {
@@ -15,6 +18,7 @@ export const TAFSIR_EDITIONS: TafsirEdition[] = [
     languageName: "arabic",
     translatedName: "Tafsir Muyassar",
     direction: "rtl",
+    downloadSizeMb: 3,
   },
   {
     id: 91,
@@ -24,6 +28,7 @@ export const TAFSIR_EDITIONS: TafsirEdition[] = [
     languageName: "arabic",
     translatedName: "Tafsir Al-Sa'di",
     direction: "rtl",
+    downloadSizeMb: 8,
   },
   {
     id: 14,
@@ -33,6 +38,7 @@ export const TAFSIR_EDITIONS: TafsirEdition[] = [
     languageName: "arabic",
     translatedName: "Tafsir Ibn Kathir",
     direction: "rtl",
+    downloadSizeMb: 20,
   },
   {
     id: 94,
@@ -42,6 +48,7 @@ export const TAFSIR_EDITIONS: TafsirEdition[] = [
     languageName: "arabic",
     translatedName: "Tafsir Al-Baghawi",
     direction: "rtl",
+    downloadSizeMb: 10,
   },
   {
     id: 15,
@@ -51,6 +58,7 @@ export const TAFSIR_EDITIONS: TafsirEdition[] = [
     languageName: "arabic",
     translatedName: "Tafsir Al-Tabari",
     direction: "rtl",
+    downloadSizeMb: 48,
   },
   {
     id: 90,
@@ -60,6 +68,7 @@ export const TAFSIR_EDITIONS: TafsirEdition[] = [
     languageName: "arabic",
     translatedName: "Tafsir Al-Qurtubi",
     direction: "rtl",
+    downloadSizeMb: 20,
   },
 ];
 

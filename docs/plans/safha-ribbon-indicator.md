@@ -1,8 +1,12 @@
-# Safha Ribbon Indicator
+---
+title: Safha Ribbon Indicator
+type: feature
+date: 2026-08-18
+status: implemented
+area: rendering
+---
 
-**Type:** feature
-**Date:** 2026-08-18
-**Status:** implemented
+# Safha Ribbon Indicator
 
 ## Summary
 

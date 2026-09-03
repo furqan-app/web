@@ -1,7 +1,14 @@
+---
+title: AI-First Documentation & Workflow System
+type: feature
+date: 2026-06-28
+status: superseded
+area: workflow
+---
+
 # AI-First Documentation & Workflow System
 
-**Date:** 2026-06-28  
-**Status:** Implemented (extended 2026-06-29 with /retrospect and /review-fq-work)
+> Point-in-time snapshot — later superseded in parts. Notably: DECISIONS.md is now a thin per-domain index (#493), Trello is fully replaced by GitHub issues, and `/retrospect` no longer writes `docs/retrospectives/` files or saves memories (#495) — it edits only `decisions/*.md` and `docs/workflow/` docs. `docs/workflow/INDEX.md` is the current source of truth for the cycle.
 
 ## Goal
 

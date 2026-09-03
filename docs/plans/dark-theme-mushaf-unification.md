@@ -1,9 +1,12 @@
-# Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette
+---
+title: Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette
+type: feature
+date: 2026-07-27
+status: implemented
+area: theming
+---
 
-**Type:** feature
-**Date:** 2026-07-27
-**Status:** implemented
-**Trello:** https://trello.com/c/EkT77YQR/148-dark-theme-visual-refinement-unify-mushaf-app-shell-palette
+# Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette
 
 ## Summary
 
