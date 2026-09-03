@@ -17,6 +17,7 @@ Active decisions for tafsir provider & quote normalization. Part of `docs/archit
 - Normalizer must handle empty or null commentary text safely without throwing.
 - Text parsing must produce typed segments (`TafsirSegment[]`) for native React rendering and clean sanitized HTML.
 - Cache keys must follow `["tafsir", tafsirId, normalizedVerseKey]` where `normalizedVerseKey` is validated and formatted as `${chapter}:${verse}` without zero-padding.
+- **`getTafsir` is no longer a pure network read.** When a tafsir edition has been downloaded for offline use, or the device is offline, it may return a verse's commentary from a cached `by_chapter` blob instead of the live `by_ayah` response — including `null` for a verse an edition has no record for. Any change to the provider's error/return contract must be checked against the Offline Tafsir decision in [`pwa.md`](pwa.md) ([ADR 0060](../adr/0060-offline-tafsir-download.md)).
 
 ---
 

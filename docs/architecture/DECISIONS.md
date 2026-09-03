@@ -35,14 +35,14 @@ rationale in the linked domain file.
 | Surah layout | [`decisions/surah-layout.md`](decisions/surah-layout.md) | surah-banner / bismillah gap-detection placement |
 | Databases | [`decisions/db.md`](decisions/db.md) | Prisma connection, the two-DB split, local Docker dev DBs & seeding, PageMetadata |
 | API & auth | [`decisions/api.md`](decisions/api.md) | middleware chain, NextAuth / `extractUser`, `jsonResponse()` envelope |
-| PWA & offline | [`decisions/pwa.md`](decisions/pwa.md) | offline page caching, Android PWA launch & back navigation, root-layout network budget, offline recitation audio |
+| PWA & offline | [`decisions/pwa.md`](decisions/pwa.md) | offline page caching, Android PWA launch & back navigation, root-layout network budget, offline recitation audio, offline tafsir |
 | Marks & sharing | [`decisions/marks.md`](decisions/marks.md) | mark = category + optional comment, semantic color categories, verse/word comments, shared mushaf access grants |
 | Recitation | [`decisions/recitation.md`](decisions/recitation.md) | recitation playback (QDC proxy, global audio timeline) |
 | Search | [`decisions/search.md`](decisions/search.md) | Arabic search normalization & result caps |
 | i18n | [`decisions/i18n.md`](decisions/i18n.md) | next-intl locales, direction, key coverage |
 | Awrad / plans | [`decisions/plans.md`](decisions/plans.md) | learning-plans engine, per-track units, derived assignments |
 | Social metadata | [`decisions/sharing.md`](decisions/sharing.md) | root-layout Open Graph, per-verse `/share/verse` route |
-| Tafsir | [`decisions/tafsir.md`](decisions/tafsir.md) | client-side QDC tafsir provider, quote normalization |
+| Tafsir | [`decisions/tafsir.md`](decisions/tafsir.md) | client-side QDC tafsir provider, quote normalization, reader-pager sync, offline blob fallback |
 | Observability | [`decisions/observability.md`](decisions/observability.md) | Sentry error tracking, Sentry→Slack relay, `fq-logger`, notification dispatch |
 | Testing & CI | [`decisions/testing.md`](decisions/testing.md) | Playwright behavioral e2e, CI quality gate, e2e-skip rule, local dev-server / build-CPU ergonomics |
 | Release | [`decisions/release.md`](decisions/release.md) | feature-branch → main → release-branch → stg → prod workflow |

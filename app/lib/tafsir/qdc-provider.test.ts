@@ -73,6 +73,64 @@ describe("qdcTafsirProvider", () => {
     });
   });
 
+  describe("getTafsir — offline blob fallback (ADR 0060)", () => {
+    const originalCaches = (globalThis as { caches?: unknown }).caches;
+
+    const installFakeCache = (store: Record<string, unknown>) => {
+      (globalThis as { caches?: unknown }).caches = {
+        open: async () => ({
+          match: async (url: string) =>
+            url in store ? { json: async () => store[url] } : undefined,
+        }),
+      };
+    };
+
+    afterEach(() => {
+      (globalThis as { caches?: unknown }).caches = originalCaches;
+    });
+
+    it("serves the cached surah blob when the live fetch returns 503", async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 503 });
+      installFakeCache({
+        "/__fq-tafsir/91/2": {
+          tafsirs: [{ verse_key: "2:255", text: "آية الكرسي" }],
+        },
+      });
+
+      const result = await qdcTafsirProvider.getTafsir(91, "2:255");
+      expect(result).toMatchObject({ tafsirId: 91, verseKey: "2:255", text: "آية الكرسي" });
+    });
+
+    it("returns null when the blob is present but omits that verse", async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 503 });
+      installFakeCache({
+        "/__fq-tafsir/91/2": { tafsirs: [{ verse_key: "2:1", text: "…" }] },
+      });
+
+      const result = await qdcTafsirProvider.getTafsir(91, "2:107");
+      expect(result).toBeNull();
+    });
+
+    it("rethrows the original error when no blob is cached", async () => {
+      global.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+      installFakeCache({});
+
+      await expect(qdcTafsirProvider.getTafsir(14, "3:1")).rejects.toThrow("Failed to fetch");
+    });
+
+    it("rethrows an AbortError without consulting the cache", async () => {
+      const abort = Object.assign(new Error("aborted"), { name: "AbortError" });
+      global.fetch = vi.fn().mockRejectedValue(abort);
+      installFakeCache({
+        "/__fq-tafsir/16/1": { tafsirs: [{ verse_key: "1:1", text: "present" }] },
+      });
+
+      await expect(qdcTafsirProvider.getTafsir(16, "1:1")).rejects.toMatchObject({
+        name: "AbortError",
+      });
+    });
+  });
+
   describe("getEditions", () => {
     it("fetches and maps editions catalog with direction metadata", async () => {
       const mockResponse = {

@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-60 active plans.
+61 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -59,6 +59,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | search | [Fix Search Debounce Lag](fix-search-debounce-lag.md) | implemented | bug |
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
+| tafsir | [Tafsir: Offline Download & Cache Management for PWA](tafsir-offline-download.md) | implemented | feature |
 | theming | [Design Migration — reader-lab language, app-wide](design-migration/INDEX.md) | in-progress | feature |
 | theming | [Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette](dark-theme-mushaf-unification.md) | implemented | feature |
 | theming | [Home Page Design Fixes](home-page-design-fixes.md) | implemented | feature |

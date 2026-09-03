@@ -8,6 +8,7 @@ import { useLocale } from "next-intl";
 import { Settings } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { OfflineRecitationSection } from "@components/offline/OfflineRecitationSection";
+import { OfflineTafsirSection } from "@components/offline/OfflineTafsirSection";
 import { MushafLayoutSection } from "@components/mushaf/MushafLayoutSection";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
@@ -147,6 +148,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
 
               <EnablePushToggle />
               <OfflineRecitationSection />
+              <OfflineTafsirSection />
             </SettingsSection>
           )}
 
