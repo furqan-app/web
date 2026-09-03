@@ -111,3 +111,7 @@ Apply on every task, scoped to the domains actually touched.
 - No feature flag, config option, or "for future use" parameter with no current caller.
 - Prefer extending an existing typed constant/registry (`MARK_CATEGORIES`, `NOTIFICATION_TYPES`, `PLAN_TEMPLATES`) over a parallel one-off mechanism.
 - Don't add error handling for states that can't occur here (e.g. re-validating what middleware already guarantees) — validate only at real boundaries.
+
+**Testing & verification**
+- Verify business logic, helpers, and components with fast unit tests (`npm test` / Vitest).
+- Never run uncapped full-suite Playwright commands locally; scope browser checks to specific test files with at most 2 workers (`--workers=2`).

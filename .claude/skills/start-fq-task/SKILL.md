@@ -188,6 +188,7 @@ Loads the right context (decisions + standards + plan), then implements the task
    - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
    - Apply the decisions you loaded from `docs/architecture/decisions/` — do not re-litigate them.
    - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
+   - Run fast unit tests for logic and components: `npm test` (Vitest, < 1s). If browser verification is necessary, never run the uncapped full suite; target the specific spec against the task dev server with at most 2 workers (`npx playwright test e2e/tests/<spec>.spec.ts --project=desktop --workers=2`). Full-suite and SSG builds are reserved for CI.
 
 4. **Record decisions**
    - If the task added, removed, or reorganised any components: update `docs/architecture/COMPONENTS.md` to reflect the new state.
@@ -210,3 +211,4 @@ Loads the right context (decisions + standards + plan), then implements the task
 - Do not add features beyond what the plan specifies.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation (plans, COMPONENTS.md, decisions/*.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
+- Do not run uncapped full-suite Playwright E2E tests locally — prefer `npm test` (Vitest) for logic and components, and scope browser checks to specific test files with `--workers=2`.
