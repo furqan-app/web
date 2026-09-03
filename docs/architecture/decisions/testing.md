@@ -66,4 +66,4 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 - Local `next build` worker count defaults to 2 cores unless overridden by `NEXT_BUILD_CPUS`; do not remove this cap (every local E2E session now runs a build).
 - Local Playwright worker count defaults to 2 unless overridden by `PLAYWRIGHT_WORKERS`.
 - A worktree must be buildable before local E2E: `app/generated` is produced by `npm run postinstall` (`prisma generate` for both schemas), never symlinked from another worktree — a symlink breaks `next build` with `Module not found: @/app/generated/app-client`.
-- Agents use `npm test` (Vitest) as the primary fast loop; for E2E, start `npm run e2e:serve` once, then run the targeted spec against it.
+- Agents do not run test suites locally by default (CI runs lint, type-check, unit tests, and Playwright automatically on PRs). When needed, agents run targeted unit tests (`npx vitest run <path>`) for pure logic changes, and run targeted Playwright specs against `npm run e2e:serve` only when authoring/updating E2E tests.

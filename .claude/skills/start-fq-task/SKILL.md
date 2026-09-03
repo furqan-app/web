@@ -189,8 +189,10 @@ Loads the right context (decisions + standards + plan), then implements the task
    - Follow the plan exactly (the latest addendum's approach). If you discover the plan needs revision, pause and discuss — do not silently deviate.
    - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
    - Apply the decisions you loaded from `docs/architecture/decisions/` — do not re-litigate them.
-   - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors.
-   - Run fast unit tests for logic and components: `npm test` (Vitest, < 1s). If browser verification is necessary, never run the uncapped full suite. Once per session: `npm run e2e:db:up && npm run e2e:setup`, then `npm run e2e:serve` in a separate terminal (one ~4 min production build, then it stays up). Then run the targeted spec against it: `npx playwright test e2e/tests/<spec>.spec.ts --project=desktop` — repeat freely, it reuses that server. E2E does not use `next dev` (on-demand compilation is slower, ~16 GB heavier, and times out). Full-suite runs are reserved for CI.
+   - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors (`npx tsc --noEmit`).
+   - **Do NOT run full test suites or local E2E by default** — running tests locally consumes significant time and system resources, and GitHub Actions CI already enforces `lint`, `type-check`, `npm test` (Vitest), and Playwright E2E on PRs. Only run tests locally when there is a specific need:
+     - **Targeted Unit Tests:** Only run targeted tests (`npx vitest run <path/to/test>`) when authoring or modifying pure business logic, calculations, or utilities that have corresponding unit tests. Never run unit tests for UI/CSS, layout, copy, translation, config, or docs changes.
+     - **Local E2E:** Never run locally unless explicitly requested by the user or when authoring/updating an E2E spec itself (`npx playwright test e2e/tests/<spec>.spec.ts --project=desktop` against `npm run e2e:serve`).
 
 4. **Record decisions**
    - If the task added, removed, or reorganised any components: update `docs/architecture/COMPONENTS.md` to reflect the new state.
@@ -213,4 +215,4 @@ Loads the right context (decisions + standards + plan), then implements the task
 - Do not add features beyond what the plan specifies.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation (plans, COMPONENTS.md, decisions/*.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
-- Do not run uncapped full-suite Playwright E2E tests locally — prefer `npm test` (Vitest) for logic and components, and scope browser checks to specific test files run against `npm run e2e:serve` (never `next dev`).
+- Do not run test suites or local E2E by default — do not run full `npm test` on non-logic changes (UI, styles, copy, config), and never spin up local E2E (`e2e:serve` / Playwright) unless specifically working on an E2E spec or requested by the user. Rely on CI for PR regression testing.
