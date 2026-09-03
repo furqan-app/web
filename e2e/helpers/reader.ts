@@ -44,6 +44,40 @@ export async function waitForReaderContent(page: Page) {
 }
 
 /**
+ * Blocks until the active visible center panel in ReaderPager has painted its word rows (.fq-safha-row).
+ * Unlike waitForReaderContent, this does not require adjacent pre-fetched or boundary panels to have rows.
+ */
+export async function waitForActivePanelContent(page: Page) {
+  const panel = getActivePanel(page);
+  await expect(panel.locator(".fq-safha-row:visible").first()).toBeVisible({ timeout: 15000 });
+}
+
+/**
+ * Spoofs PWA standalone display mode before first paint and optionally dismisses
+ * first-run offline setup gates for the provided editions (defaults to [1, 2]).
+ */
+export async function withStandaloneDisplayMode(
+  page: Page,
+  dismissedEditions: number[] = [1, 2]
+) {
+  await page.addInitScript((editions) => {
+    for (const id of editions) {
+      window.localStorage.setItem(`fq-offline-prompt-dismissed-v2-${id}`, "1");
+    }
+    const realMatchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) =>
+      query.includes("display-mode")
+        ? ({
+            matches: true,
+            media: query,
+            addEventListener() {},
+            removeEventListener() {},
+          } as any)
+        : realMatchMedia(query);
+  }, dismissedEditions);
+}
+
+/**
  * Sets the stored safha view ("single" or "double") in localStorage and initializes
  * html[data-safha-view] before first paint, matching QuranSafhaViewContext / storage.ts.
  */

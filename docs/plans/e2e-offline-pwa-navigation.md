@@ -2,7 +2,7 @@
 title: "Complex E2E & Fix: Offline PWA, Precached Assets & Degraded Network Navigation"
 type: feature
 date: 2026-09-03
-status: planned
+status: implemented
 area: pwa
 issue: 473
 adr: [0014, 0029, 0033, 0046]
