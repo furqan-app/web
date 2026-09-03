@@ -100,7 +100,7 @@ Expands `e2e/tests/tafsir-sheet.spec.ts` into an exhaustive behavioral test suit
    - Open Tafsir on `1:7` and scroll commentary down 200px.
    - Recitation audio time reaches `2:1` timing.
    - Assert: Underlying pager turns to Page 2.
-   - Assert: Tafsir sheet remains open, displays `1:7` (independent), and scroll position is unchanged across the auto-advance (±2px) — after polling for the commentary to render and overflow.
+   - Assert: Tafsir sheet remains open, displays `1:7` (independent), and its scroll container is the same DOM node before and after the auto-advance (held `elementHandle` stays `isConnected` — no remount); scroll-offset preservation is checked only when the commentary actually overflowed.
 
 5. **Recitation Follow Detach and Re-attach:**
    - Start recitation playback on Page 1 (`1:1`).
@@ -136,8 +136,7 @@ Expands `e2e/tests/tafsir-sheet.spec.ts` into an exhaustive behavioral test suit
 
 ### 4. End-to-End Suite: `e2e/tests/tafsir-sheet.spec.ts`
 - Comprehensive Playwright test scenarios covering boundary crossings, spread nuances, recitation independence, follow detach/reattach, boundary clamping, and shared mushaf preservation.
-- The shared `beforeEach` QDC tafsir mock body is intentionally long (~40 paragraphs) so `.fq-scroll-nice` is guaranteed to overflow at any CI viewport/build timing — the scroll-preservation assertions depend on a genuinely scrollable container.
-- The recitation auto-advance test gates on `expect.poll` for `scrollHeight > clientHeight` before scrolling (the sheet body may still be a non-overflowing skeleton when `openTafsirForWord` returns — it only waits for the header), polls for `scrollTop` to settle, then asserts the post-advance `scrollTop` is unchanged (±2px), which is the real "unreset" guarantee.
+- The recitation auto-advance test does not assume `.fq-scroll-nice` overflows: real 2:5 commentary is short, and the reader server-prefetches tafsir so the client `page.route` mock is not reliably the render source. It proves "not reset" primarily by holding an `elementHandle` to the scroll container and asserting it stays `isConnected` across the auto-advance (a sheet remount would detach it and zero the scroll). The scroll-offset preservation check (±2px) runs only when the container actually overflowed.
 
 ## Constraints
 
@@ -147,8 +146,8 @@ Expands `e2e/tests/tafsir-sheet.spec.ts` into an exhaustive behavioral test suit
 - **Spread-aware jumps**: `jumpTo` must NOT be called if the target page is already included in `visiblePages` (e.g. facing page of an active double spread).
 - **Overlay z-index ladder**: Tafsir Sheet (`z-50`) > RecitationPlayerBar (`z-40`) > Nav (`z-10`).
 - **Focus trap & gesture containment**: Radix `SheetContent` focus containment must remain uninterrupted during background pager turns.
-- **E2E scroll assertions need a genuinely scrollable container**: `.fq-scroll-nice` only scrolls when its content overflows. Any test that sets `scrollTop` must first gate on `scrollHeight > clientHeight` via `expect.poll` (real commentary rendered, not the loading skeleton), never assume overflow from a fixed fixture.
-- **No app-code changes for the #522 flake fix** — `TafsirSheet` / `TafsirReaderSync` behavior is correct; only the test's assumptions were unsound. The enlarged shared mock must not break the other tests in the describe block (they assert on header/edition text, not body length).
+- **E2E must not assume `.fq-scroll-nice` overflows**: it only scrolls when the rendered commentary is long enough, and the rendered commentary is not controlled by the test (short real 2:5 text; reader server-prefetch bypasses the client `page.route` mock). Prove "sheet not remounted / not reset" with an element-identity check (`elementHandle` stays `isConnected`); gate any `scrollTop` offset assertion behind an actual-overflow check.
+- **No app-code changes for the #522 flake fix** — `TafsirSheet` / `TafsirReaderSync` behavior is correct; only the test's assumptions were unsound.
 
 ## What NOT to Do
 
@@ -157,9 +156,10 @@ Expands `e2e/tests/tafsir-sheet.spec.ts` into an exhaustive behavioral test suit
 - Do NOT call `jumpTo` when `targetPage` is already included in `visiblePages`.
 - Do NOT inline pager navigation logic inside `TafsirSheet.tsx` — keep `TafsirSheet` presentationally pure and delegate synchronization to `TafsirReaderSync.tsx`.
 - Do NOT hardcode page numbers or assume single-page layout universally.
-- Do NOT drop the scroll assertions in the recitation auto-advance test — they are the remount / scroll-reset regression guard.
-- Do NOT add arbitrary `waitForTimeout` sleeps to stabilise scroll timing — gate on `expect.poll` conditions.
-- Do NOT change `.fq-scroll-nice` markup or the sheet layout to force overflow — lengthen the mock fixture instead.
+- Do NOT drop the remount guard in the recitation auto-advance test — keep the element-identity (`isConnected`) check even if the scroll-offset assertion is conditional.
+- Do NOT re-add an unconditional `expect(scrollTop).toBeGreaterThan(0)` / `expect.poll` on overflow — the rendered commentary length is not test-controlled, so it will flake again.
+- Do NOT add arbitrary `waitForTimeout` sleeps to stabilise scroll timing.
+- Do NOT change `.fq-scroll-nice` markup or the sheet layout to force overflow.
 - Do NOT lower the Playwright worker count further or special-case CI timing to work around the flake.
 
 ## Decisions Made
@@ -167,8 +167,8 @@ Expands `e2e/tests/tafsir-sheet.spec.ts` into an exhaustive behavioral test suit
 - Tafsir sheet stays independent from recitation playback: recitation continues in the background, but Tafsir commentary never auto-advances.
 - Reader pager turns automatically when manual Tafsir stepping crosses a page boundary not currently visible.
 - Stepping away from playing recitation detaches follow; stepping back or playback catching up re-attaches follow.
-- E2E scroll-preservation checks prove "not reset" by asserting `scrollTop` is *unchanged* across the event (±2px), after polling for a genuinely overflowing container — not by asserting `scrollTop > 0`, which silently passes as a no-op when the fixture doesn't overflow.
+- E2E proves the Tafsir sheet "was not reset" across a recitation auto-advance by element identity — a held `elementHandle` to `.fq-scroll-nice` stays `isConnected` — not by a scroll-offset value, since the rendered commentary length is not test-controlled.
 
 ## Revision History
 
-- **2026-09-03** — Folded Addendum 1 (Issue [#522](https://github.com/furqan-app/web/issues/522), branch `bug/522-tafsir-e2e-scroll-flake`). The recitation auto-advance test's scroll-preservation sub-check was flaky in CI: it set `scrollContainer.scrollTop = 100` and asserted `> 0`, but `.fq-scroll-nice` only scrolls when its content overflows, and `openTafsirForWord` returns before `TafsirContent` finishes loading, so the still-skeleton body often didn't overflow and `scrollTop` stayed `0`. Landed latent when #470 + #471 both reached `main`; #520's worker-cap change shifted timing further. Fix (test-only): enlarged the shared `beforeEach` QDC mock body to guarantee overflow, added `expect.poll` gates for overflow and scroll settle, and changed the post-advance assertion from `scrollTop > 0` to `scrollTop` unchanged (±2px). Local E2E verification was not possible on the author's machine (heavy `next dev` compile of the reader route destabilised it); CI is the verifier.
+- **2026-09-03** — Folded Addendum 1 (Issue [#522](https://github.com/furqan-app/web/issues/522), branch `bug/522-tafsir-e2e-scroll-flake`). The recitation auto-advance test's scroll-preservation sub-check (`scrollContainer.scrollTop = 100` then `expect(...).toBeGreaterThan(0)`) was flaky in CI: `.fq-scroll-nice` only scrolls when the rendered commentary overflows, and the rendered commentary is short real 2:5 text — the client `page.route` QDC mock does not reliably feed it because the reader server-prefetches tafsir. So `scrollTop` stayed `0`. Latent until #470 + #471 both reached `main`; #520's worker-cap change shifted timing further. First fix attempt (enlarge the mock body + `expect.poll` for overflow) failed in CI the same way — the mock still wasn't the render source. Final fix (test-only): reverted the mock to its original body; the test now holds an `elementHandle` to the scroll container and asserts it stays `isConnected` across the auto-advance (the real remount guard), and only checks scroll-offset preservation when the container actually overflowed. Local E2E verification was not possible on the author's machine (heavy `next dev` compile of the reader route destabilised it — tracked in [#524](https://github.com/furqan-app/web/issues/524)); CI is the verifier.
