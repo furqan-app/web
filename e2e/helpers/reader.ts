@@ -45,7 +45,8 @@ export async function waitForReaderContent(page: Page) {
 
 /**
  * Blocks until the active visible center panel in ReaderPager has painted its word rows (.fq-safha-row).
- * Unlike waitForReaderContent, this does not require adjacent pre-fetched or boundary panels to have rows.
+ * Uses :visible because single-safha mode on even pages renders a hidden partner (.fq-safha-partner)
+ * as the first DOM child, which causes bare .first() to hang waiting for an intentionally hidden row.
  */
 export async function waitForActivePanelContent(page: Page) {
   const panel = getActivePanel(page);
@@ -61,15 +62,20 @@ export async function withStandaloneDisplayMode(
   dismissedEditions: number[] = [1, 2]
 ) {
   await page.addInitScript((editions) => {
-    for (const id of editions) {
-      window.localStorage.setItem(`fq-offline-prompt-dismissed-v2-${id}`, "1");
-    }
+    try {
+      for (const id of editions) {
+        window.localStorage.setItem(`fq-offline-prompt-dismissed-v2-${id}`, "1");
+      }
+    } catch {}
+
     const realMatchMedia = window.matchMedia.bind(window);
     window.matchMedia = (query: string) =>
       query.includes("display-mode")
         ? ({
             matches: true,
             media: query,
+            addListener() {},
+            removeListener() {},
             addEventListener() {},
             removeEventListener() {},
           } as any)
