@@ -75,7 +75,7 @@ npm run e2e:test         # run Playwright against the running server (e2e:build 
 npm run e2e:db:down      # tear down e2e DBs
 ```
 
-*Note on builds and tests:* E2E runs against a production build (`e2e:build && e2e:start`), locally and in CI — `next dev` is not used (its on-demand route compilation is slower, ~16 GB heavier per spec file, and times out). Locally, `npm run e2e:serve` builds once (~4 min, capped at 2 CPU workers via `next.config.mjs`) and stays up; every later `e2e:test` / `npx playwright test <spec>` reuses it. Playwright local workers default to 2 (`PLAYWRIGHT_WORKERS` to change). Prefer fast unit tests (`npm test`) for business logic and components. Full-suite runs are CI-only.
+*Note on builds and tests:* Agents do not run test suites locally by default — running tests locally wastes time and resources. GitHub Actions CI automatically runs lint, type-check, unit tests (`npm test`), and Playwright E2E on every PR. Locally, agents run targeted unit tests (`npx vitest run <path>`) only when modifying pure logic/utilities with tests, and do not run local E2E unless working on an E2E spec or explicitly requested. For local E2E when needed: E2E runs against a production build (`e2e:build && e2e:start`), never `next dev`. `npm run e2e:serve` builds once (~4 min, capped at 2 CPU workers via `next.config.mjs`) and stays up; every later `e2e:test` / `npx playwright test <spec>` reuses it. Playwright local workers default to 2 (`PLAYWRIGHT_WORKERS` to change). Full-suite runs are CI-only.
 
 ## Documentation
 
