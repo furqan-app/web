@@ -64,6 +64,34 @@ on top of the frontmatter (`status` + a citation check become the archive predic
 
 ---
 
+## Update — 2026-09-03: archive sweep implemented (issue #519)
+
+Option B (deferred above) is now done. `.claude/skills/scripts/sweep-archived-plans.sh`
+(explicitly invoked — **never** called from `gen-plans-index.sh` or a hook, so a routine
+index regen never `git mv`s files) moves a plan into `docs/plans/archive/` when **both**:
+
+- `status ∈ {implemented, superseded}`, and
+- its basename is not linked or path-referenced from any file under a closed authoritative
+  set: `docs/architecture/**`, `docs/standards/**`, `docs/workflow/**`, `docs/design/**`,
+  `docs/deployment/**`, `AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`, `DESIGN.md`, `.claude/**`,
+  `.github/**`.
+
+Plan→plan links never protect a plan. After the moves the script recomputes every relative
+link inside `docs/plans/**` from each file's new location. `gen-plans-index.sh` now emits two
+indexes — `docs/plans/INDEX.md` (active) and `docs/plans/archive/INDEX.md` (archived).
+
+`docs/plans/archive/` is **outside the agent plan-scan path**: `/plan-fq-task` step 0 and
+`/start-fq-task` read only the active `INDEX.md` and the one plan being planned-from or
+implemented; an archived (or any already-`implemented`) plan is never loaded for background
+context — its durable content lives in `docs/architecture/decisions/*.md` + ADRs. Re-run the
+sweep periodically as plans reach `implemented`.
+
+The measured link-rewrite cost was 2 plan→plan links + ~50 relative doc links recomputed by
+the script — the ADR 0057 failure mode (moving a cited doc out of the scan path) did not
+occur, because "no authoritative citation" is the predicate itself.
+
+---
+
 ## Frontmatter contract
 
 ```yaml

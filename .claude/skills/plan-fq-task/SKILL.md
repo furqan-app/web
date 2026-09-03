@@ -85,15 +85,16 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 ## Steps
 
 0. **Check for an existing related plan — before anything else**
-   - Read `docs/plans/INDEX.md` (one row per plan: area, title, status, type) and scan the rows in this task's `area` for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
+   - Read `docs/plans/INDEX.md` (one row per active plan: area, title, status, type) and scan the rows in this task's `area` for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
    - If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its frontmatter `status` to `ready-to-implement` if it was `implemented`, then regenerate `INDEX.md`.
    - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
    - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just read `INDEX.md`.
+   - `INDEX.md` lists active plans only. The ~100 finished plans in `docs/plans/archive/` are history — never open one for context; their durable content is in `docs/architecture/decisions/*.md` + ADRs.
 
 1. **Load context — mandatory gate, before investigating or writing anything**
    - Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files this task touches — not every one. When a decision links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint. Non-negotiable: the plan must not contradict it, and if it needs to, raise that with the user and supersede it (flip the section `**Status:**`) — never silently.
    - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
-   - **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches a later addendum revised or reverted are dead — never re-propose them (that is where most past rework came from). Your new addendum must stay consistent with every still-active constraint above it.
+   - **If step 0 found an existing plan to extend, read that plan in full — especially its `Constraints` and `What NOT to Do` sections.** If it still carries a `## Addendum` (rare — addenda are folded into the body on ship), the newest one is the current source of truth and approaches a later addendum revised are dead — never re-propose them. Your new addendum must stay consistent with every still-active constraint above it.
 
 2. **Investigate (bugs) or clarify (features)**
 

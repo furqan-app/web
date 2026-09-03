@@ -2,7 +2,7 @@
 
 Finished (`implemented` / `superseded`) plans with no reference from an authoritative doc, moved here by `.claude/skills/scripts/sweep-archived-plans.sh` ([ADR 0059](../../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Kept for history only — do not read one as task context; `docs/architecture/decisions/*.md` and the ADRs carry the durable knowledge.
 
-101 archived plans.
+103 archived plans.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
@@ -93,6 +93,7 @@ Finished (`implemented` / `superseded`) plans with no reference from an authorit
 | theming | [Homepage Design & UX Elevation](design-migration/home-page-enhancement.md) | implemented | feature |
 | theming | [Plan: Set `font-tajawal` globally on app root & Tailwind `sans`](global-ui-font-tajawal.md) | implemented | feature |
 | theming | [Three Theme Palette](three-theme-palette.md) | implemented | feature |
+| theming | [UI: Enforce App-Wide user-select: none with Input Exceptions](app-wide-user-select-none.md) | implemented | feature |
 | theming | [Handoff — Reading-Desk Depth for Light & Gold (and de-duplicating the reader CSS)](theme-depth-unification-HANDOFF.md) | superseded | feature |
 | theming | [Session Handoff — Dark Theme Mushaf Unification](dark-theme-mushaf-unification-HANDOFF.md) | superseded | feature |
 | workflow | [Agent-surface consolidation + graphify ignore-set](consolidate-agent-surfaces.md) | implemented | chore |
@@ -101,6 +102,7 @@ Finished (`implemented` / `superseded`) plans with no reference from an authorit
 | workflow | [Git Workflow Skills (commit/push gating + confirm-dangerous-git)](git-workflow-skills.md) | implemented | feature |
 | workflow | [Git Worktrees Workflow Integration](git-worktrees-workflow.md) | implemented | feature |
 | workflow | [Plan lifecycle — YAML frontmatter, generated INDEX.md, fold-addenda-on-ship](plan-lifecycle-index.md) | implemented | chore |
+| workflow | [Plan-archive sweep + trim plan-reading in workflow docs](plan-archive-sweep.md) | implemented | chore |
 | workflow | [PR Review Remediations for Feature 433](pr-review-remediations.md) | implemented | feature |
 | workflow | [Trello → GitHub Issues Migration Plan](trello-to-github-issues-migration.md) | implemented | feature |
 | workflow | [UI Workflow Enhancements](ui-workflow-enhancements.md) | implemented | feature |

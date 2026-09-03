@@ -90,7 +90,7 @@ Load these before starting any task:
   - `docs/standards/styling.md` — Tailwind tokens, themes, RTL/LTR
   - `docs/standards/quran-rendering.md` — column–font contract for Quran text
   - `docs/standards/pwa-testing.md` — exercising PWA-gated behavior in the browser
-- **Task plans**: `docs/plans/` — start from the generated `docs/plans/INDEX.md` (area / status / type per plan)
+- **Task plans**: `docs/plans/` — start from the generated `docs/plans/INDEX.md` (area / status / type per active plan). Finished plans live in `docs/plans/archive/` — never load one for background context; its durable content is in `docs/architecture/decisions/*.md` + ADRs. Read a plan file in full only when planning-from or implementing that specific plan.
 - **ADR history**: `docs/architecture/adr/`
 - **Deployment**: `docs/deployment/hostinger.md`
 - **All AI workflows**: [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md)

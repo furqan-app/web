@@ -2,7 +2,7 @@
 title: Plan-archive sweep + trim plan-reading in workflow docs
 type: chore
 date: 2026-09-03
-status: ready-to-implement
+status: implemented
 area: workflow
 issue: 519
 adr: [0059]
@@ -12,7 +12,7 @@ adr: [0059]
 
 ## Summary
 
-Follow-up to #497 / [ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md),
+Follow-up to #497 / [ADR 0059](../../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md),
 which chose Option A (frontmatter + generated `INDEX.md` + fold-on-ship) and explicitly
 deferred **Option B — the archive sweep** as "tracked separately". This is that task, plus a
 matching trim of the plan-reading instructions in the workflow docs. Part of epic #491
@@ -70,22 +70,23 @@ archive  ⟺  status ∈ {implemented, superseded}
    `docs/plans/design-migration/` disappears, including its own `INDEX.md`).
 2. Rewrite the 2 archived→keep links (`](x.md)` → `](../x.md)`).
 3. `gen-plans-index.sh`: exclude `docs/plans/archive/**` from the active index; append a line
-   `"N plans archived — see [archive/INDEX.md](archive/INDEX.md)"`. Emit
+   `"N plans archived — see [archive/INDEX.md](INDEX.md)"`. Emit
    `docs/plans/archive/INDEX.md` in the same table format for the archived set.
 4. Commit **`.claude/skills/scripts/sweep-archived-plans.sh`** — computes the predicate, does
    the `git mv`s and link rewrites, then calls `gen-plans-index.sh`. **Explicitly invoked
    only** — never called from `gen-plans-index.sh`, so a routine index regen never silently
    relocates files. Run it once in this task.
 
-### Out of scope — flagged separately
+### `.gitignore` fix (folded in on request)
 
-`.gitignore` line 8 is `app*` (with `!app` on line 9). Having no leading slash, `app*`
-matches **any** path segment starting with `app` at any depth — it silently ignores
-`docs/plans/app-wide-user-select-none.md` (the plan doc for shipped issue #482) and would eat
-any future `app*`-named doc, plan, or component file. This is a real footgun but changing
-`.gitignore` risks un-ignoring intentionally-ignored trees; it needs its own issue and is
-**not** touched here. `gen-plans-index.sh` is *not* broken in a clean checkout / CI — only a
-working copy that has the stray untracked file sees it.
+`.gitignore` line 8 was a bare `app*` (with `!app`). No leading slash → it matched **any**
+path segment starting with `app` at any depth, silently ignoring
+`docs/plans/app-wide-user-select-none.md` (the plan doc for shipped issue #482, never
+committed as a result) and any future `app*`-named file. Verified `app*` protected nothing
+useful (`app/` is the only match and `!app` re-includes it; `app/generated` has its own
+`/app/generated` rule). Fixed: `app*` → `/app*`, `!app` → `!/app/` (anchored to root). The
+recovered plan doc gets YAML frontmatter and is archived by the sweep like any other
+finished, uncited plan.
 
 ### Part 2 — workflow-doc trim
 
@@ -314,7 +315,16 @@ for review, not a hard-coded input.
 - **Workflow docs**: `plan-task` step 0 (read `INDEX.md`) and `start-task` step 1 (read the
   implementing plan) stay; the "read every addendum / newest wins" language goes; a "never
   read archived/implemented plans for context" rule is added.
-- **Out of scope, flagged**: `.gitignore`'s `app*` rule silently ignores
-  `docs/plans/app-wide-user-select-none.md` and any future `app*`-named file — its own issue,
-  not touched here.
+- **`.gitignore` `app*` → `/app*` + `!/app/`** (folded in on request) — the bare rule
+  silently ignored `docs/plans/app-wide-user-select-none.md` and any future `app*`-named
+  file. The recovered plan doc is committed with frontmatter and archived by the sweep.
 - No new ADR — ADR 0059 update + `docs/workflow/INDEX.md` (workflow decisions live there).
+
+## Revision History
+
+- **2026-09-03** — implemented. Sweep moved 101 plans (+ the recovered
+  `app-wide-user-select-none.md` = 102 archived); `gen-plans-index.sh` split into
+  active + `archive/INDEX.md`; ~50 relative doc links recomputed by the sweep script;
+  `.gitignore` `app*` footgun fixed; workflow docs + `AGENTS.md` + ADR 0059 + both SKILL.md
+  trimmed of stale addendum-reading language and given the "never read an archived/implemented
+  plan for context" rule.

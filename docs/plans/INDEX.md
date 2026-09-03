@@ -2,9 +2,9 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-59 active plans.
+58 active plans.
 
-101 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
+103 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
@@ -63,7 +63,6 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Reading-desk depth for light & gold — and de-duplicating the reader CSS](theme-depth-unification.md) | implemented | feature |
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
-| workflow | [Plan-archive sweep + trim plan-reading in workflow docs](plan-archive-sweep.md) | ready-to-implement | chore |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |
 | workflow | [Remove 5 workflow skills (impeccable, visualize-fq-design, compress-fq-docs, mujaz, ui-motion)](remove-workflow-skills.md) | implemented | feature |
 | workflow | [AI-First Documentation & Workflow System](ai-docs-workflow-system.md) | superseded | feature |

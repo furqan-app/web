@@ -26,7 +26,7 @@ The AI-first docs system (adopted 2026-06-28): `CLAUDE.md` is a slim pointer, he
 - **`CLAUDE.md` stays a slim pointer** — never architecture detail, standards, or decisions.
 - Adding a new decision **domain file** → add its row to the Domains table in `DECISIONS.md` in the same commit.
 - Workflow / process decisions are recorded **here**, not in `decisions/`.
-- **Task plans** live in [`../plans/`](../plans/), each opening with a YAML frontmatter block; [`../plans/INDEX.md`](../plans/INDEX.md) is generated from that frontmatter by `.claude/skills/scripts/gen-plans-index.sh` and is what `/plan-fq-task` step 0 reads ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)).
+- **Task plans** live in [`../plans/`](../plans/), each opening with a YAML frontmatter block; [`../plans/INDEX.md`](../plans/INDEX.md) is generated from that frontmatter by `.claude/skills/scripts/gen-plans-index.sh` and is what `/plan-fq-task` step 0 reads ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Finished, uncited plans are swept into [`../plans/archive/`](../plans/archive/INDEX.md) by `.claude/skills/scripts/sweep-archived-plans.sh` (explicitly invoked, never automatic) — archived plans are history, not task context.
 
 ---
 
