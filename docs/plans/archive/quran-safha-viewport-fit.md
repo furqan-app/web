@@ -10,7 +10,7 @@ area: reader
 
 ## Root Cause
 
-At default font scale, 15-slot pages (surah heading + text lines) overflowed the viewport by ~70px. Word font-size scales with `vh` (`FONT_V1`), but all other vertical spacing — line gaps, heading block, card/wrapper padding — was fixed `px`/`rem`. Total content height = `15 × fontSizePx + 14 × gapPx`; with `gapPx` fixed, a 15-slot page at 1440×900 measured 850px against a 780px budget. See [ADR 0004](../architecture/adr/0004-quran-safha-viewport-fit.md).
+At default font scale, 15-slot pages (surah heading + text lines) overflowed the viewport by ~70px. Word font-size scales with `vh` (`FONT_V1`), but all other vertical spacing — line gaps, heading block, card/wrapper padding — was fixed `px`/`rem`. Total content height = `15 × fontSizePx + 14 × gapPx`; with `gapPx` fixed, a 15-slot page at 1440×900 measured 850px against a 780px budget. See [ADR 0004](../../architecture/adr/0004-quran-safha-viewport-fit.md).
 
 ## Approach
 

@@ -56,7 +56,7 @@ export function FontFaceInjector({ pageIds }: Props) {
 
 - `<link rel="preload">` stays in `ReaderPage` — it is not the mismatch source.
 - `FontFaceInjector` must be a leaf Client Component with no server children.
-- Never put `<style dangerouslySetInnerHTML>` back in a Server Component — the breakage is silent at build/lint time, only manifests in browser. See [ADR 0020](../architecture/adr/0020-client-component-for-inline-style-injection.md).
+- Never put `<style dangerouslySetInnerHTML>` back in a Server Component — the breakage is silent at build/lint time, only manifests in browser. See [ADR 0020](../../architecture/adr/0020-client-component-for-inline-style-injection.md).
 - Do not use `suppressHydrationWarning` — silences errors without fixing the structural DOM mismatch.
 - Do not remove the `<style>` and rely on a global stylesheet — per-page font injection is intentional (loading all 604 fonts globally is prohibitively large).
 - `FontFaceInjector` SSRs its initial render — no flash of unstyled text, no loading state needed.

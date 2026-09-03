@@ -10,7 +10,7 @@ area: reader
 
 ## Summary
 
-On mobile (`<md`), the Safha card fills the full viewport edge-to-edge (no border/rounded corners/shadow — those stay `md:`-only), the reading font is derived from screen width (not user-scalable), and the 15-line budget fills all available height via flexbox distribution. Navigation is swipe-based; desktop arrow buttons are hidden. See [ADR 0011](../architecture/adr/0011-mobile-quran-font-scale-vw-formula.md) for the full decision record.
+On mobile (`<md`), the Safha card fills the full viewport edge-to-edge (no border/rounded corners/shadow — those stay `md:`-only), the reading font is derived from screen width (not user-scalable), and the 15-line budget fills all available height via flexbox distribution. Navigation is swipe-based; desktop arrow buttons are hidden. See [ADR 0011](../../architecture/adr/0011-mobile-quran-font-scale-vw-formula.md) for the full decision record.
 
 ## Approach
 

@@ -16,7 +16,7 @@ Trello: [#207](https://trello.com/c/jYO7cqNd/207-wire-impeccable-fix-commands-in
 
 ## Approach
 
-See [ADR 0041](../architecture/adr/0041-wire-impeccable-into-fq-workflow.md) for the full mechanism and rejected alternatives (Bash CLI shell-out, sub-agent delegation). Summary: every invocation is a direct Skill call (command + explicit target), never a subprocess — this lets impeccable's own routing skip its PRODUCT.md/new-work gates and run the target command's playbook in-process, with full craft-floor.md/context.mjs reasoning available.
+See [ADR 0041](../../architecture/adr/0041-wire-impeccable-into-fq-workflow.md) for the full mechanism and rejected alternatives (Bash CLI shell-out, sub-agent delegation). Summary: every invocation is a direct Skill call (command + explicit target), never a subprocess — this lets impeccable's own routing skip its PRODUCT.md/new-work gates and run the target command's playbook in-process, with full craft-floor.md/context.mjs reasoning available.
 
 ## Decision Tree / Algorithm
 

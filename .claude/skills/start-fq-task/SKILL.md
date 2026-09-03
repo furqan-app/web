@@ -95,7 +95,7 @@ Loads the right context (decisions + standards + plan), then implements the task
 1. **Identify the plan**
    - Ask the user which plan to implement if not specified
    - Derive the slug from the plan filename (e.g. `fix-search-debounce`)
-   - **Read the plan in full from the worktree path: `../furqan-<slug>/docs/plans/<slug>.md`**. If that path does not exist, fall back to `docs/plans/<slug>.md` in the main repo (older tasks pre-dating the worktree-first flow). Read every addendum, especially `Constraints` and `What NOT to Do` — the newest addendum is the source of truth.
+   - **Read the plan you are implementing in full, from the worktree path: `../furqan-<slug>/docs/plans/<slug>.md`** — `Constraints` and `What NOT to Do` especially. If that path does not exist, fall back to `docs/plans/<slug>.md` (or `docs/plans/archive/<slug>.md`) in the main repo. This is the one plan file to read — do not pull in other plans for background; archived and already-`implemented` plans are history, their durable content is in `docs/architecture/decisions/*.md` + ADRs. If the plan still carries a `## Addendum` (rare — folded on ship), the newest one wins.
     - Find the plan's GitHub issue (linked in the plan) and move it to In Progress and assign it to yourself before starting implementation:
       ```bash
       gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:todo" --add-label "status:in-progress" --add-assignee @me

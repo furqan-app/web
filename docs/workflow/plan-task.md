@@ -12,18 +12,18 @@ Socratic planning and investigation for features and bugs. Output: `docs/plans/<
 
 ### 0. Check for an existing related plan — before anything else
 
-Read [`docs/plans/INDEX.md`](../plans/INDEX.md) — one row per plan (area, title, status, type) — and scan the rows in the same `area` as this task for one touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
+Read [`docs/plans/INDEX.md`](../plans/INDEX.md) — one row per active plan (area, title, status, type) — and scan the rows in the same `area` as this task for one touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
 
 - If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its frontmatter `status` to `ready-to-implement` if it was `implemented`, then regenerate `INDEX.md` (`.claude/skills/scripts/gen-plans-index.sh`).
 - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
 
-This check is a literal, mandatory action every time — it has been skipped before despite being documented, so read `INDEX.md`; don't rely on memory.
+This check is a literal, mandatory action every time — it has been skipped before despite being documented, so read `INDEX.md`; don't rely on memory. `INDEX.md` lists only active plans; the ~100 finished plans in [`docs/plans/archive/`](../plans/archive/INDEX.md) are history — never open one for context, its durable content is in `docs/architecture/decisions/*.md` + ADRs. Reading a full plan file at all is only for the one active plan you are extending here (or, in `/start-fq-task`, implementing).
 
 ### 1. Load context — mandatory gate, before investigating or writing anything
 
 - Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files whose area this task touches — not every domain file. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat all of it as non-negotiable: the plan must not contradict it, and if it needs to, raise that with the user explicitly and supersede it (flip the section's `**Status:**`) — never override silently.
 - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
-- **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches a later addendum revised or reverted are dead — never re-propose them. Your new addendum must stay consistent with every still-active constraint above it.
+- **If step 0 found an existing plan to extend, read that plan in full — especially its `Constraints` and `What NOT to Do` sections.** If it still carries a `## Addendum` (rare — addenda are folded into the body on ship), the newest one is the current source of truth and approaches a later addendum revised are dead. Your new addendum must stay consistent with every still-active constraint above it.
 
 ### 2. Investigate (bugs) or clarify (features)
 

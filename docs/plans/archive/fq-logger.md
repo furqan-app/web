@@ -10,7 +10,7 @@ area: observability
 
 ## Summary
 
-`pino`-based structured logging wrapper. Instruments server-side code: existing `console.*` call sites plus new log points in auth flows, API routes, server actions, and the Sentry-Slack webhook relay. `logger.error()` also reports to Sentry — bridging the two (ADR 0052). See [ADR 0052](../architecture/adr/0052-fq-logger-sentry-integration.md).
+`pino`-based structured logging wrapper. Instruments server-side code: existing `console.*` call sites plus new log points in auth flows, API routes, server actions, and the Sentry-Slack webhook relay. `logger.error()` also reports to Sentry — bridging the two (ADR 0052). See [ADR 0052](../../architecture/adr/0052-fq-logger-sentry-integration.md).
 
 ## Library & Runtime Split
 

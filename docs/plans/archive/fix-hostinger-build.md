@@ -10,7 +10,7 @@ area: ci
 
 ## Root Cause
 
-`app/utils/db.ts` called `new URL(process.env.QURAN_DATABASE_URL!)` at module scope. Next.js executes module scope during "Collecting page data" — missing env var during Hostinger's build causes an unrecoverable `TypeError: Invalid URL`. ESLint also failed to resolve `next/core-web-vitals` in Hostinger's environment. `NEXT_PUBLIC_BASE_URL` needed to be baked into static output as `https://furqan.taha7.com`. See [ADR 0010](../architecture/adr/0010-prisma-no-explicit-datasource-url.md).
+`app/utils/db.ts` called `new URL(process.env.QURAN_DATABASE_URL!)` at module scope. Next.js executes module scope during "Collecting page data" — missing env var during Hostinger's build causes an unrecoverable `TypeError: Invalid URL`. ESLint also failed to resolve `next/core-web-vitals` in Hostinger's environment. `NEXT_PUBLIC_BASE_URL` needed to be baked into static output as `https://furqan.taha7.com`. See [ADR 0010](../../architecture/adr/0010-prisma-no-explicit-datasource-url.md).
 
 Running `npm run build` locally also failed at the `prisma migrate deploy` step: the `build` script runs Prisma bare, Prisma looks for `.env` at root (doesn't exist), and `APP_DATABASE_URL` lives in `.env.local` which Next.js loads but Prisma doesn't.
 

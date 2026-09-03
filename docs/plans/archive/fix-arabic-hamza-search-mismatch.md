@@ -10,7 +10,7 @@ area: rendering
 
 ## Root Cause
 
-`Verse.text_imlaei_simple` is hamza-free (only bare `ا`, never `أ`/`إ`/`آ` — confirmed via direct DB query). A query typed with hamza-alif can never match. Chapter search (`name_arabic` genuinely contains hamza forms) is accepted as-is — see [ADR 0007](../architecture/adr/0007-arabic-search-query-normalization.md).
+`Verse.text_imlaei_simple` is hamza-free (only bare `ا`, never `أ`/`إ`/`آ` — confirmed via direct DB query). A query typed with hamza-alif can never match. Chapter search (`name_arabic` genuinely contains hamza forms) is accepted as-is — see [ADR 0007](../../architecture/adr/0007-arabic-search-query-normalization.md).
 
 ## Fix
 

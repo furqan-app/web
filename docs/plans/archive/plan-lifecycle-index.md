@@ -10,7 +10,7 @@ adr: [0059]
 
 # Plan lifecycle — YAML frontmatter, generated INDEX.md, fold-addenda-on-ship
 
-**Epic:** furqan-app/web#491 (T1.6) · **ADR:** [0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)
+**Epic:** furqan-app/web#491 (T1.6) · **ADR:** [0059](../../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)
 
 ## Summary
 
@@ -53,7 +53,7 @@ emits `INDEX.md`: a short preamble + one table sorted by `area` then `status`:
 ```
 | Plan | Area | Status | Type |
 |---|---|---|---|
-| [Fix QuranSafha swipe flicker](fix-safha-swipe-flicker.md) | reader | implemented | bug |
+| [Fix QuranSafha swipe flicker](../fix-safha-swipe-flicker.md) | reader | implemented | bug |
 ```
 
 Script is idempotent and deterministic (pure function of frontmatter). It is the
