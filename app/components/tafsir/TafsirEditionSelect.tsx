@@ -50,6 +50,7 @@ export function TafsirEditionSelect({
         sideOffset={6}
         avoidCollisions={false}
         container={portalContainer}
+        onEscapeKeyDown={() => setOpen(false)}
       >
         <div className="flex flex-col gap-0.5 p-0.5">
           {TAFSIR_EDITIONS.map((edition) => {

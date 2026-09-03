@@ -216,6 +216,12 @@ const Sidebar = ({ surahs, rubs }: Props) => {
           } else if (activeTab === "rubs" && rubQuery.trim()) {
             e.preventDefault();
             setRubQuery("");
+          } else if (activeTab === "ayahs") {
+            const pickingEl = document.querySelector('[data-ayah-picker-picking="true"]');
+            if (pickingEl) {
+              e.preventDefault();
+              pickingEl.dispatchEvent(new CustomEvent("fq:ayah-picker-escape"));
+            }
           }
         }}
         overlayStyle={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}

@@ -5,6 +5,8 @@ import { useIsStandaloneMobileOrTablet } from "@/app/hooks/use-is-standalone-mob
 import {
   armOverlayBackGuard,
   disarmOverlayBackGuard,
+  getTopOverlayGuard,
+  removeOverlayGuard,
 } from "@/app/utils/overlay-back-guard";
 
 interface FQNavigateEvent extends Event {
@@ -91,7 +93,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
     history.pushState(state, "");
     pushedIdRef.current = state.fqOverlayGuardId;
     armedRef.current = true;
-    armOverlayBackGuard();
+    armOverlayBackGuard({ id: state.fqOverlayGuardId });
 
     // Deferred past the current event dispatch (never inside a synchronous
     // `navigate`/`popstate` handler): `navigate` fires BEFORE `popstate` for
@@ -103,7 +105,8 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
     const disarm = () => {
       if (!armedRef.current) return;
       armedRef.current = false;
-      setTimeout(disarmOverlayBackGuard, 0);
+      const id = pushedIdRef.current;
+      setTimeout(() => disarmOverlayBackGuard(id), 0);
     };
 
     const nav = getNavigation();
@@ -131,6 +134,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
           if (nav.currentEntry?.key !== pushedKeyRef.current) return;
 
           e.intercept();
+          removeOverlayGuard(pushedIdRef.current);
           disarm();
 
           if (selfClosingRef.current) {
@@ -203,6 +207,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
             // own history write for the target route isn't guaranteed to
             // land before this microtask runs.
             nav.removeEventListener("navigate", onNavigate);
+            removeOverlayGuard(pushedIdRef.current);
             disarm();
             return;
           }
@@ -212,6 +217,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
             window.history.back(); // triggers a `traverse` navigate event, handled above
           } else {
             nav.removeEventListener("navigate", onNavigate);
+            removeOverlayGuard(pushedIdRef.current);
             disarm();
           }
         });
@@ -219,7 +225,14 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
     }
 
     const onPopState = () => {
+      const top = getTopOverlayGuard();
+      if (top && top.id !== pushedIdRef.current) {
+        // Another overlay guard is stacked above us — it handles this event.
+        return;
+      }
+
       window.removeEventListener("popstate", onPopState);
+      removeOverlayGuard(pushedIdRef.current);
       disarm();
 
       if (selfClosingRef.current) {
@@ -258,8 +271,9 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
           // harmless orphan unconditionally, same outcome as the "entry no
           // longer on top" branch below.
           window.removeEventListener("popstate", onPopState);
+          removeOverlayGuard(pushedIdRef.current);
           armedRef.current = false;
-          disarmOverlayBackGuard();
+          disarmOverlayBackGuard(pushedIdRef.current);
           return;
         }
 
@@ -291,6 +305,7 @@ export const useCloseOnBackGesture = (open: boolean, onClose: () => void) => {
           // opened in the same commit and pushed over it. Popping now would
           // remove the WRONG entry — leave our own as a harmless orphan.
           window.removeEventListener("popstate", onPopState);
+          removeOverlayGuard(pushedIdRef.current);
           disarm();
         }
       });
