@@ -58,6 +58,8 @@ components:
 
 # Design System: Furqan
 
+> Hand-maintained token summary of `docs/design/design-principles.md`. No generator — update this file when tokens or design rules change there.
+
 ## Overview
 
 **Creative North Star: "The Reading Desk"**

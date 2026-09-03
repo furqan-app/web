@@ -1,8 +1,12 @@
-# Mushaf Double-Page Spread Toggle
+---
+title: Mushaf Double-Page Spread Toggle
+type: feature
+date: 2026-07-06
+status: implemented
+area: reader
+---
 
-**Type:** feature
-**Date:** 2026-07-06
-**Status:** implemented
+# Mushaf Double-Page Spread Toggle
 
 ## Summary
 

@@ -2,19 +2,19 @@
 
 Guardrail run by `/start-fq-task` around every implementation: once *before* code is written (know what not to touch) and once *after* (verify nothing regressed), before the task is reported done. Also invocable standalone as `/check-fq-standards` against the current diff.
 
-This is not a replacement for `docs/architecture/DECISIONS.md` or the standards files — it is a gate that makes sure they were actually applied.
+This is not a replacement for `docs/architecture/decisions/*.md` or the standards files — it is a gate that makes sure they were actually applied.
 
 ## Pre-check (before writing code)
 
 1. From the plan, list the files/components/subsystems this task will touch.
-2. Grep `docs/architecture/DECISIONS.md` for `Constraints`, `Never`, `Do not`, `must not` lines whose section mentions any of those files/components/subsystems (by path, component name, or keyword). Read the **full decision block** for every hit, not just the constraint line — the rationale is what disambiguates edge cases.
+2. From the Domains table in `docs/architecture/DECISIONS.md`, pick the `decisions/*.md` file(s) covering those areas. Grep **those** files for `Constraints`, `Never`, `Do not`, `must not` lines whose section mentions any of the touched files/components/subsystems (by path, component name, or keyword). Read the **full decision block** for every hit, not just the constraint line — the rationale is what disambiguates edge cases. Also read the Non-negotiable Invariants block in the index.
 3. Note which invariants are load-bearing for this change. If the plan appears to require violating one, stop and raise it with the user — reinforces `start-task.md` Step 2's gate, before any code is touched.
 4. Skim "General Engineering Bar" below for the domains this task touches (Next.js / TypeScript / PWA / DB schema / clean code) and note which items apply.
 
 ## Post-check (after implementing, before reporting done)
 
 1. `git diff` against the base branch for everything changed.
-2. For every changed file, re-grep `DECISIONS.md` the same way as the pre-check — catches anything the plan didn't originally anticipate touching.
+2. For every changed file, re-grep the `decisions/*.md` file(s) for its domain the same way as the pre-check — catches anything the plan didn't originally anticipate touching.
 3. Walk "Regression Classes" below against the diff — each item is a concrete thing that must still hold.
 4. Walk "General Engineering Bar" below against the diff.
 5. Fix any failing item before reporting success. Never report a task done with a known open violation.
@@ -22,7 +22,7 @@ This is not a replacement for `docs/architecture/DECISIONS.md` or the standards 
 
 ## Regression Classes
 
-A static, highest-risk-first list (last reconciled against `DECISIONS.md` 2026-08-13). It is **not exhaustive** — the live grep in the pre/post-check steps above is the actual source of truth; this list exists so common regressions get caught even on a skim.
+A static, highest-risk-first list (last reconciled against the decisions 2026-08-13; split into `decisions/*.md` 2026-09-02). It is **not exhaustive** — the live grep in the pre/post-check steps above is the actual source of truth; this list exists so common regressions get caught even on a skim. Bracket tags name the source section (findable in its `decisions/*.md` file) and ADR.
 
 ### Swipe / reader flicker
 - Never mutate the text/content of a live `<style>` element carrying `@font-face` rules (rewrite or `appendChild`). Add fonts only as new immutable units — a registry `FontFace`, or a new keyed `<style>`. [Font System, ADR 0029]
@@ -74,6 +74,14 @@ A static, highest-risk-first list (last reconciled against `DECISIONS.md` 2026-0
 - Read the authenticated user via `extractUser(request)` in API routes, never `getServerSession` there (layouts/pages are the documented exception).
 - `dir="auto"` is reserved for genuine free-text user content (notes, comments) — UI chrome and Quran text keep their locale-locked or Quran-locked `dir`.
 
+### Design & UX (any diff touching components, pages, or `globals.css`)
+- Text/background pairs meet WCAG AA (4.5:1 body, 3:1 large/UI) — against the actual theme token values, checked in all three themes.
+- Visual hierarchy is intentional: one primary action per view; size, weight, and colour track importance, not convenience.
+- Spacing uses the scale in `docs/design/design-principles.md` / `styling.md` — no arbitrary one-off `px` gaps.
+- RTL/LTR parity: `ps-`/`pe-`/`ms-`/`me-` and `start`/`end`, never `left`/`right`, for anything that mirrors; verify the surface in `/ar`.
+- Interactive targets are ≥ 44×44px (or have an equivalent hit area) on touch.
+- Motion honours `prefers-reduced-motion` and follows the `styling.md` Motion rules (no animation on keyboard/high-frequency actions, transform/opacity only).
+
 ## General Engineering Bar
 
 Apply on every task, scoped to the domains actually touched.
@@ -103,3 +111,8 @@ Apply on every task, scoped to the domains actually touched.
 - No feature flag, config option, or "for future use" parameter with no current caller.
 - Prefer extending an existing typed constant/registry (`MARK_CATEGORIES`, `NOTIFICATION_TYPES`, `PLAN_TEMPLATES`) over a parallel one-off mechanism.
 - Don't add error handling for states that can't occur here (e.g. re-validating what middleware already guarantees) — validate only at real boundaries.
+
+**Testing & verification**
+- Do not run full test suites or local E2E by default (CI runs lint, type-check, unit tests, and Playwright automatically on PRs).
+- Run targeted unit tests (`npx vitest run <file>`) only when adding or modifying pure business logic, calculations, or utilities that have unit tests.
+- Never run uncapped full-suite Playwright commands locally; local E2E is reserved for when specifically working on E2E specs or requested by the user, run targeted against `npm run e2e:serve` (never `next dev`).

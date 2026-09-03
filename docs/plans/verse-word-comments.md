@@ -1,15 +1,18 @@
-# Verse/Word Comments
+---
+title: Verse/Word Comments
+type: feature
+date: 2026-07-11
+status: implemented
+area: marks
+---
 
-**Type:** feature
-**Date:** 2026-07-11
-**Status:** implemented
-**Trello:** [#44 Verse/Word comments](https://trello.com/c/mLiLSjMw/44-verse-word-comments)
+# Verse/Word Comments
 
 ## Summary
 
 Users can already color-mark a word or verse. This adds a second, independent kind of mark — a free-text **comment** — on the same word/verse, using the `Mark` model's already-documented (but unimplemented) `mark_type: "note"`. A word/verse carrying a comment gets a `border-b-2 border-dotted border-primary` indicator in the reader; there is no hover tooltip. Reading/writing the comment happens in `MarkModal`'s existing "Notes" tab, which today just shows a "Coming soon" placeholder. The My Marks page gets a 4th tab listing comments alongside the existing 3 color tabs.
 
-See [ADR 0022](../architecture/adr/0022-verse-word-comments-as-mark-type.md) for why this reuses `Mark` instead of a new model, and the "Verse/Word Comments" entry in `DECISIONS.md` for the resulting constraints.
+See [ADR 0053](../architecture/adr/0053-verse-word-comments-as-mark-type.md) for why this reuses `Mark` instead of a new model, and the "Verse/Word Comments" entry in `DECISIONS.md` for the resulting constraints.
 
 ## Approach
 
@@ -38,7 +41,7 @@ Comments are **not** a new feature surface — they're a second `mark_type` flow
 | Tab | Author shown | Why |
 |---|---|---|
 | Bookmarks | `getColorMarkMeta(marks).authorName`, shown only if `!isOwn` | Unchanged from today |
-| Notes | `getNoteMarkMeta(marks).authorName`, shown only if `!isOwn` | New — independent because a shared mushaf can have a different author per `mark_type` on the same spot (ADR 0022) |
+| Notes | `getNoteMarkMeta(marks).authorName`, shown only if `!isOwn` | New — independent because a shared mushaf can have a different author per `mark_type` on the same spot (ADR 0053) |
 
 **My Marks page bucketing:**
 
@@ -66,13 +69,15 @@ A word/verse with both a color and a note appears once in its color tab and once
 - `app/utils/marks.ts` — add `getNoteMark`/`getNoteMarkMeta`, mirroring `getColorMark`/`getColorMarkMeta` (`marks.find(action => action.name === "note")`).
 - `app/components/QuranWord.tsx` — compute a `hasNote` boolean via `getNoteMark(marks)`; append `border-b-2 border-dotted border-primary` to the word's className when true, alongside (not replacing) the existing highlight class.
 - `app/components/MarkModal.tsx`:
-  - Replace the `NotesTab` "Coming soon" placeholder with a real implementation: textarea (shadcn `Textarea` — needs `npx shadcn@latest add textarea`, none exists yet), `maxLength={500}` + character counter, Save button (calls `addPageMark` with `mark_type: "note"`), Remove button (shown only when a note currently exists, calls `deletePageMark` with `mark_type: "note"`), offline-disabled state and error state mirroring `BookmarksTab`.
+  - Replace the `NotesTab` "Coming soon" placeholder with a real implementation: textarea (shadcn `Textarea` — needs `npx shadcn@latest add textarea`, none exists yet), `dir="auto"` on the `<Textarea>` (form controls need explicit `dir`), `maxLength={500}` + character counter, Save button (calls `addPageMark` with `mark_type: "note"`), Remove button (shown only when a note currently exists, calls `deletePageMark` with `mark_type: "note"`), offline-disabled state and error state mirroring `BookmarksTab`.
   - Prefill the textarea from a new `currentNote`/`noteAuthorName` prop pair (parallel to `currentColor`/existing `markedByName`).
   - Move "Marked by X" out of the shared modal header into each tab's own content — `BookmarksTab` shows the color mark's author, `NotesTab` shows the note's author, each independently gated on its own `!isOwn`.
+  - Per-tab error state: `const [errors, setErrors] = useState({ color: false, note: false })` (not one shared `error`) — `saveMark`/`removeMarkType` set only `errors[markType]`; `BookmarksTab` gets `error={errors.color}`, `NotesTab` gets `error={errors.note}`. A shared flag leaked a failed note save into the Bookmarks tab.
 - `app/components/QuranSafha.tsx` — alongside the existing `getCurrentColorMeta`, add a `getCurrentNoteMeta` using `getNoteMarkMeta`; pass both down to `MarkModal` (new `currentNote`/`noteAuthorName` props replacing the single `markedByName` prop, which moves per-tab as above).
 - `app/api/marks/route.ts` — drop the `where: { mark_type: "color" }` filter (fetch `"color"` and `"note"` together); generalize `MarkListItem` so the shared field carries either a color key or comment text, discriminated by a `mark_type` field on each item (word/verse lookup logic for snippet/chapter/verse stays the same, since it's keyed off `marked_type`/`marked_id`, not `mark_type`).
 - `app/server/actions/getAllMarks.ts` — re-exports `MarkListItem`; no logic change needed beyond the type update flowing through.
-- `app/components/marks/MyMarksList.tsx` — add a 4th tab ("Notes") alongside the 3 `MARK_COLORS` tabs; bucket notes by `mark_type === "note"` instead of by color key; render a pencil icon + truncated comment preview instead of the color chip/bookmark icon; delete button passes `mark_type: "note"`.
+- `app/components/marks/MyMarksList.tsx` — add a 4th tab ("Notes") alongside the 3 `MARK_COLORS` tabs; bucket notes by `mark_type === "note"` instead of by color key; render a `SquarePen` icon + truncated comment preview inside a `<div dir="auto" className="mt-1 rounded-md bg-muted/50 border border-border/60 px-2.5 py-1.5 flex items-center gap-1">` — **no `dir` on the inner `<span>`** (see the `dir="auto"` rule in Constraints); delete button passes `mark_type: "note"`. `<Tabs defaultValue={buckets.find((b) => b.items.length > 0)?.key ?? "red"}>` — not a hardcoded `"red"`, or a user with only blue/green marks lands on an empty tab.
+- `app/api/mushaf/access.ts` — stale comment (was `markedByName`, now `colorAuthorName`/`noteAuthorName`).
 - `app/constants/marks.ts` — no change to `MARK_COLORS`; may add a note-tab label constant here if useful for i18n key consistency.
 - `messages/ar.json` / `messages/en.json` — new translation keys for: Notes tab textarea placeholder, save/remove button labels (`NotesTab` already has `markModal.notesTab`/`markModal.notesComingSoon` keys to replace), My Marks Notes tab label, empty-state copy.
 - `docs/architecture/COMPONENTS.md` — per CLAUDE.md's "update after adding/removing/reorganising components" rule:
@@ -80,52 +85,33 @@ A word/verse with both a color and a note appears once in its color tab and once
   - Update the `MarkModal` line (Zone: reader) — currently documents a single `"Marked by {name}"` behavior; must reflect that attribution is now shown per-tab (Bookmarks vs Notes), independently.
   - Update the `MyMarksList` line (Zone: marks) — currently says "fetches all of the caller's **color** marks... groups into red/blue/green sections"; must note the 4th Notes tab and that it now fetches both `mark_type`s.
 
+## Decisions Made
+
+- Comments are a second `mark_type: "note"` on the same generic path, not a new model or feature surface (ADR 0053).
+- Comment text uses `dir="auto"` (free-form user content); one `dir` per direction-detection chain, none on the inner span.
+- Per-tab error state and a data-derived default tab in `MyMarksList` (both from a `/review-fq-work` pass).
+
+## Revision History
+
+- 2026-07-11 — folded Addendum 1 (`dir="auto"` on comment elements): comment text detects its own direction; exactly one element per detection chain may carry `dir`, and the inner text `<span>` must have none (the container's scan skips any `dir`-bearing descendant).
+- 2026-07-11 — folded Addendum 5 (`/review-fq-work`): per-tab `errors` object (a shared flag leaked a failed note save into the Bookmarks tab); `MyMarksList` default tab derived from the first non-empty bucket, not hardcoded `"red"`; stale `markedByName` comment in `app/api/mushaf/access.ts` fixed.
+
 ## Files to Check (read, not modify)
 
 - `docs/architecture/COMPONENTS.md` — read before touching `MarkModal`/`MyMarksList`/`QuranWord` to confirm no other caller assumes single-attribution or color-only marks beyond what's listed above (per CLAUDE.md's "check this file to understand all callers" rule).
 
 ## Constraints
 
-- Do not create a new Prisma model for comments — reuse `Mark` with `mark_type: "note"` (ADR 0022).
+- Do not create a new Prisma model for comments — reuse `Mark` with `mark_type: "note"` (ADR 0053).
 - Do not add a hover tooltip anywhere — the border-bottom is the only passive indicator; reading the comment always goes through `MarkModal`.
 - Do not merge color and note attribution into one `markedByName` — they must be read and displayed independently per tab, since a shared mushaf can have different authors per `mark_type` on the same word/verse.
 - Do not special-case verse-level notes with new spread logic — reuse the existing `marks[verse_key]` → every word in `QuranLine` mechanism that color marks already rely on.
 - Do not change the generic write/delete/read path (`upsertMark`, `deleteMark`, the marks API routes, `useMarks`/`getPageMarks`) — they are already parameterized over `mark_type` and require zero changes.
+- **`dir="auto"` chain rule:** comment text gets `dir="auto"` (a deliberate deviation from the codebase's locale-locked `dir`, because it is free-form user content). Only **one** element in a "detect direction from this text" chain may carry `dir` — put it on the `<Textarea>` and on the note-box container `<div>`, and put **no** `dir` on the inner text `<span>`. Per the HTML living standard, `dir="auto"` on a container skips any descendant that itself has a `dir` attribute; with `dir="auto"` on both, the container's scan skips the span, finds only an SVG icon, and resolves to LTR. Verified live. Let CSS inheritance carry the resolved direction to plain descendants.
 
 ## What NOT to Do
 
-- None known — this is a net-new feature with no prior superseded approach.
-
-## Addendum 1 — RTL rendering + `dir="auto"` on comment elements
-
-**Date:** 2026-07-11
-
-The Notes `<Textarea>` and comment-preview box had no `dir`, rendering LTR regardless of content.
-
-**Decision:** Comment text gets `dir="auto"` (browser detects from the first strong-directional character) — a deliberate deviation from the rest of the codebase's locale-locked `dir`, because comment text is free-form user content. Do not apply `dir="auto"` elsewhere.
-
-**Final state (after multiple iterations):**
-- `<Textarea dir="auto">` in `NotesTab` — form controls need explicit `dir`; inherited direction doesn't apply to them.
-- Note box `<div dir="auto" className="mt-1 rounded-md bg-muted/50 border border-border/60 px-2.5 py-1.5 flex items-center gap-1">` — `dir="auto"` on the outer container only.
-- Inner `<span>` (comment text): **no `dir` attribute** — critical: per the HTML living standard, `dir="auto"` on a container scans descendants for the first strong-directional character, but **skips any descendant that itself has a `dir` attribute**. With `dir="auto"` on both container and span, the container's scan skips the span, finds no strong characters (only an SVG icon), and always resolves to LTR. Verified live: `getComputedStyle(box).direction` was `"ltr"` for `"هذا اختبار"` while the span had `dir="auto"`; removing span's `dir` immediately flipped it to `"rtl"`.
-
-**Rule:** Only one element in a "detect direction from this text" chain should carry `dir`. Let CSS inheritance carry the resolved direction to plain (non-form-control) descendants.
-
-**Files to Change:**
-- `app/components/MarkModal.tsx` — `dir="auto"` on `<Textarea>` in `NotesTab`.
-- `app/components/marks/MyMarksList.tsx` — `dir="auto"` on note box `<div>`, no `dir` on inner `<span>`; box padding `px-2.5 py-1.5`; `SquarePen` icon inside.
-
-## Addendum 5 — cross-tab error leakage, wrong default tab, stale comment
-
-**Date:** 2026-07-11 (found by `/review-fq-work`)
-
-1. **Cross-tab error leakage:** Single `const [error, setError]` shared by both tabs. A failed note save leaves `error: true` on the open modal; switching to Bookmarks renders "Something went wrong" there too. Fix: `const [errors, setErrors] = useState({ color: false, note: false })` — `saveMark`/`removeMarkType` set only `errors[markType]`. `BookmarksTab` gets `error={errors.color}`, `NotesTab` gets `error={errors.note}`.
-
-2. **Wrong default tab:** `<Tabs defaultValue="red">` hardcoded. Users with only blue/green marks land on empty "No marks in this color" tab. Fix: `defaultValue={buckets.find((b) => b.items.length > 0)?.key ?? "red"}` (early-return for all-empty happens before `<Tabs>`, so fallback is never actually reached).
-
-3. **Stale comment:** `app/api/mushaf/access.ts:37` references `markedByName` (renamed to `colorAuthorName`/`noteAuthorName`). Fix: update the comment.
-
-**Files to Change:**
-- `app/components/MarkModal.tsx` — per-tab `errors` object.
-- `app/components/marks/MyMarksList.tsx` — `defaultValue` from data.
-- `app/api/mushaf/access.ts` — stale comment at line 37.
+- Do not apply `dir="auto"` anywhere outside comment text — the rest of the codebase stays locale-locked.
+- Do not put `dir` on more than one element in a direction-detection chain (see the rule in Constraints) — the inner text `<span>` must have none.
+- Do not share one `error` flag across the Bookmarks and Notes tabs — a failed note save then renders "Something went wrong" in Bookmarks too. Use a per-tab `errors` object.
+- Do not hardcode `<Tabs defaultValue="red">` in `MyMarksList` — derive it from the first non-empty bucket.

@@ -54,11 +54,22 @@ async function main() {
   console.log("[2/3] Loading fixture data (e2e/fixtures/quran-fixture.sql)…");
   await loadFixture(quranUrl);
 
-  console.log("[3/3] Resetting e2e app schema (no seed data)…");
+  const appUrl = requireEnv("APP_DATABASE_URL");
+
+  console.log("[3/3] Resetting e2e app schema and seeding test user…");
   execSync(
     "npx prisma db push --force-reset --skip-generate --schema prisma/app/schema.prisma",
     { stdio: "inherit" }
   );
+
+  const appConn = await mysql.createConnection(parseConnection(appUrl));
+  try {
+    await appConn.query(
+      "INSERT INTO users (id, name, email, created_at, updated_at) VALUES (1, 'E2E Test User', 'e2e@test.local', NOW(), NOW()) ON DUPLICATE KEY UPDATE id=id"
+    );
+  } finally {
+    await appConn.end();
+  }
 
   console.log("\n✓ e2e databases ready.");
 }

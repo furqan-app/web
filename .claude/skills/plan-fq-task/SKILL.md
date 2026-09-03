@@ -7,7 +7,7 @@ description: Socratic planning and investigation for Furqan features and bugs. P
 
 Read and follow [`docs/workflow/plan-task.md`](../../../docs/workflow/plan-task.md).
 
-After completing the ADR check (step 4 in the workflow doc), do these Claude-specific steps before writing the plan:
+After completing the ADR check (step 4 in the workflow doc), do these steps before writing the plan:
 
 ## Step 5 — Ensure a GitHub issue
 
@@ -33,36 +33,39 @@ Every task must have a GitHub issue on `furqan-app/web` before implementation st
   Type IDs for this org (`furqan-app`): Task `IT_kwDOCyJLuM4BcAGi`, Bug `IT_kwDOCyJLuM4BcAGj`, Feature `IT_kwDOCyJLuM4BcAGk`. Use Bug/Feature matching the plan's `Type`; anything else stays `Task`.
 - Note the issue number/URL — `/start-fq-task` and `/ship-fq-task` will need it later.
 
-## Step 6 — Create the worktree or branch
+## Step 6 — Create the worktree
 
 Derive the slug from the planned filename (e.g. `fix-search-debounce`).
+Always fetch latest first: `git fetch origin`. Base new branches on updated `origin/main` by default (unless explicitly specified to start from another branch).
 
-**Environment check:**
-- **In Claude Code / CLI environments (supports external worktrees):**
-  1. Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
-  2. If none exists, derive branch `<type>/<issue-number>-<short-description>` and run:
-     ```bash
-     git worktree add ../furqan-<slug> -b <branch-name>  # if branch does not exist
-     git worktree add ../furqan-<slug> <branch-name>     # if branch exists
-     ```
-  3. Record in `~/.claude/furqan-worktrees.json`:
-     ```json
-     { "<slug>": { "worktreePath": "../furqan-<slug>", "branch": "<branch-name>" } }
-     ```
-  4. Resolve absolute path `<abs>` via `git worktree list | grep furqan-<slug> | awk '{print $1}'`.
-- **In AGY / IDE environments (workspace-confined):**
-  1. Create or switch to the feature branch directly inside the workspace root:
-     ```bash
-     git checkout -b <type>/<issue-number>-<short-description>
-     ```
-  2. The target path `<abs>` is the workspace root itself (`$(pwd)`).
+1. Check whether a worktree already exists: `git worktree list | grep furqan-<slug>`
+2. If none exists, derive branch `<type>/<issue-number>-<short-description>` and run:
+   ```bash
+   # If branch does NOT exist yet (defaults to origin/main):
+   git fetch origin
+   git worktree add ../furqan-<slug> -b <branch-name> origin/main
+
+   # If starting from a specific base branch:
+   git fetch origin
+   git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
+
+   # If branch already exists:
+   git worktree add ../furqan-<slug> <branch-name>
+   ```
+3. Record in `~/.claude/furqan-worktrees.json`:
+   ```json
+   { "<slug>": { "worktreePath": "../furqan-<slug>", "branch": "<branch-name>" } }
+   ```
+4. Resolve absolute path `<abs>` via `git worktree list | grep furqan-<slug> | awk '{print $1}'`.
 
 ## Step 7 — Write the plan
 
 Write all plan-phase files into `<abs>`:
-- Plan: `<abs>/docs/plans/<slug>.md`
+- Plan: `<abs>/docs/plans/<slug>.md` — opens with the YAML frontmatter block (see the plan file format in the workflow doc / [ADR 0059](../../../docs/architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md))
 - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
-- DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`
+- Decision entry (if any): the matching `<abs>/docs/architecture/decisions/*.md` file (and `<abs>/docs/architecture/DECISIONS.md` if a new domain row or invariant is needed)
+
+Then regenerate the plans index: `bash <abs>/.claude/skills/scripts/gen-plans-index.sh` and stage `<abs>/docs/plans/INDEX.md` with the plan.
 
 Use the plan file format from the workflow doc.
 
@@ -82,15 +85,16 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 ## Steps
 
 0. **Check for an existing related plan — before anything else**
-   - Run `ls docs/plans/` and scan for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
-   - If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its `Status` to `ready-to-implement` if it had been marked `implemented`.
+   - Read `docs/plans/INDEX.md` (one row per active plan: area, title, status, type) and scan the rows in this task's `area` for a plan touching the same component/feature/bug class, even if the current ask feels small or unrelated to what that plan's title suggests.
+   - If one fits (e.g. this is a follow-on, a regression from it, or the same bug class), extend that plan with a new `## Addendum` section instead of creating a new file — do not create a new plan file. Reset its frontmatter `status` to `ready-to-implement` if it was `implemented`, then regenerate `INDEX.md`.
    - If genuinely unrelated to anything existing, proceed to a new plan file as normal.
-   - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just run the `ls`/grep.
+   - This check is a literal, mandatory action every time, not a background principle — it has been skipped before despite being documented, so don't rely on remembering it; just read `INDEX.md`.
+   - `INDEX.md` lists active plans only. The ~100 finished plans in `docs/plans/archive/` are history — never open one for context; their durable content is in `docs/architecture/decisions/*.md` + ADRs.
 
 1. **Load context — mandatory gate, before investigating or writing anything**
-   - Read `docs/architecture/DECISIONS.md` — its entries are your working set of active decisions. When a decision the task touches links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint, encoding contract, or invariant behind the summary. Treat both as non-negotiable: the plan must not contradict them, and if it needs to, raise that with the user explicitly and supersede it — never override silently.
+   - Read `docs/architecture/DECISIONS.md` (the index): its Non-negotiable Invariants block always, plus the 1–3 `docs/architecture/decisions/*.md` domain files this task touches — not every one. When a decision links an ADR in `docs/architecture/adr/`, open that ADR too for the full constraint. Non-negotiable: the plan must not contradict it, and if it needs to, raise that with the user and supersede it (flip the section `**Status:**`) — never silently.
    - Read the relevant standards file(s) from `docs/standards/` based on the task domain.
-   - **If step 0 found an existing plan to extend, read that plan in full — every addendum, and especially its `Constraints` and `What NOT to Do` sections.** In a plan with multiple addenda the newest one is the current source of truth; approaches a later addendum revised or reverted are dead — never re-propose them (that is where most past rework came from). Your new addendum must stay consistent with every still-active constraint above it.
+   - **If step 0 found an existing plan to extend, read that plan in full — especially its `Constraints` and `What NOT to Do` sections.** If it still carries a `## Addendum` (rare — addenda are folded into the body on ship), the newest one is the current source of truth and approaches a later addendum revised are dead — never re-propose them. Your new addendum must stay consistent with every still-active constraint above it.
 
 2. **Investigate (bugs) or clarify (features)**
 
@@ -133,7 +137,7 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    If yes:
    - Determine the next ADR number (`ls docs/architecture/adr/` to check)
    - Create `docs/architecture/adr/NNNN-<slug>.md` now, before writing the plan
-   - Update `docs/architecture/DECISIONS.md` with a summary and a link to the ADR
+   - Add a `## ` section (`**Status:** active`) in the matching `docs/architecture/decisions/*.md` file; new domain → new file + a Domains-table row in `DECISIONS.md`; cross-cutting rule → also a one-liner in `DECISIONS.md`'s Non-negotiable Invariants block
 
    If no new decisions: skip this step.
 
@@ -161,8 +165,13 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
      1. Derive the branch name from the GitHub issue using the project convention: `<type>/<issue-number>-<short-description>` (e.g. `feature/83-git-worktrees-workflow`)
      2. Check whether the branch already exists: `git branch --list <branch-name>`
         ```bash
-        # Branch does NOT exist yet:
-        git worktree add ../furqan-<slug> -b <branch-name>
+        # Branch does NOT exist yet (defaults to origin/main):
+        git fetch origin
+        git worktree add ../furqan-<slug> -b <branch-name> origin/main
+
+        # If starting from a specific base branch:
+        git fetch origin
+        git worktree add ../furqan-<slug> -b <branch-name> <base-branch>
 
         # Branch already exists:
         git worktree add ../furqan-<slug> <branch-name>
@@ -181,7 +190,7 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
    - Write all plan-phase files into the worktree (at its resolved absolute path `<abs>`), not the main repo:
      - Plan: `<abs>/docs/plans/<slug>.md`
      - ADR (if created in step 4): `<abs>/docs/architecture/adr/NNNN-<slug>.md`
-     - DECISIONS.md update (if any): `<abs>/docs/architecture/DECISIONS.md`
+     - Decision entry (if any): the matching `<abs>/docs/architecture/decisions/*.md` file
    - Plan content:
      - What we're building / what the bug is
      - Root cause (bugs) or approach (features)
@@ -194,12 +203,23 @@ Output: `docs/plans/<slug>.md`. May also produce `docs/architecture/adr/NNNN-<sl
 
 ## Plan file format
 
+Every plan opens with a YAML frontmatter block ([ADR 0059](../../../docs/architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)) — `INDEX.md` is generated from it. `area` is one value from the fixed vocabulary in ADR 0059, never free text.
+
+```yaml
+---
+title: <matches the # H1>
+type: bug | feature | chore
+date: YYYY-MM-DD
+status: ready-to-implement    # | in-progress | implemented | superseded | unknown
+area: <one value>             # ADR 0059 vocabulary
+supersedes: [<slug>]          # omit if none
+issue: <bare number>          # omit if none
+adr: [<NNNN>]                 # omit if none
+---
+```
+
 ```markdown
 # <Task Title>
-
-**Type:** feature | bug  
-**Date:** YYYY-MM-DD  
-**Status:** ready-to-implement
 
 ## Summary
 One paragraph.
@@ -231,7 +251,8 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 
 ## Anti-patterns to avoid
 
-- Do not create a new plan file without first checking `docs/plans/` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not create a new plan file without first checking `docs/plans/INDEX.md` for an existing related one — extend it instead if the bug/feature class matches.
+- Do not hand-edit `docs/plans/INDEX.md` — it is generated from plan frontmatter by `gen-plans-index.sh`.
 - Do not write a plan that contradicts an ADR or a still-active constraint/`What NOT to Do` item in the plan you are extending. If the task genuinely requires overriding one, surface it to the user and supersede it explicitly — never silently.
 - Do not re-propose an approach that a later addendum already revised or reverted.
 - Do not ask multiple questions at once — one at a time, always.
@@ -244,4 +265,4 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 - Do not write plan files into the main repo working tree — they must go into the worktree created in step 6, addressed by its resolved **absolute** path. Writing to the main repo leaves them absent from the feature branch; writing via the relative `../furqan-<slug>` form has created stray directories outside the repo.
 - Do not create the worktree before the GitHub issue exists — the branch name is derived from the issue number.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
-- Do not write documentation (plans, COMPONENTS.md, DECISIONS.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
+- Do not write documentation (plans, COMPONENTS.md, decisions/*.md, standards files) with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).

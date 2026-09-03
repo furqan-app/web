@@ -1,8 +1,12 @@
-# Fix Tajweed Mushaf Swipe Flicker
+---
+title: Fix Tajweed Mushaf Swipe Flicker
+type: bug
+date: 2026-08-18
+status: implemented
+area: reader
+---
 
-**Type:** bug
-**Date:** 2026-08-18
-**Status:** implemented
+# Fix Tajweed Mushaf Swipe Flicker
 
 ## Summary
 

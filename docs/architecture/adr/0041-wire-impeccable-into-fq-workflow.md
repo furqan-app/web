@@ -1,7 +1,12 @@
 # ADR 0041: Impeccable design commands wired into the plan/implement/review cycle, plan-driven not ad hoc
 
 **Date:** 2026-08-13
-**Status:** Accepted
+**Status:** Superseded by #494 (2026-09-02)
+
+> The `/impeccable` skill and its plan/implement/review wiring were removed. Design/UX
+> scrutiny is now a manual checklist in `docs/workflow/check-fq-standards.md` (a "Design & UX"
+> Regression Class), and `ui-motion`'s rules folded into `docs/standards/styling.md`. See
+> `docs/plans/remove-workflow-skills.md`. The body below is kept as the audit trail.
 
 ## Context
 

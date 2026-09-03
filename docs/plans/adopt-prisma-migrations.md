@@ -1,13 +1,16 @@
-# Adopt Prisma Migrations for furqan_app
+---
+title: Adopt Prisma Migrations for furqan_app
+type: feature
+date: 2026-07-08
+status: implemented
+area: db
+---
 
-**Type:** feature  
-**Date:** 2026-07-08  
-**Status:** implemented  
-**Trello:** https://trello.com/c/PcpuGwgN/62-adopt-prisma-migrations-for-furqanapp
+# Adopt Prisma Migrations for furqan_app
 
 ## Summary
 
-Move `furqan_app` off `prisma db push` onto versioned migrations (`prisma migrate`). The App DB holds live production data and `db push` can silently drop columns on schema drift. `furqan_quran` stays on `db push --force-reset` via the seeder (ADR 0009) — it's always fully recreated and migration history adds no value. See [ADR 0017](../architecture/adr/0017-prisma-migrations-app-db.md).
+Move `furqan_app` off `prisma db push` onto versioned migrations (`prisma migrate`). The App DB holds live production data and `db push` can silently drop columns on schema drift. `furqan_quran` stays on `db push --force-reset` via the seeder (ADR 0009) — it's always fully recreated and migration history adds no value. See [ADR 0051](../architecture/adr/0051-prisma-migrations-app-db.md).
 
 ## Approach
 
@@ -63,7 +66,7 @@ npm run app-migrate-dev -- --name <descriptive_name>
 - `prisma/app/migrations/` — new directory (commit its contents)
 - `docs/deployment/hostinger.md` — Phase 5 updated: `migrate deploy` for initial empty-DB setup; ongoing runs automatically in build
 - `docs/standards/database.md` — migrations section updated
-- `docs/architecture/DECISIONS.md` — furqan_app now uses versioned migrations; ADR 0017 linked
+- `docs/architecture/DECISIONS.md` — furqan_app now uses versioned migrations; ADR 0051 linked
 
 ## Constraints
 

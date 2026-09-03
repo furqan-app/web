@@ -1,9 +1,12 @@
-# Daily Awrad & Learning Plans Engine (Foundation)
+---
+title: Daily Awrad & Learning Plans Engine (Foundation)
+type: feature
+date: 2026-07-24
+status: implemented
+area: awrad
+---
 
-**Type:** feature
-**Date:** 2026-07-24
-**Status:** implemented
-**Trello:** #140 — https://trello.com/c/AVbdOJPq
+# Daily Awrad & Learning Plans Engine (Foundation)
 
 ## Summary
 

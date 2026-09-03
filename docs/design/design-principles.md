@@ -2,7 +2,7 @@
 
 Aesthetic direction and UI sensibility for Furqan. Load this alongside `docs/standards/styling.md` for any UI or component task.
 
-This is the canonical source. `DESIGN.md` at repo root is a generated token extraction for the impeccable skill — regenerate it via `/impeccable document` after changing this file, don't hand-edit it.
+This is the canonical source. `DESIGN.md` at repo root is a hand-maintained token summary — update it when you change tokens here.
 
 The full derivation behind every principle here — why it exists, how it was measured, what it does in each theme and at each screen size — is [`design-language.md`](design-language.md). This file is the distillation you apply; that file is the argument. When they disagree, the language spec is right and this file is stale.
 
@@ -84,7 +84,7 @@ Ornament closes and frames; it never divides, never sits inside the reading colu
 
 ## Type
 
-The **reading size is a contract, not an aesthetic** — ADR 0038 and `docs/standards/quran-rendering.md`. No principle here may move it.
+The **reading size is a contract, not an aesthetic** — ADR 0054 and `docs/standards/quran-rendering.md`. No principle here may move it.
 
 The interface scale is small, dense and quiet so nothing in the chrome competes with the page: a bold wordmark, a semibold page-orientation line that truncates rather than wraps, small tracked-out muted secondary orientation, and the smallest heaviest-tracked step reserved for section overlines.
 

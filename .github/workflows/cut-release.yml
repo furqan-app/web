@@ -61,87 +61,115 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           prev_tag=$(git tag --list 'v*' --sort=-v:refname | grep -v "^v${{ steps.version.outputs.new_version }}$" | head -n1)
-          notes=""
+          lines=()
           if [[ -n "$prev_tag" ]]; then
             changed=$(git diff --name-only "$prev_tag"..HEAD)
             if echo "$changed" | grep -q '^prisma/quran/schema\.prisma$'; then
-              notes+="- Quran DB schema changed — re-seed prod manually (\`npm run seed:quran -- --force\`) if this release should reflect it.\n"
+              lines+=('- Quran DB schema changed — re-seed prod manually (`npm run seed:quran -- --force`) if this release should reflect it.')
             fi
             if echo "$changed" | grep -q '^scripts/quran-seed/'; then
-              notes+="- Quran seed logic/data changed — re-seed prod manually if you want this release's data live.\n"
+              lines+=('- Quran seed logic/data changed — re-seed prod manually if you want this release'\''s data live.')
             fi
             if echo "$changed" | grep -q '^prisma/app/migrations/'; then
-              notes+="- New Prisma migration(s) — will auto-apply via \`prisma migrate deploy\` on deploy. No action needed; consider backing up the App DB first.\n"
+              lines+=('- New Prisma migration(s) — will auto-apply via `prisma migrate deploy` on deploy. No action needed; consider backing up the App DB first.')
             fi
           fi
           {
-            echo "notes<<EOF"
-            echo -e "$notes"
-            echo "EOF"
+            echo "notes<<RELEASE_EOF"
+            [[ ${#lines[@]} -gt 0 ]] && printf '%s\n' "${lines[@]}"
+            echo "RELEASE_EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Milestone and close queued issues
+      - name: Milestone queued issues
         id: issues
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="v${{ steps.version.outputs.new_version }}"
           gh api "repos/${{ github.repository }}/milestones" -f title="$version" >/dev/null 2>&1 || true
-          mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --label "status:to-be-released" --state open --json number,title,url -q '.[] | "\(.number)|\(.title)|\(.url)"')
-          body=""
+          mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --label "status:to-be-released" --state open --json number,title,url -q '.[] | "\(.number)\t\(.title)\t\(.url)"')
+          lines=()
           if [[ ${#issues[@]} -eq 0 ]]; then
-            body="No tracked changes — infra/release-process only."
+            lines+=('No tracked changes — infra/release-process only.')
           else
             for entry in "${issues[@]}"; do
-              n="${entry%%|*}"
-              rest="${entry#*|}"
-              title="${rest%%|*}"
-              url="${rest##*|}"
+              IFS=$'\t' read -r n title url <<< "$entry"
               gh issue edit "$n" --repo "${{ github.repository }}" --milestone "$version"
-              gh issue edit "$n" --repo "${{ github.repository }}" --remove-label "status:to-be-released"
-              gh issue close "$n" --repo "${{ github.repository }}"
-              body+="- $title ($url)\n"
+              # Keep the issue open and labeled status:to-be-released — promote-release.yml
+              # (/release promote) marks it done and closes it when the version reaches prod.
+              lines+=("- ${title} (${url})")
             done
           fi
           {
-            echo "body<<EOF"
-            echo -e "$body"
-            echo "EOF"
+            echo "body<<RELEASE_EOF"
+            printf '%s\n' "${lines[@]}"
+            echo "RELEASE_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      # `${{ }}` expansions are substituted into the script text BEFORE bash runs,
+      # so a backtick / $() / ${} in an issue title (via ISSUES_BODY) would be
+      # executed as a shell command (broke the v1.8.1 cut on #524's "`next dev`"
+      # title — issue #534). Every dynamic value therefore comes in through `env:`
+      # and is referenced as a plain shell variable; the notes/body go to a file
+      # so no interpolation happens at the `gh` call either.
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: v${{ steps.version.outputs.new_version }}
+          ISSUES_BODY: ${{ steps.issues.outputs.body }}
+          DB_NOTES: ${{ steps.db_flags.outputs.notes }}
         run: |
-          version="v${{ steps.version.outputs.new_version }}"
-          notes="## What's included in $version"$'\n'"${{ steps.issues.outputs.body }}"
-          if [[ -n "${{ steps.db_flags.outputs.notes }}" ]]; then
-            notes+=$'\n'"## Manual Action Required"$'\n'"${{ steps.db_flags.outputs.notes }}"
-          fi
-          gh release create "$version" --title "$version" --notes "$notes"
+          {
+            printf '## What'\''s included in %s\n' "$VERSION"
+            printf '%s\n' "$ISSUES_BODY"
+            if [[ -n "$DB_NOTES" ]]; then
+              printf '\n## Manual Action Required\n%s\n' "$DB_NOTES"
+            fi
+          } > "$RUNNER_TEMP/release-notes.md"
+          gh release create "$VERSION" --title "$VERSION" --notes-file "$RUNNER_TEMP/release-notes.md"
 
       - name: Open and merge main → stg PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: v${{ steps.version.outputs.new_version }}
+          ISSUES_BODY: ${{ steps.issues.outputs.body }}
+          DB_NOTES: ${{ steps.db_flags.outputs.notes }}
+          REPO: ${{ github.repository }}
         run: |
-          pr_url=$(gh pr create --repo "${{ github.repository }}" --base stg --head main --title "Staging update" --body "Promoting main to stg as part of cutting v${{ steps.version.outputs.new_version }}.")
+          # The stg PR body renders the same release manifest as the GitHub Release
+          # notes and (at promote) the release → prod PR body — keep all three in sync
+          # if you edit one. Correct only while one release is in flight at a time: the
+          # issue list is "open status:to-be-released", i.e. merged to main since the
+          # last promote. See ADR 0058.
+          {
+            printf 'Promoting main to stg as part of cutting %s.\n\n## Included\n' "$VERSION"
+            printf '%s\n' "$ISSUES_BODY"
+            if [[ -n "$DB_NOTES" ]]; then
+              printf '\n## Manual Action Required\n%s\n' "$DB_NOTES"
+            fi
+          } > "$RUNNER_TEMP/stg-pr-body.md"
+          pr_url=$(gh pr create --repo "$REPO" --base stg --head main --title "Staging update ($VERSION)" --body-file "$RUNNER_TEMP/stg-pr-body.md")
           # stg has no required status checks, so it's always immediately mergeable —
           # enablePullRequestAutoMerge rejects that with "Pull request is in clean status".
           # Merge directly instead of via --auto. Use a merge commit (not squash) so main's
           # commits stay ancestors of stg — squash would break ancestor-based checks elsewhere.
-          gh pr merge "$pr_url" --repo "${{ github.repository }}" --merge
+          gh pr merge "$pr_url" --repo "$REPO" --merge
 
       - name: Summary
+        env:
+          VERSION: ${{ steps.version.outputs.new_version }}
+          REPO: ${{ github.repository }}
+          DB_NOTES: ${{ steps.db_flags.outputs.notes }}
         run: |
           {
-            echo "### Release v${{ steps.version.outputs.new_version }} cut"
-            echo "- Branch: \`release/${{ steps.version.outputs.new_version }}\`"
-            echo "- Tag: \`v${{ steps.version.outputs.new_version }}\`"
-            echo "- GitHub Release: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}"
+            echo "### Release v${VERSION} cut"
+            echo "- Branch: \`release/${VERSION}\`"
+            echo "- Tag: \`v${VERSION}\`"
+            echo "- GitHub Release: https://github.com/${REPO}/releases/tag/v${VERSION}"
             echo ""
             echo "### Manual action required"
-            if [[ -n "${{ steps.db_flags.outputs.notes }}" ]]; then
-              echo -e "${{ steps.db_flags.outputs.notes }}"
+            if [[ -n "$DB_NOTES" ]]; then
+              printf '%s\n' "$DB_NOTES"
             else
               echo "None."
             fi

@@ -41,7 +41,10 @@ export const OfflineSetupGate = () => {
     start,
     cancel,
     dismiss,
-  } = usePwaPrecache(DEFAULT_MUSHAF_ID);
+    // Renders nothing while dismissed, yet mounts app-wide on every launch —
+    // deferring keeps a long-ago-finished user's cold launch from waking the
+    // worker for status nobody displays (ADR 0014 Addendum 9, #440).
+  } = usePwaPrecache(DEFAULT_MUSHAF_ID, { deferStatusWhileDismissed: true });
 
   if (!isStandalone) return null;
   if (dismissed) return null;

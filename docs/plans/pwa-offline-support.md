@@ -1,8 +1,12 @@
-# PWA Conversion + Offline Quran Page Reading
+---
+title: PWA Conversion + Offline Quran Page Reading
+type: feature
+date: 2026-07-06
+status: implemented
+area: pwa
+---
 
-**Type:** feature  
-**Date:** 2026-07-06  
-**Status:** implemented
+# PWA Conversion + Offline Quran Page Reading
 
 ## Summary
 
@@ -587,3 +591,986 @@ manifest; see ADR 0014 Addendum 4's Implementation Note for why):
   is unreliable (false positives on captive portals) and doesn't cover slow-but-connected cases, which
   the catch handler already covers regardless of cause. A proactive online/offline banner remains
   possible future polish, not attempted here.
+
+---
+
+# Addendum 5 (2026-08-23): Fast reader-shell fallback on slow networks
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + full `build:local` production build verified; built
+`public/sw.js` inspected to confirm the compiled decision tree; not yet browser/throttle-verified —
+see Constraints)
+**Issue:** https://github.com/furqan-app/web/issues/376 (epic #375)
+**ADR:** [0014 Addendum 6](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+A cold launch of the installed PWA to an unvisited reader page (2–604) on a slow connection stalls for
+as long as the full SSR document fetch takes. The `isSelfReaderPage` handler is `CacheFirst`
+(Addendum 4): a cache miss falls through to a plain network fetch, and the `setCatchHandler` fallback
+only fires on a network *error* — a slow-but-alive link never errors, it just hangs. Meanwhile the
+consent-gated bulk download may have every page's JSON + font already in `PAGES_CACHE_NAME`, meaning
+the client could render the requested page immediately from the precached fallback shell via the
+existing pre-paint `jumpTo` self-correction (`ReaderPager.tsx` layout effect, ADR 0042).
+
+## Root Cause / Approach
+
+Replace the bare `CacheFirst` strategy object for `isSelfReaderPage && navigate` with a custom handler
+implementing the decision tree below. The cache-hit path is byte-for-byte today's behavior; only the
+miss path gains fast-fallback logic. The in-flight network fetch is never aborted — when it lands after
+a fallback was already served, its response is still written into `READER_HTML_CACHE_NAME` under the
+real URL, so that page becomes a row-1 instant hit on the next launch.
+
+The completeness probe reuses the SW's existing `isCacheComplete(cache, mushafId)` (sentinel +
+verse-pages map + 604-page count) over `PAGES_CACHE_NAME` for the default edition, memoized in SW
+memory so one cold launch pays the ~604-entry `cache.keys()` walk at most once per worker lifetime.
+It runs **only** on a cache miss — row 1 hits never touch it.
+
+## Decision Tree / Algorithm
+
+Every `isSelfReaderPage(url) && request.mode === "navigate"` request:
+
+| Row | Situation | Behavior |
+|---|---|---|
+| 1 | HTML in `READER_HTML_CACHE_NAME` | Serve cached response (unchanged CacheFirst) |
+| 2 | Miss + bulk precache complete (`isCacheComplete`, default edition) | Serve `fallbackDocumentUrl(locale)` from `READER_HTML_CACHE_NAME` immediately — network never touched |
+| 3 | Miss + no complete precache | Race the network fetch (prefer `event.preloadResponse`, navigation preload is enabled) against a 3s timer. Network first → cache & serve as today. Timer first → serve the fallback shell and keep the fetch running in the background; `cache.put` its response under the real URL when it arrives |
+| 4 | Fallback doc itself missing from cache | Fall through to network result or `Response.error()` — identical to today's terminal behavior |
+
+Navigation-preload note: with `navigationPreload: true` the browser has already started the document
+fetch when the SW wakes; row 3 must consume `handler.event.preloadResponse` rather than issuing a
+duplicate `fetch()`.
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-08-23:
+
+1. Cold launch, Slow 3G, precache complete, unvisited page → row 2: shell paints instantly, layout
+   effect jumps to the URL's page id before paint (ADR 0042), page renders from cached JSON + font.
+2. Cold launch, Slow 3G, no precache ever run, unvisited page → row 3: at most 3s wait, then shell →
+   loading spread until JSON/font arrive (or the unavailable-offline notice if truly dead).
+3. Fast connection, unvisited page → row 3 with network winning the race → real SSR HTML, cached,
+   indistinguishable from today.
+4. Visited page, offline or online → row 1, unchanged.
+5. Fully offline, unvisited page, no precache → fetch errors fast inside row 3 → fallback shell
+   (preserves today's catch-handler outcome for this case).
+6. Fresh install that has never been online, no fallback doc seeded → row 4: network/error as today.
+
+## Files to Change
+
+- `app/sw.ts` — replace the `new CacheFirst(...)` entry for `isSelfReaderPage` with a custom handler
+  implementing the tree; add SW-memory memoization of the completeness probe; extend the late-response
+  caching of row 3.
+- No changes to `app/constants/offline.ts`, `ReaderPager.tsx`, `launch.html`, or any client code — the
+  self-correction machinery (ADR 0042 layout effect) already exists and is load-bearing here.
+
+## Constraints
+
+- The `request.mode === "navigate"` matcher guard stays — dropping it lets RSC flight data into this
+  cache (Addendum 4, found in review).
+- `READER_HTML_CACHE_NAME` stays auto-versioned per deploy; the `activate` prefix cleanup stays.
+- Row 2's probe is scoped to the default edition's sentinel/keys — do not walk every registered
+  edition; the cold-launch path serves the default-edition shell regardless of which editions are
+  downloaded (the shell is per-locale, not per-edition).
+- The 3s timer must not hold the SW alive artificially beyond the backgrounded fetch it is racing —
+  the fetch continuation uses `event.waitUntil` semantics via Serwist's handler contract.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` with DevTools
+  throttling (Slow 3G/2G); Serwist is disabled in dev.
+
+## What NOT to Do
+
+- Do not bulk-precache SSR HTML for all 604 pages to solve this — reopens the ~1.5 GB rejection
+  (ADR 0028; ADR 0014 Addendum 6's What NOT to Do).
+- Do not make the row-2 fast path depend on anything newer than Addendum 1's independent tiny
+  fallback seed — but also do not confuse it with Addendum 3's constraint: the *fallback document*
+  must exist independently of the bulk download (it does, install-time seeded), while *skipping the
+  network* (row 2) legitimately requires the bulk download to be complete.
+- Do not abort the in-flight network fetch when the fallback wins the race (user decision 2026-08-23):
+  the late response is what converts future launches of that page into row-1 hits.
+- Do not lower the race timeout below ~3s (user decision 2026-08-23): merely-meh 4G connections should
+  still land real HTML; Slow 3G document loads take 5–20s and are exactly the case being fixed.
+
+## Decisions Made
+
+- Row 2 skips the network entirely when precache is complete (user confirmed 2026-08-23) — cached
+  JSON+font render beats racing for SSR HTML that adds nothing.
+- 3s race timeout (user confirmed 2026-08-23).
+- Late fetch finishes and caches (user confirmed 2026-08-23).
+
+# Addendum 6 (2026-08-23): No reader reload/skeleton flicker on network toggle
+
+**Type:** bug
+**Status:** implemented (lint + typecheck clean; browser/offline verification pending — see
+pwa-testing standard)
+**Issue:** https://github.com/furqan-app/web/issues/377 (epic #375)
+
+## Summary
+
+Toggling the device's network connection while viewing a safha in the PWA pauses and re-evaluates
+React Query fetches: the default `networkMode: "online"` skips `queryFn` entirely whenever
+`navigator.onLine === false`, so a fetch that would be served instantly by the service worker's
+`CacheFirst` rule never even runs — an offline swipe to a downloaded-but-unvisited page shows the
+unavailable-offline notice instead of the page. Pause/resume churn around connection events is also
+the flicker class this issue reports.
+
+## Approach
+
+Two-line config change on exactly the immutable-content queries; nothing else.
+
+- `app/hooks/use-quran-page.ts` (`usePage`) and `app/hooks/use-verse-pages.ts` (`useVersePages`)
+  gain `networkMode: "always"`. Their `fetch()` goes through the SW's CacheFirst rules for
+  `/quran/pages/...` and `/quran/verse-pages/...`, so it succeeds offline from cache, errors cleanly
+  when genuinely unavailable, and is untouched online.
+- `refetchOnReconnect`/`refetchOnWindowFocus` stay at their **defaults**: with `staleTime: Infinity`
+  a successfully-loaded page can never go stale, so reconnect can never refetch it — disabling those
+  options would only kill the self-healing of a query that *errored* offline (no data = stale), which
+  is exactly what should resolve into the page when the connection returns.
+- `usePageVerseBounds` is deliberately excluded: its `/api/...` route has no SW cache rule, so
+  `"always"` would only convert a clean pause into an error storm offline.
+- Audit result (no code change): every `useOnlineStatus` consumer (RecitationContext,
+  MarkModal, plans widgets, OfflineRecitationSheet, use-pwa-precache) gates an affordance and never
+  remounts reader state; `useSwUpdate` only prompts via banner; `QuranSafha`'s fontReady Set is
+  network-independent. The flicker class lives entirely in React Query's pause/resume churn.
+
+## Verified Test Cases
+
+Confirmed by the user 2026-08-23:
+
+1. Airplane mode + complete precache, swipe to a downloaded-but-unvisited page → renders from SW
+   cache (broken today — paused fetch never reaches the cache).
+2. Wi-Fi toggles while viewing a loaded page → nothing happens; data fresh forever.
+3. Reconnect after a failed page load → auto-heals into the page (default `refetchOnReconnect`).
+4. Marks/plans/session behavior unchanged (still online-only notices per ADR 0014).
+
+## Files to Change
+
+- `app/hooks/use-quran-page.ts` — add `networkMode: "always"` to `usePage`.
+- `app/hooks/use-verse-pages.ts` — add `networkMode: "always"` to `useVersePages`.
+
+## Constraints
+
+- ReaderPager's `unavailableOffline` derivation (`!data && (isPaused || isError)`) stays as-is — with
+  `"always"` the paused half simply stops firing for these queries; the errored half covers genuine
+  unavailability.
+- Marks operations remain online-only (ADR 0014); do not extend `networkMode` changes to any dynamic
+  hook.
+
+## What NOT to Do
+
+- Do not disable `refetchOnReconnect`/`refetchOnWindowFocus` on the content queries (the issue text
+  suggests it) — loaded pages are immune via `staleTime: Infinity`; disabling only removes offline-
+  error self-healing on reconnect.
+- Do not set `networkMode: "always"` globally on the QueryClient — marks/plans writes must keep their
+  online-aware semantics.
+- Do not touch `usePageVerseBounds` or add SW caching for its API route here — out of scope (#377).
+
+---
+
+# Addendum 7 (2026-08-24): Network transitions are invisible for fully-downloaded users
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `build:local` clean; fallback-path gate verified in a
+production build via Playwright — see Verification below; stg device verification of the user's
+live repro pending)
+**Issue:** https://github.com/furqan-app/web/issues/405 (epic #375)
+
+## Summary
+
+Product rule (user-confirmed 2026-08-24): **a user with the complete offline download must never
+see any re-render, skeleton, reload, or wrong-page flash when the network connection toggles** —
+offline or back online. Skeleton/unavailable states are acceptable only for pages outside the
+download (no download run, partial, or non-default edition). Two violations remain after Addendum 6:
+
+1. **Offline swipe skeleton cycle.** Prod (v1.8.0) predates Addendum 6's fix (#401 — unreleased at
+   report time). Independently, main still has a residual gap: the pager's neighbor prefetch
+   (`warmJson`, `ReaderPager.tsx` ~line 697) uses `queryClient.prefetchQuery` **without**
+   `networkMode: "always"`. Offline, each swipe commit creates a *paused* prefetch for the next
+   page; when that page's `usePage` observer mounts, React Query's `Query.fetch` finds an existing
+   non-idle fetch with no data and returns the paused retryer's promise instead of starting a new
+   fetch — so the mount fetch never reaches the SW cache and the panel hangs on skeleton. Swiping
+   back and forth across the cached/paused boundary replays the cycle.
+
+2. **Reconnect re-initialization.** Repro (stg = current main, Addendum 6 live): cold-launch
+   offline → fallback document → `jumpTo` corrects to last-read (page 50). Toggle wifi back on
+   while reading page 50 → the view replays the entire launch fallback path: a flash of page 1
+   (Al-Fatiha), then the skeleton, then page 50's content again. The reader is being
+   re-initialized from scratch at the reconnect moment — replaying "page-1 shell → correct → load
+   current page". Nothing in the app listens to `online` to reload or navigate (audited:
+   `use-online-status` only sets state; no `router.refresh`/`location.reload` outside the
+   tap-gated `useSwUpdate` banner), so the trigger is structural — either a full document reload
+   (OS-initiated, e.g. Android restoring a discarded renderer) or a client-side remount of
+   `ReaderPager` (e.g. a reconnect-refetched query transiently changing a key/ancestor, reverting
+   the pager to its SSR-seeded `initialPage` = 1 from the fallback document).
+
+## Approach
+
+Three workstreams, in order:
+
+**A. Unblock offline prefetch (certain fix).** Add `networkMode: "always"` to `warmJson`'s
+`prefetchQuery` options in `ReaderPager.tsx`, matching `usePage`. Offline prefetches then resolve
+through the SW's CacheFirst rules instead of pausing, and can no longer block the mount fetch.
+
+**B. Identify and eliminate the reconnect trigger (diagnose then fix).** Reproduce on a local
+production build (`build:local && npm start` — Serwist is disabled in dev) with the offline
+download complete: cold-launch offline, correct to a mid-mushaf page, reconnect, observe.
+Instrument to distinguish the two candidates:
+
+| Observation | Diagnosis | Fix |
+|---|---|---|
+| `performance.getEntriesByType("navigation")` shows a new document / app shell re-boots | Document reload (OS-initiated or fallback-path navigation) | Hardening C below; the reload itself is out of our control |
+| No new document; React tree remounts the pager (log in `ReaderPager` mount effect) | Structural client remount — find which reconnect-refetched query flips a key/ancestor (`MushafSwitchSync`, mushaf/grant/session queries are the suspects) | Make that refetch non-structural (`placeholderData: keepPreviousData`, or guard the key/ancestor against transient undefined) — reconnect must not change the mounted tree |
+
+**C. Flash hardening (do regardless of B's diagnosis).** When the reader mounts and
+`location.pathname`'s page id differs from the SSR-seeded `initialPage` (the fallback-document
+signature), render the skeleton-until-corrected state instead of painting page 1's content first.
+The Al-Fatiha flash is the post-hydration gap between first paint of the fallback document and the
+`jumpTo` layout-effect correction; gating the first paint on "correction not yet applied" removes
+it for every path that reaches the fallback (cold launch, reconnect reload), with no new
+SW/client protocol. This **revokes Addendum 3's accepted trade-off** ("brief page-1 flash then
+corrects — accepted"): it is no longer accepted.
+
+## Decision Tree / Algorithm
+
+| # | State | Network toggles | Expected behavior |
+|---|---|---|---|
+| 1 | Full download, page rendered | offline → online | **Nothing changes on screen.** No skeleton, no reload, no page-1 flash, no progress-bar redraw |
+| 2 | Full download, swipe offline (any of the 604 pages) | — | Renders from SW cache, seamless (Addendum 6 + fix A) |
+| 3 | Full download, reconnect reloads the document anyway (OS-initiated) | — | Fallback path shows skeleton-until-corrected, then the last-read page — never page 1's content (fix C) |
+| 4 | No/partial download, offline swipe to uncached page | — | Existing `unavailableOffline` notice over skeleton (Addendum 3 row 6) — unchanged, acceptable |
+| 5 | No download, reconnect | — | Errored queries self-heal via default `refetchOnReconnect` (Addendum 6) — unchanged |
+
+## Verified Test Cases
+
+User's live repro (stg, 2026-08-24) — the case this addendum must make disappear:
+
+- Cold-launch offline → page 50 (last-read) renders. Toggle wifi on while page 50 is open →
+  today: progress bar reloads, Al-Fatiha flashes, skeleton, page 50 re-renders. After: row 1 —
+  nothing visible happens.
+
+Walked through with the user (2026-08-24):
+
+- Full download, offline, three consecutive forward swipes past the prefetched window → each
+  renders from cache (fix A removes the paused-prefetch block).
+- Full download, swipe forward then back repeatedly across any boundary → no skeleton either
+  direction.
+- Full download, reconnect with the app backgrounded/foregrounded in any order → row 1.
+- Reconnect after a genuinely errored page load (no download) → heals into the page (unchanged).
+- Marks/plans remain online-only; their offline notices are unchanged.
+
+## Files to Change
+
+- `app/components/reader/ReaderPager.tsx` — `warmJson` prefetch gains `networkMode: "always"`
+  (fix A). First-paint gate: when the mount-time pathname/last-read correction is pending, render
+  the skeleton instead of `initialPage`'s content (fix C). Plus whatever B's diagnosis requires
+  (expected: a guard in this file or an ancestor provider, not a new system).
+- `app/components/QuranSafha.tsx` — only if the fix-C gate is cheapest at the safha's existing
+  `showSkeleton` layer; prefer the pager level if it can be expressed there without touching the
+  fontReady contract (DECISIONS: `hasHydrated` mechanism is off-limits).
+- Possibly one provider/query hook touched by B's diagnosis — TBD by the reproduction, kept
+  minimal.
+
+No SW changes are expected: fix C works entirely client-side from `location.pathname` vs
+`initialPage`, and fix A is client config.
+
+## Constraints
+
+- Reconnect must not change the mounted component tree for a fully-downloaded user (row 1). Any
+  fix that makes reconnect *fast* but still re-render is a failure.
+- Do not regress the two-stage prefetch lead (ADR 0034): `networkMode: "always"` changes *where*
+  prefetch fetches through, not *when* stages run.
+- The fix-C gate must be hydration-safe: server render and first client render must agree (the
+  correction is client-only knowledge — follow the `hasHydrated` pattern's rules, DECISIONS Font
+  System section).
+- Safety against a permanent blank: if the correction never lands, the skeleton must resolve to
+  the fallback's own content rather than spin forever (bound the gate, don't leave it absolute).
+- Marks operations stay online-only (ADR 0014); no `networkMode`/refetch changes to dynamic hooks
+  (Addendum 6's boundary).
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start`; Serwist is
+  disabled in `npm run dev`.
+
+## What NOT to Do
+
+- Do not ship fix A alone and declare the issue done — symptom 2 (reconnect re-initialization) is
+  independent of it and reproduces on current main.
+- Do not "fix" the reconnect symptom by disabling `refetchOnReconnect` globally or on content
+  queries (Addendum 6's What NOT to Do stands: errored-query self-healing is load-bearing for row
+  5).
+- Do not add an `online`-event listener that reloads, re-fetches, or navigates — the correct
+  behavior is that reconnect is a non-event for the reader.
+- Do not serve the last-read page's document from the SW fallback instead of page 1 — considered
+  and rejected: the last-read page's HTML is usually *not* in `READER_HTML_CACHE_NAME` (swiped-to
+  pages never document-load), so it would fall through to page 1 anyway while adding a
+  client→SW last-read-URL protocol.
+- Do not reintroduce the accepted-flash rationale from Addendum 3 — superseded by this addendum.
+- Do not touch the `hasHydrated`/fontReady skeleton contract while gating first paint (see
+  Constraints).
+
+## Decisions Made
+
+- The product rule is absolute for fully-downloaded users: network toggles are invisible (user,
+  2026-08-24). Skeleton states are for pages outside the download only.
+- Diagnose-then-fix for the reconnect trigger (B), with hardening C shipped regardless — C
+  removes the user-visible wrong-page flash even when the trigger itself (OS reload) can't be
+  eliminated.
+- SW-side last-read-document fallback rejected in favor of the client-side paint gate (see What
+  NOT to Do).
+- Verification target after implementation: deploy to stg and re-test the user's exact repro on
+  the installed PWA (user, 2026-08-24).
+
+## Implementation Outcome (2026-08-24)
+
+**Fix B diagnosis (resolved):** the Al-Fatiha flash the user saw can only come from a **full
+document reload**. A client-side `ReaderPager` remount cannot produce it — the correction layout
+effect (ADR 0042) re-anchors before paint, so page 1 never renders. The reload trigger is
+therefore outside the app: nothing listens to `online` to reload or navigate (audited), so the
+OS/browser restored the PWA's document when connectivity returned. The reload itself is not ours
+to eliminate; fix C's gate removes its wrong-page flash on every path that reaches the fallback
+document, which is the user-visible half of the problem.
+
+**Fix C shape note (deviation from the plan's wording, not its intent):** the gate is not a React
+render branch — React cannot run before the SSR HTML paints. It is a parse-time inline script in
+`ReaderPage` (server component, same pattern as the root layout's theme flash script) that adds
+`fq-pending-jump` to `<html>` whenever the URL doesn't name the document's own page, a
+`visibility: hidden` rule on `.fq-reader-pager-strip` in `globals.css`, and removal of the class
+in `ReaderPager`'s correction layout effect. The 2s script-side timer is the bounded-reveal
+safety. The visible sequence on a fallback load becomes: themed blank frame (pre-hydration) →
+skeleton (React, target page loading) → target page.
+
+## Verification (2026-08-24, `build:local` + `next start` + Playwright)
+
+| Check | Result |
+|---|---|
+| `npm run lint` / `npx tsc --noEmit` | clean |
+| Gate script present in static `/ar/pages/1` HTML | confirmed (`.next/server/app/ar/pages/1.html`) |
+| Normal visit `/ar/pages/1` | gate not engaged, strip visible |
+| Fallback signature (page-1 document served at `/ar/pages/50`, exactly what the SW catch handler does) — pre/at hydration | `fq-pending-jump` present, strip `visibility: hidden` |
+| Same, after hydration + correction | gate lifted, URL stays `/ar/pages/50`, 765 page-50 words rendered, zero Al-Fatiha text on the page |
+| Fix A | config-level (`networkMode: "always"` on `warmJson`), mirrors the already-shipped `usePage` option; behavioral offline-swipe verification happens on stg (needs a real SW + device network toggle) |
+
+Not verified locally: the OS-initiated reconnect reload itself (needs a real device toggling
+wifi) — that is the stg device test against the user's exact repro.
+
+---
+
+# Addendum 8 (2026-08-27): Precache the reader fallback shell at build time
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `build:local` clean; injected manifest inspected in the
+built `public/sw.js` — both shells present with a revision, the public-glob entries all survived, no
+custom `install` listener remains. Runtime RSC soft-nav check deferred to stg — see Implementation
+Notes below.)
+**Issue:** https://github.com/furqan-app/web/issues/438 (epic #375)
+**ADR:** [0014 Addendum 7](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+A user with the mushaf fully downloaded still waits seconds on the OS splash after a deploy, because
+the fallback shell Addendum 5's row 2 depends on is seeded by a custom `install` handler calling
+`ensureCached()` — which swallows failures by design. Install can therefore complete having cached
+neither shell, while `activate` still deletes the previous deploy's `reader-html-*` cache. The two
+shells move into Serwist's build-time precache manifest instead, appended via `manifestTransforms` in
+`next.config.mjs` and resolved with `serwist.matchPrecache()`.
+
+## Root Cause / Approach
+
+The failure is not that the seed is slow — it is that it is **best-effort while the teardown next to
+it is unconditional**. Once install finishes with an empty `READER_HTML_CACHE_NAME` and the previous
+cache deleted, rows 1 *and* 2 are both unreachable: every cold launch runs row 3's 3 s race and then
+row 4's raw document fetch, for the rest of that deploy, until some online visit to page 1 happens to
+repopulate the cache. Sticky, not one-shot — which is why it reads to the user as "I downloaded
+everything and it is still slow".
+
+A precache entry is **still fetched at install**; "zero network dependency" as the issue words it is
+not reachable for a hydratable Next document, because the shell must carry the current build's
+`/_next/static/chunks/*` URLs. What the precache buys is the property that actually fixes this: a
+non-cacheable response is refused, so the worker cannot activate without its shell, and a failed
+install leaves the previous worker and every one of its caches intact. (Mechanically that failure is a
+hang rather than a rejection — `@serwist/utils`' `parallel()` never settles a lane whose callback
+throws — so the worker is discarded by the browser's install timeout. Same guarantee, slower. See
+ADR 0014 Addendum 7.)
+
+Mechanism verified against the installed packages before planning:
+
+- User `manifestTransforms` run before Serwist's own URL-rewrite transform and before the public-glob
+  entries are merged (`@serwist/build`'s `transformManifest`), so the transform sees exactly the
+  webpack build assets and appending to it leaves `globPublicPatterns` untouched.
+- `PrecacheRoute` is registered ahead of `runtimeCaching` (`serwist/dist/index.mjs:1334`), so
+  navigations to `/{locale}/pages/1` start being served from the precache, bypassing the four-row tree.
+- Serwist's precache matcher strips only `utm_*`/`fbclid` from the query, so the `?_rsc=` parameter
+  Next appends keeps RSC soft-navs to that same path out of the precache route.
+- Precache entries carrying a revision are fetched with `cache: "reload"`, bypassing the browser HTTP
+  cache (the CDN edge-staleness window from Addendum 4 is unchanged, neither better nor worse).
+
+Entry revision is a hash of the webpack manifest the transform receives — the same input class
+`READER_HTML_CACHE_NAME` already hashes, so shell freshness and reader-HTML cache busting move
+together by construction.
+
+## Decision Tree / Algorithm
+
+Behaviour of each path, before and after:
+
+| Situation | Today | After |
+|---|---|---|
+| Install, shell fetch succeeds | shell in `reader-html-{hash}` | shell in the precache, guaranteed present |
+| Install, shell fetch **fails** | install still "succeeds" → `activate` deletes previous `reader-html-*` → every launch this deploy hits row 3 then row 4 | install never completes → worker discarded on the browser's install timeout → previous worker + caches intact → launches keep working; retried on the next update check |
+| Cold launch, complete download, unvisited page | row 2 only if the seed happened to land | row 2 always — `matchPrecache` hit, zero document fetch |
+| Navigation to `/{locale}/pages/1` | row 1, or network on a miss | served by `PrecacheRoute` ahead of the tree |
+| RSC soft-nav to `/{locale}/pages/1` | `defaultCache`'s RSC rule | unchanged — `?_rsc=` defeats precache matching |
+| First-ever install while offline | install fails (`launch.html` is already atomic) | unchanged |
+
+Rows 1, 3 and 4 of Addendum 5's tree, the `navigate` matcher guard, `READER_HTML_CACHE_NAME` and its
+`activate` prefix cleanup are all unchanged. Row 4 becomes effectively unreachable, but stays.
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-08-27:
+
+1. Fresh deploy, Slow 3G, complete download, healthy previous install → old worker serves while the
+   new one precaches in the background; on success it activates with its shell guaranteed. Next cold
+   launch: `launch.html` (precached) → redirect → reader → row 1 miss → row 2 `matchPrecache` hit →
+   paints with no document fetch.
+2. Same, but a shell fetch fails mid-install → install never completes, worker discarded on the
+   browser's install timeout, previous worker and its `reader-html-*` cache survive, launches keep
+   working off the previous deploy. This is the case that is broken today and sticks for the whole
+   deploy.
+3. First-ever install, online → shells land with the rest of the precache; the very next offline or
+   slow launch has a shell immediately.
+4. First-ever install, offline → install fails, no worker. Unchanged (already the case, since
+   `launch.html` and the icons are precached atomically today).
+5. Online navigation straight to `/ar/pages/1` → served by `PrecacheRoute`. Same bytes, no network.
+6. Sidebar tap producing an RSC fetch to `/ar/pages/1` → no precache match, falls through to
+   `defaultCache`'s RSC rule, exactly as today. Must be re-verified in a production build rather than
+   assumed — this is Addendum 4's RSC-poisoning concern arriving at a different layer.
+
+## Files to Change
+
+- `next.config.mjs` — add a `manifestTransforms` entry to `withSerwistInit` appending
+  `{ url: "/ar/pages/1" }` and `{ url: "/en/pages/1" }`, each with a revision hashed from the incoming
+  manifest entries. `globPublicPatterns` untouched. Each appended entry must also carry a numeric
+  `size` — the transform's return value is schema-validated and the build fails without it. Zero is
+  correct here: the documents are prerendered after the webpack compile this transform runs in, so
+  their real size is unknowable at that point, `maximumFileSizeToCacheInBytes` is applied ahead of user
+  transforms and so can never drop these entries, and the only later reader of `size` sums it for the
+  build-log total before deleting the field.
+- `app/sw.ts` — `serveReaderFallbackShell()` resolves via `serwist.matchPrecache(fallbackDocumentUrl(locale))`
+  instead of opening `READER_HTML_CACHE_NAME`; the reader branch of `setCatchHandler` does the same;
+  delete the custom `install` listener and, if it has no other caller, `ensureCached`'s use for the
+  shell (the bulk precache still uses `ensureCached` — do not delete the function).
+- `app/constants/offline.ts` — comment-only: `fallbackDocumentUrl`'s doc block still says the document
+  is "precached at service-worker install"; correct it to name the build-time manifest.
+- No client-side changes. `ReaderPager`'s correction layout effect, the `fq-pending-jump` gate and
+  `launch.html` are all untouched and remain load-bearing.
+
+## Constraints
+
+- `globPublicPatterns` stays app-shell-only. Do not widen it to reach the shell, and do not add a
+  post-build step copying built HTML into `public/` — it is globbed during the `webpack()` config
+  phase, before Next generates HTML, so the copy is always one build stale and its chunk URLs 404.
+- Do not pass `additionalPrecacheEntries` to `withSerwistInit` — in `@serwist/next` it replaces the
+  public glob instead of extending it, silently dropping `launch.html`, `offline-{ar,en}.html` and the
+  icons from the precache.
+- The `request.mode === "navigate"` matcher guard, `READER_HTML_CACHE_NAME`'s per-deploy versioning
+  and the `activate` prefix cleanup all stay (ADR 0014 Addendum 4).
+- The fallback shell stays independent of the bulk 604-page download — it must work before that
+  download has ever run. Row 2's `isCacheComplete` probe gates *skipping the network*, never whether a
+  shell exists.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` (Serwist is disabled
+  in `npm run dev`), with DevTools Slow 3G. Confirm in the built `public/sw.js` that both shell URLs
+  appear in the injected manifest with a revision, and that a soft-nav to `/ar/pages/1` still returns
+  RSC data rather than HTML. Device verification of the real repro happens on stg.
+
+## What NOT to Do
+
+- Do not keep the `install`-handler seed as a backstop alongside the precache entry (user decision
+  2026-08-27) — two shell locations to reason about, and the atomic entry is what the guarantee rests on.
+- Do not introduce a dedicated content-free shell route (considered and rejected 2026-08-27): it would
+  dodge the 5xx coupling below, but it means a new route plus changes to `ReaderPage`/`ReaderPager`'s
+  initial-data contract and to Addendum 7's `fq-pending-jump` gate. Out of scope for this issue.
+- Do not make `activate` spare a stale `reader-html-*` cache to reuse the previous deploy's shell —
+  those chunk URLs are gone after deploy and the shell would boot into a blank app.
+- Do not attempt to inline the shell HTML into `sw.js` via `webpack` `DefinePlugin`. That injection
+  path is documented as silently non-functional in this build (ADR 0014 Addendum 4's implementation
+  note), and the shell cannot be known before the build that produces it anyway.
+- Do not bulk-precache page HTML (~1.5 GB, rejected since ADR 0028).
+- Do not touch the edition-awareness of row 2 or the 3 s timeout — those are #439, blocked on this.
+
+## Decisions Made
+
+- Reuse `/{locale}/pages/1` as the shell rather than adding a content-free shell route (user,
+  2026-08-27). Accepted consequence: a 5xx from that route at install (its `revalidate = 300`
+  re-render can reach the database) fails the install and blocks the service-worker update until a
+  later attempt succeeds. The browser retries on every navigation update check and the failure mode is
+  "stay on the previous deploy", not "break".
+- `manifestTransforms` is the injection point, chosen over both `globPublicPatterns` and
+  `additionalPrecacheEntries` for the reasons under Constraints.
+- The issue's "zero network dependency at install" framing is corrected to atomicity plus
+  no-teardown-before-replacement (user confirmed 2026-08-27); it is not reachable literally.
+
+## Implementation Notes (2026-08-27)
+
+Verified against the built `public/sw.js` after `npm run build:local`:
+
+| Check | Result |
+|---|---|
+| Both shells in the injected manifest | `/ar/pages/1` and `/en/pages/1`, revision `e3e270c446fb1462` |
+| Public-glob entries survived the transform | `launch.html`, `offline-{ar,en}.html`, all 8 icons, `quran/chapters.json` — 86 entries total |
+| Serwist's own URL transform left the shells alone | no prefix rewrite, no `%5B` escaping |
+| Custom `install` listener gone | the one remaining `addEventListener("install")` is Serwist's `addEventListeners()` |
+| Only `utm_*`/`fbclid` stripped from precache lookups | `ignoreURLParametersMatching:[/^utm_/,/^fbclid$/]` in the build — so `?_rsc=` still defeats a precache match |
+| Shell size added to the now-atomic install | 57.7 KB + 56.6 KB gzipped (542 KB / 538 KB raw) — the same two documents the deleted handler already fetched |
+
+Raised by the review pass (2026-08-27), verified in the installed packages, and resolved as
+documentation corrections rather than code changes — none of them weaken the fix:
+
+- The "install throws, worker is discarded" framing was imprecise. `@serwist/utils`' `parallel()`
+  builds its lanes as `new Promise(async (res) => …)` with no `reject` captured, so a lane whose
+  callback throws never settles and `Promise.all` hangs. The worker is discarded by the browser's
+  install timeout instead. `activate` still never runs, so the no-teardown-before-replacement guarantee
+  is intact; only the timing changes. Corrected in ADR 0014 Addendum 7 and above.
+- The shell's revision hashes webpack assets, so a change to the shell's server-rendered HTML that
+  moves no client asset hash leaves the entry looking unchanged. Inherited from the same hash
+  `READER_HTML_CACHE_NAME` uses; recorded as a bounded consequence in the ADR, not fixed here.
+- `READER_FALLBACK_SHELL_LOCALES` in `next.config.mjs` cannot be checked against `FALLBACK_LOCALES` at
+  build time (plain ESM, no TS path alias). Adding a locale to one and not the other ships that locale
+  with no precached shell and no build error. Left as a comment-level warning; a real guard would mean
+  moving the locale list into a plain-JS module both sides can import, which is out of scope for #438.
+
+Two things the plan did not anticipate:
+
+- The transform's return value is schema-validated and every entry needs a numeric `size`; the first
+  build failed on exactly that. See the `next.config.mjs` bullet under Files to Change for why `0` is
+  correct rather than merely tolerated.
+- `serveReaderFallbackShell` needs an explicit `Promise<Response | undefined>` return type. It reads
+  `serwist`, whose type is inferred from the `runtimeCaching` handler that calls it, and TypeScript
+  resolves that cycle to `any` (TS7022/TS7023) instead of erroring at the call sites.
+
+Still open: verified test case 6 (the RSC soft-nav). Deferred to the stg device pass by user decision
+(2026-08-27) — the static evidence above was judged sufficient to merge on. If a soft-nav to
+`/{locale}/pages/1` ever comes back as HTML instead of RSC flight data, `PrecacheRoute` is matching
+ahead of `defaultCache`'s RSC rule and this is the cause.
+
+---
+
+# Addendum 9 (2026-08-27): The instant-shell path follows the reader's active edition
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `npm test` + full `build:local` clean; built `public/sw.js`
+and the client chunk both inspected to confirm they resolve the same marker key — see Implementation
+Outcome. Throttled device pass still pending)
+**Issue:** https://github.com/furqan-app/web/issues/439 (epic #375)
+**ADR:** [0014 Addendum 8](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+Addendum 5's row 2 — "miss + bulk precache complete → serve the shell instantly, network untouched" —
+probes `isCacheComplete(cache, DEFAULT_MUSHAF_ID)` (`app/sw.ts:99`). Downloads have been per-edition
+since ADR 0014 Addendum 5 and page content per-edition since ADR 0033, so a reader who downloaded only
+the Tajweed edition never satisfies that probe: every cold launch to an unvisited page falls into row
+3's 3 s race despite having every byte needed to render that page already on disk. The fix is to probe
+the edition the reader is actually about to render.
+
+## Root Cause / Approach
+
+One hardcoded constant, plus the fact that the service worker has no way to know the active edition.
+`QuranMushafContext` holds it in `localStorage` (unreadable from a worker) and the reader URL is
+edition-agnostic on purpose (`/{locale}/pages/{id}`, ADR 0033 — an edition is a client-side choice, not
+a route). The fallback shell is edition-agnostic too, so row 2 is not choosing *what* to serve, only
+whether to skip the network — and skipping is correct exactly when the client can render the requested
+page locally, which needs the **active** edition's JSON and font.
+
+So the client mirrors its active edition into Cache Storage as a synthetic entry (the same idiom as the
+precache sentinel), and the worker reads it on the miss path.
+
+**Issue #439's "Hole 2" needs no separate work.** Row 2 already returns the shell with no timer
+(`app/sw.ts:186-191`), and Addendum 8 made the shell impossible to miss on an active worker (install is
+atomic), so the only surviving way for a fully-downloaded user to pay the 3 s race was the probe asking
+about the wrong edition. Fixing the probe closes both holes. Row 3's 3 s race stays exactly as-is for
+the genuine no-download case, where real SSR HTML is still worth a bounded wait.
+
+## Decision Tree / Algorithm
+
+Rows are unchanged; only row 2's condition moves.
+
+| Row | Situation | Behavior |
+|---|---|---|
+| 1 | HTML in `READER_HTML_CACHE_NAME` | Serve cached — unchanged |
+| 2 | Miss + **active** edition's precache complete | Serve the precached shell immediately, network untouched |
+| 3 | Miss otherwise | 3 s race vs the navigation-preloaded fetch — unchanged |
+| 4 | Shell missing from the precache | Network/error — unreachable since Addendum 8, kept as the contract |
+
+Active-edition resolution, read fresh on every miss:
+
+| Stored marker | Resolves to |
+|---|---|
+| Absent (fresh install, install predating this build, `caches` unavailable) | `DEFAULT_MUSHAF_ID` — today's behavior |
+| A registered id (2 or 19) | That id |
+| An unregistered id (written by an older/newer build) | `DEFAULT_MUSHAF_ID`, via `getMushafEdition(id).id` |
+| Read throws | `DEFAULT_MUSHAF_ID` |
+
+Memo lifecycle:
+
+| Event | Effect |
+|---|---|
+| First miss for edition X this worker lifetime | Probe runs, result memoized under X |
+| Any edition's bulk run completes | That edition's memo entry dropped (today: only the default's) |
+| `reportStatus` deletes a stale sentinel for X | X's memo entry dropped — a partially-evicted cache cannot stay falsely instant |
+| Marker read | Never memoized — a mid-session edition switch must land on the next navigation |
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-08-27:
+
+| # | State | Expected |
+|---|---|---|
+| 1 | Default downloaded, active = default, Slow 3G cold launch, unvisited page | Row 2 → instant (regression check against Addendum 5) |
+| 2 | **Tajweed-only downloaded, active = Tajweed** | Row 2 → instant — **the fix** |
+| 3 | Nothing downloaded | Row 3 → 3 s race, unchanged |
+| 4 | Both editions downloaded, active = either | Row 2 → instant |
+| 5 | Downloaded {Tajweed}, active = default | Row 3 → real SSR HTML (their edition) on a fast link; shell at 3 s on a slow one |
+| 6 | Fresh install, never launched | No marker → default probe → false → row 3, unchanged |
+| 7 | Existing **default** user upgrading, marker not yet written | No marker → default → probe true → row 2 instant, no regression |
+| 8 | Existing **Tajweed-only** user upgrading | First cold launch after the upgrade still pays the 3 s race; the provider writes the marker that session, every launch after is instant. Accepted — no client hook runs earlier than the provider |
+| 9 | Download finishes mid-session for edition X | Memo dropped → next miss re-probes → row 2 activates without a worker restart |
+| 10 | Partial eviction found by `reportStatus` | Memo dropped → row 3, not a false instant |
+
+## Files to Change
+
+- `app/constants/offline.ts` — add `PREFS_CACHE_VERSION`/`PREFS_CACHE_NAME` (`fq-prefs-v{N}`) and
+  `ACTIVE_MUSHAF_URL` (`/__fq-active-mushaf`), plus a guarded fire-and-forget `writeActiveMushafId(id)`
+  helper. Both sides import from here for the same reason `PAGES_CACHE_VERSION` lives here — a
+  duplicated literal would let the writer and the reader drift onto different keys.
+- `app/contexts/QuranMushafContext.tsx` — call `writeActiveMushafId` from the hydration effect (with
+  the resolved persisted id, not the initial default) and from `handleMushafIdChange`. Never awaited,
+  never blocking; a rejection is swallowed.
+- `app/sw.ts` — `defaultPrecacheCompletePromise` becomes a `Map<number, Promise<boolean>>`; add
+  `readActiveMushafId()` (unmemoized, normalizing through `getMushafEdition`) and
+  `isActivePrecacheComplete()`; row 2 calls the latter. Drop the `mushafId === DEFAULT_MUSHAF_ID` guard
+  on the run-completion invalidation (`app/sw.ts:495`) so any edition's completion clears its own entry,
+  and add the same invalidation where `reportStatus` deletes a stale sentinel. Update the row 2 comment
+  and the `READER_NAV_FALLBACK_TIMEOUT_MS` block, which both still say "default edition".
+
+No changes to `ReaderPager.tsx`, `next.config.mjs`, the manifest transform, `use-pwa-precache.ts`, or
+the `ClientToSwMessage`/`SwToClientMessage` contract. No new unit tests: every part of this is Cache
+Storage I/O inside a service worker, which the Vitest suite (pure logic under `app/lib/`) does not
+reach — verification is the throttled production-build pass below.
+
+## Constraints
+
+- The marker lives in its own cache. Not `pages-v{N}` (a deliberate `PAGES_CACHE_VERSION` bump discards
+  it along with the download that constant scopes) and not `reader-html-{hash}` (deleted every deploy by
+  `activate`). The `activate` cleanup filters on the `reader-html-` prefix, so a new cache name is
+  already safe from it — but re-check that filter if the prefix is ever generalized.
+- Absent/unreadable/unregistered marker must resolve to `DEFAULT_MUSHAF_ID`. That is today's behavior,
+  which is what keeps every existing install from regressing.
+- The marker read stays unmemoized; only the completeness probe is memoized, and per-edition.
+- Row 3's 3 s timeout, rows 1/3/4, the `request.mode === "navigate"` matcher guard, and the per-deploy
+  auto-versioned `READER_HTML_CACHE_NAME` are all untouched (ADR 0014 Addenda 4, 6).
+- Guard the client write on `caches` being defined — it is absent in insecure contexts and the provider
+  renders on every route.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` (Serwist is disabled in
+  `npm run dev`), DevTools Slow 3G, installed PWA, cold launch to an unvisited page, for each of
+  (a) default edition downloaded, (b) Tajweed-only downloaded, (c) nothing downloaded. (a) and (b) must
+  paint with no network wait; (c) must behave exactly as it does today.
+
+## What NOT to Do
+
+- Do not make row 2 fire when *any* registered edition is complete — considered and rejected
+  (user, 2026-08-27): it lets one edition's cached data stand in for another's readiness, which ADR 0033
+  forbids, and hands the shell to a reader who then fetches their own edition's JSON and font over the
+  slow link the fast path exists to avoid.
+- Do not use a cookie to carry the edition to the worker — rejected for the CDN cache-key exposure on
+  statically-generated routes (ADR 0035, `fix-rsc-cache-poisoning.md`).
+- Do not add a `SET_ACTIVE_MUSHAF` message to the SW message contract. That contract is scoped to
+  download runs (`runId`/`mushafId`, ADR 0014 Addendum 5); a message also cannot help the cold launch
+  this fixes, where the worker answers the navigation before any client exists to send one.
+- Do not lower, remove, or condition row 3's 3 s race for the no-download case (ADR 0014 Addendum 6
+  user decision, 2026-08-23 — merely-meh 4G should still land real HTML).
+- Do not treat "skip the 3 s timer" as separate work from the probe fix — row 2 already has no timer and
+  Addendum 8 already guarantees the shell; there is nothing else there.
+- Do not bulk-precache SSR HTML for all 604 pages (~1.5 GB, rejected since ADR 0028).
+- Do not widen this to non-reader routes or to the shared-mushaf grant reader
+  (`/{locale}/mushaf/{grant}/pages/{id}` does not match `isSelfReaderPage` at all) — out of scope.
+- Do not optimize the probe's `cache.keys()` enumeration cost here — a separate child of epic #375.
+
+## Decisions Made
+
+- The worker learns the active edition from a persisted Cache Storage marker written by
+  `QuranMushafProvider`, probing that one edition (user, 2026-08-27). Union-probe and cookie
+  alternatives rejected — see What NOT to Do.
+- The marker gets its own `fq-prefs-v{N}` cache rather than riding in `pages-v{N}`.
+- Issue #439's second hole (the 3 s race) needs no change of its own; the probe fix closes it
+  (confirmed with the user, 2026-08-27).
+- One-time cost accepted: an existing Tajweed-only install pays the race once after upgrading, before
+  the provider has written the marker.
+- `reportStatus`'s stale-sentinel deletion also drops that edition's memo — beyond the issue text, but
+  it is the same "keep the memoization semantics" requirement the issue lists.
+
+## Implementation Outcome (2026-08-27)
+
+Shipped exactly as planned — no deviations, no new files, no change to the SW message contract.
+
+| Check | Result |
+|---|---|
+| `npm run lint` / `npx tsc --noEmit` | clean |
+| `npm test` (Vitest) | 8 files, 93 tests passed |
+| `npm run build:local` | succeeds; 604 × 2 reader pages still prerendered |
+| `isDefaultPrecacheComplete` / `defaultPrecacheCompletePromise` in built `public/sw.js` | 0 occurrences — the hardcoded probe is gone |
+| Marker key agreement | `public/sw.js` and `.next/static/chunks/163-*.js` both emit `/__fq-active-mushaf` and resolve the cache name to `"fq-prefs-v".concat(1)` |
+| `request.mode === "navigate"` guard, `reader-html-` prefix | both still present in the built worker |
+
+The first `build:local` attempt failed on a transient `ETIMEDOUT` fetching IBM Plex Sans Arabic from
+Google Fonts (`next/font`, build-time). Unrelated to this change and clean on retry — worth knowing
+because the failure text names `app/layout.tsx`, which this diff does not touch.
+
+Not verified locally, deferred to the stg/device pass (user decision, 2026-08-27): the throttled Slow 3G
+cold-launch cases (a) default downloaded, (b) Tajweed-only downloaded, (c) nothing downloaded. Those need
+a real install plus a ~48 MB download per edition; the static evidence above was judged sufficient to
+merge on. The browser-level marker check (write on hydration, rewrite on edition switch, absent-marker
+fallback) was offered and skipped in the same decision.
+
+---
+
+# Addendum 10 (2026-08-29): Stop enumerating the page cache on the SW thread at launch
+
+**Type:** bug
+**Status:** implemented (lint + typecheck + `npm test` + full `build:local` clean; built `public/sw.js`
+inspected to confirm the row-2 probe compiles to two `cache.match` calls with the `cache.keys()` walk
+deferred behind a 5s `setTimeout` under `event.waitUntil`, the row-3 3s race untouched, and the
+`reader-html-`/`request.mode === "navigate"` invariants intact. Device/throttled-launch verification
+pending — see Implementation Notes below.)
+**Issue:** https://github.com/furqan-app/web/issues/440 (epic #375)
+**ADR:** [0014 Addendum 9](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+At cold launch the service worker enumerates the entire `pages-v{N}` cache up to three times before it
+can answer the requests the reader is waiting on — the enumeration Addendum 9 explicitly deferred
+("a separate child of epic #375"). `countCachedPages()` walks `cache.keys()` (~1,208 entries per
+downloaded edition, ~2,400 with two) running two regexes per entry, on the worker's single thread,
+ahead of every queued document/font/JSON request. Reached from: (1) row 2's completeness probe on the
+launch navigation's cache miss — memoized, but a cold launch is a fresh worker; (2)+(3) `reportStatus`
+answering the two `REQUEST_PRECACHE_STATUS` messages `usePwaPrecache` fires on mount from
+`OfflineSetupGate` and `OfflineInstallPrompt`, both always mounted in `app/[locale]/layout.tsx`, even
+when dismissed long ago and rendering nothing. The cost is CPU-bound, exists only for users who
+completed a download (no sentinel = early return before the walk), and is exactly the fully-downloaded
+population reporting slow launches.
+
+## Root Cause / Approach
+
+Two independent halves:
+
+**A. Worker — read completeness at launch, verify off the critical path.** Row 2's probe
+(`isPrecacheComplete`) stops calling `isCacheComplete`'s full walk. It reads: sentinel `cache.match` +
+verse-pages `cache.match` — two reads, zero enumeration. When that reads complete, schedule a
+**deferred verification** via `event.waitUntil`: after a short delay (past the launch burst), run the
+real `countCachedPages` walk once per edition per worker lifetime; on a short count, delete the stale
+sentinel and drop that edition's row-2 memo (the same healing `reportStatus` does). `isCacheComplete`
+keeps full-walk semantics for `reportStatus` and `precacheAllPages`' start-of-run short-circuit — a
+Download tap on an evicted cache must resume, not false-complete.
+
+**B. Client — no status request for a surface that renders nothing.** `usePwaPrecache` gains an
+opt-in deferral: when set, the mount-time `REQUEST_PRECACHE_STATUS` and the focus/visibility resync
+fire only while `dismissed` is false (re-firing if it ever flips false while mounted). Gate and
+install prompt opt in; `MushafLayoutRow` (Settings) keeps always-on requests — it displays live
+status regardless of the dismissed flag and is the resume/heal surface. Fully-downloaded users have
+`dismissed = true` (auto-dismiss on `done`), so their launches send zero status messages.
+
+## Decision Tree / Algorithm
+
+Row-2 launch probe, per reader-HTML cache miss (rows 1/3/4 of Addendum 5's tree unchanged):
+
+| Sentinel match | Verse-pages match | Probe result | Follow-up |
+|---|---|---|---|
+| absent | — | not complete → row 3 | none (same early return as today — no walk) |
+| present | absent | not complete → row 3 | none; `reportStatus` heals the sentinel when Settings next asks |
+| present | present | complete → row 2 instant shell | schedule deferred verification, once per edition per worker lifetime |
+
+Deferred verification (runs after the response is served, delayed ~5 s):
+
+| Walk result | Action |
+|---|---|
+| count == `pagesCount` | nothing; edition marked verified for this worker lifetime |
+| count short | delete sentinel, drop row-2 memo → next miss lands in row 3; next `reportStatus` shows the real `n/604`; next run resumes |
+
+Client status requests (mount + focus/visibility resync):
+
+| Caller | Mode | `dismissed` | Fires `REQUEST_PRECACHE_STATUS`? |
+|---|---|---|---|
+| `MushafLayoutRow` | always | any | yes |
+| `OfflineSetupGate` / `OfflineInstallPrompt` | deferred | true | no |
+| `OfflineSetupGate` / `OfflineInstallPrompt` | deferred | false (or flips false while mounted) | yes |
+
+Message listener stays attached unconditionally in every instance — broadcast `PRECACHE_PROGRESS`
+still reaches all mounted hooks during an active run.
+
+## Verified Test Cases
+
+Decisions delegated by the user (2026-08-29, "choose decisions for me"); cases walked against the
+code:
+
+1. Fully-downloaded install (either or both editions), cold launch, unvisited page → row 2 shell with
+   **zero** `cache.keys()` walks before the response; deferred walk runs seconds later; no SW-thread
+   stall ahead of font/JSON requests.
+2. Same user, dismissed flags set (the normal end state — auto-dismiss on `done`) → zero
+   `REQUEST_PRECACHE_STATUS` at launch → `reportStatus` never runs.
+3. iOS evicted entries since last session → first launch serves the shell (accepted one-launch
+   window); an evicted page falls through `CacheFirst` to network (online: slower but works; offline:
+   existing unavailable-offline notice); deferred walk deletes the sentinel + memo; later misses land
+   in row 3; Settings shows resume with the real count.
+4. Settings opened → `MushafLayoutRow` requests status → full walk → exact `n/604`, stale-sentinel
+   healing exactly as today.
+5. Run in flight while gate/prompt dismissed → broadcast progress still updates every mounted hook;
+   Settings row live. Cancel still names its `runId`.
+6. Fresh browser visitor, nothing cached, not dismissed → gate/prompt request status; the walk over a
+   near-empty cache is trivial; behavior unchanged.
+7. Download tapped on an evicted cache → `precacheAllPages`' full-walk short-circuit returns false →
+   run resumes and refetches only what is missing (no false `done`).
+8. Mid-session edition switch → marker read stays unmemoized (Addendum 9); the new edition's cheap
+   probe + its own deferred verification run on the next miss.
+
+## Files to Change
+
+- `app/sw.ts`
+  - New cheap probe (sentinel + verse-pages `cache.match` only) used by `isPrecacheComplete` for
+    row 2; `isCacheComplete` untouched for `reportStatus`/`precacheAllPages`.
+  - Deferred verification: per-edition once-per-worker-lifetime guard (e.g. a `Set<number>` beside
+    `precacheCompleteByMushaf`); scheduled with `event.waitUntil` from the row-2 handler after the
+    shell is served, delayed ~5 s; on short count `cache.delete(precacheSentinelUrl)` +
+    `precacheCompleteByMushaf.delete` + clear the verified guard so a later re-probe re-verifies.
+  - Run-completion and `reportStatus` stale-sentinel invalidation also clear the verified guard, so
+    memo and guard can never disagree.
+- `app/hooks/use-pwa-precache.ts` — options param (e.g.
+  `usePwaPrecache(mushafId, { deferStatusWhileDismissed?: boolean })`, default `false` = today's
+  behavior). Move the status request (and resync firing) into a `dismissed`-aware effect; the message
+  listener and dismissed-flag sync stay unconditional.
+- `app/components/offline/OfflineSetupGate.tsx`, `app/components/offline/OfflineInstallPrompt.tsx` —
+  pass `deferStatusWhileDismissed: true`.
+- `app/components/mushaf/MushafLayoutRow.tsx` — unchanged call (default keeps always-on requests).
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 9 (written during planning).
+- `docs/architecture/DECISIONS.md` — PWA section: Addendum 10 amendment + supersede the
+  "count on the critical path" letter of the sentinel-validation constraint (written during planning).
+
+No changes to `app/constants/offline.ts`, the SW message contract, `ReaderPager`, or any fallback
+document. No new unit tests: everything here is Cache Storage I/O inside the worker plus a hook's
+message timing — outside the Vitest suite's reach (same call as Addendum 9); verification is the
+throttled production-build pass below.
+
+## Constraints
+
+- `isCacheComplete`'s full-walk semantics stay for `reportStatus` and `precacheAllPages` — the cheap
+  probe is scoped to row 2 only. A Download tap on an evicted cache must resume, not short-circuit.
+- Deferred verification must perform the same healing as `reportStatus` (sentinel delete + memo drop)
+  and must run at most once per edition per worker lifetime; never persist its verdict across worker
+  lifetimes.
+- Everything stays per-edition: probe, memo, verified guard, sentinel, dismissed flag (ADR 0014
+  Addendum 5).
+- `dismissed` keeps initializing `true` (`use-pwa-precache.ts`) so no surface can flash before
+  localStorage is read — the deferral builds on that read, it must not reorder it.
+- No surface may auto-start a download (ADR 0014 Addendum 2) — untouched here.
+- The Settings rows must keep always-on status requests — they render counts regardless of dismissal
+  and are where a stale sentinel gets healed on demand.
+- Verify per `docs/standards/pwa-testing.md`: `npm run build:local && npm start` (Serwist disabled in
+  dev), installed PWA with both editions downloaded, CPU-throttled cold launch to an unvisited page —
+  no SW-thread stall before assets are served (issue #440's acceptance check). Confirm in DevTools
+  that no `REQUEST_PRECACHE_STATUS` fires at launch once dismissed, and that opening Settings still
+  shows exact counts.
+
+## What NOT to Do
+
+- Do not let `precacheAllPages` or `reportStatus` adopt the cheap probe — their full walk is now the
+  primary self-healing path and the source of exact counts.
+- Do not remove the deferred verification walk — that is the bare-sentinel reduction ADR 0014
+  Addendum 2 forbade; an evicted cache would report ready forever.
+- Do not sample-probe random pages as verification — probabilistic; misses exactly the partial
+  evictions it exists to catch.
+- Do not persist the verification verdict (e.g. "verified at T" in Cache Storage) across worker
+  lifetimes — eviction can happen any time; once per worker lifetime is the chosen balance
+  (delegated decision, 2026-08-29).
+- Do not defer the Settings rows' status requests, and do not gate them on `dismissed`.
+- Do not dedupe/relocate the gate and prompt mounts in `app/[locale]/layout.tsx` — out of scope; the
+  fix is not firing useless messages, not restructuring the surfaces.
+- Do not change what "complete" means or relax sentinel-plus-count validation semantics anywhere
+  outside row 2 (issue #440's out-of-scope list).
+- Do not touch Addendum 5's rows 1/3/4, the 3 s race, the `request.mode === "navigate"` guard, or the
+  active-edition marker mechanics (Addendum 9).
+
+## Decisions Made
+
+All delegated by the user (2026-08-29, "choose decisions for me, what I just need is to have a nice
+offline experience"):
+
+- **Deferred-verification trade-off accepted**: after an iOS eviction, the first cold launch may
+  serve the instant shell; the deferred walk corrects state seconds later in the same session. Delta
+  vs today is one shell serve — today's design caught it on the next launch's pre-serve probe.
+  Supersedes the letter (not the intent) of DECISIONS' "do not reduce back to a bare sentinel
+  `match()`" constraint; recorded in ADR 0014 Addendum 9.
+- **No persisted count entry / sentinel body stays empty** — the issue's "persisted count (or
+  equivalent)": the sentinel already is the persisted completeness assertion; a count in its body
+  adds nothing once verification is deferred, and a second synthetic entry adds drift risk.
+- **~5 s delay** before the deferred walk, clearing the launch request burst; scheduled under
+  `event.waitUntil` (a killed worker skips it harmlessly — the next launch re-probes).
+- **Hook option defaults to today's behavior** (always request); the two launch surfaces opt into
+  deferral explicitly — no silent behavior change for future callers.
+
+## Implementation Outcome (2026-08-29)
+
+Shipped exactly as planned — no deviations, no new files.
+
+- `app/sw.ts` — `hasCompletionMarkers` (2 `cache.match` calls) replaces the full walk inside
+  `isPrecacheComplete`'s row-2 probe. `scheduleDeferredVerification` (`verifiedByMushaf` guard +
+  `event.waitUntil` + 5s `setTimeout` + `isCacheComplete`'s real walk) fires once per edition per
+  worker lifetime when the cheap probe reads complete, healing exactly like `reportStatus` on a short
+  count. `isActivePrecacheComplete`/`isPrecacheComplete` now take the `FetchEvent`/`ExtendableEvent`
+  they schedule the deferred work on. Both invalidation sites (`precacheAllPages`'s completion,
+  `reportStatus`'s stale-sentinel deletion) drop `verifiedByMushaf` alongside the existing memo.
+  `reportStatus` and `precacheAllPages` untouched — still call the full-walk `isCacheComplete`.
+- `app/hooks/use-pwa-precache.ts` — `deferStatusWhileDismissed` option (default `false`). The status
+  request/resync moved into its own effect keyed on `statusEligible = !deferStatusWhileDismissed ||
+  !dismissed`; the message-listener/dismissed-sync effect is unchanged apart from losing the status
+  logic it used to also own.
+- `OfflineSetupGate.tsx`, `OfflineInstallPrompt.tsx` — pass `{ deferStatusWhileDismissed: true }`.
+  `MushafLayoutRow.tsx` untouched (default `false` preserves always-on requests).
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 9 (written during planning,
+  unchanged by implementation).
+- `docs/architecture/DECISIONS.md` — PWA section: Addendum 10 amendment; sentinel-validation
+  constraint rewritten to describe the split by call site (already done during planning).
+- `docs/architecture/COMPONENTS.md` — `OfflineSetupGate`/`OfflineInstallPrompt` entries note the new
+  `deferStatusWhileDismissed: true` call.
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | clean |
+| `npm run lint` | clean |
+| `npm test` (Vitest) | 9 files, 128 tests passed |
+| `npm run build:local` | succeeds |
+| Row-2 probe in built `public/sw.js` | compiles to `e.match(sentinel) && e.match(versePages)` — zero `cache.keys()` calls |
+| Deferred verification in built `public/sw.js` | `verifiedByMushaf`-equivalent `Set` guard → `event.waitUntil` → `setTimeout(…, 5e3)` → full-walk `isCacheComplete` → sentinel delete + memo/guard drop on failure, matching source |
+| Row-3 race timeout | `setTimeout(…, 3e3)` unchanged in the built worker |
+| `reader-html-` prefix / `request.mode === "navigate"` guard | both present, untouched |
+
+Not verified locally (needs a real install + a completed download; deferred per this task's own
+Verified Test Cases and consistent with every prior addendum's device-pass deferral): a CPU-throttled
+cold launch on an installed PWA with both editions downloaded, confirming no SW-thread stall before
+assets are served and that DevTools shows zero `REQUEST_PRECACHE_STATUS` messages at launch once
+dismissed.
+
+## Review Fixes (2026-08-29, Sonnet review pass)
+
+One fix applied, from a `/review-fq-work` pass before shipping:
+
+- `isCacheComplete` (`app/sw.ts`) called out its own sentinel + verse-pages `cache.match` checks
+  verbatim instead of reusing `hasCompletionMarkers`, duplicating exactly the two reads the row-2
+  probe was extracted to isolate — the drift risk DECISIONS.md's rewritten sentinel-validation
+  constraint explicitly warns against. `isCacheComplete` now calls `hasCompletionMarkers` internally;
+  `reportStatus`/`precacheAllPages` callers are unaffected (same return semantics, one fewer duplicated
+  code path). Re-verified clean after the change: `tsc --noEmit`, `lint`, `npm test` (128/128),
+  `build:local`.
+
+Not fixed, accepted as-is: `scheduleDeferredVerification`'s catch branch clears `verifiedByMushaf` but
+leaves `precacheCompleteByMushaf`'s memo untouched on a `caches.open`/`isCacheComplete` I/O failure —
+self-healing in practice (the guard clear lets the next miss retry the real walk; nothing serves
+provably-stale data), but a persistent I/O fault would reschedule that retry indefinitely with no
+backoff. Judged too narrow an edge case (transient Cache Storage I/O failure, not a normal eviction) to
+warrant added complexity before shipping. `reportStatus` also does not mark `verifiedByMushaf` on its
+own successful full walk, leaving a redundant deferred re-walk schedulable right after — a missed
+optimization, not a correctness issue, left for a future pass if it matters in practice.

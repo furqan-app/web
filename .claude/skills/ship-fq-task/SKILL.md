@@ -7,9 +7,7 @@ description: The only sanctioned way to commit and push in this project. Syncs w
 
 Read and follow [`docs/workflow/ship-task.md`](../../../docs/workflow/ship-task.md).
 
-## Claude-specific additions
-
-### Step 6 — GitHub issue integration
+## Step 6 — GitHub issue integration
 
 When the workflow doc says "update the task ticket":
 ```bash
@@ -18,7 +16,7 @@ gh issue comment <issue-number> --repo furqan-app/web --body "PR: <pr-url>
 <short summary>"
 gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:in-progress" --add-label "status:in-review"
 ```
-The PR body (step 5) must reference the issue as `Refs #<issue-number>` — **not** `Fixes #<issue-number>` or `Closes #<issue-number>`. Merging into `main` is not the same as shipping a release here; using `Fixes`/`Closes` would let GitHub auto-close the issue on merge, before the release that actually ships it. A GitHub Action (`.github/workflows/issue-status-on-merge.yml`) reads the `Refs #N` reference on merge and advances the issue from `status:in-review` to `status:to-be-released` automatically — `/cut-release` is what finally closes it.
+The PR body (step 5) must reference the issue as `Refs #<issue-number>` — **not** `Fixes #<issue-number>` or `Closes #<issue-number>`. Merging into `main` is not the same as shipping a release here; using `Fixes`/`Closes` would let GitHub auto-close the issue on merge, before the release that actually ships it. A GitHub Action (`.github/workflows/issue-status-on-merge.yml`) reads the `Refs #N` reference on merge and advances the issue from `status:in-review` to `status:to-be-released` automatically — `/release promote` is what finally marks it `status:done` and closes it when the version reaches `prod` (`/release cut` only milestones it).
 
 ### Step 7 — Clean up the worktree (mandatory — always run, even if step 6 was skipped)
 
@@ -65,7 +63,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 0. **Resolve ambiguity upfront — ask once, then proceed without further confirmation**
    - Identify the GitHub issue from: the plan file, the current branch name, or context from the conversation. If there is any ambiguity about which issue this work belongs to, ask now and only now — do not ask again mid-flow.
    - **Offer a review pass:** ask once whether the user wants to run `/review-fq-work` on the branch before shipping. If yes, **also ask which model to run the review with** — present the list Opus (recommended, most thorough), Sonnet (faster/cheaper), Haiku (fastest, light sanity check) — then run `/review-fq-work` with the chosen model and let the user act on the findings. Do **not** continue to step 1 until they say to ship. If no (or already reviewed this session), proceed. Ask this together with the ticket question so there is a single upfront pause.
-   - Once the ticket is confirmed and the review offer is answered, execute steps 1–7 in sequence without pausing for approval. Step 7 (worktree cleanup) is mandatory — do not skip it.
+   - **Offer a retrospect pass:** in that same pause, ask whether to run `/retrospect` — unless it already ran this session. It runs *before* the commit so any `decisions/*.md` or workflow-doc edits it produces are staged into this PR (step 3), not stranded after step 7 tears down the worktree.
+   - Once the ticket is confirmed and both offers are answered, execute steps 1–7 in sequence without pausing for approval. Step 7 (worktree cleanup) is mandatory — do not skip it.
 
 1. **Sync with main**
    - `git fetch origin`
@@ -77,7 +76,8 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
    - `git checkout -b <branch-name>`
 
 3. **Commit**
-   - `git add` the relevant files (never `git add -A` blindly — review what's staged)
+   - **Fold plan addenda first** — if the diff touches any `docs/plans/**/*.md` with a `## Addendum` section, read the whole stack, merge it into the body at current truth, drop every `## Addendum` heading, add a dated `## Revision History` line per fold (supersessions in bold). Every still-active Constraint / What-NOT / Decision from every addendum must survive the fold. See `docs/workflow/ship-task.md` step 3 for the fidelity bar.
+   - `git add` the relevant files (never `git add -A` blindly — review what's staged) — include any `decisions/*.md` or workflow-doc edits `/retrospect` produced in step 0
    - Invoke `commit-staged` to draft the message
    - Run `git commit` immediately — do not pause for confirmation
    - See "No AI signatures" section — no AI attribution anywhere in this flow
@@ -92,6 +92,7 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 6. **Update the GitHub issue**
    - `gh issue comment <issue-number> --repo furqan-app/web --body "..."`: post the PR URL and a short summary
    - `gh issue edit <issue-number> --repo furqan-app/web --remove-label "status:in-progress" --add-label "status:in-review"`
+   - `.claude/skills/scripts/sync-issue-board-status.sh <issue-number> status:in-review` — moves the card on the Furqan Kanban board (fallback if the `issue-status-to-project.yml` workflow hasn't fired yet; on scope error, continue — the workflow will sync it)
 
 7. **Clean up the worktree** (mandatory — always run, even if step 6 was skipped)
    - Read the current branch name (`git branch --show-current`)
@@ -125,7 +126,7 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
 
 ## No AI signatures — anywhere
 
-Never add any AI attribution in this flow: no `Co-Authored-By: Claude` in commit messages, no "Generated with Claude Code" or similar in PR titles, bodies, or comments, no AI footer/trailer anywhere.
+Never add any AI attribution in this flow: no `Co-Authored-By: ...` in commit messages, no "Generated with AI" or similar in PR titles, bodies, or comments, no AI footer/trailer anywhere.
 
 ## What NOT to do
 

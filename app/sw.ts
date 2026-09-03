@@ -2,13 +2,18 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, RangeRequestsPlugin, Serwist } from "serwist";
+import { CacheFirst, NetworkOnly, RangeRequestsPlugin, Serwist } from "serwist";
 import {
+  ACTIVE_MUSHAF_URL,
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
+  PREFS_CACHE_NAME,
+  QDC_TAFSIR_HOST,
   RECITATION_AUDIO_HOST,
   RECITATION_DOWNLOAD_CACHE_NAME,
+  TAFSIR_DOWNLOAD_CACHE_NAME,
+  TAFSIR_DOWNLOAD_CACHE_PREFIX,
   fallbackDocumentUrl,
   offlineFallbackUrl,
   pageFontUrl,
@@ -17,7 +22,7 @@ import {
   versePagesUrl,
 } from "@constants/offline";
 import type { ClientToSwMessage, SwToClientMessage } from "@constants/offline";
-import { getMushafEdition } from "@utils/mushaf-editions";
+import { DEFAULT_MUSHAF_ID, getMushafEdition } from "@utils/mushaf-editions";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -71,6 +76,185 @@ const READER_HTML_CACHE_NAME = `${READER_HTML_CACHE_PREFIX}${hashString(JSON.str
 const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
 
+// ADR 0014 Addendum 6: a cache miss on a slow-but-alive connection must not
+// stall a cold launch for the full SSR document fetch — the catch handler only
+// fires on network error, never on slowness. The reader-page handler below is
+// therefore a four-row decision tree instead of a bare CacheFirst: cache hit →
+// serve; miss + the ACTIVE edition's bulk precache complete (Addendum 8) →
+// serve the precached fallback shell instantly, network untouched; miss
+// otherwise → race the navigation-preloaded fetch against this timeout,
+// fallback wins → serve the shell while the fetch continues in the background
+// and is still cached under its real URL on arrival. Slow 3G document loads
+// take 5–20s; merely-meh 4G (~1s) should still land real HTML, hence 3s and
+// nothing lower.
+//
+// This timeout is for the genuine no-download case only. Row 2 never reaches
+// it — it has no timer at all — so a fully-downloaded reader waiting 3s always
+// means the completeness probe answered about the wrong edition, which is the
+// defect Addendum 8 fixes. Do not add a second "skip the timer" branch.
+const READER_NAV_FALLBACK_TIMEOUT_MS = 3000;
+
+// ADR 0049: RecitationProvider/SessionProvider both fire an unconditional
+// mount-time request in the root layout, and defaultCache's `/api/auth/.*`
+// rule gives `/api/auth/session` a 10s NetworkOnly({ networkTimeoutSeconds })
+// timeout — on a mobile connection (~6 concurrent connections per host) that
+// can hold a slot open for the full 10s on every launch, competing with the
+// reader's own fetches. Server-injecting the session was considered and
+// rejected (it would force getServerSession — and therefore dynamic
+// rendering — onto the root layout that wraps all 604 static Quran pages).
+//
+// Serwist's own `networkTimeoutSeconds` does NOT bound this: NetworkOnly's
+// `_handle` races `Promise.race([handler.fetch(request), timeout(ms)])` with
+// no AbortController anywhere in the chain (confirmed by reading
+// node_modules/serwist's NetworkOnly/StrategyHandler.fetch) — the SW's
+// promise to the page settles at the timeout, but the real fetch, and the
+// connection it holds, keeps running in the background regardless. Using the
+// built-in option here would only change when the page finds out, not
+// whether the connection is actually freed — the reader-page rule above hits
+// the same gap for the same reason and works around it with its own
+// hand-rolled race (see `network`/`timeout` there); this rule uses
+// AbortController directly instead, since there is no cache-fallback branch
+// to preserve. Every other /api/auth/* route (signin, callback, csrf) is
+// user-triggered, not launch-time, and stays on defaultCache's 10s
+// NetworkOnly default — unaffected by this rule or its gap.
+const AUTH_SESSION_NETWORK_TIMEOUT_MS = 3000;
+
+/**
+ * Memoized completeness probe for row 2, keyed by edition — runs ONLY on a
+ * reader-HTML cache miss. Since ADR 0014 Addendum 9 (#440) it READS
+ * completeness (sentinel + verse-pages, two cache.match calls) instead of
+ * re-deriving it with countCachedPages's `cache.keys()` walk: the worker has
+ * one thread, and at cold launch every queued document/font/JSON request sat
+ * behind that ~1,208-entry enumeration. The walk still happens — as a deferred
+ * verification scheduled AFTER the shell response is served (see
+ * scheduleDeferredVerification below) — so iOS's out-from-under eviction is
+ * still healed, just off the launch's critical path. Entries are dropped when a
+ * bulk run completes (a download finishing mid-session activates row 2 without
+ * waiting for the worker to restart) and when reportStatus finds a cache that
+ * can no longer back its own sentinel (a partial eviction must not leave row 2
+ * falsely instant for the rest of the worker's life).
+ */
+const precacheCompleteByMushaf = new Map<number, Promise<boolean>>();
+
+/**
+ * Sentinel + verse-pages presence only — no `cache.keys()` enumeration. The
+ * launch-path read half of Addendum 9's split; countCachedPages remains the
+ * verify half. Scoped to row 2: reportStatus and precacheAllPages keep the
+ * full-walk isCacheComplete — they need exact counts and must never
+ * false-complete a resumable run off a sentinel the cache can no longer back.
+ */
+async function hasCompletionMarkers(cache: Cache, mushafId: number) {
+  if (!(await cache.match(precacheSentinelUrl(mushafId)))) return false;
+  return Boolean(await cache.match(versePagesUrl(mushafId)));
+}
+
+// Clears the launch request burst before the verification walk occupies the
+// worker thread — nothing may queue behind it, which is the point of #440.
+const VERIFY_PRECACHE_DELAY_MS = 5000;
+
+/**
+ * Editions whose cheap row-2 probe has been backed by a real walk this worker
+ * lifetime. Never persisted across lifetimes — eviction can happen any time;
+ * once per lifetime is the chosen balance (ADR 0014 Addendum 9). Cleared
+ * wherever precacheCompleteByMushaf is invalidated, so memo and guard cannot
+ * disagree.
+ */
+const verifiedByMushaf = new Set<number>();
+
+/**
+ * The deferred verify half of Addendum 9's split: runs the full
+ * isCacheComplete walk once per edition per worker lifetime, after the shell
+ * response has already been served. A failed check performs the same healing
+ * as reportStatus — delete the stale sentinel, drop the row-2 memo — so the
+ * next miss lands in row 3 and the next run resumes instead of trusting the
+ * ghost. Runs under event.waitUntil; a worker killed before the delay elapses
+ * skips it harmlessly (the next lifetime re-probes).
+ */
+function scheduleDeferredVerification(mushafId: number, event: ExtendableEvent) {
+  if (verifiedByMushaf.has(mushafId)) return;
+  verifiedByMushaf.add(mushafId);
+  event.waitUntil(
+    (async () => {
+      await new Promise((resolve) => setTimeout(resolve, VERIFY_PRECACHE_DELAY_MS));
+      try {
+        const cache = await caches.open(PAGES_CACHE_NAME);
+        if (await isCacheComplete(cache, mushafId)) return;
+        await cache.delete(precacheSentinelUrl(mushafId));
+        precacheCompleteByMushaf.delete(mushafId);
+        verifiedByMushaf.delete(mushafId);
+      } catch {
+        // Cache Storage unreadable — deleting state on an I/O error heals
+        // nothing; clear the guard so a later probe can retry the walk.
+        verifiedByMushaf.delete(mushafId);
+      }
+    })(),
+  );
+}
+
+async function isPrecacheComplete(
+  mushafId: number,
+  event: ExtendableEvent,
+): Promise<boolean> {
+  let probe = precacheCompleteByMushaf.get(mushafId);
+  if (!probe) {
+    probe = caches
+      .open(PAGES_CACHE_NAME)
+      .then((cache) => hasCompletionMarkers(cache, mushafId))
+      .catch(() => false);
+    precacheCompleteByMushaf.set(mushafId, probe);
+  }
+  const complete = await probe;
+  if (complete) scheduleDeferredVerification(mushafId, event);
+  return complete;
+}
+
+/**
+ * The edition the client is about to render, mirrored into Cache Storage by
+ * QuranMushafProvider (ADR 0014 Addendum 8) — a worker cannot read the
+ * localStorage that actually owns it, and the reader URL is edition-agnostic by
+ * design (ADR 0033). Every failure mode resolves to DEFAULT_MUSHAF_ID, which is
+ * this probe's pre-Addendum-8 behavior, so no existing install regresses:
+ * absent marker (fresh install, or one predating this build), an id no longer
+ * in the registry, and an unreadable cache all land there — the last via
+ * getMushafEdition's own fallback.
+ *
+ * Deliberately NOT memoized. It is one cache.match against a single-entry
+ * cache, and caching it would make an edition switch invisible to the handler
+ * until the worker restarted.
+ */
+async function readActiveMushafId(): Promise<number> {
+  try {
+    const cache = await caches.open(PREFS_CACHE_NAME);
+    const stored = await cache.match(ACTIVE_MUSHAF_URL);
+    if (!stored) return DEFAULT_MUSHAF_ID;
+    return getMushafEdition(Number(await stored.text())).id;
+  } catch {
+    return DEFAULT_MUSHAF_ID;
+  }
+}
+
+const isActivePrecacheComplete = async (event: ExtendableEvent) =>
+  isPrecacheComplete(await readActiveMushafId(), event);
+
+const fallbackLocale = (url: URL) =>
+  FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
+  FALLBACK_LOCALES[0];
+
+// ADR 0014 Addendum 7: the shell is a build-time precache entry (appended by
+// next.config.mjs's manifestTransforms), not a best-effort install-time fetch
+// into READER_HTML_CACHE_NAME. matchPrecache resolves it regardless of which
+// cache Serwist's own versioning stores the manifest under — same as
+// offlineFallbackUrl below. It cannot be missing on an active worker: install
+// is atomic, so a worker that failed to fetch a shell never activates and the
+// previous deploy's worker and caches stay intact. Callers still branch on
+// `undefined` — that is matchPrecache's contract, and row 4 of the tree below
+// is defined by it. The return type is annotated rather than inferred because
+// this reads `serwist`, whose own type is inferred from the runtimeCaching
+// handler that calls this: a cycle TypeScript silently resolves to `any`
+// (TS7022/TS7023) instead of flagging at the call sites.
+const serveReaderFallbackShell = (url: URL): Promise<Response | undefined> =>
+  serwist.matchPrecache(fallbackDocumentUrl(fallbackLocale(url)));
+
 const isPageFont = (url: URL) =>
   /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
@@ -85,6 +269,11 @@ const isPageJson = (url: URL) =>
 // default edition's page numbers when offline.
 const isVersePagesJson = (url: URL) =>
   /^\/quran\/verse-pages\/[0-9]+\.json$/.test(url.pathname);
+
+// Juz start positions — verse_key + default-edition start page per juz,
+// generated once from the rubs table. Immutable; same treatment as
+// verse-pages so home-page juz jump rows resolve offline (ADR 0033).
+const isJuzStartsJson = (url: URL) => url.pathname === "/quran/juz-starts.json";
 
 // Offline Recitation Audio (ADR 0046). The chapter-audio metadata route
 // RecitationContext.play() already calls — caching its exact response is what
@@ -117,10 +306,69 @@ const serwist = new Serwist({
     // later served back for a plain document request — the same failure shape
     // fix-rsc-cache-poisoning.md fixed at the CDN layer, relocated to this
     // layer (found in review before this shipped).
+    //
+    // The miss path is ADR 0014 Addendum 6's decision tree, not a bare
+    // CacheFirst — see READER_NAV_FALLBACK_TIMEOUT_MS above.
     {
       matcher: ({ url, request }) =>
         isSelfReaderPage(url) && request.mode === "navigate",
-      handler: new CacheFirst({ cacheName: READER_HTML_CACHE_NAME }),
+      handler: {
+        handle: async ({ event, request, url }) => {
+          const cache = await caches.open(READER_HTML_CACHE_NAME);
+          const cached = await cache.match(request);
+          if (cached) return cached;
+
+          // Row 2 — a complete precache OF THE EDITION ABOUT TO BE RENDERED
+          // means every page renders client-side from cached JSON + font once
+          // the shell mounts (the pre-paint jumpTo self-correction, ADR 0042),
+          // so SSR HTML adds nothing but the network wait. Scoped to the active
+          // edition, not any complete one: the shell is edition-agnostic, but
+          // the content it then loads is not (ADR 0033), so another edition's
+          // download says nothing about whether this page can render locally.
+          if (await isActivePrecacheComplete(event)) {
+            const shell = await serveReaderFallbackShell(url);
+            if (shell) return shell;
+            // No shell cached (e.g. install never completed online) — fall
+            // through to the network race below.
+          }
+
+          // Row 3 — race the network against the timeout. navigationPreload
+          // is enabled, so consume the preloaded response rather than issuing
+          // a duplicate document fetch. A rejection here propagates so the
+          // route-level catch handler still serves its fallback.
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const network = (async () => {
+            const fetchEvent = event as FetchEvent;
+            const preload =
+              "preloadResponse" in fetchEvent ? await fetchEvent.preloadResponse : undefined;
+            return preload ?? fetch(request);
+          })().then(async (response) => {
+            if (timer !== undefined) clearTimeout(timer);
+            // Late caching flows through here too when the timeout already
+            // won: the response lands under its real URL, making this page a
+            // cache-hit for every future launch.
+            if (response && response.ok) await cache.put(request, response.clone());
+            return response;
+          });
+
+          const timeout = new Promise<undefined>((resolve) => {
+            timer = setTimeout(() => resolve(undefined), READER_NAV_FALLBACK_TIMEOUT_MS);
+          });
+
+          const response = await Promise.race([network, timeout]);
+          if (response !== undefined) return response;
+
+          // Timer won. Serve the fallback shell; keep the background fetch
+          // alive (and swallow a late failure — we've already answered).
+          const shell = await serveReaderFallbackShell(url);
+          if (!shell) {
+            // Row 4 — nothing to fall back to; today's terminal behavior.
+            return network;
+          }
+          event.waitUntil(network.then(() => {}, () => {}));
+          return shell;
+        },
+      },
     },
     // Page fonts are genuinely immutable (Static Generation Strategy
     // decision) — once cached, never re-validated against the network.
@@ -129,7 +377,7 @@ const serwist = new Serwist({
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     {
-      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url),
+      matcher: ({ url }) => isPageJson(url) || isVersePagesJson(url) || isJuzStartsJson(url),
       handler: new CacheFirst({ cacheName: PAGES_CACHE_NAME }),
     },
     // Offline Recitation Audio (ADR 0046) — both immutable per reciter+chapter
@@ -146,6 +394,42 @@ const serwist = new Serwist({
         cacheName: RECITATION_DOWNLOAD_CACHE_NAME,
         plugins: [new RangeRequestsPlugin()],
       }),
+    },
+    // Offline Tafsir (ADR 0060). QDC's tafsir host serves both `by_ayah` (live
+    // reads) and `by_chapter` (downloads). Without this rule, defaultCache's
+    // cross-origin `NetworkFirst` (32-entry `cross-origin` cache, 10s timeout,
+    // `!sameOrigin` matcher) would mirror all 114 `by_chapter` responses into
+    // that shared cache AND stall every offline `by_ayah` read for 10s before it
+    // rejects. NetworkOnly keeps QDC tafsir out of the cache entirely; the
+    // client provider owns the offline fallback (reading its own
+    // `tafsir-download-v{N}` cache), so no `CacheFirst` rule is wanted here —
+    // the download URL and the live-read URL differ, so it could never be
+    // populated by the download anyway.
+    {
+      matcher: ({ url }) =>
+        url.hostname === QDC_TAFSIR_HOST &&
+        url.pathname.startsWith("/api/qdc/tafsirs/"),
+      handler: new NetworkOnly(),
+    },
+    // ADR 0049 — actually aborts the launch-time session fetch at 3s instead
+    // of defaultCache's 10s NetworkOnly (whose own networkTimeoutSeconds only
+    // races the SW's response to the page; it never cancels the underlying
+    // fetch — see AUTH_SESSION_NETWORK_TIMEOUT_MS above). Registered ahead of
+    // `...defaultCache` below, which still owns every other /api/auth/* route
+    // at its (uncancelled) 10s default.
+    {
+      matcher: ({ url }) => url.pathname === "/api/auth/session",
+      handler: {
+        handle: async ({ request }) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), AUTH_SESSION_NETWORK_TIMEOUT_MS);
+          try {
+            return await fetch(request, { signal: controller.signal });
+          } finally {
+            clearTimeout(timer);
+          }
+        },
+      },
     },
     ...defaultCache,
   ],
@@ -167,8 +451,13 @@ self.addEventListener("activate", (event: ExtendableEvent) => {
         names
           .filter(
             (name) =>
-              name.startsWith(READER_HTML_CACHE_PREFIX) &&
-              name !== READER_HTML_CACHE_NAME,
+              (name.startsWith(READER_HTML_CACHE_PREFIX) &&
+                name !== READER_HTML_CACHE_NAME) ||
+              // A TAFSIR_DOWNLOAD_CACHE_VERSION bump must not orphan the old
+              // cache (ADR 0060). Only stale versions are dropped — never the
+              // current one, and this prefix collides with nothing else.
+              (name.startsWith(TAFSIR_DOWNLOAD_CACHE_PREFIX) &&
+                name !== TAFSIR_DOWNLOAD_CACHE_NAME),
           )
           .map((name) => caches.delete(name)),
       );
@@ -193,46 +482,19 @@ self.addEventListener("activate", (event: ExtendableEvent) => {
 // offline document instead (terminal state, not flash-then-corrects).
 serwist.setCatchHandler(async ({ request, url }) => {
   if (request.mode !== "navigate") return Response.error();
-  const locale =
-    FALLBACK_LOCALES.find((l) => url.pathname.startsWith(`/${l}/`)) ??
-    FALLBACK_LOCALES[0];
 
   if (isSelfReaderPage(url)) {
-    const cache = await caches.open(READER_HTML_CACHE_NAME);
-    const fallback = await cache.match(fallbackDocumentUrl(locale));
+    const fallback = await serveReaderFallbackShell(url);
     return fallback ?? Response.error();
   }
 
   // Precached via globPublicPatterns (next.config.mjs), same as launch.html —
   // matchPrecache resolves it regardless of which cache Serwist's own
   // versioning happens to store the precache manifest under.
-  const fallback = await serwist.matchPrecache(offlineFallbackUrl(locale));
-  return fallback ?? Response.error();
-});
-
-// Precache the reader fallback document itself — page 1's real reader-page
-// HTML for both locales — at install time, for every visitor. Independent of
-// the consent-gated bulk download (must work before that has ever run) and
-// tiny next to it, so no standalone/consent gate applies here, unlike the
-// page fonts and bulk JSON PAGES_CACHE_NAME holds. Best-effort: a failure
-// here (installing while offline) just means no fallback exists yet until a
-// later online visit. Lives in READER_HTML_CACHE_NAME, not PAGES_CACHE_NAME
-// (ADR 0014 Addendum 4) — it's reader HTML like any other, so it needs the
-// same per-deploy auto-refresh; the old shared cache location meant this one
-// document was fetched once at first install and never revalidated again,
-// its own smaller instance of the staleness class the rest of this addendum
-// fixes. It shares its cache key with isSelfReaderPage's own CacheFirst rule,
-// so any ordinary online visit to page 1 populates it too — this seed is only
-// for a visitor who is offline before ever reaching page 1 normally.
-self.addEventListener("install", (event: ExtendableEvent) => {
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(READER_HTML_CACHE_NAME);
-      await Promise.all(
-        FALLBACK_LOCALES.map((locale) => ensureCached(cache, fallbackDocumentUrl(locale))),
-      );
-    })(),
+  const fallback = await serwist.matchPrecache(
+    offlineFallbackUrl(fallbackLocale(url)),
   );
+  return fallback ?? Response.error();
 });
 
 // Bulk pre-cache, edition-parameterized (ADR 0014 Addendum 5) — any registered
@@ -320,8 +582,7 @@ async function cachePage(cache: Cache, mushafId: number, id: number) {
  * avoids the 604-page re-walk this replaced (Trello #129).
  */
 async function isCacheComplete(cache: Cache, mushafId: number, knownCount?: number) {
-  if (!(await cache.match(precacheSentinelUrl(mushafId)))) return false;
-  if (!(await cache.match(versePagesUrl(mushafId)))) return false;
+  if (!(await hasCompletionMarkers(cache, mushafId))) return false;
   const cached = knownCount ?? (await countCachedPages(cache, mushafId));
   return cached === getMushafEdition(mushafId).pagesCount;
 }
@@ -410,6 +671,14 @@ async function precacheAllPages(mushafId: number) {
         new Request(precacheSentinelUrl(mushafId)),
         new Response("", { status: 200 }),
       );
+      // A row-2 probe memoized before this run finished is stale-negative —
+      // drop it so the next reader-page cache miss re-probes and activates
+      // the fast fallback path (ADR 0014 Addendum 6). Unconditional since
+      // Addendum 8: any edition can be the active one, so any edition's
+      // completion can be the one that unblocks row 2. The verified guard
+      // goes with it (Addendum 9) — memo and guard must never disagree.
+      precacheCompleteByMushaf.delete(mushafId);
+      verifiedByMushaf.delete(mushafId);
     }
     // Release the run BEFORE the awaited final report: a START arriving while
     // that postMessage was in flight used to be dropped silently, leaving a
@@ -429,8 +698,16 @@ async function reportStatus(mushafId: number) {
   // time, once per mounted hook instance.
   const complete = await isCacheComplete(cache, mushafId, cached);
   // Drop a sentinel the cache can no longer back up, so the next run rewrites it
-  // only once the missing pages are actually refetched.
-  if (!complete) await cache.delete(precacheSentinelUrl(mushafId));
+  // only once the missing pages are actually refetched. The row-2 memo and its
+  // verified guard go with it: an eviction is detected here and in the deferred
+  // row-2 verification (ADR 0014 Addendum 9), and a probe memoized as `true`
+  // beforehand would otherwise keep serving the instant shell for pages this
+  // cache can no longer render (ADR 0014 Addendum 8).
+  if (!complete) {
+    await cache.delete(precacheSentinelUrl(mushafId));
+    precacheCompleteByMushaf.delete(mushafId);
+    verifiedByMushaf.delete(mushafId);
+  }
   const activeRunId = activeRunIdByMushaf.get(mushafId) ?? null;
   await postToClients({
     type: "PRECACHE_STATUS",

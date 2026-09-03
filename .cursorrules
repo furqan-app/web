@@ -1,24 +1,12 @@
 # Cursor Rules for Furqan
 
-> Universal entry point: [`AGENTS.md`](AGENTS.md)
-> All workflow instructions: [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md)
+Read [`AGENTS.md`](AGENTS.md) first — it is the canonical source for all project rules, the
+mandatory plan → implement workflow, architecture-constraint loading, and the graphify
+knowledge-graph rules. Then [`docs/workflow/INDEX.md`](docs/workflow/INDEX.md) for the
+step-by-step workflow docs.
 
-## MANDATORY WORKFLOW
+## Cursor-specific delta
 
-1. **NEVER edit or generate code without an approved plan.**
-   - When a user asks for a feature, refactor, or bugfix, your immediate task is to investigate and plan, NOT to write code.
-   - Follow [`docs/workflow/plan-task.md`](docs/workflow/plan-task.md).
-   - Ask clarifying/adversarial questions **one at a time**.
-   - Create or update the specification file in `docs/plans/<slug>.md`.
-   - Wait for explicit user confirmation before writing or modifying any code.
-
-2. **ALWAYS load active architecture constraints:**
-   - Read `docs/architecture/DECISIONS.md` (and any referenced ADRs).
-   - Read relevant standards in `docs/standards/`.
-
-3. **Branching in Cursor:**
-   - Work on a dedicated git branch inside the repo: `git checkout -b <type>/<issue-number>-<slug>`.
-   - Do not create external worktrees outside the workspace.
-
-4. **Concise Responses:**
-   - Follow `docs/workflow/terse-mode.md` — direct, concise, no conversational fluff.
+- **Branching:** work on a dedicated branch *inside* the repo, not an external worktree:
+  `git fetch origin && git checkout -b <type>/<issue-number>-<slug> origin/main`.
+  (`AGENTS.md` describes `../furqan-<slug>` worktrees — that flow is for Claude Code, not Cursor.)

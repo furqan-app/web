@@ -1,10 +1,18 @@
+---
+title: Design Migration — reader-lab language, app-wide
+type: feature
+date: 2026-08-21
+status: in-progress
+area: theming
+issue: 360
+adr: [0047]
+---
+
 # Design Migration — reader-lab language, app-wide
 
-**Type:** feature
-**Date:** 2026-08-21
-**Status:** complete — all phases landed. Remaining before merge: regenerate `DESIGN.md` via `/impeccable document` (and delete its banner), and regenerate visual baselines via the `workflow_dispatch` CI job.
-**Issue:** https://github.com/furqan-app/web/issues/360
-**ADR:** [0047](../../architecture/adr/0047-adopt-reader-lab-design-language.md)
+**Status:** complete — all phases landed. Remaining before merge: reconcile `DESIGN.md` by hand with the migrated tokens (and delete its banner), and regenerate visual baselines via the `workflow_dispatch` CI job.
+
+> Note (#494, 2026-09-02): the `/impeccable` review gate referenced throughout this programme no longer exists. `DESIGN.md` is hand-maintained (no `/impeccable document`), and design-language alignment is a manual review concern — see `docs/plans/remove-workflow-skills.md`. The phase records below are unchanged.
 
 ## Summary
 
@@ -53,19 +61,19 @@ The uncommitted chrome edits in the main working tree (`Nav.tsx`, `UserMenu.tsx`
 
 | # | Subtask | File | Depends on |
 |---|---|---|---|
-| 0.1 ✅ | Light + gold lab variants | [`0.1-lab-light-gold-variants.md`](0.1-lab-light-gold-variants.md) | prerequisite above |
-| 0.2 ✅ | Page face in the lab | [`0.2-lab-page-face.md`](0.2-lab-page-face.md) | 0.1 |
-| 0.3 ✅ | Small-screen lab composition | [`0.3-lab-small-screen.md`](0.3-lab-small-screen.md) | 0.1 |
-| 0.4 ✅ | Write the design-language spec | [`0.4-design-language-spec.md`](0.4-design-language-spec.md) → [`design-language.md`](../../design/design-language.md) | 0.1, 0.2, 0.3 |
-| 1.1 ✅ | Rewrite the canon | [`1.1-rewrite-design-principles.md`](1.1-rewrite-design-principles.md) | 0.4 |
-| 2.1 ✅ | Semantic tokens | [`2.1-semantic-tokens.md`](2.1-semantic-tokens.md) | 1.1 |
-| 3.1 ✅ | UI primitives | [`3.1-ui-primitives.md`](3.1-ui-primitives.md) | 2.1 |
-| 3.2 ✅ | Shared chrome | [`3.2-shared-chrome.md`](3.2-shared-chrome.md) | 3.1 |
-| 4.1 ✅ | Marks + plans | [`4.1-screens-marks-plans.md`](4.1-screens-marks-plans.md) | 3.2 |
-| 4.2 ✅ | Home | [`4.2-screens-home.md`](4.2-screens-home.md) | 4.1 |
-| 4.3 ✅ | Search + settings | [`4.3-screens-search-settings.md`](4.3-screens-search-settings.md) | 4.1 |
-| 4.4 ✅ | Mushaf hub + shared grant | [`4.4-screens-mushaf-hub.md`](4.4-screens-mushaf-hub.md) | 4.1 |
-| 5.1 ✅ | Page face and reader | [`5.1-page-face-and-reader.md`](5.1-page-face-and-reader.md) | 4.x complete |
+| 0.1 ✅ | Light + gold lab variants | [`0.1-lab-light-gold-variants.md`](../archive/design-migration/0.1-lab-light-gold-variants.md) | prerequisite above |
+| 0.2 ✅ | Page face in the lab | [`0.2-lab-page-face.md`](../archive/design-migration/0.2-lab-page-face.md) | 0.1 |
+| 0.3 ✅ | Small-screen lab composition | [`0.3-lab-small-screen.md`](../archive/design-migration/0.3-lab-small-screen.md) | 0.1 |
+| 0.4 ✅ | Write the design-language spec | [`0.4-design-language-spec.md`](../archive/design-migration/0.4-design-language-spec.md) → [`design-language.md`](../../design/design-language.md) | 0.1, 0.2, 0.3 |
+| 1.1 ✅ | Rewrite the canon | [`1.1-rewrite-design-principles.md`](../archive/design-migration/1.1-rewrite-design-principles.md) | 0.4 |
+| 2.1 ✅ | Semantic tokens | [`2.1-semantic-tokens.md`](../archive/design-migration/2.1-semantic-tokens.md) | 1.1 |
+| 3.1 ✅ | UI primitives | [`3.1-ui-primitives.md`](../archive/design-migration/3.1-ui-primitives.md) | 2.1 |
+| 3.2 ✅ | Shared chrome | [`3.2-shared-chrome.md`](../archive/design-migration/3.2-shared-chrome.md) | 3.1 |
+| 4.1 ✅ | Marks + plans | [`4.1-screens-marks-plans.md`](../archive/design-migration/4.1-screens-marks-plans.md) | 3.2 |
+| 4.2 ✅ | Home | [`4.2-screens-home.md`](../archive/design-migration/4.2-screens-home.md) | 4.1 |
+| 4.3 ✅ | Search + settings | [`4.3-screens-search-settings.md`](../archive/design-migration/4.3-screens-search-settings.md) | 4.1 |
+| 4.4 ✅ | Mushaf hub + shared grant | [`4.4-screens-mushaf-hub.md`](../archive/design-migration/4.4-screens-mushaf-hub.md) | 4.1 |
+| 5.1 ✅ | Page face and reader | [`5.1-page-face-and-reader.md`](../archive/design-migration/5.1-page-face-and-reader.md) | 4.x complete |
 
 Phase 4's four subtasks are independent of each other once 4.1 proves the token layer end-to-end; they can run in parallel.
 

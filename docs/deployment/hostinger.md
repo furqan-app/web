@@ -206,7 +206,7 @@ in-process worker or queue.
 
 ## Ongoing — deploying App DB schema changes
 
-The App DB uses versioned Prisma migrations (ADR 0017). Schema changes follow this
+The App DB uses versioned Prisma migrations ([ADR 0051](../architecture/adr/0051-prisma-migrations-app-db.md)). Schema changes follow this
 workflow:
 
 1. **Edit `prisma/app/schema.prisma`** locally.

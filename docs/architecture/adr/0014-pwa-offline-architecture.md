@@ -227,3 +227,253 @@ route-aware `setCatchHandler` fix shipped alongside it.
 **Consequence.** This narrows, but does not remove, ADR 0023's precache exclusion for the tajweed edition — see that ADR's Addendum 7. The `~99 MB` combined download if a user downloads both editions is accepted (product decision, not re-litigated here); no warning gate is added when a second edition is downloaded.
 
 **What NOT to do:** do not make the two editions share a completion sentinel, dismissed-flag, or `runId`/progress channel — each of those was sized for exactly one downloadable edition and silently cross-reports otherwise. Do not change the first-run gate or install-prompt to offer edition choice — they stay single-edition (the default), per Addendum 2.
+
+## Addendum 6 (2026-08-23): Fast reader-shell fallback on slow networks
+
+**Issue:** [#376](https://github.com/furqan-app/web/issues/376)
+
+**Context.** Addendum 4's `CacheFirst` for reader-page HTML only fast-paths cache *hits*. On a cache
+miss over a slow-but-alive connection, a cold launch to an unvisited page 2–604 stalls on the full SSR
+document fetch — the `setCatchHandler` fallback fires on network *error*, never on slowness. Yet when
+the consent-gated bulk download is complete, every page renders client-side from cached JSON + font;
+the SSR fetch adds nothing but delay.
+
+**Decision.** The reader-page navigation handler becomes a four-row decision tree instead of a bare
+`CacheFirst`: (1) cache hit → serve as before; (2) miss + bulk precache complete → serve the precached
+fallback shell immediately, network untouched, and let ADR 0042's pre-paint `jumpTo` self-correction
+land the requested page; (3) miss otherwise → race the navigation-preloaded fetch against 3s, serving
+the fallback shell if the timer wins while the fetch continues in the background and is still cached
+under its real URL on arrival; (4) no fallback doc at all → today's terminal behavior.
+
+**Trade-off accepted:** row 2 means users with a complete download stop receiving true SSR HTML on
+cold launches to unvisited pages — the shell + client render replaces it. This is deliberate: the
+rendered result is identical (same words, same fonts from the same immutable sources), and paint speed
+is bounded by local I/O rather than the network. Row 3's late-caching converts each fallback-then-fetch
+page into a row-1 hit for subsequent launches.
+
+**What NOT to do:** do not abort the background fetch when the fallback wins row 3 — it is what warms
+the cache. Do not bulk-precache page HTML to avoid the tree entirely (~1.5 GB, rejected since ADR
+0028). Do not drop the `request.mode === "navigate"` matcher guard or the per-deploy auto-versioned
+cache name — both remain load-bearing from Addendum 4.
+
+## Addendum 7 (2026-08-27): The fallback shell becomes a build-time precache entry
+
+**Issue:** [#438](https://github.com/furqan-app/web/issues/438) (epic #375)
+
+**Supersedes:** Addendum 4's "Fallback document reconciliation" paragraph — the shell moves out of
+`READER_HTML_CACHE_NAME` again, this time into Serwist's own precache manifest rather than back into
+`pages-v{N}`. Everything else in Addendum 4 (the per-deploy cache name, the `activate` prefix cleanup,
+the `navigate` matcher guard, the update banner) is untouched.
+
+**Context.** Addendum 4 seeded the two fallback shells (`/ar/pages/1`, `/en/pages/1`) with a custom
+`install` handler calling `ensureCached()`, which swallows failures by design. So install could
+complete having cached neither shell, and `activate` then deleted the previous deploy's
+`reader-html-*` cache unconditionally. The resulting state — new worker active, empty reader-HTML
+cache, previous deploy's cache gone — makes Addendum 6's rows 1 **and** 2 both unreachable: every cold
+launch falls into row 3's 3 s race and then row 4's raw document fetch, and stays there for the whole
+deploy until some online visit to page 1 happens to repopulate the cache. That is the reported
+"downloaded the whole mushaf and it is still slow", and it is sticky rather than one-shot.
+
+**Decision.** Both shells become entries in the build-time precache manifest, appended by a
+`manifestTransforms` entry in `next.config.mjs`; `serveReaderFallbackShell()` and the reader branch of
+`setCatchHandler` resolve them with `serwist.matchPrecache()`, the same way `offline-{ar,en}.html`
+already does. The custom `install` handler is deleted as redundant.
+
+`globPublicPatterns` is deliberately **not** the mechanism, and stays app-shell-only. It is globbed
+inside the `webpack()` config phase, before Next generates any static HTML, so a build step emitting
+the shell into `public/` is always one build stale — and a stale shell carries the previous build's
+`/_next/static/chunks/*` URLs, which 404 after deploy. `additionalPrecacheEntries` is not the mechanism
+either: in `@serwist/next` it *replaces* the public glob rather than extending it, which would silently
+drop `launch.html`, the offline documents and the icons from the precache.
+
+**What this actually buys — atomicity, not "no network".** A precache entry is still fetched at install.
+The difference is that `PrecacheStrategy` refuses a non-cacheable response, so the worker cannot
+activate without its shell, and a failed install leaves the previous worker and all of its caches
+intact instead of tearing them down with nothing to replace them. Serving a hydratable Next document
+with zero install-time network is not reachable at all: the shell must carry the current build's chunk
+URLs, so it cannot be authored by hand or carried over from a previous deploy.
+
+**How a failed precache actually fails** (verified against the installed packages, 2026-08-27 — an
+earlier draft of this addendum said "throws, so the worker is discarded", which is imprecise).
+`PrecacheStrategy._handleInstall` does throw `bad-precaching-response`, but `Serwist.handleInstall`
+drives every entry through `@serwist/utils`' `parallel()`, whose worker lanes are
+`new Promise(async (res) => …)` with no `reject` captured — its own docblock says it "does not handle
+any error". A throw inside a lane therefore leaves that lane permanently unsettled, `Promise.all` never
+settles, and the promise handed to `event.waitUntil` hangs; the worker is discarded by the browser's
+install timeout rather than immediately. The guarantee this addendum rests on is unaffected — `activate`
+still never runs, so nothing is torn down and the previous worker keeps serving — but the shape is
+"stuck installing, then timed out", not "fails fast". This is upstream behavior that already applied to
+`launch.html`, the offline documents and the icons; what these two entries add is a URL served by a
+route that can 5xx, where the others are static files.
+
+Each entry's revision is a hash of the webpack manifest the transform receives, the same input class
+`READER_HTML_CACHE_NAME` already hashes — shell freshness and reader-HTML cache busting therefore move
+together by construction rather than by convention. It inherits that hash's blind spot too: a deploy
+that changes the shell's server-rendered HTML without moving any client asset hash (a server-resolved
+translation edit, say) leaves the revision equal and the stale shell in place until an unrelated deploy
+bumps a webpack asset.
+
+**Consequences**
+
+- **+** Row 2 becomes reliable: with a complete download, a cold launch to an unvisited page paints
+  from local storage with no document fetch on the critical path.
+- **+** A flaky install can no longer strand a device on rows 3/4 for a whole deploy.
+- **−** `PrecacheRoute` is registered ahead of `runtimeCaching`, so navigations to `/{locale}/pages/1`
+  now come from the precache and bypass the four-row tree entirely. Same bytes, no network — accepted.
+  RSC soft-navs to the same path are unaffected: Serwist's precache matcher only strips `utm_*`/`fbclid`
+  from the query, so the `?_rsc=` parameter Next appends prevents a match and those requests still fall
+  through to `defaultCache`'s RSC rule. This is the `request.mode === "navigate"` concern from Addendum
+  4 arriving at a different layer, and it must be re-verified in a production build, not assumed.
+- **−** The worker's update path is now coupled to that route's availability: a 5xx from
+  `/{locale}/pages/1` (its `revalidate = 300` re-render can hit the database) fails the install and
+  blocks the whole service-worker update until a later attempt succeeds — via the hang-then-timeout
+  path described above, so the block lasts as long as the browser's install timeout. Accepted
+  (2026-08-27): install is already atomic for `launch.html` and the icons, the browser retries on every
+  navigation update check, and the failure mode is "stay on the previous deploy", not "break".
+- **−** The shell's revision cannot see server-only content changes (see above). Bounded, not fixed:
+  the route is still `CacheFirst` under a per-deploy cache name for every page *other* than page 1, and
+  page 1's shell is a launch surface the pre-paint `jumpTo` corrects away from within the first frame.
+
+**What NOT to do:** do not widen `globPublicPatterns` to reach the shell, and do not add a post-build
+step that copies built HTML into `public/` — both are the stale-chunk trap above. Do not pass
+`additionalPrecacheEntries` to `withSerwistInit`. Do not keep the `install`-handler seed "as a backstop"
+alongside the precache entry — two shell locations to reason about, and the atomic entry is what the
+guarantee rests on. Do not make `activate` spare a stale `reader-html-*` cache in the hope of reusing
+last deploy's shell; those chunk URLs are gone.
+
+## Addendum 8 (2026-08-27): The instant-shell path follows the reader's active edition
+
+**Issue:** [#439](https://github.com/furqan-app/web/issues/439) (epic #375)
+
+**Amends:** Addendum 6's row 2, superseding its constraint that the probe is "scoped to the default
+edition's sentinel/keys". Rows 1, 3 and 4 are untouched, as are Addendum 7's precache-entry shells.
+
+**Context.** Addendum 5 made bulk downloads per-edition and ADR 0033 made page content per-edition, but
+Addendum 6's completeness probe stayed hardcoded to `DEFAULT_MUSHAF_ID`. A reader who downloaded only
+the Tajweed edition therefore never satisfies row 2: every cold launch to an unvisited page falls into
+row 3's 3 s race despite having every byte needed to render that page already on disk. That 3 s is not a
+second, separable defect — row 2 already serves with no timer, and Addendum 7 made the shell impossible
+to miss on an active worker, so the wasted wait is entirely a consequence of the probe asking about the
+wrong edition.
+
+**The constraint that shapes this.** The service worker cannot reach `QuranMushafContext`: the active
+edition lives in `localStorage`, which a worker cannot read, and the reader URL is deliberately
+edition-agnostic (`/{locale}/pages/{id}` — ADR 0033 makes an edition a client-side choice, not a route).
+The shell is edition-agnostic too, so row 2 is not choosing *what* to serve; it is choosing whether to
+skip the network. Skipping is correct exactly when the client can render the requested page locally,
+which needs the **active** edition's page JSON and font.
+
+**Decision.** The client mirrors its active edition into Cache Storage — a synthetic entry at
+`/__fq-active-mushaf` in a small dedicated `fq-prefs-v{N}` cache, written by `QuranMushafProvider` on
+hydration and on every edition change, the same synthetic-entry idiom as the precache sentinel. The
+worker reads it on the reader-HTML miss path and probes that edition, falling back to
+`DEFAULT_MUSHAF_ID` whenever the marker is absent, unregistered, or unreadable — which is exactly
+today's behavior, so no existing install regresses.
+
+Rejected: **"any complete edition qualifies"** — cheaper (no marker at all), but it lets one edition's
+cached data stand in for another edition's readiness, which is what ADR 0033 exists to forbid.
+Concretely, a reader who downloaded Tajweed and then switched to the default edition would be handed the
+shell and left fetching the default edition's JSON and font over the same slow link the fast path exists
+to avoid. Rejected: **a cookie read off the navigation request** — synchronous and bootstrap-free, but it
+puts a cookie on statically-generated routes sitting behind an edge cache whose key behavior this
+project has already been bitten by (ADR 0035, `fix-rsc-cache-poisoning.md`).
+
+**Cache placement is load-bearing.** The marker cannot live in `pages-v{N}` (a deliberate
+`PAGES_CACHE_VERSION` bump would discard an unrelated preference along with the download that constant
+scopes) nor in `reader-html-{hash}` (deleted on every deploy by `activate`). Its own cache name outlives
+both, and the `activate` cleanup's `reader-html-` prefix filter already leaves it alone.
+
+**Memoization.** The completeness memo becomes per-edition (a `Map` keyed by `mushafId`) and is
+invalidated when *any* edition's run completes, not only the default's. The marker read is deliberately
+**not** memoized: it is one `cache.match` against a single-entry cache, and memoizing it would make a
+mid-session edition switch invisible until the worker restarted. A stale sentinel deleted by
+`reportStatus` also drops that edition's memo, so a cache partially evicted mid-session cannot keep row
+2 falsely instant for the rest of the worker's lifetime.
+
+**Consequences**
+
+- **+** A reader who downloaded any single edition gets the instant path for it, not only a
+  default-edition downloader.
+- **−** An existing Tajweed-only install pays the 3 s race exactly once after upgrading to this build:
+  the marker is written by the provider during that first session, and no client hook runs earlier than
+  it. Accepted (2026-08-27).
+- **−** One more piece of client state the worker depends on. If the provider's write is removed or the
+  storage key changes, row 2 silently reverts to default-edition-only — the same class of silent drift
+  as the `display-mode` gate in Addendum 3, with no error surfaced anywhere.
+
+**What NOT to do:** do not satisfy one edition's instant path from another edition's cached data (ADR
+0033). Do not memoize the marker read. Do not move the marker into `pages-v{N}` or `reader-html-{hash}`.
+Do not lower or remove row 3's 3 s race for the genuine no-download case — real SSR HTML is still worth a
+bounded wait there (Addendum 6). Rows 1, 3 and 4, the `request.mode === "navigate"` guard, and the
+per-deploy auto-versioned cache name all stay.
+
+## Addendum 9 (2026-08-29): Completeness is read at launch, verified off the critical path
+
+**Issue:** [#440](https://github.com/furqan-app/web/issues/440) (epic #375)
+
+**Amends:** the eviction-validation contract from Addendum 2 ("the sentinel is only trusted when a
+`cache.keys()`-derived page count also equals 604"), for the **row-2 launch probe only**. Supersedes
+the letter of the "do not reduce this back to a bare sentinel `match()`" constraint while keeping its
+intent: self-healing from iOS eviction survives, it just no longer runs ahead of the launch's queued
+requests.
+
+**Context.** A service worker has one thread, and at cold launch every queued document, font and
+page-JSON request sits behind whatever the worker is doing. `countCachedPages()` walks
+`cache.keys()` over `pages-v{N}` (~1,208 entries per downloaded edition, ~2,400 with two) running two
+regexes per entry, and the launch path reached it up to three times: once from row 2's completeness
+probe (memoized, but a cold launch is a fresh worker), and twice from `reportStatus` answering the
+`REQUEST_PRECACHE_STATUS` messages that `OfflineSetupGate` and `OfflineInstallPrompt` fire on mount in
+the root layout — even when both surfaces were dismissed long ago and render nothing from the answer.
+The cost is CPU-bound, exists only for users who completed a download (no sentinel = early return, no
+walk), and survives any network-side fix — precisely the fully-downloaded population reporting slow
+launches.
+
+**Decision — worker side.** Row 2's probe becomes a cheap read: sentinel `cache.match` plus
+verse-pages `cache.match`, no `keys()` enumeration. When that reads complete, the real validation —
+the full `countCachedPages` walk — is **deferred**: scheduled via `event.waitUntil` after the shell
+response is served, delayed a few seconds past the launch burst, and run at most once per edition per
+worker lifetime. A short count triggers the same healing actions `reportStatus` performs today:
+delete the stale sentinel and drop that edition's row-2 memo, so the next miss lands in row 3 and the
+next run resumes rather than trusting the ghost.
+
+`isCacheComplete` (sentinel + verse-pages + full count) keeps its exact semantics everywhere else:
+`reportStatus` still walks and heals on every status request, and `precacheAllPages`' start-of-run
+short-circuit still walks — a user tapping Download on an evicted cache must resume the download, not
+be told it is already done by a sentinel the cache can no longer back.
+
+**Decision — client side.** `usePwaPrecache` no longer fires `REQUEST_PRECACHE_STATUS` (on mount or
+on the focus/visibility resync) for a surface that is dismissed and will render nothing from the
+answer. The gate and the install prompt opt into this deferral; the Settings "Mushaf Layout" rows
+keep always-on requests — they display live status regardless of any dismissed flag, and they are the
+resume/heal surface. If `dismissed` ever flips false while mounted, the request fires then. Progress
+messages are broadcast by the worker to all clients, so an in-flight run still updates every mounted
+listener without any instance having requested status.
+
+**The accepted trade-off.** Eviction is invisible without enumeration, so "never report ready on a
+partially-evicted cache" cannot hold on a zero-walk critical path. The window is now: after iOS
+evicts entries, the **first** cold launch still serves the instant shell; the deferred walk corrects
+state seconds later in the same session. Under the old design the eviction was caught on the next
+launch's pre-serve probe — the delta is one shell serve. Worst visible case inside the window: an
+evicted page's JSON/font miss `CacheFirst` and fall through to the network (online: works, slower;
+offline: the existing unavailable-offline notice). Judged strictly better than taxing every launch of
+every healthy fully-downloaded install to catch a rare platform eviction slightly sooner.
+
+**Consequences**
+
+- **+** Cold launch of a fully-downloaded install performs zero `cache.keys()` enumerations before
+  assets are served — row 2 costs two `cache.match` reads.
+- **+** Dismissed launch surfaces stop waking the worker for status nobody renders; `reportStatus`
+  runs only for surfaces actually showing its answer.
+- **−** A partially-evicted cache can serve the instant shell for one launch before healing (see
+  trade-off above). Accepted (2026-08-29, decision delegated by the user).
+- **−** Two completeness code paths now exist (cheap read for row 2, full walk everywhere else);
+  changing one without the other reintroduces either the stall or the false-ready-forever bug.
+
+**What NOT to do:** do not let `precacheAllPages` or `reportStatus` adopt the cheap probe — their
+full walk is now the primary self-healing path and the source of exact `n/604` counts. Do not persist
+the deferred verification's verdict across worker lifetimes ("verified at T") — eviction can happen
+any time; once per worker lifetime is the chosen balance. Do not sample-probe a few random pages as
+"verification" — probabilistic, and misses exactly the partial evictions it exists to catch. Do not
+remove the deferred walk entirely — that is the bare-sentinel reduction Addendum 2 forbade, and it
+makes an evicted cache report ready forever. Do not make the Settings rows defer their status request
+— they are the surface that displays counts and heals stale sentinels on demand.

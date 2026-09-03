@@ -1,8 +1,12 @@
-# Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)
+---
+title: Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)
+type: feature
+date: 2026-08-13
+status: implemented
+area: theming
+---
 
-**Type:** feature
-**Date:** 2026-08-13
-**Status:** implemented
+# Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)
 
 ## Summary
 

@@ -11,7 +11,10 @@ export const DEFAULT_RECITATION_SETTINGS: RecitationSettings = {
 };
 
 export const REPEAT_COUNT_MIN = 1;
-export const REPEAT_COUNT_MAX = 10;
+// Shared ceiling for BOTH repeat steppers (per-ayah + whole-range) and the
+// player-bar cycle button — #393 follow-up (2026-08-26): bar and sheet must
+// agree on one model: 1..5, then ∞.
+export const REPEAT_COUNT_MAX = 5;
 export const PLAYBACK_SPEED_MIN = 0.5;
 export const PLAYBACK_SPEED_MAX = 2;
 export const PLAYBACK_SPEED_STEP = 0.25;

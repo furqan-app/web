@@ -1,8 +1,12 @@
-# Fix Dialog Missing Title/Description A11y Warnings
+---
+title: Fix Dialog Missing Title/Description A11y Warnings
+type: bug
+date: 2026-07-06
+status: implemented
+area: a11y
+---
 
-**Type:** bug  
-**Date:** 2026-07-06  
-**Status:** implemented
+# Fix Dialog Missing Title/Description A11y Warnings
 
 ## Summary
 

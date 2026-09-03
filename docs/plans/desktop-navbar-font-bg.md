@@ -1,9 +1,13 @@
-# Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation
+---
+title: "Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation"
+type: feature
+date: 2026-08-19
+status: implemented
+area: nav
+issue: 337
+---
 
-**Type:** design
-**Date:** 2026-08-19
-**Status:** implemented
-**Issue:** [#337](https://github.com/furqan-app/web/issues/337)
+# Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation
 
 ## Summary
 
@@ -15,32 +19,23 @@ properties for chrome surfaces) is discoverable for future nav work.
 
 ## Changes
 
-### Shared "icon chip" control style (logo + recitation play button)
+### `.fq-icon-chip` control style (recitation play button)
 
-`FurqanLogo.tsx` and `RecitationPlayerBar.tsx`'s play/pause button now share one look: `1px solid
-hsl(var(--primary))` border, `hsl(var(--primary-foreground))` icon color, and a background that must
-read differently per theme to stay legible — solid `--primary` fill on light/gold (a translucent tint
-washed out against their pale background), translucent `hsl(var(--primary) / 23%)` on dark (near-black
-nav gives enough contrast already). Implemented as:
+The recitation play/pause button (`RecitationPlayerBar.tsx`) uses `.fq-icon-chip`: `1px solid hsl(var(--primary))` border, `hsl(var(--primary-foreground))` icon colour, and `--nav-icon-chip-bg` — a per-theme custom property (solid `--primary` fill on light/gold where a translucent tint washes out; translucent `hsl(var(--primary) / 23%)` on dark) declared in `app/globals.css`, mirroring the `--nav-tab-bg` split. No inline `style` props — the first pass hardcoded literal HSL per the user's spec, which baked light/dark's shared `--primary` value in and broke on gold. `FurqanLogo` originally shared this chip; it was later restyled (see below) to a bare 32px green silhouette with no chrome.
 
-- `--nav-icon-chip-bg` custom property, declared per theme in `app/globals.css` (mirrors the
-  pre-existing `--nav-tab-bg` token's same light/gold-solid vs dark-translucent split).
-- `.fq-icon-chip` shared class consuming it, applied to both components' `className` (no more inline
-  `style` props — the first pass used hardcoded literal HSL values per the user's exact spec, which
-  baked in light/dark's shared `--primary` value as a constant and broke on gold theme; fixed by
-  deriving from the CSS variables instead).
+### Surah-selector ornament (CSS drawn, ADR 0031 exception)
 
-### Surah-selector ornament: explicit ADR 0031 exception
+The flanking surah-toggle ornaments are **pure CSS** (`.fq-nav-ornament`): tapering hairline rules with open 45° diamonds, styled emerald green (`--primary`) — adopted from the Reader Lab, replacing the earlier raster `surah-ornament-mask.png` mask. They are anchored **outside** the toggle capsule so the brand framing survives the capsule restyle. Desktop-gated (`@media (min-width: 768px)`) — mobile keeps the compact single-line pill with no ornaments (the 45px raster boxes at `left/right: -30px` overflowed into the mobile icons).
 
-The surah-toggle pill (`Nav.tsx`, `.fq-surah-toggle`) grew ornament flourishes either side on desktop,
-using the mushaf's decorative mask PNG, colored via `--mushaf-ornament` (the same token the reader
-page's own ornament glyphs use). [ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md)
-confines gold to the reader page in dark theme with "no exceptions in chrome," and this pill lives in
-the nav bar (chrome) — flagged in review. A `--nav-ornament` token that resolved to emerald on dark
-(gold unchanged on light/gold) was implemented to comply, then explicitly reverted by the user back to
-gold on all four themes, including dark — a deliberate, user-requested exception to ADR 0031 for this
-one control (recorded in `DECISIONS.md`). Do not reintroduce the emerald-on-dark variant without a new
-request.
+_(Historical: the first pass used the mushaf's decorative mask PNG coloured via `--mushaf-ornament`; flagged in review since ADR 0031 confines gold to the reader page in dark ("no exceptions in chrome") and this is nav chrome. An emerald-on-dark `--nav-ornament` token was built to comply, then reverted to gold on all four themes at the user's request — a deliberate ADR 0031 exception, recorded in DECISIONS.md — before Addendum 2 replaced the whole raster approach with the emerald CSS `.fq-nav-ornament`.)_
+
+### FurqanLogo (32px green silhouette)
+
+`FurqanLogo` renders the logo silhouette in emerald green (`--primary`) via a CSS `mask` on `logo-navbar-white.png`, `size-[32px]`, **no dark medallion background, no gold rim** — `bg-transparent`, sitting on the navbar surface directly.
+
+### Surah toggle capsule (click affordance, #430)
+
+The centered desktop Surah + Juz/Hizb control is a `rounded-full` **translucent capsule** — `bg-[var(--nav-tab-bg)] border border-border/70 shadow-sm`, `group-hover:bg-muted/70 group-hover:border-border`, `active:scale-[0.98]` press feedback, and a `ChevronDown` that rotates 180° (`transition-transform duration-200`) when `open`. It previously rendered `md:bg-transparent md:border-transparent md:shadow-none` and read as a static manuscript header, so users never discovered it opens the Surah & Juz drawer. Centering stays `md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:z-10` (the row has unequal content on either side). `font-surahnames text-[26px]` for Arabic, `text-[17px] font-semibold` Latin; `aria-expanded={open}`, `aria-label`, `fq-focus-ring`.
 
 ### Mobile nav spacing fix
 
@@ -95,11 +90,12 @@ got no replacement, leaving every full-width row with zero hover feedback. Resto
 section wrappers — doesn't carry the accent-foreground green-tint risk the original removal was
 targeting).
 
-### Minor
+### Continue Reading link + group dividers
 
-- `ContinueReadingLink.tsx`: dropped `fq-nav-tab`-style padded-pill background on desktop (now a plain
-  icon control, matching search); `flex-row-reverse` swaps icon/label visual order without touching DOM
-  order (icon still hits screen readers first).
+- `ContinueReadingLink.tsx`: dropped the `fq-nav-tab` padded-pill background on desktop (plain icon control, matching search); `flex-row-reverse` swaps icon/label visual order without touching DOM order. Final icon is `Bookmark` (save icon) at `size-4` with an unweighted `font-normal text-xs` label.
+- Vertical dividers (`h-4 w-px bg-border`) separate logical icon groups on desktop.
+
+### Minor
 - `UserMenu.tsx`: dropped the extra `md:border md:border-border` on top of `navPillClassName`'s own
   `fq-nav-tab` background (redundant double-framing).
 - `SettingsSidebar.tsx`: dropped a stray `hover:bg-accent` on the settings trigger button (same green-
@@ -146,43 +142,17 @@ targeting).
 - Do not add hover-state removals to a shared class (`menuRowClassName`, `navPillClassName`, button
   variants) without checking every consumer gets a replacement — the `menuRowClassName` regression above
   happened exactly this way.
+- Do not go back to a raster ornament mask for the surah toggle — the CSS `.fq-nav-ornament` (emerald, drawn) replaced it (Addendum 2).
+- Do not restore `FurqanLogo`'s dark medallion background or gold rim — it is a bare 32px green silhouette on the navbar surface (Addendum 4).
+- Do not render the desktop surah control `md:bg-transparent` again — it must read as a clickable capsule (#430, Addendum 5).
 
----
+## Revision History
 
-## Addendum 2: Lab-Style Green CSS Ornament & Surah Font (2026-08-22)
+- 2026-08-22 — folded Addendum 2 (Lab-style green CSS ornament & surah font). **Supersedes the raster `surah-ornament-mask.png` mask** — the flanking ornaments are now pure CSS (`.fq-nav-ornament`: tapering hairline rules + open 45° diamonds, emerald `--primary`); `font-surahnames` for the Arabic surah name; the boxed pill background dropped for an unboxed centered group.
+- 2026-08-22 — folded Addendum 3: Continue Reading uses the `Bookmark` icon at `size-4` / `font-normal text-xs`; `h-4 w-px bg-border` vertical dividers between icon groups; medallion inner image `size-[24px]` (before Addendum 4 removed the medallion).
+- 2026-08-22 — folded Addendum 4 (green 32px logo). **Supersedes `FurqanLogo`'s `.fq-icon-chip` / medallion treatment** — the logo is now an emerald silhouette via CSS `mask` on `logo-navbar-white.png`, `size-[32px]`, `bg-transparent`, no dark medallion, no gold rim.
+- 2026-08-26 — folded Addendum 5 (translucent capsule surah toggler, #430). **Supersedes the `md:bg-transparent md:border-transparent md:shadow-none` unboxed group** — the centered Surah + Juz/Hizb control is a `rounded-full` translucent capsule (`--nav-tab-bg` bg, hairline border, `group-hover:bg-muted/70`, `active:scale-[0.98]`, animated chevron) so it reads as a clickable drawer toggle. The flanking `.fq-nav-ornament` stays anchored outside it.
 
-**Status:** implemented
-
-### Summary
-Adopt the Reader Lab's pure-CSS drawn manuscript ornaments and layout for the navbar surah toggle button:
-1. Replace raster `surah-ornament-mask.png` with drawn CSS ornaments (`.fq-nav-ornament`): tapering hairline rules with open 45° diamonds styled in emerald green (`--primary`).
-2. Use `font-surahnames` (`sura_names.ttf`, zero-padded 3-digit surah code) for the surah name in Arabic/RTL.
-3. Retain the toggle arrow (`ChevronDown` / `ChevronUp`) to signal menu expansion.
-4. Remove the boxed pill background on desktop in favor of an unboxed, centered group on the navbar surface.
-
----
-
-## Addendum 3: Continue Reading Icon/Weight, Group Dividers, and Logo Size (2026-08-22)
-
-**Status:** implemented
-
-### Summary
-Refine navbar elements to match user visual feedback:
-1. Continue Reading link uses `Bookmark` save icon at `size-4`, with unweighted `font-normal text-xs` label.
-2. Vertical dividers (`h-4 w-px bg-border`) separate logical icon groups on desktop.
-3. Medallion logo inner image increased to `size-[24px]` for crisp visibility.
-
----
-
-## Addendum 4: Green 32px Logo with Navbar Background (2026-08-22)
-
-**Status:** implemented
-
-### Summary
-Restyle the `FurqanLogo` component:
-1. Render the logo silhouette in emerald green (`--primary`) via CSS mask on `logo-navbar-white.png`.
-2. Increase logo mark to 32px size (`size-[32px]`) for clear visibility.
-3. Remove the dark medallion background and gold rim, setting the background to match the navbar (`bg-transparent`).
 
 
 

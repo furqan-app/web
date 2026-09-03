@@ -1,326 +1,90 @@
+---
+title: Fix Tajweed Mushaf Font Size to Match Regular Mushaf
+type: bug
+date: 2026-07-14
+status: implemented
+area: rendering
+---
+
 # Fix Tajweed Mushaf Font Size to Match Regular Mushaf
 
-**Type:** bug  
-**Date:** 2026-07-14  
-**Status:** implemented (Addendum 5)
+> The desktop `FONT_V1` / `lineGapRatio` scale model this plan tuned was later replaced wholesale by ADR 0054's per-band size contracts (`reader-line-rhythm.md`). The **tajweed-specific** CSS overrides below (the `0.85` glyph-density factor, the gap compensation, the mobile `0.88` scale) are the enduring part of this plan; the regular-mushaf `lineGapRatio` change and the CSS-variable simplification are historical (see Revision History).
 
 ## Summary
 
-At font scale = 1, the tajweed mushaf page looks noticeably smaller than the regular mushaf page. The existing `--fq-tajweed-scale: 0.7` correction (from tajweed-mushaf-mode.md Addendum 1) only scales `font-size` — it does not scale `--fq-line-gap` or `--fq-heading-h`. The result: 70%-sized text sitting in 100%-sized spacing, which makes the full page look smaller overall.
+The tajweed (COLRv1 colour-glyph) mushaf page rendered visibly smaller and, in early attempts, narrower than the regular page at the same setting. The final fix is **CSS-only**, scoped to `.fq-quran-safha.fq-tajweed` / `.fq-content:has(.fq-tajweed)`:
+
+- **Desktop:** `font-size = base × 0.85` (glyph-density match — COLRv1 glyphs are ~2.56× their CSS em-box vs the regular font's ~1.92×, and 0.85 ≈ 1.92 / 2.56), with the inter-line gap **compensated up** so the 15 line boxes + 14 gaps sum to the same page height as regular. No explicit width — the card sizes to its widest COLRv1 line.
+- **Mobile:** `font-size = var(--fq-mobile-font) × 0.88` (COLRv1 lines have no kashida justification, so a line wider than ~14.7× font-size overflows at the regular size) + `padding-block-start: 1em` (COLRv1 glyphs extend ~1.56× past their line box and the first line's ink otherwise laps into the header band). No gap compensation — mobile distributes lines with `space-between` (`--fq-line-gap: 0px`), so flexbox redistributes freed vertical space automatically.
 
 ## Root Cause
 
-The three layout values that determine page fill are:
-
-| Value | Set where | Tajweed today | Expected |
-|---|---|---|---|
-| `font-size` | CSS `.fq-quran-safha.fq-tajweed` | `base × 0.7` | `base × s` |
-| `--fq-line-gap` | inline style on `.fq-content` | `base × 0.417` (unchanged) | `base × 0.417 × s` |
-| `--fq-heading-h` | inline style on `.fq-content` | `base × 2.417` (unchanged) | `base × 2.417 × s` |
-
-All three must scale by the same factor `s` to preserve page-fill proportions. Today only `font-size` is corrected.
-
-## Approach
-
-Goal: **page-fill match** — the tajweed mushaf page fills the same container space as regular at the same font scale setting. Start with `s = 1.0` (no correction) and calibrate downward if COLRv1 glyphs visually overflow or look too large.
-
-Scale `--fq-line-gap` and `--fq-heading-h` together with `font-size` using CSS `:has(.fq-tajweed)` scoped overrides on `.fq-content`. Keep `--fq-tajweed-scale` as the single knob.
+The regular mushaf's fill depends on three values scaling together — `font-size`, `--fq-line-gap`, `--fq-heading-h`. The original `--fq-tajweed-scale: 0.7` correction only scaled `font-size`, leaving 70%-sized text in 100%-sized spacing. Scaling all three by one factor `s` was then tried (`s = 0.77`, mathematically derived) and **rejected** — any `font-size` reduction shrinks the card, because the card is `md:w-auto` and COLRv1 lines don't stretch full-width, so shorter lines → narrower card. The final approach keeps `font-size × 0.85` (for visual glyph parity, not fill) and compensates the *gap* instead.
 
 ## Decision Tree
 
 ```
-tajweedMode = false → use regular rules unchanged
-tajweedMode = true  → apply --fq-tajweed-scale to font-size, --fq-line-gap, --fq-heading-h
-
-font-size rules (already exist, unchanged pattern):
-  Mobile:           font-size = --fq-mobile-font × s
-  Desktop single:   font-size = --fq-word-base × s
-  Desktop double:   font-size = min(--fq-word-base, --fq-dv-word) × s
-
-NEW — gap/heading rules (missing today):
-  Mobile:           --fq-heading-h = --fq-mobile-font × 2.4 × s  (--fq-line-gap stays 0px)
-  Desktop single:   --fq-line-gap  = --fq-line-gap-base × s
-                    --fq-heading-h = --fq-heading-base × s
-  Desktop double:   --fq-line-gap  = min(--fq-line-gap-base, --fq-dv-word × 0.417) × s
-                    --fq-heading-h = min(--fq-heading-base, --fq-dv-word × 2.417) × s
+tajweedMode = false → regular rules unchanged
+tajweedMode = true →
+  Desktop single:  font-size = var(--fq-word-base) × 0.85
+                   --fq-line-gap (on .fq-content:has(.fq-tajweed)) = var(--fq-word-base) × 0.5607
+  Desktop double:  font-size = min(var(--fq-word-base), var(--fq-dv-word)) × 0.85
+                   --fq-line-gap = min(word-base × 0.5607, dv-word × 0.5777)   (0.5777 compensates
+                     double-view's 0.417 base-gap ratio vs single-view's 0.40)
+  Mobile:          font-size = var(--fq-mobile-font) × 0.88
+                   padding-block-start: 1em on .fq-quran-safha.fq-tajweed
+                   (no gap/heading override — mobile uses space-between)
+  width:           no override anywhere — card sizes to content
 ```
+
+Gap-compensation derivation (single-view): `15·fs + 14·(0.40·fs) = 20.6·fs` (regular); `15·(0.85·fs) + 14·new_gap = 20.6·fs` → `new_gap = (20.6 − 12.75) / 14 = 0.5607·fs` (~35% larger than the regular gap).
 
 ## Calibration
 
-Calibrated via browser testing against page 10 (15 full lines, no surah start):
-
-- `s=1.0` → glyphs overflow badly (COLRv1 line-height box is ~1.42× regular, as expected)
-- `s=0.82` → still slightly overflowing / cramped
-- `s=0.75` → good, small gap at bottom
-- `s=0.77` → fills identically to regular ✓
-
-Mathematical derivation: `(15 + 14 × 0.417) / (1.42 × 15 + 14 × 0.417) = 20.838 / 27.138 ≈ 0.768`, rounded to `0.77`.
-
-**Calibrated value: `--fq-tajweed-scale: 0.77`**
-
-Note: individual tajweed lines are centered and do not stretch edge-to-edge (COLRv1 has no AAT kashida tables). This width difference is inherent to the font design and cannot be fixed with scaling.
+- Mobile `0.88`: effective divisor ≈ 16.7, font ≈ 21.9px on a 390px phone; median tajweed lines fill ~93% of card width, rare wider lines clip invisibly via `overflow-hidden`. **Deliberately not calibrated to the worst-case line-width ratio (22.73)** — that would leave typical lines at ~70% width, which looks worse than the rare clip.
+- Desktop `0.85`: `regular_glyph_visual_ratio / tajweed_glyph_visual_ratio = 1.92 / 2.56`.
+- A forced `width: 14.7 × font-size` on the tajweed card was tried and rejected — 14.7 is the theoretical worst case, most pages' lines are narrower, so it made the tajweed container *wider* than the regular card and centred lines away from the edges.
 
 ## Files to Change
 
-- `app/globals.css` — add `.fq-content:has(.fq-tajweed)` scoped overrides for `--fq-line-gap` and `--fq-heading-h` in each breakpoint block; change `--fq-tajweed-scale` from `0.7` to calibrated value.
+- `app/globals.css`:
+  - `@media (min-width: 768px)`: `font-size: calc(var(--fq-word-base) * 0.85)` on `.fq-quran-safha.fq-tajweed` (single) and `calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.85)` (double) — no width override; `.fq-content:has(.fq-tajweed) { --fq-line-gap: calc(var(--fq-word-base) * 0.5607); }`; the double-view block gets `:root[data-safha-view="double"] .fq-spread .fq-content:has(.fq-tajweed) { --fq-line-gap: min(calc(var(--fq-word-base) * 0.5607), calc(var(--fq-dv-word) * 0.5777)) !important; }`.
+  - `@media (max-width: 767px)`: `.fq-quran-safha.fq-tajweed { font-size: calc(var(--fq-mobile-font) * 0.88); padding-block-start: 1em; }`.
+  - Remove the dead `line-height: 1` rule on `.fq-tajweed > .fq-safha-row` and the stale "do not scale tajweed font-size" comment.
 
-No JS changes needed: the inline style values on `.fq-content` are the `*-base` source; CSS overrides those for the tajweed case.
+No JS changes; no `font.ts` changes for the tajweed sizing.
 
 ## Constraints
 
-- All constraints from `tajweed-mushaf-mode.md` remain in force (no new ADR needed).
-- Do not modify `FONT_V1`, the `getLineGapVh` / `getHeadingBlockVh` formulas, or the inline style computation in `QuranSafha.tsx`.
-- The `--fq-tajweed-scale` CSS variable stays as the single calibration knob — do not hardcode the scale inline.
+- Do not modify `FONT_V1` / the inline-style computation in `QuranSafha.tsx` / any mobile `--fq-line-gap: 0px` rule for the tajweed sizing.
+- `--fq-tajweed-scale` / per-`.fq-tajweed` overrides are CSS-only — never hardcode a scale inline or add a JS-side tajweed calculation.
+- No explicit `width` on `.fq-quran-safha.fq-tajweed`, `.fq-content`, or the card wrapper — the card sizes to its widest COLRv1 line.
+- Do not change `align-items: center` on `.fq-spread .fq-quran-safha`, or the mobile 28px cap logic (`0.88` applies to the already-capped `var(--fq-mobile-font)`).
+- Do not touch the `font-palette` / `@font-palette-values` rules — unrelated.
+- Do not calibrate the mobile scale to the worst-case line-width ratio (22.73).
+- `:has()` requires Chrome 105+ / Safari 15.4+ / Firefox 121+ — acceptable for this app's user base.
+- All constraints from `tajweed-mushaf-mode.md` remain in force.
 
 ## What NOT to Do
 
-- Do not only scale `font-size` without scaling `--fq-line-gap` and `--fq-heading-h` — that is the original broken state.
-- Do not use any font-size scaling override (s < 1.0) — any scale reduction shrinks the card width because the card is `md:w-auto` and COLRv1 has no kashida justification (lines don't stretch full-width, so shorter lines → narrower card).
-- Do not set `line-height: 1` on `.fq-tajweed > .fq-safha-row` — the COLRv1 font's natural CSS line-height already resolves to exactly 1.0× font-size (confirmed by browser measurement); the rule is a no-op.
-- Do not introduce a separate `FONT_V2` constant or JS calculation for tajweed — no correction is needed.
-- Do not modify the mobile `--fq-line-gap: 0px` rule — mobile uses `space-between` for line distribution, not gap.
-
-## Addendum 1 — Revised approach (2026-07-14)
-
-The scale-based approach (s=0.77) was implemented but found to shrink the card width because:
-1. `md:w-auto` makes the card size to content width
-2. COLRv1 has no kashida justification → lines are their natural (shorter) width
-3. Any font-size reduction makes those lines proportionally shorter → card narrows
-
-**Final approach**: Remove all font-size overrides for `.fq-tajweed`. The COLRv1 font's CSS line boxes resolve to exactly 1.0× font-size (natural, same as the base font) — confirmed via browser measurement (`line-height: normal` produces the same row height as `line-height: 1`). The page fills identically to regular. Visual glyph overlap between adjacent lines is larger than regular (COLRv1 glyph bounding box ≈ 2.56× font-size vs regular ≈ 1.92×), but this is inherent to the font design and consistent with print tajweed mushaf typography.
-
-**Files changed**: `app/globals.css` — removed the `.fq-tajweed`-scoped `font-size` overrides (mobile, desktop single, desktop double-view) and the dead `line-height: 1` rule; added `font-size: calc(var(--fq-word-base) * 0.85)` for desktop single-view and `font-size: calc(min(var(--fq-word-base), var(--fq-dv-word)) * 0.85)` for desktop double-view. Scale 0.85 ≈ regular_glyph_visual_ratio / tajweed_glyph_visual_ratio = 1.92 / 2.56, matching glyph density across both fonts. Mobile tajweed font-size is unchanged (left for a separate pass).
-
----
-
-## Addendum 2 — Desktop regular mushaf: line gap increase + UI cleanup (2026-07-18)
-
-### Context
-
-Scope is **desktop only, regular mushaf (non-tajweed), font scales 1–3**. Mobile is deferred. Tajweed mode spacing is a separate future pass.
-
-### Goals
-
-1. **CSS variable simplification** — `--fq-line-gap` and `--fq-heading-h` are set in JS to the same values as `--fq-line-gap-base` / `--fq-heading-base`. Remove the redundant pair from the JS inline style and derive them via CSS instead, keeping the `-base` variants as the stable references for the double-view `min()` expressions.
-
-2. **Bigger line gap on desktop** — at scale 1 lines are visually too close. Increase `lineGapRatio` in `FONT_V1` from `0.38` to a calibrated value (start at `0.45`, adjust up/down until scales 1–3 fit without scroll at 768px+ viewport). The ratio applies proportionally to all scales, so the budget must be verified at scale 3 / 768px (the tightest combination).
-
-3. **Remove toggle and play buttons from reader** — `QuranSafhaViewToggle` and `RecitationPlayButton` are rendered in a `hidden md:flex` row above the spread in `ReaderPage.tsx`. Removing them frees ~44px of vertical space in the flex column, which is the primary reason scales 2–3 currently push past the viewport edge. The toggle **behavior** (localStorage, CSS gate, double-page display) is unchanged — only the button is removed from this location; it will be placed elsewhere in a future task.
-
-### Why removing the button row unlocks more line gap
-
-`ReaderPage` uses a vertical flex column (`flex flex-col justify-center`) whose children are the button row and the spread. Both are centered together. At scale 3 / 800px, the combined block (button row 44px + spread card ~700px) is at the viewport limit — the card alone would have room for a bigger gap, but the button row consumes that slack. Removing it gives the card the full viewport budget.
-
-### Decision Tree
-
-```
-JS inline style on .fq-content (QuranSafha.tsx + test-tajweed/page.tsx):
-  BEFORE: 5 vars — --fq-word-base, --fq-line-gap, --fq-heading-h, --fq-line-gap-base, --fq-heading-base
-  AFTER:  3 vars — --fq-word-base, --fq-line-gap-base, --fq-heading-base
-
-CSS globals.css — new default rule (single-page desktop and standalone):
-  .fq-content {
-    --fq-line-gap: var(--fq-line-gap-base);
-    --fq-heading-h: var(--fq-heading-base);
-  }
-
-Existing overrides are unchanged and still win:
-  mobile:      --fq-line-gap: 0px !important
-               --fq-heading-h: calc(var(--fq-mobile-font) * 2.4) !important
-  double-view: --fq-line-gap: min(var(--fq-line-gap-base), ...) !important
-               --fq-heading-h: min(var(--fq-heading-base), ...) !important
-```
-
-### Calibration target
-
-At scale 3, 768px viewport (tightest case):
-
-```
-card_height = overhead + 15 × font_size + 14 × gap
-
-overhead (desktop only — padding-block: 0.5em on .fq-quran-safha is a mobile-only rule and
-does NOT apply at 768px+; double-view also does not apply here):
-  = px-7×2 (56px, .fq-content horizontal padding contributes 0 vertical)
-    + py-5×2 (40px, .fq-content vertical padding)
-    + header band height (~32px)
-    + footer band height (~32px)
-    + 2 × gap (one gap between header and line 1, one between line 15 and footer,
-               via the flex gap on .fq-spread .fq-quran-safha)
-  = 120 + 2 × gap
-
-font_size   = max(24px, 3.5vh) = 26.88px at 768px
-gap         = lineGapRatio × 26.88px
-
-card_height = 120 + 2×gap + 15×26.88 + 14×gap
-            = 120 + 403.2 + 16×gap
-            = 523.2 + 16×gap
-
-Usable viewport = 768px − 56px (nav) = 712px
-Max gap = (712 − 523.2) / 16 = 11.8px
-Max ratio = 11.8 / 26.88 ≈ 0.439
-```
-
-**Note:** an earlier draft of this calculation incorrectly included `padding-block: 0.5em` on `.fq-quran-safha` as desktop overhead — that rule is scoped to `@media (max-width: 767px)` and does not apply on desktop. The real ceiling is ~0.44, not 0.41.
-
-**Calibrated starting value: `lineGapRatio = 0.40`** — gives a visible increase from 0.38 while leaving ~4px of margin against the 768px constraint. Adjust up toward 0.43 or down to 0.39 after visual browser test. Verify actual header/footer band heights in DevTools before finalizing, as the 32px estimate is approximate.
-
-### Files to Change
-
-- `app/constants/font.ts` — change `lineGapRatio` from `0.38` to calibrated value (~`0.40`).
-- `app/globals.css` — add `.fq-content { --fq-line-gap: var(--fq-line-gap-base); --fq-heading-h: var(--fq-heading-base); }` as a new rule in `@layer base` (place it before the mobile and double-view overrides so `!important` still wins). No other globals.css changes for this addendum.
-- `app/components/QuranSafha.tsx` — remove `--fq-line-gap` and `--fq-heading-h` from the `.fq-content` inline style (lines 279–280). Keep `--fq-word-base`, `--fq-line-gap-base`, `--fq-heading-base`.
-- `app/[locale]/test-tajweed/page.tsx` — same inline style simplification (lines 68–73): remove `--fq-line-gap` and `--fq-heading-h`, keep the 3 remaining vars.
-- `app/components/reader/ReaderPage.tsx` — remove the `hidden md:flex items-center gap-2` div (lines 119–122) containing `QuranSafhaViewToggle` and `RecitationPlayButton`. Also remove the `gap-2` from the outer wrapper div (line 118) since there is no longer a second sibling above the spread.
-
-### Constraints
-
-- Do not touch mobile CSS — the `--fq-line-gap: 0px !important` and `space-between` rules are load-bearing for mobile layout and are out of scope here.
-- Do not remove the toggle **behavior** (QuranSafhaViewContext, localStorage, CSS double-view gate) — only the button element is removed from ReaderPage.
-- **Do not merge this addendum to production independently.** `QuranSafhaViewToggle` and `RecitationPlayButton` currently exist only in the removed row — deleting it without a replacement location is a production feature regression. This addendum must ship in the same release as the PR that places the toggle in its new location.
-- Do not change `minFontSizePx` — the readability floor is unchanged.
-- Increasing `lineGapRatio` also slightly increases `getHeadingBlockVh` (heading height = 2 × fontSize + lineGap). At 0.40 the delta is small (~0.5px per scale); verify surah-start pages still look correct after the change.
-- The `.fq-content { --fq-line-gap: var(--fq-line-gap-base) }` rule must appear **before** the `@media (max-width: 767px)` and double-view blocks in globals.css so `!important` overrides win.
-
-### What NOT to Do
-
-- Do not remove `--fq-line-gap-base` or `--fq-heading-base` from JS — they are the stable references needed by the double-view `min()` expressions to avoid a circular CSS variable.
-- Do not increase `lineGapRatio` above `0.416` without verifying scale 3 at 768px does not scroll.
-- Do not add `gap-2` or any spacing between the outer flex column children after removing the button row — the spread should center alone with no sibling gap.
-- After the CSS variable simplification, `--fq-line-gap` depends entirely on `--fq-line-gap-base` being injected by JS. If `--fq-line-gap-base` is absent (SSR edge case, test harness without the inline style), `--fq-line-gap` silently resolves to 0 and lines pack flush. This is a known, accepted trade-off of the simplification. If a rendering context is added in the future that does not go through `QuranSafha`'s inline style, it must set `--fq-line-gap-base` explicitly.
-
-### Deferred / Future Notes
-
-- **Mobile gap**: `lineGapRatio` change has no effect on the mobile line gap (`0px !important` wins), but it does shift `--fq-heading-h` (surah heading block height) on mobile. Revisit mobile spacing as a separate task.
-- **Tajweed line gap on desktop**: COLRv1 glyphs extend ~2.56× beyond their CSS line boxes and visually overlap the gap even when it is technically present. A tajweed-specific gap increase (larger `--fq-line-gap` override under `.fq-tajweed`) is a separate calibration pass.
-- **Scales 4–10**: left at "may scroll" per original design intent (ADR 0004). Only 1–3 are in scope for this addendum.
-- **Toggle button new location**: resolved in Addendum 3 — moved to `SettingsSidebar`.
-
----
-
-## Addendum 3 — Move view toggle to Settings sidebar (2026-07-18)
-
-`QuranSafhaViewToggle` was removed from `ReaderPage` in Addendum 2 with no replacement, creating a temporary feature regression. This addendum adds it to `SettingsSidebar` as a desktop-only (`hidden lg:block`) section.
-
-**Why `lg:` not `md:`:** double-page view is CSS-gated at `@media (min-width: 1024px)` — below `lg`, switching to double-page has no visible effect, so showing the control below that breakpoint would be confusing.
-
-**File changed:** `app/components/SettingsSidebar.tsx` — import `QuranSafhaViewToggle`, add a new `hidden lg:block` section following the existing section pattern (h3 heading + `bg-muted` card). Section label: `t("pageView", "Page View")`. Placed after the font-size section and before Appearance.
-
----
-
-## Addendum 4 — Tajweed page matches regular page dimensions (2026-07-18)
-
-### Context
-
-Scope: **desktop only (single-page and double-page), font scale 1** (will apply to all scales since the formula is scale-independent). Mobile is deferred.
-
-When switching between regular and tajweed mode, the tajweed page is visibly shorter and narrower than the regular page. The user confirmed via side-by-side screenshots (same page, same viewport) that there is white space below the tajweed text block that doesn't exist on the regular page.
-
-### Root cause
-
-Addendum 1 introduced `font-size: calc(var(--fq-word-base) * 0.85)` for tajweed to match "glyph density." This 0.85 factor:
-1. Shrinks each line box (1.0× font-size for both fonts → smaller font-size = shorter line boxes)
-2. Total page height = 15 × font-size + 14 × gap + overhead → shorter
-3. Line width scales with font-size → narrower lines → narrower card (`md:w-auto`)
-
-The gap CSS value (`--fq-line-gap`) is shared and unchanged, but the overall page is visibly smaller because the 15 line boxes are each 13% shorter.
-
-### Approach
-
-Three CSS-only changes to make both mushaf modes produce identical page dimensions while keeping visual glyph size matched:
-
-**1. Keep font-size × 0.85** for tajweed (matches visual glyph size — COLRv1 glyphs are ~2.56× the CSS em-box vs regular's ~1.92×, so 0.85 ≈ 1.92/2.56).
-
-**2. Compensate the line gap** so total page height is identical despite the smaller font-size. The 0.85 factor shortens each of the 15 line boxes by 13%, freeing vertical space that is redistributed into the 14 inter-line gaps:
-
-```
-Regular:  15 × fs + 14 × (0.40 × fs) = 20.6 × fs
-Tajweed:  15 × (0.85 × fs) + 14 × new_gap = 20.6 × fs
-          → new_gap = (20.6 - 12.75) / 14 = 0.5607 × fs
-```
-
-The tajweed gap (0.5607 × regular fs) is ~35% larger than the regular gap (0.40 × fs). Applied via `.fq-content:has(.fq-tajweed)` overriding `--fq-line-gap`.
-
-**3. No explicit width** — the card sizes naturally to the widest COLRv1 line. A forced `width: 14.7 * font-size` was tried and rejected: 14.7 is the theoretical worst-case ratio, but most pages' actual lines are narrower, making the tajweed container wider than the regular card and centering lines away from the edges.
-
-### Decision Tree
-
-```
-tajweedMode = false → regular rules unchanged
-tajweedMode = true  →
-  font-size:
-    Desktop single:  var(--fq-word-base) × 0.85
-    Desktop double:  min(var(--fq-word-base), var(--fq-dv-word)) × 0.85
-  width: no override (card sizes to content naturally)
-  gap on .fq-content:has(.fq-tajweed):
-    Desktop single:  var(--fq-word-base) × 0.5607
-    Desktop double:  min(word-base × 0.5607, dv-word × 0.5777)
-```
-
-### Files to Change
-
-- `app/globals.css`:
-  - **Keep** `font-size: calc(var(--fq-word-base) * 0.85)` on `.fq-quran-safha.fq-tajweed` in the `@media (min-width: 768px)` block (no width override)
-  - **Add** `.fq-content:has(.fq-tajweed) { --fq-line-gap: calc(var(--fq-word-base) * 0.5607); }` in the same block
-  - **Keep** `font-size: calc(min(...) * 0.85)` on the double-view tajweed rule (no width override)
-  - **Add** `:root[data-safha-view="double"] .fq-spread .fq-content:has(.fq-tajweed) { --fq-line-gap: min(calc(var(--fq-word-base) * 0.5607), calc(var(--fq-dv-word) * 0.5777)) !important; }` in the double-view block (0.5777 compensates for double-view's 0.417 base gap ratio vs single-view's 0.40)
-  - **Update** the "Tajweed font size" comment block to explain the new approach
-
-No JS changes needed. No font.ts changes.
-
-### Constraints
-
-- Do not modify `FONT_V1`, the inline style computation in `QuranSafha.tsx`, or any mobile CSS.
-- No explicit width on `.fq-quran-safha.fq-tajweed` — the card sizes to its widest COLRv1 line naturally. A forced `width: 14.7 * font-size` was tried and rejected (14.7 is the worst-case ratio; most pages' actual lines are narrower, making the tajweed container wider than the regular card and centering lines away from the edges).
-- The `font-palette` rules are unrelated and must not be touched.
-- The `:has()` selector requires Chrome 105+, Safari 15.4+, Firefox 121+. Acceptable for this app's user base.
-
-### What NOT to Do
-
-- Do not remove the 0.85 font-size scaling — it is load-bearing for visual glyph size matching.
-- Do not add a JS-side tajweed calculation — this is CSS-only.
-- Do not set an explicit width on `.fq-quran-safha.fq-tajweed`, `.fq-content`, or the card wrapper — card must size to content naturally.
-- Do not change the `align-items: center` on `.fq-spread .fq-quran-safha`.
-
----
-
-## Addendum 5 — Mobile tajweed font-size overflow fix (2026-07-19)
-
-### Context
-
-Scope: **mobile only (below 768px)**. Desktop tajweed sizing (Addendum 4) is done and working.
-
-On mobile, the tajweed mushaf overflows horizontally — lines extend past the card edges. The regular mushaf fits perfectly.
-
-### Root cause
-
-`--fq-mobile-font` is `min(calc((100vw - 24px) / 14.7), 28px)`. The 14.7 divisor is calibrated for the regular font's worst-case line-width/font-size ratio (14.42, ADR 0011). The COLRv1 tajweed font has no kashida justification, so its line-width ratios range from 5.8–22.73× (median ~16.08, worst case at page 123 line 8). Any tajweed line wider than ~14.7× font-size overflows the container at the regular font-size.
-
-Desktop's 0.85 scale factor (Addendum 4) was for visual glyph size matching, not width — at 0.85× on mobile, a worst-case tajweed line still overflows by ~31%.
-
-### Approach
-
-Add a tajweed-specific mobile font-size override that scales `--fq-mobile-font` down enough for most lines to fit: `.fq-quran-safha.fq-tajweed { font-size: calc(var(--fq-mobile-font) * <scale>); }` in the `@media (max-width: 767px)` block.
-
-The scale = `14.7 / <tajweed-target-divisor>`. Per DECISIONS.md's existing guidance, we do NOT calibrate to the worst case (22.73) — that would leave typical lines filling only ~70% of width. Instead, target a divisor covering most lines; the card's `overflow-hidden` + `flex-wrap: nowrap` handles any rare outlier clipping invisibly.
-
-Starting calibration value: ~0.78. **Calibrated value: 0.88** (effective divisor ≈ 16.7, font ≈ 21.9px on a 390px phone). At 0.88, median tajweed lines fill ~93% of card width; rare wider lines clip invisibly via `overflow-hidden`.
-
-No gap or heading compensation needed — mobile uses `space-between` for line distribution (`--fq-line-gap: 0px !important`), so flexbox automatically redistributes vertical space when lines are shorter. However, `padding-block-start: 1em` is added to `.fq-quran-safha.fq-tajweed` to compensate for COLRv1 glyphs extending ~1.56× beyond their CSS line box — without it, the first line's visual glyphs overlap into the header band area.
-
-### Files to Change
-
-- `app/globals.css` — add `.fq-quran-safha.fq-tajweed { font-size: calc(var(--fq-mobile-font) * 0.88); padding-block-start: 1em; }` inside the `@media (max-width: 767px)` block, after the existing `.fq-quran-safha` rule. Remove the stale comment that said "Tajweed font-size stays at the same value as regular — do not scale it."
-
-### Constraints
-
-- Do not touch `--fq-line-gap: 0px !important` — mobile line distribution is via `space-between`, not gap.
-- Do not touch `--fq-heading-h` — the surah heading block participates in `space-between` and will redistribute naturally.
-- Do not change `--fq-mobile-font` itself — it is the shared base; the tajweed override is scoped to `.fq-quran-safha.fq-tajweed` only.
-- Do not calibrate to the worst-case line-width ratio (22.73) — typical lines would fill only ~70% of width, which looks worse than the rare clip it prevents.
-
-### What NOT to Do
-
-- Do not modify `FONT_V1`, `QuranSafha.tsx`, or any desktop CSS rules.
-- Do not add gap compensation on mobile — `space-between` handles it.
-- Do not use a separate CSS custom property (no `--fq-mobile-font-tajweed`) — a simple `calc()` override on `font-size` is sufficient.
-- Do not change the 28px cap logic — the scale applies to the already-capped value via `var(--fq-mobile-font)`.
+- Do not scale `font-size` for tajweed *without* the gap compensation — 70%-sized text in 100%-sized spacing is the original broken state.
+- Do not use a whole-page `s < 1.0` factor across all three layout values — it shrinks the card (no kashida justification → shorter lines → narrower `md:w-auto` card).
+- Do not remove the `0.85` font-size scaling (load-bearing for visual glyph-size parity) or the `0.5607`/`0.5777` gap compensation.
+- Do not add gap compensation on mobile — `space-between` handles it. Do not add a `--fq-mobile-font-tajweed` custom property — a `calc()` override on `font-size` is enough.
+- Do not set `line-height: 1` on `.fq-tajweed > .fq-safha-row` — the COLRv1 font's natural line-height already resolves to exactly 1.0× (a no-op).
+- Do not introduce a `FONT_V2` constant / JS calc for tajweed.
+- Do not modify the mobile `--fq-line-gap: 0px` / `--fq-heading-h` rules.
+
+## Decisions Made
+
+- Tajweed sizing is a CSS-only, `.fq-tajweed`-scoped correction: `font-size × 0.85` on desktop (glyph parity) with the gap compensated up (`0.5607·fs` single / `min(0.5607, 0.5777)` double) so page height matches regular; `font-size × 0.88` + `padding-block-start: 1em` on mobile.
+- No explicit width on the tajweed card — a forced worst-case width was tried and rejected.
+- Mobile scale targets "most lines fit" (~0.88), not the worst-case line; rare outliers clip invisibly under `overflow-hidden`.
+
+## Revision History
+
+- 2026-07-14 — folded Addendum 1. **Supersedes the base plan's `--fq-tajweed-scale: 0.77` whole-page scale** — it shrank the `md:w-auto` card (COLRv1 has no kashida, so shorter lines → narrower card). Replaced by removing the tajweed `font-size` overrides and adding `font-size: calc(var(--fq-word-base) * 0.85)` (glyph-density match, 1.92 / 2.56).
+- 2026-07-18 — folded Addendum 2 (desktop regular mushaf): `FONT_V1.lineGapRatio` 0.38 → ~0.40; the `QuranSafhaViewToggle` + `RecitationPlayButton` row removed from `ReaderPage` (frees ~44px so scales 2–3 fit at 768px); the `--fq-line-gap` / `--fq-heading-h` JS inline vars derived via CSS from the `-base` pair instead (5 vars → 3). **Later subsumed by ADR 0054** (`reader-line-rhythm.md`), which replaced the `FONT_V1` scale model with per-band contracts and desktop presets — the `lineGapRatio` value and the variable simplification no longer describe current code.
+- 2026-07-18 — folded Addendum 3: the view toggle removed in Addendum 2 was placed in `SettingsSidebar` as a `hidden lg:block` "Page View" section (double-page view is CSS-gated at `min-width: 1024px`, so below `lg` the control would be inert). (The settings sheet was later redesigned again — see `design-migration/4.3`.)
+- 2026-07-18 — folded Addendum 4. **Supersedes Addendum 1's "font-size 0.85 alone"** — the 0.85 factor also shrank every line box, so the tajweed page was shorter than regular. Fix: keep `0.85` for glyph parity, **compensate `--fq-line-gap` up** to `0.5607·fs` (single) / `min(0.5607·word-base, 0.5777·dv-word)` (double) so the 15-line + 14-gap total matches regular; no explicit width (a forced `14.7·fs` width was rejected).
+- 2026-07-19 — folded Addendum 5 (mobile): `.fq-quran-safha.fq-tajweed { font-size: calc(var(--fq-mobile-font) * 0.88); padding-block-start: 1em; }` — COLRv1 lines overflowed the card at the regular mobile size (no kashida), and the first line's ink lapped into the header band. Mobile needs no gap compensation (`space-between`).

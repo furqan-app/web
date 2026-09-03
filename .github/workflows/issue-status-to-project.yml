@@ -1,0 +1,73 @@
+name: Sync status labels to Kanban board
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  issues: read
+  repository-projects: write
+
+env:
+  PROJECT_NUMBER: 3
+  ORG: furqan-app
+  FIELD_ID: PVTSSF_lADOCyJLuM4BgSPAzhafCVA
+
+jobs:
+  sync-status:
+    if: startsWith(github.event.label.name, 'status:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move issue card on Furqan Kanban
+        env:
+          GH_TOKEN: ${{ secrets.GH_PROJECTS_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          LABEL: ${{ github.event.label.name }}
+        run: |
+          # Map status:* labels → Status field option IDs on project "Furqan Kanban"
+          case "$LABEL" in
+            status:backlog)        option="f75ad846" ;; # Backlog
+            status:todo)           option="61e4505c" ;; # Ready
+            status:in-progress)    option="47fc9ee4" ;; # In progress
+            status:in-review)      option="df73e18b" ;; # In review
+            status:to-be-released) option="fda173c6" ;; # To be released
+            status:done)           option="98236657" ;; # Done
+            *) echo "No board mapping for '$LABEL' — skipping."; exit 0 ;;
+          esac
+
+          project_id=$(gh api graphql -f query='
+            query($org:String!, $num:Int!) {
+              organization(login:$org){ projectV2(number:$num){ id } }
+            }' -f org="$ORG" -F num="$PROJECT_NUMBER" --jq '.data.organization.projectV2.id')
+
+          item_id=$(gh api graphql -f query='
+            query($owner:String!, $name:String!, $num:Int!) {
+              repository(owner:$owner, name:$name){
+                issue(number:$num){
+                  projectItems(first:20){ nodes{ id project{ number } } }
+                }
+              }
+            }' -f owner="${{ github.repository_owner }}" -f name=web -F num="$ISSUE_NUMBER" \
+              --jq ".data.repository.issue.projectItems.nodes[] | select(.project.number == $PROJECT_NUMBER) | .id")
+
+          if [[ -z "$item_id" ]]; then
+            echo "Issue not on project yet — adding it."
+            item_id=$(gh api graphql -f query='
+              mutation($projectId:ID!, $contentId:ID!) {
+                addProjectV2ItemById(input:{ projectId:$projectId, contentId:$contentId }){
+                  item{ id }
+                }
+              }' -f projectId="$project_id" -f contentId="${{ github.event.issue.node_id }}" \
+                --jq '.data.addProjectV2ItemById.item.id')
+          fi
+
+          gh api graphql -f query='
+            mutation($projectId:ID!, $itemId:ID!, $fieldId:ID!, $optionId:String!) {
+              updateProjectV2ItemFieldValue(input:{
+                projectId:$projectId, itemId:$itemId, fieldId:$fieldId,
+                value:{ singleSelectOptionId:$optionId }
+              }){ projectV2Item{ id } }
+            }' -f projectId="$project_id" -f itemId="$item_id" -f fieldId="$FIELD_ID" \
+              -f optionId="$option" --jq '.data.updateProjectV2ItemFieldValue.projectV2Item.id' >/dev/null
+
+          echo "Moved #$ISSUE_NUMBER to option $option ($LABEL)."

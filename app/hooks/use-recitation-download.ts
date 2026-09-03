@@ -12,6 +12,7 @@ import {
   versePagesUrl,
 } from "@constants/offline";
 import { DEFAULT_MUSHAF_ID } from "@utils/mushaf-editions";
+import { ensureCachedBytes } from "@/app/lib/offline/ensure-cached-bytes";
 import { ChapterAudio, RecitationDownloadItem } from "@/app/types/recitation";
 import { SurahResult } from "@/app/types";
 
@@ -27,16 +28,6 @@ const parsePageRange = (pages: string): number[] => {
   for (let p = start; p <= end; p++) ids.push(p);
   return ids;
 };
-
-/** Fetch+cache a byte response (audio, fonts, page JSON). Skips the network if already cached. */
-async function ensureCachedBytes(cache: Cache, url: string): Promise<number> {
-  const existing = await cache.match(url);
-  if (existing) return (await existing.blob()).size;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to fetch ${url}`);
-  await cache.put(url, response.clone());
-  return (await response.blob()).size;
-}
 
 /** Fetch+cache a jsonResponse()-enveloped route, returning its unwrapped `data`. */
 async function fetchAndCacheJson<T>(cache: Cache, url: string): Promise<{ data: T; sizeBytes: number }> {

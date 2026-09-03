@@ -1,8 +1,12 @@
-# Fix RSC Cache Poisoning on Hostinger
+---
+title: Fix RSC Cache Poisoning on Hostinger
+type: bug
+date: 2026-07-06
+status: implemented
+area: api
+---
 
-**Type:** bug  
-**Date:** 2026-07-06  
-**Status:** implemented
+# Fix RSC Cache Poisoning on Hostinger
 
 ## Root Cause
 

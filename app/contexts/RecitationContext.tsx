@@ -17,6 +17,7 @@ import {
   fetchChapters,
   fetchPageBounds,
   fetchReciters,
+  fetchRubFirstVerse,
   fetchStopPoint,
 } from "@/app/utils/recitation-api";
 import { fetchVersePages } from "@/app/hooks/use-verse-pages";
@@ -139,6 +140,14 @@ type RecitationContextType = {
   // persistent pager (ADR 0028) watches this to keep the recited page on screen —
   // navigation lives in the pager, not here.
   recitedPage: number | null;
+  // Attach/detach follow state (ADR 0050). true = the reader is showing the
+  // recited page and tracks it (auto-advance pulls the visible window forward);
+  // false = the user has navigated away on purpose (or left the reader route)
+  // and RecitationReturnPanel offers a way back. Owned here, decided entirely by
+  // the RecitationFollow leaf — ReaderPager never subscribes. Session state,
+  // never persisted. Reset to false by stop(); set true by play().
+  isFollowing: boolean;
+  setIsFollowing: (value: boolean) => void;
   // First verse_key of the currently displayed page, kept current by
   // RecitationPageSync — the voice panel's play button reads it as its
   // "play current Safha" start point (it cannot receive props from the pager).
@@ -150,9 +159,23 @@ type RecitationContextType = {
   // floor for its page-type input, with no DB lookup needed.
   currentPageNumber: number | null;
   setCurrentPageNumber: (page: number | null) => void;
-  play: (startVerseKey: string, overrides?: PlaybackOverride) => void;
+  // Resolves a drafted Start From point (#393) to a concrete verse key.
+  // Page-type points need one edition-aware bounds fetch; the rest resolve
+  // synchronously from what's already in context.
+  resolveStartPoint: (
+    start: StartPoint,
+  ) => Promise<string>;
+  // Apply Changes with a moved start (#392 D3): seeks to `verseKey` and
+  // restarts the range from there — both repeat counters reset, stop target
+  // unchanged. No-op when idle (idle starts go through play()).
+  applyStartSeek: (verseKey: string, effectiveSettings?: RecitationSettings) => void;
+  play: (startVerseKey: string, overrides?: PlaybackOverride, effectiveSettings?: RecitationSettings) => void;
   togglePlayPause: () => void;
   stop: () => void;
+  // Repeat-cycle button (#391): zeroes the per-ayah repeat counter so the
+  // in-flight pass counts as repetition 1 of a fresh cycle. No seek — the
+  // audio keeps playing where it is. No-op when idle.
+  resetPerAyahRepeat: () => void;
   isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
@@ -170,12 +193,35 @@ type RecitationContextType = {
   playbackError: "offline-unavailable" | null;
 };
 
+// A drafted Start From point (#393). Per-session, never persisted — derived
+// fresh every time the settings sheet opens (Current Verse while playing,
+// Current Page while idle) and discarded on close. Unlike RangePoint (the
+// persisted "custom" stop target) there is no localStorage footprint.
+export type StartPoint =
+  | { type: "current-verse" }
+  | { type: "current-page" }
+  | { type: "surah-start" }
+  | { type: "rub-start" }
+  | { type: "verse"; surah: number; ayah: number }
+  | { type: "page"; page: number };
+
 const RecitationContext = createContext<RecitationContextType | undefined>(undefined);
 
 function getInitialSettings(): RecitationSettings {
+  // Only identity/preference fields survive a reload (#390 follow-up,
+  // confirmed with user): reciter and speed. Practice configuration
+  // (stopPoint/rangeTo/repeats/pause) deliberately resets to defaults — a
+  // month-old "custom 2:1→2:3 ×4" hijacking quick-play was judged a flow no
+  // user would consider normal.
   if (typeof window !== "undefined") {
     const stored = storage.get("recitationSettings");
-    if (stored) return { ...DEFAULT_RECITATION_SETTINGS, ...stored };
+    if (stored) {
+      return {
+        ...DEFAULT_RECITATION_SETTINGS,
+        reciterId: stored.reciterId ?? null,
+        playbackSpeed: stored.playbackSpeed ?? DEFAULT_RECITATION_SETTINGS.playbackSpeed,
+      };
+    }
   }
   return DEFAULT_RECITATION_SETTINGS;
 }
@@ -191,6 +237,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
   const [recitedPage, setRecitedPage] = useState<number | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
   const [currentPageNumber, setCurrentPageNumber] = useState<number | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -236,7 +283,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       .catch(() => setChapters([]));
   }, []);
 
-  // Default to the first reciter once the live list loads, if the user has
+  // Default to the first reciter once the list loads, if the user has
   // never explicitly chosen one — lets the header quick-play button start
   // instantly without forcing the settings sheet open first.
   useEffect(() => {
@@ -249,7 +296,19 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const updateSettings = useCallback((patch: Partial<RecitationSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...patch };
-      storage.set("recitationSettings", next);
+      // Only preference fields persist to localStorage; practice
+      // configuration (stopPoint/rangeTo/repeats/pause) is session-scoped —
+      // stop() resets it to defaults, so a stale range must never survive
+      // into a future session's quick-play.
+      storage.set("recitationSettings", {
+        reciterId: next.reciterId,
+        playbackSpeed: next.playbackSpeed,
+        stopPoint: next.stopPoint,
+        rangeTo: next.rangeTo,
+        perAyahRepeatCount: next.perAyahRepeatCount,
+        rangeRepeatCount: next.rangeRepeatCount,
+        pauseBetweenRepeatsMs: next.pauseBetweenRepeatsMs,
+      });
       return next;
     });
   }, []);
@@ -278,8 +337,18 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     currentVerseKeyRef.current = null;
     setCurrentVerseKey(null);
     setRecitedPage(null);
+    setIsFollowing(false);
     rangeRepeatOverrideRef.current = null;
     setActiveOverride(null);
+    // Practice configuration is session-scoped: ending a session resets it
+    // so quick-play tomorrow never replays an old exercise. Reciter/speed
+    // are preferences and survive.
+    setSettings((prev) => ({
+      ...prev,
+      ...DEFAULT_RECITATION_SETTINGS,
+      reciterId: prev.reciterId,
+      playbackSpeed: prev.playbackSpeed,
+    }));
     clearHighlight();
   }, [clearHighlight]);
 
@@ -297,8 +366,18 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   }, [mushafId]);
 
   const play = useCallback(
-    async (verseKey: string, overrides?: PlaybackOverride) => {
-      const reciterId = settings.reciterId ?? reciters[0]?.id;
+    async (
+      verseKey: string,
+      overrides?: PlaybackOverride,
+      // Explicit effective settings for callers that commit a draft and
+      // start in the same tick (#392): the closure `settings` still holds
+      // the pre-draft values until React re-renders, so resolveStopTarget /
+      // playbackRate / repeat targets would silently run against stale
+      // configuration. The sheet passes {...settings, ...draft}.
+      effectiveSettings?: RecitationSettings,
+    ) => {
+      const s = effectiveSettings ?? settings;
+      const reciterId = s.reciterId ?? reciters[0]?.id;
       if (!reciterId) return;
 
       const chapterId = parseChapterIdFromVerseKey(verseKey);
@@ -324,11 +403,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
             ? Promise.resolve({ verseKey: overrides.stopVerseKey, chapterId: overrides.stopChapterId })
             : resolveStopTarget(
                 verseKey,
-                settings.stopPoint,
+                s.stopPoint,
                 chapterAudioPromise,
                 chapterId,
                 mushafId,
-                settings.rangeTo,
+                s.rangeTo,
               ),
         ]);
 
@@ -343,6 +422,23 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
         verseTimingsRef.current = chapterAudio.verseTimings;
         versePagesRef.current = versePages;
+        // Publish the recited page synchronously at session start. The mount-time
+        // [mushafId, getVersePages] effect below does not re-run on play(), and the
+        // first timeupdate tick is still the start verse so it skips
+        // updateRecitedPage — without this, recitedPage stays null until the first
+        // verse boundary, and RecitationFollow / RecitationReturnPanel need it from
+        // the first frame (ADR 0050).
+        {
+          const startPage = versePages[verseKey];
+          if (startPage != null) setRecitedPage(startPage);
+        }
+        // Note: isFollowing is NOT force-set here. Only RecitationFollow (mounted
+        // in the reader) can attach — a session started off-reader (a listening
+        // wird from /plans, an offline download from Settings) must stay
+        // "detached" so RecitationReturnPanel is the surface that can stop it or
+        // jump into the reader. On-reader, the leaf attaches within a tick (or
+        // pulls the reader to a far start verse — its prevRecitedPage == null
+        // branch). See ADR 0050.
         startVerseKeyRef.current = verseKey;
         stopVerseKeyRef.current = stopTarget.verseKey;
         stopChapterIdRef.current = stopTarget.chapterId;
@@ -356,7 +452,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         clearHighlight();
 
         audio.src = chapterAudio.audioUrl;
-        audio.playbackRate = settings.playbackSpeed;
+        audio.playbackRate = s.playbackSpeed;
         audio.currentTime = startTiming.timestampFrom / 1000;
         await audio.play();
         setStatus("playing");
@@ -367,6 +463,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         setStatus("idle");
         rangeRepeatOverrideRef.current = null;
         setActiveOverride(null);
+        setIsFollowing(false);
         // Only a real "not downloaded" case, not e.g. an autoplay-policy
         // rejection while online.
         if (!isOnline) setPlaybackError("offline-unavailable");
@@ -374,7 +471,6 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     },
     [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline],
   );
-
   const togglePlayPause = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -548,6 +644,83 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       }
     },
     [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
+  );
+
+  // Resolves a drafted Start From point to a verse key. Presets resolve
+  // against the live reference context; page-type points need one bounds
+  // fetch. Throws on resolution failure — callers fall back to
+  // pageFirstVerseKey / currentVerseKey per the plan's idle-start rule.
+  const resolveStartPoint = useCallback(
+    async (start: StartPoint): Promise<string> => {
+      const referenceVerseKey = currentVerseKeyRef.current ?? startVerseKeyRef.current ?? pageFirstVerseKey;
+      switch (start.type) {
+        case "current-verse":
+          if (!referenceVerseKey) throw new Error("No reference verse");
+          return referenceVerseKey;
+        case "surah-start": {
+          if (!referenceVerseKey) throw new Error("No reference verse");
+          return `${parseChapterIdFromVerseKey(referenceVerseKey)}:1`;
+        }
+        case "rub-start":
+          if (!referenceVerseKey) throw new Error("No reference verse");
+          return (await fetchRubFirstVerse(referenceVerseKey)).verseKey;
+        case "current-page": {
+          const page = recitedPage ?? currentPageNumber;
+          if (!page) {
+            if (!referenceVerseKey) throw new Error("No reference position");
+            return referenceVerseKey;
+          }
+          return (await fetchPageBounds(page, mushafId)).firstVerseKey;
+        }
+        case "page":
+          return (await fetchPageBounds(start.page, mushafId)).firstVerseKey;
+        case "verse":
+          return `${start.surah}:${start.ayah}`;
+      }
+    },
+    [recitedPage, currentPageNumber, pageFirstVerseKey, mushafId],
+  );
+
+  // Apply Changes with a moved start (#392 D3): restart the range from
+  // `verseKey` without stopping — both repeat counters reset so the new range
+  // runs clean; the stop target stays exactly where the session resolved it.
+  // Same-chapter is an in-place seek (mirrors seekToRangeStart's same-chapter
+  // branch); cross-chapter reloads via loadChapter. effectiveSettings mirrors
+  // play()'s parameter: Apply may change reciter and start in one commit, and
+  // the closure would still hold the pre-draft reciter.
+  const applyStartSeek = useCallback(
+    async (verseKey: string, effectiveSettings?: RecitationSettings) => {
+      if (status === "idle") return;
+      const audio = audioRef.current;
+      if (!audio) return;
+      const s = effectiveSettings ?? settings;
+      const chapterId = parseChapterIdFromVerseKey(verseKey);
+
+      perAyahRepeatsDoneRef.current = 0;
+      rangeRepeatsDoneRef.current = 0;
+
+      if (chapterId === currentChapterIdRef.current) {
+        const timing = verseTimingsRef.current.find((vt) => vt.verseKey === verseKey);
+        if (!timing) return;
+        startVerseKeyRef.current = verseKey;
+        currentVerseKeyRef.current = verseKey;
+        setCurrentVerseKey(verseKey);
+        updateRecitedPage(verseKey);
+        scheduleSeek(timing.timestampFrom, 0);
+        return;
+      }
+
+      const reciterId = s.reciterId ?? reciters[0]?.id;
+      if (!reciterId) return;
+      try {
+        startVerseKeyRef.current = verseKey;
+        const ok = await loadChapter(reciterId, chapterId, verseKey);
+        if (!ok) stop();
+      } catch {
+        stop();
+      }
+    },
+    [status, settings, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
   );
 
   const handleTimeUpdate = useCallback(() => {
@@ -769,6 +942,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.reciterId]);
 
+  const resetPerAyahRepeat = useCallback(() => {
+    if (status === "idle") return;
+    perAyahRepeatsDoneRef.current = 0;
+  }, [status]);
+
   const openSettings = useCallback(() => {
     setIsSettingsOpen(true);
   }, []);
@@ -787,6 +965,8 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         status,
         currentVerseKey,
         recitedPage,
+        isFollowing,
+        setIsFollowing,
         pageFirstVerseKey,
         setPageFirstVerseKey,
         currentPageNumber,
@@ -794,6 +974,9 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         play,
         togglePlayPause,
         stop,
+        resetPerAyahRepeat,
+        resolveStartPoint,
+        applyStartSeek,
         isSettingsOpen,
         openSettings,
         closeSettings,

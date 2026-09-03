@@ -452,6 +452,17 @@
   * {
     @apply border-border;
   }
+  html,
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -470,6 +481,29 @@
 @layer components {
   .hidden-scroll::-webkit-scrollbar {
     width: 0px;
+  }
+
+  /* Smooth, discreet scrollbar for reading sheets and panels */
+  .fq-scroll-nice {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  }
+  .fq-scroll-nice::-webkit-scrollbar {
+    width: 5px;
+  }
+  .fq-scroll-nice::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .fq-scroll-nice::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.22);
+    border-radius: 9999px;
+    transition: background 0.15s ease;
+  }
+  .fq-scroll-nice::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.45);
   }
 
   /* Marks the desktop nav search input as recessed into the bar, without a
@@ -925,10 +959,13 @@ body,
 
   /* The fixed navigation paints at 57px (its 56px utility height plus the bottom
      border). The reader's JSX minimum uses 3.5rem/56px, which otherwise leaves a
-     one-pixel document overflow and an unnecessary desktop scrollbar. */
+     one-pixel document overflow and an unnecessary desktop scrollbar.
+     `--fq-nav-extra` (0px unless the recitation return strip is open — ADR 0050)
+     is subtracted too, so a second nav row shrinks the flow reader by the same
+     amount instead of adding a sliver of scroll. */
   @media (min-width: 1367px) {
     .fq-reader-outer {
-      min-height: calc(100dvh - 70px) !important;
+      min-height: calc(100dvh - 70px - var(--fq-nav-extra, 0px)) !important;
     }
   }
 
@@ -1226,6 +1263,13 @@ body,
     .fq-reader-outer {
       padding-bottom: 0 !important;
     }
+    /* The recitation rail is `position: fixed; right: 0; top: 70px; width: 72px`,
+       so its top overlays the return strip (a second nav row that starts at
+       ~56px). Reserve the rail's physical column on the strip too — same
+       `padding-right: 72px` reasoning as the spread container above. */
+    .fq-recitation-return-strip {
+      padding-right: 72px;
+    }
     .fq-reader-outer > .fq-reader-spread-container {
       padding-block: 64px;
       /* Chrome RESERVES space; it never overlaps the mushaf. The rail is a
@@ -1265,6 +1309,7 @@ body,
       top: 70px;
       bottom: 0 !important;
       width: 72px;
+      padding: 0 !important;
       border-width: 0 !important;
       border-radius: 0;
       backdrop-filter: blur(14px);
@@ -1404,6 +1449,39 @@ body,
   .fq-reader-pager-strip.fq-dragging .fq-ayah-end:hover {
     filter: none !important;
     transform: none !important;
+  }
+
+  /* Pre-paint jump gate (issue #405, plan Addendum 7 fix C). When a reader
+     document is served as the offline fallback, the URL names a different page
+     than the SSR content; ReaderPage's inline script adds this class at parse
+     time so the strip never paints the wrong page's words during hydration.
+     ReaderPager's correction layout effect removes it in the same frame as its
+     jumpTo; the script's own 2s timer is the bounded-reveal safety. `visibility`
+     (not display) keeps layout metrics intact and the themed page background
+     visible — a blank themed frame, never a flash of Al-Fatiha. */
+  html.fq-pending-jump .fq-reader-pager-strip {
+    visibility: hidden;
+  }
+
+  /* Root-level guard for pure-touch devices (ADR 0023 Addendum 9). The rule
+     above only neutralizes the hover filter while `.fq-dragging` is present —
+     a touch-primary browser's synthetic hover-on-tap can still trigger it
+     outside any drag window (e.g. a tap-and-hold that never crosses the drag
+     threshold). The project's own convention for gating a hover-only affordance
+     is `(hover: hover) and (pointer: fine)` (docs/../skills/ui-motion) — this is
+     that condition's negation (De Morgan's: NOT(hover:hover AND pointer:fine) =
+     hover:none OR pointer:coarse), so it also catches a device that can hover
+     but only coarsely, not just one that cannot hover at all. A hybrid device
+     with a mouse present (hover:hover AND pointer:fine) still keeps relying on
+     the rule above for its touch interactions. Not a global Tailwind `hover`
+     variant redefinition — scoped to the same two selectors as the drag rule,
+     so nothing outside QuranWord's hover cue is affected. */
+  @media (hover: none), (pointer: coarse) {
+    .fq-qword:hover,
+    .fq-ayah-end:hover {
+      filter: none !important;
+      transform: none !important;
+    }
   }
 
   /* Reader height, anchored to the initial containing block (ADR 0044).
@@ -1611,11 +1689,11 @@ body,
        with the rules they described and are not reproduced here. */
     .fq-spread .fq-safha-card {
       background-image: none !important;
-      box-shadow:
+      /* box-shadow:
         inset 0 1px 0 var(--mushaf-rim-top),
         inset 1px 0 0 var(--mushaf-rim-side),
         inset -1px 0 0 var(--mushaf-rim-side),
-        inset 0 -1px 0 var(--mushaf-rim-foot) !important;
+        inset 0 -1px 0 var(--mushaf-rim-foot) !important; */
     }
     /* Centre binding separator — one rule, all themes, modelled on real open-book
        macro photography. A centred overlay at the seam reads as the crease where
@@ -2046,8 +2124,7 @@ body,
     position: relative;
     background-color: hsl(var(--chrome));
     box-shadow:
-      inset 0 1px 0 hsl(var(--surface-rim) / var(--surface-rim-alpha)),
-      var(--panel-cast);
+      inset 0 1px 0 hsl(var(--surface-rim) / var(--surface-rim-alpha));
   }
   /* Closing hairline that fades at both ends, so a full-bleed bar has no hard
      corners against the desk. */
@@ -2069,6 +2146,29 @@ body,
      the edge that faces the page. */
   .fq-chrome-bar-bottom::after {
     inset: 0 0 auto;
+  }
+
+  /* ADR 0050 — the "return to recitation" strip, a second row of the nav shown
+     while a session is parked away from the reader. It inherits the nav's opaque
+     `.fq-chrome-bar` face; only the hairline that separates it from the main row
+     is its own (a Tailwind `border-t` on the element). While it is mounted,
+     `RecitationReturnStrip` adds `.fq-recitation-strip-open` to <html> so the
+     desktop reader's flow `min-height` can give its band back and stay
+     scroll-free (mobile/tablet reader is `position: fixed` and unaffected). */
+  :root {
+    --fq-nav-extra: 0px;
+  }
+  :root.fq-recitation-strip-open {
+    --fq-nav-extra: 2.75rem;
+  }
+  /* Non-reader pages: `<main>` is a flow sibling under the `relative` nav, so the
+     strip pushes it down. Its `min-h-[calc(100dvh-3.5rem)]` would then run the
+     document past the viewport by the strip's height; subtract it back so a
+     short page stays exactly one screen. `!important` beats the Tailwind utility
+     from `@layer utilities`. The reader has no `<main>`, so this is non-reader
+     only. */
+  :root.fq-recitation-strip-open main {
+    min-height: calc(100dvh - 3.5rem - var(--fq-nav-extra, 0px)) !important;
   }
 
   /* The recitation transport's three zones — identity, transport, utilities.

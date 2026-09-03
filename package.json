@@ -1,6 +1,6 @@
 {
   "name": "furqan",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,6 +8,7 @@
     "build:local": "dotenv -e .env.local -- npx prisma migrate deploy --schema prisma/app/schema.prisma && next build",
     "start": "next start",
     "lint": "next lint",
+    "type-check": "tsc --noEmit",
     "quran-studio": "dotenv -e .env.local -- npx prisma studio --schema prisma/quran/schema.prisma",
     "app-studio": "dotenv -e .env.local -- npx prisma studio --schema prisma/app/schema.prisma",
     "quran-generate": "dotenv -e .env.local -- npx prisma generate --schema prisma/quran/schema.prisma",
@@ -19,6 +20,8 @@
     "seed:quran": "dotenv -e .env.local -- node scripts/quran-seed/seed.js",
     "generate:quran-json": "dotenv -e .env.local -- node scripts/quran-json/generate.js",
     "generate:quran-chapters": "dotenv -e .env.local -- node scripts/quran-chapters/generate.js",
+    "generate:quran-juz-starts": "dotenv -e .env.local -- node scripts/quran-juz-starts/generate.js",
+    "generate:quran-reciters": "node scripts/quran-reciters/generate.js",
     "postinstall": "prisma generate --schema prisma/quran/schema.prisma && prisma generate --schema prisma/app/schema.prisma",
     "e2e:generate-fixture": "node scripts/e2e-fixture/generate.js",
     "e2e:db:up": "docker compose -f compose.e2e.yml up -d --wait",
@@ -26,7 +29,10 @@
     "e2e:setup": "dotenv -e .env.e2e -- node scripts/e2e-fixture/setup.js",
     "e2e:build": "dotenv -e .env.e2e -- next build",
     "e2e:start": "dotenv -e .env.e2e -- next start",
+    "e2e:serve": "npm run e2e:build && npm run e2e:start",
     "e2e:test": "dotenv -e .env.e2e -- playwright test",
+    "test:unit": "vitest run",
+    "test:e2e": "dotenv -e .env.e2e -- playwright test",
     "test": "vitest run"
   },
   "dependencies": {

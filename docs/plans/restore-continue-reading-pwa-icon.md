@@ -1,8 +1,12 @@
-# Restore Continue Reading nav icon on installed PWA
+---
+title: Restore Continue Reading nav icon on installed PWA
+type: bug
+date: 2026-08-18
+status: implemented
+area: pwa
+---
 
-**Type:** bug
-**Date:** 2026-08-18
-**Status:** implemented
+# Restore Continue Reading nav icon on installed PWA
 
 ## Summary
 

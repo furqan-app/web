@@ -1,8 +1,13 @@
-# Mobile Navigation UX
+---
+title: Mobile Navigation UX
+type: feature
+date: 2026-07-01
+status: implemented
+area: nav
+issue: 431
+---
 
-**Type:** feature  
-**Date:** 2026-07-01  
-**Status:** implemented
+# Mobile Navigation UX
 
 ## Summary
 
@@ -31,7 +36,7 @@ Remove the `fixed top-1/2 start-0 -translate-y-1/2` `<SheetTrigger>` button. Mak
 
 ### `app/components/nav/Nav.tsx`
 - `<FurqanLogo />` renders unconditionally as the first element of the leading `div`, before the sidebar trigger, in both LTR and RTL.
-- Sidebar trigger `Button` (all breakpoints, gated by `isOnPagesRoute`): `pathname?.includes("/pages/")` with trailing slash (no trailing slash matches false positives like `/ar/pages-list`). One `PanelLeftOpen` icon, `className={cn("size-5", isRTL && "rotate-180")}` — no duplicate RTL/LTR branches.
+- Sidebar trigger `Button` (all breakpoints, gated by `isOnPagesRoute`): `pathname?.includes("/pages/")` with trailing slash (no trailing slash matches false positives like `/ar/pages-list`). The trigger renders as a `rounded-full` pill — `h-8 px-3 py-1 bg-[var(--nav-tab-bg)] border border-border/70 shadow-sm`, `active:scale-[0.97]` press micro-motion — carrying a `ChevronDown` with `transition-transform duration-200` that rotates 180° while the sidebar is `open` (no static icon switching). In RTL it uses the `font-surahnames` glyph (`text-[19px]`, zero-padded `String(id).padStart(3,"0")`) with a `toLocaleNumeral` prefix; in LTR a plain `text-xs font-semibold` name. (The pill *content* — the current surah name/number rather than a bare icon — was introduced later by `sidebar-surah-indicator.md`; this section covers the pill styling only.)
 - `UserMenu`: `hidden md:flex` (folds into Settings sheet on mobile).
 
 ### `app/components/search/SearchBar.tsx`
@@ -61,6 +66,7 @@ Add `AccountCard` entry.
 - **Non-pages routes**: trigger hidden when `pathname` doesn't include `/pages/` (trailing slash required).
 - **Sheet stacking**: Sidebar, Settings, and mobile Search sheets are separate Radix portals — no z-index conflict.
 - **Logo**: fixed in leading `div` both locales. RTL-edge repositioning was implemented then reverted by the user; `isRTL` is retained only for icon rotation.
+- **Sidebar trigger pill**: `rounded-full` with `--nav-tab-bg` + hairline border, `active:scale-[0.97]`, rotating `ChevronDown` (no static icon swap); `font-surahnames` glyph + numeral prefix in RTL, plain text in LTR.
 
 ## Constraints
 
@@ -70,3 +76,7 @@ Add `AccountCard` entry.
 - Keep `next/dynamic` deferred loading of Sidebar in `pages/layout.tsx`.
 - Do not add a UserMenu icon to mobile nav or a bottom navigation bar.
 - Do not move Sidebar to root locale layout.
+
+## Revision History
+
+- 2026-08-26 — folded Addendum 1 (#431): mobile sidebar trigger restyled from a bare `PanelLeftOpen` icon to a `rounded-full` calligraphic pill with a rotating chevron and press micro-motion.

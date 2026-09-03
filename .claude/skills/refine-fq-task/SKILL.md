@@ -7,7 +7,7 @@ description: Refines a big or vague task into separate workable points and creat
 
 Read and follow [`docs/workflow/refine-task.md`](../../../docs/workflow/refine-task.md).
 
-## Claude-specific additions — Step 5, creating the issues
+## Step 5 — Creating the issues
 
 ### Parent epic (create first)
 
@@ -31,7 +31,7 @@ gh issue create --repo furqan-app/web --title "<point title>" \
 - When a point depends on another, add `Blocked by #<sibling-number>` to its body.
 - After all children exist, edit the parent body so the checklist references the real issue numbers (`- [ ] #123 <title>`).
 
-## What NOT to do (Claude-specific)
+## What NOT to do
 
 - Do not create worktrees or branches — no implementation happens here.
 - Do not label children `status:todo` — they move forward when each is planned.

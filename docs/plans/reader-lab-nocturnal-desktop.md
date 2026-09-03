@@ -1,9 +1,12 @@
-# Nocturnal Reader Lab — Desktop RTL
+---
+title: Nocturnal Reader Lab — Desktop RTL
+type: feature
+date: 2026-08-21
+status: implemented
+area: reader
+---
 
-**Type:** feature  
-**Date:** 2026-08-21  
-**Status:** implemented  
-**Issue:** intentionally none — user explicitly requested no GitHub issue
+# Nocturnal Reader Lab — Desktop RTL
 
 ## Summary
 

@@ -37,12 +37,16 @@ export const versePagesUrl = (mushafId: number) =>
 export const FALLBACK_LOCALES = ["ar", "en"] as const;
 
 // The offline-navigation fallback document (ADR 0014 Addendum 3): page 1's
-// real reader-page HTML, precached at service-worker install for every
-// visitor (both locales) — independent of, and much smaller than, the
-// consent-gated bulk 604-page download, so it works even on a fresh install
-// before that download has ever run. Registered as the setCatchHandler
-// fallback in app/sw.ts for a failed navigation request; ReaderPager then
-// self-corrects to whatever page was actually requested (or the last-read
+// real reader-page HTML, for every visitor (both locales) — independent of,
+// and much smaller than, the consent-gated bulk 604-page download, so it works
+// even on a fresh install before that download has ever run. It is an entry in
+// Serwist's build-time precache manifest, appended by next.config.mjs's
+// manifestTransforms and resolved with matchPrecache (ADR 0014 Addendum 7); it
+// is NOT seeded by a custom install handler, which could complete having
+// cached nothing while activate still dropped the previous deploy's cache.
+// app/sw.ts serves it both as the setCatchHandler fallback for a failed
+// navigation and as rows 2/3 of the reader-page decision tree; ReaderPager
+// then self-corrects to whatever page was actually requested (or the last-read
 // page) once it mounts.
 export const fallbackDocumentUrl = (locale: (typeof FALLBACK_LOCALES)[number]) =>
   `/${locale}/pages/1`;
@@ -81,6 +85,43 @@ export const precacheSentinelUrl = (mushafId: number) =>
 // abandoned.
 export const precacheDismissedKey = (mushafId: number) =>
   `fq-offline-prompt-dismissed-v${PAGES_CACHE_VERSION}-${mushafId}`;
+
+// ---------------------------------------------------------------------------
+// Active mushaf edition, mirrored client → service worker (ADR 0014 Addendum
+// 8). The reader's edition lives in localStorage, which a worker cannot read,
+// and the reader URL is edition-agnostic on purpose (ADR 0033 makes an edition
+// a client-side choice, not a route) — so the SW has no other way to know which
+// edition's page JSON + font the client is about to need. It needs that to
+// decide whether skipping the network is safe on a reader-HTML cache miss.
+//
+// Its own cache, deliberately: pages-v{N} is discarded by a PAGES_CACHE_VERSION
+// bump (which asserts the *download* is wrong, not the user's edition choice),
+// and reader-html-{hash} is deleted on every deploy by the activate handler.
+// Losing the marker is silent — row 2 quietly reverts to default-edition-only —
+// so it must outlive both. The prefix also must not collide with
+// READER_HTML_CACHE_PREFIX, which that same activate cleanup deletes by prefix.
+// ---------------------------------------------------------------------------
+export const PREFS_CACHE_VERSION = 1;
+export const PREFS_CACHE_NAME = `fq-prefs-v${PREFS_CACHE_VERSION}`;
+
+/** Synthetic cache entry holding the active edition id as text. */
+export const ACTIVE_MUSHAF_URL = "/__fq-active-mushaf";
+
+/**
+ * Mirror the active edition for the service worker. Fire-and-forget by design:
+ * it runs on every provider mount, nothing renders from it, and a failure only
+ * costs the reader the instant-shell path on a later cold launch — never
+ * correctness. `caches` is absent in insecure contexts, hence the guard.
+ */
+export function writeActiveMushafId(mushafId: number) {
+  if (typeof caches === "undefined") return;
+  caches
+    .open(PREFS_CACHE_NAME)
+    .then((cache) =>
+      cache.put(ACTIVE_MUSHAF_URL, new Response(String(mushafId))),
+    )
+    .catch(() => {});
+}
 
 // Approximate wire size of a full precache, per edition, shown to the user
 // before anything transfers — see each edition's `downloadSizeMb` in
@@ -164,3 +205,42 @@ export type SwToClientMessage =
       complete: boolean;
       running: boolean;
     };
+
+// ---------------------------------------------------------------------------
+// Offline Tafsir (ADR 0060) — whole-edition downloads. A foreground client
+// fetch+cache.put loop (app/hooks/use-tafsir-download.ts) stores each surah's
+// `by_chapter?per_page=300` response under a synthetic key in this cache;
+// app/lib/tafsir/offline-cache.ts reads it back, and qdcTafsirProvider.getTafsir
+// falls back to it. app/sw.ts's only involvement is one NetworkOnly rule for
+// QDC_TAFSIR_HOST (keeping these responses out of defaultCache's shared 32-entry
+// cross-origin NetworkFirst cache and its 10s timeout) plus a prefix-scoped
+// activate cleanup.
+//
+// Bumped manually when the cached blob shape changes. A bump orphans the old
+// cache UNLESS app/sw.ts's activate handler deletes TAFSIR_DOWNLOAD_CACHE_PREFIX
+// entries other than the current name — it does; keep it that way.
+// ---------------------------------------------------------------------------
+export const TAFSIR_DOWNLOAD_CACHE_VERSION = 1;
+export const TAFSIR_DOWNLOAD_CACHE_PREFIX = "tafsir-download-v";
+export const TAFSIR_DOWNLOAD_CACHE_NAME = `${TAFSIR_DOWNLOAD_CACHE_PREFIX}${TAFSIR_DOWNLOAD_CACHE_VERSION}`;
+
+// QDC's public tafsir API host. Same origin serves both `by_ayah` (live reads)
+// and `by_chapter` (downloads); the NetworkOnly rule matches the whole
+// `/api/qdc/tafsirs/` path so neither pollutes the cross-origin cache.
+export const QDC_TAFSIR_HOST = "api.qurancdn.com";
+
+// Every downloaded surah is stored at `/__fq-tafsir/{editionId}/{chapter}` —
+// same-origin synthetic keys, never fetched over the network (the download URL
+// is QDC's `by_chapter`, a different URL).
+export const tafsirChapterCachePrefix = (editionId: number) =>
+  `/__fq-tafsir/${editionId}/`;
+export const tafsirChapterCacheUrl = (editionId: number, chapter: number) =>
+  `${tafsirChapterCachePrefix(editionId)}${chapter}`;
+
+// A full tafsir edition is every surah.
+export { QURAN_LAST_CHAPTER_ID as TAFSIR_TOTAL_CHAPTERS } from "@/app/constants/recitation";
+
+// Same-tab coordination is the download-manager singleton (app/lib/tafsir/
+// download-manager.ts) — every component renders from its one snapshot, so no
+// custom window event is needed. Cross-tab changes arrive via the native
+// `storage` event, which the manager listens for while it has subscribers.

@@ -10,6 +10,7 @@ import { useOnlineStatus } from "@hooks/use-online-status";
 import { useReaderPage } from "@/app/contexts/ReaderPageContext";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
+import { useIsReaderRoute } from "@/app/hooks/use-is-reader-route";
 import { PLAN_TEMPLATE_UI } from "@constants/plan-ui";
 import type { TrackAssignment } from "@/app/lib/plans/engine";
 import { isPageInAssignmentRange } from "@/app/lib/plans/assignment-range";
@@ -45,17 +46,20 @@ const inRange = (
 
 // Floating pill on reader routes surfacing every active plan's today
 // assignments, with a live "in range" hint — never an auto-check-off (D5).
+// Excluded on shared mushaf grant reader routes (ADR 0012).
 // Mirrors RecitationPlayerBar's nav-overlay show/hide.
 export const PlansWidget = () => {
   const t = useTranslations();
   const locale = useLocale();
   const pathname = usePathname();
   const { status: sessionStatus } = useSession();
-  const isOnReaderRoute = Boolean(pathname?.includes("/pages/"));
+  const isOnReaderRoute = useIsReaderRoute();
+  const isSharedMushaf = pathname?.includes("/mushaf/") ?? false;
+  const isSelfReaderRoute = isOnReaderRoute && !isSharedMushaf;
   const isSignedIn = sessionStatus === "authenticated";
 
   const { data: todayData, checkOff, uncheckOff } = useTodayAssignments({
-    enabled: isOnReaderRoute && isSignedIn,
+    enabled: isSelfReaderRoute && isSignedIn,
   });
   const isOnline = useOnlineStatus();
   const { visiblePages } = useReaderPage();
@@ -68,7 +72,7 @@ export const PlansWidget = () => {
   );
   const verseIndex = usePlanVerseIndex({ enabled: hasVerseUnitAssignment });
 
-  if (!isOnReaderRoute || !isSignedIn || !todayData || todayData.length === 0) {
+  if (!isSelfReaderRoute || !isSignedIn || !todayData || todayData.length === 0) {
     return null;
   }
 

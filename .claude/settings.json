@@ -1,42 +1,12 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/mujaz-mode.js"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/mujaz-mode.js"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/mujaz-stats.js"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash|Grep",
         "hooks": [
           {
             "type": "command",
-            "command": "/home/tahamohamed/.local/bin/graphify hook-guard search"
+            "command": "graphify hook-guard search"
           }
         ]
       },
@@ -45,14 +15,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/home/tahamohamed/.local/bin/graphify hook-guard read"
+            "command": "graphify hook-guard read"
           }
         ]
       }
     ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "bash .claude/hooks/mujaz-statusline.sh"
   }
 }

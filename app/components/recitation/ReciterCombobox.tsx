@@ -37,6 +37,7 @@ export const ReciterCombobox = ({
         align={align}
         side={side}
         container={portalContainer}
+        onEscapeKeyDown={() => setOpen(false)}
       >
         <div className="max-h-[300px] overflow-y-auto p-1 divide-y divide-border/20">
           {reciters.map((reciter) => (
