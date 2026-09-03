@@ -4,7 +4,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 
 60 active plans.
 
-103 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
+104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
