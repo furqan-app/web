@@ -90,7 +90,13 @@ test.describe("Tafsir Sheet Integration & Page Boundary Interplay", () => {
     await context.addInitScript(() => {
       localStorage.setItem("quranSafhaView", JSON.stringify("single"));
     });
-    // Mock QDC public tafsir endpoint for deterministic responses & scrollable content
+    // Mock QDC public tafsir endpoint for deterministic responses & scrollable content.
+    // The body is intentionally long so `.fq-scroll-nice` is guaranteed to overflow at
+    // any CI viewport/build timing — the scroll-preservation assertions in the recitation
+    // auto-advance test need a genuinely scrollable container (see
+    // docs/plans/e2e-tafsir-page-boundaries-recitation.md).
+    const longTafsirParagraph =
+      "<p>تفسير الآية الكريمة وبيان معانيها العظيمة ودلالاتها البلاغية واللغوية، مع استطراد موسع في الفوائد المستنبطة والأحكام المتعلقة بها لضمان امتلاء الحاوية بمحتوى قابل للتمرير الرأسي واختبار استقرار موضع التمرير وعدم إعادة ضبطه.</p>";
     await page.route("https://api.qurancdn.com/**", (route) =>
       route.fulfill({
         status: 200,
@@ -98,12 +104,8 @@ test.describe("Tafsir Sheet Integration & Page Boundary Interplay", () => {
         body: JSON.stringify({
           tafsir: {
             text: `
-              <p>تفسير الآية الكريمة وبيان معانيها العظيمة ودلالاتها البلاغية واللغوية.</p>
+              ${longTafsirParagraph.repeat(40)}
               <p>قال تعالى: <span class="arabic qpc-hafs green">{ اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ }</span> وهو الحي القيوم العظيم.</p>
-              <p>شرح تفصيلي موسع لتمكين التمرير الرأسي داخل الحاوية واختبار استقرار التمرير وعدم إعادة الضبط.</p>
-              <p>فقرة إضافية من الشرح والتعليق والفوائد المستنبطة من هذه الآية العظيمة.</p>
-              <p>فقرة خامسة تحتوي على استطراد بياني وتفسيري يمتد إلى عدة أسطر لضمان وجود شريط تمرير كافي.</p>
-              <p>فقرة سادسة تختم التفسير بالدعاء والتأمل في مراد الله سبحانه وتعالى في كتابه المبين.</p>
             `,
           },
         }),
@@ -263,13 +265,21 @@ test.describe("Tafsir Sheet Integration & Page Boundary Interplay", () => {
     const tafsirSheet = await openTafsirForWord(page, "2:5:1");
     await expect(tafsirSheet.getByText(/الآية ٥/)).toBeVisible();
 
-    // Scroll commentary down inside the sheet
+    // Scroll commentary down inside the sheet. Wait for the mocked commentary to
+    // actually render and overflow before scrolling — openTafsirForWord only waits
+    // for the sheet header, so the body may still be a non-overflowing skeleton.
     const scrollContainer = tafsirSheet.locator(".fq-scroll-nice");
+    await expect
+      .poll(() => scrollContainer.evaluate((el) => el.scrollHeight - el.clientHeight))
+      .toBeGreaterThan(0);
     await scrollContainer.evaluate((el) => {
       el.scrollTop = 100;
     });
+    // Let scroll-smooth settle before capturing the reference position.
+    await expect
+      .poll(() => scrollContainer.evaluate((el) => el.scrollTop))
+      .toBeGreaterThan(0);
     const initialScroll = await scrollContainer.evaluate((el) => el.scrollTop);
-    expect(initialScroll).toBeGreaterThan(0);
 
     // Simulate audio reaching 6.5s (verse 2:6, Page 3)
     await page.evaluate(() => {
@@ -286,8 +296,9 @@ test.describe("Tafsir Sheet Integration & Page Boundary Interplay", () => {
     // Tafsir remains open, displays 2:5 (independent of recitation), and did not reset scroll
     await expect(tafsirSheet).toBeVisible();
     await expect(tafsirSheet.getByText(/الآية ٥/)).toBeVisible();
+    // Scroll position is preserved across the auto-advance (no remount / reset).
     const postAdvanceScroll = await scrollContainer.evaluate((el) => el.scrollTop);
-    expect(postAdvanceScroll).toBeGreaterThan(0);
+    expect(Math.abs(postAdvanceScroll - initialScroll)).toBeLessThanOrEqual(2);
   });
 
   test("manual Tafsir step away from active recitation detaches follow; stepping back re-attaches", async ({
