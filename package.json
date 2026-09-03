@@ -29,6 +29,7 @@
     "e2e:setup": "dotenv -e .env.e2e -- node scripts/e2e-fixture/setup.js",
     "e2e:build": "dotenv -e .env.e2e -- next build",
     "e2e:start": "dotenv -e .env.e2e -- next start",
+    "e2e:serve": "npm run e2e:build && npm run e2e:start",
     "e2e:test": "dotenv -e .env.e2e -- playwright test",
     "test:unit": "vitest run",
     "test:e2e": "dotenv -e .env.e2e -- playwright test",

@@ -114,4 +114,4 @@ Apply on every task, scoped to the domains actually touched.
 
 **Testing & verification**
 - Verify business logic, helpers, and components with fast unit tests (`npm test` / Vitest).
-- Never run uncapped full-suite Playwright commands locally; scope browser checks to specific test files with at most 2 workers (`--workers=2`).
+- Never run uncapped full-suite Playwright commands locally; scope browser checks to specific test files, run against `npm run e2e:serve` (a production build started once and reused) — E2E does not use `next dev`.

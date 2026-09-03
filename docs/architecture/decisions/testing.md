@@ -50,17 +50,20 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 
 ---
 
-## Developer Ergonomics: Local Dev Server for Playwright & Worker Concurrency Limits
+## Developer Ergonomics: Local E2E Against a Production Build & Worker Concurrency Limits
 
 **Status:** active
 
-**Decision (2026-08-27, updated 2026-09-03):** Playwright is configured in `playwright.config.ts` to use `next dev` locally (reusing `http://localhost:3000`), completely bypassing the heavy 1,208-page static compilation during local testing. In CI, it executes `npm run e2e:build && npm run e2e:start` for full SSG validation. Next.js build concurrency (`experimental.cpus`) in `next.config.mjs` is capped at 2 CPU workers locally (overrideable via `NEXT_BUILD_CPUS`), and local Playwright worker concurrency (`workers`) in `playwright.config.ts` is capped at 2 workers (overrideable via `PLAYWRIGHT_WORKERS`). In CI, both remain unconstrained. See `docs/plans/local-build-and-test-ergonomics.md` (Issues #450, #516).
+**Decision (2026-08-27, superseded in part 2026-09-03):** Playwright's web server is a production build (`npm run e2e:build && npm run e2e:start`) both locally and in CI. Locally, `reuseExistingServer: !process.env.CI` means `npm run e2e:serve` in a separate terminal builds once and every later `npm run e2e:test` / `npx playwright test` run attaches to that server; CI always builds fresh. Next.js build concurrency (`experimental.cpus`) in `next.config.mjs` is capped at 2 CPU workers locally (overrideable via `NEXT_BUILD_CPUS`); in CI it is unconstrained. Local Playwright worker concurrency (`workers`) defaults to 2 (overrideable via `PLAYWRIGHT_WORKERS`); CI is unconstrained. See `docs/plans/local-e2e-build-path.md` (Issue #524) and the archived `docs/plans/archive/local-build-and-test-ergonomics.md` (Issues #450, #516).
 
-**Rationale:** Generating all 604 mushaf pages across 2 locales (1,208 pages) during production builds maxes out CPU and memory, freezing local development machines. Furthermore, uncapped local Playwright runs spawn parallel Chromium instances that overwhelm `next dev` with concurrent on-demand compilation bursts, thrashing memory and swap. Dev-server execution, CPU worker caps, and Playwright worker concurrency limits allow responsive local development while preserving unconstrained CI validation.
+**Superseded (2026-09-03, Issue #524):** The original decision used `next dev` as the local web server to skip the 1,208-page build. Measured on a 31 GB / 16-core machine (~19 GB free at idle), running one spec file (`tafsir-sheet.spec.ts`) that way consumed ~16 GB of RAM and all 2 GB of swap over ~9 minutes and **failed every test** (each `page.goto` exceeds the 60 s timeout waiting for the reader route to compile). `experimental.cpus` does not cap `next dev`'s webpack compilation, and capping Playwright workers only changes how many on-demand compiles run at once, not the per-run heap cost. The same spec against `e2e:start` **passed 8/8 in 17 s with no measurable memory growth**; the one-time `e2e:build` is bounded (~4 min, ~3 GB, no swap, load ≤ 7 under the 2-CPU cap). `next dev` is therefore removed from the E2E path.
+
+**Rationale:** A production build is a bounded, once-per-session cost that `reuseExistingServer` amortises across every run in that session; `next dev`'s on-demand compilation of a data-heavy route is unbounded in memory and does not complete within the test timeout. Serving pre-rendered pages keeps local E2E fast and flat on memory while staying identical to what CI validates.
 
 **Constraints:**
-- Local Playwright tests target the dev server (`http://localhost:3000`) and must support `reuseExistingServer: true`.
-- CI must keep running `npm run e2e:build && npm run e2e:start` to validate full SSG static generation before merging.
-- Local `next build` worker count defaults to 2 cores unless overridden by `NEXT_BUILD_CPUS`.
-- Local Playwright worker count defaults to 2 workers unless overridden by `PLAYWRIGHT_WORKERS`.
-- Agents must use `npm test` (Vitest) as their fast primary verification loop, and scope local Playwright executions to targeted test files with at most 2 workers.
+- Local Playwright must support `reuseExistingServer: true` — this is what makes `e2e:serve` (build once) compose with repeated `e2e:test` runs, and it is off in CI so CI always builds fresh.
+- CI must keep running `npm run e2e:build && npm run e2e:start` with unconstrained workers to validate full SSG static generation before merging.
+- Local `next build` worker count defaults to 2 cores unless overridden by `NEXT_BUILD_CPUS`; do not remove this cap (every local E2E session now runs a build).
+- Local Playwright worker count defaults to 2 unless overridden by `PLAYWRIGHT_WORKERS`.
+- A worktree must be buildable before local E2E: `app/generated` is produced by `npm run postinstall` (`prisma generate` for both schemas), never symlinked from another worktree — a symlink breaks `next build` with `Module not found: @/app/generated/app-client`.
+- Agents use `npm test` (Vitest) as the primary fast loop; for E2E, start `npm run e2e:serve` once, then run the targeted spec against it.
