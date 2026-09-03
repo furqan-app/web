@@ -8,6 +8,12 @@ type Props = {
   total: number;
   /** Settings renders a tighter label than the gate/prompt. */
   size?: "sm" | "md";
+  /**
+   * The count label. Defaults to `offline.progress` ("{cached} of {total}
+   * pages"); pass a pre-formatted string for other units (e.g. surahs, ADR
+   * 0060). Numbers must already be localized by the caller.
+   */
+  label?: string;
 };
 
 /**
@@ -17,13 +23,14 @@ type Props = {
  * the Settings copy of this markup previously had no `role="progressbar"`, making
  * the bar invisible to assistive tech on one surface but not the other.
  */
-export const OfflineProgressBar = ({ cached, total, size = "md" }: Props) => {
+export const OfflineProgressBar = ({ cached, total, size = "md", label }: Props) => {
   const locale = useLocale();
   // Parameterized key — next-intl directly, never the project wrapper (see
   // docs/standards/i18n.md).
   const tp = useIntlTranslations("offline");
   const percent = total > 0 ? Math.round((cached / total) * 100) : 0;
   const num = (value: number) => toLocaleNumeral(value, locale);
+  const text = label ?? tp("progress", { cached: num(cached), total: num(total) });
 
   return (
     <>
@@ -33,17 +40,17 @@ export const OfflineProgressBar = ({ cached, total, size = "md" }: Props) => {
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={tp("progress", { cached: num(cached), total: num(total) })}
+        aria-label={text}
       >
         <div
-          className="h-full bg-primary transition-[width] duration-300"
+          className="h-full bg-primary transition-[width] duration-300 motion-reduce:transition-none"
           style={{ width: `${percent}%` }}
         />
       </div>
       <p
         className={`text-muted-foreground ${size === "sm" ? "text-xs" : "text-sm"}`}
       >
-        {tp("progress", { cached: num(cached), total: num(total) })}
+        {text}
       </p>
     </>
   );

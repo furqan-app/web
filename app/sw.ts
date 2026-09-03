@@ -2,15 +2,18 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, RangeRequestsPlugin, Serwist } from "serwist";
+import { CacheFirst, NetworkOnly, RangeRequestsPlugin, Serwist } from "serwist";
 import {
   ACTIVE_MUSHAF_URL,
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
   PREFS_CACHE_NAME,
+  QDC_TAFSIR_HOST,
   RECITATION_AUDIO_HOST,
   RECITATION_DOWNLOAD_CACHE_NAME,
+  TAFSIR_DOWNLOAD_CACHE_NAME,
+  TAFSIR_DOWNLOAD_CACHE_PREFIX,
   fallbackDocumentUrl,
   offlineFallbackUrl,
   pageFontUrl,
@@ -392,6 +395,22 @@ const serwist = new Serwist({
         plugins: [new RangeRequestsPlugin()],
       }),
     },
+    // Offline Tafsir (ADR 0060). QDC's tafsir host serves both `by_ayah` (live
+    // reads) and `by_chapter` (downloads). Without this rule, defaultCache's
+    // cross-origin `NetworkFirst` (32-entry `cross-origin` cache, 10s timeout,
+    // `!sameOrigin` matcher) would mirror all 114 `by_chapter` responses into
+    // that shared cache AND stall every offline `by_ayah` read for 10s before it
+    // rejects. NetworkOnly keeps QDC tafsir out of the cache entirely; the
+    // client provider owns the offline fallback (reading its own
+    // `tafsir-download-v{N}` cache), so no `CacheFirst` rule is wanted here —
+    // the download URL and the live-read URL differ, so it could never be
+    // populated by the download anyway.
+    {
+      matcher: ({ url }) =>
+        url.hostname === QDC_TAFSIR_HOST &&
+        url.pathname.startsWith("/api/qdc/tafsirs/"),
+      handler: new NetworkOnly(),
+    },
     // ADR 0049 — actually aborts the launch-time session fetch at 3s instead
     // of defaultCache's 10s NetworkOnly (whose own networkTimeoutSeconds only
     // races the SW's response to the page; it never cancels the underlying
@@ -432,8 +451,13 @@ self.addEventListener("activate", (event: ExtendableEvent) => {
         names
           .filter(
             (name) =>
-              name.startsWith(READER_HTML_CACHE_PREFIX) &&
-              name !== READER_HTML_CACHE_NAME,
+              (name.startsWith(READER_HTML_CACHE_PREFIX) &&
+                name !== READER_HTML_CACHE_NAME) ||
+              // A TAFSIR_DOWNLOAD_CACHE_VERSION bump must not orphan the old
+              // cache (ADR 0060). Only stale versions are dropped — never the
+              // current one, and this prefix collides with nothing else.
+              (name.startsWith(TAFSIR_DOWNLOAD_CACHE_PREFIX) &&
+                name !== TAFSIR_DOWNLOAD_CACHE_NAME),
           )
           .map((name) => caches.delete(name)),
       );

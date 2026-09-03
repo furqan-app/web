@@ -205,3 +205,42 @@ export type SwToClientMessage =
       complete: boolean;
       running: boolean;
     };
+
+// ---------------------------------------------------------------------------
+// Offline Tafsir (ADR 0060) — whole-edition downloads. A foreground client
+// fetch+cache.put loop (app/hooks/use-tafsir-download.ts) stores each surah's
+// `by_chapter?per_page=300` response under a synthetic key in this cache;
+// app/lib/tafsir/offline-cache.ts reads it back, and qdcTafsirProvider.getTafsir
+// falls back to it. app/sw.ts's only involvement is one NetworkOnly rule for
+// QDC_TAFSIR_HOST (keeping these responses out of defaultCache's shared 32-entry
+// cross-origin NetworkFirst cache and its 10s timeout) plus a prefix-scoped
+// activate cleanup.
+//
+// Bumped manually when the cached blob shape changes. A bump orphans the old
+// cache UNLESS app/sw.ts's activate handler deletes TAFSIR_DOWNLOAD_CACHE_PREFIX
+// entries other than the current name — it does; keep it that way.
+// ---------------------------------------------------------------------------
+export const TAFSIR_DOWNLOAD_CACHE_VERSION = 1;
+export const TAFSIR_DOWNLOAD_CACHE_PREFIX = "tafsir-download-v";
+export const TAFSIR_DOWNLOAD_CACHE_NAME = `${TAFSIR_DOWNLOAD_CACHE_PREFIX}${TAFSIR_DOWNLOAD_CACHE_VERSION}`;
+
+// QDC's public tafsir API host. Same origin serves both `by_ayah` (live reads)
+// and `by_chapter` (downloads); the NetworkOnly rule matches the whole
+// `/api/qdc/tafsirs/` path so neither pollutes the cross-origin cache.
+export const QDC_TAFSIR_HOST = "api.qurancdn.com";
+
+// Every downloaded surah is stored at `/__fq-tafsir/{editionId}/{chapter}` —
+// same-origin synthetic keys, never fetched over the network (the download URL
+// is QDC's `by_chapter`, a different URL).
+export const tafsirChapterCachePrefix = (editionId: number) =>
+  `/__fq-tafsir/${editionId}/`;
+export const tafsirChapterCacheUrl = (editionId: number, chapter: number) =>
+  `${tafsirChapterCachePrefix(editionId)}${chapter}`;
+
+// A full tafsir edition is every surah.
+export { QURAN_LAST_CHAPTER_ID as TAFSIR_TOTAL_CHAPTERS } from "@/app/constants/recitation";
+
+// Same-tab coordination is the download-manager singleton (app/lib/tafsir/
+// download-manager.ts) — every component renders from its one snapshot, so no
+// custom window event is needed. Cross-tab changes arrive via the native
+// `storage` event, which the manager listens for while it has subscribers.

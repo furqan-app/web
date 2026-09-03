@@ -1,7 +1,8 @@
 import { DesktopQuranFontSize, QuranSafhaView } from "@types";
 import { RecitationDownloadItem, RecitationSettings } from "@/app/types/recitation";
+import { TafsirDownloadItem } from "@/app/types/tafsir";
 
-export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'lastReadPath' | 'keepScreenAwake' | 'recitationDownloads';
+export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'lastReadPath' | 'keepScreenAwake' | 'recitationDownloads' | 'tafsirDownloads';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -31,6 +32,10 @@ type StorageValueType = {
   // deliberate download apart from a page asset merely shared with the bulk
   // PWA cache.
   recitationDownloads: RecitationDownloadItem[];
+  // Deliberately-downloaded whole tafsir editions (ADR 0060) — source of truth
+  // for what's offline; every read validates it against a live 114-chapter
+  // count in `tafsir-download-v{N}` because iOS evicts Cache Storage entries.
+  tafsirDownloads: TafsirDownloadItem[];
 };
 
 export const storage = {

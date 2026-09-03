@@ -495,7 +495,8 @@
     "error": "تعذر تحميل التفسير. يرجى التحقق من الاتصال والمحاولة مجدداً.",
     "retry": "إعادة المحاولة",
     "empty": "لا يتوفر تفسير لهذه الآية في الطبعة المحددة.",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "availableOffline": "متاح دون اتصال"
   },
   "light": "",
   "gold": "",
@@ -509,5 +510,19 @@
   "searchClear": "",
   "noMatches": "",
   "verseSearchHint": "",
-  "viewingChipGeneric": ""
+  "viewingChipGeneric": "",
+  "offlineTafsir": {
+    "title": "التفسير دون اتصال",
+    "description": "نزّل نسخة تفسير كاملة للقراءة دون اتصال.",
+    "download": "تنزيل",
+    "retry": "إعادة المحاولة",
+    "delete": "حذف",
+    "offlineNotice": "اتصل بالإنترنت للتنزيل.",
+    "sizeMb": "{size} ميغابايت",
+    "progress": "{cached} من {total} سورة",
+    "spaceAvailable": "{size} ميغابايت متاحة",
+    "notEnoughSpace": "لا توجد مساحة تخزين كافية لهذه النسخة.",
+    "alsoMushafLabel": "تنزيل صفحات المصحف أيضاً",
+    "alsoMushafHint": "تفتح ورقة التفسير فوق صفحة المصحف — نزّلها أيضاً (~{size} ميغابايت) لتظهر الصفحة دون اتصال."
+  }
 }

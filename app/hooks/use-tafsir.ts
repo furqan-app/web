@@ -34,5 +34,12 @@ export const useTafsir = ({
     gcTime: 60 * 60 * 1000, // 1 hour memory garbage collection
     // Enable fetching through service worker cache even when offline
     networkMode: "always",
+    // Offline, the provider has already consulted any downloaded blob (ADR
+    // 0060); retrying just re-opens the cache to the same miss and burns ~7s of
+    // backoff before the error UI appears.
+    retry: (failureCount: number) =>
+      typeof navigator !== "undefined" && navigator.onLine === false
+        ? false
+        : failureCount < 2,
   });
 };
