@@ -10,7 +10,7 @@ supersedes: []
 
 # Fold the 29 addendum-bearing plans into single coherent specs
 
-**Epic:** furqan-app/web#491 · **Follows:** [`plan-lifecycle-index.md`](plan-lifecycle-index.md) ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)) — the deferred half of #497.
+**Epic:** furqan-app/web#491 · **Follows:** [`plan-lifecycle-index.md`](plan-lifecycle-index.md) ([ADR 0059](../../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)) — the deferred half of #497.
 
 ## Summary
 

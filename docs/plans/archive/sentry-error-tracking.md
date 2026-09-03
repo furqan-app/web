@@ -10,7 +10,7 @@ area: observability
 
 ## Summary
 
-Add `@sentry/nextjs` for production error capture across client, server, and edge — errors only, no performance tracing, no session replay. Reporting gates on `NEXT_PUBLIC_SENTRY_DSN` presence (no branching code — SDK no-ops without a DSN). See [ADR 0017](../architecture/adr/0017-sentry-error-tracking.md).
+Add `@sentry/nextjs` for production error capture across client, server, and edge — errors only, no performance tracing, no session replay. Reporting gates on `NEXT_PUBLIC_SENTRY_DSN` presence (no branching code — SDK no-ops without a DSN). See [ADR 0017](../../architecture/adr/0017-sentry-error-tracking.md).
 
 ## Files Changed
 

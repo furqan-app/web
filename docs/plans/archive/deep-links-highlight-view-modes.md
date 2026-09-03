@@ -152,9 +152,9 @@ Implement a deterministic behavioral Playwright end-to-end test suite (`e2e/test
 
 ## Constraints
 
-- Single/double spread contract: [ADR 0013](../architecture/adr/0013-mushaf-double-page-spread.md) and [ADR 0054](../architecture/adr/0054-reader-size-contracts-and-tablet-double-view.md). The single-vs-double display gate is CSS-driven (`data-safha-view`), not JS hook.
-- Persistent client pager: [ADR 0028](../architecture/adr/0028-reader-persistent-pager.md). Navigation within the reader happens via `commitTo` and `window.history.replaceState`. `router.push` must never be reintroduced for in-reader page changes.
-- Content readiness checks: must use positive assertions (`waitForReaderContent` checking `.fq-safha-row` inside `.fq-quran-safha`) rather than checking absence of skeletons, per [ADR 0022](../architecture/adr/0022-visual-e2e-testing.md) and [ADR 0034](../architecture/adr/0034-page-turn-readiness-on-slow-networks.md).
+- Single/double spread contract: [ADR 0013](../../architecture/adr/0013-mushaf-double-page-spread.md) and [ADR 0054](../../architecture/adr/0054-reader-size-contracts-and-tablet-double-view.md). The single-vs-double display gate is CSS-driven (`data-safha-view`), not JS hook.
+- Persistent client pager: [ADR 0028](../../architecture/adr/0028-reader-persistent-pager.md). Navigation within the reader happens via `commitTo` and `window.history.replaceState`. `router.push` must never be reintroduced for in-reader page changes.
+- Content readiness checks: must use positive assertions (`waitForReaderContent` checking `.fq-safha-row` inside `.fq-quran-safha`) rather than checking absence of skeletons, per [ADR 0022](../../architecture/adr/0022-visual-e2e-testing.md) and [ADR 0034](../../architecture/adr/0034-page-turn-readiness-on-slow-networks.md).
 - Dedicated E2E database: tests execute against `compose.e2e.yml` databases on ports 3309/3310, never dev databases.
 
 ## What NOT to Do

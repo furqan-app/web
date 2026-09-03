@@ -28,8 +28,8 @@ second thing to keep in sync, and the previous version of this handoff went stal
 way: it still described an ambient desk pool that Pass 2 deleted and a 36px separator that Pass 3
 widened to 40px. Read the plan.
 
-Also load: [ADR 0031](../architecture/adr/0031-dark-theme-gold-emerald-semantics.md) (gold vs
-emerald), [ADR 0032](../architecture/adr/0032-dark-surface-depth-from-light.md) (depth from
+Also load: [ADR 0031](../../architecture/adr/0031-dark-theme-gold-emerald-semantics.md) (gold vs
+emerald), [ADR 0032](../../architecture/adr/0032-dark-surface-depth-from-light.md) (depth from
 light — including its addendum on why fixed ladder numbers were wrong and where to sample), and
 the Theme Architecture / Dark Surface Depth / Desktop Reading Group entries in `DECISIONS.md`.
 

@@ -18,7 +18,7 @@ Implement a behavioral Playwright end-to-end test suite (`e2e/tests/reader-navig
 ## Approach
 
 1. **Shared Reader Test Helpers (`e2e/helpers/reader.ts`)**:
-   - `waitForReaderContent(page)`: Positive assertion ensuring all mounted `.fq-quran-safha` elements have painted word rows (`.fq-safha-row`) per [ADR 0022](../architecture/adr/0022-visual-e2e-testing.md) and [ADR 0034](../architecture/adr/0034-page-turn-readiness-on-slow-networks.md).
+   - `waitForReaderContent(page)`: Positive assertion ensuring all mounted `.fq-quran-safha` elements have painted word rows (`.fq-safha-row`) per [ADR 0022](../../architecture/adr/0022-visual-e2e-testing.md) and [ADR 0034](../../architecture/adr/0034-page-turn-readiness-on-slow-networks.md).
    - `setStoredSafhaView(page, view)`: Sets `localStorage.quranSafhaView` to `'single' | 'double'` and initializes `html[data-safha-view]` before first paint.
    - `swipeReader(page, direction)`: Dispatches touch swipe gestures to exercise mobile touch page turns and snap-backs.
 
@@ -107,7 +107,7 @@ Implement a behavioral Playwright end-to-end test suite (`e2e/tests/reader-navig
 ## Constraints
 
 - Tests must use resilient locators (`getByRole`, accessible names, `data-` attributes) rather than fragile CSS class selectors where possible.
-- Content readiness checks must use positive assertions (`waitForReaderContent` checking `.fq-safha-row` presence within `.fq-quran-safha`) rather than checking absence of skeletons, per [ADR 0022](../architecture/adr/0022-visual-e2e-testing.md) and [ADR 0034](../architecture/adr/0034-page-turn-readiness-on-slow-networks.md).
+- Content readiness checks must use positive assertions (`waitForReaderContent` checking `.fq-safha-row` presence within `.fq-quran-safha`) rather than checking absence of skeletons, per [ADR 0022](../../architecture/adr/0022-visual-e2e-testing.md) and [ADR 0034](../../architecture/adr/0034-page-turn-readiness-on-slow-networks.md).
 - No visual screenshot diffing (`toHaveScreenshot()`) or baseline image comparisons.
 - Must execute against the dedicated e2e database fixture (`compose.e2e.yml` / `e2e:setup`) on ports 3309/3310, never dev DBs (3307/3308).
 

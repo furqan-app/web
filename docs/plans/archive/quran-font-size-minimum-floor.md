@@ -10,7 +10,7 @@ area: rendering
 
 ## Summary
 
-`FONT_V1` word font-size and derived spacing are pure `vh` values with no lower bound. Short viewports (including DevTools docked open) shrink text indefinitely. Fix: 24px flat minimum floor via CSS `max()`, propagated to derived spacing. See [ADR 0006](../architecture/adr/0006-quran-font-size-minimum-floor.md).
+`FONT_V1` word font-size and derived spacing are pure `vh` values with no lower bound. Short viewports (including DevTools docked open) shrink text indefinitely. Fix: 24px flat minimum floor via CSS `max()`, propagated to derived spacing. See [ADR 0006](../../architecture/adr/0006-quran-font-size-minimum-floor.md).
 
 ## Changes
 

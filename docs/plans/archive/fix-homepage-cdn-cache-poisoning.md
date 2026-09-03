@@ -102,5 +102,5 @@ whatever it is, rather than chasing the trigger further.
   self-heal window, per user confirmation.
 - Fix direction: harden origin headers (bound `revalidate`), not purge-and-monitor — durable fix over
   reactive mitigation, per user confirmation.
-- See [ADR 0035](../architecture/adr/0035-bounded-revalidate-on-static-document-routes.md) for the
+- See [ADR 0035](../../architecture/adr/0035-bounded-revalidate-on-static-document-routes.md) for the
   full options-considered writeup.

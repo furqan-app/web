@@ -10,13 +10,13 @@ area: reader
 
 ## Summary
 
-The reader has three physically different surfaces — a width-filled mobile page, a full-viewport tablet spread, and a desktop book on a desk — and a shared 1–10 `vh` `FONT_V1` scale was overridden independently by each, leaving word size, page width, line rhythm, and surah-start clearance without one source of truth. This replaces that scale with **per-band contracts** ([ADR 0054](../architecture/adr/0054-reader-size-contracts-and-tablet-double-view.md)):
+The reader has three physically different surfaces — a width-filled mobile page, a full-viewport tablet spread, and a desktop book on a desk — and a shared 1–10 `vh` `FONT_V1` scale was overridden independently by each, leaving word size, page width, line rhythm, and surah-start clearance without one source of truth. This replaces that scale with **per-band contracts** ([ADR 0054](../../architecture/adr/0054-reader-size-contracts-and-tablet-double-view.md)):
 
 - **Mobile (`<768px`)** — unchanged and non-adjustable (`--fq-mobile-font`, ADR 0011).
 - **Tablet (1024–1366px)** — always a double-page spread; word size resolves `min(widthCap, heightCap) × 0.96`; the released height feeds `space-between` rhythm; an explicit `0.2em` frame-to-Bismillah clearance is reserved.
 - **Desktop (`≥1367px`)** — Small/Medium/Large presets of **26/28/30px**, defaulting to Small (`desktopQuranFontSize` storage key; the old numeric `quranFontScale` is ignored, no migration). The resolved size governs word ink, page width, frame fallback, and vertical rhythm together.
 
-The desktop card fills its height band and `space-between` hands the surplus to the inter-line gaps ([ADR 0036](../architecture/adr/0036-reader-fills-height-band.md)) — the model mobile has used since ADR 0011, gated at `min-height: 800px` (below that the lines already fill the band and stretching only pushes the card under the recitation bar).
+The desktop card fills its height band and `space-between` hands the surplus to the inter-line gaps ([ADR 0036](../../architecture/adr/0036-reader-fills-height-band.md)) — the model mobile has used since ADR 0011, gated at `min-height: 800px` (below that the lines already fill the band and stretching only pushes the card under the recitation bar).
 
 ## Approach
 
@@ -40,7 +40,7 @@ Use **one resolved CSS value per active surface** instead of a shared numeric sc
 | `≥1367px` **and** `min-height < 800px` | preset value, `flex-start` + floor gap | User choice | No band-fill — no surplus to distribute, only the recitation bar to collide with. |
 | Legacy `quranFontScale` stored value | ignored | — | `desktopQuranFontSize` defaults to `small`; no numeric migration. |
 
-The `min-height: 800px` gate coincides with the recitation rail's own gate (`≥1367px` + `≥800px`, [recitation-bar-vertical-rail.md](recitation-bar-vertical-rail.md)) — that ticket removed the 104px bottom reserve this rhythm claims.
+The `min-height: 800px` gate coincides with the recitation rail's own gate (`≥1367px` + `≥800px`, [recitation-bar-vertical-rail.md](../recitation-bar-vertical-rail.md)) — that ticket removed the 104px bottom reserve this rhythm claims.
 
 ## Verified Test Cases
 
@@ -99,4 +99,4 @@ The `min-height: 800px` gate coincides with the recitation rail's own gate (`≥
 
 ## Revision History
 
-- 2026-08-11 — folded Addendum (Trello #172; frame-collision fix #188), which introduced [ADR 0054](../architecture/adr/0054-reader-size-contracts-and-tablet-double-view.md). **Supersedes two decisions from the original 2026-08-02 plan:** (1) "reading font size stays untouched at every breakpoint" — desktop now has 26/28/30px presets; (2) "tablet is left alone" — tablet is now forced double-page, resized to `min(widthCap, heightCap) × 0.96`, and gains an explicit frame-to-Bismillah clearance. The shared 1–10 `FONT_V1` `vh` scale is replaced by per-band contracts. The original plan's band-fill mechanism (ADR 0036 — stretch chain + `space-between` floor + desk/side margins, gated `min-height: 800px`) is retained as the desktop rhythm substrate, now fed by the preset-resolved size instead of `FONT_V1`.
+- 2026-08-11 — folded Addendum (Trello #172; frame-collision fix #188), which introduced [ADR 0054](../../architecture/adr/0054-reader-size-contracts-and-tablet-double-view.md). **Supersedes two decisions from the original 2026-08-02 plan:** (1) "reading font size stays untouched at every breakpoint" — desktop now has 26/28/30px presets; (2) "tablet is left alone" — tablet is now forced double-page, resized to `min(widthCap, heightCap) × 0.96`, and gains an explicit frame-to-Bismillah clearance. The shared 1–10 `FONT_V1` `vh` scale is replaced by per-band contracts. The original plan's band-fill mechanism (ADR 0036 — stretch chain + `space-between` floor + desk/side margins, gated `min-height: 800px`) is retained as the desktop rhythm substrate, now fed by the preset-resolved size instead of `FONT_V1`.

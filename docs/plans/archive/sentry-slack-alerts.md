@@ -10,7 +10,7 @@ area: observability
 
 ## Summary
 
-Sentry's native Slack action requires Team-plan+. Instead: a relay endpoint receives Sentry's Internal Integration webhook when an alert rule fires, verifies the HMAC signature, and forwards a formatted message to a Slack Incoming Webhook (free on both sides). See [ADR 0018](../architecture/adr/0018-sentry-slack-relay-webhook.md).
+Sentry's native Slack action requires Team-plan+. Instead: a relay endpoint receives Sentry's Internal Integration webhook when an alert rule fires, verifies the HMAC signature, and forwards a formatted message to a Slack Incoming Webhook (free on both sides). See [ADR 0018](../../architecture/adr/0018-sentry-slack-relay-webhook.md).
 
 ## Route: `app/api/webhooks/sentry/route.ts` (POST only)
 
