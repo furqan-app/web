@@ -42,28 +42,32 @@ jobs:
         run: |
           version="v${{ steps.version.outputs.version }}"
           mapfile -t issues < <(gh issue list --repo "${{ github.repository }}" --milestone "$version" --state all --json title,url -q '.[] | "- \(.title) (\(.url))"')
-          body=""
-          for line in "${issues[@]}"; do body+="$line"$'\n'; done
           {
-            echo "body<<EOF"
-            echo -e "$body"
-            echo "EOF"
+            echo "body<<RELEASE_EOF"
+            [[ ${#issues[@]} -gt 0 ]] && printf '%s\n' "${issues[@]}"
+            echo "RELEASE_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      # Dynamic values come in through `env:` and are used as shell variables /
+      # a body file — never interpolated into the script text, where a backtick
+      # or $() in an issue title would run as a command (issue #534).
       - name: Open and auto-merge release → prod PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: v${{ steps.version.outputs.version }}
+          RELEASE_BRANCH: release/${{ steps.version.outputs.version }}
+          ISSUES_BODY: ${{ steps.issues.outputs.body }}
+          REPO: ${{ github.repository }}
         run: |
-          version="v${{ steps.version.outputs.version }}"
-          pr_body="Promoting $version to prod."$'\n\n'"${{ steps.issues.outputs.body }}"
-          pr_url=$(gh pr create --repo "${{ github.repository }}" --base prod --head "release/${{ steps.version.outputs.version }}" --title "Release $version" --body "$pr_body")
+          printf 'Promoting %s to prod.\n\n%s\n' "$VERSION" "$ISSUES_BODY" > "$RUNNER_TEMP/prod-pr-body.md"
+          pr_url=$(gh pr create --repo "$REPO" --base prod --head "$RELEASE_BRANCH" --title "Release $VERSION" --body-file "$RUNNER_TEMP/prod-pr-body.md")
           # Merge directly instead of via --auto: GITHUB_TOKEN's enablePullRequestAutoMerge
           # call fails with "Resource not accessible by integration" unless auto-merge is
           # enabled repo-wide. Use a merge commit (not squash) so the release branch tip
           # stays an ancestor of prod — this workflow's own "is it already promoted" check
           # relies on that.
-          gh pr merge "$pr_url" --repo "${{ github.repository }}" --merge
-          echo "### Promoting v${{ steps.version.outputs.version }} to prod" >> "$GITHUB_STEP_SUMMARY"
+          gh pr merge "$pr_url" --repo "$REPO" --merge
+          echo "### Promoting $VERSION to prod" >> "$GITHUB_STEP_SUMMARY"
           echo "PR: $pr_url" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Mark milestoned issues done and close them
