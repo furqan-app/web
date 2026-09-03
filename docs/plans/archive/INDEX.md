@@ -2,7 +2,7 @@
 
 Finished (`implemented` / `superseded`) plans with no reference from an authoritative doc, moved here by `.claude/skills/scripts/sweep-archived-plans.sh` ([ADR 0059](../../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Kept for history only — do not read one as task context; `docs/architecture/decisions/*.md` and the ADRs carry the durable knowledge.
 
-103 archived plans.
+104 archived plans.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
@@ -44,6 +44,7 @@ Finished (`implemented` / `superseded`) plans with no reference from an authorit
 | observability | [fq-logger: Structured Logging & Observability](fq-logger.md) | implemented | feature |
 | observability | [Sentry Error Tracking](sentry-error-tracking.md) | implemented | feature |
 | observability | [Sentry-to-Slack Alerting via Relay Webhook](sentry-slack-alerts.md) | implemented | feature |
+| pwa | [Complex E2E & Fix: Offline PWA, Precached Assets & Degraded Network Navigation](e2e-offline-pwa-navigation.md) | implemented | feature |
 | pwa | [Keep Mobile/Tablet Screen Active While App Is Open](keep-screen-awake.md) | implemented | feature |
 | pwa | [PWA App-Launch Stickiness: Launch Into Last Page + Android Double-Back-to-Exit](pwa-app-stickiness.md) | implemented | feature |
 | pwa | [PWA: Remove the Root Layout's Unconditional Reciters and Session Network Calls From the Launch Path](pwa-launch-network-calls.md) | implemented | bug |

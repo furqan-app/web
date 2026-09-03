@@ -4,7 +4,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 
 60 active plans.
 
-103 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
+104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
@@ -31,7 +31,6 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Restructure Navigation for Clean UX](restructure-navigation.md) | implemented | feature |
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
-| pwa | [Complex E2E & Fix: Offline PWA, Precached Assets & Degraded Network Navigation](e2e-offline-pwa-navigation.md) | implemented | feature |
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
