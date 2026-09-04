@@ -63,6 +63,28 @@ Examples of simple tasks: fix a typo, swap a color token, change a CSS value, ad
 - **Ask one verification question at a time.** If a case is ambiguous, resolve it before moving to the next. If an example breaks the proposed approach, revise the approach and re-verify — do not proceed to the plan with an unresolved case.
 - **Do not write the plan until the user confirms all cases are handled correctly.** The signal is explicit agreement: "yes", "that's right", "looks good" — not silence or the absence of objection.
 
+### 3b. Sweep the plan before marking it ready
+
+A single self-review over a large plan is not sufficient — in practice successive passes keep
+finding real defects after the plan has already been declared correct. Before setting
+`status: ready-to-implement`, re-read the finished plan against these questions specifically,
+rather than reading it for general correctness:
+
+- **Does an existing test assert the behaviour this plan changes?** `grep` the e2e and unit specs
+  for the components and routes named in `Files to Change`. A plan that silently invalidates a
+  passing test is incomplete, not "cleanup later".
+- **Does anything here read or write through the service worker?** Any same-origin `GET /api/*` is
+  cached 24h by `defaultCache` — see the Non-negotiable Invariants block in `DECISIONS.md`.
+- **Does any state derive from a signal that behaves differently offline?** `useSession()`,
+  `navigator.onLine`, and anything with a network timeout.
+- **Every claim of "unchanged", "untouched", "no migration", "reuses the existing X" is a
+  hypothesis** — open the file and confirm it. This is where a plan is most confidently wrong.
+- **Does a removed or relocated UI affordance leave any breakpoint or route without access?**
+  (the rule already stated in step 2).
+
+Record what the sweep found in the plan's `Decisions Made`, including corrections to the plan's
+own earlier claims — a plan that quietly fixes itself teaches the next reader nothing.
+
 ### 4. ADR check — do this before writing the plan
 
 Ask yourself: did the investigation surface any non-obvious architectural decisions — constraints, encoding contracts, font pairings, security rules, data-flow invariants — that a future developer would not know from reading the code?

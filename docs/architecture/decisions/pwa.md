@@ -23,7 +23,7 @@ Active decisions for PWA & offline — page caching, Android launch/back nav, ro
 
 **Status:** active
 
-**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches, in the background, the **slim per-page content JSON** (`public/quran/pages/{n}.json`) + each page's **base WOFF2 font** for all 604 pages — NOT the SSR HTML (ADR 0028): the persistent pager renders any page client-side from that JSON + font once the app shell is loaded, so caching ~2.6 MB HTML ×604 (~1.5 GB) is unnecessary. The pre-cache set is locale-independent (Quran content + fonts; the localized app shell is precached via the Serwist build manifest). Resumes on later launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. The reader-page HTML route itself (visited pages, any visitor) is cached `NetworkFirst`, not `CacheFirst` (Trello #122, ADR 0014 Addendum 1) — see Constraints below. Trade-off: an offline *cold* load of a page URL never visited this session lacks its SSR HTML; in-app swiping to any page works offline from the JSON + fonts regardless. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](../adr/0014-pwa-offline-architecture.md) and [ADR 0028](../adr/0028-reader-persistent-pager.md).
+**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches, in the background, the **slim per-page content JSON** (`public/quran/pages/{n}.json`) + each page's **base WOFF2 font** for all 604 pages — NOT the SSR HTML (ADR 0028): the persistent pager renders any page client-side from that JSON + font once the app shell is loaded, so caching ~2.6 MB HTML ×604 (~1.5 GB) is unnecessary. The pre-cache set is locale-independent (Quran content + fonts; the localized app shell is precached via the Serwist build manifest). Resumes on later launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. The reader-page HTML route itself (visited pages, any visitor) is cached `NetworkFirst`, not `CacheFirst` (Trello #122, ADR 0014 Addendum 1) — see Constraints below. Trade-off: an offline *cold* load of a page URL never visited this session lacks its SSR HTML; in-app swiping to any page works offline from the JSON + fonts regardless. Marks stay **online-only** *for the shared-mushaf grant reader only* — superseded for the user's own mushaf by [ADR 0061](../adr/0061-offline-first-marks-sync.md) (see "Marks Are Local-First" in [`marks.md`](marks.md)), which makes self marks local-first and syncs them by state. When `grantId` is set the mark UI is still disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](../adr/0014-pwa-offline-architecture.md) and [ADR 0028](../adr/0028-reader-persistent-pager.md).
 
 **Amended (Addendum 2, Trello #187):** the pre-cache is no longer silent or background. It is **user-initiated on an explicit tap**, offered on three surfaces — an in-tab prompt on `appinstalled` (Chromium only; iOS fires no install event at all), a blocking full-screen gate on first standalone launch, and a permanent Settings button. Base (madani) mushaf only: **≈48 MB over the wire** (45.7 MiB WOFF2 + ~2.0 MiB gzipped JSON), **≈67 MiB stored**. Completion is a sentinel entry in the versioned cache, which also stops the 604-iteration loop re-running on every launch (Trello #129). The 200 ms inter-page throttle is removed for concurrency-6 batches, since nothing competes with a foreground download. Tajweed stays excluded (ADR 0023); a separate opt-in download is future scope.
 
@@ -61,12 +61,40 @@ Active decisions for PWA & offline — page caching, Android launch/back nav, ro
 - Completion is recorded as a sentinel `Response` at `/__fq-precache-complete` inside `pages-v{N}`, written **only** after a fully successful run. Never write it on a partial run — a 603/604 cache cannot serve offline and must not report "Ready". The `localStorage` dismissed flag is scoped to the same cache version and set on dismissal only, never on download start (an interrupted run must be re-offered, not silently abandoned).
 - The sentinel's presence is **not** sufficient proof of a servable cache — iOS evicts entries out from under a completed run, so a `cache.keys()`-derived page count must still validate it. Since Addendum 10 (#440) that validation is split by call site: `reportStatus` and `precacheAllPages` keep the count on their critical path (they need exact numbers and must never false-complete a resumable run), while row 2's launch probe trusts sentinel + verse-pages and runs the count as a deferred verification off the critical path (once per edition per worker lifetime, healing exactly as `reportStatus` does). Do not remove the deferred walk — that reduces to a bare sentinel `match()` and makes an evicted cache report ready forever; do not put the walk back on the launch path either (the stall of #440); and do not let the two paths' healing actions drift apart (both must delete the stale sentinel and drop the row-2 memo).
 - Progress belongs on the surface that started the download. Settings shows a status row plus a Download button, and renders a progress bar **only while a download is actually in flight** — never the old ambient bar that sat there counting up on every launch regardless of whether the user had asked for anything.
-- Do not add offline write-queueing for marks without re-opening ADR 0014 — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers.
+- Do not add offline write-queueing for **grant-scoped** marks — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers, and ADR 0061 deliberately left that hazard in place. Self marks are local-first per ADR 0061; `grantId` is the cut-off between the two.
 - The pre-cached JSON/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (content JSON shape, font logic) — bumping it on every deploy would force a full re-download of the page cache for every installed user on every deploy.
 - The pre-cache set is fully locale-independent (slim JSON + base fonts) — do not reintroduce per-locale HTML precaching; the localized app shell comes from the Serwist build manifest.
 - iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; the page cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS. (The JSON+font set is far smaller than the old full-HTML precache, easing this.)
 - The manual `pages-v{N}` version constant lives in `app/constants/offline.ts` (`PAGES_CACHE_VERSION`) — bump it there when reader markup/font logic changes. It must stay in that one module: `app/sw.ts` and `app/hooks/use-pwa-precache.ts` both import it, and the client's dismissed-flag key is derived from it, so a duplicated literal would let the cache and the flag drift onto different versions.
 - Serwist is disabled in development (`disable: process.env.NODE_ENV === "development"` in `next.config.mjs`) — `npm run dev` never registers a service worker. To test install/offline behavior, use `npm run build:local && npm start`. Use **`build:local`**, not `build`: the latter is the CI/production script and runs `prisma migrate deploy` with no env file, so it fails locally on a missing `APP_DATABASE_URL` before Next even starts. Also stop any dev server first — a dev server and a production build sharing `.next` corrupts the output, which surfaces as prerendered routes 500ing with nothing logged.
+
+---
+
+## `defaultCache` Caches Every Same-Origin API GET
+
+**Status:** active
+
+**Decision (2026-09-04):** `defaultCache` (from `@serwist/next/worker`) contains a catch-all rule
+`matcher: sameOrigin && pathname.startsWith("/api/"), method: "GET"` handled by
+`NetworkFirst({ cacheName: "apis", maxEntries: 16, maxAgeSeconds: 86400, networkTimeoutSeconds: 10 })`.
+**Every same-origin API GET is therefore cached for 24 hours** unless a rule registered ahead of
+`...defaultCache` says otherwise.
+
+**Constraints:**
+- Any feature that reads its own API while offline — or on a network slower than the 10s timeout —
+  receives a stale cached `200` that is indistinguishable from a live response. For a read that only
+  *displays* data this is a staleness bug. For a **sync or reconciliation** read it is a correctness
+  bug: the client treats a day-old snapshot as server truth, and reports a successful reconciliation
+  it never performed.
+- Such endpoints need an explicit `NetworkOnly` rule in `app/sw.ts` ahead of `...defaultCache` — the
+  same-origin counterpart of ADR 0060's QDC tafsir rule (`decisions/pwa.md`, "Offline Tafsir"), which
+  covers the cross-origin case only. Failing is the safe outcome for such a read; a local store that
+  already holds last-known state loses nothing when a pull fails, and loses correctness when a pull
+  lies.
+- `maxEntries: 16` means per-resource responses (one per page, per verse, …) churn through an LRU, so
+  the symptom is intermittent rather than reproducibly wrong — budget for that when diagnosing.
+- Found while planning offline-first marks (#236): the pull for `/api/quran/pages/{id}/marks` and
+  `/api/marks` would have reconciled the local store against this cache. See #549.
 
 ---
 
