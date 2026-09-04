@@ -20,6 +20,8 @@ rationale in the linked domain file.
 - **Never mutate the text of a live `<style>` element carrying `@font-face` rules.** Add fonts only as new immutable units (registry `FontFace`, keyed `<style>`, adopted `CSSStyleSheet`). ADR 0029. → [`decisions/rendering.md`](decisions/rendering.md)
 - **`commitTo` is the only in-reader navigation primitive.** Never `router.push` for swipe / arrows / recitation-follow; never read `usePathname()` for the current page. ADR 0028. → [`decisions/reader.md`](decisions/reader.md)
 - **Breakpoint-dependent positioning is CSS `@media`-gated, never JS-hook-gated.** SSR renders the hook's `false` default and paints it before hydration. ADR 0043. → [`decisions/reader.md`](decisions/reader.md)
+- **`useSession()` is never the input to persistent per-user state.** It reports unauthenticated on every offline launch; distinguish "no session" from "unknown". → [`decisions/api.md`](decisions/api.md)
+- **A sync or reconciliation read must never fall through to `defaultCache`.** Same-origin `GET /api/*` is cached 24h; such endpoints need `NetworkOnly` in `app/sw.ts`. → [`decisions/pwa.md`](decisions/pwa.md)
 - **Any verse→page lookup resolves through the active mushaf edition** — never `Verse.page_number` directly, never locale-flipped `next`/`prev` href logic. ADR 0033. → [`decisions/rendering.md`](decisions/rendering.md)
 
 ---

@@ -55,3 +55,27 @@ const user = extractUser(request); // { id, email, ... }
 **Constraints:**
 - Never return raw `NextResponse.json({ ... })` in API routes — always use `jsonResponse()` (exception: the page words route which predates this convention).
 - Validate inputs before DB writes; return `code: 422` with `message` on missing required fields.
+
+---
+
+## `useSession()` Is Not a Source of Persistent Identity
+
+**Status:** active
+
+**Decision (2026-09-04):** next-auth's fetch-failure path never calls `setSession`, so
+`useSession()` reports `unauthenticated` whenever `/api/auth/session` fails or is aborted.
+Given `app/sw.ts`'s 3s abort (ADR 0049, see the Auth section above), that is the **normal**
+state offline — not an edge case.
+
+**Constraints:**
+- It is safe to use for rendering a session-dependent control: a wrong reading self-corrects on
+  the next successful fetch, and nothing is lost in between.
+- It must **never** be the input to persistent per-user state — ownership stamps, local-store
+  partitioning, cache keys, or any transition that destroys data. Such state needs an
+  evidence-based signal that distinguishes **"no session"** (a successful fetch saying so, or a
+  401 from a real request) from **"unknown"** (a failed or aborted fetch), and must treat
+  "unknown" as *keep the last known state*.
+- Found while planning offline-first marks (#236): deriving the local store's owner stamp from
+  `useSession()` would have re-stamped it to `"guest"` on every offline launch, then tripped the
+  different-owner reset on reconnect and discarded the user's offline work. See
+  `docs/plans/offline-first-marks/INDEX.md`, "Session state is not a reliable signal offline".
