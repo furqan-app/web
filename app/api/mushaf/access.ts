@@ -58,11 +58,25 @@ export const withAuthorNames = async (
 };
 
 /** Body shape shared by the self and grant-scoped marks write paths. */
-type MarkBody = {
+export type MarkBody = {
   marked_type?: string;
   marked_id?: string;
   category?: string;
   comment?: string | null;
+  updated_at?: number | string | Date | null;
+};
+
+const parseClientUpdatedAt = (
+  raw?: number | string | Date | null
+): Date | null => {
+  if (raw != null) {
+    const parsed = new Date(raw);
+    if (isNaN(parsed.getTime())) {
+      return null;
+    }
+    return parsed;
+  }
+  return new Date();
 };
 
 /**
@@ -72,6 +86,11 @@ type MarkBody = {
  * mark's unique key is page-independent, so `page` is used only when creating a
  * new row. Shared by the self and grant-scoped marks routes so the write path
  * can't drift.
+ *
+ * Implements the stale-write guard (ADR 0061): compares incoming `updated_at`
+ * against stored `client_updated_at`. If the stored timestamp is newer, skips the
+ * write and returns true (self-healing on next pull). A null stored timestamp
+ * (legacy rows) always yields to incoming writes.
  */
 export const upsertMark = async (
   toUser: number,
@@ -82,30 +101,59 @@ export const upsertMark = async (
   const { marked_type, marked_id, category } = body;
   if (!marked_type || !marked_id || !category) return false;
 
+  const clientUpdatedAt = parseClientUpdatedAt(body.updated_at);
+  if (!clientUpdatedAt) return false;
+
   // Trim to null so a blank comment never persists an empty string.
   const comment = body.comment?.trim() ? body.comment.trim() : null;
 
-  await appPrisma.mark.upsert({
-    where: {
-      marked_type_marked_id_to_user: {
-        to_user: toUser,
+  return await appPrisma.$transaction(async (tx) => {
+    const existing = await tx.mark.findUnique({
+      where: {
+        marked_type_marked_id_to_user: {
+          to_user: toUser,
+          marked_type,
+          marked_id,
+        },
+      },
+      select: { client_updated_at: true },
+    });
+
+    if (
+      existing?.client_updated_at &&
+      existing.client_updated_at.getTime() > clientUpdatedAt.getTime()
+    ) {
+      return true;
+    }
+
+    await tx.mark.upsert({
+      where: {
+        marked_type_marked_id_to_user: {
+          to_user: toUser,
+          marked_type,
+          marked_id,
+        },
+      },
+      update: {
+        from_user: fromUser,
+        category,
+        comment,
+        client_updated_at: clientUpdatedAt,
+      },
+      create: {
+        page_number: page,
         marked_type,
         marked_id,
+        category,
+        comment,
+        from_user: fromUser,
+        to_user: toUser,
+        client_updated_at: clientUpdatedAt,
       },
-    },
-    update: { from_user: fromUser, category, comment },
-    create: {
-      page_number: page,
-      marked_type,
-      marked_id,
-      category,
-      comment,
-      from_user: fromUser,
-      to_user: toUser,
-    },
-  });
+    });
 
-  return true;
+    return true;
+  });
 };
 
 /**
