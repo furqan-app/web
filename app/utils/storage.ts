@@ -1,8 +1,22 @@
 import { DesktopQuranFontSize, QuranSafhaView } from "@types";
 import { RecitationDownloadItem, RecitationSettings } from "@/app/types/recitation";
 import { TafsirDownloadItem } from "@/app/types/tafsir";
+import type { LocalMarksMap } from "@/app/lib/marks/store";
 
-export type StorageKey = 'theme' | 'desktopQuranFontSize' | 'quranSafhaView' | 'recitationSettings' | 'quranMushafId' | 'quranTajweedMode' | 'lastReadPage' | 'lastReadPath' | 'keepScreenAwake' | 'recitationDownloads' | 'tafsirDownloads';
+export type StorageKey =
+  | 'theme'
+  | 'desktopQuranFontSize'
+  | 'quranSafhaView'
+  | 'recitationSettings'
+  | 'quranMushafId'
+  | 'quranTajweedMode'
+  | 'lastReadPage'
+  | 'lastReadPath'
+  | 'keepScreenAwake'
+  | 'recitationDownloads'
+  | 'tafsirDownloads'
+  | 'localMarks'
+  | 'localMarksOwner';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -36,6 +50,26 @@ type StorageValueType = {
   // for what's offline; every read validates it against a live 114-chapter
   // count in `tafsir-download-v{N}` because iOS evicts Cache Storage entries.
   tafsirDownloads: TafsirDownloadItem[];
+  // Offline-first marks store (ADR 0061) — the local read source of truth for
+  // marks on the self mushaf. Keyed by `${marked_type}:${marked_id}` via markKey.
+  localMarks: LocalMarksMap;
+  // Sticky owner stamp ("guest" | user id) for localMarks (ADR 0061). Moving
+  // from "guest" to a user migrates marks via the sync push loop; switching to
+  // a different user id resets the store.
+  localMarksOwner: string;
+};
+
+export const isQuotaExceededError = (err: unknown): boolean => {
+  if (err instanceof DOMException) {
+    return (
+      err.name === "QuotaExceededError" ||
+      err.code === 22 ||
+      err.code === 1014 ||
+      err.name === "NS_ERROR_DOM_QUOTA_REACHED"
+    );
+  }
+  const name = (err as Error | undefined)?.name;
+  return name === "QuotaExceededError" || name === "NS_ERROR_DOM_QUOTA_REACHED";
 };
 
 export const storage = {
@@ -51,12 +85,19 @@ export const storage = {
     }
   },
   
-  set: <K extends StorageKey>(key: K, value: StorageValueType[K]) => {
+  set: <K extends StorageKey>(
+    key: K,
+    value: StorageValueType[K],
+    options?: { throwOnQuota?: boolean }
+  ) => {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
       console.warn(`Error writing ${key} to localStorage:`, error);
+      if (options?.throwOnQuota && isQuotaExceededError(error)) {
+        throw error;
+      }
     }
   },
 

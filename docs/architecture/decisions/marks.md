@@ -191,9 +191,12 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
   Root-Layout Network Budget forbids (see [`pwa.md`](pwa.md)).
 - **The store's `getSnapshot` must return a stable object reference** until a mutation.
   Re-parsing `localStorage` per call returns a fresh object every time and sends
-  `useSyncExternalStore` into an infinite re-render loop. Writes must handle
-  `QuotaExceededError` explicitly — `storage.set` swallows failures with a `console.warn`,
-  which here means a mark the user believes is saved silently isn't.
+  `useSyncExternalStore` into an infinite re-render loop.
+- **Writes must handle `QuotaExceededError` explicitly with snapshot rollback.** `storage.set`
+  swallows failures with a `console.warn` by default to protect pre-existing callers, but accepts
+  `{ throwOnQuota: true }` so marks operations can surface quota exhaustion. When thrown, the
+  in-memory snapshot (`marksSnapshot` / `ownerSnapshot`) must roll back to the pre-mutation state
+  to prevent memory from diverging from disk.
 - **`/api/quran/pages/{id}/marks` and `/api/marks` must be `NetworkOnly` in `app/sw.ts`,
   registered ahead of `...defaultCache`.** `defaultCache` caches every same-origin `GET /api/*`
   for 24h (`NetworkFirst`, `cacheName: "apis"`, `maxEntries: 16`, `networkTimeoutSeconds: 10`),
