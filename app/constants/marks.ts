@@ -92,3 +92,14 @@ export const MARKS_PAGE_LIMIT = 20;
  */
 export const markKey = (mark: { marked_type: string; marked_id: string }) =>
   `${mark.marked_type}:${mark.marked_id}`;
+
+/**
+ * (surah, verse, wordPosition) so the list reads in natural Quran order.
+ * `marked_id` is `location` ("s:v:w") for word marks, `verse_key` ("s:v")
+ * for verse marks — a verse mark has no word segment, so it sorts after
+ * every word of that verse (it's triggered at the end-of-verse glyph).
+ */
+export const getSortKey = (item: { marked_type: string; marked_id: string }) => {
+  const [surah, verse, word] = item.marked_id.split(":").map(Number);
+  return [surah, verse, item.marked_type === "word" ? word : Infinity];
+};
