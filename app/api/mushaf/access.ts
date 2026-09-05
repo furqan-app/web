@@ -66,12 +66,15 @@ export type MarkBody = {
   updated_at?: number | string | Date | null;
 };
 
-const parseClientUpdatedAt = (raw?: number | string | Date | null): Date => {
+const parseClientUpdatedAt = (
+  raw?: number | string | Date | null
+): Date | null => {
   if (raw != null) {
     const parsed = new Date(raw);
-    if (!isNaN(parsed.getTime())) {
-      return parsed;
+    if (isNaN(parsed.getTime())) {
+      return null;
     }
+    return parsed;
   }
   return new Date();
 };
@@ -98,9 +101,11 @@ export const upsertMark = async (
   const { marked_type, marked_id, category } = body;
   if (!marked_type || !marked_id || !category) return false;
 
+  const clientUpdatedAt = parseClientUpdatedAt(body.updated_at);
+  if (!clientUpdatedAt) return false;
+
   // Trim to null so a blank comment never persists an empty string.
   const comment = body.comment?.trim() ? body.comment.trim() : null;
-  const clientUpdatedAt = parseClientUpdatedAt(body.updated_at);
 
   return await appPrisma.$transaction(async (tx) => {
     const existing = await tx.mark.findUnique({
@@ -116,7 +121,7 @@ export const upsertMark = async (
 
     if (
       existing?.client_updated_at &&
-      existing.client_updated_at.getTime() >= clientUpdatedAt.getTime()
+      existing.client_updated_at.getTime() > clientUpdatedAt.getTime()
     ) {
       return true;
     }

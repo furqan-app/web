@@ -25,12 +25,12 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | ready-to-implement | feature |
 | marks | [Marks API: full-sync mode + share getSortKey](offline-first-marks/545-api-full-sync.md) | ready-to-implement | chore |
 | marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | ready-to-implement | feature |
-| marks | [Marks: stale-write guard via client_updated_at](offline-first-marks/544-stale-write-guard.md) | ready-to-implement | chore |
 | marks | [My Marks reads the local store; ungate the page in the PWA](offline-first-marks/551-my-marks-store.md) | ready-to-implement | feature |
 | marks | [Offline-First Marks — umbrella](offline-first-marks/INDEX.md) | ready-to-implement | feature |
 | marks | [Reader renders marks from the local store](offline-first-marks/548-reader-store-reads.md) | ready-to-implement | feature |
 | marks | [Service worker: marks GET must be NetworkOnly](offline-first-marks/549-sw-networkonly.md) | ready-to-implement | chore |
 | marks | [Copy and Share Verses from Mark Modal](copy-share-verses.md) | implemented | feature |
+| marks | [Marks: stale-write guard via client_updated_at](offline-first-marks/544-stale-write-guard.md) | implemented | chore |
 | marks | [Verse/Word Comments](verse-word-comments.md) | implemented | feature |
 | nav | [Close Overlays on Back-Swipe (Mobile/Tablet PWA)](close-overlays-on-back-swipe.md) | implemented | bug |
 | nav | [Complex E2E & Fix: Multi-Layer Overlay Stacks, Gesture Interrupts & History Traversal](e2e-overlay-stacks-history.md) | implemented | feature |

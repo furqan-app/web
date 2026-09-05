@@ -38,6 +38,19 @@ describe("upsertMark stale-write guard (ADR 0061)", () => {
     expect(appPrisma.mark.upsert).not.toHaveBeenCalled();
   });
 
+  it("returns false when updated_at is invalid date", async () => {
+    const ok = await upsertMark(toUser, fromUser, page, {
+      marked_type: "word",
+      marked_id: "2:255:1",
+      category: "forgetting",
+      updated_at: "invalid-date-string",
+    });
+
+    expect(ok).toBe(false);
+    expect(appPrisma.mark.findUnique).not.toHaveBeenCalled();
+    expect(appPrisma.mark.upsert).not.toHaveBeenCalled();
+  });
+
   it("skips writing and returns true when existing client_updated_at is newer than incoming updated_at", async () => {
     const storedDate = new Date("2026-09-04T12:00:00.000Z");
     const incomingOlderDate = new Date("2026-09-04T10:00:00.000Z");
@@ -68,12 +81,14 @@ describe("upsertMark stale-write guard (ADR 0061)", () => {
     expect(appPrisma.mark.upsert).not.toHaveBeenCalled();
   });
 
-  it("skips writing and returns true when incoming updated_at is identical to stored client_updated_at (retry short-circuit)", async () => {
+  it("writes and returns true when incoming updated_at is identical to stored client_updated_at", async () => {
     const storedDate = new Date("2026-09-04T12:00:00.000Z");
 
     vi.mocked(appPrisma.mark.findUnique).mockResolvedValueOnce({
       client_updated_at: storedDate,
     } as Pick<Mark, "client_updated_at"> as never);
+
+    vi.mocked(appPrisma.mark.upsert).mockResolvedValueOnce({} as unknown as Mark);
 
     const ok = await upsertMark(toUser, fromUser, page, {
       marked_type: "word",
@@ -83,8 +98,7 @@ describe("upsertMark stale-write guard (ADR 0061)", () => {
     });
 
     expect(ok).toBe(true);
-    // Crucial: write is skipped on identical timestamp
-    expect(appPrisma.mark.upsert).not.toHaveBeenCalled();
+    expect(appPrisma.mark.upsert).toHaveBeenCalled();
   });
 
   it("writes and returns true when incoming updated_at is newer than stored client_updated_at", async () => {
