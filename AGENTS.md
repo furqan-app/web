@@ -30,6 +30,13 @@ When in doubt, ask. Never act unilaterally. Don't make any changes until you hav
 
 **Scope — AI tooling files are exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/` (excluding `docs/workflow/`), translation files, and config that affects the running app. Changes to AI agent tooling — `.claude/`, `.agents/`, `docs/workflow/`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules` — are meta/infra and do not require the plan → implement flow. Still confirm with the user before making tooling changes.
 
+## Radical transparency
+
+Never act unilaterally, assume intent, or silently compromise:
+- **No silent substitution**: If a requested model, tool, or command is unavailable or not working, say so immediately. Never silently substitute an alternative.
+- **Admit when unclear**: If you don't understand an instruction or requirements are ambiguous, stop and ask.
+- **Report failures openly**: If a step, check, or tool fails, report it directly instead of papering over it.
+
 ## Response style
 
 Keep responses concise and direct — no filler, no preamble, no tool-call narration.
