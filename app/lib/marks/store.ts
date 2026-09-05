@@ -298,20 +298,23 @@ export function clearLocalMarks(): void {
 
 /**
  * Reconciles marks received from a server pull.
- * Invariant (ADR 0061):
+ * Invariants (ADR 0061):
  * - Pull returns a spot held pending -> ignored (unpushed intent is never lost).
- * - Pull returns a spot held synced -> overwritten.
+ * - Pull returns a spot held synced -> overwritten with server truth.
+ * - Spot held synced locally but absent from server full-sync -> removed (deleted remotely).
  */
 export function applyServerPull(serverMarks: LocalMark[]): void {
   ensureInitialized();
   const next: LocalMarksMap = { ...marksSnapshot };
   let changed = false;
+  const serverKeys = new Set<string>();
 
   for (const serverMark of serverMarks) {
     const key = markKey({
       marked_type: serverMark.marked_type,
       marked_id: serverMark.marked_id,
     });
+    serverKeys.add(key);
     const local = next[key];
 
     // Invariant: Pull returns a spot held pending -> ignored
@@ -325,6 +328,14 @@ export function applyServerPull(serverMarks: LocalMark[]): void {
       deleted: false,
     };
     changed = true;
+  }
+
+  // Synced marks not returned by the server full-sync have been deleted remotely
+  for (const [key, local] of Object.entries(next)) {
+    if (local.sync === "synced" && !serverKeys.has(key)) {
+      delete next[key];
+      changed = true;
+    }
   }
 
   if (changed) {

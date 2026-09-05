@@ -2,7 +2,7 @@
 title: Marks sync engine (push-then-pull)
 type: feature
 date: 2026-09-04
-status: ready-to-implement
+status: implemented
 area: marks
 issue: 547
 adr: [0061]
