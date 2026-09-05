@@ -2,7 +2,7 @@
 title: Local marks store module
 type: feature
 date: 2026-09-04
-status: ready-to-implement
+status: implemented
 area: marks
 issue: 546
 adr: [0061]

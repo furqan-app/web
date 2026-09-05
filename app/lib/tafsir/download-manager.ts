@@ -1,5 +1,5 @@
 import { TafsirEdition, TafsirDownloadItem } from "@/app/types/tafsir";
-import { storage } from "@/app/utils/storage";
+import { storage, isQuotaExceededError } from "@/app/utils/storage";
 import { byChapterTafsirUrl } from "@/app/lib/tafsir/qdc-provider";
 import {
   cacheChapterBytes,
@@ -65,11 +65,6 @@ function writeRegistry(items: TafsirDownloadItem[]) {
   storage.set("tafsirDownloads", items);
   rebuild();
 }
-
-const isQuotaError = (err: unknown): boolean =>
-  err instanceof DOMException
-    ? err.name === "QuotaExceededError"
-    : (err as Error | undefined)?.name === "QuotaExceededError";
 
 const isAbortError = (err: unknown): boolean =>
   (err as Error | undefined)?.name === "AbortError";
@@ -194,7 +189,7 @@ export async function downloadEdition(edition: TafsirEdition): Promise<void> {
     ]);
     runtimeState.set(edition.id, "downloaded");
   } catch (err) {
-    runtimeState.set(edition.id, isQuotaError(err) ? "quota-exceeded" : "failed");
+    runtimeState.set(edition.id, isQuotaExceededError(err) ? "quota-exceeded" : "failed");
   } finally {
     runtimeProgress.delete(edition.id);
     rebuild();
