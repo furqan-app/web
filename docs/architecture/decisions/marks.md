@@ -223,3 +223,6 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
 - **A `422` push is dropped and logged, not retried forever**, and surfaces in My Marks —
   never in the reader. Sync state is shown only when a mark is *not* synced; no per-mark
   sync badges over scripture.
+- **The sync engine (`app/lib/marks/sync.ts`) coordinates push-then-pull sync as a module singleton.**
+  In-flight deduplication guarantees that concurrent triggers share the same run without double-pushing.
+  Exposed via `useSyncExternalStore`, coordinating across tabs via the native `storage` event.

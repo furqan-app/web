@@ -22,7 +22,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | db | [Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload](fix-dev-hmr-prisma-connections.md) | implemented | bug |
 | marks | [E2E: offline and guest marking coverage](offline-first-marks/552-e2e-coverage.md) | ready-to-implement | chore |
 | marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | ready-to-implement | feature |
-| marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | ready-to-implement | feature |
+| marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | implemented | feature |
 | marks | [My Marks reads the local store; ungate the page in the PWA](offline-first-marks/551-my-marks-store.md) | ready-to-implement | feature |
 | marks | [Offline-First Marks — umbrella](offline-first-marks/INDEX.md) | ready-to-implement | feature |
 | marks | [Reader renders marks from the local store](offline-first-marks/548-reader-store-reads.md) | ready-to-implement | feature |
