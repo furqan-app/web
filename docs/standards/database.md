@@ -64,6 +64,7 @@ Both DATABASE_URLs must include `?connection_limit=1` (set in the environment va
 
 **`furqan_app`** uses versioned Prisma migrations ([ADR 0051](../architecture/adr/0051-prisma-migrations-app-db.md)):
 - Locally, after any schema change: `npm run app-migrate-dev -- --name <name>` — creates `prisma/app/migrations/TIMESTAMP_<name>/migration.sql`, applies it to the dev DB, regenerates the client. Commit both the schema file and the new migrations file.
+- The local MySQL user (`app_user`) requires global privileges (`GRANT ALL PRIVILEGES ON *.* TO 'app_user'@'%'`) so that temporary shadow databases created during `migrate dev` can execute all migration statements including DML (e.g. historical `DELETE` migrations).
 - Production: `prisma migrate deploy` runs automatically in the `build` npm script before `next build`. Applies pending migrations silently with no risk of accidental column drops.
 - On a fresh environment with an empty App DB: `migrate deploy` applies all migrations on first deploy — no manual step.
 - On an existing DB with no migration history (baselining): see `docs/plans/adopt-prisma-migrations.md`.
