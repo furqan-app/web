@@ -2,7 +2,7 @@
 title: Marks API: full-sync mode + share getSortKey
 type: chore
 date: 2026-09-04
-status: ready-to-implement
+status: implemented
 area: marks
 issue: 545
 adr: [0061]
