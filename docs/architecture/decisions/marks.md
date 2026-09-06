@@ -287,3 +287,9 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
   This is recorded because it was missed: `#546` and `#547` both shipped as modules nothing imported,
   so the store was never populated, no trigger ever attached, and every unit test passed
   regardless — the failure is invisible from inside either module (`#560`).
+- **My Marks reads the local store with progressive windowing (#551).**
+  - Reads directly from `store.ts` via `useSyncExternalStore` in `useAllMarks`, filtering out tombstones (`deleted: true`) and applying client-side sorting in natural Quran reading order via `getSortKey`.
+  - Replaces cursor/infinite-query pagination with progressive client-side windowing (`MARKS_PAGE_LIMIT = 20`, scroll listener + load more button).
+  - Gated with `evaluateMarkModalGates`: installed PWA guests see their local marks; unauthenticated users in standard browser tabs see `MarksSignedOutPrompt`.
+  - Removes are local-first tombstones (`tombstoneLocalMark`) that trigger background `syncMarks()` without page reloads.
+  - Surfaces the two sync failure states exclusively on `/marks` (never in the reader): 401 session expired (with `signIn()`) and 422 permanently-failed dropped marks (with dismiss via `clearDroppedMarks()`).

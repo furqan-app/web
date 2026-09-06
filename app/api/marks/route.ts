@@ -5,9 +5,7 @@ import { extractUser } from "@/app/api/request";
 import { withAuthorNames, type MarkWithAuthor } from "@/app/api/mushaf/access";
 import {
   VERSE_SNIPPET_WORD_LIMIT,
-  MARKS_PAGE_LIMIT,
   MARK_CATEGORIES,
-  markKey,
   getSortKey,
 } from "@/app/constants/marks";
 
@@ -33,7 +31,6 @@ export type MarkListItem = {
 
 export type MarksPage = {
   data: Array<MarkListItem>;
-  nextCursor: string | null;
 };
 
 const buildVerseSnippet = (words: Array<{ qpc_uthmani_hafs: string }>) => {
@@ -46,9 +43,8 @@ const buildVerseSnippet = (words: Array<{ qpc_uthmani_hafs: string }>) => {
 const VALID_CATEGORIES = new Set(MARK_CATEGORIES.map((c) => c.key));
 
 /**
- * Enrich raw mark rows with Quran data (surah names, verse number, snippet).
- * Shared by the paginated and full-sync paths so both modes return identical
- * enrichment (#546's local record denormalizes exactly these fields).
+ * Enrich raw mark rows with Quran data (surah names, verse number, snippet)
+ * so returned marks carry the denormalized fields needed by the local store (#546/#551).
  */
 const enrichMarks = async (
   marks: Array<MarkWithAuthor>
@@ -134,10 +130,6 @@ export async function GET(request: NextRequest) {
   }
 
   const category = request.nextUrl.searchParams.get("category");
-  const cursor = request.nextUrl.searchParams.get("cursor");
-  // Full-sync mode for #547's pull: one request returns every mark, enriched,
-  // with no cursor — walking the cursor would be ~25 round-trips per sync.
-  const all = request.nextUrl.searchParams.get("all") === "true";
 
   if (category && category !== "all" && !VALID_CATEGORIES.has(category)) {
     return jsonResponse({ code: 422, message: "Invalid category" });
@@ -160,28 +152,8 @@ export async function GET(request: NextRequest) {
     return aSurah - bSurah || aVerse - bVerse || (aWord - bWord || 0);
   });
 
-  if (all) {
-    const page: MarksPage = {
-      data: await enrichMarks(await withAuthorNames(marks, user.id)),
-      nextCursor: null,
-    };
-    return jsonResponse({ data: page });
-  }
-
-  // Cursor not found (e.g. that mark was deleted mid-scroll) falls back to
-  // the start rather than erroring — a safe restart, not expected in normal use.
-  const startIndex = cursor
-    ? Math.max(0, marks.findIndex((m) => markKey(m) === cursor) + 1)
-    : 0;
-  const pageMarks = marks.slice(startIndex, startIndex + MARKS_PAGE_LIMIT);
-  const nextCursor =
-    startIndex + MARKS_PAGE_LIMIT < marks.length
-      ? markKey(pageMarks[pageMarks.length - 1])
-      : null;
-
   const page: MarksPage = {
-    data: await enrichMarks(await withAuthorNames(pageMarks, user.id)),
-    nextCursor,
+    data: await enrichMarks(await withAuthorNames(marks, user.id)),
   };
 
   return jsonResponse({ data: page });
