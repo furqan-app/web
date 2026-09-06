@@ -315,6 +315,12 @@ export function clearLocalMarks(): void {
  * - Pull returns a spot held pending -> ignored (unpushed intent is never lost).
  * - Pull returns a spot held synced -> overwritten with server truth.
  * - Spot held synced locally but absent from server full-sync -> removed (deleted remotely).
+ *
+ * `serverMarks` MUST be the caller's COMPLETE mark set — the "absent from the pull =>
+ * delete locally" rule below treats a missing key as a remote deletion. This is only
+ * safe because `/api/marks?all=true` returns every mark in one unpaginated response
+ * (#545). Re-introducing pagination on that endpoint without a completeness signal
+ * would make every page-1 pull silently wipe the marks on pages 2..n.
  */
 export function applyServerPull(serverMarks: LocalMark[]): void {
   ensureInitialized();

@@ -1,8 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { User, LogOut, Bookmark, CalendarDays, ChevronDown, ChevronUp, Users } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Bookmark,
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  Users,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,8 +20,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/routing";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import useTranslations from "@hooks/use-translations";
+import { toLocaleNumeral } from "@/app/utils/i18n";
+import { getPendingCount, syncMarks } from "@/app/lib/marks/sync";
 import { menuRowClassName } from "./NavPillLink";
 import { useNotifications } from "@/app/hooks/use-notifications";
 import { NotificationBell } from "@components/notifications/NotificationBell";
@@ -24,6 +36,153 @@ type Props = {
   container?: HTMLElement | null;
   // Closes menu
   onNavigate?: () => void;
+};
+
+/**
+ * Sign-out that flushes pending offline marks first and, if any survive the
+ * flush, asks the user before dropping the session (ADR 0061 / #561). Used for
+ * both `UserMenu` sign-out call sites so neither can bypass the flush.
+ *
+ * Never touches the marks owner stamp — `signOut()` alone leaves the store and
+ * its stamp intact, which is what lets a later sign-in as the same account pick
+ * the pending marks back up. This path is online-only by construction: `UserMenu`
+ * renders Sign out only when `session` is truthy.
+ */
+const SignOutControl = ({
+  menuRow,
+  onNavigate,
+}: {
+  menuRow?: boolean;
+  onNavigate?: () => void;
+}) => {
+  const t = useTranslations();
+  const tMarks = useNextIntlTranslations("marks");
+  const locale = useLocale();
+  const [flushing, setFlushing] = useState(false);
+  const [confirmCount, setConfirmCount] = useState<number | null>(null);
+
+  // The dropdown unmounts this control whenever the menu closes (Escape, an
+  // outside click), which can land mid-`await`. A continuation that then signs
+  // out — or silently drops the confirm — is a surprise after a "never mind"
+  // gesture, so every post-await branch checks this first.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const doSignOut = () => {
+    onNavigate?.();
+    signOut();
+  };
+
+  // One flush of the pending queue. `syncMarks()` is a module singleton, so a
+  // second call while one is in flight just awaits the same run — safe to call
+  // from both the sign-out attempt and "Stay and retry".
+  const flush = async () => {
+    setFlushing(true);
+    try {
+      await syncMarks();
+    } catch {
+      // A failed flush (network, quota) just leaves the count > 0; the caller
+      // decides what to show.
+    }
+    if (mountedRef.current) setFlushing(false);
+  };
+
+  const requestSignOut = async () => {
+    if (flushing) return;
+    if (getPendingCount() === 0) {
+      doSignOut();
+      return;
+    }
+    await flush();
+    if (!mountedRef.current) return;
+    if (getPendingCount() === 0) {
+      doSignOut();
+      return;
+    }
+    setConfirmCount(getPendingCount());
+  };
+
+  const stayAndRetry = () => {
+    setConfirmCount(null);
+    void flush();
+  };
+
+  if (confirmCount != null) {
+    return (
+      <div className="flex flex-col gap-1.5 px-1 py-1.5">
+        <p className="flex items-start gap-2 px-2 text-xs text-foreground">
+          <AlertTriangle
+            className="mt-0.5 size-3.5 flex-none text-warning"
+            strokeWidth={1.9}
+          />
+          <span>
+            {tMarks("signOutPending", {
+              count: confirmCount,
+              n: toLocaleNumeral(confirmCount, locale),
+            })}
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={stayAndRetry}
+          className="fq-focus-ring flex min-h-10 w-full items-center justify-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-[background-color,transform] duration-150 hover:bg-primary/90 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+        >
+          {t("marks.signOutStay", "Stay and retry")}
+        </button>
+        <button
+          type="button"
+          onClick={doSignOut}
+          className="fq-focus-ring flex min-h-10 w-full items-center justify-center rounded-lg px-3 text-xs font-medium text-[hsl(var(--control-inert))] transition-[background-color,color,transform] duration-150 hover:bg-[hsl(var(--well)/var(--well-alpha))] hover:text-destructive active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100"
+        >
+          {t("marks.signOutAnyway", "Sign out anyway")}
+        </button>
+      </div>
+    );
+  }
+
+  const icon = flushing ? (
+    <Loader2 className="size-4 flex-none animate-spin" />
+  ) : (
+    <LogOut className="size-4 flex-none" />
+  );
+  const label = flushing
+    ? t("marks.signOutSyncing", "Syncing marks…")
+    : t("signOut", "Sign out");
+
+  if (menuRow) {
+    return (
+      <button
+        type="button"
+        className={menuRowClassName}
+        disabled={flushing}
+        onClick={requestSignOut}
+      >
+        {icon}
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <DropdownMenuItem
+      className="cursor-pointer"
+      disabled={flushing}
+      // Keep the menu open through the flush and the confirm — a plain select
+      // would close it and unmount this control mid-flow.
+      onSelect={(e) => {
+        e.preventDefault();
+        void requestSignOut();
+      }}
+    >
+      {icon}
+      {label}
+    </DropdownMenuItem>
+  );
 };
 
 export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
@@ -73,17 +232,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
               {t("plans.navLink", "My Plans")}
             </Link>
             {session ? (
-              <button
-                type="button"
-                className={menuRowClassName}
-                onClick={() => {
-                  onNavigate?.();
-                  signOut();
-                }}
-              >
-                <LogOut className="size-4 flex-none" />
-                {t("signOut", "Sign out")}
-              </button>
+              <SignOutControl menuRow onNavigate={onNavigate} />
             ) : (
               <button
                 type="button"
@@ -126,7 +275,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
             {session.user?.name}
           </DropdownMenuItem>
         ) : null}
-        
+
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/mushaf" locale={locale}>
             <Users className="size-4" />
@@ -149,10 +298,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
           </Link>
         </DropdownMenuItem>
         {session ? (
-          <DropdownMenuItem className="cursor-pointer" onClick={() => signOut()}>
-            <LogOut className="size-4" />
-            {t("signOut", "Sign out")}
-          </DropdownMenuItem>
+          <SignOutControl onNavigate={onNavigate} />
         ) : (
           <DropdownMenuItem className="cursor-pointer" onClick={() => signIn()}>
             {t("signIn", "Sign in")}

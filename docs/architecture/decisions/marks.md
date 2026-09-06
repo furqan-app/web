@@ -131,6 +131,11 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
 - **A pull never overwrites a `pending` record**, and `synced` records are freely
   overwritten. This one rule is what makes the design safe; inverting it either loses
   unpushed work or freezes stale local state forever.
+- **`applyServerPull` treats its argument as the caller's *complete* mark set** — a spot held
+  `synced` locally but absent from the pull is dropped as a remote deletion. Safe only because
+  `GET /api/marks?all=true` is unpaginated (#545). If that endpoint ever paginates again,
+  `applyServerPull` needs a completeness signal first, or a partial page silently wipes the
+  marks it didn't return. Commented at both ends (`store.ts`, `api/marks/route.ts`).
 - **Deletes are tombstones** (`deleted: true`, `pending`) until the server acks, then the
   row is dropped. Removing the local row instead lets the next pull resurrect the mark
   from the server — the delete is silently undone.
@@ -159,11 +164,21 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
   re-stamps the store to `"guest"` offline and then trips the different-owner reset on
   reconnect, discarding exactly the offline marks this design exists to protect. Guest-facing
   UI (the `MarkModal` prompt, the `/marks` line) gates on the stamp for the same reason.
-- **Sign-out flushes pending marks and confirms when any remain** ("You have N marks that
-  haven't synced yet" — Sign out anyway / Stay and retry). This is online-only by
-  construction: `UserMenu` renders Sign out only when `session` is truthy, so offline it shows
-  Sign in and the path is unreachable. Both `signOut()` call sites in `UserMenu` must route
-  through it.
+- **Sign-out flushes pending marks and confirms when any remain** ("N marks haven't synced
+  yet" — Sign out anyway / Stay and retry). This is online-only by construction: `UserMenu`
+  renders Sign out only when `session` is truthy, so offline it shows Sign in and the path is
+  unreachable. Both `signOut()` call sites in `UserMenu` route through the internal
+  `SignOutControl` (#561): it `await`s one `syncMarks()`, re-reads `getPendingCount()`, and
+  either signs out or shows the confirm. The confirm is an **inline row swap inside the open
+  menu**, not a `Dialog` — a Radix `Dialog` mounted inside `DropdownMenuContent` unmounts with
+  the menu, and "Stay and retry" needs the menu to stay put. The dropdown item calls
+  `e.preventDefault()` in `onSelect` so the flush and the confirm don't close the menu. It still
+  unmounts `SignOutControl` if the menu is dismissed another way (Escape, outside click)
+  mid-`await syncMarks()`, so every post-await branch checks a `mountedRef` first and bails — a
+  continuation that signs the user out (or drops the confirm) after a "never mind" gesture is a
+  surprise. Nothing here calls `setOwnerStamp`: `signOut()` alone leaves the store and its stamp intact,
+  which is what lets a re-sign-in as the same account recover the pending marks via the push
+  loop. Do not wipe the store here.
 - **The store is stamped with an owner** (`"guest"` or the user id). Signing in re-stamps a
   guest store to that user (its records are all `pending`, so the ordinary push loop *is*
   the guest→account migration — do not write a separate migration path). Signing in with

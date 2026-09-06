@@ -121,6 +121,15 @@ const enrichMarks = async (
 
 /**
  * This request is protected by the global middleware in middleware.ts
+ *
+ * Full-sync contract (ADR 0061 / #545): this returns EVERY mark for the caller in
+ * one response — no cursor, no limit. The marks sync engine's pull phase
+ * (`fetchAllMarks` -> `applyServerPull`) relies on that: a spot held `synced`
+ * locally but absent from the response is treated as deleted remotely and dropped.
+ * If this endpoint ever paginates again, `applyServerPull` must gain a completeness
+ * signal first, or a partial page will silently wipe the caller's other marks.
+ * The `category` filter is safe only because the sync engine never sends it (it is
+ * for the My Marks category tabs, which read the local store, not this route).
  */
 export async function GET(request: NextRequest) {
   const user = extractUser(request);

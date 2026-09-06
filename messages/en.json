@@ -209,7 +209,11 @@
     "filterLabel": "Filter marks",
     "sessionExpired": "Session expired — sign in to sync your marks.",
     "syncFailedPermanently": "Some marks couldn't be saved due to invalid data and were removed.",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "signOutSyncing": "Syncing marks…",
+    "signOutPending": "{count, plural, one {{n} mark hasn’t synced yet} other {{n} marks haven’t synced yet}}",
+    "signOutAnyway": "Sign out anyway",
+    "signOutStay": "Stay and retry"
   },
   "mushaf": {
     "hubTitle": "Shared Mushaf",

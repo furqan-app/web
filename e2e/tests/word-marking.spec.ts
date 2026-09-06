@@ -977,5 +977,98 @@ test.describe("Offline & Guest Marking (ADR 0061)", () => {
       .first();
     await expect(postSyncFirstWord).not.toHaveClass(/bg-red-400/, { timeout: 10000 });
   });
+
+  test("sign-out with unsynced marks flushes, then confirms and preserves them when the flush fails (#561)", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "UserMenu dropdown is the desktop sign-out path");
+    await setupReaderSession(page, context, 1);
+
+    // Every marks write/pull fails from here on, so a created mark can never leave `pending`.
+    await page.route("**/api/quran/pages/*/marks", (route) => route.abort());
+    await page.route("**/api/marks*", (route) => route.abort());
+
+    const word = getActivePanel(page).locator('[data-fq-word="1:1:2"]').first();
+    await expect(word).toBeVisible();
+
+    await openWordMarkModal(page, word, false);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.locator('label[for="mark-color-linking"]').click();
+    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect
+      .poll(async () => (await getLocalMark(page, "word:1:1:2"))?.sync, { timeout: 10000 })
+      .toBe("pending");
+
+    // Sign out — the flush runs, cannot clear the record, so the inline confirm appears
+    // instead of an immediate sign-out.
+    await page.getByRole("button", { name: "حسابي" }).first().click();
+    await page.getByRole("menuitem", { name: "تسجيل الخروج" }).click();
+
+    const stayBtn = page.getByRole("button", { name: "البقاء وإعادة المحاولة" });
+    await expect(stayBtn).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "تسجيل الخروج على أي حال" })).toBeVisible();
+
+    // "Stay and retry" keeps the session; the pending record and the owner stamp are untouched.
+    await stayBtn.click();
+    await expect(page.getByRole("menuitem", { name: "تسجيل الخروج" })).toBeVisible();
+    expect((await getLocalMark(page, "word:1:1:2"))?.sync).toBe("pending");
+    expect(
+      await page.evaluate(() => window.localStorage.getItem("localMarksOwner")),
+    ).toBe('"1"');
+  });
+
+  test("'Sign out anyway' drops the session but preserves the local store and owner stamp (#561)", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "UserMenu dropdown is the desktop sign-out path");
+    await setupReaderSession(page, context, 1);
+
+    await page.route("**/api/quran/pages/*/marks", (route) => route.abort());
+    await page.route("**/api/marks*", (route) => route.abort());
+
+    const word = getActivePanel(page).locator('[data-fq-word="1:1:2"]').first();
+    await expect(word).toBeVisible();
+    await openWordMarkModal(page, word, false);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.locator('label[for="mark-color-linking"]').click();
+    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await expect(dialog).toBeHidden();
+    await expect
+      .poll(async () => (await getLocalMark(page, "word:1:1:2"))?.sync, { timeout: 10000 })
+      .toBe("pending");
+
+    await page.getByRole("button", { name: "حسابي" }).first().click();
+    await page.getByRole("menuitem", { name: "تسجيل الخروج" }).click();
+    await page.getByRole("button", { name: "تسجيل الخروج على أي حال" }).click();
+
+    // Session is gone — the NextAuth session cookie is cleared from the context.
+    await expect
+      .poll(
+        async () =>
+          (await context.cookies()).some(
+            (c) => c.name.endsWith("next-auth.session-token") && c.value,
+          ),
+        { timeout: 15000 },
+      )
+      .toBe(false);
+
+    // …but the local store and the owner stamp are intact, so a re-sign-in as the
+    // same account recovers the pending marks via the ordinary push loop.
+    await page.reload();
+    await waitForReaderContent(page);
+    expect((await getLocalMark(page, "word:1:1:2"))?.sync).toBe("pending");
+    expect(
+      await page.evaluate(() => window.localStorage.getItem("localMarksOwner")),
+    ).toBe('"1"');
+    // The account menu now offers Sign in, not Sign out.
+    await page.getByRole("button", { name: "حسابي" }).first().click();
+    await expect(page.getByRole("menuitem", { name: "تسجيل الدخول" })).toBeVisible();
+  });
 });
 
