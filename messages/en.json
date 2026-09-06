@@ -32,7 +32,15 @@
     "idleHint": "Type a surah name, a verse number, or a phrase.",
     "loading": "Searching…",
     "noResults": "Nothing found",
-    "noResultsHint": "Try a different spelling, or search by surah number."
+    "noResultsHint": "Try a different spelling, or search by surah number.",
+    "pageTitle": "Search results",
+    "resultsCount": "{count} results",
+    "errorTitle": "Search failed",
+    "errorHint": "Check your connection and try again.",
+    "retry": "Retry",
+    "endOfResults": "No more results",
+    "viewAll": "View all results",
+    "viewAllCount": "View all {count} results"
   },
   "sidebar": {
     "title": "Quran navigation",

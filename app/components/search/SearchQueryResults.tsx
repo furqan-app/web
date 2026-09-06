@@ -1,10 +1,10 @@
 import { highlight } from "@utils/highlight";
-import { Link } from "@/i18n/routing";
 import { SurahResult, VerseResult } from "@types";
 import useTranslations from "@hooks/use-translations";
 import { useLocale } from "next-intl";
 import { toLocaleNumeral } from "@utils/i18n";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
+import { SearchSurahRow, SearchVerseRow } from "./SearchResultRows";
 import { cn } from "@/lib/utils";
 
 export default function SearchQueryResults({
@@ -41,21 +41,12 @@ export default function SearchQueryResults({
             </span>
           </div>
           {chapters.map((chapter) => (
-            <Link
+            <SearchSurahRow
               key={chapter.id}
+              chapter={chapter}
               href={`${basePath}/${chapter.pages.split("-")[0]}`}
-              onClick={() => setIsOpen(false)}
-              className="fq-focus-ring-inset block border-b border-border/70 px-4 py-2 transition-colors last:border-b-0 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
-            >
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">
-                  {chapter.name_simple}
-                </span>
-                <span className="font-surahnames text-xl">
-                  {chapter.name_arabic}
-                </span>
-              </div>
-            </Link>
+              onNavigate={() => setIsOpen(false)}
+            />
           ))}
         </div>
       )}
@@ -71,29 +62,16 @@ export default function SearchQueryResults({
             </span>
           </div>
           {verses.map((verse) => (
-            <Link
+            <SearchVerseRow
               key={verse.verse_key}
+              verse={verse}
               href={highlight.addToUrl({
                 verseKey: verse.verse_key,
                 pageNumber: verse.page_number,
                 basePath,
               })}
-              onClick={() => setIsOpen(false)}
-              className="fq-focus-ring-inset block border-b border-border/70 px-4 py-2 transition-colors last:border-b-0 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
-            >
-              <div className="text-sm text-muted-foreground">
-                {locale === "ar"
-                  ? verse.chapter.name_arabic
-                  : verse.chapter.name_simple}{" "}
-                -{" "}
-                {toLocaleNumeral(Number(verse.verse_key.split(":")[1]), locale)}
-              </div>
-              <div className="text-right font-uthmanic text-lg" dir="rtl">
-                {verse.Word.length > 0
-                  ? verse.Word.map((w) => w.qpc_uthmani_hafs).join(" ")
-                  : (verse.display_uthmani ?? "")}
-              </div>
-            </Link>
+              onNavigate={() => setIsOpen(false)}
+            />
           ))}
         </div>
       )}

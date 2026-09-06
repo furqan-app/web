@@ -15,7 +15,7 @@ Last updated: 2026-08-31
 Nav                          — top bar, always visible; single flat flex row, every item a direct child positioned via `order`. On desktop, provides direct 1-click access to most utilities. `SharedMushaf` is permanently placed inside the `UserMenu` across all devices. On mobile, condenses further secondary actions (`Settings`, `NotificationBell`) into the `UserMenu` to prevent overcrowding (docs/plans/restructure-navigation.md). `NavOverflowMenu` is completely removed in favor of the User Portal pattern.
   FurqanLogo                 — brand mark (CSS mask with emerald primary, links to home); balanced 38px mark in a 40px footprint across themes (#411)
   SearchBar                  — icon button opening full-screen top Sheet overlay with auto-focused input; supports global Cmd+K / Ctrl+K keyboard shortcut toggle
-    SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware)
+    SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware); surah/verse rows are the shared SearchSurahRow/SearchVerseRow (see search zone)
   NavPillLink                — shared pill-style nav <Link> wrapper (icon+label); exports `navPillClassName` so non-Link consumers (UserMenu's dropdown-pill trigger <button>) can compose the same style via cn(); used directly by SharedMushafLink
   ContinueReadingLink        — link to /pages/{lastReadPage} (defaults to page 1); icon+label on desktop, icon-only on mobile; reads LastReadPageContext (live, not a one-shot localStorage read — Nav never remounts during in-app nav, so a one-shot read goes stale the moment LastReadPageSync writes again); renders unconditionally on every breakpoint and display mode (ADR 0042 Addendum, 2026-08-18) — no longer hidden on standalone/fullscreen mobile/tablet, since home is a legitimate mid-session screen there with no other nav path back to the reading position; renders via NavPillLink
   SharedMushafLink           — link to /mushaf hub (signed in or out); icon+label on desktop, icon-only on mobile; rendered directly in Nav header row at all breakpoints; renders via NavPillLink
@@ -107,6 +107,15 @@ app/global-error.tsx         — last-resort error boundary for the root layout 
 (page.tsx — server: header + session gate, self-marks only, no grant equivalent)
   MyMarksList                — client: fetches the caller's marks page-by-page via useAllMarks (useInfiniteQuery, cursor-paginated, one query per active category); a controlled filter (default "All") over "All" + one entry per MARK_CATEGORIES with distinct semantic Lucide icons and soft tinted badges, rendered responsively — a Radix DropdownMenu on mobile (`< md`, so 7 filters never overflow) and a scrolling pill-chip row on `md+`; switching the filter is a fresh paginated query (own cache — flipping back to a previously-viewed tab is instant); the loaded pages' marks are grouped by surah (mushaf order), full-width rows, each row's icon rendered with its distinct semantic category icon and badge tint (matters in All), comment previewed inline when present; each row links to /pages/[page] and has an inline remove button (deletePageMark, reused from delete-my-marks); an IntersectionObserver sentinel below the last row auto-loads the next page on scroll
   MarksSignedOutPrompt       — client: sign-in CTA when unauthenticated (own copy — not shared with mushaf/SignedOutPrompt)
+```
+
+## Zone: search (`app/[locale]/search/page.tsx` + `app/[locale]/mushaf/[grant]/search/page.tsx`)
+
+```
+(search/page.tsx — static server: setRequestLocale + Suspense boundary; the view seeds ?q= client-side via useSearchParams so the route never forces dynamic rendering. The grant entry reuses the same view under the [grant] layout guard so useReaderBasePath keeps links inside the granted mushaf — ADR 0012)
+  SearchResultsPage          — client: in-page search input (500 ms debounce, ?q= via history.replaceState — refresh/share-safe, no history entries), static surah section (useSearchChapters), infinite verses list (useSearchInfiniteVerses, take 20, IntersectionObserver sentinel gated on hasNextPage && !isFetchingNextPage); idle/loading-skeleton/empty/error+retry states; online verse page_numbers remapped through the active edition's verse-pages map, surah first-pages resolved as ${chapterId}:1 (ADR 0033)
+    SearchSurahRow           — single surah result row [SHARED — also used by the overlay's SearchQueryResults]; caller-resolved href
+    SearchVerseRow           — single verse result row (Word qpc_uthmani_hafs join, display_uthmani fallback, dir="rtl") [SHARED — also used by SearchQueryResults]; caller-resolved href
 ```
 
 ## Zone: plans (`app/[locale]/plans/page.tsx`)

@@ -15,7 +15,7 @@ Active decisions for search. Part of `docs/architecture/decisions/`; always-load
 **Constraints:**
 - Any new search endpoint added later should follow the same cap + min-length pattern, using `isSearchQueryValid` from `app/constants/search.ts` rather than re-deriving the threshold.
 - Do not remove the `take`/`orderBy` pair or the query-length gate as a "cleanup" — they are load-bearing for perceived typing responsiveness, not arbitrary.
-- `take: 10` is a UI-payload cap, not a hard ceiling on search capability — a "see all results" affordance to escape it is a known, deliberately deferred future addition (not yet built).
+- `take: 10` is a UI-payload cap, not a hard ceiling on search capability — it is escaped via the dedicated full-results page (`/[locale]/search`, `+[grant]` nested entry, #539): a `useInfiniteQuery` list in `take: 20` chunks (`SEARCH_RESULTS_PAGE_TAKE`, within `MAX_VERSE_TAKE = 50`) through the same paginated API, reached from the overlay's fixed "More results" footer (#538). The overlay keeps `take: 10`; do not "unify" the two chunk sizes — one is typed-query responsiveness, the other is scroll paging.
 - `Cmd+K` / `Ctrl+K` keydown listener in `SearchBar.tsx` must always check for both `metaKey` (macOS) and `ctrlKey` (Windows/Linux) and call `e.preventDefault()`.
 
 **Arabic query normalization:** `Verse.text_imlaei_simple` is sourced from the upstream `qdc` API and is confirmed hamza-free across the entire table — it never contains `أ`/`إ`/`آ`, only bare `ا`. Verse search normalizes the incoming query (hamza-alif variants → bare alif) before the Prisma `contains` match; the column itself is never touched. See [ADR 0007](../adr/0007-arabic-search-query-normalization.md).

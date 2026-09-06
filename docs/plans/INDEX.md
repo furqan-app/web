@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-75 active plans.
+76 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -69,6 +69,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |
 | rendering | [Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle](fix-quran-page-font-loading.md) | implemented | bug |
 | rendering | [Safha Ribbon Indicator](safha-ribbon-indicator.md) | implemented | feature |
+| search | [Dedicated Search Results Page with Infinite Scroll](search-results-page.md) | implemented | feature |
 | search | [Fix Search Debounce Lag](fix-search-debounce-lag.md) | implemented | bug |
 | search | [Offline Quran Search Foundation (Index, Offline Engine, Paginated API)](search-foundation.md) | implemented | feature |
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
