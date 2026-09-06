@@ -136,8 +136,8 @@ export default function SearchResultsPage() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("search.placeholder", "Search the Quran...")}
-          aria-label={t("search.placeholder", "Search the Quran...")}
+          placeholder={t("search.pagePlaceholder", "Search the Quran…")}
+          aria-label={t("search.pagePlaceholder", "Search the Quran…")}
           className="font-tajawal pe-9 bg-muted border-0 focus-visible:ring-0"
         />
       </div>

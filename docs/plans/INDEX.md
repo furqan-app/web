@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-80 active plans.
+81 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -56,6 +56,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Fix Tajweed Mushaf Swipe Flicker](fix-tajweed-swipe-flicker.md) | implemented | bug |
 | reader | [Loading Placeholder Toggles the Scrollbar, Reflowing the Whole Document](fix-panel-placeholder-reflow.md) | implemented | bug |
 | reader | [Mushaf Double-Page Spread Toggle](mushaf-double-page-view.md) | implemented | feature |
+| reader | [Native Touch Long-Press for Word Marking](native-word-long-press.md) | implemented | bug |
 | reader | [Nocturnal Reader Lab — Desktop RTL](reader-lab-nocturnal-desktop.md) | implemented | feature |
 | reader | [Page Turn Blanks the Reader on Slow Networks](fix-page-turn-blank-slow-network.md) | implemented | bug |
 | reader | [Reader Swipe Performance: Persistent Client Pager](reader-persistent-pager.md) | implemented | feature |

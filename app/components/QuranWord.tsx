@@ -1,12 +1,12 @@
 "use client";
 
-import { memo, MouseEvent, useRef } from "react";
+import { memo, MouseEvent, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { highlight, HighlightType } from "../utils/highlight";
 import { WordWithVerse } from "../types/prisma";
 import { MARK_CATEGORIES } from "../constants/marks";
 
-const LONG_PRESS_MS = 500;
+const LONG_PRESS_MS = 400;
 const LONG_PRESS_SLOP = 10; // px — max movement before a press is treated as a swipe
 
 export type QuranWordProps = {
@@ -44,9 +44,21 @@ export const QuranWord = memo(function QuranWord({
   );
 
   // Long-press tracking (overlay mode only — mobile + tablet reader).
-  const pressStartTime = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressStartX = useRef<number>(0);
   const pressStartY = useRef<number>(0);
+  const didLongPress = useRef<boolean>(false);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => clearLongPressTimer();
+  }, [clearLongPressTimer]);
 
   return (
     <div
@@ -57,31 +69,86 @@ export const QuranWord = memo(function QuranWord({
       data-fq-word={word.location}
       onClick={(e) => {
         // In overlay mode, a short tap should reach the ReaderPager strip (nav toggle).
-        // Long presses are handled in onTouchEnd with e.preventDefault(), which
-        // suppresses this click event — so this handler only fires on short taps.
-        if (isOverlayMode) return;
+        // Long presses suppress synthetic clicks via e.preventDefault() in onTouchEnd
+        // and stop propagation here if a synthetic click still reaches onClick.
+        if (isOverlayMode) {
+          if (didLongPress.current) {
+            e.stopPropagation();
+            didLongPress.current = false;
+          }
+          return;
+        }
         onWordClicked(e, word);
       }}
-      onTouchStart={isOverlayMode ? (e) => {
-        pressStartTime.current = Date.now();
-        pressStartX.current = e.touches[0].clientX;
-        pressStartY.current = e.touches[0].clientY;
-      } : undefined}
-      onTouchEnd={isOverlayMode ? (e) => {
-        if (pressStartTime.current === null) return;
-        const elapsed = Date.now() - pressStartTime.current;
-        const dx = e.changedTouches[0].clientX - pressStartX.current;
-        const dy = e.changedTouches[0].clientY - pressStartY.current;
-        const moved = Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_SLOP;
-        pressStartTime.current = null;
-        if (!moved && elapsed >= LONG_PRESS_MS) {
-          e.preventDefault(); // suppress synthetic click → don't toggle nav
-          onWordLongPressed?.(word);
-        }
-      } : undefined}
-      onTouchCancel={isOverlayMode ? () => {
-        pressStartTime.current = null;
-      } : undefined}
+      onTouchStart={
+        isOverlayMode
+          ? (e) => {
+              if (e.touches.length > 1) {
+                clearLongPressTimer();
+                return;
+              }
+              clearLongPressTimer();
+              didLongPress.current = false;
+              pressStartX.current = e.touches[0].clientX;
+              pressStartY.current = e.touches[0].clientY;
+
+              timerRef.current = setTimeout(() => {
+                didLongPress.current = true;
+                timerRef.current = null;
+                if (
+                  typeof navigator !== "undefined" &&
+                  typeof navigator.vibrate === "function"
+                ) {
+                  try {
+                    navigator.vibrate(15);
+                  } catch {
+                    // Ignore haptic vibration errors in restricted environments
+                  }
+                }
+                onWordLongPressed?.(word);
+              }, LONG_PRESS_MS);
+            }
+          : undefined
+      }
+      onTouchMove={
+        isOverlayMode
+          ? (e) => {
+              if (timerRef.current === null) return;
+              if (e.touches.length > 1) {
+                clearLongPressTimer();
+                return;
+              }
+              const dx = e.touches[0].clientX - pressStartX.current;
+              const dy = e.touches[0].clientY - pressStartY.current;
+              if (dx * dx + dy * dy > LONG_PRESS_SLOP * LONG_PRESS_SLOP) {
+                clearLongPressTimer();
+              }
+            }
+          : undefined
+      }
+      onTouchEnd={
+        isOverlayMode
+          ? (e) => {
+              clearLongPressTimer();
+              if (didLongPress.current) {
+                e.preventDefault(); // suppress synthetic click → don't toggle nav
+                // Keep flag briefly active so if a delayed synthetic click fires,
+                // the onClick handler above catches and stopPropagation's it.
+                setTimeout(() => {
+                  didLongPress.current = false;
+                }, 100);
+              }
+            }
+          : undefined
+      }
+      onTouchCancel={
+        isOverlayMode
+          ? () => {
+              clearLongPressTimer();
+              didLongPress.current = false;
+            }
+          : undefined
+      }
       className={`group relative leading-none text-black dark:text-white cursor-pointer select-none
       ${word.char_type_name === "end" ? "fq-ayah-end" : "fq-qword"}
       hover:scale-[1.06] hover:[filter:drop-shadow(1px_1px_0px_hsl(var(--foreground)/0.4))] transition-[filter,transform] duration-150
