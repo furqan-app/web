@@ -288,6 +288,12 @@ const isRecitationChapterApi = (url: URL) =>
 // from cache when a download has populated RECITATION_DOWNLOAD_CACHE_NAME.
 const isRecitationAudio = (url: URL) => url.hostname === RECITATION_AUDIO_HOST;
 
+// Marks API endpoints (ADR 0061, #549). Both /api/quran/pages/{id}/marks and
+// /api/marks must never be served from cache.
+const isMarksApi = (url: URL) =>
+  url.pathname === "/api/marks" ||
+  /^\/api\/quran\/pages\/[0-9]+\/marks$/.test(url.pathname);
+
 const serwist = new Serwist({
   precacheEntries: precacheManifest,
   skipWaiting: true,
@@ -409,6 +415,17 @@ const serwist = new Serwist({
       matcher: ({ url }) =>
         url.hostname === QDC_TAFSIR_HOST &&
         url.pathname.startsWith("/api/qdc/tafsirs/"),
+      handler: new NetworkOnly(),
+    },
+    // Offline-First Marks (ADR 0061, #549). Both /api/quran/pages/{id}/marks
+    // and /api/marks must never be served from cache: defaultCache's catch-all
+    // rule would otherwise cache them for 24h in the "apis" cache, feeding
+    // the sync engine stale snapshots during offline pulls or network timeouts
+    // (>10s) and rolling back synced marks. Failing is safe because the local
+    // store already holds the last known state. Same pattern and class of
+    // reason as the QDC tafsir NetworkOnly rule above (ADR 0060).
+    {
+      matcher: ({ sameOrigin, url }) => sameOrigin && isMarksApi(url),
       handler: new NetworkOnly(),
     },
     // ADR 0049 — actually aborts the launch-time session fetch at 3s instead
