@@ -56,9 +56,9 @@ export default function SearchQueryResults({
           <div className="fq-section-heading !rounded-none px-4 py-2">
             <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
               {toLocaleNumeral(verses.length, locale)}{" "}
-              {verses.length > 10
-                ? t("count_verses", "Verses")
-                : t("verses", "Verses")}
+              {/* Overlay caps verses at 10 (take: 10) — always the plural form.
+                  The full count lives on the dedicated results page. */}
+              {t("verses", "Verses")}
             </span>
           </div>
           {verses.map((verse) => (

@@ -38,7 +38,7 @@ browser experiment + DB/font forensics (see Verified Test Cases); the why lives 
 |---|---|---|---|
 | 1 | Query invalid (trimmed < 2 chars) | none — query disabled | `{ results: [], total: 0 }`, no network, no index read |
 | 2 | Online, API fetch succeeds | `GET /api/search/verses?q&take&skip` → `{ data: { results, total } }` | online rows (`Word[]` join for display), `total` = full match count |
-| 3 | Offline (`navigator.onLine === false`) or fetch rejects | precached `quran/search-index.json`, same normalization (hamza→alif, digit fold), paginated client-side with same `take`/`skip` | rows carry pre-joined `display_uthmani` instead of `Word[]`; overlay renders `Word`-join when present, `display_uthmani` otherwise |
+| 3 | Offline (`navigator.onLine === false`) or fetch rejects | precached `quran/search-index.json`, same normalization as the online route (hamza→alif only on the verse path — no digit fold, `text_imlaei_simple` has no digits), paginated client-side with same `take`/`skip` | rows carry pre-joined `display_uthmani` instead of `Word[]`; overlay renders `Word`-join when present, `display_uthmani` otherwise |
 | 4 | Surahs, any connectivity | online: `/api/search/chapters` envelope; offline: filter precached `quran/chapters.json` in memory (strict `contains` + numeric-id match preserved) | same `SurahResult[]`, no pagination (114 rows) |
 | 5 | Index not yet in cache on first offline search | loading until `cache.match` resolves; if absent → existing no-results state, never a throw | — |
 
@@ -79,8 +79,9 @@ server-side and client-side on both paths.
   params (default 10, max 50), `count` alongside `findMany`, same `where`/`orderBy`/select.
 - `app/api/search/chapters/route.ts` — same envelope + `total` (no pagination; 114 rows).
 - `app/hooks/use-search.ts` — envelope readers, `take`/`skip` args, offline branch (index load via
-  `cache.match`/fetch once + in-memory, `normalizeArabicQuery` + `normalizeDigits` parity,
-  client-side `take`/`skip` slicing, chapters fallback over `chapters.json`).
+  `cache.match`/fetch once + in-memory, `normalizeArabicQuery` parity with the online verse route,
+  `normalizeDigits` on the chapters path only, client-side `take`/`skip` slicing, chapters fallback
+  over `chapters.json`).
 - `app/types/index.ts` — `VerseResult` gains optional `display_uthmani?: string`; new
   `SearchPage<T> = { results: T[]; total: number }` (or inline type).
 - `app/components/search/SearchQueryResults.tsx` — prop-passing only (`data.results`); verse row

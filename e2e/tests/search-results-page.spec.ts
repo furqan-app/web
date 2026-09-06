@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { openSearch } from "../helpers/reader";
+import { openSearch, waitForServiceWorker } from "../helpers/reader";
 import {
   authenticateAsUser,
   clearAuth,
@@ -29,7 +29,7 @@ test.describe("Search Results Page", () => {
     // surah and 48 verses.
     await page.goto("/ar/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86");
 
-    const input = page.getByPlaceholder("ابحث عن السورة بالاسم أو الرقم");
+    const input = page.getByPlaceholder("ابحث في القرآن…");
     await expect(input).toHaveValue("الرحمن");
 
     // Surah section renders the match…
@@ -80,7 +80,7 @@ test.describe("Search Results Page", () => {
   }) => {
     await page.goto("/ar/search");
 
-    const input = page.getByPlaceholder("ابحث عن السورة بالاسم أو الرقم");
+    const input = page.getByPlaceholder("ابحث في القرآن…");
     await input.fill("الفاتحة");
 
     await expect(page).toHaveURL(/\/ar\/search\?q=.+/, {
@@ -121,6 +121,92 @@ test.describe("Search Results Page", () => {
     ).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
     await expect(verseLinks(page)).toHaveCount(0);
     await expect(page.getByText("لا توجد نتائج")).toBeHidden();
+  });
+
+  test.describe("Offline (precached search index)", () => {
+    // Wait until the Serwist install-time precache actually holds the index —
+    // waitForServiceWorker only proves the SW is active/controlling. Precache
+    // entries are keyed with a revision query param, so match with ignoreSearch.
+    const waitForIndexPrecached = (page: Page) =>
+      page.waitForFunction(
+        async () => {
+          for (const name of await caches.keys()) {
+            const cache = await caches.open(name);
+            if (await cache.match("/quran/search-index.json", { ignoreSearch: true }))
+              return true;
+          }
+          return false;
+        },
+        undefined,
+        { timeout: 15000 }
+      );
+
+    test("serves verse results from the precached index when offline", async ({
+      page,
+      context,
+    }) => {
+      // Load once online: primes the verse-pages CacheFirst entry and lets the
+      // SW finish precaching. The dedicated page is in-app-offline scope only
+      // (ADR 0062 / search-results-page.md) — a cold offline deep link is not
+      // expected to work.
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%AD%D9%85%D8%AF"); // الحمد
+      await expect(verseLinks(page).first()).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await waitForServiceWorker(page);
+      await waitForIndexPrecached(page);
+
+      // Any hit to the search API while offline is a bug — the engine must read
+      // the index directly (searchVersesOnline bails on navigator.onLine).
+      let searchApiCalls = 0;
+      await page.route("**/api/search/**", (route) => {
+        searchApiCalls += 1;
+        return route.abort();
+      });
+      await context.setOffline(true);
+      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+      // Refine to a query that was never fetched online — its results can only
+      // come from the precached index.
+      const input = page.getByPlaceholder("ابحث في القرآن…");
+      await input.fill("الرحمن");
+
+      // The debounced refine reached the URL (the new query, not just any ?q=).
+      await expect(page).toHaveURL(
+        /\/ar\/search\?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86$/,
+        { timeout: DEBOUNCE_TIMEOUT }
+      );
+      await expect(verseLinks(page).first()).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      // Offline total must equal the online/API total for this query (48 verses
+      // in the full-dataset fixture — see the seed note at the top of this file).
+      // A silently truncated index would show a smaller count here.
+      await expect(page.getByText("عدد النتائج: ٤٨")).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      expect(searchApiCalls).toBe(0);
+    });
+
+    test("keeps loaded rows and pages further from the index after going offline mid-session", async ({
+      page,
+      context,
+    }) => {
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D9%84%D9%87"); // الله
+      const links = verseLinks(page);
+      await expect(links).toHaveCount(20, { timeout: DEBOUNCE_TIMEOUT });
+      await waitForServiceWorker(page);
+      await waitForIndexPrecached(page);
+
+      await context.setOffline(true);
+      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+      // Rows fetched online survive the transition untouched…
+      await expect(links).toHaveCount(20);
+      // …and the next infinite-scroll chunk resolves from the local index.
+      await links.last().scrollIntoViewIfNeeded();
+      await expect(links).toHaveCount(40, { timeout: DEBOUNCE_TIMEOUT });
+    });
   });
 
   test.describe("Grant-scoped entry", () => {
