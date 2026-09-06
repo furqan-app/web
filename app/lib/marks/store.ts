@@ -15,6 +15,13 @@ export type LocalMark = {
   deleted: boolean; // tombstone
   updated_at: number; // client ms
   sync: "synced" | "pending";
+  // Author attribution. A grant holder can write marks INTO your mushaf
+  // (ADR 0012), so a mark on your own mushaf is not necessarily yours and the
+  // reader must be able to render "Marked by X" without a network call.
+  // Optional: records written before #548 have neither field, and a guest's
+  // own marks have no server identity yet — both read as "mine" (#548).
+  from_user?: number;
+  author_name?: string | null;
 };
 
 export type LocalMarksMap = Record<string, LocalMark>;

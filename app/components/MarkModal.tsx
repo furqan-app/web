@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 
 import { MarkerColorPicker } from "./MarkerColorPicker";
 import { useMarks } from "../hooks/use-marks";
+import { syncMarks } from "@/app/lib/marks/sync";
 import { useOnlineStatus } from "../hooks/use-online-status";
 import { VerseForMark, WordWithVerse } from "../types/prisma";
 import { useRecitation } from "@/app/contexts/RecitationContext";
@@ -426,6 +427,19 @@ export function MarkModal({
     }
   };
 
+  // The grant reader is still React Query-backed, so it needs the explicit
+  // invalidation. The self mushaf renders from the local store instead: pull the
+  // server write straight back into it rather than calling reload(), which would
+  // be a silent no-op there (ADR 0061). #550 replaces this with a direct store
+  // write in the modal, at which point the reader updates with no round trip.
+  const refreshAfterWrite = () => {
+    if (grantId) {
+      reloadMarks();
+      return;
+    }
+    void syncMarks();
+  };
+
   const saveMark = async () => {
     if (!selectedCategory || isSaving) return;
     setError(false);
@@ -444,7 +458,7 @@ export function MarkModal({
       );
 
       if (added) {
-        reloadMarks();
+        refreshAfterWrite();
         close();
       } else {
         setError(true);
@@ -470,7 +484,7 @@ export function MarkModal({
       );
 
       if (removed) {
-        reloadMarks();
+        refreshAfterWrite();
         close();
       } else {
         setError(true);

@@ -171,18 +171,45 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
   account's pending marks would graft one person's annotations onto another's account.
   Sign-out flushes pending while still online rather than wiping the store — the installed
   PWA is a single-owner device.
+- **`useMarks` reads two different sources, and the split is `grantId`.** The self mushaf reads the
+  local store via `useSyncExternalStore` and issues **no** network request at all; `grantId` set keeps
+  the React Query server fetch. Both hooks are called unconditionally so hook order never depends on
+  `grantId` — the query is gated with `enabled: Boolean(grantId)`, not by branching around the call.
+  The `LocalMark` → `PageMark` adapter runs in a `useMemo`, never inside `getSnapshot`, which must keep
+  returning one stable reference. `is_own` is derived per mark, never hardcoded:
+  a grant holder writes with `to_user` = owner and `from_user` = viewer (ADR 0012), so a mark on your
+  OWN mushaf can be someone else's and must still render "Marked by X". That is why the self marks
+  endpoint always ran `withAuthorNames`. The local-first chain therefore carries the author end to
+  end — `/api/marks` returns `from_user` + `author_name`, `LocalMark` stores them (optional: records
+  predating this, and a guest's own marks, have no server author and read as the reader's own), and
+  the adapter compares `from_user` to the owner stamp. Hardcoding `is_own: true` silently drops a
+  teacher's attribution; `e2e/tests/shared-mushaf.spec.ts` catches it. Tombstoned records (`deleted: true`) are filtered
+  out so a delete looks immediate while the row stays for the sync engine to push.
+- **`reload()` survives for the grant reader only.** Removing it wholesale (as `#548`'s plan first
+  said) would have broken refresh-after-write on the shared mushaf, which is still React Query-backed
+  and has no other refresh path. `MarkModal` routes through one helper: `grantId` → `reload()`, self →
+  a best-effort `syncMarks()` that pulls the server write back into the store. `#550` replaces the
+  self branch with a direct store write.
 - **`grantId` is the offline cut-off.** When `MarkModal` has a `grantId`, it keeps today's
   offline-disabled behaviour and never touches the local store. ADR 0014's rejection of
   offline mark writes was about concurrent viewers of a shared mushaf under
   last-author-wins (ADR 0012); that hazard is real and is not superseded.
-- **OPEN RISK for the reader read path (#548): `useSyncExternalStore` is recorded elsewhere as
-  unsafe on this exact surface.** The Font System decision in [`rendering.md`](rendering.md) lists it
-  among the mechanisms *tried and abandoned* for `QuranSafha`'s `fontReady`, because "Next.js App
-  Router's RSC navigation calls `getServerSnapshot` on the client" — which for marks would mean the
-  empty server snapshot replacing real marks on an RSC navigation, blanking highlights. That finding
-  came from live testing of one hook in one component and may not generalize, but it is the same
-  hook on the same component. #548's mandated instrumentation is where this gets settled with
-  evidence; do not wire the reader read path on the assumption that it does not apply.
+- **RESOLVED (#548, 2026-09-06) — `useSyncExternalStore` is safe for the marks read path.** The Font
+  System decision in [`rendering.md`](rendering.md) lists it among the mechanisms *tried and abandoned*
+  for `QuranSafha`'s `fontReady` because "RSC navigation calls `getServerSnapshot` on the client",
+  which for marks would mean the empty server snapshot blanking highlights. Measured on the real
+  reader before wiring anything: `getServerSnapshot` is called **only during initial SSR hydration**
+  and **never** on a soft RSC navigation into the reader, on back/forward `popstate`, or on the pager
+  commits that mount new panels (0 calls in all three, against 114–228 `getSnapshot` calls). The
+  `fontReady` finding does not generalize to a store-backed subscription. Highlights therefore survive
+  every in-app navigation; do not re-litigate this without new measurements.
+- **One mark write re-renders every mounted panel exactly once, and does not touch the font path.**
+  Measured with all panels subscribed: a store mutation re-renders all 6 mounted `QuranSafha` panels
+  once each (no cascade, no loop) and triggers **0** `document.fonts.check` calls — `fontReady` is
+  `useState` and does not depend on marks, so a mark write cannot re-run the font-readiness gate or
+  flash a skeleton. Subscription granularity (a per-page selector, a `markPages`-keyed snapshot) was
+  therefore **not** needed and must not be added speculatively — it would be complexity with no
+  measured problem behind it.
 - **`localStorage`, not IndexedDB**, and deliberately so. Marks can never be in the SSR HTML
   (user state on a statically-generated page; `useSyncExternalStore` uses `getServerSnapshot`
   through hydration), so highlights land on the **first client commit after hydration** — a
