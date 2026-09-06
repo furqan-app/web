@@ -276,6 +276,12 @@ export function tombstoneLocalMark(
     chapter_name_arabic:
       metadata?.chapter_name_arabic ?? existing?.chapter_name_arabic ?? "",
     verse_number: metadata?.verse_number ?? existing?.verse_number ?? 0,
+    ...(existing?.from_user !== undefined || metadata?.from_user !== undefined
+      ? { from_user: metadata?.from_user ?? existing?.from_user }
+      : {}),
+    ...(existing?.author_name !== undefined || metadata?.author_name !== undefined
+      ? { author_name: metadata?.author_name ?? existing?.author_name }
+      : {}),
     deleted: true,
     updated_at: Date.now(),
     sync: "pending",

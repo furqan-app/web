@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
@@ -43,7 +43,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 import { formatVerseSharePayload } from "@/app/utils/share-verse";
-import { MARK_CATEGORIES } from "@/app/constants/marks";
+import { MARK_CATEGORIES, markKey as toMarkKey } from "@/app/constants/marks";
+import {
+  setLocalMark,
+  tombstoneLocalMark,
+  getOwnerSnapshot,
+  getServerOwnerSnapshot,
+  getSnapshot,
+  getServerSnapshot,
+  subscribe,
+  type LocalMark,
+} from "@/app/lib/marks/store";
+import { isStandaloneDisplayMode } from "@/app/utils/platform";
+import { storage } from "@/app/utils/storage";
+import { evaluateMarkModalGates } from "@/app/lib/marks/gates";
 
 const COMMENT_MAX_LENGTH = 500;
 
@@ -182,7 +195,27 @@ export function MarkModal({
 }: ModalProps) {
   const { reload: reloadMarks } = useMarks([markFor.page_number], grantId);
   const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
+  const ownerStamp = useSyncExternalStore(subscribe, getOwnerSnapshot, getServerOwnerSnapshot);
+  const marksSnapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [isStandalone, setIsStandalone] = useState(() =>
+    typeof window !== "undefined" ? isStandaloneDisplayMode() : false,
+  );
+  useEffect(() => {
+    setIsStandalone(isStandaloneDisplayMode());
+  }, []);
+
+  const [promptDismissed, setPromptDismissed] = useState(() =>
+    typeof window !== "undefined" ? Boolean(storage.get("guestMarkPromptDismissed")) : false,
+  );
+  useEffect(() => {
+    setPromptDismissed(Boolean(storage.get("guestMarkPromptDismissed")));
+  }, []);
+
+  const dismissGuestPrompt = () => {
+    setPromptDismissed(true);
+    storage.set("guestMarkPromptDismissed", true);
+  };
+
   const t = useTranslations();
   const markT = useNextIntlTranslations("markModal");
   const locale = useLocale();
@@ -240,6 +273,24 @@ export function MarkModal({
   }, [markKey]);
 
   const isWord = "location" in markFor;
+  const markedType = isWord ? "word" : "verse";
+  const markedId = isWord ? markFor.location : markFor.verse_key;
+
+  const { canMark, inputsDisabled } = evaluateMarkModalGates({
+    sessionUser: session?.user,
+    ownerStamp,
+    isOffline,
+    isStandalone,
+    grantId,
+  });
+
+  const isGuest = ownerStamp === "guest";
+  const showGuestPrompt = isGuest && !grantId && isStandalone && !promptDismissed;
+
+  const currentKey = toMarkKey({ marked_type: markedType, marked_id: markedId });
+  const currentLocalMark = !grantId ? marksSnapshot[currentKey] : undefined;
+  const isPending = Boolean(currentLocalMark && !currentLocalMark.deleted && currentLocalMark.sync === "pending");
+
   const selectedCategoryMeta = MARK_CATEGORIES.find(({ key }) => key === selectedCategory);
   const selectedCategoryLabel = selectedCategoryMeta
     ? t(selectedCategoryMeta.labelKey, selectedCategoryMeta.defaultLabel)
@@ -264,6 +315,13 @@ export function MarkModal({
   const localizedAyah = toLocaleNumeral(ayahNum, locale);
 
   const fallbackVerseText = isWord ? markFor.qpc_uthmani_hafs : (verseDisplayText ?? "");
+
+  const buildMarkMetadata = () => ({
+    snippet: fallbackVerseText,
+    chapter_name_simple: surahMeta?.nameSimple ?? "",
+    chapter_name_arabic: surahMeta?.nameArabic ?? "",
+    verse_number: ayahNum,
+  });
 
   const resolveVerseText = async (): Promise<string> => {
     if (!isOnline) return fallbackVerseText;
@@ -427,43 +485,61 @@ export function MarkModal({
     }
   };
 
-  // The grant reader is still React Query-backed, so it needs the explicit
-  // invalidation. The self mushaf renders from the local store instead: pull the
-  // server write straight back into it rather than calling reload(), which would
-  // be a silent no-op there (ADR 0061). #550 replaces this with a direct store
-  // write in the modal, at which point the reader updates with no round trip.
-  const refreshAfterWrite = () => {
-    if (grantId) {
-      reloadMarks();
-      return;
-    }
-    void syncMarks();
-  };
-
   const saveMark = async () => {
     if (!selectedCategory || isSaving) return;
     setError(false);
     setIsSaving(true);
 
-    try {
-      const added = await addPageMark(
-        {
-          category: selectedCategory,
-          marked_type: isWord ? "word" : "verse",
-          marked_id: isWord ? markFor.location : markFor.verse_key,
-          page_number: markFor.page_number,
-          comment: comment.trim() || undefined,
-        },
-        grantId,
-      );
+    if (grantId) {
+      try {
+        const added = await addPageMark(
+          {
+            category: selectedCategory,
+            marked_type: markedType,
+            marked_id: markedId,
+            page_number: markFor.page_number,
+            comment: comment.trim() || undefined,
+          },
+          grantId,
+        );
 
-      if (added) {
-        refreshAfterWrite();
-        close();
-      } else {
-        setError(true);
+        if (added) {
+          reloadMarks();
+          close();
+        } else {
+          setError(true);
+        }
+      } finally {
+        setIsSaving(false);
       }
-    } finally {
+      return;
+    }
+
+    try {
+      const metadata = buildMarkMetadata();
+      const newLocalMark: LocalMark = {
+        marked_type: markedType,
+        marked_id: markedId,
+        page_number: markFor.page_number,
+        category: selectedCategory,
+        comment: comment.trim() || null,
+        snippet: metadata.snippet,
+        chapter_name_simple: metadata.chapter_name_simple,
+        chapter_name_arabic: metadata.chapter_name_arabic,
+        verse_number: metadata.verse_number,
+        ...(currentLocalMark?.from_user !== undefined ? { from_user: currentLocalMark.from_user } : {}),
+        ...(currentLocalMark?.author_name !== undefined ? { author_name: currentLocalMark.author_name } : {}),
+        deleted: false,
+        updated_at: Date.now(),
+        sync: "pending",
+      };
+
+      setLocalMark(newLocalMark);
+      void syncMarks();
+      close();
+    } catch (err) {
+      console.error("Failed to save local mark:", err);
+      setError(true);
       setIsSaving(false);
     }
   };
@@ -473,23 +549,48 @@ export function MarkModal({
     setError(false);
     setIsRemoving(true);
 
-    try {
-      const removed = await deletePageMark(
-        {
-          marked_type: isWord ? "word" : "verse",
-          marked_id: isWord ? markFor.location : markFor.verse_key,
-          page_number: markFor.page_number,
-        },
-        grantId,
-      );
+    if (grantId) {
+      try {
+        const removed = await deletePageMark(
+          {
+            marked_type: markedType,
+            marked_id: markedId,
+            page_number: markFor.page_number,
+          },
+          grantId,
+        );
 
-      if (removed) {
-        refreshAfterWrite();
-        close();
-      } else {
-        setError(true);
+        if (removed) {
+          reloadMarks();
+          close();
+        } else {
+          setError(true);
+        }
+      } finally {
+        setIsRemoving(false);
       }
-    } finally {
+      return;
+    }
+
+    try {
+      const metadata = buildMarkMetadata();
+      tombstoneLocalMark(markedType, markedId, {
+        page_number: markFor.page_number,
+        category: selectedCategory,
+        comment: comment.trim() || null,
+        snippet: metadata.snippet,
+        chapter_name_simple: metadata.chapter_name_simple,
+        chapter_name_arabic: metadata.chapter_name_arabic,
+        verse_number: metadata.verse_number,
+        ...(currentLocalMark?.from_user !== undefined ? { from_user: currentLocalMark.from_user } : {}),
+        ...(currentLocalMark?.author_name !== undefined ? { author_name: currentLocalMark.author_name } : {}),
+      });
+
+      void syncMarks();
+      close();
+    } catch (err) {
+      console.error("Failed to tombstone local mark:", err);
+      setError(true);
       setIsRemoving(false);
     }
   };
@@ -677,53 +778,86 @@ export function MarkModal({
           )}
           </div>
 
-          {isAuthenticated ? (
+          {canMark ? (
             <div className="space-y-2.5">
-            <div>
-              <div className="mb-2 flex items-center gap-3">
-                <p className="shrink-0 text-[11px] font-medium text-muted-foreground">
-                {t("markModal.chooseCategoryLabel", "Add a review mark")}
-                </p>
-                <div className="h-px flex-1 bg-border/70" />
+              {showGuestPrompt ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">
+                      {t("markModal.guestPrompt", "Sign in to keep your marks across devices")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        signIn("google", {
+                          callbackUrl: `${pathname}?markWord=${encodeURIComponent(markKey)}`,
+                        })
+                      }
+                      className="shrink-0 font-medium text-primary hover:underline"
+                    >
+                      {t("signIn", "Sign in")}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={dismissGuestPrompt}
+                    className="shrink-0 rounded p-0.5 text-muted-foreground/70 transition-colors hover:text-foreground"
+                    aria-label={t("markModal.dismissGuestPrompt", "Dismiss")}
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ) : null}
+
+              <div>
+                <div className="mb-2 flex items-center gap-3">
+                  <p className="shrink-0 text-[11px] font-medium text-muted-foreground">
+                    {t("markModal.chooseCategoryLabel", "Add a review mark")}
+                  </p>
+                  <div className="h-px flex-1 bg-border/70" />
+                </div>
+                <MarkerColorPicker
+                  value={selectedCategory}
+                  onChange={setSelectedCategory}
+                  disabled={inputsDisabled}
+                />
               </div>
-              <MarkerColorPicker
-                value={selectedCategory}
-                onChange={setSelectedCategory}
-                disabled={isOffline}
+
+              <Textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
+                maxLength={COMMENT_MAX_LENGTH}
+                disabled={inputsDisabled}
+                aria-label={t("markModal.commentPlaceholder", "Add a comment (optional)…")}
+                placeholder={t("markModal.commentPlaceholder", "Add a comment (optional)…")}
+                dir={getLanguageDirection(locale)}
+                className="h-[clamp(2.75rem,12dvh,5.25rem)] resize-none rounded-xl border-border/80 bg-card text-start text-base placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary sm:text-sm"
               />
             </div>
-
-            <Textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
-              maxLength={COMMENT_MAX_LENGTH}
-              disabled={isOffline}
-              aria-label={t("markModal.commentPlaceholder", "Add a comment (optional)…")}
-              placeholder={t("markModal.commentPlaceholder", "Add a comment (optional)…")}
-              dir={getLanguageDirection(locale)}
-              className="h-[clamp(2.75rem,12dvh,5.25rem)] resize-none rounded-xl border-border/80 bg-card text-start text-base placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary sm:text-sm"
-            />
-          </div>
           ) : (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-border/80 bg-card p-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t("markModal.signInToMark", "Sign in to mark words and verses")}
-            </p>
-            <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6"
-              onClick={() => signIn("google", { callbackUrl: `${pathname}?markWord=${encodeURIComponent(markKey)}` })}
-            >
-              {t("signIn", "Sign in")}
-            </Button>
-          </div>
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-border/80 bg-card p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t("markModal.signInToMark", "Sign in to mark words and verses")}
+              </p>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6"
+                onClick={() =>
+                  signIn("google", {
+                    callbackUrl: `${pathname}?markWord=${encodeURIComponent(markKey)}`,
+                  })
+                }
+              >
+                {t("signIn", "Sign in")}
+              </Button>
+            </div>
           )}
         </div>
-        {isAuthenticated ? (
+        {canMark ? (
           <div className="shrink-0 border-t border-border/80 bg-card px-4 py-2.5 sm:px-5">
             <button
               type="button"
               onClick={saveMark}
-              disabled={!selectedCategory || isOffline || isSaving || isRemoving}
+              disabled={!selectedCategory || inputsDisabled || isSaving || isRemoving}
               className="flex min-h-12 w-full items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground shadow-xs transition-[background-color,transform] duration-150 hover:bg-primary/95 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
             >
               <span className="flex size-12 shrink-0 items-center justify-center border-e border-primary-foreground/20">
@@ -735,20 +869,24 @@ export function MarkModal({
               <button
                 type="button"
                 onClick={removeMark}
-                disabled={isOffline || isSaving || isRemoving}
+                disabled={inputsDisabled || isSaving || isRemoving}
                 className="mt-1.5 flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-medium text-destructive transition-[background-color,transform] duration-150 hover:bg-destructive/10 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 {isRemoving ? <Loader2 className="size-3.5 animate-spin" /> : <Eraser className="size-3.5" strokeWidth={1.8} />}
                 {t("markModal.removeMark", "Remove Mark")}
               </button>
             ) : null}
-            {isOffline ? (
+            {error ? (
+              <p role="alert" className="mt-2 text-center text-xs text-destructive">
+                {t("markModal.actionError", "Something went wrong. Try again.")}
+              </p>
+            ) : inputsDisabled ? (
               <p className="mt-2 text-center text-xs text-muted-foreground">
                 {t("markModal.offlineNotice", "Connect to the internet to view or add marks")}
               </p>
-            ) : error ? (
-              <p role="alert" className="mt-2 text-center text-xs text-destructive">
-                {t("markModal.actionError", "Something went wrong. Try again.")}
+            ) : isPending ? (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                {t("markModal.savedLocally", "Saved on this device")}
               </p>
             ) : null}
           </div>
