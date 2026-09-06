@@ -41,6 +41,7 @@ This check is a literal, mandatory action every time — it has been skipped bef
 - Ask one adversarial question at a time — wait for the answer before asking the next
 - Questions should surface: scope ambiguity, edge cases, mobile/RTL behavior, interaction with existing systems, timing concerns
 - If the task removes or relocates an existing UI trigger/control, explicitly verify every breakpoint and route that used it still has equivalent access before writing "unchanged" anywhere in the plan — check what else depends on it, don't assume.
+- If the task integrates with or wraps a third-party package, check its **full** catalog before scoping around it — not just whatever subset is already installed locally. What's installed reflects one machine's history, not what the package actually offers; scoping from it risks reinventing something the package already ships. Use the package's own listing command (e.g. `npx skills add <source> -l` for a skills.sh-sourced package) or read its upstream repo directly. #571 initially scoped `detect-fleet`/`setup-fq-fleet` around 4 already-installed delegate skills before discovering the source package shipped 18, including one (`delegate-setup`) that already solved most of the task — see [ADR 0063](../architecture/adr/0063-fleet-detection-wraps-delegate-setup.md).
 
 **UI tasks.** If the task involves components, pages, layout, or styling, consult `docs/design/design-principles.md` and `docs/standards/styling.md` (including its Motion section) during investigation, and list any UI/UX concerns — contrast, hierarchy, spacing scale, RTL/LTR parity, touch targets, reduced motion — directly in the plan.
 
@@ -155,6 +156,8 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 ```
 
 `## What NOT to Do` is a required section — the implement workflow reads it to avoid re-implementing a superseded approach. If nothing is ruled out yet, keep the heading with a single "None known" bullet rather than omitting it.
+
+If step 4 produced an ADR that already spells out a decision table or if/then logic in full, `## Decision Tree / Algorithm` should **link to that ADR section** rather than reproduce the table verbatim — two copies of the same table drift the moment one is edited and the other isn't (caught by `/review-fq-work` on #571, where the plan's copy of an ADR's `cost_tier` table had already gone stale relative to the ADR's).
 
 ---
 
