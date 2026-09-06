@@ -64,6 +64,22 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 
 ---
 
+## Standing a task down (abandoned before shipping)
+
+A task can end without a PR — blocked by a defect in a dependency, superseded, or split into a
+prerequisite issue. `/ship-fq-task` never runs in that case, so its cleanup never runs either.
+
+- **Tear the worktree down with [`ship-task.md`](ship-task.md) step 7's procedure**, not an ad-hoc
+  `rm -rf`. A `next dev` server ignores SIGTERM and survives both `git worktree remove` and the
+  folder deletion: it keeps listening on the recorded port with a now-deleted working directory and
+  answers every request with a 500, which reads like a broken app rather than a stale process. Kill
+  by the recorded port **and** by any process rooted in the worktree, with `-9`, before removing
+  anything. (Hit while standing `#548` down for `#560`.)
+- **Revert the issue's status label.** `/start-fq-task` moved it to `status:in-progress` and assigned
+  it; put it back to what it was and unassign, or the board shows work in flight that nobody is doing.
+
+---
+
 ## Anti-patterns to avoid
 
 - Do not load all standards files when only one is relevant.

@@ -66,4 +66,11 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 - Local `next build` worker count defaults to 2 cores unless overridden by `NEXT_BUILD_CPUS`; do not remove this cap (every local E2E session now runs a build).
 - Local Playwright worker count defaults to 2 unless overridden by `PLAYWRIGHT_WORKERS`.
 - A worktree must be buildable before local E2E: `app/generated` is produced by `npm run postinstall` (`prisma generate` for both schemas), never symlinked from another worktree — a symlink breaks `next build` with `Module not found: @/app/generated/app-client`.
+- **The e2e databases carry no migration history, so new `furqan_app` migrations never reach them.**
+  They are created by `prisma db push`, so `prisma migrate deploy` against `.env.e2e` fails with
+  **P3005** ("the database schema is not empty") rather than applying anything. A spec that depends on
+  a newly-migrated column therefore fails on a schema error unrelated to the code under test — found
+  when `#544`'s `Mark.client_updated_at` was absent from `furqan_app_e2e` while verifying `#560`.
+  When a spec needs a new column, apply that migration's SQL to the e2e DB by hand (or recreate the
+  DB from the current schema); do not try to baseline it mid-task.
 - Agents do not run test suites locally by default (CI runs lint, type-check, unit tests, and Playwright automatically on PRs). When needed, agents run targeted unit tests (`npx vitest run <path>`) for pure logic changes, and run targeted Playwright specs against `npm run e2e:serve` only when authoring/updating E2E tests.

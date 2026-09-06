@@ -24,6 +24,21 @@ This is not a replacement for `docs/architecture/decisions/*.md` or the standard
 
 A static, highest-risk-first list (last reconciled against the decisions 2026-08-13; split into `decisions/*.md` 2026-09-02). It is **not exhaustive** — the live grep in the pre/post-check steps above is the actual source of truth; this list exists so common regressions get caught even on a skim. Bracket tags name the source section (findable in its `decisions/*.md` file) and ADR.
 
+### Reachability (new code must be called)
+- **Every new module in the diff has at least one non-test importer.** A module only `*.test.ts`
+  imports is dead code that ships green: unit tests pass, lint passes, type-check passes, and the
+  failure is invisible from inside the module. `#546`/`#547` both merged to `main` this way and the
+  whole offline-marks feature was inert until `#560` wired it up — grep the diff's new files for
+  importers before reporting done.
+- **Behaviour the plan promises is traceable to a real call site.** A module-scope listener,
+  singleton or lifecycle trigger does nothing until something imports the module; a `subscribe()`
+  that attaches event listeners on its first listener does nothing until something subscribes. If the
+  plan says "on launch" or "when the session becomes authenticated", name the mounted component that
+  makes that happen. `#547`'s plan listed both triggers and its Files to Change named no component to
+  host either.
+- **A plan whose Files to Change are all new files is the warning sign.** Working code almost always
+  edits something that already exists. If nothing existing changed, ask what is supposed to call this.
+
 ### Swipe / reader flicker
 - Never mutate the text/content of a live `<style>` element carrying `@font-face` rules (rewrite or `appendChild`). Add fonts only as new immutable units — a registry `FontFace`, or a new keyed `<style>`. [Font System, ADR 0029]
 - `commitTo` is the only in-reader navigation primitive. Never reintroduce `router.push` for swipe/arrows/recitation-follow, never read `usePathname()` for the current page. [ADR 0028]
