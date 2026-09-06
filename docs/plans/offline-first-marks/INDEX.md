@@ -40,12 +40,17 @@ others.
 | [#550](https://github.com/furqan-app/web/issues/550) MarkModal gates | [`550-markmodal-gates.md`](550-markmodal-gates.md) | 546 |
 | [#551](https://github.com/furqan-app/web/issues/551) My Marks from the store | [`551-my-marks-store.md`](551-my-marks-store.md) | 546, 550 |
 | [#552](https://github.com/furqan-app/web/issues/552) E2E coverage | [`552-e2e-coverage.md`](552-e2e-coverage.md) | 550, 551 |
+| [#561](https://github.com/furqan-app/web/issues/561) Sign-out flushes pending marks | [`561-signout-flush.md`](561-signout-flush.md) | 550 |
 
 #544, #545 and #546 have no dependencies and can run in parallel.
 
 #560 was added on 2026-09-06: #546 and #547 both shipped as modules nothing imported, so the
 store was never populated and the sync triggers were never attached. It is a prerequisite for
 #548, not new scope.
+
+#561 was split out of #560 (2026-09-04) and scheduled after the epic (2026-09-06): the
+sign-out flush-and-confirm required by `decisions/marks.md` cannot be exercised until #550
+creates `pending` records. It also carries two small hardening items from the epic review.
 
 ## Architecture
 
@@ -187,7 +192,7 @@ Walked through and agreed during planning. Each child file names the ones it mus
 6. **Shared mushaf, offline.** No local write path; `MarkModal` keeps its disabled state and offline notice.
 7. **Account switch.** Store stamped U; signing in as V resets the store and pulls fresh.
 8. **Signed-in user opens the installed PWA offline.** Session fetch fails, `useSession()` reports unauthenticated — the stamp is unchanged, the reader still shows their marks, no guest prompt. On reconnect nothing is reset.
-9. **Sign-out with 3 marks still pending, online.** Flush attempted; failures leave them pending; dialog offers Sign out anyway / Stay and retry.
+9. **Sign-out with 3 marks still pending, online.** Flush attempted; failures leave them pending; an inline confirm (not a dialog — see #561) offers Sign out anyway / Stay and retry.
 10. **Two tabs syncing at once.** Singleton in-flight guard plus the `storage` event; state-based sync makes a double push idempotent regardless.
 
 ## What NOT to do

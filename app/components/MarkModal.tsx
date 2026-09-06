@@ -536,6 +536,10 @@ export function MarkModal({
 
       setLocalMark(newLocalMark);
       void syncMarks();
+      // The store write is synchronous and `close()` unmounts this modal, so the
+      // reset is belt-and-braces — but it keeps the flag honest if the modal ever
+      // stops unmounting on close, where a stuck `true` would disable Save + Remove.
+      setIsSaving(false);
       close();
     } catch (err) {
       console.error("Failed to save local mark:", err);
@@ -587,6 +591,9 @@ export function MarkModal({
       });
 
       void syncMarks();
+      // Belt-and-braces: `close()` unmounts this modal, but reset the flag so it
+      // stays honest if the modal ever stops unmounting on close.
+      setIsRemoving(false);
       close();
     } catch (err) {
       console.error("Failed to tombstone local mark:", err);
