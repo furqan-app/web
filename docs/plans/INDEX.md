@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-71 active plans.
+72 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -22,7 +22,6 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | db | [Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload](fix-dev-hmr-prisma-connections.md) | implemented | bug |
 | marks | [E2E: offline and guest marking coverage](offline-first-marks/552-e2e-coverage.md) | ready-to-implement | chore |
 | marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | ready-to-implement | feature |
-| marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | implemented | feature |
 | marks | [My Marks reads the local store; ungate the page in the PWA](offline-first-marks/551-my-marks-store.md) | ready-to-implement | feature |
 | marks | [Offline-First Marks — umbrella](offline-first-marks/INDEX.md) | ready-to-implement | feature |
 | marks | [Reader renders marks from the local store](offline-first-marks/548-reader-store-reads.md) | ready-to-implement | feature |
@@ -30,6 +29,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | marks | [Copy and Share Verses from Mark Modal](copy-share-verses.md) | implemented | feature |
 | marks | [Local marks store module](offline-first-marks/546-local-store.md) | implemented | feature |
 | marks | [Marks API: full-sync mode + share getSortKey](offline-first-marks/545-api-full-sync.md) | implemented | chore |
+| marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | implemented | feature |
 | marks | [Marks: stale-write guard via client_updated_at](offline-first-marks/544-stale-write-guard.md) | implemented | chore |
 | marks | [Verse/Word Comments](verse-word-comments.md) | implemented | feature |
 | nav | [Close Overlays on Back-Swipe (Mobile/Tablet PWA)](close-overlays-on-back-swipe.md) | implemented | bug |
@@ -67,6 +67,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | rendering | [Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle](fix-quran-page-font-loading.md) | implemented | bug |
 | rendering | [Safha Ribbon Indicator](safha-ribbon-indicator.md) | implemented | feature |
 | search | [Fix Search Debounce Lag](fix-search-debounce-lag.md) | implemented | bug |
+| search | [Offline Quran Search Foundation (Index, Offline Engine, Paginated API)](search-foundation.md) | implemented | feature |
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
 | tafsir | [Tafsir: Offline Download & Cache Management for PWA](tafsir-offline-download.md) | implemented | feature |

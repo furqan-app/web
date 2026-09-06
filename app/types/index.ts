@@ -61,10 +61,19 @@ export type Surah = {
 };
 
 
+export type SearchPage<T> = {
+  results: T[];
+  total: number;
+};
+
 export type VerseResult = {
   verse_key: string;
   text_imlaei_simple: string;
-  text_uthmani: string;
+  // Absent on offline rows (the index carries no uthmani string — see ADR 0062).
+  text_uthmani?: string;
+  // Pre-joined qpc_uthmani_hafs display string. Present on offline rows only;
+  // online rows carry Word[] instead. Render Word-join when present, else this.
+  display_uthmani?: string;
   page_number: number;
   chapter: {
     name_arabic: string;
