@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-72 active plans.
+73 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -24,14 +24,15 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | ready-to-implement | feature |
 | marks | [My Marks reads the local store; ungate the page in the PWA](offline-first-marks/551-my-marks-store.md) | ready-to-implement | feature |
 | marks | [Offline-First Marks — umbrella](offline-first-marks/INDEX.md) | ready-to-implement | feature |
-| marks | [Reader renders marks from the local store](offline-first-marks/548-reader-store-reads.md) | ready-to-implement | feature |
-| marks | [Service worker: marks GET must be NetworkOnly](offline-first-marks/549-sw-networkonly.md) | ready-to-implement | chore |
 | marks | [Copy and Share Verses from Mark Modal](copy-share-verses.md) | implemented | feature |
 | marks | [Local marks store module](offline-first-marks/546-local-store.md) | implemented | feature |
 | marks | [Marks API: full-sync mode + share getSortKey](offline-first-marks/545-api-full-sync.md) | implemented | chore |
 | marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | implemented | feature |
 | marks | [Marks: stale-write guard via client_updated_at](offline-first-marks/544-stale-write-guard.md) | implemented | chore |
+| marks | [Reader renders marks from the local store](offline-first-marks/548-reader-store-reads.md) | implemented | feature |
+| marks | [Service worker: marks GET must be NetworkOnly](offline-first-marks/549-sw-networkonly.md) | implemented | chore |
 | marks | [Verse/Word Comments](verse-word-comments.md) | implemented | feature |
+| marks | [Wire the marks store + sync engine into the app lifecycle](offline-first-marks/560-sync-wiring.md) | implemented | fix |
 | nav | [Close Overlays on Back-Swipe (Mobile/Tablet PWA)](close-overlays-on-back-swipe.md) | implemented | bug |
 | nav | [Complex E2E & Fix: Multi-Layer Overlay Stacks, Gesture Interrupts & History Traversal](e2e-overlay-stacks-history.md) | implemented | feature |
 | nav | [Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation](desktop-navbar-font-bg.md) | implemented | feature |

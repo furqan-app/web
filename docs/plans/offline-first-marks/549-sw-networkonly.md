@@ -2,7 +2,7 @@
 title: Service worker: marks GET must be NetworkOnly
 type: chore
 date: 2026-09-04
-status: ready-to-implement
+status: implemented
 area: marks
 issue: 549
 adr: [0061]
