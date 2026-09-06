@@ -15,15 +15,34 @@ Spawn the review subagent (e.g. using `runSubagent` or subagent capability):
 - Sonnet / Fast reasoning model
 - Haiku / Lightweight model
 
+## Scope — the default is the WORKING TREE, not `main...HEAD`
+
+`/ship-fq-task` is the only sanctioned path to `git commit` here, and this review runs *before* it, so
+the branch normally has **zero commits** when this fires. Defaulting to `git diff main...HEAD` hands
+the reviewer an empty diff and the result is indistinguishable from a clean review.
+
+- _(no arg)_ — everything uncommitted: `git status --short` + `git diff HEAD` (default)
+- `--staged` / `--unstaged` — one half only
+- `--committed` — `main...HEAD`, for an already-pushed branch or someone else's PR
+
+**If the chosen scope is empty, STOP and say so** — name the command that returned nothing and the
+scope that likely holds the work. Never report "no issues found" for a diff the reviewer never saw.
+
+When delegating this review to an agent that does not share this session's context (a subagent, or an
+external CLI), the brief must state the scope explicitly and carry the constraints itself — including
+the umbrella `INDEX.md` invariants when the plan is a child of one.
+
 ---
 <!-- original content preserved below this line for reference only -->
 
 Spawns a subagent to review code changes across three dimensions. Terminal output only.
 
-Accepts an optional scope argument:
-- _(no arg)_ — committed changes on this branch vs main (default)
-- `--staged` — staged but uncommitted changes (`git diff --cached`)
-- `--unstaged` — unstaged working-tree changes (`git diff`)
+Accepts an optional scope argument (**superseded — see "Scope" above; the default is the working
+tree, not `main...HEAD`**):
+- _(no arg)_ — ~~committed changes on this branch vs main~~ → now `git diff HEAD` (staged + unstaged)
+- `--staged` — staged changes only (`git diff --cached`)
+- `--unstaged` — unstaged working-tree changes only (`git diff`)
+- `--committed` — commits on this branch vs main (`git diff main...HEAD`)
 
 ## Choosing the review model
 
@@ -39,7 +58,7 @@ Map the choice to the Agent `model` value: `opus` / `sonnet` / `haiku`. Opus is 
 
 Pick the right commands based on the scope argument:
 
-**Default (branch vs main):**
+**`--committed` (branch vs main — NOT the default, see "Scope" above):**
 ```bash
 git diff main...HEAD --name-only
 git diff main...HEAD
