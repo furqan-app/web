@@ -20,6 +20,7 @@ import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import { PlansWidget } from "@components/plans/PlansWidget";
 import { LastReadPageSync } from "@components/reader/LastReadPageSync";
+import { MarksSync } from "@components/marks/MarksSync";
 import { TafsirReaderSync } from "@components/tafsir/TafsirReaderSync";
 import { KeepScreenAwakeSync } from "@components/KeepScreenAwakeSync";
 import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
@@ -75,6 +76,7 @@ export default async function LocaleLayout({
                                   <RecitationSettingsSheet />
                                   <PlansWidget />
                                   <LastReadPageSync />
+                                  <MarksSync />
                                   <TafsirReaderSync />
                                   <KeepScreenAwakeSync />
                                   <OfflineInstallPrompt />

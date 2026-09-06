@@ -11,11 +11,11 @@ adr: [0061]
 # Offline-First Marks — umbrella
 
 Marking works offline and, in the installed PWA, without an account. This is an **umbrella
-plan**: nine independently implementable issues, each with its own file here, its own branch
+plan**: ten independently implementable issues, each with its own file here, its own branch
 and its own PR.
 
 Read this file plus the one child file for the issue you are implementing. Do not read the
-other eight.
+others.
 
 ## Working model
 
@@ -34,13 +34,18 @@ other eight.
 | [#545](https://github.com/furqan-app/web/issues/545) Marks API full-sync mode | [`545-api-full-sync.md`](545-api-full-sync.md) | — |
 | [#546](https://github.com/furqan-app/web/issues/546) Local store module | [`546-local-store.md`](546-local-store.md) | — |
 | [#547](https://github.com/furqan-app/web/issues/547) Sync engine | [`547-sync-engine.md`](547-sync-engine.md) | 544, 545, 546 |
-| [#548](https://github.com/furqan-app/web/issues/548) Reader reads the store | [`548-reader-store-reads.md`](548-reader-store-reads.md) | 546 |
+| [#560](https://github.com/furqan-app/web/issues/560) Wire store + engine into the app | [`560-sync-wiring.md`](560-sync-wiring.md) | 546, 547 |
+| [#548](https://github.com/furqan-app/web/issues/548) Reader reads the store | [`548-reader-store-reads.md`](548-reader-store-reads.md) | 546, 560 |
 | [#549](https://github.com/furqan-app/web/issues/549) SW: marks GET NetworkOnly | [`549-sw-networkonly.md`](549-sw-networkonly.md) | 548 |
 | [#550](https://github.com/furqan-app/web/issues/550) MarkModal gates | [`550-markmodal-gates.md`](550-markmodal-gates.md) | 546 |
 | [#551](https://github.com/furqan-app/web/issues/551) My Marks from the store | [`551-my-marks-store.md`](551-my-marks-store.md) | 546, 550 |
 | [#552](https://github.com/furqan-app/web/issues/552) E2E coverage | [`552-e2e-coverage.md`](552-e2e-coverage.md) | 550, 551 |
 
 #544, #545 and #546 have no dependencies and can run in parallel.
+
+#560 was added on 2026-09-06: #546 and #547 both shipped as modules nothing imported, so the
+store was never populated and the sync triggers were never attached. It is a prerequisite for
+#548, not new scope.
 
 ## Architecture
 
