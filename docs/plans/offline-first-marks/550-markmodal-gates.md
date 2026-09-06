@@ -51,7 +51,7 @@ umbrella.
   per-mark badges in the reader.
 - The existing offline notice becomes that status line rather than a blocker — reuse the string
   slot, do not leave a dead key.
-- The comment textarea keeps `dir="auto"` per the free-text rule in `decisions/marks.md`.
+- The comment textarea keeps `dir={getLanguageDirection(locale)}` per `mark-modal-redesign.md` (avoids LTR placeholder orientation in empty Arabic inputs; e2e tested in `word-marking.spec.ts`).
 - `grantId` set ⇒ nothing in this issue applies.
 
 ## UI/UX notes

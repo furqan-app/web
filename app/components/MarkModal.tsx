@@ -830,7 +830,7 @@ export function MarkModal({
                 disabled={inputsDisabled}
                 aria-label={t("markModal.commentPlaceholder", "Add a comment (optional)…")}
                 placeholder={t("markModal.commentPlaceholder", "Add a comment (optional)…")}
-                dir="auto"
+                dir={getLanguageDirection(locale)}
                 className="h-[clamp(2.75rem,12dvh,5.25rem)] resize-none rounded-xl border-border/80 bg-card text-start text-base placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary sm:text-sm"
               />
             </div>
