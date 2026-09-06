@@ -2,7 +2,7 @@
 title: E2E: offline and guest marking coverage
 type: chore
 date: 2026-09-04
-status: ready-to-implement
+status: implemented
 area: marks
 issue: 552
 adr: [0061]
@@ -23,7 +23,8 @@ Cover the new behaviour without disturbing the coverage that is still correct.
 - Offline marking for a signed-in user: go offline, mark, assert the highlight and the pending
   status; reconnect and assert it syncs.
 - A mark made offline survives a reload before ever syncing (the tombstone/`pending` guarantee).
-- Sign-out with pending marks shows the confirmation (test case 9).
+- Offline delete of a mark tombstones locally, survives reload, and deletes on server after reconnect.
+- Note: Sign-out with pending marks (test case 9) was split out into #561 and remains in backlog; its E2E test belongs with that implementation.
 
 ## Keep unchanged — these are still correct
 

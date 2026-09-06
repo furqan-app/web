@@ -6,6 +6,7 @@ import {
   setStoredSafhaView,
   openSettings,
   withStandaloneDisplayMode,
+  waitForServiceWorker,
 } from "../helpers/reader";
 import { authenticateAsUser } from "../helpers/auth";
 import {
@@ -48,17 +49,6 @@ const audioIsPlaying = () => {
   const a = document.querySelector("audio");
   return !!a && !a.paused && !a.ended;
 };
-
-/**
- * Ensures the Serwist service worker is registered and actively controlling the page.
- */
-async function waitForServiceWorker(page: Page) {
-  await page.waitForFunction(async () => {
-    if (!("serviceWorker" in navigator)) return false;
-    const reg = await navigator.serviceWorker.ready;
-    return Boolean(reg?.active && navigator.serviceWorker.controller);
-  }, undefined, { timeout: 15000 }).catch(() => {});
-}
 
 /**
  * Mocks chapter 18 audio metadata and returns silent audio bytes with CORS headers from QDC audio host.
