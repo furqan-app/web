@@ -175,6 +175,14 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
   offline-disabled behaviour and never touches the local store. ADR 0014's rejection of
   offline mark writes was about concurrent viewers of a shared mushaf under
   last-author-wins (ADR 0012); that hazard is real and is not superseded.
+- **OPEN RISK for the reader read path (#548): `useSyncExternalStore` is recorded elsewhere as
+  unsafe on this exact surface.** The Font System decision in [`rendering.md`](rendering.md) lists it
+  among the mechanisms *tried and abandoned* for `QuranSafha`'s `fontReady`, because "Next.js App
+  Router's RSC navigation calls `getServerSnapshot` on the client" — which for marks would mean the
+  empty server snapshot replacing real marks on an RSC navigation, blanking highlights. That finding
+  came from live testing of one hook in one component and may not generalize, but it is the same
+  hook on the same component. #548's mandated instrumentation is where this gets settled with
+  evidence; do not wire the reader read path on the assumption that it does not apply.
 - **`localStorage`, not IndexedDB**, and deliberately so. Marks can never be in the SSR HTML
   (user state on a statically-generated page; `useSyncExternalStore` uses `getServerSnapshot`
   through hydration), so highlights land on the **first client commit after hydration** — a
@@ -226,3 +234,13 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
 - **The sync engine (`app/lib/marks/sync.ts`) coordinates push-then-pull sync as a module singleton.**
   In-flight deduplication guarantees that concurrent triggers share the same run without double-pushing.
   Exposed via `useSyncExternalStore`, coordinating across tabs via the native `storage` event.
+- **The engine is inert until something subscribes to it, and `MarksSync` is that something.**
+  `sync.ts` attaches every trigger it owns — `online`, `visibilitychange`, cross-tab `storage`, and
+  the store-mutation listener that raises the guest→account migration — inside `subscribe()`, on the
+  first listener; and its deferred launch trigger runs at module evaluation, so it needs the module
+  to be *imported* by something in the bundle. Nothing else calls `setOwnerStamp` either, and
+  `executeSync` returns early for a `"guest"` stamp. All three are wired by one null-rendering leaf,
+  `app/components/marks/MarksSync.tsx`, mounted in `app/[locale]/layout.tsx` beside `LastReadPageSync`.
+  This is recorded because it was missed: `#546` and `#547` both shipped as modules nothing imported,
+  so the store was never populated, no trigger ever attached, and every unit test passed
+  regardless — the failure is invisible from inside either module (`#560`).
