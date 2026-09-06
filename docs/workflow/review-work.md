@@ -90,6 +90,10 @@ You are a senior code reviewer. Review the following branch diff across three di
 
 **Dimension 3 — Plan Consistency**
 - Does the implementation match the plan in `docs/plans/`?
+- **Treat the plan's premises as claims to check, not ground truth.** Where a constraint asserts a
+  system-wide invariant — anything of the form "X is always true", "Y never happens" — verify it
+  against the ADRs and the e2e specs before judging the code by it. A review that checks code
+  against a wrong spec returns a clean verdict on a real bug.
 - **If that plan is a child of an umbrella** (it lives in a `docs/plans/<feature>/` directory
   alongside an `INDEX.md`), read the `INDEX.md` too. Its "Cross-cutting invariants" and "What NOT to
   do" bind the child even though the child file does not restate them, so a reviewer reading only the
@@ -100,6 +104,27 @@ You are a senior code reviewer. Review the following branch diff across three di
 
 If a dimension has no findings, say "No issues found." Do not pad with filler observations. Number findings within each dimension (1., 2., 3., ...), continuing the count across dimensions rather than restarting at 1 for each one, so every finding has a stable reference number for follow-up discussion.
 
-### 3 — Next step
+### 3 — What this gate does not cover
+
+A review verdict is bounded by the plan it judges against. It cannot catch a constraint that is
+itself false, because the code will match it exactly and the reviewer will confirm as much.
+
+This is not hypothetical. `#548`'s plan asserted "on the self mushaf `is_own` is always `true` and
+`author_name` `null`". Under [ADR 0012](../architecture/adr/0012-shared-mushaf-access.md) a grant
+holder writes marks **into** your mushaf (`to_user` = owner, `from_user` = viewer), so a mark on your
+own mushaf can be someone else's — which is why the self marks endpoint always ran
+`withAuthorNames`. The implementation followed the plan, a review confirmed it held, and the
+attribution silently disappeared. Only `e2e/tests/shared-mushaf.spec.ts` caught it, because it
+encodes the actual behaviour rather than a restatement of it.
+
+Two things follow:
+
+- **A green review is not a substitute for CI.** Never report work as verified on a review verdict
+  alone when the suite has not run against it.
+- **When the reviewer is given the constraints second-hand** — a subagent, or a delegated external
+  CLI — it inherits whatever premises the brief carries. Point it at the ADRs and the specs, not
+  only at the plan's summary of them.
+
+### 4 — Next step
 
 Once the findings are resolved, run `/retrospect` **before** `/ship-fq-task` — its `decisions/*.md` and workflow-doc edits must be committed inside this PR, not produced after ship opens it. See [retrospect.md](retrospect.md).
