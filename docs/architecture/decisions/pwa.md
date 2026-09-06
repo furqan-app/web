@@ -121,11 +121,29 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 - `public/launch.html` must stay in the root `middleware.ts` `config.matcher` exclusion list and in `globPublicPatterns` in `next.config.mjs`. Dropping the first makes `intl-middleware` redirect it into a locale prefix and 404 it (the trap that broke the PWA icons); dropping the second un-precaches it and breaks offline cold launch.
 - The launch script must validate `lastReadPath` against `^/(ar|en)/pages/(\d{1,3})$` with the page bounded to 1–604 before navigating. It navigates to a string read from `localStorage` — an unvalidated read is an open redirect, not a cosmetic concern.
 - The launch script must keep reading the legacy numeric `lastReadPage` when `lastReadPath` is absent, resolving it to an unprefixed `/pages/{n}`. Every install predating ADR 0042 has only the numeric key, so dropping this fallback sends the whole existing user base to page 1 on the one launch the feature exists to make seamless. There is no safe deadline to remove it — a dormant install can surface at any time.
-- The launch script duplicates **two** literals that cannot be imported into a pre-React file: the `display-mode` list from `app/utils/platform.ts` and the `1367px` breakpoint from `DESKTOP_UP_QUERY` (`app/hooks/use-is-desktop-up.ts`). Changing either at its source means editing `public/launch.html` too.
+- The launch script duplicates **two** literals that cannot be imported into a pre-React file: the `display-mode` list from `app/utils/platform.ts` and the `1367px` breakpoint from `DESKTOP_UP_QUERY` (`app/hooks/use-is-desktop-up.ts`). Changing either at its source means editing `public/launch.html` AND the cover reveal script in `app/components/reader/ReaderPage.tsx` (ADR 0065) too — both are pre-React files with the same limitation.
 - The manifest's `launch_handler.client_mode` must stay `"focus-existing"`. `"navigate-existing"` focuses the running app **and** navigates it to the launch URL, which drags a user sitting on Settings or Marks back into the reader on every icon tap.
 - The manifest's `id` must stay `"/"` and must never be derived from `start_url` again. With no `id`, app identity comes from `start_url`, so changing that field orphans every existing install and duplicates the icon on reinstall.
 - `lastReadPath` and `lastReadPage` must keep being written together from `LastReadPageContext.setLastReadPage`. Two write sites would let the launch script and `ContinueReadingLink` disagree about where the user left off.
 - `ReaderPager`'s offline fallback self-correction must stay an isomorphic **layout** effect (the `useIsomorphicLayoutEffect` pattern in `app/hooks/use-is-desktop-up.ts`, which exists to suppress React's server-side `useLayoutEffect` warning). Reverting it to `useEffect` reintroduces the page-1 flash ADR 0014 Addendum 3 had accepted.
+
+**Amended (ADR 0065, #586):** reader documents paint a splash-continuity cover
+as part of first paint on standalone mobile/tablet and lift it when the visible
+pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
+
+**Constraints:**
+- The cover is static SSR markup (identical bytes for every user — no per-user
+  content, no dynamic rendering) revealed pre-paint only on
+  standalone-mobile/tablet by a parse-time inline script; browser tabs and
+  desktop never reveal it.
+- Removal keys on the *active* edition's readiness (query data +
+  `pageFontsReady` for the visible ids) and composes with the `fq-pending-jump`
+  trio — never replaces any leg of it, never reads readiness from another
+  edition's cache.
+- Bounded reveal always: a mount-side safety timer lifts the cover even if
+  readiness never signals. A plain `aria-hidden` `<div>` at `z-40` — never a
+  focus-trapping dialog, never above the Radix ceiling, never a download
+  trigger.
 
 **Overlay close-on-back-gesture (2026-08-15, [ADR 0055](../adr/0055-overlay-close-on-back-gesture.md)):** on mobile/tablet installed PWA (Android **and** iOS, not desktop — `useIsStandaloneMobileOrTablet()`, no `isAndroid()` gate), every modal overlay (`MarkModal`, `SettingsSidebar`, the surah `Sidebar`, `NavOverflowMenu`, `RecitationSettingsSheet`) closes on the first back-gesture instead of letting it navigate the underlying page. All five use one shared hook, `useCloseOnBackGesture(open, onClose)` (`app/hooks/use-close-on-back-gesture.ts`), which pushes a fresh, uniquely-id'd guard history entry on open and closes the overlay on the next real back press. A shared module-level flag (`app/utils/overlay-back-guard.ts`) marks whether an overlay guard is currently armed; `AndroidBackExitGuard`'s `popstate` handler checks it first and defers entirely when set, relying on mount order (the reader's exit-guard always mounts before a user can open anything on top of it) rather than event-timing tricks. At most one overlay is ever open at a time — every one of the five is a modal Radix `Dialog`/`Sheet` that blocks interaction with whatever is behind it, so no stack is needed, just the one flag. `useIsStandaloneMobileOrTablet()` (`app/hooks/use-is-standalone-mobile-or-tablet.ts`) factors out the `!isDesktopUp && isStandaloneDisplayMode()` half shared with `AndroidBackExitGuard`'s own gate.
 
