@@ -81,3 +81,4 @@ When a shared rule changes, edit `AGENTS.md` only. Do not re-bloat the pointer f
 |---|---|---|
 | `/detect-fleet` | [fleet-setup.md](fleet-setup.md) | Read-only capability report — which coding CLIs are installed/authenticated, their live models, `cost_tier`. Wraps upstream `delegate-setup`'s `discover.mjs` ([ADR 0063](../architecture/adr/0063-fleet-detection-wraps-delegate-setup.md)) |
 | `/setup-fq-fleet` | [fleet-setup.md](fleet-setup.md) | On-demand, human-confirmed install + lane setup — hands off to `delegate-setup`'s interactive flow, steered to fq's three roles (`implementation` / `planning` / `second-opinion`) |
+| `/fq-ask-human` | [ask-human.md](ask-human.md) | Escalation valve — post a numbered decision to Slack and block on a threaded human answer; `no-token` and timeout degrade to a defined terminal state. Local bot token, no deployed-app route ([ADR 0064](../architecture/adr/0064-agent-slack-escalation.md)) |
