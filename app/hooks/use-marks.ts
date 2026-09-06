@@ -102,10 +102,12 @@ export const useMarks = (
 
       // A record with no author predates the author chain, and a guest's own
       // marks have no server identity yet — both read as the reader's own.
+      // A record that DOES name an author is only yours when it matches the
+      // stamp: under a non-numeric stamp `viewerId` is NaN and this comparison
+      // is false, so a foreign mark keeps its attribution instead of being
+      // silently claimed. Never assume authorship that cannot be shown.
       const isOwn =
-        mark.from_user === undefined ||
-        Number.isNaN(viewerId) ||
-        mark.from_user === viewerId;
+        mark.from_user === undefined || mark.from_user === viewerId;
 
       marks[mark.marked_id] = {
         marked_id: mark.marked_id,

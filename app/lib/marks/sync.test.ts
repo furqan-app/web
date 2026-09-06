@@ -171,6 +171,41 @@ describe("Marks sync engine (app/lib/marks/sync.ts)", () => {
       expect(getLocalMark("word:2:255:1")?.sync).toBe("synced");
       expect(getSnapshot().status).toBe("idle");
     });
+
+    it("stores the author a pull returns, so a mark written into your mushaf keeps its attribution", async () => {
+      // ADR 0012: a grant holder writes with to_user = owner, from_user = viewer,
+      // so a mark on your OWN mushaf can be someone else's. The reader derives
+      // is_own from these fields, so losing them here silently drops
+      // "Marked by X" — the regression e2e/tests/shared-mushaf.spec.ts caught.
+      vi.spyOn(getPageMarksModule, "fetchAllMarks").mockResolvedValueOnce({
+        success: true,
+        status: 200,
+        code: 200,
+        data: [
+          {
+            marked_type: "word",
+            marked_id: "2:255:9",
+            page_number: 42,
+            category: "linking",
+            comment: null,
+            snippet: "اللَّهُ",
+            chapter_name_simple: "Al-Baqarah",
+            chapter_name_arabic: "البقرة",
+            verse_number: 255,
+            from_user: 7,
+            author_name: "Viewer Student",
+          },
+        ],
+      });
+
+      setOwnerStamp("1");
+      await syncMarks();
+
+      const pulled = getLocalMark("word:2:255:9");
+      expect(pulled?.sync).toBe("synced");
+      expect(pulled?.from_user).toBe(7);
+      expect(pulled?.author_name).toBe("Viewer Student");
+    });
   });
 
   describe("In-flight guard (deduplication)", () => {
