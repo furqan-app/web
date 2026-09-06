@@ -20,9 +20,9 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | ci | [Visual E2E Testing in the Workflow](visual-e2e-testing.md) | implemented | feature |
 | db | [Adopt Prisma Migrations for furqan_app](adopt-prisma-migrations.md) | implemented | feature |
 | db | [Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload](fix-dev-hmr-prisma-connections.md) | implemented | bug |
-| marks | [E2E: offline and guest marking coverage](offline-first-marks/552-e2e-coverage.md) | ready-to-implement | chore |
 | marks | [Offline-First Marks — umbrella](offline-first-marks/INDEX.md) | ready-to-implement | feature |
 | marks | [Copy and Share Verses from Mark Modal](copy-share-verses.md) | implemented | feature |
+| marks | [E2E: offline and guest marking coverage](offline-first-marks/552-e2e-coverage.md) | implemented | chore |
 | marks | [Local marks store module](offline-first-marks/546-local-store.md) | implemented | feature |
 | marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | implemented | feature |
 | marks | [Marks API: full-sync mode + share getSortKey](offline-first-marks/545-api-full-sync.md) | implemented | chore |
