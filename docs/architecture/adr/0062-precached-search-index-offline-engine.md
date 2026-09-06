@@ -40,9 +40,11 @@ inside `SearchQueryResults` rows: `verse.text_uthmani` (B), `words.text_uthmani`
    production visitor's install manifest (lazy-load on intent was considered and rejected for
    failing the first-ever-search-offline case).
 5. **Offline engine lives in `useSearch`**: online → API envelope; `navigator.onLine === false` or
-   fetch rejection → local index with identical normalization (`normalizeArabicQuery` hamza→alif,
-   `normalizeDigits` fold) and identical `take`/`skip` pagination client-side. Chapters offline
-   filter the already-precached `chapters.json` (strict `contains` + numeric-id match preserved).
+   fetch rejection → local index with the same normalization and the same `take`/`skip` pagination
+   client-side. Verse matching applies `normalizeArabicQuery` (hamza-alif → bare alif) only — the
+   same as the online route; `text_imlaei_simple` contains no digits, so no digit fold runs on the
+   verse path, online or offline. Chapters offline filter the already-precached `chapters.json`
+   (strict `contains` + numeric-id match with `normalizeDigits` fold — matching the chapters route).
 6. **Both search routes migrate to `jsonResponse()`**: `{ data: { results, total } }` with
    `take`/`skip` params (default `take: 10`, server max-`take` 50 — the `Word[]` eager-load is what
    makes the cap load-bearing). The raw `{ results }` shape is removed; `useSearch` and the overlay

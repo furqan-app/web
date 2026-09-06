@@ -35,9 +35,11 @@ export async function GET(request: NextRequest) {
       skip,
       orderBy: { id: 'asc' },
       select: {
+        // Display is the Word.qpc_uthmani_hafs join (below); verse.text_uthmani
+        // embeds waqf/rub codepoints uthmanic.ttf can't render and has not been
+        // shown since 2026-07-01 (ADR 0062). Not selected — dead payload.
         verse_key: true,
         text_imlaei_simple: true,
-        text_uthmani: true,
         page_number: true,
         chapter: {
           select: {

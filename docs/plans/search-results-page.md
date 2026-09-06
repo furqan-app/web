@@ -94,3 +94,28 @@ Walked through with the user (confirmed 2026-09-06):
 - agy review (claude-opus-4-6-thinking, read-only, 2026-09-06): APPROVE-WITH-NOTES. Applied both warnings: 20-entry LRU cap on `offlineMatchesCache`, `useSearch` chapters half delegated to `useSearchChapters` (same queryKey, overlay behavior identical).
 - Sweep (3b): `e2e/tests/search.spec.ts`, `overlay-stacks-history.spec.ts`, and `deep-links-view-modes.spec.ts` assert overlay behavior only (`openSearch` helper, `SearchBar` dialog) — this plan adds a route and a hook without touching those files, so no existing test is invalidated. No state derives from `useSession`/`navigator.onLine` beyond the established `networkMode: "always"` offline-fallback pattern. No UI affordance is removed or relocated (the overlay keeps its trigger on every breakpoint). The `take = 20` chunk size is new but bounded by the existing `MAX_VERSE_TAKE = 50` invariant.
 - No ADR: everything applied (ADR 0033 edition resolution, ADR 0062 offline index, ADR 0043 CSS gating, ADR 0049 network budget) already exists; nothing non-obvious and new surfaced.
+
+## Finalization pass (2026-09-07, `chore/536-search-finalize`, epic #536 closeout)
+
+Post-merge review of the whole epic (both PRs) — epic verified working end to end (all states,
+offline engine, overlay affordance, verse-link highlight, API pagination). Only gaps closed here,
+no behavior change to shipped paths:
+
+- **`e2e/tests/search-results-page.spec.ts`** — added an `Offline (precached search index)` block:
+  (1) after an online prime + `waitForServiceWorker` + a `caches.match('/quran/search-index.json')`
+  poll, a fresh offline query renders verse results with **zero `/api/search/**` calls**;
+  (2) rows loaded online survive an online→offline toggle and the next infinite-scroll chunk
+  resolves from the index. The epic's headline feature had no automated guard before this.
+- **`app/api/search/verses/route.ts`** — dropped `text_uthmani` from the `select`. No consumer
+  reads it (display is the `Word.qpc_uthmani_hafs` join online / `display_uthmani` offline); it has
+  not been shown in any search UI since 2026-07-01 and ADR 0062's forensics confirm it is unfit for
+  display. `VerseResult.text_uthmani?` removed with it.
+- **`app/components/search/SearchResultsPage.tsx`** — the in-page input now uses a dedicated
+  `search.pagePlaceholder` ("Search the Quran…" / "ابحث في القرآن…"); it previously borrowed the
+  overlay's surah-only `search.placeholder` while doing full phrase/verse search. Overlay key
+  untouched.
+- **`app/components/search/SearchQueryResults.tsx`** — removed the unreachable
+  `verses.length > 10 ? count_verses : verses` branch (overlay is capped at `take: 10`).
+- **ADR 0062 + `decisions/search.md` + `search-foundation.md`** — corrected the line that implied
+  the offline verse engine runs `normalizeDigits`; verse matching is hamza-fold only, online and
+  offline (the chapters path keeps the digit fold).
