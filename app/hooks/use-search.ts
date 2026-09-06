@@ -10,7 +10,7 @@ const EMPTY_CHAPTERS: SearchPage<SurahResult> = { results: [], total: 0 };
 
 // One row of public/quran/search-index.json — MUST stay in sync with
 // scripts/quran-search-index/generate.js (see ADR 0062).
-type SearchIndexRow = { k: string; t: string; d: string; c: number };
+export type SearchIndexRow = { k: string; t: string; d: string; c: number };
 
 const isSearchIndex = (value: unknown): value is SearchIndexRow[] =>
   Array.isArray(value) &&
@@ -60,9 +60,12 @@ const loadChaptersJson = (): Promise<SurahResult[]> => {
   return chaptersPromise;
 };
 
-const isOffline = () => typeof navigator !== "undefined" && !navigator.onLine;
+export const isSearchOffline = () =>
+  typeof navigator !== "undefined" && !navigator.onLine;
 
-const searchVersesOnline = async (
+const isOffline = isSearchOffline;
+
+export const searchVersesOnline = async (
   query: string,
   take: number,
   skip: number,
@@ -81,25 +84,67 @@ const searchVersesOnline = async (
   }
 };
 
-const searchVersesOffline = async (
+export type OfflineVerseMatches = {
+  rows: SearchIndexRow[];
+  total: number;
+  names: Map<number, SurahResult>;
+  versePages: VersePages;
+};
+
+// Memoized per normalized query + edition: the full-results page walks these
+// matches chunk by chunk, and re-filtering all 6,236 rows per chunk would
+// repeat the same scan on every scroll step. The overlay's single-shot call
+// below reuses the same memo — identical results, no behavior change.
+const offlineMatchesCache = new Map<string, Promise<OfflineVerseMatches>>();
+
+export const getOfflineVerseMatches = (
+  query: string,
+  mushafId: number,
+): Promise<OfflineVerseMatches> => {
+  const key = `${mushafId}:${normalizeArabicQuery(query)}`;
+  let cached = offlineMatchesCache.get(key);
+  if (!cached) {
+    cached = (async (): Promise<OfflineVerseMatches> => {
+      const [index, chapters, versePages] = await Promise.all([
+        loadSearchIndex(),
+        loadChaptersJson(),
+        // Active edition's map (ADR 0033) — SW-cached, resolves offline. The
+        // index carries no page number by design, so links always land on the
+        // right page for the edition being read.
+        fetchVersePages(mushafId).catch((): VersePages => ({})),
+      ]);
+      const normalized = normalizeArabicQuery(query);
+      const rows = index.filter((row) => row.t.includes(normalized));
+      return {
+        rows,
+        total: rows.length,
+        names: new Map(chapters.map((c) => [c.id, c])),
+        versePages,
+      };
+    })();
+    offlineMatchesCache.set(key, cached);
+    // Bounded LRU: a long-lived tab issues many distinct queries; without a
+    // cap this memo grows for the session lifetime. Map preserves insertion
+    // order, so the first key is the oldest.
+    if (offlineMatchesCache.size > 20) {
+      const oldest = offlineMatchesCache.keys().next();
+      if (!oldest.done) offlineMatchesCache.delete(oldest.value);
+    }
+  }
+  return cached;
+};
+
+export const searchVersesOffline = async (
   query: string,
   take: number,
   skip: number,
   mushafId: number,
 ): Promise<SearchPage<VerseResult>> => {
-  const normalized = normalizeArabicQuery(query);
-  const [index, chapters, versePages] = await Promise.all([
-    loadSearchIndex(),
-    loadChaptersJson(),
-    // Active edition's map (ADR 0033) — SW-cached, resolves offline. The index
-    // carries no page number by design, so links always land on the right page
-    // for the edition being read.
-    fetchVersePages(mushafId).catch((): VersePages => ({})),
-  ]);
-  const names = new Map(chapters.map((c) => [c.id, c]));
-  const matches = index.filter((row) => row.t.includes(normalized));
-  const total = matches.length;
-  const results = matches.slice(skip, skip + take).map((row) => ({
+  const { rows, total, names, versePages } = await getOfflineVerseMatches(
+    query,
+    mushafId,
+  );
+  const results = rows.slice(skip, skip + take).map((row) => ({
     verse_key: row.k,
     text_imlaei_simple: row.t,
     display_uthmani: row.d,
@@ -113,7 +158,7 @@ const searchVersesOffline = async (
   return { results, total };
 };
 
-const searchChaptersOnline = async (query: string): Promise<SearchPage<SurahResult> | null> => {
+export const searchChaptersOnline = async (query: string): Promise<SearchPage<SurahResult> | null> => {
   if (isOffline()) return null;
   try {
     const response = await fetch(`/api/search/chapters?q=${encodeURIComponent(query)}`);
@@ -125,7 +170,7 @@ const searchChaptersOnline = async (query: string): Promise<SearchPage<SurahResu
   }
 };
 
-const searchChaptersOffline = async (query: string): Promise<SearchPage<SurahResult>> => {
+export const searchChaptersOffline = async (query: string): Promise<SearchPage<SurahResult>> => {
   // Mirrors the API route's matching (strict contains + numeric-id) over the
   // precached chapters.json. name_simple is Latin, so its compare folds case to
   // match the DB's case-insensitive collation; name_arabic stays strict.
@@ -164,16 +209,7 @@ export const useSearch = (query: string, take = 10, skip = 0) => {
     networkMode: "always",
   });
 
-  const chapters = useQuery({
-    queryKey: ["search-chapters", query],
-    queryFn: async (): Promise<SearchPage<SurahResult>> => {
-      if (!query.trim()) return EMPTY_CHAPTERS;
-      return (await searchChaptersOnline(query)) ?? searchChaptersOffline(query);
-    },
-    enabled: isSearchQueryValid(query),
-    // Same as verses above — the chapters fallback reads precached JSON.
-    networkMode: "always",
-  });
+  const chapters = useSearchChapters(query);
 
   return {
     verses,
@@ -181,3 +217,18 @@ export const useSearch = (query: string, take = 10, skip = 0) => {
     isLoading: verses.isLoading || chapters.isLoading,
   };
 };
+
+// Chapters-only query for the full-results page, which pages verses
+// separately via useSearchInfiniteVerses. Same fetchers and gates as the
+// chapters half of useSearch above — extracted, not forked.
+export const useSearchChapters = (query: string) =>
+  useQuery({
+    queryKey: ["search-chapters", query],
+    queryFn: async (): Promise<SearchPage<SurahResult>> => {
+      if (!query.trim()) return EMPTY_CHAPTERS;
+      return (await searchChaptersOnline(query)) ?? searchChaptersOffline(query);
+    },
+    enabled: isSearchQueryValid(query),
+    // The chapters fallback reads precached JSON — run even while offline.
+    networkMode: "always",
+  });
