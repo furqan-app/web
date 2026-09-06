@@ -168,7 +168,10 @@
     "shareVerseOpenReader": "Open in reader",
     "saveMarkWithCategory": "Save: {category}",
     "updateMarkWithCategory": "Update: {category}",
-    "close": "Close mark panel"
+    "close": "Close mark panel",
+    "savedLocally": "Saved on this device",
+    "guestPrompt": "Sign in to keep your marks across devices",
+    "dismissGuestPrompt": "Dismiss"
   },
   "rubs": "Rubs",
   "rub": "Rub",

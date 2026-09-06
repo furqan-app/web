@@ -169,7 +169,10 @@
     "shareVerseOpenReader": "افتح في المصحف",
     "saveMarkWithCategory": "حفظ: {category}",
     "updateMarkWithCategory": "تحديث: {category}",
-    "close": "إغلاق لوحة العلامة"
+    "close": "إغلاق لوحة العلامة",
+    "savedLocally": "محفوظ على هذا الجهاز",
+    "guestPrompt": "سجّل الدخول للاحتفاظ بعلاماتك عبر أجهزتك",
+    "dismissGuestPrompt": "تجاهل"
   },
   "rubs": "أرباع",
   "rub": "ربع",

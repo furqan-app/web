@@ -21,11 +21,11 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | db | [Adopt Prisma Migrations for furqan_app](adopt-prisma-migrations.md) | implemented | feature |
 | db | [Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload](fix-dev-hmr-prisma-connections.md) | implemented | bug |
 | marks | [E2E: offline and guest marking coverage](offline-first-marks/552-e2e-coverage.md) | ready-to-implement | chore |
-| marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | ready-to-implement | feature |
 | marks | [My Marks reads the local store; ungate the page in the PWA](offline-first-marks/551-my-marks-store.md) | ready-to-implement | feature |
 | marks | [Offline-First Marks — umbrella](offline-first-marks/INDEX.md) | ready-to-implement | feature |
 | marks | [Copy and Share Verses from Mark Modal](copy-share-verses.md) | implemented | feature |
 | marks | [Local marks store module](offline-first-marks/546-local-store.md) | implemented | feature |
+| marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | implemented | feature |
 | marks | [Marks API: full-sync mode + share getSortKey](offline-first-marks/545-api-full-sync.md) | implemented | chore |
 | marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | implemented | feature |
 | marks | [Marks: stale-write guard via client_updated_at](offline-first-marks/544-stale-write-guard.md) | implemented | chore |

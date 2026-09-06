@@ -16,7 +16,8 @@ export type StorageKey =
   | 'recitationDownloads'
   | 'tafsirDownloads'
   | 'localMarks'
-  | 'localMarksOwner';
+  | 'localMarksOwner'
+  | 'guestMarkPromptDismissed';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -57,6 +58,8 @@ type StorageValueType = {
   // from "guest" to a user migrates marks via the sync push loop; switching to
   // a different user id resets the store.
   localMarksOwner: string;
+  // Dismissal state for the one-line guest marking sign-in prompt in the installed PWA (#550).
+  guestMarkPromptDismissed: boolean;
 };
 
 export const isQuotaExceededError = (err: unknown): boolean => {

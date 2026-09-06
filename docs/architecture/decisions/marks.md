@@ -185,11 +185,27 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
   the adapter compares `from_user` to the owner stamp. Hardcoding `is_own: true` silently drops a
   teacher's attribution; `e2e/tests/shared-mushaf.spec.ts` catches it. Tombstoned records (`deleted: true`) are filtered
   out so a delete looks immediate while the row stays for the sync engine to push.
-- **`reload()` survives for the grant reader only.** Removing it wholesale (as `#548`'s plan first
-  said) would have broken refresh-after-write on the shared mushaf, which is still React Query-backed
-  and has no other refresh path. `MarkModal` routes through one helper: `grantId` → `reload()`, self →
-  a best-effort `syncMarks()` that pulls the server write back into the store. `#550` replaces the
-  self branch with a direct store write.
+- **`reload()` survives for the grant reader only (#550).** On self mushaf (`grantId` unset),
+  `MarkModal` writes directly to `setLocalMark` / `tombstoneLocalMark` with `sync: "pending"`, fires
+  background `syncMarks()`, and closes immediately. On grant mushaf (`grantId` set),
+  `addPageMark` / `deletePageMark` are awaited and `reload()` refreshes the React Query cache.
+- **`MarkModal` offline and guest gating (#550).**
+  - Gating logic lives in `app/lib/marks/gates.ts` (`evaluateMarkModalGates`).
+  - Online (`!isOffline`), live session (`Boolean(sessionUser)`) is authoritative; after sign-out,
+    browser tabs enforce the sign-in wall even if `ownerStamp` remains sticky.
+  - Offline (`isOffline`), session fetch always fails; sticky `ownerStamp !== "guest"` indicates
+    the user was signed in prior to going offline.
+  - Guests (`ownerStamp === "guest"`) in installed PWA (`isStandalone`) can mark offline and online
+    without an account. In standard browser tabs, guests retain the sign-in wall.
+  - On grant mushaf, marking is online-only. Offline on grant mushaf disables inputs and displays
+    `markModal.offlineNotice` (test case 6).
+  - PWA guests see a one-line dismissible sign-in prompt; dismissal state is tracked in `localStorage`
+    under `guestMarkPromptDismissed`.
+  - Local marks preserve author attribution (`from_user`, `author_name`) when updating or tombstoning
+    existing marks.
+  - Local marks capture denormalized metadata (`snippet`, `chapter_name_simple`, `chapter_name_arabic`,
+    `verse_number`) at creation time for offline/guest My Marks (#551).
+  - Footer displays `markModal.savedLocally` only while a mark has `sync === "pending"`.
 - **`grantId` is the offline cut-off.** When `MarkModal` has a `grantId`, it keeps today's
   offline-disabled behaviour and never touches the local store. ADR 0014's rejection of
   offline mark writes was about concurrent viewers of a shared mushaf under
