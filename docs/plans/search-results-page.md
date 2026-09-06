@@ -46,7 +46,7 @@ Walked through with the user (confirmed 2026-09-06):
 | Input | Expected |
 |---|---|
 | `q=رحمة` (hundreds of matches) | Multi-page infinite scroll; header shows total; chunks of 20 until `loadedCount === total`, then end marker |
-| `q=الأنعام` | Surah section lists Al-An'am + verse matches below |
+| `q=الرحمن` | Surah section lists Ar-Rahman + verse matches below (48 rows in the e2e DB — surah names alone match no verse text: 0 rows for البقرة/الأنعام/الفاتحة, so e2e seeds must use a query matching both) |
 | `q=ا` (single char) | Idle state, zero fetches (gate) |
 | Offline toggle mid-scroll | Subsequent chunks resolve locally from the index; already-loaded rows unchanged |
 | `q=114` | Surah section matches surah 114; verses section hides (no global "Nothing found") |

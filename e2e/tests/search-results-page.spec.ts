@@ -23,14 +23,18 @@ test.describe("Search Results Page", () => {
   test("seeds the query from ?q= and shows surah + verse results", async ({
     page,
   }) => {
-    await page.goto("/ar/search?q=%D8%A7%D9%84%D8%A8%D9%82%D8%B1%D8%A9");
+    // NOTE: the seed query must match both a surah and verse text. Surah
+    // names alone match nothing in verse text (verified 0 rows for
+    // "البقرة"/"الأنعام"/"الفاتحة" in the e2e DB) — "الرحمن" matches the
+    // surah and 48 verses.
+    await page.goto("/ar/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86");
 
     const input = page.getByPlaceholder("ابحث عن السورة بالاسم أو الرقم");
-    await expect(input).toHaveValue("البقرة");
+    await expect(input).toHaveValue("الرحمن");
 
     // Surah section renders the match…
     await expect(
-      page.getByRole("link", { name: /^Al-Baqarah/ }).first()
+      page.getByRole("link", { name: /^Ar-Rahman/ }).first()
     ).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
 
     // …and verse results carry highlight links plus a total count.
