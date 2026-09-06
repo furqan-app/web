@@ -95,7 +95,7 @@ Nav                          — top bar, always visible; single flat flex row, 
   SignedOutPrompt            — client: sign-in CTA when unauthenticated
   ([grant]/layout.tsx)       — server guard: no session → redirect home; revoked/foreign grant → redirect to hub ?removed=1; else renders Sidebar (viewing indicator lives in the safha header — see reader zone, ViewingChip)
 
-app/not-found.tsx            — app-wide 404 (client), catches all unmatched URLs; themed via theme tokens + plain <a> full-load links (Home + Shared Mushaf) so navigation keeps CSS. Renders under the root layout (no Nav).
+app/not-found.tsx            — app-wide 404 (server), catches all unmatched URLs; themed via theme tokens + plain <a> full-load links (Home + Shared Mushaf + ReturnToReadingLink) so navigation keeps CSS. Renders under the root layout (no Nav). ReturnToReadingLink (app/components/nav/ReturnToReadingLink.tsx, client) resolves lastReadPath on mount, validates locale + 1–604, falls back to default-locale page 1; label passed as a server prop (no intl provider here).
 app/[locale]/not-found.tsx   — locale-nested 404 fallback; delegates to Custom404 for notFound() errors inside the [locale] segment.
 app/[locale]/error.tsx       — error boundary for the locale-nested tree (client); keeps Nav/theme/i18n mounted (nested under [locale]/layout.tsx, unlike not-found.tsx). Reports to Sentry via Sentry.captureException, themed like not-found.tsx, with a "try again" (reset()) + home link. See ADR 0017.
 app/global-error.tsx         — last-resort error boundary for the root layout itself (client); replaces app/layout.tsx entirely, so it renders its own <html>/<body> with plain inline-safe CSS (no theme tokens/fonts/i18n available). Reports to Sentry. See ADR 0017.
