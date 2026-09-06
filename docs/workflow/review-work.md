@@ -2,9 +2,18 @@
 
 Spawns a reviewer to check code changes across three dimensions. Accepts an optional scope argument:
 
-- _(no arg)_ — committed changes on this branch vs main (default)
-- `--staged` — staged but uncommitted changes
-- `--unstaged` — unstaged working-tree changes
+- _(no arg)_ — **everything not yet committed**: staged + unstaged working-tree changes (default)
+- `--staged` — staged changes only
+- `--unstaged` — unstaged working-tree changes only
+- `--committed` — commits on this branch vs `main`
+
+**Why the working tree is the default:** `/ship-fq-task` is the only sanctioned path to `git commit`
+in this project, and this review runs *before* it (`review-work.md` step 3 → `/retrospect` →
+`/ship-fq-task`; `ship-task.md` step 0 also offers this review before its own commit step). So at the
+moment this runs there are normally **zero commits on the branch**, and a `main...HEAD` default hands
+the reviewer an empty diff. That failure is silent — a review that saw nothing is indistinguishable
+from a clean review. Use `--committed` for the genuine cases (reviewing an already-pushed branch, or
+a PR someone else opened).
 
 ## Choosing the review model
 
@@ -20,12 +29,14 @@ Use your most capable available model for thorough reviews; use a faster model w
 
 Pick the right commands based on the scope argument:
 
-**Default (branch vs main):**
+**Default (everything uncommitted):**
 ```bash
-git diff main...HEAD --name-only
-git diff main...HEAD
-git log main...HEAD --oneline
+git status --short
+git diff HEAD --name-only
+git diff HEAD
 ```
+`git diff HEAD` covers staged and unstaged together, which is what "the work I just did and have not
+shipped" means here.
 
 **`--staged`:**
 ```bash
@@ -38,6 +49,18 @@ git diff --cached
 git diff --name-only
 git diff
 ```
+
+**`--committed` (branch vs main):**
+```bash
+git diff main...HEAD --name-only
+git diff main...HEAD
+git log main...HEAD --oneline
+```
+
+**If the chosen scope produces an empty diff, STOP.** Report "no changes found in scope `<scope>`",
+say which command produced nothing, and name the scope that probably has the work (`git status
+--short` shows it). Do **not** proceed into the review prompt and do **not** report "no issues
+found" — a review of nothing must never be reportable as a clean review.
 
 Also list `docs/plans/` to identify any plans associated with this branch's work.
 
@@ -67,6 +90,10 @@ You are a senior code reviewer. Review the following branch diff across three di
 
 **Dimension 3 — Plan Consistency**
 - Does the implementation match the plan in `docs/plans/`?
+- **If that plan is a child of an umbrella** (it lives in a `docs/plans/<feature>/` directory
+  alongside an `INDEX.md`), read the `INDEX.md` too. Its "Cross-cutting invariants" and "What NOT to
+  do" bind the child even though the child file does not restate them, so a reviewer reading only the
+  child file is checking half the contract.
 - Are there TODOs or placeholders left in the code?
 - Are there any `docs/plans/` files that should now be marked `implemented` but aren't?
 - Does anything contradict `docs/architecture/DECISIONS.md`'s invariants or a `docs/architecture/decisions/*.md` entry for a touched domain?
