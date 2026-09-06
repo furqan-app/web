@@ -1,6 +1,6 @@
 {
   "name": "furqan",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -20,6 +20,7 @@
     "seed:quran": "dotenv -e .env.local -- node scripts/quran-seed/seed.js",
     "generate:quran-json": "dotenv -e .env.local -- node scripts/quran-json/generate.js",
     "generate:quran-chapters": "dotenv -e .env.local -- node scripts/quran-chapters/generate.js",
+    "generate:quran-search-index": "dotenv -e .env.local -- node scripts/quran-search-index/generate.js",
     "generate:quran-juz-starts": "dotenv -e .env.local -- node scripts/quran-juz-starts/generate.js",
     "generate:quran-reciters": "node scripts/quran-reciters/generate.js",
     "postinstall": "prisma generate --schema prisma/quran/schema.prisma && prisma generate --schema prisma/app/schema.prisma",

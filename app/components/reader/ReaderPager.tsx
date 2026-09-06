@@ -12,6 +12,7 @@ import { getLanguageDirection } from "@/app/utils/i18n";
 import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
+import { LaunchSplashCover } from "@/app/components/reader/LaunchSplashCover";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { ReaderPageSync } from "@/app/components/reader/ReaderPageSync";
@@ -219,7 +220,7 @@ export function ReaderPager({
   const isLgUp = useIsLgUp();
   const isTablet = useIsTablet();
   const { toggleOverlay } = useNavOverlay();
-  const { mushafId, edition } = useQuranMushaf();
+  const { mushafId, edition, hydrated: mushafHydrated } = useQuranMushaf();
   const { setJumpTo } = useReaderNavigation();
 
   // Seed the SSR pair once, before children (usePage) render, so the initial page
@@ -657,6 +658,16 @@ export function ReaderPager({
     ? getFirstVerseKeyOfPage(currentPageWords.lines)
     : null;
 
+  // Splash-continuity cover inputs (issue #586, ADR 0065): the ids the user
+  // actually sees (single view: the anchor page only — same visibility scoping
+  // as baseFontIds, so no eager partner download is implied) plus whether
+  // their query data is present under the active mushafId. Font readiness is
+  // awaited inside the leaf via pageFontsReady (read-only).
+  const coverVisibleIds = isDouble ? [curRightId, curLeftId] : [pageNumber];
+  const coverDataReady = isDouble
+    ? Boolean(rightData && leftData)
+    : Boolean(currentPageWords);
+
   // @font-face for every page in the window so a revealed neighbor never flashes.
   // Pair-expanded — safe here because tajweed's keyed <style> elements are pure
   // CSS declaration (browsers never fetch an unrendered face).
@@ -760,6 +771,17 @@ export function ReaderPager({
   return (
     <>
       <FontFaceInjector pageIds={allPageIds} baseFontIds={baseFontIds} />
+      {/* Mounted directly after FontFaceInjector on purpose: sibling effects
+          run in order, so the cover's pageFontsReady check runs after the
+          registry faces for this window exist (it settles instantly for
+          unregistered ids — awaiting it earlier would lift the cover before
+          the font starts downloading). Null leaf, renders nothing. */}
+      <LaunchSplashCover
+        dataReady={coverDataReady}
+        visibleIds={coverVisibleIds}
+        edition={edition}
+        mushafHydrated={mushafHydrated}
+      />
       <RecitationPageSync firstVerseKey={firstVerseKey} pageNumber={pageNumber} />
       <RecitationFollow anchor={pageNumber} isDouble={isDouble} onFollow={followTo} />
       <ReaderPageSync anchor={pageNumber} isDouble={isDouble} />

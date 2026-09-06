@@ -2,13 +2,14 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-61 active plans.
+81 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
 | Area | Plan | Status | Type |
 |---|---|---|---|
 | a11y | [Fix Dialog Missing Title/Description A11y Warnings](fix-dialog-missing-description.md) | implemented | bug |
+| api | [Fix ByteString Crash on Non-ASCII Usernames in Auth Middleware](fix-arabic-username-auth-header.md) | implemented | bug |
 | api | [Fix RSC Cache Poisoning on Hostinger](fix-rsc-cache-poisoning.md) | implemented | bug |
 | awrad | [Daily Awrad & Learning Plans Engine (Foundation)](awrad-learning-plans.md) | implemented | feature |
 | awrad | [Daily Awrad UI](daily-awrad-ui.md) | implemented | feature |
@@ -20,9 +21,22 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | ci | [Visual E2E Testing in the Workflow](visual-e2e-testing.md) | implemented | feature |
 | db | [Adopt Prisma Migrations for furqan_app](adopt-prisma-migrations.md) | implemented | feature |
 | db | [Fix Prisma Connection Exhaustion on Next.js Dev Hot-Reload](fix-dev-hmr-prisma-connections.md) | implemented | bug |
+| marks | [Offline-First Marks — umbrella](offline-first-marks/INDEX.md) | ready-to-implement | feature |
 | marks | [Copy and Share Verses from Mark Modal](copy-share-verses.md) | implemented | feature |
+| marks | [E2E: offline and guest marking coverage](offline-first-marks/552-e2e-coverage.md) | implemented | chore |
+| marks | [Local marks store module](offline-first-marks/546-local-store.md) | implemented | feature |
+| marks | [MarkModal: offline marking + guest marking in the installed PWA](offline-first-marks/550-markmodal-gates.md) | implemented | feature |
+| marks | [Marks API: full-sync mode + share getSortKey](offline-first-marks/545-api-full-sync.md) | implemented | chore |
+| marks | [Marks sync engine (push-then-pull)](offline-first-marks/547-sync-engine.md) | implemented | feature |
+| marks | [Marks: stale-write guard via client_updated_at](offline-first-marks/544-stale-write-guard.md) | implemented | chore |
+| marks | [My Marks reads the local store; ungate the page in the PWA](offline-first-marks/551-my-marks-store.md) | implemented | feature |
+| marks | [Reader renders marks from the local store](offline-first-marks/548-reader-store-reads.md) | implemented | feature |
+| marks | [Service worker: marks GET must be NetworkOnly](offline-first-marks/549-sw-networkonly.md) | implemented | chore |
+| marks | [Sign-out flushes pending marks and confirms when any remain](offline-first-marks/561-signout-flush.md) | implemented | feature |
 | marks | [Verse/Word Comments](verse-word-comments.md) | implemented | feature |
+| marks | [Wire the marks store + sync engine into the app lifecycle](offline-first-marks/560-sync-wiring.md) | implemented | fix |
 | nav | [Close Overlays on Back-Swipe (Mobile/Tablet PWA)](close-overlays-on-back-swipe.md) | implemented | bug |
+| nav | [Complex E2E & Fix — Locale Switching & Bi-Directional Reader Navigation](e2e-locale-switching.md) | implemented | feature |
 | nav | [Complex E2E & Fix: Multi-Layer Overlay Stacks, Gesture Interrupts & History Traversal](e2e-overlay-stacks-history.md) | implemented | feature |
 | nav | [Desktop Navbar Redesign: Icon-Chip Theming, Spacing, Search Consolidation](desktop-navbar-font-bg.md) | implemented | feature |
 | nav | [Fix Sidebar Bottom Clip](fix-sidebar-bottom-clip.md) | implemented | bug |
@@ -33,14 +47,17 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
+| pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
 | reader | [Arrow Controls on Desktop](arrow-controls-desktop.md) | implemented | feature |
+| reader | [Complex E2E & Fix: Boundary Wrap-Arounds & Error Route Recovery Navigation](e2e-boundary-wraparound-recovery.md) | implemented | feature |
 | reader | [Fix QuranSafha Swipe Flicker (font-ready flash + mark re-renders)](fix-safha-swipe-flicker.md) | implemented | bug |
 | reader | [Fix Reversed Mobile Swipe Navigation Direction](fix-mobile-swipe-direction.md) | implemented | bug |
 | reader | [Fix Tajweed Mushaf Swipe Flicker](fix-tajweed-swipe-flicker.md) | implemented | bug |
 | reader | [Loading Placeholder Toggles the Scrollbar, Reflowing the Whole Document](fix-panel-placeholder-reflow.md) | implemented | bug |
 | reader | [Mushaf Double-Page Spread Toggle](mushaf-double-page-view.md) | implemented | feature |
+| reader | [Native Touch Long-Press for Word Marking](native-word-long-press.md) | implemented | bug |
 | reader | [Nocturnal Reader Lab — Desktop RTL](reader-lab-nocturnal-desktop.md) | implemented | feature |
 | reader | [Page Turn Blanks the Reader on Slow Networks](fix-page-turn-blank-slow-network.md) | implemented | bug |
 | reader | [Reader Swipe Performance: Persistent Client Pager](reader-persistent-pager.md) | implemented | feature |
@@ -56,7 +73,9 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |
 | rendering | [Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle](fix-quran-page-font-loading.md) | implemented | bug |
 | rendering | [Safha Ribbon Indicator](safha-ribbon-indicator.md) | implemented | feature |
+| search | [Dedicated Search Results Page with Infinite Scroll](search-results-page.md) | implemented | feature |
 | search | [Fix Search Debounce Lag](fix-search-debounce-lag.md) | implemented | bug |
+| search | [Offline Quran Search Foundation (Index, Offline Engine, Paginated API)](search-foundation.md) | implemented | feature |
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
 | tafsir | [Tafsir: Offline Download & Cache Management for PWA](tafsir-offline-download.md) | implemented | feature |
@@ -67,5 +86,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |
+| workflow | [Fleet Detection + On-Demand Setup (detect-fleet, setup-fq-fleet)](fleet-detection-setup.md) | implemented | feature |
+| workflow | [fq-ask-human: Slack escalation — post a question, await a threaded human decision](fq-ask-human.md) | implemented | feature |
 | workflow | [Remove 5 workflow skills (impeccable, visualize-fq-design, compress-fq-docs, mujaz, ui-motion)](remove-workflow-skills.md) | implemented | feature |
 | workflow | [AI-First Documentation & Workflow System](ai-docs-workflow-system.md) | superseded | feature |

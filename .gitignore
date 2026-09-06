@@ -78,3 +78,7 @@ settings.local.json
 # impeccable machine-local settings + per-run scratch output (keep DESIGN.md, .impeccable/design.json)
 .impeccable/config.local.json
 /.impeccable/critique/
+
+# fleet detection cache + delegate-setup lane config (describe one machine, never the repo)
+.claude/fleet.json
+/.delegate/

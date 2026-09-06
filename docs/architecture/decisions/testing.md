@@ -62,8 +62,26 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 
 **Constraints:**
 - Local Playwright must support `reuseExistingServer: true` — this is what makes `e2e:serve` (build once) compose with repeated `e2e:test` runs, and it is off in CI so CI always builds fresh.
+- **A zombie `next-server` still listening on the e2e port is silently adopted by `reuseExistingServer: true`.**
+  If it was built from another branch or carries a different `.env` (e.g. a stale `NEXTAUTH_SECRET`), specs
+  fail in misleading ways — every authenticated spec hits the sign-in wall because the stale server can't
+  decode the test JWT, which reads like a broken auth *helper* rather than a stale process. When local E2E
+  behaves inexplicably, `ss -tlnp | grep :3000` (or `fuser -k 3000/tcp`) and rebuild before debugging the test.
+- **Running `e2e:build` in a worktree that has a live `next dev` server clobbers the shared `.next`.** The dev
+  server then serves a broken half-production build (missing vendor chunks, then bare 404s). Stop that
+  worktree's dev server before `e2e:build`, then restart it afterward.
+- **After `signOut()` in a Playwright spec, assert session state via `context.cookies()`, not
+  `page.evaluate(() => fetch("/api/auth/session"))`.** `signOut()` triggers a hard navigation; a `fetch`
+  inside `page.evaluate` races it and throws "execution context destroyed", making the assertion flaky.
 - CI must keep running `npm run e2e:build && npm run e2e:start` with unconstrained workers to validate full SSG static generation before merging.
 - Local `next build` worker count defaults to 2 cores unless overridden by `NEXT_BUILD_CPUS`; do not remove this cap (every local E2E session now runs a build).
 - Local Playwright worker count defaults to 2 unless overridden by `PLAYWRIGHT_WORKERS`.
 - A worktree must be buildable before local E2E: `app/generated` is produced by `npm run postinstall` (`prisma generate` for both schemas), never symlinked from another worktree — a symlink breaks `next build` with `Module not found: @/app/generated/app-client`.
+- **The e2e databases carry no migration history, so new `furqan_app` migrations never reach them.**
+  They are created by `prisma db push`, so `prisma migrate deploy` against `.env.e2e` fails with
+  **P3005** ("the database schema is not empty") rather than applying anything. A spec that depends on
+  a newly-migrated column therefore fails on a schema error unrelated to the code under test — found
+  when `#544`'s `Mark.client_updated_at` was absent from `furqan_app_e2e` while verifying `#560`.
+  When a spec needs a new column, apply that migration's SQL to the e2e DB by hand (or recreate the
+  DB from the current schema); do not try to baseline it mid-task.
 - Agents do not run test suites locally by default (CI runs lint, type-check, unit tests, and Playwright automatically on PRs). When needed, agents run targeted unit tests (`npx vitest run <path>`) for pure logic changes, and run targeted Playwright specs against `npm run e2e:serve` only when authoring/updating E2E tests.

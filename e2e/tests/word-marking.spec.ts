@@ -5,6 +5,11 @@ import {
   skipNonDesktop,
   skipNonMobile,
   longPressWord,
+  clearLocalMarksStore,
+  openWordMarkModal,
+  withStandaloneDisplayMode,
+  waitForServiceWorker,
+  getLocalMark,
 } from "../helpers/reader";
 import {
   authenticateAsUser,
@@ -15,8 +20,8 @@ import {
 test.describe.configure({ mode: "serial" });
 
 /**
- * Standard setup helper for reader tests: clears marks, sets auth cookies,
- * navigates to page 1, and waits for reader content to mount.
+ * Standard setup helper for reader tests: clears marks (DB and local store),
+ * sets auth cookies, navigates to page 1, and waits for reader content to mount.
  */
 async function setupReaderSession(
   page: Page,
@@ -26,6 +31,7 @@ async function setupReaderSession(
 ) {
   await clearUserMarks();
   await authenticateAsUser(context);
+  await clearLocalMarksStore(page);
   await page.goto(`/${locale}/pages/${pageNumber}`);
   await waitForReaderContent(page);
 }
@@ -712,3 +718,357 @@ test.describe("My Marks Deletion Cache Freshness", () => {
     await expect(returnedWord).not.toHaveClass(/bg-red-400/, { timeout: 10000 });
   });
 });
+
+test.describe("Offline & Guest Marking (ADR 0061)", () => {
+  test("guest marking in installed PWA persists across reload and appears in My Marks", async ({
+    page,
+    context,
+  }, testInfo) => {
+    const isMobile = testInfo.project.name === "mobile";
+    await clearAuth(context);
+    await clearUserMarks();
+    await withStandaloneDisplayMode(page);
+    await clearLocalMarksStore(page);
+
+    await page.goto("/ar/pages/1");
+    await waitForReaderContent(page);
+
+    const firstWord = getActivePanel(page)
+      .locator('[data-fq-word="1:1:1"]')
+      .first();
+    await expect(firstWord).toBeVisible();
+
+    await openWordMarkModal(page, firstWord, isMobile);
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    // Guest in installed PWA sees category options (not the sign-in wall)
+    const forgettingOption = dialog.locator('label[for="mark-color-forgetting"]');
+    await expect(forgettingOption).toBeVisible();
+
+    // Select forgetting and save
+    await forgettingOption.click();
+    const saveBtn = dialog.getByRole("button", { name: "حفظ: نسيان" });
+    await expect(saveBtn).toBeEnabled();
+    await saveBtn.click();
+    await expect(dialog).toBeHidden();
+
+    // Highlight is applied immediately
+    await expect(firstWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
+
+    // Hard reload — highlight persists post-reload
+    await page.reload();
+    await waitForReaderContent(page);
+
+    const reloadedWord = getActivePanel(page)
+      .locator('[data-fq-word="1:1:1"]')
+      .first();
+    await expect(reloadedWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
+
+    // Navigate to /ar/marks — mark appears in My Marks without sign-in prompt
+    await page.goto("/ar/marks");
+    await expect(page.locator("main")).toBeVisible();
+    await expect(page.getByText("الفاتحة").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("الفاتحة - ١").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("سجّل الدخول لرؤية علاماتك.")).toBeHidden();
+  });
+
+  test("offline marking for signed-in user shows saved-locally status and syncs on reconnect", async ({
+    page,
+    context,
+  }, testInfo) => {
+    const isMobile = testInfo.project.name === "mobile";
+    await setupReaderSession(page, context, 1);
+
+    const word2 = getActivePanel(page)
+      .locator('[data-fq-word="1:1:2"]')
+      .first();
+    await expect(word2).toBeVisible();
+
+    // Go offline
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+    // Open modal offline
+    await openWordMarkModal(page, word2, isMobile);
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    // Select linking and save
+    await dialog.locator('label[for="mark-color-linking"]').click();
+    const saveBtn = dialog.getByRole("button", { name: "حفظ: تربيط" });
+    await expect(saveBtn).toBeEnabled();
+    await saveBtn.click();
+    await expect(dialog).toBeHidden();
+
+    // Highlight is visible offline
+    await expect(word2).toHaveClass(/bg-blue-300/, { timeout: 10000 });
+
+    // Reopen modal: verify savedLocally pending indicator is shown
+    await openWordMarkModal(page, word2, isMobile);
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("محفوظ على هذا الجهاز")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+
+    // Reconnect to network
+    await context.setOffline(false);
+    await page.evaluate(() => {
+      if (navigator.onLine) {
+        window.dispatchEvent(new Event("online"));
+      }
+    }).catch(() => {});
+
+    // Poll until record is synced
+    await expect
+      .poll(async () => (await getLocalMark(page, "word:1:1:2"))?.sync, {
+        timeout: 15000,
+      })
+      .toBe("synced");
+
+    // Reopen modal: savedLocally pending indicator should now be gone
+    await openWordMarkModal(page, word2, isMobile);
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("محفوظ على هذا الجهاز")).toBeHidden();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  });
+
+  test("mark made offline survives page reload while still offline", async ({
+    page,
+    context,
+  }, testInfo) => {
+    const isMobile = testInfo.project.name === "mobile";
+    await setupReaderSession(page, context, 1);
+    await waitForServiceWorker(page);
+    await page.reload();
+    await waitForReaderContent(page);
+
+    const word3 = getActivePanel(page)
+      .locator('[data-fq-word="1:1:3"]')
+      .first();
+    await expect(word3).toBeVisible();
+
+    // Go offline
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+    // Mark as tashkeel-error
+    await openWordMarkModal(page, word3, isMobile);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    await dialog.locator('label[for="mark-color-tashkeel-error"]').click();
+    await dialog.getByRole("button", { name: /حفظ: خطأ.*تشكيل/ }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect(word3).toHaveClass(/bg-yellow-200/, { timeout: 10000 });
+
+    // Reload while remaining offline
+    await page.reload();
+    await waitForReaderContent(page);
+
+    const reloadedWord3 = getActivePanel(page)
+      .locator('[data-fq-word="1:1:3"]')
+      .first();
+    await expect(reloadedWord3).toHaveClass(/bg-yellow-200/, { timeout: 10000 });
+
+    // Reopen modal: radio checked and savedLocally indicator still present
+    await openWordMarkModal(page, reloadedWord3, isMobile);
+    const postReloadDialog = page.getByRole("dialog");
+    await expect(postReloadDialog).toBeVisible();
+
+    const radio = postReloadDialog.locator("#mark-color-tashkeel-error");
+    await expect(radio).toBeChecked();
+    await expect(postReloadDialog.getByText("محفوظ على هذا الجهاز")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(postReloadDialog).toBeHidden();
+
+    // Restore online state
+    await context.setOffline(false);
+  });
+
+  test("offline delete tombstones mark locally, survives reload, and deletes on server after reconnect", async ({
+    page,
+    context,
+  }, testInfo) => {
+    const isMobile = testInfo.project.name === "mobile";
+    await setupReaderSession(page, context, 1);
+    await waitForServiceWorker(page);
+    await page.reload();
+    await waitForReaderContent(page);
+
+    const firstWord = getActivePanel(page)
+      .locator('[data-fq-word="1:1:1"]')
+      .first();
+    await expect(firstWord).toBeVisible();
+
+    // 1. Create a mark and wait for it to sync
+    await openWordMarkModal(page, firstWord, isMobile);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    await dialog.locator('label[for="mark-color-forgetting"]').click();
+    await dialog.getByRole("button", { name: "حفظ: نسيان" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(firstWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
+
+    // Ensure synced
+    await expect
+      .poll(async () => (await getLocalMark(page, "word:1:1:1"))?.sync, {
+        timeout: 15000,
+      })
+      .toBe("synced");
+
+    // 2. Go offline
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+    // 3. Remove mark while offline
+    await openWordMarkModal(page, firstWord, isMobile);
+    await expect(dialog).toBeVisible();
+    const removeBtn = dialog.getByRole("button", { name: "إزالة العلامة" });
+    await expect(removeBtn).toBeVisible();
+    await removeBtn.click();
+    await expect(dialog).toBeHidden();
+
+    // Highlight is immediately gone from the reader
+    await expect(firstWord).not.toHaveClass(/bg-red-400/, { timeout: 10000 });
+
+    // Local store holds pending tombstone
+    const tombstone = await getLocalMark(page, "word:1:1:1");
+    expect(tombstone?.deleted).toBe(true);
+    expect(tombstone?.sync).toBe("pending");
+
+    // 4. Reload while offline — highlight remains gone
+    await page.reload();
+    await waitForReaderContent(page);
+
+    const reloadedFirstWord = getActivePanel(page)
+      .locator('[data-fq-word="1:1:1"]')
+      .first();
+    await expect(reloadedFirstWord).not.toHaveClass(/bg-red-400/, { timeout: 10000 });
+
+    // 5. Reconnect to network
+    await context.setOffline(false);
+    await page.evaluate(() => {
+      if (navigator.onLine) {
+        window.dispatchEvent(new Event("online"));
+      }
+    }).catch(() => {});
+
+    // 6. After sync completes, tombstone is dropped from local store
+    await expect
+      .poll(async () => await getLocalMark(page, "word:1:1:1"), {
+        timeout: 15000,
+      })
+      .toBeNull();
+
+    // 7. Verify deletion persisted on server: reload page and ensure highlight does not resurrect
+    await page.reload();
+    await waitForReaderContent(page);
+    const postSyncFirstWord = getActivePanel(page)
+      .locator('[data-fq-word="1:1:1"]')
+      .first();
+    await expect(postSyncFirstWord).not.toHaveClass(/bg-red-400/, { timeout: 10000 });
+  });
+
+  test("sign-out with unsynced marks flushes, then confirms and preserves them when the flush fails (#561)", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "UserMenu dropdown is the desktop sign-out path");
+    await setupReaderSession(page, context, 1);
+
+    // Every marks write/pull fails from here on, so a created mark can never leave `pending`.
+    await page.route("**/api/quran/pages/*/marks", (route) => route.abort());
+    await page.route("**/api/marks*", (route) => route.abort());
+
+    const word = getActivePanel(page).locator('[data-fq-word="1:1:2"]').first();
+    await expect(word).toBeVisible();
+
+    await openWordMarkModal(page, word, false);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.locator('label[for="mark-color-linking"]').click();
+    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect
+      .poll(async () => (await getLocalMark(page, "word:1:1:2"))?.sync, { timeout: 10000 })
+      .toBe("pending");
+
+    // Sign out — the flush runs, cannot clear the record, so the inline confirm appears
+    // instead of an immediate sign-out.
+    await page.getByRole("button", { name: "حسابي" }).first().click();
+    await page.getByRole("menuitem", { name: "تسجيل الخروج" }).click();
+
+    const stayBtn = page.getByRole("button", { name: "البقاء وإعادة المحاولة" });
+    await expect(stayBtn).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "تسجيل الخروج على أي حال" })).toBeVisible();
+
+    // "Stay and retry" keeps the session; the pending record and the owner stamp are untouched.
+    await stayBtn.click();
+    await expect(page.getByRole("menuitem", { name: "تسجيل الخروج" })).toBeVisible();
+    expect((await getLocalMark(page, "word:1:1:2"))?.sync).toBe("pending");
+    expect(
+      await page.evaluate(() => window.localStorage.getItem("localMarksOwner")),
+    ).toBe('"1"');
+  });
+
+  test("'Sign out anyway' drops the session but preserves the local store and owner stamp (#561)", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "UserMenu dropdown is the desktop sign-out path");
+    await setupReaderSession(page, context, 1);
+
+    await page.route("**/api/quran/pages/*/marks", (route) => route.abort());
+    await page.route("**/api/marks*", (route) => route.abort());
+
+    const word = getActivePanel(page).locator('[data-fq-word="1:1:2"]').first();
+    await expect(word).toBeVisible();
+    await openWordMarkModal(page, word, false);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.locator('label[for="mark-color-linking"]').click();
+    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await expect(dialog).toBeHidden();
+    await expect
+      .poll(async () => (await getLocalMark(page, "word:1:1:2"))?.sync, { timeout: 10000 })
+      .toBe("pending");
+
+    await page.getByRole("button", { name: "حسابي" }).first().click();
+    await page.getByRole("menuitem", { name: "تسجيل الخروج" }).click();
+    await page.getByRole("button", { name: "تسجيل الخروج على أي حال" }).click();
+
+    // Session is gone — the NextAuth session cookie is cleared from the context.
+    await expect
+      .poll(
+        async () =>
+          (await context.cookies()).some(
+            (c) => c.name.endsWith("next-auth.session-token") && c.value,
+          ),
+        { timeout: 15000 },
+      )
+      .toBe(false);
+
+    // …but the local store and the owner stamp are intact, so a re-sign-in as the
+    // same account recovers the pending marks via the ordinary push loop.
+    await page.reload();
+    await waitForReaderContent(page);
+    expect((await getLocalMark(page, "word:1:1:2"))?.sync).toBe("pending");
+    expect(
+      await page.evaluate(() => window.localStorage.getItem("localMarksOwner")),
+    ).toBe('"1"');
+    // The account menu now offers Sign in, not Sign out.
+    await page.getByRole("button", { name: "حسابي" }).first().click();
+    await expect(page.getByRole("menuitem", { name: "تسجيل الدخول" })).toBeVisible();
+  });
+});
+

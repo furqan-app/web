@@ -27,12 +27,21 @@
   },
   "search": {
     "placeholder": "Search surah by name or number",
+    "pagePlaceholder": "Search the Quran…",
     "description": "Search for a surah or verse by name or number.",
     "idleTitle": "Search the Quran",
     "idleHint": "Type a surah name, a verse number, or a phrase.",
     "loading": "Searching…",
     "noResults": "Nothing found",
-    "noResultsHint": "Try a different spelling, or search by surah number."
+    "noResultsHint": "Try a different spelling, or search by surah number.",
+    "pageTitle": "Search results",
+    "resultsCount": "{count} results",
+    "errorTitle": "Search failed",
+    "errorHint": "Check your connection and try again.",
+    "retry": "Retry",
+    "endOfResults": "No more results",
+    "viewAll": "View all results",
+    "viewAllCount": "View all {count} results"
   },
   "sidebar": {
     "title": "Quran navigation",
@@ -131,7 +140,8 @@
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",
-    "homeLink": "Go back to Home"
+    "homeLink": "Go back to Home",
+    "returnToReading": "Return to Reading"
   },
   "error": {
     "title": "Something went wrong",
@@ -168,7 +178,10 @@
     "shareVerseOpenReader": "Open in reader",
     "saveMarkWithCategory": "Save: {category}",
     "updateMarkWithCategory": "Update: {category}",
-    "close": "Close mark panel"
+    "close": "Close mark panel",
+    "savedLocally": "Saved on this device",
+    "guestPrompt": "Sign in to keep your marks across devices",
+    "dismissGuestPrompt": "Dismiss"
   },
   "rubs": "Rubs",
   "rub": "Rub",
@@ -193,7 +206,14 @@
     "emptyHint": "Mark a word or a verse while reading and it will appear here.",
     "emptyCategory": "No marks in this category yet.",
     "allLabel": "All",
-    "filterLabel": "Filter marks"
+    "filterLabel": "Filter marks",
+    "sessionExpired": "Session expired — sign in to sync your marks.",
+    "syncFailedPermanently": "Some marks couldn't be saved due to invalid data and were removed.",
+    "loadMore": "Load more",
+    "signOutSyncing": "Syncing marks…",
+    "signOutPending": "{count, plural, one {{n} mark hasn’t synced yet} other {{n} marks haven’t synced yet}}",
+    "signOutAnyway": "Sign out anyway",
+    "signOutStay": "Stay and retry"
   },
   "mushaf": {
     "hubTitle": "Shared Mushaf",

@@ -29,8 +29,9 @@ model Mark {
   category    String // memorization category key (see MARK_CATEGORIES)
   comment     String? @db.Text // optional free-text comment attached to the mark
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  client_updated_at DateTime?
 
   @@unique([marked_type, marked_id, to_user])
   @@map("marks")

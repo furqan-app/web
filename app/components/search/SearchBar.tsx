@@ -5,6 +5,10 @@ import { useSearch } from "@hooks/use-search";
 import { isSearchQueryValid } from "@/app/constants/search";
 import SearchQueryResults from "./SearchQueryResults";
 import useTranslations from "@hooks/use-translations";
+import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
+import { toLocaleNumeral } from "@utils/i18n";
+import { useReaderBasePath } from "@hooks/use-reader-base-path";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, SearchX, ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
@@ -35,8 +39,24 @@ const SearchState = ({
     </div>
 );
 
+// Grant-aware search-page path: /search normally, /mushaf/[grant]/search
+// under a grant (ADR 0012). The only basePath shapes useReaderBasePath ever
+// returns are "/pages" and "/mushaf/<grant>/pages" — throw on anything else
+// rather than silently linking somewhere wrong.
+const toSearchPath = (base: string): string => {
+    if (base === "/pages") return "/search";
+    const grant = base.match(/^\/mushaf\/([^/]+)\/pages$/);
+    if (grant) return `/mushaf/${grant[1]}/search`;
+    throw new Error(`Unknown reader base path: ${base}`);
+};
+
 export const SearchBar = () => {
     const t = useTranslations();
+    // Count-bearing label goes through next-intl directly with values — the
+    // project wrapper calls t(key) with no values (i18n.md).
+    const tSearch = useNextIntlTranslations("search");
+    const locale = useLocale();
+    const basePath = useReaderBasePath();
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const { verses, chapters, isLoading } = useSearch(debouncedQuery);
@@ -66,7 +86,7 @@ export const SearchBar = () => {
         setQuery(value);
     };
 
-    const hasResults = (chapters.data?.length || 0) > 0 || (verses.data?.length || 0) > 0;
+    const hasResults = (chapters.data?.results.length || 0) > 0 || (verses.data?.results.length || 0) > 0;
 
     return (
         <>
@@ -147,8 +167,8 @@ export const SearchBar = () => {
                         ) : hasResults ? (
                             <SearchQueryResults
                                 setIsOpen={setOpen}
-                                chapters={chapters.data || []}
-                                verses={verses.data || []}
+                                chapters={chapters.data?.results || []}
+                                verses={verses.data?.results || []}
                                 className="relative w-full mt-0 rounded-none shadow-none border-0 max-h-none"
                             />
                         ) : (
@@ -162,6 +182,28 @@ export const SearchBar = () => {
                             />
                         )}
                     </div>
+                    {/* #538 affordance: the overlay caps verses at 10 — the
+                        dedicated page pages through the full total. A fixed
+                        footer below the scroll container (not a row inside
+                        it), so it stays visible without scrolling on phone
+                        viewports. Same grant-aware derivation as the result
+                        links: /search normally, /mushaf/[grant]/search under
+                        a grant (ADR 0012). */}
+                    {hasResults && (
+                        <div className="shrink-0 border-t border-border bg-background px-4 py-2">
+                            <Link
+                                href={`${toSearchPath(basePath)}?q=${encodeURIComponent(debouncedQuery)}`}
+                                onClick={() => setOpen(false)}
+                                className="fq-focus-ring block w-full rounded-lg px-4 py-3 text-center text-sm font-medium text-primary transition-colors hover:bg-[hsl(var(--well)/var(--well-alpha))]"
+                            >
+                                {(verses.data?.total ?? 0) > (verses.data?.results.length ?? 0)
+                                    ? tSearch("viewAllCount", {
+                                          count: toLocaleNumeral(verses.data?.total ?? 0, locale),
+                                      })
+                                    : t("search.viewAll", "View all results")}
+                            </Link>
+                        </div>
+                    )}
                 </SheetContent>
             </Sheet>
         </>

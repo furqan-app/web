@@ -3,9 +3,11 @@ import {
   waitForActivePanelContent,
   getActivePanel,
   skipNonDesktop,
+  skipNonMobile,
   setStoredSafhaView,
   openSettings,
   withStandaloneDisplayMode,
+  waitForServiceWorker,
 } from "../helpers/reader";
 import { authenticateAsUser } from "../helpers/auth";
 import {
@@ -48,17 +50,6 @@ const audioIsPlaying = () => {
   const a = document.querySelector("audio");
   return !!a && !a.paused && !a.ended;
 };
-
-/**
- * Ensures the Serwist service worker is registered and actively controlling the page.
- */
-async function waitForServiceWorker(page: Page) {
-  await page.waitForFunction(async () => {
-    if (!("serviceWorker" in navigator)) return false;
-    const reg = await navigator.serviceWorker.ready;
-    return Boolean(reg?.active && navigator.serviceWorker.controller);
-  }, undefined, { timeout: 15000 }).catch(() => {});
-}
 
 /**
  * Mocks chapter 18 audio metadata and returns silent audio bytes with CORS headers from QDC audio host.
@@ -122,6 +113,52 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
 
     // Reader content mounts cleanly
     await waitForActivePanelContent(page);
+  });
+
+  test("1b. splash-continuity cover reveals pre-paint on standalone and lifts when the pair is ready", async ({
+    page,
+    context,
+  }, testInfo) => {
+    // Mobile viewport: the cover scope is standalone mobile/tablet (mirrors
+    // launch.html — desktop standalone is deliberately excluded, so the
+    // desktop project would never reveal it).
+    skipNonMobile(testInfo);
+    await authenticateAsUser(context);
+
+    // Standalone spoofed before first paint (first-run gate pre-dismissed for
+    // the default edition), so the parse-time reveal script takes the cover path.
+    await withStandaloneDisplayMode(page, [1, 2]);
+    await setStoredSafhaView(page, "single");
+
+    // Hold the base-edition page fonts briefly so the cover is observably up
+    // before readiness lifts it (otherwise local fonts settle too fast to
+    // assert the reveal leg deterministically).
+    await page.route("**/fonts/v1/woff2/*.woff2", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await route.continue();
+    });
+
+    const navigatedAt = Date.now();
+    await page.goto("/ar/pages/1");
+
+    // Cover reveals pre-paint on spoofed standalone…
+    await page.waitForFunction(
+      () => document.documentElement.classList.contains("fq-launch-cover"),
+      undefined,
+      { timeout: 5000 }
+    );
+
+    // …and lifts once the pair's data + fonts are ready. Fonts were delayed
+    // ~1.2s but never blocked, so a lift well under the 5s safety bound proves
+    // the ready path did it — not the safety timer.
+    await waitForActivePanelContent(page);
+    await page.waitForFunction(
+      () => !document.documentElement.classList.contains("fq-launch-cover"),
+      undefined,
+      { timeout: 10000 }
+    );
+    expect(Date.now() - navigatedAt).toBeLessThan(4500);
+    await expect(page.locator("#fq-launch-cover")).toBeHidden();
   });
 
   test("2. downloads surah recitation and populates Cache Storage across audio and pages caches", async ({
@@ -432,5 +469,95 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await expect(notice).toBeVisible({ timeout: 15000 });
     await expect(activePanel).toHaveAttribute("dir", "ltr");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  });
+
+  test("7. service worker: marks GET is NetworkOnly and rejects offline rather than resolving from cache", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo);
+    await authenticateAsUser(context);
+    await withStandaloneDisplayMode(page, [1, 2]);
+    await setStoredSafhaView(page, "single");
+
+    // Visit reader page online
+    await page.goto("/ar/pages/1");
+    await waitForActivePanelContent(page);
+    await waitForServiceWorker(page);
+
+    // Issue marks GET requests
+    const fetchResults = await page.evaluate(async () => {
+      const headers = { accept: "application/json" };
+      const r1 = await fetch("/api/quran/pages/1/marks", { headers });
+      const r2 = await fetch("/api/marks", { headers });
+      return { r1Ok: r1.ok, r2Ok: r2.ok };
+    });
+    expect(fetchResults.r1Ok).toBe(true);
+    expect(fetchResults.r2Ok).toBe(true);
+
+    // Verify 'apis' cache holds no marks entries
+    const cacheInspection = await page.evaluate(async () => {
+      const keys = await caches.keys();
+      const apisCache = keys.find((k) => k === "apis");
+      if (!apisCache) return [];
+      const cache = await caches.open(apisCache);
+      const reqs = await cache.keys();
+      return reqs.map((r) => r.url);
+    });
+    const marksInApis = cacheInspection.filter((url) =>
+      url.includes("/marks")
+    );
+    expect(marksInApis).toEqual([]);
+
+    // Turn offline
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+    // Seed a mark in localMarks in localStorage
+    await page.evaluate(() => {
+      const mark = {
+        marked_type: "word",
+        marked_id: "1:1:1",
+        page_number: 1,
+        category: "forgetting",
+        comment: null,
+        snippet: "بِسْمِ",
+        chapter_name_simple: "Al-Fatihah",
+        chapter_name_arabic: "الفاتحة",
+        verse_number: 1,
+        deleted: false,
+        updated_at: Date.now(),
+        sync: "synced",
+        from_user: 1,
+      };
+      localStorage.setItem("localMarks", JSON.stringify({ "word:1:1:1": mark }));
+      localStorage.setItem("localMarksOwner", JSON.stringify("1"));
+      window.dispatchEvent(new StorageEvent("storage", { key: "localMarks" }));
+      window.dispatchEvent(new StorageEvent("storage", { key: "localMarksOwner" }));
+    });
+
+    // Offline mark display still works — served by the store, not cache
+    const markedWord = getActivePanel(page).locator('[data-fq-word="1:1:1"]');
+    await expect(markedWord).toHaveClass(/bg-red-400/);
+
+    // Verify marks GET rejects rather than resolving from cache
+    const offlineResult = await page.evaluate(async () => {
+      const headers = { accept: "application/json" };
+      let r1Rejected = false;
+      try {
+        await fetch("/api/quran/pages/1/marks", { headers });
+      } catch {
+        r1Rejected = true;
+      }
+      let r2Rejected = false;
+      try {
+        await fetch("/api/marks", { headers });
+      } catch {
+        r2Rejected = true;
+      }
+      return { r1Rejected, r2Rejected };
+    });
+    expect(offlineResult.r1Rejected).toBe(true);
+    expect(offlineResult.r2Rejected).toBe(true);
   });
 });

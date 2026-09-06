@@ -52,9 +52,32 @@ export const ReaderPage = async ({
   // must resolve to the fallback's own content, never a permanent blank.
   const jumpGateScript = `(function(){try{var m=location.pathname.match(/\\/pages\\/(\\d+)/);if(!m||Number(m[1])!==${pageNumber}){var d=document.documentElement;d.classList.add("fq-pending-jump");setTimeout(function(){d.classList.remove("fq-pending-jump")},2000)}}catch(e){}})();`;
 
+  // Splash-continuity cover (issue #586, ADR 0065). The OS splash ends at this
+  // document's first paint, which would otherwise be the skeleton spread plus
+  // the document's own loading indicator. This reveals a static cover layer
+  // (rendered below, identical bytes for every user) at parse time, BEFORE
+  // first paint — but ONLY on standalone mobile/tablet, the same scope as
+  // public/launch.html's redirect, so browser tabs and desktop never paint it.
+  // Removal belongs to LaunchSplashCover (client leaf in ReaderPager), which
+  // lifts the classes when the visible pair is ready or its safety timer fires.
+  // Plain <script> in a Server Component — same pattern as the jump gate above
+  // and the theme script in the root layout (ADR 0020 scopes only <style>).
+  // Hand-synced literals, same discipline as launch.html: the display-mode list
+  // from app/utils/platform.ts and the 1367px breakpoint from DESKTOP_UP_QUERY.
+  const coverRevealScript = `(function(){try{var s=window.matchMedia("(display-mode: standalone)").matches||window.matchMedia("(display-mode: fullscreen)").matches||navigator.standalone===true;var d=window.matchMedia("(min-width: 1367px)").matches;if(s&&!d){document.documentElement.classList.add("fq-launch-cover")}}catch(e){}})();`;
+
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: jumpGateScript }} />
+      <script dangerouslySetInnerHTML={{ __html: coverRevealScript }} />
+      {/* Static splash-continuity layer (ADR 0065): hidden by default via CSS,
+          shown only while <html> carries `fq-launch-cover`. Inline wordmark
+          only — no <img>, no fetched asset, zero network. `aria-hidden` and no
+          focusable children: it blocks no choice, so it takes no focus trap
+          (the first-run gate's focus-trap spec must keep passing). */}
+      <div id="fq-launch-cover" aria-hidden="true">
+        <span className="fq-launch-cover-mark">Furqan</span>
+      </div>
       <ReaderPager
         initialPage={pageNumber}
         rightPageId={rightPageId}
