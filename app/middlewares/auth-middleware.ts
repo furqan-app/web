@@ -54,11 +54,13 @@ export const withAuth = (middleware: CustomMiddleware) => {
     // `extractUser` reads). Strip any client-supplied `user` header first so it
     // can never be forged, and forward via `request.headers` rather than setting
     // it on the response (which the handler never sees, and which would leak the
-    // token to the browser). `withIntl` doesn't mutate the response for `/api`
-    // paths, so building a fresh forwarding response here drops nothing.
+    // token to the browser). The serialized token is percent-encoded so non-ASCII
+    // characters (e.g. Arabic names) comply with HTTP header ByteString rules.
+    // `withIntl` doesn't mutate the response for `/api` paths, so building a
+    // fresh forwarding response here drops nothing.
     const requestHeaders = new Headers(req.headers);
     requestHeaders.delete("user");
-    requestHeaders.set("user", JSON.stringify(token));
+    requestHeaders.set("user", encodeURIComponent(JSON.stringify(token)));
 
     return middleware(
       req,
