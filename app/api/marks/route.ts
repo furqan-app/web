@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { appPrisma, quranPrisma } from "@/app/utils/db";
 import { extractUser } from "@/app/api/request";
-import type { Mark } from "@/app/generated/app-client";
+import { withAuthorNames, type MarkWithAuthor } from "@/app/api/mushaf/access";
 import {
   VERSE_SNIPPET_WORD_LIMIT,
   MARKS_PAGE_LIMIT,
@@ -23,6 +23,12 @@ export type MarkListItem = {
   chapter_name_arabic: string;
   verse_number: number;
   snippet: string;
+  // Author attribution. A grant holder can write marks INTO your mushaf
+  // (ADR 0012), so a mark on your OWN mushaf is not necessarily yours — the
+  // reader must be able to render "Marked by X" from the local store, which
+  // is only possible if the full-sync pull carries the author. #548.
+  from_user: number;
+  author_name: string | null;
 };
 
 export type MarksPage = {
@@ -45,7 +51,7 @@ const VALID_CATEGORIES = new Set(MARK_CATEGORIES.map((c) => c.key));
  * enrichment (#546's local record denormalizes exactly these fields).
  */
 const enrichMarks = async (
-  marks: Array<Mark>
+  marks: Array<MarkWithAuthor>
 ): Promise<Array<MarkListItem>> => {
   const wordMarks = marks.filter((m) => m.marked_type === "word");
   const verseMarks = marks.filter((m) => m.marked_type === "verse");
@@ -90,6 +96,8 @@ const enrichMarks = async (
           chapter_name_arabic: word.verse.chapter.name_arabic,
           verse_number: word.verse.verse_number,
           snippet: word.qpc_uthmani_hafs,
+          from_user: mark.from_user,
+          author_name: mark.author_name,
         },
       ];
     }
@@ -108,6 +116,8 @@ const enrichMarks = async (
         chapter_name_arabic: verse.chapter.name_arabic,
         verse_number: verse.verse_number,
         snippet: buildVerseSnippet(verse.Word),
+        from_user: mark.from_user,
+        author_name: mark.author_name,
       },
     ];
   });
@@ -151,7 +161,10 @@ export async function GET(request: NextRequest) {
   });
 
   if (all) {
-    const page: MarksPage = { data: await enrichMarks(marks), nextCursor: null };
+    const page: MarksPage = {
+      data: await enrichMarks(await withAuthorNames(marks, user.id)),
+      nextCursor: null,
+    };
     return jsonResponse({ data: page });
   }
 
@@ -166,7 +179,10 @@ export async function GET(request: NextRequest) {
       ? markKey(pageMarks[pageMarks.length - 1])
       : null;
 
-  const page: MarksPage = { data: await enrichMarks(pageMarks), nextCursor };
+  const page: MarksPage = {
+    data: await enrichMarks(await withAuthorNames(pageMarks, user.id)),
+    nextCursor,
+  };
 
   return jsonResponse({ data: page });
 }

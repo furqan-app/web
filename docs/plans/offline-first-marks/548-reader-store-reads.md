@@ -39,11 +39,26 @@ snapshot keyed by the `markPages` list — not in `QuranSafha`.
   and the `Record<marked_id, PageMark>` return shape.
 - `app/components/MarkModal.tsx` — drop the `reloadMarks()` call (see below).
 
+*(Added during implementation, 2026-09-06 — the author chain the corrected `is_own` constraint
+needs, none of which existed: `app/api/marks/route.ts` returns `from_user` + `author_name` via the
+existing `withAuthorNames` helper, `app/lib/marks/store.ts` carries them on `LocalMark`, and
+`app/lib/marks/sync.ts` maps them through the pull.)*
+
 ## Constraints
 
-- The adapter must still populate `PageMark`'s `from_user` / `author_name` / `is_own`. On the self
-  mushaf `is_own` is always `true` and `author_name` `null` — `QuranSafha` passes `authorName` to
-  `MarkModal` and it must not start rendering "Marked by" for the user's own marks.
+- The adapter must still populate `PageMark`'s `from_user` / `author_name` / `is_own`.
+  **Corrected during implementation (2026-09-06): `is_own` is NOT always `true` on the self mushaf.**
+  As first written this constraint said it was, and implementing it that way silently dropped
+  "Marked by X" for marks a grant holder wrote into your mushaf — caught by
+  `e2e/tests/shared-mushaf.spec.ts`, which signs in as the owner on `/ar/pages/1` and asserts the
+  viewer's name. A grant holder writes with `to_user` = owner and `from_user` = viewer (ADR 0012),
+  which is exactly why the self marks endpoint always ran `withAuthorNames`. So `is_own` is derived
+  per mark by comparing the record's `from_user` to the owner stamp, and the author must be carried
+  all the way down the local-first chain: `/api/marks` returns `from_user` + `author_name`,
+  `LocalMark` stores them (optional — records written before this, and a guest's own marks, have no
+  server author and read as the reader's own), and `applyServerPull` passes them through.
+  `QuranSafha` still gates `authorName` on `!is_own`, so nothing renders "Marked by" over your own
+  mark.
 - **`grantId` set keeps the existing server-fetch path**, untouched.
 - **`reloadMarks()` / `invalidateQueries(["/marks"])` is removed from the SELF path only.**
   *(Revised during implementation, 2026-09-06.)* As first written this constraint said to remove it

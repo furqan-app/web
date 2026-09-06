@@ -276,6 +276,8 @@ async function executeSync(): Promise<void> {
       deleted: false,
       updated_at: Date.now(),
       sync: "synced",
+      from_user: m.from_user,
+      author_name: m.author_name,
     }));
 
     applyServerPull(serverMarks);

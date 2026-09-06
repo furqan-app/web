@@ -176,9 +176,14 @@ Supersedes the marks clause of ADR 0014 for the self mushaf. See
   the React Query server fetch. Both hooks are called unconditionally so hook order never depends on
   `grantId` — the query is gated with `enabled: Boolean(grantId)`, not by branching around the call.
   The `LocalMark` → `PageMark` adapter runs in a `useMemo`, never inside `getSnapshot`, which must keep
-  returning one stable reference. On the self mushaf every mark is the reader's own, so the adapter
-  sets `is_own: true` and `author_name: null` — `QuranSafha` passes `authorName` to `MarkModal`, and
-  "Marked by" must never appear over your own mark. Tombstoned records (`deleted: true`) are filtered
+  returning one stable reference. `is_own` is derived per mark, never hardcoded:
+  a grant holder writes with `to_user` = owner and `from_user` = viewer (ADR 0012), so a mark on your
+  OWN mushaf can be someone else's and must still render "Marked by X". That is why the self marks
+  endpoint always ran `withAuthorNames`. The local-first chain therefore carries the author end to
+  end — `/api/marks` returns `from_user` + `author_name`, `LocalMark` stores them (optional: records
+  predating this, and a guest's own marks, have no server author and read as the reader's own), and
+  the adapter compares `from_user` to the owner stamp. Hardcoding `is_own: true` silently drops a
+  teacher's attribution; `e2e/tests/shared-mushaf.spec.ts` catches it. Tombstoned records (`deleted: true`) are filtered
   out so a delete looks immediate while the row stays for the sync engine to push.
 - **`reload()` survives for the grant reader only.** Removing it wholesale (as `#548`'s plan first
   said) would have broken refresh-after-write on the shared mushaf, which is still React Query-backed

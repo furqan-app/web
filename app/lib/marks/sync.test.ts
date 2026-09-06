@@ -147,6 +147,8 @@ describe("Marks sync engine (app/lib/marks/sync.ts)", () => {
               chapter_name_simple: sampleMark.chapter_name_simple,
               chapter_name_arabic: sampleMark.chapter_name_arabic,
               verse_number: sampleMark.verse_number,
+              from_user: 1,
+              author_name: null,
             },
           ],
         });
@@ -237,6 +239,8 @@ describe("Marks sync engine (app/lib/marks/sync.ts)", () => {
             chapter_name_simple: sampleMark.chapter_name_simple,
             chapter_name_arabic: sampleMark.chapter_name_arabic,
             verse_number: sampleMark.verse_number,
+            from_user: 1,
+            author_name: null,
           },
         ],
       });
@@ -274,6 +278,8 @@ describe("Marks sync engine (app/lib/marks/sync.ts)", () => {
             chapter_name_simple: sampleMark.chapter_name_simple,
             chapter_name_arabic: sampleMark.chapter_name_arabic,
             verse_number: sampleMark.verse_number,
+            from_user: 1,
+            author_name: null,
           },
         ],
       });
@@ -404,6 +410,8 @@ describe("Marks sync engine (app/lib/marks/sync.ts)", () => {
             chapter_name_simple: validMark.chapter_name_simple,
             chapter_name_arabic: validMark.chapter_name_arabic,
             verse_number: validMark.verse_number,
+            from_user: 1,
+            author_name: null,
           },
         ],
       });
@@ -500,6 +508,8 @@ describe("Marks sync engine (app/lib/marks/sync.ts)", () => {
               chapter_name_simple: "Al-Baqarah",
               chapter_name_arabic: "البقرة",
               verse_number: 255,
+              from_user: 1,
+              author_name: null,
             },
             {
               marked_type: "word",
@@ -511,6 +521,8 @@ describe("Marks sync engine (app/lib/marks/sync.ts)", () => {
               chapter_name_simple: "Al-Baqarah",
               chapter_name_arabic: "البقرة",
               verse_number: 255,
+              from_user: 1,
+              author_name: null,
             },
           ],
         };
