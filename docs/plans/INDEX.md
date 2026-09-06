@@ -47,6 +47,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
+| pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
 | reader | [Arrow Controls on Desktop](arrow-controls-desktop.md) | implemented | feature |

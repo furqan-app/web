@@ -3,6 +3,7 @@ import {
   waitForActivePanelContent,
   getActivePanel,
   skipNonDesktop,
+  skipNonMobile,
   setStoredSafhaView,
   openSettings,
   withStandaloneDisplayMode,
@@ -112,6 +113,52 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
 
     // Reader content mounts cleanly
     await waitForActivePanelContent(page);
+  });
+
+  test("1b. splash-continuity cover reveals pre-paint on standalone and lifts when the pair is ready", async ({
+    page,
+    context,
+  }, testInfo) => {
+    // Mobile viewport: the cover scope is standalone mobile/tablet (mirrors
+    // launch.html — desktop standalone is deliberately excluded, so the
+    // desktop project would never reveal it).
+    skipNonMobile(testInfo);
+    await authenticateAsUser(context);
+
+    // Standalone spoofed before first paint (first-run gate pre-dismissed for
+    // the default edition), so the parse-time reveal script takes the cover path.
+    await withStandaloneDisplayMode(page, [1, 2]);
+    await setStoredSafhaView(page, "single");
+
+    // Hold the base-edition page fonts briefly so the cover is observably up
+    // before readiness lifts it (otherwise local fonts settle too fast to
+    // assert the reveal leg deterministically).
+    await page.route("**/fonts/v1/woff2/*.woff2", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await route.continue();
+    });
+
+    const navigatedAt = Date.now();
+    await page.goto("/ar/pages/1");
+
+    // Cover reveals pre-paint on spoofed standalone…
+    await page.waitForFunction(
+      () => document.documentElement.classList.contains("fq-launch-cover"),
+      undefined,
+      { timeout: 5000 }
+    );
+
+    // …and lifts once the pair's data + fonts are ready. Fonts were delayed
+    // ~1.2s but never blocked, so a lift well under the 5s safety bound proves
+    // the ready path did it — not the safety timer.
+    await waitForActivePanelContent(page);
+    await page.waitForFunction(
+      () => !document.documentElement.classList.contains("fq-launch-cover"),
+      undefined,
+      { timeout: 10000 }
+    );
+    expect(Date.now() - navigatedAt).toBeLessThan(4500);
+    await expect(page.locator("#fq-launch-cover")).toBeHidden();
   });
 
   test("2. downloads surah recitation and populates Cache Storage across audio and pages caches", async ({
