@@ -34,6 +34,22 @@ Active decisions for observability — Sentry, Slack relay, fq-logger, notificat
 
 ---
 
+## Agent Slack Escalation (fq-ask-human)
+
+**Status:** active
+
+**Decision:** The `fq-ask-human` skill lets a blocked agent post a numbered question to Slack and block on a threaded human answer. It runs entirely on the developer's machine: `scripts/ask-human.mjs` (Node, global `fetch`) reads a dedicated bot token from a gitignored `.env.ask-human` at the repo root, calls `chat.postMessage`, then polls `conversations.replies` (backoff 5s → 30s cap) until a human reply or the caller's timeout, and prints one JSON result line. Invoked identically from any agent surface as `node scripts/ask-human.mjs <payload.json>`. See [ADR 0064](../adr/0064-agent-slack-escalation.md).
+
+**Constraints:**
+- No route is added to the deployed app, and no Slack Events API / socket-mode / inbound listener is introduced — agent-decision traffic must never pass through production runtime. This is a separate concern from ADR 0018's `app/api/webhooks/sentry/route.ts`, which is public only because Sentry is external.
+- The token is `FQ_ASK_HUMAN_SLACK_BOT_TOKEN` in `.env.ask-human` (matched by the existing `.env*` gitignore rule) — never `SLACK_WEBHOOK_URL`, never `.env.local` (which Next.js loads into the app), never Hostinger's env panel. The script never fetches, generates, or echoes it.
+- Every escalation carries an explicit terminal state: a caller-supplied `default` to apply on timeout, or an explicit `halt`. An agent that blocks forever on a Slack reply is worse than one that guesses.
+- A missing token (`path:"no-token"`) and a hard Slack failure (`path:"error"` — bad token, channel not found, bot not in channel, repeated 5xx/network) are handled identically by the caller: surface the question in the terminal and halt (or apply `default` if `onTimeout:"default"`). The script never silently proceeds as if unanswered.
+- A human reply that is a bare number selects that option; any other reply is returned as `path:"answered-freeform"` with the text — a first-class outcome the caller must handle, not an error to reprompt.
+- The caller contract (payload + result schema, Slack app setup) lives in [`docs/workflow/ask-human.md`](../../workflow/ask-human.md), registered in `docs/workflow/INDEX.md`.
+
+---
+
 ## Structured Logging (fq-logger)
 
 **Status:** active

@@ -104,8 +104,8 @@ app/global-error.tsx         — last-resort error boundary for the root layout 
 ## Zone: marks (`app/[locale]/marks/page.tsx`)
 
 ```
-(page.tsx — server: header + session gate, self-marks only, no grant equivalent)
-  MyMarksList                — client: fetches the caller's marks page-by-page via useAllMarks (useInfiniteQuery, cursor-paginated, one query per active category); a controlled filter (default "All") over "All" + one entry per MARK_CATEGORIES with distinct semantic Lucide icons and soft tinted badges, rendered responsively — a Radix DropdownMenu on mobile (`< md`, so 7 filters never overflow) and a scrolling pill-chip row on `md+`; switching the filter is a fresh paginated query (own cache — flipping back to a previously-viewed tab is instant); the loaded pages' marks are grouped by surah (mushaf order), full-width rows, each row's icon rendered with its distinct semantic category icon and badge tint (matters in All), comment previewed inline when present; each row links to /pages/[page] and has an inline remove button (deletePageMark, reused from delete-my-marks); an IntersectionObserver sentinel below the last row auto-loads the next page on scroll
+(page.tsx — server: header + MyMarksList render, self-marks only, no grant equivalent)
+  MyMarksList                — client: renders marks from local store via useAllMarks with client-side sort (getSortKey) and progressive windowing (#551); gates via evaluateMarkModalGates so installed PWA guests see their marks while plain browser tabs show MarksSignedOutPrompt; surfaces sync failure states (401 session-expired with sign-in CTA, 422 permanently-failed dropped marks); controlled filter (default "All") over "All" + one entry per MARK_CATEGORIES with distinct semantic icons and badges; marks grouped by surah in natural Quran order, each row linking to /pages/[page] with inline tombstone removal (tombstoneLocalMark + background syncMarks, no reload); comment previewed inline when present
   MarksSignedOutPrompt       — client: sign-in CTA when unauthenticated (own copy — not shared with mushaf/SignedOutPrompt)
 ```
 

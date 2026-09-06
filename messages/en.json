@@ -205,7 +205,10 @@
     "emptyHint": "Mark a word or a verse while reading and it will appear here.",
     "emptyCategory": "No marks in this category yet.",
     "allLabel": "All",
-    "filterLabel": "Filter marks"
+    "filterLabel": "Filter marks",
+    "sessionExpired": "Session expired — sign in to sync your marks.",
+    "syncFailedPermanently": "Some marks couldn't be saved due to invalid data and were removed.",
+    "loadMore": "Load more"
   },
   "mushaf": {
     "hubTitle": "Shared Mushaf",
