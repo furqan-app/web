@@ -66,7 +66,7 @@ export const SearchBar = () => {
         setQuery(value);
     };
 
-    const hasResults = (chapters.data?.length || 0) > 0 || (verses.data?.length || 0) > 0;
+    const hasResults = (chapters.data?.results.length || 0) > 0 || (verses.data?.results.length || 0) > 0;
 
     return (
         <>
@@ -147,8 +147,8 @@ export const SearchBar = () => {
                         ) : hasResults ? (
                             <SearchQueryResults
                                 setIsOpen={setOpen}
-                                chapters={chapters.data || []}
-                                verses={verses.data || []}
+                                chapters={chapters.data?.results || []}
+                                verses={verses.data?.results || []}
                                 className="relative w-full mt-0 rounded-none shadow-none border-0 max-h-none"
                             />
                         ) : (

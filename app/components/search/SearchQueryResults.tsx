@@ -89,7 +89,9 @@ export default function SearchQueryResults({
                 {toLocaleNumeral(Number(verse.verse_key.split(":")[1]), locale)}
               </div>
               <div className="text-right font-uthmanic text-lg" dir="rtl">
-                {verse.Word.map((w) => w.qpc_uthmani_hafs).join(" ")}
+                {verse.Word.length > 0
+                  ? verse.Word.map((w) => w.qpc_uthmani_hafs).join(" ")
+                  : (verse.display_uthmani ?? "")}
               </div>
             </Link>
           ))}

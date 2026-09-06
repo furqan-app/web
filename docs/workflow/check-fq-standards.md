@@ -71,6 +71,7 @@ A static, highest-risk-first list (last reconciled against the decisions 2026-08
 
 ### API / auth / i18n
 - API routes return `jsonResponse()`, never a raw `NextResponse.json()`.
+- Route files (`route.ts`) export only route handlers and route config — never shared constants or helpers (Next.js rejects non-route exports at build time, and neither `tsc` nor `lint` catches it; put shared values in `app/constants/`).
 - Read the authenticated user via `extractUser(request)` in API routes, never `getServerSession` there (layouts/pages are the documented exception).
 - `dir="auto"` is reserved for genuine free-text user content (notes, comments) — UI chrome and Quran text keep their locale-locked or Quran-locked `dir`.
 
