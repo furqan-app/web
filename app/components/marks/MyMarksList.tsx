@@ -1,16 +1,43 @@
 "use client";
 
-import { useEffect, useRef, useState, MouseEvent } from "react";
+import { useEffect, useState, MouseEvent, useSyncExternalStore } from "react";
 import { useLocale } from "next-intl";
+import { signIn, useSession } from "next-auth/react";
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, Check, ChevronDown, List, MessageSquare, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Bookmark,
+  Check,
+  ChevronDown,
+  List,
+  LogIn,
+  MessageSquare,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { useAllMarks } from "@hooks/use-all-marks";
-import { deletePageMark } from "@/app/server/actions/deletePageMark";
-import { MarkListItem } from "@/app/server/actions/getAllMarks";
-import { MARK_CATEGORIES, COMMENT_PREVIEW_CHAR_LIMIT, markKey } from "@constants/marks";
+import { useMarksSync } from "@/app/hooks/use-marks-sync";
+import { clearDroppedMarks } from "@/app/lib/marks/sync";
+import {
+  tombstoneLocalMark,
+  getOwnerSnapshot,
+  getServerOwnerSnapshot,
+  subscribe as subscribeStore,
+  type LocalMark,
+} from "@/app/lib/marks/store";
+import {
+  MARK_CATEGORIES,
+  COMMENT_PREVIEW_CHAR_LIMIT,
+  markKey,
+} from "@constants/marks";
+import { isStandaloneDisplayMode } from "@/app/utils/platform";
+import { useOnlineStatus } from "@/app/hooks/use-online-status";
+import { evaluateMarkModalGates } from "@/app/lib/marks/gates";
+import { MarksSignedOutPrompt } from "./MarksSignedOutPrompt";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,23 +102,27 @@ const FilterIcon = ({
 type SurahGroup = {
   chapterNameSimple: string;
   chapterNameArabic: string;
-  items: Array<MarkListItem>;
+  items: Array<LocalMark>;
 };
 
 /**
- * `items` is already sorted (surah, verse, wordPos) by the API — pages arrive
- * in that order too, so surah runs stay contiguous across page boundaries.
- * This is a linear scan, not a re-sort.
+ * Groups already sorted marks by surah. Natural reading order is preserved.
+ * Fallbacks are provided if denormalized chapter names are missing.
  */
-const groupBySurah = (items: Array<MarkListItem>): Array<SurahGroup> => {
+const groupBySurah = (items: Array<LocalMark>): Array<SurahGroup> => {
   const groups: Array<SurahGroup> = [];
 
   for (const item of items) {
     const last = groups[groups.length - 1];
-    if (!last || last.chapterNameSimple !== item.chapter_name_simple) {
+    const itemChapter =
+      item.chapter_name_simple ||
+      item.chapter_name_arabic ||
+      `Page ${item.page_number}`;
+
+    if (!last || last.chapterNameSimple !== itemChapter) {
       groups.push({
-        chapterNameSimple: item.chapter_name_simple,
-        chapterNameArabic: item.chapter_name_arabic,
+        chapterNameSimple: item.chapter_name_simple || itemChapter,
+        chapterNameArabic: item.chapter_name_arabic || itemChapter,
         items: [item],
       });
     } else {
@@ -114,9 +145,7 @@ const MarkRowSkeleton = () => (
   </div>
 );
 
-// Empty states are designed here rather than left as a bare centred sentence —
-// the language spec never covered them, and a list screen is where they are
-// most often seen.
+// Empty states are designed here rather than left as a bare centred sentence.
 const MarksEmptyState = ({
   title,
   hint,
@@ -133,69 +162,127 @@ const MarksEmptyState = ({
   </div>
 );
 
-export const MyMarksList = () => {
+export const MyMarksList = ({
+  initialSessionUser,
+}: {
+  initialSessionUser?: unknown;
+} = {}) => {
   const t = useTranslations();
   const locale = useLocale();
   const [active, setActive] = useState("all");
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    reload,
-  } = useAllMarks(active);
-  const [removingKeys, setRemovingKeys] = useState<Set<string>>(new Set());
-  const [failedKeys, setFailedKeys] = useState<Set<string>>(new Set());
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const { data: session, status } = useSession();
+  const sessionUser =
+    status === "loading"
+      ? initialSessionUser
+      : status === "authenticated"
+        ? session?.user
+        : undefined;
+
+  const ownerStamp = useSyncExternalStore(
+    subscribeStore,
+    getOwnerSnapshot,
+    getServerOwnerSnapshot
+  );
+
+  const [isStandalone, setIsStandalone] = useState(() =>
+    typeof window !== "undefined" ? isStandaloneDisplayMode() : false
+  );
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || !hasNextPage || isFetchingNextPage) return;
+    setIsMounted(true);
+    setIsStandalone(isStandaloneDisplayMode());
+  }, []);
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) {
-        fetchNextPage();
-      }
-    });
+  const isOnline = useOnlineStatus();
+  const isOffline = !isOnline;
 
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const { canMark } = evaluateMarkModalGates({
+    sessionUser,
+    ownerStamp,
+    isOffline,
+    isStandalone,
+  });
 
-  const handleRemove = async (
-    e: MouseEvent<HTMLButtonElement>,
-    mark: MarkListItem
-  ) => {
+  const { marks, totalCount, hasMore, loadMore, isLoading } =
+    useAllMarks(active);
+  const { status: syncStatus, droppedMarks } = useMarksSync();
+
+  // If not authenticated and not in standalone PWA, show the sign-in prompt
+  if (isMounted && !canMark) {
+    return <MarksSignedOutPrompt />;
+  }
+
+  const handleRemove = (e: MouseEvent<HTMLButtonElement>, mark: LocalMark) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const key = markKey(mark);
-    setRemovingKeys((prev) => new Set(prev).add(key));
-    setFailedKeys((prev) => {
-      const next = new Set(prev);
-      next.delete(key);
-      return next;
-    });
-
-    const ok = await deletePageMark({
+    // Local-first removal: write tombstone immediately and sync in background
+    tombstoneLocalMark(mark.marked_type, mark.marked_id, {
       page_number: mark.page_number,
-      marked_type: mark.marked_type,
-      marked_id: mark.marked_id,
+      category: mark.category,
+      comment: mark.comment,
+      snippet: mark.snippet,
+      chapter_name_simple: mark.chapter_name_simple,
+      chapter_name_arabic: mark.chapter_name_arabic,
+      verse_number: mark.verse_number,
+      from_user: mark.from_user,
+      author_name: mark.author_name,
     });
-
-    setRemovingKeys((prev) => {
-      const next = new Set(prev);
-      next.delete(key);
-      return next;
-    });
-
-    if (ok) {
-      reload();
-    } else {
-      setFailedKeys((prev) => new Set(prev).add(key));
-    }
+    void import("@/app/lib/marks/sync").then(({ syncMarks }) => syncMarks());
   };
+
+  const renderFailureAlerts = () => (
+    <>
+      {/* 401 Session expired warning banner (#547 / #551) */}
+      {syncStatus === "session-expired" && (
+        <div
+          role="alert"
+          className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertTriangle className="size-4 flex-none text-warning" strokeWidth={1.9} />
+            <p className="text-xs font-medium text-foreground">
+              {t("marks.sessionExpired", "Session expired — sign in to sync your marks.")}
+            </p>
+          </div>
+          <button
+            onClick={() => signIn()}
+            className="fq-focus-ring flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform duration-150 active:scale-95 flex-none"
+          >
+            <LogIn className="size-3.5" strokeWidth={1.8} />
+            {t("signIn", "Sign in")}
+          </button>
+        </div>
+      )}
+
+      {/* 422 Permanently failed dropped marks warning banner (#547 / #551) */}
+      {droppedMarks.length > 0 && (
+        <div
+          role="alert"
+          className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertCircle className="size-4 flex-none text-destructive" strokeWidth={1.9} />
+            <p className="text-xs font-medium text-foreground">
+              {t(
+                "marks.syncFailedPermanently",
+                "Some marks couldn't be saved due to invalid data and were removed."
+              )}
+            </p>
+          </div>
+          <button
+            onClick={() => clearDroppedMarks()}
+            aria-label={t("close", "Close")}
+            className="fq-focus-ring flex-none rounded-lg p-1 text-destructive hover:bg-destructive/15 transition-[background-color,transform] duration-150 active:scale-95"
+          >
+            <X className="size-4" strokeWidth={1.8} />
+          </button>
+        </div>
+      )}
+    </>
+  );
 
   if (isLoading) {
     return (
@@ -207,25 +294,20 @@ export const MyMarksList = () => {
     );
   }
 
-  const activeItems = data?.pages.flatMap((page) => page.data) ?? [];
-
-  // A page can come back with zero enriched items (its raw marks all failed
-  // Quran lookup) while still carrying a nextCursor — don't treat that as
-  // "no more marks" or the sentinel below would never get a chance to fetch
-  // the pages after it.
-  const exhausted = activeItems.length === 0 && !hasNextPage;
-
   // "all" tab empty means the user has zero marks at all — hide the tab
   // strip entirely, same as before pagination.
-  if (active === "all" && exhausted) {
+  if (active === "all" && totalCount === 0) {
     return (
-      <MarksEmptyState
-        title={t("marks.empty", "No marks yet.")}
-        hint={t(
-          "marks.emptyHint",
-          "Mark a word or a verse while reading and it will appear here.",
-        )}
-      />
+      <>
+        {renderFailureAlerts()}
+        <MarksEmptyState
+          title={t("marks.empty", "No marks yet.")}
+          hint={t(
+            "marks.emptyHint",
+            "Mark a word or a verse while reading and it will appear here."
+          )}
+        />
+      </>
     );
   }
 
@@ -233,6 +315,8 @@ export const MyMarksList = () => {
 
   return (
     <>
+      {renderFailureAlerts()}
+
       {/* Mobile: a compact dropdown so the 7 filters never overflow. */}
       <div className="md:hidden mb-4">
         <DropdownMenu>
@@ -283,9 +367,6 @@ export const MyMarksList = () => {
             <button
               key={f.key}
               onClick={() => setActive(f.key)}
-              // Selected IS live state, so --primary is right here. The inert
-              // ones sit at the well's recessed value rather than --muted, so
-              // one filter reads as chosen and the rest read as one group.
               className={cn(
                 "fq-focus-ring flex flex-none items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all duration-150 active:scale-[0.98]",
                 isActive
@@ -304,34 +385,36 @@ export const MyMarksList = () => {
         })}
       </div>
 
-      {exhausted ? (
+      {marks.length === 0 ? (
         <MarksEmptyState
           title={t("marks.emptyCategory", "No marks in this category yet.")}
         />
       ) : (
         // One surface per surah with hairline-separated rows, not a stack of
-        // identical floating cards — N cards is N competing objects, and it is
-        // what made this inventory unscannable.
+        // identical floating cards
         <div className="flex flex-col gap-4">
-          {groupBySurah(activeItems).map((group) => (
+          {groupBySurah(marks).map((group) => (
             <div key={group.chapterNameSimple} className="fq-section-group fq-section-group-open">
               <div
                 dir={locale === "ar" ? "rtl" : "ltr"}
                 className="fq-section-heading px-4 py-2"
               >
-                {/* Which surah you are looking at is identity — where you are —
-                    so it takes the warm accent, not --primary. */}
                 <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-                  {locale === "ar" ? group.chapterNameArabic : group.chapterNameSimple}
+                  {locale === "ar"
+                    ? group.chapterNameArabic || group.chapterNameSimple
+                    : group.chapterNameSimple || group.chapterNameArabic}
                 </span>
               </div>
 
               {group.items.map((mark) => {
                 const key = markKey(mark);
-                const isRemoving = removingKeys.has(key);
-                const hasFailed = failedKeys.has(key);
                 const categoryInfo = categoryByKey[mark.category];
                 const CategoryIcon = categoryInfo?.icon ?? Bookmark;
+
+                const chapterName =
+                  locale === "ar"
+                    ? mark.chapter_name_arabic || mark.chapter_name_simple
+                    : mark.chapter_name_simple || mark.chapter_name_arabic;
 
                 return (
                   <div
@@ -355,23 +438,20 @@ export const MyMarksList = () => {
                       </span>
 
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs text-muted-foreground">
-                          {locale === "ar"
-                            ? mark.chapter_name_arabic
-                            : mark.chapter_name_simple}{" "}
-                          - {toLocaleNumeral(mark.verse_number, locale)}
-                        </div>
-                        <div
-                          className="text-right font-uthmanic text-lg truncate"
-                          dir="rtl"
-                        >
-                          {mark.snippet}
-                        </div>
+                        {chapterName && mark.verse_number ? (
+                          <div className="text-xs text-muted-foreground">
+                            {chapterName} - {toLocaleNumeral(mark.verse_number, locale)}
+                          </div>
+                        ) : null}
+                        {mark.snippet ? (
+                          <div
+                            className="text-right font-uthmanic text-lg truncate"
+                            dir="rtl"
+                          >
+                            {mark.snippet}
+                          </div>
+                        ) : null}
                         {mark.comment ? (
-                          // A comment is content, not live state. It carried
-                          // --primary on its border, fill and icon, which put
-                          // the state accent on every row that happened to
-                          // have a note. Hairline and a muted tone instead.
                           <div
                             dir="auto"
                             className="mt-1 flex items-center gap-1.5 rounded-md border border-border bg-[hsl(var(--well)/var(--well-alpha))] px-2.5 py-1.5"
@@ -382,11 +462,6 @@ export const MyMarksList = () => {
                             </span>
                           </div>
                         ) : null}
-                        {hasFailed && (
-                          <div className="text-xs text-destructive mt-1">
-                            {t("markModal.actionError", "Something went wrong. Try again.")}
-                          </div>
-                        )}
                       </div>
 
                       <span className="text-xs text-muted-foreground flex-none">
@@ -396,9 +471,8 @@ export const MyMarksList = () => {
 
                     <button
                       onClick={(e) => handleRemove(e, mark)}
-                      disabled={isRemoving}
                       aria-label={t("markModal.removeMark", "Remove Mark")}
-                      className="fq-chrome-btn fq-focus-ring size-8 hover:text-destructive disabled:opacity-50"
+                      className="fq-chrome-btn fq-focus-ring size-8 hover:text-destructive"
                     >
                       <Trash2 className="size-4" strokeWidth={1.8} />
                     </button>
@@ -408,11 +482,16 @@ export const MyMarksList = () => {
             </div>
           ))}
 
-          {hasNextPage ? (
-            <div ref={sentinelRef} className={isFetchingNextPage ? "fq-section-group" : undefined}>
-              {isFetchingNextPage ? <MarkRowSkeleton /> : null}
+          {hasMore && (
+            <div className="flex justify-center py-2">
+              <button
+                onClick={loadMore}
+                className="fq-focus-ring text-xs text-muted-foreground hover:text-foreground py-2 px-4 rounded-lg bg-[hsl(var(--well)/var(--well-alpha))] transition-colors"
+              >
+                {t("marks.loadMore", "Load more")}
+              </button>
             </div>
-          ) : null}
+          )}
         </div>
       )}
     </>

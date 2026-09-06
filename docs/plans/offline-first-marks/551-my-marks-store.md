@@ -2,7 +2,7 @@
 title: My Marks reads the local store; ungate the page in the PWA
 type: feature
 date: 2026-09-04
-status: ready-to-implement
+status: implemented
 area: marks
 issue: 551
 adr: [0061]

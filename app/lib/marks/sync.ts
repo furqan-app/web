@@ -419,6 +419,14 @@ if (typeof window !== "undefined") {
 }
 
 /**
+ * Clears dropped marks from the sync engine snapshot.
+ */
+export function clearDroppedMarks(): void {
+  droppedMarks = [];
+  rebuild();
+}
+
+/**
  * Reset module state for deterministic unit testing.
  */
 export function _resetSyncForTesting(): void {

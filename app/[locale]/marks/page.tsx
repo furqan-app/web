@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/options";
 import { MyMarksList } from "@/app/components/marks/MyMarksList";
-import { MarksSignedOutPrompt } from "@/app/components/marks/MarksSignedOutPrompt";
 import { Locale } from "@/app/types/config";
 
 export default async function MarksPage({
@@ -32,7 +31,7 @@ export default async function MarksPage({
         </div>
       </header>
 
-      {session?.user ? <MyMarksList /> : <MarksSignedOutPrompt />}
+      <MyMarksList initialSessionUser={session?.user} />
     </main>
   );
 }
