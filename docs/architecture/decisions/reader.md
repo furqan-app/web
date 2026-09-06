@@ -143,6 +143,9 @@ payload; windowing removes the mass mount.
   all use it; do not reintroduce `router.push` for in-reader page changes, and do not read
   `usePathname()` for the current page (`replaceState` never updates it — that is exactly what broke
   recitation-follow before it was moved into the pager).
+- **Status:** active (2026-09-06, #474) — keyboard and click arrows are locale-independent: physical-left
+  always steps forward in Quran order and physical-right backward, in both `ar` and `en`. The Quran's
+  page order is fixed regardless of UI language, so never branch arrow direction on `isRTL`.
 - Recitation-follow: `RecitationContext` exposes `recitedPage` **and `isFollowing`** (a two-state
   attach/detach flag — ADR 0056); a dedicated null-rendering `RecitationFollow` leaf owns every
   transition via the pure `decideRecitationFollow` and calls the pager's `followTo` only while
