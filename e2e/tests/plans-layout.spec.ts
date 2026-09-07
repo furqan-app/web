@@ -79,7 +79,7 @@ test.describe("Plans Page: Authenticated Empty State & Header CTA", () => {
     await expect(dialog).toBeVisible();
 
     // Dialog presents templates
-    await expect(dialog.getByText("ورد القراءة اليومي")).toBeVisible();
+    await expect(dialog.getByText("الورد اليومي")).toBeVisible();
     await expect(dialog.getByText("ورد الاستماع")).toBeVisible();
     await expect(dialog.getByText("الحصون الخمسة")).toBeVisible();
 
