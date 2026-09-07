@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-81 active plans.
+82 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 

@@ -162,22 +162,16 @@ const MarksEmptyState = ({
   </div>
 );
 
-export const MyMarksList = ({
-  initialSessionUser,
-}: {
-  initialSessionUser?: unknown;
-} = {}) => {
+export const MyMarksList = () => {
   const t = useTranslations();
   const locale = useLocale();
   const [active, setActive] = useState("all");
 
   const { data: session, status } = useSession();
+  // No server session seed: the /marks route is a static precached shell (ADR
+  // 0014 Addendum 10, #591), so the live session resolves here client-side.
   const sessionUser =
-    status === "loading"
-      ? initialSessionUser
-      : status === "authenticated"
-        ? session?.user
-        : undefined;
+    status === "authenticated" ? session?.user : undefined;
 
   const ownerStamp = useSyncExternalStore(
     subscribeStore,
@@ -209,8 +203,17 @@ export const MyMarksList = ({
     useAllMarks(active);
   const { status: syncStatus, droppedMarks } = useMarksSync();
 
-  // If not authenticated and not in standalone PWA, show the sign-in prompt
-  if (isMounted && !canMark) {
+  // The route is static with no server session seed (ADR 0014 Addendum 10,
+  // #591): while the live session is still resolving *online*, hold the
+  // loading skeleton — never the signed-out prompt — so the online signed-in
+  // path keeps its no-flash behavior. Offline the session fetch never resolves
+  // to authenticated, so the sticky owner stamp decides immediately (gates.ts:
+  // offline isSignedIn is stamp !== "guest") — otherwise every offline cold
+  // launch would sit on skeleton until the ~3s session abort. The prompt below
+  // only renders post-load (or immediately offline), which is the state
+  // word-marking.spec.ts pins for signed-out visitors.
+  const sessionPending = status === "loading" && !isOffline;
+  if (isMounted && !sessionPending && !canMark) {
     return <MarksSignedOutPrompt />;
   }
 
@@ -284,7 +287,7 @@ export const MyMarksList = ({
     </>
   );
 
-  if (isLoading) {
+  if (!isMounted || sessionPending || isLoading) {
     return (
       <div className="fq-section-group">
         <MarkRowSkeleton />
