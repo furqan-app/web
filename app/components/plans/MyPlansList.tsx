@@ -8,15 +8,18 @@ import { toLocaleNumeral } from "@utils/i18n";
 import { usePlans } from "@hooks/use-plans";
 import { useTodayAssignments } from "@hooks/use-today-assignments";
 import { usePlanHistory } from "@hooks/use-plan-history";
-import { useOnlineStatus } from "@hooks/use-online-status";
 import { PLAN_TEMPLATE_UI, PLAN_TRACK_UI } from "@constants/plan-ui";
 import type { PlanProgressHistoryEntry, UserPlanListItem } from "@/app/server/actions/plans";
 import type { UserPlanStatus } from "@constants/plans";
 import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
-import { PlanAssignmentRow } from "./PlanAssignmentRow";
 import { PlansTodayHero } from "./PlansTodayHero";
 import { AddPlanButton } from "./AddPlanButton";
 import { PlansBrowseDialog, type PlansBrowseView } from "./PlansBrowseDialog";
+import {
+  quantityAmount,
+  getPlanPaceSummary,
+  computeTodayTaskCounts,
+} from "@/app/lib/plans/ui-helpers";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -168,11 +171,53 @@ const PlanHistorySection = ({ planId }: { planId: number }) => {
   );
 };
 
+export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
+  const t = useTranslations();
+  const locale = useLocale();
+
+  const parts: string[] = [];
+
+  if (plan.template_key === "husun") {
+    const startJuz = plan.target_juz_start ?? 1;
+    const endJuz = plan.target_juz_end ?? 30;
+    if (startJuz === 1 && endJuz === 30) {
+      parts.push(t("plans.summary.allQuran", "Whole Qur'an (30 Juz)"));
+    } else {
+      const startStr = toLocaleNumeral(startJuz, locale);
+      const endStr = toLocaleNumeral(endJuz, locale);
+      const rangeTemplate = t("plans.summary.juzRange", "Juz {start} to {end}");
+      parts.push(rangeTemplate.replace("{start}", startStr).replace("{end}", endStr));
+    }
+    const hifzPace = quantityAmount(plan.params.quantities?.hifz, 1);
+    const hifzUnit = plan.params.trackUnits?.hifz;
+    parts.push(getPlanPaceSummary(hifzPace, hifzUnit, locale, t));
+  } else if (plan.template_key === "daily-wird") {
+    const pace = quantityAmount(plan.params.quantities?.reading, 5);
+    const unit = plan.params.trackUnits?.reading;
+    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+  } else if (plan.template_key === "listening-wird") {
+    const pace = quantityAmount(plan.params.quantities?.listening, 5);
+    const unit = plan.params.trackUnits?.listening;
+    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+  }
+
+  if (parts.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-1">
+      {parts.map((part, idx) => (
+        <span key={idx} className="inline-flex items-center gap-1.5">
+          {idx > 0 && <span aria-hidden="true" className="text-muted-foreground/40">•</span>}
+          <span>{part}</span>
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   const t = useTranslations();
-  const isOnline = useOnlineStatus();
   const { setStatus } = usePlans();
-  const { data: todayData, checkOff, uncheckOff } = useTodayAssignments();
   const [editOpen, setEditOpen] = useState(false);
 
   const ui = PLAN_TEMPLATE_UI[plan.template_key];
@@ -180,103 +225,74 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   const statusUi = STATUS_LABEL[plan.status];
   const actions = STATUS_ACTIONS[plan.status];
   const editView = EDIT_VIEW_FOR_TEMPLATE[plan.template_key];
-  const assignments =
-    plan.status === "active"
-      ? (todayData ?? []).find((p) => p.planId === plan.id)?.assignments ?? []
-      : [];
 
   return (
     <div className={cn("flex flex-col gap-3.5 rounded-2xl border border-border bg-card p-4", CARD_SHADOW)}>
-      <div className="flex items-center gap-3">
-        {/* What kind of plan this is — identity, so the warm accent. It was
-            --primary, which put the live-state colour on every card whether
-            the plan was running or abandoned. */}
-        <span className="grid place-items-center size-9 rounded-xl bg-primary/10 text-primary flex-none">
-          {Icon ? <Icon className="size-[19px]" strokeWidth={1.6} /> : null}
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-extrabold text-foreground">
-            {ui ? t(ui.labelKey, ui.defaultLabel) : plan.template_key}
-          </div>
-          {/* …and whether it is running IS state, so that is where --primary
-              goes. One accent per element, never both. */}
-          <div
-            className={cn(
-              "text-xs",
-              plan.status === "active" ? "font-medium text-primary" : "text-muted-foreground",
-            )}
-          >
-            {t(statusUi.labelKey, statusUi.defaultLabel)}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          {/* Identity icon */}
+          <span className="grid place-items-center size-9 rounded-xl bg-primary/10 text-primary flex-none mt-0.5">
+            {Icon ? <Icon className="size-[19px]" strokeWidth={1.6} /> : null}
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-extrabold text-foreground">
+                {ui ? t(ui.labelKey, ui.defaultLabel) : plan.template_key}
+              </span>
+              <span
+                className={cn(
+                  "text-[11px] px-2 py-0.5 rounded-md font-semibold",
+                  plan.status === "active"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {t(statusUi.labelKey, statusUi.defaultLabel)}
+              </span>
+            </div>
+            <PlanParametersSummary plan={plan} />
           </div>
         </div>
 
-        {actions.length > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label={t("plans.actions.label", "Plan actions")}
-              className="fq-chrome-btn fq-focus-ring size-8"
+        <div className="flex items-center gap-1.5 flex-none">
+          {editView ? (
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className="fq-focus-ring min-h-[44px] inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent/50 transition-colors"
             >
-              <MoreVertical className="size-4" strokeWidth={1.8} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {editView ? (
-                <DropdownMenuItem onSelect={() => setEditOpen(true)} className="gap-2">
-                  <Pencil className="size-4" strokeWidth={1.8} />
-                  {t("plans.actions.edit", "Edit")}
-                </DropdownMenuItem>
-              ) : null}
-              {actions.map((action) => (
-                <DropdownMenuItem
-                  key={action.status}
-                  onSelect={() => setStatus.mutate({ planId: plan.id, status: action.status })}
-                  className="gap-2"
-                >
-                  <action.icon className="size-4" strokeWidth={1.8} />
-                  {t(action.labelKey, action.defaultLabel)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+              <Pencil className="size-3.5" strokeWidth={1.8} />
+              <span>{t("plans.actions.edit", "Edit")}</span>
+            </button>
+          ) : null}
+
+          {actions.length > 0 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={t("plans.actions.label", "Plan actions")}
+                className="fq-chrome-btn fq-focus-ring min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg"
+              >
+                <MoreVertical className="size-4" strokeWidth={1.8} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {actions.map((action) => (
+                  <DropdownMenuItem
+                    key={action.status}
+                    onSelect={() => setStatus.mutate({ planId: plan.id, status: action.status })}
+                    className="gap-2"
+                  >
+                    <action.icon className="size-4" strokeWidth={1.8} />
+                    {t(action.labelKey, action.defaultLabel)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
       </div>
 
       {editView ? (
         <PlansBrowseDialog open={editOpen} onOpenChange={setEditOpen} initialView={editView} />
-      ) : null}
-
-      {plan.status === "active" ? (
-        assignments.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {assignments.map((assignment) => (
-              <PlanAssignmentRow
-                key={assignment.trackKey}
-                planId={plan.id}
-                assignment={assignment}
-                onToggle={() =>
-                  assignment.completed
-                    ? uncheckOff.mutate({ planId: plan.id, trackKey: assignment.trackKey })
-                    : checkOff.mutate({
-                        planId: plan.id,
-                        trackKey: assignment.trackKey,
-                        rangeStart: assignment.rangeStart,
-                        rangeEnd: assignment.rangeEnd,
-                      })
-                }
-                isPending={checkOff.isPending || uncheckOff.isPending}
-                disabled={!isOnline}
-              />
-            ))}
-            {!isOnline ? (
-              <p className="text-xs text-muted-foreground text-center">
-                {t("plans.offlineNotice", "Connect to the internet to check off progress")}
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            {t("plans.nothingToday", "Nothing due today.")}
-          </p>
-        )
       ) : null}
 
       <PlanHistorySection planId={plan.id} />
@@ -284,12 +300,14 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   );
 };
 
-// Hub body: hero "today" card (all active plans' assignments, streak + week
-// strip) above per-plan cards (status, actions, history), plus the
-// consolidated "new wird" entry point.
+// Hub body: Segmented dual-view tabs ([ Today's tasks | My plans ])
+// separating daily actionable check-offs from plan configuration & management.
 export const MyPlansList = () => {
   const t = useTranslations();
+  const locale = useLocale();
   const { data: plans, isLoading } = usePlans();
+  const { data: todayData } = useTodayAssignments();
+  const [activeTab, setActiveTab] = useState<"today" | "plans">("today");
 
   if (isLoading) {
     return (
@@ -327,25 +345,125 @@ export const MyPlansList = () => {
   const active = items.filter((p) => p.status === "active");
   const other = items.filter((p) => p.status !== "active" && p.status !== "abandoned");
 
+  const { totalTasks, pendingTasks } = computeTodayTaskCounts(todayData);
+
   return (
     <div className="flex flex-col gap-6">
-      {active.length > 0 ? <PlansTodayHero /> : null}
+      {/* Segmented Dual-View Navigation Tabs */}
+      <div
+        className="flex p-1 rounded-2xl bg-muted/50 border border-border text-xs font-semibold"
+        role="tablist"
+        aria-label={t("plans.pageTitle", "Daily Awrad & Learning Plans")}
+      >
+        <button
+          type="button"
+          role="tab"
+          id="tab-today"
+          aria-selected={activeTab === "today"}
+          aria-controls="tabpanel-today"
+          onClick={() => setActiveTab("today")}
+          className={cn(
+            "flex-1 min-h-[44px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-150 fq-focus-ring",
+            activeTab === "today"
+              ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <span>{t("plans.tabs.today", "Today's Tasks")}</span>
+          {totalTasks > 0 ? (
+            <span
+              className={cn(
+                "inline-flex items-center justify-center px-1.5 py-0.5 min-w-5 h-4 text-[10px] rounded-full font-bold transition-colors",
+                pendingTasks === 0
+                  ? "bg-primary/15 text-primary"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {pendingTasks === 0 ? "✓" : `${toLocaleNumeral(pendingTasks, locale)}/${toLocaleNumeral(totalTasks, locale)}`}
+            </span>
+          ) : null}
+        </button>
 
-      <div className="flex flex-col gap-3.5">
-        {/* Section overline — the manuscript register: small, tracked out,
-            warm, with a rule that fades away from the label. */}
-        <div className="fq-overline">
-          {t("plans.myPlans", "My plans")}
-        </div>
-        {active.map((plan) => (
-          <PlanCard key={plan.id} plan={plan} />
-        ))}
-        {other.map((plan) => (
-          <PlanCard key={plan.id} plan={plan} />
-        ))}
+        <button
+          type="button"
+          role="tab"
+          id="tab-plans"
+          aria-selected={activeTab === "plans"}
+          aria-controls="tabpanel-plans"
+          onClick={() => setActiveTab("plans")}
+          className={cn(
+            "flex-1 min-h-[44px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-150 fq-focus-ring",
+            activeTab === "plans"
+              ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <span>{t("plans.tabs.manage", "My Plans")}</span>
+          {active.length > 0 ? (
+            <span className="inline-flex items-center justify-center px-1.5 py-0.5 min-w-5 h-4 text-[10px] rounded-full bg-muted text-muted-foreground font-bold">
+              {toLocaleNumeral(active.length, locale)}
+            </span>
+          ) : null}
+        </button>
       </div>
 
-      <AddPlanButton />
+      {/* Tab 1: Today's Tasks */}
+      {activeTab === "today" ? (
+        <div id="tabpanel-today" role="tabpanel" aria-labelledby="tab-today" className="flex flex-col gap-4">
+          {active.length > 0 ? (
+            <>
+              <PlansTodayHero />
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("plans")}
+                  className="fq-focus-ring rounded-md text-xs font-medium text-muted-foreground hover:text-primary transition-colors py-1 px-2"
+                >
+                  {t("plans.manageHint", "Want to edit your plans or view history? Go to Plan Management →")}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="fq-card flex flex-col items-center gap-3 p-8 text-center">
+              <p className="text-sm font-semibold text-foreground">
+                {t("plans.noTasksToday", "No tasks due today.")}
+              </p>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                {t(
+                  "plans.noTasksHint",
+                  "Your plans may be paused or completed. You can view or resume them in plan management."
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveTab("plans")}
+                className="fq-focus-ring rounded-md mt-2 text-xs font-bold text-primary hover:underline py-1 px-2"
+              >
+                {t("plans.goToManage", "Go to Plan Management →")}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Tab 2: Plan Management */}
+      {activeTab === "plans" ? (
+        <div id="tabpanel-plans" role="tabpanel" aria-labelledby="tab-plans" className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3.5">
+            <div className="fq-overline">
+              {t("plans.myPlans", "My plans")}
+            </div>
+            {active.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} />
+            ))}
+            {other.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} />
+            ))}
+          </div>
+
+          <AddPlanButton />
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -263,6 +263,18 @@
     "empty": "No plans yet — enroll in one below.",
     "emptyHint": "A plan gives you a daily portion to read, listen to, or memorise.",
     "nothingToday": "Nothing due today.",
+    "noTasksToday": "No tasks due today.",
+    "noTasksHint": "Your plans may be paused or completed. You can view or resume them in plan management.",
+    "goToManage": "Go to Plan Management →",
+    "manageHint": "Want to edit your plans or view history? Go to Plan Management →",
+    "tabs": {
+      "today": "Today's Tasks",
+      "manage": "My Plans"
+    },
+    "summary": {
+      "allQuran": "Whole Qur'an (30 Juz)",
+      "juzRange": "Juz {start} to {end}"
+    },
     "checkOff": "Check off",
     "undoCheckOff": "Undo check-off",
     "nextAssignment": "Next",
