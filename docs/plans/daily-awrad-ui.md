@@ -1,9 +1,10 @@
 ---
 title: Daily Awrad UI
 type: feature
-date: 2026-07-27
+date: 2026-09-07
 status: implemented
 area: awrad
+issue: 595
 ---
 
 # Daily Awrad UI
@@ -144,6 +145,12 @@ Engine behavior for the new templates is already covered by `engine.test.ts`'s h
 - `app/components/nav/Nav.tsx` — mount `PlansLink` next to `MarksLink` in the end cluster.
 - `app/[locale]/layout.tsx` — wrap `{children}` + the bars in `<ReaderPageProvider>` (inside `NavOverlayProvider`, so both `ReaderPager` and `PlansWidget` are under it), and mount `<PlansWidget />` after `<RecitationPlayerBar />`.
 - `messages/ar.json` / `messages/en.json` — `plans.*` keys (nav link, hub title/empty/signed-out, template names + descriptions, husun track names in Arabic, activity labels, enroll form labels/validation, widget sheet, status actions). `ar.json` must be complete.
+- `app/[locale]/plans/page.tsx` — layout flex wrapper for header title + header `AddPlanButton` (#595).
+- `app/components/plans/AddPlanButton.tsx` — support `variant?: "header" | "card"` with `min-h-[44px]` touch target (#595).
+- `app/components/plans/MyPlansList.tsx` — segmented dual-view tab control, separate views for today vs management, remove duplicate `PlanAssignmentRow` from `PlanCard`, add parameter summary chips (#595).
+- `app/lib/plans/ui-helpers.ts` (new) — pure helpers for quantity parsing, pace formatting with `trackUnits` (ADR 0038), and task count aggregation (#595).
+- `app/components/plans/plans-ui.test.ts` (new) — unit tests covering key parity, quantity parsing, unit-aware pace summaries, and badge logic (#595).
+- `e2e/tests/plans-layout.spec.ts` (new) — Playwright E2E spec verifying unauthenticated gating, header CTA, browse modal, and dual-view tab switching in Arabic and English (#595).
 - `docs/architecture/DECISIONS.md` — the #149 bullet under "Awrad & Learning Plans Engine" (already in this branch; updated by this review).
 
 ## Constraints
@@ -154,6 +161,9 @@ Engine behavior for the new templates is already covered by `engine.test.ts`'s h
 - `ReaderPageContext` carries only visible page numbers — no recitation state duplicated into it, and `RecitationContext` gains no page-number field.
 - The reader widget's highlight is a hint only — it must never auto-write a check-off (D5).
 - Styling: semantic shadcn tokens only (no `bg-white`/`gray-*`), `ps-/pe-/ms-/me-`/`start-`/`end-` for anything that mirrors, `dir="rtl"` on any Quran text. `tailwindcss-animate` is not installed — use Radix `data-[state=...]` + `transition-*` with a `motion-reduce:` variant.
+- Touch targets for interactive buttons, tabs, and menu triggers must be at least 44px (`min-h-[44px]`) (#595).
+- No changes to underlying derivation logic in `app/lib/plans/engine.ts` (#595).
+- No database migrations or schema mutations (#595).
 - i18n: client components use the repo's `@hooks/use-translations` (`t(key, fallback)`), server components `getTranslations()` after `setRequestLocale`. Locale-aware `Link` from `@/i18n/routing`; page/juz numbers rendered through `toLocaleNumeral`.
 - API: `jsonResponse()` envelope + `extractUser` only. `^/api/plans` is already in `auth-middleware`'s `protectedRoutes` — no matcher change needed.
 
@@ -170,6 +180,9 @@ Engine behavior for the new templates is already covered by `engine.test.ts`'s h
 - Do not create new `usePlans`/`useTodayAssignments`/`checkOffTrack` implementations — they already exist from #140.
 - Do not auto-mark a plan `completed`, and do not change `PATCH /api/plans/:id` (it already handles all four statuses with ownership re-verification).
 - Do not block this task on sourcing an authoritative husun quantity table — ship the documented defaults, revisit if a canonical source surfaces.
+- Do not render `PlanAssignmentRow` inside `PlanCard` in Tab 2 — daily check-offs belong exclusively in Tab 1 (#595).
+- Do not use router navigation / URL query params for tab switching — local state provides instant zero-latency transitions (#595).
+- Do not remove the empty state card when 0 plans are enrolled (#595).
 
 ## Decisions Made
 
@@ -185,6 +198,9 @@ Engine behavior for the new templates is already covered by `engine.test.ts`'s h
 - Juz-range enroll default is **1–30** (whole mushaf), not a single juz — added after implementation feedback that a same-value "30 to 30" default read as an accidental range rather than an intentional one.
 - Plan history: added in this task (not deferred) as a small per-plan collapsible list on the hub, reading the existing `PlanProgressEntry` log via a new `GET /api/plans/:planId/progress` (most-recent-first, capped at 50, read-only per ADR 0030). Added after implementation feedback identified it as a real gap — the hub only ever showed "today," with no way to see what was actually done on prior days.
 - Track rows are clickable: `PlanAssignmentRow`'s label/range links to `/pages/{rangeStart}`, so tapping a track jumps to that page in the reader — added after implementation feedback, mirrors `MyMarksList`'s existing row-link pattern.
+- Selected Option 2 (Segmented Dual-View) per user confirmation: Tab 1 for daily actionable tasks (`مهام اليوم`), Tab 2 for plan configuration and management (`إدارة الخطط`) (#595).
+- Preserved `PlansTodayHero` streak and 7-day strip in Tab 1 ("مهام اليوم") (#595).
+- Relocated primary CTA (`+ ورد جديد`) to the header row next to the title (#595).
 
 ---
 
@@ -406,3 +422,7 @@ All six confirmed with the user (2026-07-27) alongside the two upstream scoping 
 **Addendum 2 (2026-07-28):** editing an active plan is now also reachable directly from its own card's "⋮" menu (`plans.actions.edit`), not only via "ورد جديد" → the already-active row. `PlansBrowseDialog` gained an `initialView` prop (defaults to `"list"`); each `PlanCard` renders its own dialog instance (local `editOpen` state, no shared/lifted state needed — Radix `Dialog` is cheap when closed) opened straight to that template's edit view: `daily-wird`/`listening-wird` skip straight to their single-step form, `husun` jumps straight to `husun-settings` (skipping the static overview step, since an editor is already familiar with the template). Shown whenever the status-action menu itself would show (active/paused), reusing `STATUS_ACTIONS`'s existing active/paused-only condition.
 
 **Addendum 1 (2026-07-28):** the centered number is directly editable (a borderless `<input>` in place of the static `<span>`, `min-w`-locked so the stepper buttons don't shift) — going from 40 to 20 via the buttons alone is a bad UX (20 clicks). Typing shows plain ASCII digits (matches the pre-redesign `PlanEnrollForm` inputs' existing convention, not Eastern Arabic numerals) with a local draft state that only commits (clamped to an integer ≥ `min`) on blur/Enter, so a mid-edit empty field doesn't clamp on every keystroke.
+
+## Revision History
+
+- 2026-09-07: Folded Addendum 3 (#595) — separated daily actionable awrad (`مهام اليوم`) from plan management (`إدارة الخطط`) via segmented dual-view tabs, and promoted primary "+ ورد جديد" CTA to the page header.
