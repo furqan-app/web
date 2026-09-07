@@ -27,6 +27,7 @@ import { getPendingCount, syncMarks } from "@/app/lib/marks/sync";
 import { menuRowClassName } from "./NavPillLink";
 import { useNotifications } from "@/app/hooks/use-notifications";
 import { NotificationBell } from "@components/notifications/NotificationBell";
+import { hardNavigateIfOffline } from "@/app/utils/platform";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -223,7 +224,19 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
                 {session.user?.name}
               </div>
             ) : null}
-            <Link href="/marks" locale={locale} className={menuRowClassName} onClick={onNavigate}>
+            <Link
+              href="/marks"
+              locale={locale}
+              className={menuRowClassName}
+              onClick={(e) => {
+                // Offline route coverage (#591): in-app taps are RSC soft-navs,
+                // which fail for a never-visited page with no connection. Offline,
+                // hard-navigate so the service worker serves the precached shell
+                // instead of error.tsx + a Sentry report. Online keeps soft nav.
+                onNavigate?.();
+                hardNavigateIfOffline(e, `/${locale}/marks`);
+              }}
+            >
               <Bookmark className="size-4 flex-none" />
               {t("marks.navLink", "My Marks")}
             </Link>
@@ -286,7 +299,14 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
 
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <Link href="/marks" locale={locale}>
+          <Link
+            href="/marks"
+            locale={locale}
+            // Same offline hard-nav as the menu-row branch above (#591).
+            onClick={(e) => {
+              hardNavigateIfOffline(e, `/${locale}/marks`);
+            }}
+          >
             <Bookmark className="size-4" />
             {t("marks.navLink", "My Marks")}
           </Link>

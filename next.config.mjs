@@ -5,7 +5,9 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 const withNextIntl = createNextIntlPlugin();
 
-// The two reader fallback shells (ADR 0014 Addendum 7, #438). These are real
+// The two reader fallback shells plus the four offline app-shell pages
+// (/marks, /search per locale — ADR 0014 Addendum 7, #438 and Addendum 10,
+// #591). These are real
 // SSG'd reader documents, not files under public/, so they cannot come from
 // `globPublicPatterns` below — that list is globbed here in the `webpack()`
 // config phase, before Next has generated any HTML, so a `public/` copy would
@@ -31,6 +33,17 @@ const withNextIntl = createNextIntlPlugin();
 // FALLBACK_LOCALES itself hardcodes the locales rather than importing routing.
 const READER_FALLBACK_SHELL_LOCALES = ['ar', 'en'];
 
+// Offline app-shell pages (ADR 0014 Addendum 10, #591): self /marks and /search
+// are static shells whose content resolves client-side (local marks store,
+// precached search index), so they get the same atomic-install treatment as
+// the reader shells above. Built from READER_FALLBACK_SHELL_LOCALES so no
+// second locale list can drift. Grant routes are dynamic per grant and are
+// permanently excluded.
+const APP_SHELL_PAGE_PATHS = READER_FALLBACK_SHELL_LOCALES.flatMap((locale) => [
+  `/${locale}/marks`,
+  `/${locale}/search`,
+]);
+
 /** @type {import('@serwist/build').ManifestTransform} */
 const appendReaderFallbackShells = (manifestEntries) => {
   // Revision hashed from the webpack build assets this transform receives —
@@ -53,6 +66,12 @@ const appendReaderFallbackShells = (manifestEntries) => {
       // deleting the field from every entry.
       ...READER_FALLBACK_SHELL_LOCALES.map((locale) => ({
         url: `/${locale}/pages/1`,
+        revision,
+        size: 0,
+      })),
+      // Same shape for the offline app-shell pages (ADR 0014 Addendum 10).
+      ...APP_SHELL_PAGE_PATHS.map((url) => ({
+        url,
         revision,
         size: 0,
       })),

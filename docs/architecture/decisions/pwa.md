@@ -200,3 +200,17 @@ pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 - Deleting an edition drops every `/__fq-tafsir/{editionId}/` entry, then the registry entry (registry last, mirroring `use-recitation-download`). No cross-edition or cross-feature reference-counting — nothing is shared.
 - `per_page=300` is a fixed upper bound (> 286, the largest surah) so every `by_chapter` call returns a single page. Concurrency 4 with a 3-attempt per-chapter retry (400 ms / 1.5 s backoff) — QDC is a rate-limiting third-party API, not same-origin static assets, so `PRECACHE_CONCURRENCY` (6) does not apply.
 - No Next.js proxy routes for QDC tafsir endpoints (carried over from the Tafsir provider decision in [`tafsir.md`](tafsir.md)).
+
+---
+
+## Offline App-Shell Pages (`/marks`, `/search`)
+
+**Status:** active
+
+**Decision (2026-09-07, #591):** The self `/marks` and `/search` pages are offline-capable documents. Their four shells (`/{ar,en}/marks`, `/{ar,en}/search`) ride the build-time precache manifest via the same `manifestTransforms` entry as the reader shells (same revision, same atomic install), and a navigate-only runtime rule ahead of `...defaultCache` serves `matchPrecache(url.pathname)` so query-bearing navigations (`/search?q=…`) resolve to the same shell bytes. `/marks` renders statically (no server session; the live session is client-seeded — online loads hold the skeleton until it resolves, offline the sticky owner stamp decides immediately). The self links hard-navigate when tapped offline; online taps and grant links keep soft nav. See [ADR 0014 Addendum 10](../adr/0014-pwa-offline-architecture.md).
+
+**Constraints:**
+- A precached document MUST be user-agnostic static HTML — per-request HTML in the install precache is a cross-user session leak on shared browsers, not a staleness quirk. New shells must prove static-ness; dynamic routes (the grant reader) are permanently excluded from this mechanism.
+- The precache manifest is the single source of truth for these shells: no second versioned cache, no populate-on-miss, no manual version string.
+- The matcher stays exact (`/^\/(ar|en)\/(marks|search)$/`) with the `navigate`-mode guard — it must never meet `/api/*` (the marks `NetworkOnly` rule owns those), grant paths, or RSC flight data.
+- A `matchPrecache` miss falls through to the network; only `setCatchHandler` decides the terminal document. All other non-reader routes keep terminal-doc behavior unchanged.
