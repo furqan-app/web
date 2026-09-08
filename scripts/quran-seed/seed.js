@@ -12,6 +12,7 @@ const {
   layoutFromSeededWords,
   LAYOUT_MUSHAF_IDS,
   DEFAULT_MUSHAF_ID,
+  SEEDED_WORDS_MUSHAF_ID,
 } = require("./mushaf-layout");
 const {
   deriveRubs,
@@ -72,8 +73,11 @@ async function main() {
     let rows;
     let pageOf;
 
-    if (mushafId === DEFAULT_MUSHAF_ID) {
+    if (mushafId === SEEDED_WORDS_MUSHAF_ID) {
       // Already in hand — verses-words.js fetched with this same mushaf param.
+      // Tied to SEEDED_WORDS_MUSHAF_ID, NOT DEFAULT_MUSHAF_ID: the seeded words
+      // carry only this edition's placement, so the shortcut is valid for it
+      // alone even after the reader default moves elsewhere (ADR 0066).
       console.log(`\n[3/5] Deriving mushaf=${mushafId} word placement from seeded words…`);
       rows = layoutFromSeededWords(mushafId, words);
       pageOf = (v) => v.page_number;
@@ -132,7 +136,7 @@ async function main() {
         `rub_verse_mappings=${rubVerseMappings.length} ` +
         `page_metadata=${pageMetadata.length} ` +
         `mushaf_page_metadata=${mushafPageMetadata.length} ` +
-        `default_mushaf=${DEFAULT_MUSHAF_ID}`
+        `default_mushaf=${DEFAULT_MUSHAF_ID} seeded_words_mushaf=${SEEDED_WORDS_MUSHAF_ID}`
     );
   } finally {
     await prisma.$disconnect();

@@ -47,16 +47,43 @@ export type MushafEdition = {
   thumbnailUrl: string;
 };
 
-export const DEFAULT_MUSHAF_ID = 2;
+export const QCF_V1_MUSHAF_ID = 2;
+export const QCF_V2_MUSHAF_ID = 1;
 export const TAJWEED_MUSHAF_ID = 19;
 
+/**
+ * The edition every *stored* page number is expressed against — plan
+ * verse-unit ranges (ADR 0038) and the `Word.page_number` mark mirror. Fixed
+ * independently of `DEFAULT_MUSHAF_ID` (ADR 0066): a stored "page 250" must keep
+ * meaning the same verses after the reader default moves to a divergent edition.
+ * Changing THIS value is a data migration, not a config flip.
+ */
+export const CANONICAL_PAGE_MUSHAF_ID = QCF_V1_MUSHAF_ID;
+
+/**
+ * The edition the reader opens with. Per ADR 0066 this is a render-time choice
+ * ONLY — it does not drive the seeded-words shortcut (`SEEDED_WORDS_MUSHAF_ID`
+ * in `scripts/quran-seed/`), `Mark.page_number` canonicalization, the plan
+ * page-range edition (`CANONICAL_PAGE_MUSHAF_ID`), or the consent-gated offline
+ * precache (`PRECACHE_MUSHAF_ID` in `app/constants/offline.ts`), each of which
+ * stays on QCF V1.
+ *
+ * QCF V2 does NOT share QCF V1's page boundaries — it diverges on the same 56
+ * verses / 361 words as the tajweed edition. Marks and plan ranges survive the
+ * move anyway because they resolve against `CANONICAL_PAGE_MUSHAF_ID` (marks via
+ * the per-word `Word.page_number` mirror carried in the static JSON), never the
+ * displayed page. Collapsing any of the four constants back into this one would
+ * silently shift stored marks and plan ranges — do not.
+ */
+export const DEFAULT_MUSHAF_ID = QCF_V2_MUSHAF_ID;
+
 export const MUSHAF_EDITIONS: Record<number, MushafEdition> = {
-  [DEFAULT_MUSHAF_ID]: {
-    id: DEFAULT_MUSHAF_ID,
+  [QCF_V1_MUSHAF_ID]: {
+    id: QCF_V1_MUSHAF_ID,
     name: "QCF V1",
     fontFamily: (page) => `quran-p${page}`,
     fontUrl: (page) => `/fonts/v1/woff2/p${page}.woff2`,
-    pageJsonUrl: (page) => `/quran/pages/${DEFAULT_MUSHAF_ID}/${page}.json`,
+    pageJsonUrl: (page) => `/quran/pages/${QCF_V1_MUSHAF_ID}/${page}.json`,
     pagesCount: 604,
     linesPerPage: 15,
     usesColorGlyphs: false,
@@ -64,7 +91,23 @@ export const MUSHAF_EDITIONS: Record<number, MushafEdition> = {
     // Measured 2026-08-10: 45.7 MiB WOFF2 + ~2.0 MiB gzipped JSON. See
     // docs/plans/pwa-offline-support.md Addendum 1.
     downloadSizeMb: 48,
-    thumbnailUrl: `/mushaf-previews/${DEFAULT_MUSHAF_ID}.png`,
+    thumbnailUrl: `/mushaf-previews/${QCF_V1_MUSHAF_ID}.png`,
+  },
+  [QCF_V2_MUSHAF_ID]: {
+    id: QCF_V2_MUSHAF_ID,
+    name: "QCF V2",
+    fontFamily: (page) => `quran-p${page}-v2`,
+    fontUrl: (page) => `/fonts/v2/woff2/p${page}.woff2`,
+    pageJsonUrl: (page) => `/quran/pages/${QCF_V2_MUSHAF_ID}/${page}.json`,
+    pagesCount: 604,
+    linesPerPage: 15,
+    usesColorGlyphs: false,
+    fontIdPattern: /^\/fonts\/v2\/woff2\/p([0-9]+)\.woff2$/,
+    // Measured 2026-09-07: 93.2 MiB WOFF2 (97,748,500 B) + ~2.0 MiB gzipped
+    // JSON — ~2x QCF V1, which is why it is NOT the precached edition
+    // (ADR 0066). Re-measure with the note in app/constants/offline.ts.
+    downloadSizeMb: 95,
+    thumbnailUrl: `/mushaf-previews/${QCF_V2_MUSHAF_ID}.png`,
   },
   [TAJWEED_MUSHAF_ID]: {
     id: TAJWEED_MUSHAF_ID,
@@ -84,7 +127,11 @@ export const MUSHAF_EDITIONS: Record<number, MushafEdition> = {
 };
 
 /** Every edition with seeded word placement, in display order. */
-export const MUSHAF_EDITION_IDS = [DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID];
+export const MUSHAF_EDITION_IDS = [
+  QCF_V1_MUSHAF_ID,
+  QCF_V2_MUSHAF_ID,
+  TAJWEED_MUSHAF_ID,
+];
 
 /**
  * Resolves an edition, falling back to the default for an unknown id rather than

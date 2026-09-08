@@ -8,6 +8,7 @@ import {
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
+  PRECACHE_MUSHAF_ID,
   PREFS_CACHE_NAME,
   QDC_TAFSIR_HOST,
   RECITATION_AUDIO_HOST,
@@ -22,7 +23,7 @@ import {
   versePagesUrl,
 } from "@constants/offline";
 import type { ClientToSwMessage, SwToClientMessage } from "@constants/offline";
-import { DEFAULT_MUSHAF_ID, getMushafEdition } from "@utils/mushaf-editions";
+import { getMushafEdition } from "@utils/mushaf-editions";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -220,11 +221,13 @@ async function isPrecacheComplete(
  * The edition the client is about to render, mirrored into Cache Storage by
  * QuranMushafProvider (ADR 0014 Addendum 8) — a worker cannot read the
  * localStorage that actually owns it, and the reader URL is edition-agnostic by
- * design (ADR 0033). Every failure mode resolves to DEFAULT_MUSHAF_ID, which is
- * this probe's pre-Addendum-8 behavior, so no existing install regresses:
- * absent marker (fresh install, or one predating this build), an id no longer
- * in the registry, and an unreadable cache all land there — the last via
- * getMushafEdition's own fallback.
+ * design (ADR 0033). Every failure mode resolves to PRECACHE_MUSHAF_ID — the
+ * edition the consent-gated bulk download actually fetches (ADR 0066), which is
+ * not necessarily DEFAULT_MUSHAF_ID. Absent marker (fresh install, or one
+ * predating this build), an id no longer in the registry, and an unreadable
+ * cache all land there — the last via getMushafEdition's own fallback. Falling
+ * back to the reader default instead would make this probe ask about an edition
+ * the gate never downloaded, reintroducing #439's wasted 3s race.
  *
  * Deliberately NOT memoized. It is one cache.match against a single-entry
  * cache, and caching it would make an edition switch invisible to the handler
@@ -234,10 +237,10 @@ async function readActiveMushafId(): Promise<number> {
   try {
     const cache = await caches.open(PREFS_CACHE_NAME);
     const stored = await cache.match(ACTIVE_MUSHAF_URL);
-    if (!stored) return DEFAULT_MUSHAF_ID;
+    if (!stored) return PRECACHE_MUSHAF_ID;
     return getMushafEdition(Number(await stored.text())).id;
   } catch {
-    return DEFAULT_MUSHAF_ID;
+    return PRECACHE_MUSHAF_ID;
   }
 }
 
@@ -274,7 +277,7 @@ const serveAppShellPage = (url: URL): Promise<Response | undefined> =>
   serwist.matchPrecache(url.pathname);
 
 const isPageFont = (url: URL) =>
-  /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
+  /^\/fonts\/(v1|v2|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
 // Static per-page content JSON the pager fetches (ADR 0028) — immutable.
 // Scoped per mushaf edition: page N of one edition holds different words than

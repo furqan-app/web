@@ -6,7 +6,17 @@
 //
 // mushaf-editions.ts has no DOM/React dependency (plain data), so importing
 // it here — and transitively into the service worker — is safe.
-import { DEFAULT_MUSHAF_ID, getMushafEdition } from "@utils/mushaf-editions";
+import { QCF_V1_MUSHAF_ID, getMushafEdition } from "@utils/mushaf-editions";
+
+// The edition the consent-gated first-run gate / post-install prompt download,
+// and the one the SW's reader-HTML-miss probe falls back to. Independent of
+// DEFAULT_MUSHAF_ID (ADR 0066): QCF V2 became the reader default while its font
+// set is ~2x QCF V1's, and doubling every installed user's mandatory first-run
+// transfer would blow the iOS Cache Storage headroom ADR 0014 is built around.
+// A user who wants QCF V2 offline downloads it explicitly from the Settings
+// "Mushaf Layout" list (ADR 0014 Addendum 5). Do not point any first-run /
+// install-prompt surface at DEFAULT_MUSHAF_ID.
+export const PRECACHE_MUSHAF_ID = QCF_V1_MUSHAF_ID;
 
 // Bumped manually (never automatically on every deploy) when a change affects
 // cached page output (reader markup, font logic).
@@ -21,8 +31,8 @@ export const TOTAL_PAGES = 604;
 // Bulk precache is edition-parameterized (ADR 0014 Addendum 5) — any
 // registered edition can be independently downloaded from the Settings
 // "Mushaf Layout" list, with its own sentinel/dismissed-flag/progress state.
-// The first-run gate and post-install prompt stay scoped to DEFAULT_MUSHAF_ID
-// only (ADR 0014 Addendum 2 still stands for those two surfaces).
+// The first-run gate and post-install prompt stay scoped to PRECACHE_MUSHAF_ID
+// only (ADR 0014 Addendum 2 / 11 still stand for those two surfaces).
 export const pageFontUrl = (mushafId: number, id: number) =>
   getMushafEdition(mushafId).fontUrl(id);
 export const pageJsonUrl = (mushafId: number, id: number) =>
@@ -137,7 +147,9 @@ export function writeActiveMushafId(mushafId: number) {
 // mushaf-editions.ts for the measurement note. Re-measure with:
 //   du -sb public/fonts/v1/woff2 public/fonts/v4/colrv1/woff2
 //   for f in public/quran/pages/{2,19}/*.json; do gzip -6 -c "$f" | wc -c; done
-export const OFFLINE_DOWNLOAD_MB = getMushafEdition(DEFAULT_MUSHAF_ID).downloadSizeMb;
+// PRECACHE_MUSHAF_ID, not DEFAULT_MUSHAF_ID — see ADR 0066.
+export const OFFLINE_DOWNLOAD_MB =
+  getMushafEdition(PRECACHE_MUSHAF_ID).downloadSizeMb;
 
 // Fetch this many pages at once. There is deliberately no inter-page delay: the
 // precache is always foreground and user-initiated now, so nothing competes with

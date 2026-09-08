@@ -651,7 +651,10 @@ body,
          space-between distributes the 15 lines inside this padded box. */
       padding-block: 0.5em;
     }
-    .fq-quran-safha.fq-tajweed {
+    /* QCF V2 + QCF V4 tajweed are one glyph family (tajweed = V2 + colour),
+       drawn ~10% wider per em than QCF V1, so both take the compact sizing.
+       `.fq-tajweed` is kept for the colour-palette rules only. */
+    .fq-quran-safha.fq-mushaf-v2 {
       font-size: calc(var(--fq-mobile-font) * 0.88);
       padding-block-start: 1em;
     }
@@ -836,11 +839,11 @@ body,
       --fq-safha-font: var(--fq-resolved-word);
       font-size: var(--fq-resolved-word);
     }
-    .fq-quran-safha.fq-tajweed {
+    .fq-quran-safha.fq-mushaf-v2 {
       --fq-safha-font: calc(var(--fq-resolved-word) * 0.85);
       font-size: calc(var(--fq-resolved-word) * 0.85);
     }
-    .fq-content:has(.fq-tajweed) {
+    .fq-content:has(.fq-mushaf-v2) {
       --fq-line-gap: calc(var(--fq-resolved-word) * 0.5608);
     }
     .fq-surah-frame + .fq-bismillah {
@@ -1863,7 +1866,7 @@ body,
       min-height: 0;
       justify-content: space-between;
     }
-    .fq-spread .fq-quran-safha.fq-tajweed {
+    .fq-spread .fq-quran-safha.fq-mushaf-v2 {
       --fq-safha-font: calc(var(--fq-tablet-word) * 0.85);
       font-size: calc(var(--fq-tablet-word) * 0.85);
     }
@@ -1899,12 +1902,13 @@ body,
     font-palette: --Gold;
   }
 
-  /* Tajweed page dimensions — scaled font-size (0.85×) to match visual glyph
-     size, compensated line gap (0.5607× regular fs) to preserve total page
-     height. Math: 15×0.85fs + 14×0.5607fs = 12.75fs + 7.85fs = 20.6fs,
-     matching regular's 15fs + 14×0.40fs = 20.6fs. No explicit width — card
-     sizes naturally to the widest COLRv1 line.
-     See fix-tajweed-font-size.md Addendum 4. */
+  /* `.fq-mushaf-v2` page dimensions (QCF V2 and QCF V4 tajweed — same glyph
+     family) — scaled font-size (0.85×) to match visual glyph size, compensated
+     line gap (0.5607× regular fs) to preserve total page height. Math:
+     15×0.85fs + 14×0.5607fs = 12.75fs + 7.85fs = 20.6fs, matching regular's
+     15fs + 14×0.40fs = 20.6fs. No explicit width — card sizes naturally to the
+     widest line. See fix-tajweed-font-size.md Addendum 4 and
+     docs/plans/qcf-v2-mushaf-edition.md. */
 
 
   /* ========================================================================
