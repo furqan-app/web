@@ -78,10 +78,17 @@ test.describe("Plans Page: Authenticated Empty State & Header CTA", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
-    // Dialog presents templates
+    // 3-way wird-type picker
     await expect(dialog.getByText("الورد اليومي")).toBeVisible();
-    await expect(dialog.getByText("ورد الاستماع")).toBeVisible();
+    await expect(dialog.getByText("ورد مخصص")).toBeVisible();
     await expect(dialog.getByText("الحصون الخمسة")).toBeVisible();
+
+    // Clicking "الورد اليومي" reveals the activity sub-picker
+    await dialog.getByText("الورد اليومي").click();
+    await expect(dialog.getByRole("tab", { name: "قراءة" })).toBeVisible();
+    await expect(dialog.getByRole("tab", { name: "استماع" })).toBeVisible();
+    await expect(dialog.getByRole("tab", { name: "حفظ" })).toBeVisible();
+    await expect(dialog.getByRole("tab", { name: "مراجعة" })).toBeVisible();
 
     // Press Escape to dismiss dialog
     await page.keyboard.press("Escape");
