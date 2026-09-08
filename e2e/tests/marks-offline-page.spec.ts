@@ -89,21 +89,54 @@ async function goOffline(page: Page, context: BrowserContext) {
 }
 
 /**
- * Waits until MarksSync's effect has stamped the store owner from the observed
- * authenticated session. The stamp lags the sign-in: marking works on the live
- * online session, but offline gating reads the stamp — going offline first
- * would show the signed-out prompt on a slow run (CI failure on PR #604).
+ * Requires the MarksSync owner stamp before the network goes: offline gating
+ * reads the stamp, not the live session, and the stamp lands in an effect
+ * after useSession resolves — so a slow first mount can leave it unset while
+ * modal marking (live session) already works. On timeout, throws with a
+ * diagnostic dump (stamp, stored mark keys, live session body) so the next
+ * failure names its cause instead of just showing a null.
  */
-async function waitForOwnerStamp(
+async function requireOwnerStamp(
   page: Page,
   e2eUser: { id: number; name: string; email: string }
 ) {
-  await expect
-    .poll(
-      async () => await page.evaluate(() => window.localStorage.getItem("localMarksOwner")),
-      { timeout: 15000 }
-    )
-    .toBe(JSON.stringify(String(e2eUser.id)));
+  const want = JSON.stringify(String(e2eUser.id));
+  const deadline = Date.now() + 20000;
+  for (;;) {
+    const stamp = await page.evaluate(() =>
+      window.localStorage.getItem("localMarksOwner")
+    );
+    if (stamp === want) return;
+    if (Date.now() > deadline) {
+      const diag = await page
+        .evaluate(async () => {
+          let session: unknown;
+          try {
+            session = await (await fetch("/api/auth/session")).json();
+          } catch (err) {
+            session = `fetch-failed: ${String(err)}`;
+          }
+          let markKeys: string[] | string = [];
+          try {
+            markKeys = Object.keys(
+              JSON.parse(window.localStorage.getItem("localMarks") ?? "{}")
+            );
+          } catch (err) {
+            markKeys = `parse-failed: ${String(err)}`;
+          }
+          return {
+            owner: window.localStorage.getItem("localMarksOwner"),
+            markKeys,
+            session,
+          };
+        })
+        .catch((err) => `evaluate-failed: ${String(err)}`);
+      throw new Error(
+        `owner stamp never landed for user ${e2eUser.id}; diag: ${JSON.stringify(diag)}`
+      );
+    }
+    await page.waitForTimeout(500);
+  }
 }
 
 async function goOnline(page: Page, context: BrowserContext) {
@@ -134,9 +167,12 @@ test.describe("My Marks page offline (read plus local-first delete)", () => {
       .poll(async () => await getLocalMark(page, "word:1:1:2"), { timeout: 10000 })
       .not.toBeNull();
 
-    // The owner stamp must land before the network goes — offline gating
-    // reads the stamp, not the live session.
-    await waitForOwnerStamp(page, projectUser(testInfo));
+    // Fresh authenticated mount replays session resolve + stamp from first
+    // principles in case the first mount's effect ordering slipped under load,
+    // then require the stamp: offline gating reads it, not the live session.
+    await page.reload();
+    await waitForReaderContent(page);
+    await requireOwnerStamp(page, projectUser(testInfo));
 
     // Zero connection from here on.
     await goOffline(page, context);
