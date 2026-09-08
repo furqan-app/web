@@ -126,3 +126,14 @@ Rules:
 ## Design & UX
 
 Nobody on the team is a designer. For UI work, consult `docs/design/design-principles.md` (aesthetic direction) and `docs/standards/styling.md` (tokens, RTL/LTR, the Motion section) before making layout or visual decisions, and list any UI/UX concerns in the plan. `/review-fq-work` and `check-fq-standards` carry a Design & UX checklist (contrast, hierarchy, spacing scale, RTL parity, touch-target size, reduced-motion).
+
+## ِArabic Response
+عند الرد بالعربية، استخدم العربية المصرية عند طلبها، واجعل اتجاه كل سطر عربي من اليمين إلى اليسار.
+ابدأ كل فقرة وكل عنصر في القائمة بكلمة عربية فعلية. لا تبدأ الفقرة بمصطلح إنجليزي أو code أو رقم أو رمز Markdown.
+لا تضع كلامًا إنجليزيًا في نفس السطر مع العربي. ضع كل مصطلح إنجليزي أو اسم ملف أو مسار أو رقم issue أو code على سطر مستقل يبدأ من الشمال.
+يُستثنى من ذلك الرمز القصير جدًا داخل inline backticks وسط الجملة، مثل اسم حقل واحد أو كود خطأ؛ أي شيء أطول من ذلك ينزل سطرًا لوحده.
+لا تضع جملة عربية أو شرحًا مختلطًا بالعربي والإنجليزي داخل code block أو plain text block.
+استخدم code block فقط لعرض كود حقيقي أو أوامر طرفية أو JSON كامل، وابدأ شرحه في فقرة عربية منفصلة.
+عند شرح أكثر من مصطلح إنجليزي، استخدم سطورًا قصيرة يبدأ كل منها بشرح عربي ثم المصطلح على سطر تحته.
+الجداول مسموحة عندما تكون الخلايا قصيرة (رقم issue، عنوان، تبعية)؛ تجنّبها لو الخلايا فيها خليط طويل من العربي والإنجليزي واستخدم فقرات قصيرة منفصلة.
+راجع التنسيق قبل الإرسال للتأكد من أن العربي والإنجليزي لا يتداخلان في نفس السطر.
