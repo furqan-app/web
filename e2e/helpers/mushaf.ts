@@ -35,28 +35,19 @@ export function getAppDbPool(): mysql.Pool {
 }
 
 /**
- * Seeds both default and secondary users into the e2e app database.
+ * Seeds test users into the e2e app database: default/secondary/anonymous
+ * plus any `extra` users (e.g. per-project isolation users). Idempotent
+ * (`ON DUPLICATE KEY UPDATE`), so concurrent workers can all call it safely.
  */
-export async function seedTestUsers(): Promise<void> {
+export async function seedTestUsers(extra: E2EUser[] = []): Promise<void> {
   const pool = getAppDbPool();
+  const users = [DEFAULT_E2E_USER, SECONDARY_E2E_USER, ANONYMOUS_E2E_USER, ...extra];
+  const placeholders = users.map(() => "(?, ?, ?, NOW(), NOW())").join(",\n       ");
   await pool.query(
-    `INSERT INTO users (id, name, email, created_at, updated_at) 
-     VALUES 
-       (?, ?, ?, NOW(), NOW()),
-       (?, ?, ?, NOW(), NOW()),
-       (?, ?, ?, NOW(), NOW())
+    `INSERT INTO users (id, name, email, created_at, updated_at)
+     VALUES ${placeholders}
      ON DUPLICATE KEY UPDATE name=VALUES(name), email=VALUES(email)`,
-    [
-      DEFAULT_E2E_USER.id,
-      DEFAULT_E2E_USER.name,
-      DEFAULT_E2E_USER.email,
-      SECONDARY_E2E_USER.id,
-      SECONDARY_E2E_USER.name,
-      SECONDARY_E2E_USER.email,
-      ANONYMOUS_E2E_USER.id,
-      ANONYMOUS_E2E_USER.name,
-      ANONYMOUS_E2E_USER.email,
-    ]
+    users.flatMap((u) => [u.id, u.name, u.email])
   );
 }
 
