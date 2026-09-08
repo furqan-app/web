@@ -7,6 +7,7 @@ import { useMarks } from "@hooks/use-marks";
 import { DESKTOP_QURAN_FONT_SIZES } from "@constants/font";
 import { useDesktopQuranFontSize } from "@contexts/DesktopQuranFontSizeContext";
 import { useQuranMushaf } from "@contexts/QuranMushafContext";
+import { QCF_V2_MUSHAF_ID } from "@utils/mushaf-editions";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { getMarkMeta } from "@utils/marks";
@@ -399,6 +400,15 @@ export const QuranSafha = ({
   // See docs/plans/fix-quran-page-font-loading.md.
   const pageFontFamily = edition.fontFamily(page);
   const fontSpec = `1px "${pageFontFamily}"`;
+
+  // QCF V2 and the QCF V4 tajweed font are the same glyph family — tajweed is
+  // that font with baked-in colour layers — so both are drawn wider per em than
+  // QCF V1 (measured line-width/font-size ratio ~15.6 vs V1's ~14.2) and need
+  // the same compact sizing: font-size scaled down + line-gap compensated so 15
+  // lines still fill the page height. `.fq-mushaf-v2` carries those rules;
+  // `.fq-tajweed` is kept separately for the colour-palette selectors only.
+  const compactMetrics =
+    edition.usesColorGlyphs || edition.id === QCF_V2_MUSHAF_ID;
   // `fontReady` is authoritative via document.fonts.check(): true ONLY when this
   // page's font is currently loaded and paint-ready. This is load-bearing for the
   // persistent pager (ADR 0028): FontFaceInjector keeps @font-face rules only for
@@ -740,7 +750,7 @@ export const QuranSafha = ({
                   is hidden when there is no text yet; the bars below are then the
                   card's only content and must stay visible. */}
               <div
-                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${edition.usesColorGlyphs ? "fq-tajweed" : ""}`}
+                className={`fq-quran-safha relative md:flex md:flex-col md:items-center ${edition.usesColorGlyphs ? "fq-tajweed " : ""}${compactMetrics ? "fq-mushaf-v2" : ""}`}
                 style={{
                   fontFamily: pageFontFamily,
                   ...(hasContent && !fontReady ? { visibility: "hidden" as const } : {}),
@@ -773,7 +783,7 @@ export const QuranSafha = ({
                 {showSkeleton &&
                   (hasContent ? (
                     <div
-                      className={`absolute inset-0 flex flex-col fq-skeleton-lines justify-between ${edition.usesColorGlyphs ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
+                      className={`absolute inset-0 flex flex-col fq-skeleton-lines justify-between ${compactMetrics ? "pt-[1em] md:pt-[0.5em]" : "pt-[0.5em]"} pb-[0.5em]`}
                       style={{ visibility: "visible" }}
                     >
                       {SKELETON_BARS.map((i) => (

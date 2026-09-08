@@ -13,7 +13,7 @@ const {
   fetchMushafLayout,
   layoutFromSeededWords,
   LAYOUT_MUSHAF_IDS,
-  DEFAULT_MUSHAF_ID,
+  SEEDED_WORDS_MUSHAF_ID,
 } = require("../quran-seed/mushaf-layout");
 
 // Full dataset, not a trim — see docs/plans/visual-e2e-testing.md Addendum 1:
@@ -56,7 +56,7 @@ async function main() {
   for (const mushafId of LAYOUT_MUSHAF_IDS) {
     let rows;
     let pageOf;
-    if (mushafId === DEFAULT_MUSHAF_ID) {
+    if (mushafId === SEEDED_WORDS_MUSHAF_ID) {
       console.log(`Deriving mushaf=${mushafId} word placement from fetched words…`);
       rows = layoutFromSeededWords(mushafId, words);
       pageOf = (v) => v.page_number;

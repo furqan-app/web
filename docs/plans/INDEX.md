@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-81 active plans.
+83 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -68,6 +68,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | recitation | [Recitation Bar: Vertical Rail (Desktop)](recitation-bar-vertical-rail.md) | implemented | feature |
 | release | [Protect prod Branch: Enforce Merges from release/* Only](protect-prod-branch.md) | implemented | feature |
 | release | [Release-Branch Deployment Workflow](release-branch-workflow.md) | implemented | feature |
+| rendering | [Add QCF V2 (Madani, 1421H) mushaf edition and make it the default](qcf-v2-mushaf-edition.md) | implemented | feature |
 | rendering | [Add Tajweed color-coded mushaf mode](tajweed-mushaf-mode.md) | implemented | feature |
 | rendering | [Fix Tajweed Mushaf Font Size to Match Regular Mushaf](fix-tajweed-font-size.md) | implemented | bug |
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |

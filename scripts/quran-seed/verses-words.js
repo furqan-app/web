@@ -1,6 +1,11 @@
 const axios = require("axios");
+const { SEEDED_WORDS_MUSHAF_ID } = require("./mushaf-layout");
 
 const BASE_URL = "https://api.qurancdn.com/api/qdc/verses/by_page/";
+// This `mushaf` param is the single source of the `Word.page_number` /
+// `Word.line_number` mirror, so it also defines which edition the
+// `layoutFromSeededWords` shortcut in mushaf-layout.js is valid for. Read the
+// shared constant — never a bare literal here — so the two cannot drift.
 const PARAMS = {
   words: "true",
   per_page: "all",
@@ -8,7 +13,7 @@ const PARAMS = {
   reciter: "7",
   word_fields:
     "verse_key,verse_id,page_number,location,text_uthmani,code_v1,code_v2,qpc_uthmani_hafs",
-  mushaf: "2",
+  mushaf: String(SEEDED_WORDS_MUSHAF_ID),
   filter_page_words: "true",
 };
 const TOTAL_PAGES = 604;

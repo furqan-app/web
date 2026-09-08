@@ -98,9 +98,13 @@
     "switchAction": "Switch to this layout",
     "active": "Active",
     "downloaded": "Downloaded",
+    "activeNeedsDownload": "Your current layout — download it to read offline",
     "editions": {
       "2": {
         "name": "King Fahd Complex Mushaf (1405H print)"
+      },
+      "1": {
+        "name": "King Fahd Complex Mushaf (1421H print)"
       },
       "19": {
         "name": "Tajweed mushaf"

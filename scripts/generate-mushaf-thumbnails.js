@@ -26,6 +26,12 @@ const EDITIONS = [
     usesColorGlyphs: false,
   },
   {
+    mushafId: 1,
+    glyphField: "code_v2",
+    fontFile: path.join(PUBLIC_DIR, "fonts/v2/woff2/p1.woff2"),
+    usesColorGlyphs: false,
+  },
+  {
     mushafId: 19,
     glyphField: "code_v2",
     fontFile: path.join(PUBLIC_DIR, "fonts/v4/colrv1/woff2/p1.woff2"),

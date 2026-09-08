@@ -14,6 +14,7 @@ import { toLocaleNumeral } from "@/app/utils/i18n";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
 import { useQuranMushaf } from "@contexts/QuranMushafContext";
 import { getMushafEdition } from "@utils/mushaf-editions";
+import { PRECACHE_MUSHAF_ID } from "@constants/offline";
 import { OfflineProgressBar } from "@components/offline/OfflineProgressBar";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,18 @@ export const MushafLayoutRow = ({ mushafId, onSelect }: Props) => {
 
   const showDownload = isStandalone && state !== "unknown";
   const hasPartialProgress = cached > 0 && cached < total;
+
+  // The reader default may not be the edition the first-run gate precaches
+  // (ADR 0066) — so a user reading QCF V2 can be online-only for their own
+  // layout even after completing offline setup. Nudge them here, on the row
+  // that also carries the Download button.
+  const showActiveNeedsDownload =
+    showDownload &&
+    isActive &&
+    mushafId !== PRECACHE_MUSHAF_ID &&
+    state !== "done" &&
+    state !== "running" &&
+    state !== "offline";
 
   const statusText = !showDownload
     ? null
@@ -79,6 +92,14 @@ export const MushafLayoutRow = ({ mushafId, onSelect }: Props) => {
           >
             {name}
           </p>
+          {showActiveNeedsDownload && (
+            <p className="text-[10.5px] font-medium text-foreground mt-0.5 leading-tight">
+              {t(
+                "mushafLayout.activeNeedsDownload",
+                "Your current layout — download it to read offline",
+              )}
+            </p>
+          )}
           {statusText && (
             <p className="text-[10.5px] text-muted-foreground mt-0.5 leading-tight">{statusText}</p>
           )}

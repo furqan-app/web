@@ -2,8 +2,9 @@
  * Verse-ordinal ↔ page-number resolution for verse-unit plan enrollments
  * (ADR 0038). Pure, synchronous, zero DB calls — built entirely from the
  * already-committed static Quran assets (public/quran/chapters.json,
- * public/quran/verse-pages/2.json — mushaf 2, DEFAULT_MUSHAF_ID), read once
- * and cached at module scope, same convention as app/hooks/get-surahs.ts.
+ * public/quran/verse-pages/2.json — mushaf 2, CANONICAL_PAGE_MUSHAF_ID; this is
+ * deliberately NOT DEFAULT_MUSHAF_ID, which moved to QCF V2, see ADR 0066),
+ * read once and cached at module scope, same convention as app/hooks/get-surahs.ts.
  *
  * A "verse ordinal" is a global 1-based position across the whole Quran in
  * reading order (surah 1 verse 1 = 1, …, surah 114 verse 6 = 6236). It has no
