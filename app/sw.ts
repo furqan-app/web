@@ -77,6 +77,14 @@ const READER_HTML_CACHE_NAME = `${READER_HTML_CACHE_PREFIX}${hashString(JSON.str
 const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
 
+// Offline app-shell pages (ADR 0014 Addendum 10, #591). Self /marks and
+// /search are static shells whose content resolves client-side, so any query
+// string (?q=…, seeded client-side) maps to the same precached bytes. Exact
+// by construction: /api/* starts with /api, grant paths live under
+// /{locale}/mushaf/, and the bare /{locale} home matches neither alternative.
+const isAppShellPage = (url: URL) =>
+  /^\/(ar|en)\/(marks|search)$/.test(url.pathname);
+
 // ADR 0014 Addendum 6: a cache miss on a slow-but-alive connection must not
 // stall a cold launch for the full SSR document fetch — the catch handler only
 // fires on network error, never on slowness. The reader-page handler below is
@@ -258,6 +266,16 @@ const fallbackLocale = (url: URL) =>
 const serveReaderFallbackShell = (url: URL): Promise<Response | undefined> =>
   serwist.matchPrecache(fallbackDocumentUrl(fallbackLocale(url)));
 
+// Serves the precached shell for the request's own path (URL.pathname excludes
+// the query by definition, so /ar/search?q=… resolves to the /ar/search shell
+// — the query is seeded client-side and the HTML is identical). Falls through
+// to the network on a miss so only setCatchHandler ever decides the terminal
+// document. Annotated rather than inferred for the same TS7022/TS7023 cycle as
+// serveReaderFallbackShell above (reads `serwist`, whose type is inferred from
+// the runtimeCaching handler calling this).
+const serveAppShellPage = (url: URL): Promise<Response | undefined> =>
+  serwist.matchPrecache(url.pathname);
+
 const isPageFont = (url: URL) =>
   /^\/fonts\/(v1|v2|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
@@ -377,6 +395,22 @@ const serwist = new Serwist({
           event.waitUntil(network.then(() => {}, () => {}));
           return shell;
         },
+      },
+    },
+    // Offline app-shell pages (ADR 0014 Addendum 10, #591): exact-path
+    // navigations are already served by PrecacheRoute (registered ahead of
+    // runtimeCaching), so this rule only ever fires for query-bearing variants
+    // like /ar/search?q=…, normalizing them onto the same precached shell.
+    // The `request.mode === "navigate"` guard carries the same load as the
+    // reader rule above: without it RSC flight data for these paths would be
+    // servable as documents. No second cache, no populate-on-miss — the
+    // precache manifest is the single source of truth.
+    {
+      matcher: ({ url, request }) =>
+        isAppShellPage(url) && request.mode === "navigate",
+      handler: {
+        handle: async ({ request, url }) =>
+          (await serveAppShellPage(url)) ?? fetch(request),
       },
     },
     // Page fonts are genuinely immutable (Static Generation Strategy

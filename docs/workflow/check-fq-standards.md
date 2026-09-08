@@ -76,7 +76,7 @@ A static, highest-risk-first list (last reconciled against the decisions 2026-08
 ### PWA / offline
 - The bulk 604-page pre-cache is explicit-tap-only on every surface — never silent or auto-started.
 - `globPublicPatterns` in `next.config.mjs` stays pinned to the app shell, never `["**/*"]`.
-- Reader HTML is `NetworkFirst`; only page fonts/JSON are `CacheFirst`.
+- Reader HTML is `CacheFirst` under a per-deploy auto-versioned cache name with a `navigate`-mode matcher guard — never a static or manually-bumped name, never without the guard, and never reverted to `NetworkFirst` (ADR 0014 Addenda 4–6); only page fonts/JSON are plain long-lived `CacheFirst`.
 - Page fonts are never pre-cached for a regular (non-installed) browser tab.
 
 ### Theming

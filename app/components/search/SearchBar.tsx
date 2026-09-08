@@ -9,6 +9,7 @@ import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl
 import { Link } from "@/i18n/routing";
 import { toLocaleNumeral } from "@utils/i18n";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
+import { hardNavigateIfOffline } from "@/app/utils/platform";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, SearchX, ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
@@ -57,6 +58,9 @@ export const SearchBar = () => {
     const tSearch = useNextIntlTranslations("search");
     const locale = useLocale();
     const basePath = useReaderBasePath();
+    // Hoisted: derived once per render for both the href and the offline
+    // hard-nav gate below (throws on unknown bases — same as before, at render).
+    const searchPath = toSearchPath(basePath);
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const { verses, chapters, isLoading } = useSearch(debouncedQuery);
@@ -192,8 +196,28 @@ export const SearchBar = () => {
                     {hasResults && (
                         <div className="shrink-0 border-t border-border bg-background px-4 py-2">
                             <Link
-                                href={`${toSearchPath(basePath)}?q=${encodeURIComponent(debouncedQuery)}`}
-                                onClick={() => setOpen(false)}
+                                href={`${searchPath}?q=${encodeURIComponent(debouncedQuery)}`}
+                                onClick={(e) => {
+                                    // Offline route coverage (#591): this tap is an RSC
+                                    // soft-nav, which fails for a never-visited page
+                                    // with no connection. Offline on the SELF path,
+                                    // hard-navigate so the service worker serves the
+                                    // precached shell instead of error.tsx + a Sentry
+                                    // report. Grant links stay soft-nav (online-only
+                                    // scope); online keeps soft nav.
+                                    if (searchPath !== "/search") {
+                                        setOpen(false);
+                                        return;
+                                    }
+                                    if (
+                                        !hardNavigateIfOffline(
+                                            e,
+                                            `/${locale}/search?q=${encodeURIComponent(debouncedQuery)}`,
+                                        )
+                                    ) {
+                                        setOpen(false);
+                                    }
+                                }}
                                 className="fq-focus-ring block w-full rounded-lg px-4 py-3 text-center text-sm font-medium text-primary transition-colors hover:bg-[hsl(var(--well)/var(--well-alpha))]"
                             >
                                 {(verses.data?.total ?? 0) > (verses.data?.results.length ?? 0)
