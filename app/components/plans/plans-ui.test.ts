@@ -183,3 +183,102 @@ describe("Plans UI Redesign (#595)", () => {
     });
   });
 });
+
+describe("Daily Wird Activity Flavours (#607)", () => {
+  describe("i18n Translation Keys Parity", () => {
+    const requiredKeys = [
+      "browse.dailyWirdType.title",
+      "browse.dailyWirdType.description",
+      "browse.customWirdType.title",
+      "browse.customWirdType.description",
+      "browse.comingSoon",
+      "startPoint.label",
+      "startPoint.fromBeginning",
+      "startPoint.pagePrefix",
+      "startPoint.lockedNotice",
+      "startPoint.byPage",
+      "startPoint.bySurah",
+      "startPoint.pageNumber",
+      "startPoint.pageRangeHint",
+      "startPoint.choosePage",
+      "startPoint.searchPages",
+      "startPoint.noPageFound",
+      "startPoint.chooseSurah",
+      "startPoint.searchSurahs",
+      "startPoint.noSurahFound",
+      "templates.dailyWird.label",
+      "templates.listeningWird.label",
+      "templates.memorizingWird.label",
+      "templates.memorizingWird.description",
+      "templates.reviewingWird.label",
+      "templates.reviewingWird.description",
+      "tracks.memorizing",
+      "tracks.reviewing",
+    ];
+
+    it("ensures all newly added translation keys exist in both ar.json and en.json", () => {
+      const getNested = (obj: Record<string, unknown>, path: string) =>
+        path
+          .split(".")
+          .reduce<unknown>(
+            (acc, part) =>
+              acc && typeof acc === "object"
+                ? (acc as Record<string, unknown>)[part]
+                : undefined,
+            obj
+          );
+
+      for (const key of requiredKeys) {
+        const arVal = getNested(arMessages.plans, key);
+        const enVal = getNested(enMessages.plans, key);
+
+        expect(arVal, `Missing ar.json key: plans.${key}`).toBeDefined();
+        expect(typeof arVal).toBe("string");
+        expect(enVal, `Missing en.json key: plans.${key}`).toBeDefined();
+        expect(typeof enVal).toBe("string");
+      }
+    });
+  });
+
+  describe("Plan Parameters Summary for new flavours", () => {
+    it("derives memorizing-wird pace correctly with default 1", () => {
+      const memorizingWird: UserPlanListItem = {
+        id: 5,
+        template_key: "memorizing-wird",
+        params: {},
+        start_date: "2026-09-01",
+        status: "active",
+      };
+      expect(quantityAmount(memorizingWird.params.quantities?.memorizing, 1)).toBe(1);
+
+      const memorizingWirdWithCustomPace: UserPlanListItem = {
+        id: 6,
+        template_key: "memorizing-wird",
+        params: { quantities: { memorizing: 2 } },
+        start_date: "2026-09-01",
+        status: "active",
+      };
+      expect(quantityAmount(memorizingWirdWithCustomPace.params.quantities?.memorizing, 1)).toBe(2);
+    });
+
+    it("derives reviewing-wird pace correctly with default 1", () => {
+      const reviewingWird: UserPlanListItem = {
+        id: 7,
+        template_key: "reviewing-wird",
+        params: {},
+        start_date: "2026-09-01",
+        status: "active",
+      };
+      expect(quantityAmount(reviewingWird.params.quantities?.reviewing, 1)).toBe(1);
+
+      const reviewingWirdWithCustomPace: UserPlanListItem = {
+        id: 8,
+        template_key: "reviewing-wird",
+        params: { quantities: { reviewing: 3 } },
+        start_date: "2026-09-01",
+        status: "active",
+      };
+      expect(quantityAmount(reviewingWirdWithCustomPace.params.quantities?.reviewing, 1)).toBe(3);
+    });
+  });
+});

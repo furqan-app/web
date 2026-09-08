@@ -174,6 +174,42 @@ export const PLAN_TEMPLATES: Record<string, PlanTemplate> = {
       },
     ],
   },
+  /** Same shape as daily-wird, for a memorization khatma (defaults mirror husun hifz). */
+  "memorizing-wird": {
+    key: "memorizing-wird",
+    missedDayPolicy: "cursor",
+    tracks: [
+      {
+        key: "memorizing",
+        activity: "memorize",
+        unit: "page",
+        rule: {
+          kind: "fixed_cycle",
+          rangeStart: MUSHAF_FIRST_PAGE,
+          rangeEnd: MUSHAF_LAST_PAGE,
+          defaultUnitsPerDay: 1,
+        },
+      },
+    ],
+  },
+  /** Same shape as daily-wird, for a review khatma (defaults mirror husun baeed). */
+  "reviewing-wird": {
+    key: "reviewing-wird",
+    missedDayPolicy: "cursor",
+    tracks: [
+      {
+        key: "reviewing",
+        activity: "review",
+        unit: "page",
+        rule: {
+          kind: "fixed_cycle",
+          rangeStart: MUSHAF_FIRST_PAGE,
+          rangeEnd: MUSHAF_LAST_PAGE,
+          defaultUnitsPerDay: 1,
+        },
+      },
+    ],
+  },
   /**
    * الحصون الخمسة (Dr. Saeed Hamza) — the forcing case for all five rule
    * kinds (see docs/plans/daily-awrad-ui.md and ADR 0030). Quantities are a

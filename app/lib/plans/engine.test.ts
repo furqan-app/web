@@ -10,6 +10,7 @@ import {
   PLAN_TEMPLATES,
   type PlanTemplate,
 } from "@/app/constants/plans";
+import { pageFirstVerseOrdinal } from "@/app/lib/plans/verse-index";
 
 const TODAY = "2026-07-24";
 
@@ -98,6 +99,27 @@ describe("fixed_cycle", () => {
   it("honors startPage on a fresh enrollment", () => {
     const [a] = deriveAssignments(wird, { startPage: 100 }, [], TODAY);
     expect(a).toMatchObject({ rangeStart: 100, rangeEnd: 104 });
+  });
+
+  it("honors startPage on a fresh verse-unit enrollment by resolving to pageFirstVerseOrdinal", () => {
+    const [a] = deriveAssignments(
+      wird,
+      { trackUnits: { reading: "verse" }, quantities: { reading: 10 }, startPage: 100 },
+      [],
+      TODAY
+    );
+    const expectedStart = pageFirstVerseOrdinal(100);
+    expect(a).toMatchObject({
+      unit: "verse",
+      rangeStart: expectedStart,
+      rangeEnd: expectedStart + 9,
+    });
+  });
+
+  it("khatma wrap-around wraps to 1 even when an initial startPage was specified", () => {
+    const log = [entry("reading", "2026-07-23", 598, MUSHAF_LAST_PAGE)];
+    const [a] = deriveAssignments(wird, { startPage: 100 }, log, TODAY);
+    expect(a).toMatchObject({ rangeStart: 1, rangeEnd: 5 });
   });
 
   it("resumes after the last logged entry regardless of missed days (cursor policy, D4)", () => {
@@ -664,5 +686,42 @@ describe("verse-unit (ADR 0038)", () => {
     const assignments = deriveAssignments(husun, params, [], TODAY);
     expect(byTrack(assignments, "tilawa")).toMatchObject({ unit: "page", rangeStart: 1, rangeEnd: 20 });
     expect(byTrack(assignments, "hifz")).toMatchObject({ unit: "verse", rangeStart: 1, rangeEnd: 7 });
+  });
+});
+
+describe("memorizing-wird and reviewing-wird templates (#607)", () => {
+  it("derives memorizing-wird on day one with 1 page/day default pace", () => {
+    const memorizingWird = PLAN_TEMPLATES["memorizing-wird"];
+    const [a] = deriveAssignments(memorizingWird, {}, [], TODAY);
+    expect(a).toMatchObject({
+      trackKey: "memorizing",
+      activity: "memorize",
+      unit: "page",
+      rangeStart: 1,
+      rangeEnd: 1,
+      completed: false,
+    });
+  });
+
+  it("derives reviewing-wird on day one with 1 page/day default pace", () => {
+    const reviewingWird = PLAN_TEMPLATES["reviewing-wird"];
+    const [a] = deriveAssignments(reviewingWird, {}, [], TODAY);
+    expect(a).toMatchObject({
+      trackKey: "reviewing",
+      activity: "review",
+      unit: "page",
+      rangeStart: 1,
+      rangeEnd: 1,
+      completed: false,
+    });
+  });
+
+  it("honors startPage for memorizing-wird", () => {
+    const memorizingWird = PLAN_TEMPLATES["memorizing-wird"];
+    const [a] = deriveAssignments(memorizingWird, { startPage: 50 }, [], TODAY);
+    expect(a).toMatchObject({
+      rangeStart: 50,
+      rangeEnd: 50,
+    });
   });
 });

@@ -51,6 +51,8 @@ const STATUS_ACTIONS: Record<UserPlanStatus, { status: UserPlanStatus; icon: typ
 const EDIT_VIEW_FOR_TEMPLATE: Record<string, PlansBrowseView> = {
   "daily-wird": "daily-wird",
   "listening-wird": "listening-wird",
+  "memorizing-wird": "memorizing-wird",
+  "reviewing-wird": "reviewing-wird",
   husun: "husun-settings",
 };
 
@@ -198,6 +200,14 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
   } else if (plan.template_key === "listening-wird") {
     const pace = quantityAmount(plan.params.quantities?.listening, 5);
     const unit = plan.params.trackUnits?.listening;
+    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+  } else if (plan.template_key === "memorizing-wird") {
+    const pace = quantityAmount(plan.params.quantities?.memorizing, 1);
+    const unit = plan.params.trackUnits?.memorizing;
+    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+  } else if (plan.template_key === "reviewing-wird") {
+    const pace = quantityAmount(plan.params.quantities?.reviewing, 1);
+    const unit = plan.params.trackUnits?.reviewing;
     parts.push(getPlanPaceSummary(pace, unit, locale, t));
   }
 

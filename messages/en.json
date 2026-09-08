@@ -322,16 +322,49 @@
       "back": "Back",
       "next": "Next",
       "previous": "Previous",
-      "husunOverview": "Five interlinked tracks: you memorize a new page daily, prepare it, and review it both soon and later — automatically, based on what you've memorized. You only choose the memorization rate and range."
+      "husunOverview": "Five interlinked tracks: you memorize a new page daily, prepare it, and review it both soon and later — automatically, based on what you've memorized. You only choose the memorization rate and range.",
+      "dailyWirdType": {
+        "title": "Daily wird",
+        "description": "A repeating full-mushaf khatma with your choice of activity and pace."
+      },
+      "customWirdType": {
+        "title": "Custom wird",
+        "description": "Choose a custom range, surah, or target completion date (coming soon)."
+      },
+      "comingSoon": "Soon"
+    },
+    "startPoint": {
+      "label": "Start point (optional)",
+      "fromBeginning": "From page 1",
+      "pagePrefix": "Page",
+      "lockedNotice": "Wird is already active — resumes from where you left off",
+      "byPage": "By page",
+      "bySurah": "By surah",
+      "pageNumber": "Page number",
+      "pageRangeHint": "(1–604)",
+      "choosePage": "Choose a page",
+      "searchPages": "Search pages…",
+      "noPageFound": "No page found.",
+      "chooseSurah": "Choose a surah",
+      "searchSurahs": "Search surahs…",
+      "noSurahFound": "No surah found."
     },
     "templates": {
       "dailyWird": {
-        "label": "Daily Wird",
+        "label": "Daily Wird — Reading",
         "description": "Read N pages a day, cycling the whole mushaf."
       },
       "listeningWird": {
-        "label": "Listening Wird",
+        "label": "Daily Wird — Listening",
         "description": "Listen to N pages a day, cycling the whole mushaf."
+      },
+      "memorizingWird": {
+        "label": "Daily Wird — Memorization",
+        "description": "Memorize N pages a day, cycling the whole mushaf."
+      },
+      "reviewingWird": {
+        "label": "Daily Wird — Review",
+        "description": "Review N pages a day, cycling the whole mushaf."
       },
       "husun": {
         "label": "الحصون الخمسة",
@@ -341,6 +374,8 @@
     "tracks": {
       "reading": "Reading",
       "listening": "Listening",
+      "memorizing": "Memorizing",
+      "reviewing": "Reviewing",
       "tilawa": "Continuous reading",
       "hifz": "New memorization",
       "tahdeer": "Preparation",
