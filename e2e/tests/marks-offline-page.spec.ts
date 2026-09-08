@@ -13,16 +13,23 @@ import {
   clearAuth,
   clearUserMarks,
 } from "../helpers/auth";
+import { seedTestUsers } from "../helpers/mushaf";
 
 test.describe.configure({ mode: "serial" });
+
+test.beforeAll(async () => {
+  await seedTestUsers([DESKTOP_MARKS_USER, MOBILE_MARKS_USER]);
+});
 
 /**
  * Dedicated users per project (ids 11/12 — 1/2/3 belong to the shared
  * DEFAULT/SECONDARY/ANONYMOUS users). Desktop and mobile projects run in
  * parallel workers against one e2e database, and every test here seeds and
  * wipes server marks; sharing one user would let a parallel worker's wipe
- * delete the rows this worker just synced. Auth is JWT-cookie based and marks
- * reference users by scalar id, so no DB seeding is needed for these ids.
+ * delete the rows this worker just synced. Rows are seeded via
+ * `seedTestUsers` below — required, not optional: the session callback
+ * resolves `session.user` (including `id`) from the users table, and without
+ * a row the session carries no id so MarksSync never stamps the owner.
  */
 const DESKTOP_MARKS_USER = {
   id: 11,
