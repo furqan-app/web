@@ -88,6 +88,24 @@ async function goOffline(page: Page, context: BrowserContext) {
   await page.evaluate(() => window.dispatchEvent(new Event("offline"))).catch(() => {});
 }
 
+/**
+ * Waits until MarksSync's effect has stamped the store owner from the observed
+ * authenticated session. The stamp lags the sign-in: marking works on the live
+ * online session, but offline gating reads the stamp — going offline first
+ * would show the signed-out prompt on a slow run (CI failure on PR #604).
+ */
+async function waitForOwnerStamp(
+  page: Page,
+  e2eUser: { id: number; name: string; email: string }
+) {
+  await expect
+    .poll(
+      async () => await page.evaluate(() => window.localStorage.getItem("localMarksOwner")),
+      { timeout: 15000 }
+    )
+    .toBe(JSON.stringify(String(e2eUser.id)));
+}
+
 async function goOnline(page: Page, context: BrowserContext) {
   await context.setOffline(false);
   await page.evaluate(() => {
@@ -115,6 +133,10 @@ test.describe("My Marks page offline (read plus local-first delete)", () => {
     await expect
       .poll(async () => await getLocalMark(page, "word:1:1:2"), { timeout: 10000 })
       .not.toBeNull();
+
+    // The owner stamp must land before the network goes — offline gating
+    // reads the stamp, not the live session.
+    await waitForOwnerStamp(page, projectUser(testInfo));
 
     // Zero connection from here on.
     await goOffline(page, context);
