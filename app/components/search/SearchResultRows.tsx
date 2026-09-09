@@ -2,25 +2,28 @@ import { Link } from "@/i18n/routing";
 import { SurahResult, VerseResult } from "@types";
 import { useLocale } from "next-intl";
 import { toLocaleNumeral } from "@utils/i18n";
+import type { MouseEvent } from "react";
 
 // Shared surah/verse result rows — one design, two surfaces. The overlay
 // (SearchQueryResults) and the full-results page (SearchResultsPage) render
 // these; only the resolved href and the navigate callback differ per caller.
 // Callers resolve hrefs themselves: the overlay keeps its current
 // default-edition surah links untouched, while the page resolves every page
-// through the active edition's verse-pages map (ADR 0033).
+// through the active edition's verse-pages map (ADR 0033). onNavigate receives
+// the click event so callers that must hard-navigate offline (the page, via
+// hardNavigateIfOffline) can preventDefault; plain closers stay assignable.
 
 type SurahRowProps = {
   chapter: SurahResult;
   href: string;
-  onNavigate?: () => void;
+  onNavigate?: (e: MouseEvent<Element>) => void;
 };
 
 export function SearchSurahRow({ chapter, href, onNavigate }: SurahRowProps) {
   return (
     <Link
       href={href}
-      onClick={onNavigate}
+      onClick={(e) => onNavigate?.(e)}
       className="fq-focus-ring-inset block border-b border-border/70 px-4 py-2 transition-colors last:border-b-0 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
     >
       <div className="flex justify-between items-center">
@@ -34,7 +37,7 @@ export function SearchSurahRow({ chapter, href, onNavigate }: SurahRowProps) {
 type VerseRowProps = {
   verse: VerseResult;
   href: string;
-  onNavigate?: () => void;
+  onNavigate?: (e: MouseEvent<Element>) => void;
 };
 
 export function SearchVerseRow({ verse, href, onNavigate }: VerseRowProps) {
@@ -43,7 +46,7 @@ export function SearchVerseRow({ verse, href, onNavigate }: VerseRowProps) {
   return (
     <Link
       href={href}
-      onClick={onNavigate}
+      onClick={(e) => onNavigate?.(e)}
       className="fq-focus-ring-inset block border-b border-border/70 px-4 py-2 transition-colors last:border-b-0 hover:bg-[hsl(var(--well)/var(--well-alpha))]"
     >
       <div className="text-sm text-muted-foreground">
