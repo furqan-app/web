@@ -14,8 +14,9 @@ import { useSearchChapters } from "@hooks/use-search";
 import { useSearchInfiniteVerses } from "@hooks/use-search-infinite";
 import { useVersePages } from "@hooks/use-verse-pages";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
+import { hardNavigateIfOffline } from "@/app/utils/platform";
 import { SearchSurahRow, SearchVerseRow } from "./SearchResultRows";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 // Same shape for idle, loading, empty and error so the page never
 // restructures itself as the query changes — only its contents do
@@ -58,7 +59,16 @@ export default function SearchResultsPage() {
   const locale = useLocale();
   const searchParams = useSearchParams();
   const basePath = useReaderBasePath();
-  const { data: versePages } = useVersePages();
+  // The surah section waits on this map too: rendering surah links before it
+  // resolves would fall back to the raw default-edition chapter.pages range
+  // (ADR 0033 — 56 verses paginate differently per edition), so the map
+  // pending joins the loading state and a map failure joins the error state.
+  const {
+    data: versePages,
+    isLoading: isVersePagesLoading,
+    isError: isVersePagesError,
+    refetch: refetchVersePages,
+  } = useVersePages();
 
   // Seeded client-side from ?q= so the server route stays static (no
   // searchParams read at SSR — that would force dynamic rendering).
@@ -103,8 +113,8 @@ export default function SearchResultsPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const queryValid = isSearchQueryValid(debouncedQuery);
-  const isLoading = chapters.isLoading || verses.isLoading;
-  const isError = chapters.isError || verses.isError;
+  const isLoading = chapters.isLoading || verses.isLoading || isVersePagesLoading;
+  const isError = chapters.isError || verses.isError || isVersePagesError;
   const surahs = chapters.data?.results ?? [];
   const items = (verses.data?.pages ?? []).flatMap((page) => page.results);
   const total = verses.data?.pages[0]?.total ?? 0;
@@ -112,7 +122,17 @@ export default function SearchResultsPage() {
   const retry = () => {
     if (chapters.isError) chapters.refetch();
     if (verses.isError) verses.refetch();
+    if (isVersePagesError) refetchVersePages();
   };
+
+  // Offline taps are RSC soft-navs, which fail for pages whose payload was
+  // never cached — hard-navigate so the SW serves the precached shell instead
+  // of error.tsx (platform.ts contract, same as the overlay's More-results
+  // link). SELF entry only: grant links stay online-only soft nav (ADR 0012).
+  const hardNavIfSelf = (href: string) =>
+    basePath === "/pages"
+      ? (e: MouseEvent<Element>) => hardNavigateIfOffline(e, `/${locale}${href}`)
+      : undefined;
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-10 max-w-2xl min-h-[calc(100dvh-3.5rem)]">
@@ -185,15 +205,22 @@ export default function SearchResultsPage() {
                   {t("surahs", "Surahs")} ({toLocaleNumeral(surahs.length, locale)})
                 </span>
               </div>
-              {surahs.map((chapter) => (
-                <SearchSurahRow
-                  key={chapter.id}
-                  chapter={chapter}
-                  // Edition-resolved first page (ADR 0033) — never the raw
-                  // default-edition chapter.pages range.
-                  href={`${basePath}/${versePages?.[`${chapter.id}:1`] ?? chapter.pages.split("-")[0]}`}
-                />
-              ))}
+              {surahs.map((chapter) => {
+                // Edition-resolved first page (ADR 0033). The section only
+                // renders once the map is loaded (skeletons until then, the
+                // error state when it fails), so no default-edition fallback;
+                // the generated map covers all 114 chapters, so the key below
+                // is always present when this renders.
+                const href = `${basePath}/${versePages?.[`${chapter.id}:1`]}`;
+                return (
+                  <SearchSurahRow
+                    key={chapter.id}
+                    chapter={chapter}
+                    href={href}
+                    onNavigate={hardNavIfSelf(href)}
+                  />
+                );
+              })}
             </section>
           )}
 
@@ -206,17 +233,21 @@ export default function SearchResultsPage() {
                   })}
                 </span>
               </div>
-              {items.map((verse) => (
-                <SearchVerseRow
-                  key={verse.verse_key}
-                  verse={verse}
-                  href={highlight.addToUrl({
-                    verseKey: verse.verse_key,
-                    pageNumber: verse.page_number,
-                    basePath,
-                  })}
-                />
-              ))}
+              {items.map((verse) => {
+                const href = highlight.addToUrl({
+                  verseKey: verse.verse_key,
+                  pageNumber: verse.page_number,
+                  basePath,
+                });
+                return (
+                  <SearchVerseRow
+                    key={verse.verse_key}
+                    verse={verse}
+                    href={href}
+                    onNavigate={hardNavIfSelf(href)}
+                  />
+                );
+              })}
               {hasNextPage ? (
                 <div ref={sentinelRef}>
                   {isFetchingNextPage && (

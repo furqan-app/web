@@ -1,5 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
-import { openSearch, waitForServiceWorker } from "../helpers/reader";
+import {
+  openSearch,
+  waitForServiceWorker,
+  waitForReaderContent,
+} from "../helpers/reader";
 import {
   authenticateAsUser,
   clearAuth,
@@ -145,10 +149,9 @@ test.describe("Search Results Page", () => {
       page,
       context,
     }) => {
-      // Load once online: primes the verse-pages CacheFirst entry and lets the
-      // SW finish precaching. The dedicated page is in-app-offline scope only
-      // (ADR 0062 / search-results-page.md) — a cold offline deep link is not
-      // expected to work.
+      // Load once online: primes the verse-pages entry and lets the SW finish
+      // precaching (shell included, #591), so the refine below resolves fully
+      // offline from the precached index.
       await page.goto("/ar/search?q=%D8%A7%D9%84%D8%AD%D9%85%D8%AF"); // الحمد
       await expect(verseLinks(page).first()).toBeVisible({
         timeout: DEBOUNCE_TIMEOUT,
@@ -206,6 +209,253 @@ test.describe("Search Results Page", () => {
       // …and the next infinite-scroll chunk resolves from the local index.
       await links.last().scrollIntoViewIfNeeded();
       await expect(links).toHaveCount(40, { timeout: DEBOUNCE_TIMEOUT });
+    });
+
+    test("cold offline entry serves the shell with full verse plus surah results", async ({
+      page,
+      context,
+    }) => {
+      // Prime online: caches the shell's dependencies and lets the SW finish
+      // precaching (the shell itself is served by the #591 isAppShellPage rule).
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%AD%D9%85%D8%AF"); // الحمد
+      await expect(verseLinks(page).first()).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await waitForServiceWorker(page);
+      await waitForIndexPrecached(page);
+
+      // Any hit to the search API while offline is a bug — the engine must read
+      // the index directly (searchVersesOnline bails on navigator.onLine).
+      let searchApiCalls = 0;
+      await page.route("**/api/search/**", (route) => {
+        searchApiCalls += 1;
+        return route.abort();
+      });
+      await context.setOffline(true);
+      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+      // Cold navigation with zero connection: the shell serves, ?q= seeds
+      // client-side, and both sections resolve from precached JSON.
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86"); // الرحمن
+      await expect(page.getByPlaceholder("ابحث في القرآن…")).toHaveValue(
+        "الرحمن",
+        { timeout: DEBOUNCE_TIMEOUT }
+      );
+      await expect(
+        page.getByRole("link", { name: /^Ar-Rahman/ }).first()
+      ).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
+      await expect(verseLinks(page).first()).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      // Offline total must equal the online/API total for this query (48 verses
+      // in the full-dataset fixture — see the seed note at the top of this file).
+      await expect(page.getByText("عدد النتائج: ٤٨")).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      expect(searchApiCalls).toBe(0);
+    });
+
+    test("surah links resolve through the edition map offline, identical to online", async ({
+      page,
+      context,
+    }) => {
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86");
+      const surahLink = page.getByRole("link", { name: /^Ar-Rahman/ }).first();
+      await expect(surahLink).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
+      const onlineHref = await surahLink.getAttribute("href");
+      // Edition-resolved first page (ADR 0033) — never the default-edition range.
+      expect(onlineHref).toMatch(/^\/ar\/pages\/\d+$/);
+      await waitForServiceWorker(page);
+      await waitForIndexPrecached(page);
+
+      await page.route("**/api/search/**", (route) => route.abort());
+      await context.setOffline(true);
+      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+      // Refine away and back so the surah section re-resolves fully offline.
+      const input = page.getByPlaceholder("ابحث في القرآن…");
+      await input.fill("الفاتحة");
+      await expect(
+        page.getByRole("link", { name: /^Al-Fatihah/ }).first()
+      ).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
+      await input.fill("الرحمن");
+      const offlineLink = page.getByRole("link", { name: /^Ar-Rahman/ }).first();
+      await expect(offlineLink).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
+      expect(await offlineLink.getAttribute("href")).toBe(onlineHref);
+    });
+
+    test("missing index offline shows error plus retry, recovers on retry", async ({
+      page,
+      context,
+    }) => {
+      // Prime the shell with no search intent, so the index stays unfetched
+      // (ADR 0049).
+      await page.goto("/ar/search");
+      await expect(page.getByPlaceholder("ابحث في القرآن…")).toBeVisible();
+      await waitForServiceWorker(page);
+      await waitForIndexPrecached(page);
+
+      // Simulate a never-precached index: stash its bytes in-page, then delete
+      // the entry under its exact precache key. An abort route alone cannot
+      // prove absence — nothing guarantees interception wins over an SW
+      // precache hit, while a deleted entry deterministically fails the fetch
+      // (no cache, no connection). The exact key (with revision param) is
+      // saved so recovery puts the bytes back where the precache route looks
+      // them up; the whole test — including recovery — stays offline on this
+      // one document.
+      await page.evaluate(async () => {
+        const w = window as unknown as {
+          __savedIndexKey?: { cache: string; url: string };
+          __savedIndex?: ArrayBuffer;
+        };
+        for (const name of await caches.keys()) {
+          const cache = await caches.open(name);
+          for (const req of await cache.keys()) {
+            if (req.url.includes("/quran/search-index.json")) {
+              const res = await cache.match(req);
+              if (!res) {
+                throw new Error("search-index.json entry unreadable");
+              }
+              w.__savedIndex = await res.arrayBuffer();
+              w.__savedIndexKey = { cache: name, url: req.url };
+              await cache.delete(req);
+            }
+          }
+        }
+        if (!w.__savedIndexKey) {
+          throw new Error("search-index.json precache entry not found");
+        }
+      });
+
+      // Any hit to the search API at any point is a bug — the engine must read
+      // the index directly (searchVersesOnline bails on navigator.onLine).
+      let searchApiCalls = 0;
+      await page.route("**/api/search/**", (route) => {
+        searchApiCalls += 1;
+        return route.abort();
+      });
+      await context.setOffline(true);
+      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+      await page.getByPlaceholder("ابحث في القرآن…").fill("الرحمن");
+      // The chapters half succeeds offline (precached chapters.json) but the
+      // verses half throws on the missing index, so the page-level error state
+      // wins over the surah section. React Query retries 3× (~7s backoff) plus
+      // the 500ms debounce before the error lands — hence the wider timeout.
+      await expect(page.getByText("تعذّر البحث")).toBeVisible({
+        timeout: 20000,
+      });
+
+      // Recovery proves the INDEX path: put the stashed bytes back under the
+      // exact saved key and Retry — results resolve with the API still aborted
+      // throughout.
+      await page.evaluate(async () => {
+        const w = window as unknown as {
+          __savedIndexKey: { cache: string; url: string };
+          __savedIndex: ArrayBuffer;
+        };
+        const cache = await caches.open(w.__savedIndexKey.cache);
+        await cache.put(
+          w.__savedIndexKey.url,
+          new Response(w.__savedIndex)
+        );
+      });
+      await page.getByRole("button", { name: "إعادة المحاولة" }).click();
+      await expect(verseLinks(page).first()).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await expect(page.getByText("عدد النتائج: ٤٨")).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      expect(searchApiCalls).toBe(0);
+    });
+
+    test("offline misses show no-results, surah-only matches skip the empty state", async ({
+      page,
+      context,
+    }) => {
+      // Guards the throw's boundary: index present + zero matches must stay
+      // "Nothing found" (never the error state); only a missing index errors.
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%AD%D9%85%D8%AF"); // الحمد
+      await expect(verseLinks(page).first()).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await waitForServiceWorker(page);
+      await waitForIndexPrecached(page);
+
+      await page.route("**/api/search/**", (route) => route.abort());
+      await context.setOffline(true);
+      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+      const input = page.getByPlaceholder("ابحث في القرآن…");
+      await input.fill("xyznonexistent");
+      await expect(page.getByText("لا توجد نتائج")).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await expect(page.getByText("تعذّر البحث")).toBeHidden();
+
+      // Numeric surah-only match offline: surah section renders, verses hide,
+      // and still no global empty or error state.
+      await input.fill("114");
+      await expect(
+        page.getByRole("link", { name: /^An-Nas/ }).first()
+      ).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
+      await expect(verseLinks(page)).toHaveCount(0);
+      await expect(page.getByText("لا توجد نتائج")).toBeHidden();
+      await expect(page.getByText("تعذّر البحث")).toBeHidden();
+    });
+
+    test("offline result links open edition-correct reader pages", async ({
+      page,
+      context,
+    }) => {
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86");
+      const verseLink = verseLinks(page).first();
+      await expect(verseLink).toBeVisible({ timeout: DEBOUNCE_TIMEOUT });
+      const verseHref = await verseLink.getAttribute("href");
+      expect(verseHref).toMatch(/\/ar\/pages\/\d+\?highlight=/);
+      const surahHref = await page
+        .getByRole("link", { name: /^Ar-Rahman/ })
+        .first()
+        .getAttribute("href");
+      expect(surahHref).toMatch(/^\/ar\/pages\/\d+$/);
+      if (!verseHref || !surahHref) {
+        throw new Error("search result hrefs missing before offline open");
+      }
+      await waitForServiceWorker(page);
+      await waitForIndexPrecached(page);
+
+      // Prime both targets so their document + JSON + font are cached.
+      await page.goto(verseHref);
+      await waitForReaderContent(page);
+      await page.goto(surahHref);
+      await waitForReaderContent(page);
+
+      await context.setOffline(true);
+      await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+      // Cold search entry, then open the verse row: the reader renders offline.
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86");
+      await expect(verseLinks(page).first()).toBeVisible({
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await verseLinks(page).first().click();
+      await expect(page).toHaveURL(/\/ar\/pages\/\d+\?highlight=/, {
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await waitForReaderContent(page);
+
+      // Back to search (cold nav) and open the surah row to its first page.
+      await page.goto("/ar/search?q=%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86");
+      await page
+        .getByRole("link", { name: /^Ar-Rahman/ })
+        .first()
+        .click();
+      const surahPage = surahHref.split("/").pop();
+      await expect(page).toHaveURL(new RegExp(`/ar/pages/${surahPage}(\\?|$)`), {
+        timeout: DEBOUNCE_TIMEOUT,
+      });
+      await waitForReaderContent(page);
     });
   });
 
