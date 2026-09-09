@@ -5,10 +5,31 @@ import { appPrisma } from "@/app/utils/db";
 import {
   USER_PLAN_STATUSES,
   getEnrollmentTemplate,
+  type CustomWirdDefinition,
   type PlanUnit,
+  type UserPlanParams,
   type UserPlanStatus,
 } from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
+import { resolveCustomPlanEdit } from "@/app/lib/plans/validate-custom-definition";
+
+const serializePlan = (plan: {
+  id: number;
+  name?: string | null;
+  template_key: string;
+  definition?: unknown;
+  params: unknown;
+  start_date: Date;
+  status: string;
+}) => ({
+  id: plan.id,
+  name: plan.name ?? null,
+  template_key: plan.template_key,
+  definition: (plan.definition as CustomWirdDefinition | null) ?? null,
+  params: (plan.params ?? {}) as UserPlanParams,
+  start_date: plan.start_date.toISOString().slice(0, 10),
+  status: plan.status as UserPlanStatus,
+});
 
 /**
  * PATCH /api/plans/:planId — change enrollment status (pause/resume/complete/
@@ -37,8 +58,12 @@ export async function PATCH(
     body?.params !== undefined ||
     body?.target_juz_start !== undefined ||
     body?.target_juz_end !== undefined;
+  const hasCustomEdit =
+    body?.name !== undefined ||
+    body?.cadence !== undefined ||
+    body?.range !== undefined;
 
-  if (status === undefined && !hasParamsEdit) {
+  if (status === undefined && !hasParamsEdit && !hasCustomEdit) {
     return jsonResponse({ code: 422, message: "Nothing to update" });
   }
   if (status !== undefined && !USER_PLAN_STATUSES.includes(status)) {
@@ -48,6 +73,50 @@ export async function PATCH(
   const plan = await appPrisma.userPlan.findUnique({ where: { id: planId } });
   if (!plan || plan.user_id !== user.id) {
     return jsonResponse({ code: 404, message: "Plan not found" });
+  }
+
+  if (plan.template_key === "custom") {
+    if (hasParamsEdit) {
+      return jsonResponse({
+        code: 422,
+        message: "Custom wirds edit cadence/range, not params",
+      });
+    }
+
+    const progressCount = await appPrisma.planProgressEntry.count({
+      where: { user_plan_id: planId },
+    });
+    const resolved = await resolveCustomPlanEdit(body ?? {}, plan, progressCount);
+    if ("error" in resolved) {
+      return jsonResponse({ code: 422, message: resolved.error });
+    }
+
+    const data: {
+      status?: UserPlanStatus;
+      name?: string | null;
+      definition?: object;
+      params?: object;
+    } = {};
+    if (resolved.status !== undefined) data.status = resolved.status;
+    if (resolved.name !== undefined) data.name = resolved.name;
+    if (resolved.definition !== undefined) data.definition = resolved.definition as object;
+    if (resolved.params !== undefined) data.params = resolved.params as object;
+
+    const updated = await appPrisma.userPlan.update({
+      where: { id: planId },
+      data,
+    });
+
+    return jsonResponse({
+      data: serializePlan(updated),
+    });
+  }
+
+  if (hasCustomEdit) {
+    return jsonResponse({
+      code: 422,
+      message: "name/cadence/range apply only to custom wirds",
+    });
   }
 
   const data: { status?: UserPlanStatus; params?: object } = {};

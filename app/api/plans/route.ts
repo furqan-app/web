@@ -12,6 +12,7 @@ import {
   type UserPlanStatus,
 } from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
+import { resolveCustomPlanEnrollment } from "@/app/lib/plans/validate-custom-definition";
 import { getPageJuzNumber } from "@/app/lib/plans/resolve-units";
 import { pageOfVerse } from "@/app/lib/plans/verse-index";
 
@@ -100,6 +101,24 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   if (!body?.template_key) {
     return jsonResponse({ code: 422, message: "Missing template_key" });
+  }
+
+  if (body.template_key === "custom") {
+    const resolved = await resolveCustomPlanEnrollment(body);
+    if ("error" in resolved) {
+      return jsonResponse({ code: 422, message: resolved.error });
+    }
+    const plan = await appPrisma.userPlan.create({
+      data: {
+        user_id: user.id,
+        name: resolved.name,
+        template_key: "custom",
+        definition: resolved.definition as object,
+        params: resolved.params as object,
+        start_date: new Date(`${resolved.startDate}T00:00:00Z`),
+      },
+    });
+    return jsonResponse({ data: serializePlan(plan) });
   }
 
   const template = getPlanTemplate(body.template_key);

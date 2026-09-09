@@ -6,7 +6,9 @@ import {
   pageLastVerseOrdinal,
   pageOfVerse,
   pageVerseCount,
+  parseVerseOrdinal,
   verseKeyOfOrdinal,
+  verseOrdinalOfKey,
 } from "@/app/lib/plans/verse-index";
 
 describe("verse-index", () => {
@@ -47,5 +49,30 @@ describe("verse-index", () => {
   it("throws on an out-of-range ordinal", () => {
     expect(() => pageOfVerse(0)).toThrow();
     expect(() => pageOfVerse(MUSHAF_LAST_VERSE + 1)).toThrow();
+  });
+
+  it("resolves verse keys to ordinals via verseOrdinalOfKey", () => {
+    expect(verseOrdinalOfKey("1:1")).toBe(1);
+    expect(verseOrdinalOfKey("1:7")).toBe(7);
+    expect(verseOrdinalOfKey("2:1")).toBe(8);
+    expect(verseOrdinalOfKey("2:255")).toBe(262);
+    expect(verseOrdinalOfKey("114:6")).toBe(MUSHAF_LAST_VERSE);
+    expect(verseOrdinalOfKey("999:1")).toBeNull();
+    expect(verseOrdinalOfKey("invalid")).toBeNull();
+  });
+
+  it("parses both ordinals and keys via parseVerseOrdinal", () => {
+    expect(parseVerseOrdinal(1)).toBe(1);
+    expect(parseVerseOrdinal(6236)).toBe(6236);
+    expect(parseVerseOrdinal(0)).toBeNull();
+    expect(parseVerseOrdinal(6237)).toBeNull();
+    expect(parseVerseOrdinal(" 2:255 ")).toBe(262);
+    expect(parseVerseOrdinal("262")).toBe(262);
+    expect(parseVerseOrdinal(" 262 ")).toBe(262);
+    expect(parseVerseOrdinal("0")).toBeNull();
+    expect(parseVerseOrdinal("6237")).toBeNull();
+    expect(parseVerseOrdinal("999:1")).toBeNull();
+    expect(parseVerseOrdinal(null)).toBeNull();
+    expect(parseVerseOrdinal(undefined)).toBeNull();
   });
 });
