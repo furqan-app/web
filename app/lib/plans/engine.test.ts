@@ -8,6 +8,8 @@ import {
 import {
   MUSHAF_LAST_PAGE,
   PLAN_TEMPLATES,
+  planTemplateFromDefinition,
+  type CustomWirdDefinition,
   type PlanTemplate,
 } from "@/app/constants/plans";
 import { pageFirstVerseOrdinal } from "@/app/lib/plans/verse-index";
@@ -722,6 +724,215 @@ describe("memorizing-wird and reviewing-wird templates (#607)", () => {
     expect(a).toMatchObject({
       rangeStart: 50,
       rangeEnd: 50,
+    });
+  });
+});
+
+describe("custom wird engine (#608)", () => {
+  it("derives PlanTemplate cleanly from CustomWirdDefinition", () => {
+    const paceDef: CustomWirdDefinition = {
+      activity: "read",
+      unit: "page",
+      rangeStart: 10,
+      rangeEnd: 20,
+      cadence: { type: "pace", unitsPerDay: 2 },
+    };
+    const tPace = planTemplateFromDefinition(paceDef);
+    expect(tPace.key).toBe("custom");
+    expect(tPace.missedDayPolicy).toBe("cursor");
+    expect(tPace.tracks[0]).toMatchObject({
+      key: "custom",
+      activity: "read",
+      unit: "page",
+      rule: {
+        kind: "fixed_cycle",
+        rangeStart: 10,
+        rangeEnd: 20,
+        boundsUnit: "page",
+        defaultUnitsPerDay: 2,
+        onComplete: "stop",
+        repetitions: 1,
+      },
+    });
+
+    const deadlineDef: CustomWirdDefinition = {
+      activity: "memorize",
+      unit: "verse",
+      rangeStart: 50,
+      rangeEnd: 100,
+      cadence: { type: "deadline", endDate: "2026-08-01" },
+    };
+    const tDeadline = planTemplateFromDefinition(deadlineDef);
+    expect(tDeadline.missedDayPolicy).toBe("calendar");
+    expect(tDeadline.tracks[0]).toMatchObject({
+      key: "custom",
+      activity: "memorize",
+      unit: "verse",
+      rule: {
+        kind: "cursor_advance",
+        targetStart: 50,
+        targetEnd: 100,
+      },
+    });
+  });
+
+  it("bounded fixed_cycle stop-at-end: completes and returns no assignments once rangeEnd is reached", () => {
+    const def: CustomWirdDefinition = {
+      activity: "read",
+      unit: "page",
+      rangeStart: 10,
+      rangeEnd: 15,
+      cadence: { type: "pace", unitsPerDay: 2 },
+    };
+    const template = planTemplateFromDefinition(def);
+
+    // Day 1: 10..11
+    const [d1] = deriveAssignments(template, {}, [], "2026-10-01");
+    expect(d1).toMatchObject({ rangeStart: 10, rangeEnd: 11, completed: false });
+
+    // Day 2: 12..13
+    const log1 = [entry("custom", "2026-10-01", 10, 11)];
+    const [d2] = deriveAssignments(template, {}, log1, "2026-10-02");
+    expect(d2).toMatchObject({ rangeStart: 12, rangeEnd: 13, completed: false });
+
+    // Day 3: 14..15 (clamped to boundEnd)
+    const log2 = [...log1, entry("custom", "2026-10-02", 12, 13)];
+    const [d3] = deriveAssignments(template, {}, log2, "2026-10-03");
+    expect(d3).toMatchObject({ rangeStart: 14, rangeEnd: 15, completed: false });
+
+    // Day 4: past boundEnd -> returns empty array (exhausted, does NOT wrap to 10!)
+    const log3 = [...log2, entry("custom", "2026-10-03", 14, 15)];
+    const d4 = deriveAssignments(template, {}, log3, "2026-10-04");
+    expect(d4).toHaveLength(0);
+  });
+
+  it("cursor_advance custom range: advances through custom targetStart/targetEnd and stops", () => {
+    const def: CustomWirdDefinition = {
+      activity: "memorize",
+      unit: "page",
+      rangeStart: 305,
+      rangeEnd: 307,
+      cadence: { type: "pace", unitsPerDay: 1 },
+    };
+    const template = planTemplateFromDefinition(def);
+
+    // Day 1: 305..305
+    const [d1] = deriveAssignments(template, {}, [], "2026-10-01");
+    expect(d1).toMatchObject({ rangeStart: 305, rangeEnd: 305, completed: false });
+
+    // Day 2: 306..306
+    const log1 = [entry("custom", "2026-10-01", 305, 305)];
+    const [d2] = deriveAssignments(template, {}, log1, "2026-10-02");
+    expect(d2).toMatchObject({ rangeStart: 306, rangeEnd: 306 });
+
+    // Day 3: 307..307 (last page)
+    const log2 = [...log1, entry("custom", "2026-10-02", 306, 306)];
+    const [d3] = deriveAssignments(template, {}, log2, "2026-10-03");
+    expect(d3).toMatchObject({ rangeStart: 307, rangeEnd: 307 });
+
+    // Day 4: target fully memorized -> returns empty
+    const log3 = [...log2, entry("custom", "2026-10-03", 307, 307)];
+    const d4 = deriveAssignments(template, {}, log3, "2026-10-04");
+    expect(d4).toHaveLength(0);
+  });
+
+  it("missed-day cursor continuity for a bounded wird: shifts forward without skipping pages", () => {
+    const def: CustomWirdDefinition = {
+      activity: "listen",
+      unit: "page",
+      rangeStart: 50,
+      rangeEnd: 60,
+      cadence: { type: "pace", unitsPerDay: 3 },
+    };
+    const template = planTemplateFromDefinition(def);
+
+    // Day 1 (Oct 1): reads 50..52
+    const log1 = [entry("custom", "2026-10-01", 50, 52)];
+
+    // Day 2 (Oct 2) missed.
+    // Day 3 (Oct 3): cursor resumes at 53..55
+    const [d3] = deriveAssignments(template, {}, log1, "2026-10-03");
+    expect(d3).toMatchObject({ rangeStart: 53, rangeEnd: 55 });
+  });
+
+  it("calendar-policy pace recompute for a deadline cadence", () => {
+    const def: CustomWirdDefinition = {
+      activity: "read",
+      unit: "page",
+      rangeStart: 1,
+      rangeEnd: 30,
+      cadence: { type: "deadline", endDate: "2026-10-05" },
+    };
+    const template = planTemplateFromDefinition(def);
+    const params = { endDate: "2026-10-05" };
+
+    // Day 1 (Oct 1): 5 days remaining (Oct 1..5), 30 pages -> 30/5 = 6 pages/day (1..6)
+    const [d1] = deriveAssignments(template, params, [], "2026-10-01");
+    expect(d1).toMatchObject({ rangeStart: 1, rangeEnd: 6 });
+
+    // User logs Day 1: 1..6
+    const log1 = [entry("custom", "2026-10-01", 1, 6)];
+
+    // Day 2 (Oct 2) was missed!
+    // Day 3 (Oct 3): 3 days remaining (Oct 3..5), 24 pages left -> 24/3 = 8 pages/day (7..14)
+    const [d3] = deriveAssignments(template, params, log1, "2026-10-03");
+    expect(d3).toMatchObject({ rangeStart: 7, rangeEnd: 14 });
+
+    // Overdue check: on Oct 06 (past endDate), remainingDays <= 0 -> finish all remaining today!
+    const [dOverdue] = deriveAssignments(template, params, log1, "2026-10-06");
+    expect(dOverdue).toMatchObject({ rangeStart: 7, rangeEnd: 30 });
+  });
+
+  it("deadline cadence with repeat count K > 1 wraps between passes and recomputes pace across passes", () => {
+    const def: CustomWirdDefinition = {
+      activity: "review",
+      unit: "page",
+      rangeStart: 582,
+      rangeEnd: 584, // 3 pages
+      cadence: { type: "deadline", endDate: "2026-10-02", repetitions: 2 }, // 2 passes = 6 pages total over 2 days
+    };
+    const template = planTemplateFromDefinition(def);
+    const params = { endDate: "2026-10-02" };
+
+    // Day 1 (Oct 1): 2 days remaining. Total pages = 6. Daily pace = 6/2 = 3 pages.
+    // Pass 1 assignment is 582..584.
+    const [d1] = deriveAssignments(template, params, [], "2026-10-01");
+    expect(d1).toMatchObject({ rangeStart: 582, rangeEnd: 584 });
+
+    // User finishes Pass 1 on Oct 1
+    const log1 = [entry("custom", "2026-10-01", 582, 584)];
+
+    // Day 2 (Oct 2): 1 day remaining. Pass 1 is complete (completedPasses = 1 < K=2).
+    // Start wraps to boundStart (582). Total remaining = 3 pages. Daily pace = 3/1 = 3 pages.
+    // Pass 2 assignment is 582..584.
+    const [d2] = deriveAssignments(template, params, log1, "2026-10-02");
+    expect(d2).toMatchObject({ rangeStart: 582, rangeEnd: 584 });
+
+    // User finishes Pass 2 on Oct 2
+    const log2 = [...log1, entry("custom", "2026-10-02", 582, 584)];
+
+    // Day 3 (Oct 3): completedPasses = 2 >= K=2. Completed! Returns empty.
+    const d3 = deriveAssignments(template, params, log2, "2026-10-03");
+    expect(d3).toHaveLength(0);
+  });
+
+  it("verse-unit custom wird preserves exact verse ordinals without re-conversion", () => {
+    const def: CustomWirdDefinition = {
+      activity: "read",
+      unit: "verse",
+      rangeStart: 500,
+      rangeEnd: 510,
+      cadence: { type: "pace", unitsPerDay: 5 },
+    };
+    const template = planTemplateFromDefinition(def);
+    const params = { trackUnits: { custom: "verse" as const } };
+
+    const [d1] = deriveAssignments(template, params, [], TODAY);
+    expect(d1).toMatchObject({
+      trackKey: "custom",
+      unit: "verse",
+      rangeStart: 500,
+      rangeEnd: 504,
     });
   });
 });

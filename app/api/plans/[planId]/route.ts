@@ -4,7 +4,7 @@ import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
 import {
   USER_PLAN_STATUSES,
-  getPlanTemplate,
+  getEnrollmentTemplate,
   type PlanUnit,
   type UserPlanStatus,
 } from "@/app/constants/plans";
@@ -54,7 +54,7 @@ export async function PATCH(
   if (status !== undefined) data.status = status;
 
   if (hasParamsEdit) {
-    const template = getPlanTemplate(plan.template_key);
+    const template = getEnrollmentTemplate(plan);
     if (!template) {
       return jsonResponse({ code: 422, message: "Unknown template_key" });
     }

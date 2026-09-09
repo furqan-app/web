@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { jsonResponse } from "@/app/api/response";
 import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
-import { PLAN_DATE_RE, getPlanTemplate, type UserPlanParams } from "@/app/constants/plans";
+import { PLAN_DATE_RE, getEnrollmentTemplate, type UserPlanParams } from "@/app/constants/plans";
 import { deriveStreak, type StreakPlanInput, type StreakResult } from "@/app/lib/plans/streak";
 import type { ProgressLogEntry } from "@/app/lib/plans/engine";
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const inputs: StreakPlanInput[] = [];
   for (const plan of plans) {
-    const template = getPlanTemplate(plan.template_key);
+    const template = getEnrollmentTemplate(plan);
     if (!template) continue;
 
     const entries: ProgressLogEntry[] = plan.progress.map((entry) => ({
