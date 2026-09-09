@@ -266,10 +266,18 @@ const deriveSourceFreeTrack = (
 
   if (rule.kind === "fixed_cycle") {
     const { start: boundStart, end: boundEnd } = fixedCycleBounds(rule, unit);
-    let start =
-      state.lastEnd !== null
-        ? state.lastEnd + 1
-        : Math.min(Math.max(params.startPage ?? boundStart, boundStart), boundEnd);
+    let start: number;
+    if (state.lastEnd !== null) {
+      start = state.lastEnd + 1;
+    } else if (params.startPage !== undefined) {
+      const clampedPage = Math.min(
+        Math.max(params.startPage, MUSHAF_FIRST_PAGE),
+        MUSHAF_LAST_PAGE
+      );
+      start = unit === "page" ? clampedPage : pageFirstVerseOrdinal(clampedPage);
+    } else {
+      start = boundStart;
+    }
     if (start > boundEnd) start = boundStart; // wrap: next khatma
     const units = unitsPerDay(
       template,
@@ -286,6 +294,7 @@ const deriveSourceFreeTrack = (
 
   if (rule.kind === "cursor_advance") {
     const { targetStart, targetEnd } = cursorAdvanceTarget(params, unit);
+    // startPage is a fixed_cycle-only param by construction (only the 4 daily-wird templates send it), so no page->verse conversion is needed here.
     const start =
       state.lastEnd !== null
         ? state.lastEnd + 1
