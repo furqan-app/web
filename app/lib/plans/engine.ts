@@ -21,7 +21,6 @@
 import {
   MUSHAF_FIRST_PAGE,
   MUSHAF_LAST_PAGE,
-  independentTrackUnit,
   resolveTrackUnit,
   toVerseEquivalent,
   type PlanQuantity,
@@ -87,6 +86,10 @@ type TrackState = {
   minStart: number | null;
   /** The entry logged on the requested date, if any. */
   todayEntry: ProgressLogEntry | null;
+  /**
+   * Count of completed passes over boundEnd (entries where range_end matches boundEnd).
+   */
+  completedPasses: (boundEnd: number) => number;
 };
 
 const trackState = (
@@ -110,7 +113,16 @@ const trackState = (
     if (minStart === null || start < minStart) minStart = start;
     if (entry.date === date) todayEntry = entry;
   }
-  return { lastEnd, minStart, todayEntry };
+  const completedPasses = (boundEnd: number): number => {
+    let count = 0;
+    for (const entry of entries) {
+      if (entry.track_key === trackKey && Number(entry.range_end) === boundEnd) {
+        count++;
+      }
+    }
+    return count;
+  };
+  return { lastEnd, minStart, todayEntry, completedPasses };
 };
 
 /**
@@ -118,17 +130,23 @@ const trackState = (
  * this range in pages (e.g. the whole mushaf, 1–604); for a verse-unit
  * enrollment it's converted to the verse ordinals spanning those same pages —
  * so a "whole mushaf" page range naturally becomes 1–6236.
+ * For custom wirds, if rule.boundsUnit is already "verse", rangeStart/rangeEnd
+ * are already verse ordinals and are returned directly (ADR 0067).
  */
 const fixedCycleBounds = (
   rule: Extract<TrackRule, { kind: "fixed_cycle" }>,
   unit: PlanUnit
-): { start: number; end: number } =>
-  unit === "page"
+): { start: number; end: number } => {
+  if (rule.boundsUnit === "verse") {
+    return { start: rule.rangeStart, end: rule.rangeEnd };
+  }
+  return unit === "page"
     ? { start: rule.rangeStart, end: rule.rangeEnd }
     : {
         start: pageFirstVerseOrdinal(rule.rangeStart),
         end: pageLastVerseOrdinal(rule.rangeEnd),
       };
+};
 
 /**
  * Units/day for a self-advancing track: enrollment override, else the rule's
@@ -153,6 +171,10 @@ const unitsPerDay = (
   const override = params.quantities?.[track.key];
   const resolveBase = (): number => {
     if (override === undefined) {
+      const isNativeVerse =
+        (track.rule.kind === "fixed_cycle" || track.rule.kind === "cursor_advance") &&
+        track.rule.boundsUnit === "verse";
+      if (isNativeVerse) return defaultUnitsPerDayPages;
       return unit === "page" ? defaultUnitsPerDayPages : toVerseEquivalent(defaultUnitsPerDayPages);
     }
     if (typeof override === "number") return override;
@@ -219,10 +241,19 @@ const assignRange = (
   completed: state.todayEntry !== null,
 });
 
-const cursorAdvanceTarget = (params: UserPlanParams, unit: PlanUnit) => ({
+const cursorAdvanceTarget = (
+  params: UserPlanParams,
+  unit: PlanUnit,
+  rule?: Extract<TrackRule, { kind: "cursor_advance" }>
+) => ({
   targetStart:
-    params.targetStart ?? (unit === "page" ? MUSHAF_FIRST_PAGE : MUSHAF_FIRST_VERSE),
-  targetEnd: params.targetEnd ?? (unit === "page" ? MUSHAF_LAST_PAGE : MUSHAF_LAST_VERSE),
+    rule?.targetStart ??
+    params.targetStart ??
+    (unit === "page" ? MUSHAF_FIRST_PAGE : MUSHAF_FIRST_VERSE),
+  targetEnd:
+    rule?.targetEnd ??
+    params.targetEnd ??
+    (unit === "page" ? MUSHAF_LAST_PAGE : MUSHAF_LAST_VERSE),
 });
 
 /**
@@ -266,10 +297,20 @@ const deriveSourceFreeTrack = (
 
   if (rule.kind === "fixed_cycle") {
     const { start: boundStart, end: boundEnd } = fixedCycleBounds(rule, unit);
+    const isStop = rule.onComplete === "stop";
+    const K = rule.repetitions ?? 1;
+    const completedPasses = isStop ? state.completedPasses(boundEnd) : 0;
+
     let start: number;
     if (state.lastEnd !== null) {
-      start = state.lastEnd + 1;
-    } else if (params.startPage !== undefined) {
+      if (isStop && state.lastEnd === boundEnd) {
+        if (completedPasses >= K) return null; // all passes complete
+        start = boundStart; // wrap to next pass
+      } else {
+        start = state.lastEnd + 1;
+      }
+    } else if (!isStop && params.startPage !== undefined) {
+      // params.startPage is preset-only; custom wirds run strictly rangeStart -> rangeEnd
       const clampedPage = Math.min(
         Math.max(params.startPage, MUSHAF_FIRST_PAGE),
         MUSHAF_LAST_PAGE
@@ -278,14 +319,26 @@ const deriveSourceFreeTrack = (
     } else {
       start = boundStart;
     }
-    if (start > boundEnd) start = boundStart; // wrap: next khatma
+
+    if (start > boundEnd) {
+      if (isStop) return null;
+      start = boundStart; // wrap: next khatma
+    }
+
+    // Remaining units for calendar pace recompute:
+    let remainingUnits = boundEnd - start + 1;
+    if (isStop && template.missedDayPolicy === "calendar") {
+      const remainingPasses = Math.max(0, K - completedPasses - 1);
+      remainingUnits = remainingPasses * (boundEnd - boundStart + 1) + (boundEnd - start + 1);
+    }
+
     const units = unitsPerDay(
       template,
       track,
       params,
       unit,
       date,
-      boundEnd - start + 1,
+      remainingUnits,
       rule.defaultUnitsPerDay,
       start
     );
@@ -293,7 +346,7 @@ const deriveSourceFreeTrack = (
   }
 
   if (rule.kind === "cursor_advance") {
-    const { targetStart, targetEnd } = cursorAdvanceTarget(params, unit);
+    const { targetStart, targetEnd } = cursorAdvanceTarget(params, unit, rule);
     // startPage is a fixed_cycle-only param by construction (only the 4 daily-wird templates send it), so no page->verse conversion is needed here.
     const start =
       state.lastEnd !== null
@@ -351,7 +404,7 @@ export const deriveAssignments = (
           track,
           params,
           states.get(track.key)!,
-          independentTrackUnit(params, track.key),
+          resolveTrackUnit(template, params, track.key),
           date
         )
       );

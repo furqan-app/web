@@ -164,7 +164,9 @@ model ScheduledNotification {
 model UserPlan {
   id           Int      @id @default(autoincrement())
   user_id      Int
+  name         String?
   template_key String
+  definition   Json?
   params       Json
   start_date   DateTime @db.Date
   status       String   @default("active") // active | paused | completed | abandoned

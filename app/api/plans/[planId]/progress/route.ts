@@ -6,12 +6,38 @@ import {
   MUSHAF_FIRST_PAGE,
   MUSHAF_LAST_PAGE,
   PLAN_DATE_RE,
-  getPlanTemplate,
+  getEnrollmentTemplate,
   resolveTrackUnit,
+  type CustomWirdDefinition,
   type PlanUnit,
   type UserPlanParams,
 } from "@/app/constants/plans";
 import { MUSHAF_FIRST_VERSE, MUSHAF_LAST_VERSE } from "@/app/lib/plans/verse-index";
+
+type ProgressDbClient = Pick<typeof appPrisma, "planProgressEntry">;
+
+const isCustomPlanCompleted = async (
+  planId: number,
+  definition: CustomWirdDefinition,
+  db: ProgressDbClient = appPrisma
+): Promise<boolean> => {
+  if (definition.activity === "memorize") {
+    const entries = await db.planProgressEntry.findMany({
+      where: { user_plan_id: planId, track_key: "custom" },
+    });
+    return entries.some((e) => Number(e.range_end) >= definition.rangeEnd);
+  }
+
+  const K = definition.cadence.type === "deadline" ? (definition.cadence.repetitions ?? 1) : 1;
+  const endCount = await db.planProgressEntry.count({
+    where: {
+      user_plan_id: planId,
+      track_key: "custom",
+      range_end: String(definition.rangeEnd),
+    },
+  });
+  return endCount >= K;
+};
 
 export type PlanProgressHistoryEntry = {
   id: number;
@@ -108,7 +134,7 @@ export async function POST(
     return jsonResponse({ code: 422, message: "Plan is not active" });
   }
 
-  const template = getPlanTemplate(plan.template_key);
+  const template = getEnrollmentTemplate(plan);
   if (!template || !template.tracks.some((t) => t.key === track_key)) {
     return jsonResponse({ code: 422, message: "Unknown track for this plan" });
   }
@@ -127,23 +153,41 @@ export async function POST(
     return jsonResponse({ code: 422, message: "Invalid range" });
   }
 
-  const entry = await appPrisma.planProgressEntry.upsert({
-    where: {
-      user_plan_id_track_key_date: {
+  const entry = await appPrisma.$transaction(async (tx) => {
+    const upserted = await tx.planProgressEntry.upsert({
+      where: {
+        user_plan_id_track_key_date: {
+          user_plan_id: planId,
+          track_key,
+          date: new Date(`${date}T00:00:00Z`),
+        },
+      },
+      update: { range_start: String(start), range_end: String(end), unit },
+      create: {
         user_plan_id: planId,
         track_key,
         date: new Date(`${date}T00:00:00Z`),
+        range_start: String(start),
+        range_end: String(end),
+        unit,
       },
-    },
-    update: { range_start: String(start), range_end: String(end), unit },
-    create: {
-      user_plan_id: planId,
-      track_key,
-      date: new Date(`${date}T00:00:00Z`),
-      range_start: String(start),
-      range_end: String(end),
-      unit,
-    },
+    });
+
+    if (plan.template_key === "custom" && plan.definition) {
+      const completed = await isCustomPlanCompleted(
+        planId,
+        plan.definition as CustomWirdDefinition,
+        tx
+      );
+      if (completed) {
+        await tx.userPlan.update({
+          where: { id: planId },
+          data: { status: "completed" },
+        });
+      }
+    }
+
+    return upserted;
   });
 
   return jsonResponse({
@@ -190,21 +234,40 @@ export async function DELETE(
   if (!plan || plan.user_id !== user.id) {
     return jsonResponse({ code: 404, message: "Plan not found" });
   }
-  if (plan.status !== "active") {
+  if (
+    plan.status !== "active" &&
+    !(plan.status === "completed" && plan.template_key === "custom")
+  ) {
     return jsonResponse({ code: 422, message: "Plan is not active" });
   }
 
-  const template = getPlanTemplate(plan.template_key);
+  const template = getEnrollmentTemplate(plan);
   if (!template || !template.tracks.some((t) => t.key === track_key)) {
     return jsonResponse({ code: 422, message: "Unknown track for this plan" });
   }
 
-  await appPrisma.planProgressEntry.deleteMany({
-    where: {
-      user_plan_id: planId,
-      track_key,
-      date: new Date(`${date}T00:00:00Z`),
-    },
+  await appPrisma.$transaction(async (tx) => {
+    await tx.planProgressEntry.deleteMany({
+      where: {
+        user_plan_id: planId,
+        track_key,
+        date: new Date(`${date}T00:00:00Z`),
+      },
+    });
+
+    if (plan.status === "completed" && plan.template_key === "custom" && plan.definition) {
+      const stillCompleted = await isCustomPlanCompleted(
+        planId,
+        plan.definition as CustomWirdDefinition,
+        tx
+      );
+      if (!stillCompleted) {
+        await tx.userPlan.update({
+          where: { id: planId },
+          data: { status: "active" },
+        });
+      }
+    }
   });
 
   return jsonResponse({ data: { track_key, date } });

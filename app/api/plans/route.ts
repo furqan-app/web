@@ -4,8 +4,10 @@ import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
 import {
   PLAN_DATE_RE,
+  getEnrollmentTemplate,
   getPlanTemplate,
-  independentTrackUnit,
+  resolveTrackUnit,
+  type CustomWirdDefinition,
   type UserPlanParams,
   type UserPlanStatus,
 } from "@/app/constants/plans";
@@ -15,7 +17,9 @@ import { pageOfVerse } from "@/app/lib/plans/verse-index";
 
 export type UserPlanListItem = {
   id: number;
+  name?: string | null;
   template_key: string;
+  definition?: CustomWirdDefinition | null;
   params: UserPlanParams;
   start_date: string;
   status: UserPlanStatus;
@@ -32,13 +36,17 @@ const toDateString = (d: Date) => d.toISOString().slice(0, 10);
 
 const serializePlan = (plan: {
   id: number;
+  name?: string | null;
   template_key: string;
+  definition?: unknown;
   params: unknown;
   start_date: Date;
   status: string;
 }): UserPlanListItem => ({
   id: plan.id,
+  name: plan.name ?? null,
   template_key: plan.template_key,
+  definition: (plan.definition as CustomWirdDefinition | null) ?? null,
   params: (plan.params ?? {}) as UserPlanParams,
   start_date: toDateString(plan.start_date),
   status: plan.status as UserPlanStatus,
@@ -51,11 +59,12 @@ const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> 
   // they belong to is verse-unit (ADR 0038, per-track) — convert to the page
   // they fall on before the page-based juz lookup, same as resolvePlanParams
   // does in reverse at enroll/edit time.
-  const template = getPlanTemplate(item.template_key);
+  const template = getEnrollmentTemplate(item);
   const cursorAdvanceTrackKey = template?.tracks.find((t) => t.rule.kind === "cursor_advance")?.key;
   const isVerseUnit =
+    template !== null &&
     cursorAdvanceTrackKey !== undefined &&
-    independentTrackUnit(item.params, cursorAdvanceTrackKey) === "verse";
+    resolveTrackUnit(template, item.params, cursorAdvanceTrackKey) === "verse";
   const startPage = isVerseUnit ? pageOfVerse(targetStart) : targetStart;
   const endPage = isVerseUnit ? pageOfVerse(targetEnd) : targetEnd;
   const [juzStart, juzEnd] = await Promise.all([
