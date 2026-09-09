@@ -295,17 +295,44 @@ test.describe("Search Results Page", () => {
       await waitForServiceWorker(page);
       await waitForIndexPrecached(page);
 
-      // Simulate a never-precached index by deleting the entry in-page. An
-      // abort route alone cannot prove this — nothing guarantees interception
-      // wins over an SW precache hit, while a deleted entry deterministically
-      // fails the fetch (no cache, no connection). Precache keys carry
-      // revision params, hence ignoreSearch (see waitForIndexPrecached above).
+      // Simulate a never-precached index: stash its bytes in-page, then delete
+      // the entry under its exact precache key. An abort route alone cannot
+      // prove absence — nothing guarantees interception wins over an SW
+      // precache hit, while a deleted entry deterministically fails the fetch
+      // (no cache, no connection). The exact key (with revision param) is
+      // saved so recovery puts the bytes back where the precache route looks
+      // them up; the whole test — including recovery — stays offline on this
+      // one document.
       await page.evaluate(async () => {
+        const w = window as unknown as {
+          __savedIndexKey?: { cache: string; url: string };
+          __savedIndex?: ArrayBuffer;
+        };
         for (const name of await caches.keys()) {
-          await (await caches.open(name)).delete("/quran/search-index.json", {
-            ignoreSearch: true,
-          });
+          const cache = await caches.open(name);
+          for (const req of await cache.keys()) {
+            if (req.url.includes("/quran/search-index.json")) {
+              const res = await cache.match(req);
+              if (!res) {
+                throw new Error("search-index.json entry unreadable");
+              }
+              w.__savedIndex = await res.arrayBuffer();
+              w.__savedIndexKey = { cache: name, url: req.url };
+              await cache.delete(req);
+            }
+          }
         }
+        if (!w.__savedIndexKey) {
+          throw new Error("search-index.json precache entry not found");
+        }
+      });
+
+      // Any hit to the search API at any point is a bug — the engine must read
+      // the index directly (searchVersesOnline bails on navigator.onLine).
+      let searchApiCalls = 0;
+      await page.route("**/api/search/**", (route) => {
+        searchApiCalls += 1;
+        return route.abort();
       });
       await context.setOffline(true);
       await page.evaluate(() => window.dispatchEvent(new Event("offline")));
@@ -319,16 +346,20 @@ test.describe("Search Results Page", () => {
         timeout: 20000,
       });
 
-      // Recovery still proves the INDEX path: back online (so the index is
-      // fetchable again) with the search API aborted, forcing the offline
-      // engine even while connected.
-      let searchApiCalls = 0;
-      await page.route("**/api/search/**", (route) => {
-        searchApiCalls += 1;
-        return route.abort();
+      // Recovery proves the INDEX path: put the stashed bytes back under the
+      // exact saved key and Retry — results resolve with the API still aborted
+      // throughout.
+      await page.evaluate(async () => {
+        const w = window as unknown as {
+          __savedIndexKey: { cache: string; url: string };
+          __savedIndex: ArrayBuffer;
+        };
+        const cache = await caches.open(w.__savedIndexKey.cache);
+        await cache.put(
+          w.__savedIndexKey.url,
+          new Response(w.__savedIndex)
+        );
       });
-      await context.setOffline(false);
-      await page.evaluate(() => window.dispatchEvent(new Event("online")));
       await page.getByRole("button", { name: "إعادة المحاولة" }).click();
       await expect(verseLinks(page).first()).toBeVisible({
         timeout: DEBOUNCE_TIMEOUT,
@@ -336,7 +367,7 @@ test.describe("Search Results Page", () => {
       await expect(page.getByText("عدد النتائج: ٤٨")).toBeVisible({
         timeout: DEBOUNCE_TIMEOUT,
       });
-      expect(searchApiCalls).toBeGreaterThan(0);
+      expect(searchApiCalls).toBe(0);
     });
 
     test("offline misses show no-results, surah-only matches skip the empty state", async ({
