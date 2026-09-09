@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-85 active plans.
+86 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -12,6 +12,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | api | [Fix ByteString Crash on Non-ASCII Usernames in Auth Middleware](fix-arabic-username-auth-header.md) | implemented | bug |
 | api | [Fix RSC Cache Poisoning on Hostinger](fix-rsc-cache-poisoning.md) | implemented | bug |
 | awrad | [Custom wird engine + storage: user-authored single-track plan definitions](608-custom-wird-engine.md) | implemented | feature |
+| awrad | [Custom wird enrollment API: range + cadence resolution & validation](609-custom-wird-enrollment-api.md) | implemented | feature |
 | awrad | [Daily Awrad & Learning Plans Engine (Foundation)](awrad-learning-plans.md) | implemented | feature |
 | awrad | [Daily Awrad UI](daily-awrad-ui.md) | implemented | feature |
 | awrad | [Daily wird presets: add memorize & review flavours, reframe as \"Daily wird — <activity>\" + optional start point](607-daily-wird-activity-flavours.md) | implemented | feature |
