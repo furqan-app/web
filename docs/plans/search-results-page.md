@@ -36,7 +36,10 @@ Phase-2 hardening (#593) closed three page-level gaps (not engine gaps) found by
 Infinite verses list, `take = 20` chunks (`skip = pageIndex * 20`, within the `MAX_VERSE_TAKE = 50` bound; 20 balances the eager-loaded `Word[]` payload against round trips):
 
 - IF trimmed query fails `isSearchQueryValid` (< 2 chars) → idle state, no fetch (existing client + server gates unchanged; online/offline identical).
-- ELSE IF the active-edition `verse-pages` map is pending → skeletons for both the surah and verse sections (surah rows never render on the default-edition fallback).
+- ELSE IF the active-edition `verse-pages` map is pending → skeletons for both the surah and verse
+  sections (surah rows never render on the default-edition fallback). The map is install-precached
+  (`quran/verse-pages/*.json` in `globPublicPatterns`), so it is unconditionally resolvable offline —
+  never dependent on a prior online fetch winning a race against SW registration (CI finding, #593).
 - ELSE IF online AND fetch succeeds with `response.ok` → `GET /api/search/verses?q&take=20&skip`, then **remap every `page_number` through the active edition's `verse-pages` map** (ADR 0033 — the API returns the default-edition mirror), render the `Word.qpc_uthmani_hafs` join; `hasNextPage = loadedCount < total`.
 - ELSE IF online AND response is non-ok → **throw** so React Query's `isError` fires and the page shows its error state. Do not fall through to the offline index here: `searchVersesOnline`'s `null`-on-`!ok` would otherwise render a 500 as "Nothing found" (review finding).
 - ELSE (offline flag or fetch rejects) → same paging over precached `search-index.json` with the same normalization, page via the edition map, render `display_uthmani`. Memoize the filtered matches per normalized query so each `fetchNextPage` does not re-filter all 6,236 rows; evict the memo entry on rejection so Retry re-attempts the fetch.
@@ -82,7 +85,13 @@ Agreed with the user 2026-09-08 (cold-offline entry, map-wait, error-plus-retry,
 - `app/hooks/use-search-infinite.ts` — `useInfiniteQuery` over the same online/offline fetchers, `take = 20`, `networkMode: "always"`, per-item edition page remap on the online path, memoized offline filter per normalized query, throw-on-non-ok while online so `isError` is reachable. Inherits the missing-index throw; no logic change of its own.
 - `app/hooks/use-search.ts` — export (or extract to a shared module) `searchVersesOnline`/`searchVersesOffline` so the infinite hook reuses them; no behavior change to the overlay path. A missing `search-index.json` rethrows (memo cleared) so queries reach `isError` + Retry instead of resolving `[]`; `offlineMatchesCache` evicts rejections so Retry re-attempts the fetch. The overlay has no error branch and keeps showing its no-results state on query error — no visible overlay change.
 - `app/components/search/SearchQueryResults.tsx` — extract the surah-row and verse-row components for reuse by the page; do not reuse the wrapper (its root is dropdown-styled: `absolute max-h-96 overflow-auto`) and do not copy its raw `chapter.pages.split("-")[0]` surah link (default-edition-only). Do not fork the row design.
-- `app/components/search/SearchResultRows.tsx` — `onNavigate` receives the click event (`(e: React.MouseEvent<Element>) => void`, forwarded as `onClick={(e) => onNavigate?.(e)}`); backward-compatible with the overlay's `() => setIsOpen(false)` closers.
+- `app/components/search/SearchResultRows.tsx` — `onNavigate` receives the click event
+  (`(e: React.MouseEvent<Element>) => void`, forwarded as `onClick={(e) => onNavigate?.(e)}`);
+  backward-compatible with the overlay's `() => setIsOpen(false)` closers.
+- `next.config.mjs` — `globPublicPatterns` += `quran/verse-pages/*.json` (CI finding: the map was only
+  runtime-cached opportunistically, so a prime fetch beating SW registration left cold-offline loads
+  with no map; install-precache makes it unconditional — same accepted pattern as `search-index.json`,
+  ~72 KB per edition, globbed so future editions are covered).
 - `app/components/search/SearchBar.tsx` (#538 affordance, folded in pre-ship per user request) — a "More results" link as the last overlay row, shown whenever any matches exist: label `search.viewAll` ("View all results"), or `search.viewAllCount` ("View all {count} results", count = verses total via `toLocaleNumeral` string) when the verses total exceeds the 10 shown. Href resolves through the reader base path (`/search` normally, `/mushaf/[grant]/search` under a grant — same derivation as the row links) with `?q=<query>`; clicking closes the Sheet. New props on `SearchQueryResults`: `query: string`, `versesTotal: number`. `take: 10` default and the 2-char gate stay untouched. The link lives in `SearchBar` as a fixed footer below the scroll container (not a row inside `SearchQueryResults` — a `sticky bottom-0` row was tried first and still sits below the fold at rest; verified with a mobile-viewport probe: footer at y=611/664, 44px tall).
 - `messages/ar.json`, `messages/en.json` — new `search.*` keys (results title, showing-X-of-Y count, end-of-list, refine input). Placeholder-bearing keys must use next-intl's `useTranslations(namespace)` directly with values, never the project `use-translations` wrapper; pre-convert counts with `toLocaleNumeral(n, locale)` and pass them as strings (i18n standard).
 - `e2e/tests/search-results-page.spec.ts` — query seeding from `?q=`, infinite scroll loads a second chunk, surah section renders, invalid query shows idle, grant entry keeps links under `/mushaf/[grant]/`, verses-empty-with-surah-match hides the verses section. Offline block: in-app refine + mid-scroll paging from the index (zero API calls), cold offline entry with verse+surah parity, online/offline surah-href identity, missing-index error-plus-retry (simulated by in-page Cache Storage deletion; recovery online with the search API aborted), offline no-results boundary guard, offline open of verse and surah rows to primed reader pages.
@@ -97,13 +106,21 @@ Agreed with the user 2026-09-08 (cold-offline entry, map-wait, error-plus-retry,
 - Breakpoint-dependent layout is CSS `@media`-gated, never JS-hook-gated (ADR 0043).
 - Quran verse text renders with `font-uthmanic` and explicit `dir="rtl"` in both locales.
 - The search index loads on search intent only — no eager fetch from any layout-mounted provider (ADR 0049).
-- The route stays static: no `searchParams` read at SSR, `?q=` seeded client-side inside the existing `Suspense` boundary; no SSR session.
+- The route stays static: no `searchParams` read at SSR, `?q=` seeded client-side inside the
+  existing `Suspense` boundary; no SSR session.
+- The active-edition `verse-pages` map is install-precached, not merely runtime-cached: a mount-time
+  fetch can beat SW registration (network success, nothing stored), leaving cold-offline loads with
+  no map — precache makes it unconditional for search and every other offline consumer (rub nav,
+  edition switch).
 - Follow `jsonResponse()` conventions (no API changes needed, but the hook must keep parsing the `{ data: { results, total } }` envelope).
 - E2E runs against a production build (`e2e:build` / `e2e:serve`), never `next dev`.
 
 ## What NOT to Do
 
-- No `app/sw.ts` or `next.config.mjs` changes: `search-index.json` stays precached, `verse-pages`/`chapters.json` stay `CacheFirst` (#591's shell rule is consumed as-is).
+- No `app/sw.ts` changes: `search-index.json` stays precached, page fonts and page JSON stay
+  consent-gated with runtime `CacheFirst` (#591's shell rule is consumed as-is). `next.config.mjs`
+  gains exactly one entry — the `quran/verse-pages/*.json` precache glob (CI finding, see Revision
+  History).
 - No `/api/search/*` shape changes (#538's pagination is landed).
 - Do not refactor `useSearch` itself to infinite — new hook alongside, overlay untouched.
 - Do not paginate surah matches — static list, cap 10 stands.
@@ -129,6 +146,10 @@ Agreed with the user 2026-09-08 (cold-offline entry, map-wait, error-plus-retry,
 - Sweep (3b): `e2e/tests/search.spec.ts`, `overlay-stacks-history.spec.ts`, and `deep-links-view-modes.spec.ts` assert overlay behavior only (`openSearch` helper, `SearchBar` dialog) — this plan adds a route and a hook without touching those files, so no existing test is invalidated. No state derives from `useSession`/`navigator.onLine` beyond the established `networkMode: "always"` offline-fallback pattern. No UI affordance is removed or relocated (the overlay keeps its trigger on every breakpoint). The `take = 20` chunk size is new but bounded by the existing `MAX_VERSE_TAKE = 50` invariant.
 - No ADR: everything applied (ADR 0033 edition resolution, ADR 0062 offline index, ADR 0043 CSS gating, ADR 0049 network budget) already exists; nothing non-obvious and new surfaced.
 - Review (read-only subagent, pre-ship #593): NEEDS-CHANGES with one load-bearing correction — result rows are plain Links whose offline taps soft-nav and fail (the `platform.ts` contract: `hardNavigateIfOffline` exists exactly for this; the SW shell rule serves `navigate` mode only), so the page now hard-navigates on the SELF entry (`basePath === "/pages"`, grant entry stays soft-nav per ADR 0012) via a widened `onNavigate(e)` on the shared rows (overlay closers unaffected). Also applied: missing-index simulation by in-page Cache Storage deletion (an abort route can't be proven to beat an SW precache hit), an offline no-results boundary guard, and a wider timeout on the retry-backoff assertion.
+- Precache the verse-pages map over test-only warm-up or app-level re-fetch (user-confirmed):
+  the map was the sole offline dependency left to an opportunistic runtime cache, and install
+  precache (atomic per worker) fixes it for every consumer at ~72 KB per edition with zero
+  lifecycle complexity. `app/sw.ts` stays untouched — precache entries need no SW rule change.
 - Sweep (3b, #593): the spec's Offline block is extended, not invalidated; overlay specs assert overlay behavior only and are untouched by this page-level change; no state derives from `useSession()`/`navigator.onLine` beyond the established `networkMode: "always"` fallback pattern; no UI affordance is removed or relocated; grant entry verified unchanged (soft-nav preserved via the `basePath === "/pages"` guard).
 
 ## Finalization pass (2026-09-07, `chore/536-search-finalize`, epic #536 closeout)
@@ -159,3 +180,4 @@ no behavior change to shipped paths:
 ## Revision History
 
 - 2026-09-08: folded the #593 addendum (epic #590, issue #593) into the body — **superseded "cold offline deep-links show the generic offline document — accepted (in-app offline only)"** and the phase-1 "in-app-offline scope only" decision; cold entry is now covered via the #591 shell rule. No other active item dropped.
+- 2026-09-09: CI on PR #613 proved the verse-pages map was only opportunistically cached (prime mount-fetch beating SW registration left cold-offline loads with no map) — **superseded "no `next.config.mjs` changes" for the single `quran/verse-pages/*.json` precache glob**; `app/sw.ts` remains untouched and page fonts/page JSON remain consent-gated.
