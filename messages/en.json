@@ -465,9 +465,12 @@
       "empty": "No history yet."
     },
     "widget": {
-      "open": "Today's plans",
-      "title": "Today's plans",
-      "description": "Your active plans' assignments for today."
+      "open": "Check off today's wird",
+      "dialLabel": "wird",
+      "title": "Today's wird",
+      "description": "Assignments due on this page for your active plans.",
+      "completed": "Today's wird on this page is done",
+      "viewAllPlans": "All plans & history"
     }
   },
   "recitation": {

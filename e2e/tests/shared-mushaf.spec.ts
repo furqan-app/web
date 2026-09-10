@@ -127,7 +127,7 @@ test.describe("Shared Mushaf Access & Mid-Session Revocation", () => {
       );
 
       // 2. Personal daily awrad PlansWidget must NOT be rendered on shared mushaf
-      const plansWidgetTrigger = page.locator('button[aria-label*="خطط"]');
+      const plansWidgetTrigger = page.locator('[data-testid="plans-widget-trigger"]');
       await expect(plansWidgetTrigger).toBeHidden();
 
       // 3. Owner mark on word 1:1:1 is visible
