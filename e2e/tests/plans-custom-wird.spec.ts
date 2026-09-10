@@ -37,8 +37,8 @@ test.describe("Plans Page: Custom Wird Creation & Editing (#610)", () => {
     await expect(nameInput).toBeVisible();
     await nameInput.fill("ورد سورة الكهف");
 
-    // Select "بالسورة" range mode tab
-    const bySurahTab = dialog.getByRole("tab", { name: "بالسورة" });
+    // Select "بالسورة" range mode (radiogroup, not tablist — no tabpanels)
+    const bySurahTab = dialog.getByRole("radio", { name: "بالسورة" });
     await expect(bySurahTab).toBeVisible();
     await bySurahTab.click();
 
@@ -104,12 +104,12 @@ test.describe("Plans Page: Custom Wird Creation & Editing (#610)", () => {
     // Name
     await dialog.locator('input[placeholder*="سورة البقرة"]').fill("ختمة كاملة مخصصة");
 
-    // "كامل المصحف" tab is selected by default
-    const wholeQuranTab = dialog.getByRole("tab", { name: "كامل المصحف" });
-    await expect(wholeQuranTab).toHaveAttribute("aria-selected", "true");
+    // "كامل المصحف" range mode is selected by default (radiogroup)
+    const wholeQuranTab = dialog.getByRole("radio", { name: "كامل المصحف" });
+    await expect(wholeQuranTab).toHaveAttribute("aria-checked", "true");
 
     // Switch to "بالآية" (verse mode)
-    const verseTab = dialog.getByRole("tab", { name: "بالآية" });
+    const verseTab = dialog.getByRole("radio", { name: "بالآية" });
     await verseTab.click();
 
     // In verse mode, weekly pace is disabled with helper text
@@ -123,8 +123,8 @@ test.describe("Plans Page: Custom Wird Creation & Editing (#610)", () => {
     const memorizeBtn = dialog.getByRole("radio", { name: /حفظ/i });
     await memorizeBtn.click();
 
-    // Switch to deadline cadence
-    const deadlineTab = dialog.getByRole("tab", { name: "بتاريخ إتمام" });
+    // Switch to deadline cadence (radiogroup)
+    const deadlineTab = dialog.getByRole("radio", { name: "بتاريخ إتمام" });
     await deadlineTab.click();
 
     // Repetitions stepper must be HIDDEN for memorize activity
