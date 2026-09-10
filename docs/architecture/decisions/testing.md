@@ -17,6 +17,7 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 - On failure in CI, the Playwright HTML report is uploaded as a standard GitHub Actions artifact (`playwright-report/`). Dedicated `gh-pages` deployments and sticky PR comments for screenshot diffing are discontinued.
 - Tests assert behavioral outcomes and interactive state transitions (DOM visibility, navigation URL, focus, accessibility roles, and localStorage persistence) rather than pixel-diff matching.
 - **Locators in the search test must be scoped to the searchbar under test.** Mobile opens search in a dialog while the nav's own searchbar stays mounted, so two `SearchQueryResults` render and any page-level locator fails with a Playwright strict-mode violation.
+- **Assert reader and navigation chrome by `data-testid`, never by localized `aria-label` text.** A localized text match (e.g. `button[aria-label*="خطط"]`) silently breaks when copy or translations change (e.g. #597 renaming to "أشّر ورد اليوم"); interactive chrome targeted by specs must carry a stable `data-testid` (e.g. `data-testid="plans-widget-trigger"`).
 
 ---
 

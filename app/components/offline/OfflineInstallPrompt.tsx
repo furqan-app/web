@@ -22,7 +22,7 @@ import { PRECACHE_MUSHAF_ID } from "@constants/offline";
  * dismissible card at `z-50` (the app's Radix ceiling; a higher value floated it
  * above an open Settings sheet). Anchored clear of the two other fixed
  * bottom-corner elements: `RecitationPlayerBar` (full-width, ~76px tall) and
- * `PlansWidget` (`bottom-20 end-4`), hence bottom-24 on the start side.
+ * the ephemeral, page-gated `PlansWidget` (`bottom-24 end-4`), hence bottom-24 on the start side.
  */
 export const OfflineInstallPrompt = () => {
   const t = useTranslations();
