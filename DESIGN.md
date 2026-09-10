@@ -174,6 +174,9 @@ Circular, not icon-as-button: `w-[52px] h-[52px] rounded-full`, `bg-card border 
 - **Do** carry the mushaf reading page's depth through rim/sheet/crease tokens, matching the active theme's Elevation strategy, when adding any new reader-adjacent surface.
 - **Do** use `start`/`end` logical Tailwind variants (`ps-`, `pe-`, `ms-`, `me-`), not `left`/`right`, for anything that must mirror correctly in RTL.
 - **Do** follow the Column–Font Contract exactly when rendering any Quran text — one column, one font, per context (see Typography).
+- **Do** use `QuantityStepper` or searchable `NumberCombobox` controls instead of raw `<input type="number">`, formatting all displayed numerals with `toLocaleNumeral`.
+- **Do** add `fq-scroll-nice` to every scrollable container (`overflow-y-auto` / `overflow-x-auto`).
+- **Do** pass ICU interpolation variables via `next-intl` parameter objects (`t("key", { count: ... })`), never manual `.replace()`.
 
 ### Don't:
 - **Don't** add a second accent color anywhere in the system — one interactive hue, full stop.
@@ -181,3 +184,6 @@ Circular, not icon-as-button: `w-[52px] h-[52px] rounded-full`, `bg-card border 
 - **Don't** reach for `box-shadow` to lift the dark-theme reader page or its chrome — use the light/rim tokens; a shadow there is invisible.
 - **Don't** use a filled/circle-wrapped icon variant (e.g. `ArrowRightCircle`, `CircleChevronRight`) for reader navigation — always the bare `lucide-react` chevron in a separately-styled circular button.
 - **Don't** feed a surah's Arabic name text to the surah-name font — it maps zero-padded numeric strings to glyphs.
+- **Don't** render raw `<input type="number">` fields in any form or dialog.
+- **Don't** leave scrollable regions without `fq-scroll-nice`.
+- **Don't** use the `@hooks/use-translations` wrapper for messages with `{placeholders}` — import `useTranslations` directly from `next-intl`.

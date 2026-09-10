@@ -151,7 +151,7 @@ export const PlansWidget = () => {
             return (
               <div key={plan.planId} className="flex flex-col gap-2">
                 <div className="text-xs font-bold text-primary">
-                  {ui ? t(ui.labelKey, ui.defaultLabel) : plan.templateKey}
+                  {plan.name || (ui ? t(ui.labelKey, ui.defaultLabel) : plan.templateKey)}
                 </div>
                 {plan.assignments.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
@@ -162,6 +162,7 @@ export const PlansWidget = () => {
                     <PlanAssignmentRow
                       key={assignment.trackKey}
                       planId={plan.planId}
+                      planName={plan.name}
                       assignment={assignment}
                       onToggle={() =>
                         assignment.completed

@@ -24,6 +24,7 @@ export type UserPlanListItem = {
   params: UserPlanParams;
   start_date: string;
   status: UserPlanStatus;
+  has_progress: boolean;
   /**
    * Derived-on-read juz numbers for params.targetStart/targetEnd, for
    * prefilling the params-edit UI — juz is never stored (D3), only computed
@@ -43,6 +44,9 @@ const serializePlan = (plan: {
   params: unknown;
   start_date: Date;
   status: string;
+  _count?: {
+    progress?: number;
+  };
 }): UserPlanListItem => ({
   id: plan.id,
   name: plan.name ?? null,
@@ -51,6 +55,7 @@ const serializePlan = (plan: {
   params: (plan.params ?? {}) as UserPlanParams,
   start_date: toDateString(plan.start_date),
   status: plan.status as UserPlanStatus,
+  has_progress: (plan._count?.progress ?? 0) > 0,
 });
 
 const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> => {
@@ -83,6 +88,7 @@ export async function GET(request: NextRequest) {
 
   const plans = await appPrisma.userPlan.findMany({
     where: { user_id: user.id },
+    include: { _count: { select: { progress: true } } },
     orderBy: { created_at: "desc" },
   });
 

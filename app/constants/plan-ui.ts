@@ -11,6 +11,7 @@ import {
   Headphones,
   RotateCcw,
   RefreshCw,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import type { PlanActivity } from "@/app/constants/plans";
@@ -54,6 +55,13 @@ export const PLAN_TEMPLATE_UI: Record<
     defaultDescription: "A structured 5-track memorization program.",
     icon: Castle,
   },
+  custom: {
+    labelKey: "plans.templates.custom.label",
+    defaultLabel: "Custom wird",
+    descriptionKey: "plans.templates.custom.description",
+    defaultDescription: "A personalized goal with custom range and cadence.",
+    icon: Sparkles,
+  },
 };
 
 export const PLAN_TRACK_UI: Record<string, { labelKey: string; defaultLabel: string; icon: LucideIcon }> = {
@@ -66,6 +74,7 @@ export const PLAN_TRACK_UI: Record<string, { labelKey: string; defaultLabel: str
   tahdeer: { labelKey: "plans.tracks.tahdeer", defaultLabel: "التحضير", icon: Headphones },
   qareeb: { labelKey: "plans.tracks.qareeb", defaultLabel: "مراجعة القريب", icon: RotateCcw },
   baeed: { labelKey: "plans.tracks.baeed", defaultLabel: "مراجعة البعيد", icon: RefreshCw },
+  custom: { labelKey: "plans.templates.custom.label", defaultLabel: "Custom wird", icon: Sparkles },
 };
 
 export const PLAN_ACTIVITY_UI: Record<PlanActivity, { labelKey: string; defaultLabel: string }> = {

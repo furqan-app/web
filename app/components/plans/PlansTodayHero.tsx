@@ -126,6 +126,7 @@ export const PlansTodayHero = () => {
           <PlanAssignmentRow
             key={`${plan.planId}-${assignment.trackKey}`}
             planId={plan.planId}
+            planName={plan.name}
             assignment={assignment}
             onToggle={() =>
               assignment.completed

@@ -21,6 +21,9 @@ const serializePlan = (plan: {
   params: unknown;
   start_date: Date;
   status: string;
+  _count?: {
+    progress?: number;
+  };
 }) => ({
   id: plan.id,
   name: plan.name ?? null,
@@ -29,6 +32,7 @@ const serializePlan = (plan: {
   params: (plan.params ?? {}) as UserPlanParams,
   start_date: plan.start_date.toISOString().slice(0, 10),
   status: plan.status as UserPlanStatus,
+  has_progress: (plan._count?.progress ?? 0) > 0,
 });
 
 /**
@@ -105,6 +109,7 @@ export async function PATCH(
     const updated = await appPrisma.userPlan.update({
       where: { id: planId },
       data,
+      include: { _count: { select: { progress: true } } },
     });
 
     return jsonResponse({

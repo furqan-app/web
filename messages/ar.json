@@ -330,7 +330,7 @@
       },
       "customWirdType": {
         "title": "ورد مخصص",
-        "description": "حدد سورة أو جزءاً أو موعداً للختم (قريباً)"
+        "description": "اختَر مقدارًا مخصّصًا وحدِّد وتيرته اليومية أو تاريخ انتهائه"
       },
       "comingSoon": "قريباً"
     },
@@ -349,6 +349,59 @@
       "chooseSurah": "اختر السورة",
       "searchSurahs": "ابحث عن سورة…",
       "noSurahFound": "لم يُعثر على سور."
+    },
+    "custom": {
+      "newTitle": "ورد مخصص جديد",
+      "editTitle": "تعديل الورد المخصص",
+      "description": "حدد المقدار والوتيرة المناسبة لك",
+      "nameLabel": "اسم الورد",
+      "namePlaceholder": "مثال: حفظ سورة البقرة",
+      "activityLabel": "نوع الورد",
+      "rangeLabel": "المقدار",
+      "rangeMode": {
+        "wholeMushaf": "كامل المصحف",
+        "surah": "بالسورة",
+        "juz": "بالجزء",
+        "page": "بالصفحة",
+        "verse": "بالآية"
+      },
+      "fromSurah": "من سورة",
+      "toSurah": "إلى سورة",
+      "fromJuz": "من الجزء",
+      "toJuz": "إلى الجزء",
+      "fromPage": "من صفحة",
+      "toPage": "إلى صفحة",
+      "fromVerse": "من آية",
+      "toVerse": "إلى آية",
+      "versePrefix": "آية",
+      "cadenceLabel": "الوتيرة",
+      "cadenceType": {
+        "pace": "بمعدل ثابت",
+        "deadline": "بتاريخ إتمام"
+      },
+      "period": {
+        "day": "يوميًا",
+        "week": "أسبوعيًا"
+      },
+      "targetDate": "موعد الانتهاء",
+      "repetitions": "عدد الختمات",
+      "pagesRange": "صفحات {start}–{end}",
+      "singlePage": "صفحة {page}",
+      "pagesCount": "{count, plural, one {{n} صفحة} two {{n} صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
+      "versesCount": "{count, plural, one {{n} آية} two {{n} آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
+      "daysCount": "{count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}}",
+      "pagesPerDay": "{count, plural, one {{n} صفحة/يوم} two {{n} صفحتان/يوم} few {{n} صفحات/يوم} many {{n} صفحة/يوم} other {{n} صفحة/يوم}}",
+      "versesPerDay": "{count, plural, one {{n} آية/يوم} two {{n} آيتان/يوم} few {{n} آيات/يوم} many {{n} آية/يوم} other {{n} آية/يوم}}",
+      "pagesPerWeek": "{count, plural, one {{n} صفحة/أسبوع} two {{n} صفحتان/أسبوع} few {{n} صفحات/أسبوع} many {{n} صفحة/أسبوع} other {{n} صفحة/أسبوع}}",
+      "estimate": {
+        "days": "≈ {count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}} للإتمام",
+        "pace": "≈ {pace} (يُعاد حسابه تلقائيًا)"
+      },
+      "rangeFrozen": "تم تثبيت المقدار لتسجيل قراءات سابقة",
+      "verseWeeklyUnavailable": "المعدل الأسبوعي غير متاح للآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء",
+      "memorizeRepetitionsLocked": "خطط الحفظ تقتصر على ختمة واحدة",
+      "submit": "ابدأ الورد",
+      "save": "حفظ التعديلات"
     },
     "templates": {
       "dailyWird": {
@@ -370,6 +423,10 @@
       "husun": {
         "label": "الحصون الخمسة",
         "description": "برنامج حفظ متكامل من خمسة مسارات."
+      },
+      "custom": {
+        "label": "ورد مخصص",
+        "description": "ورد مخصص بمقدار ووتيرة حسب اختيارك."
       }
     },
     "tracks": {
