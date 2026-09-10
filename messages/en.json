@@ -312,7 +312,9 @@
       "streakDays": "day streak",
       "last7Days": "Last 7 days",
       "allDone": "Well done, you've completed today's wird",
-      "keepGoing": "Keep going — you're now on"
+      "keepGoing": "Keep going — you're now on",
+      "reminderLabel": "Daily reminder: {time}",
+      "reminderSet": "Set daily reminder"
     },
     "browse": {
       "title": "New wird or plan",
@@ -547,12 +549,31 @@
       "title": "Notifications",
       "enablePush": "Push notifications",
       "enablePushDescription": "Get notified about reminders and updates on this device",
-      "enablePushDenied": "Blocked by your browser — allow notifications in site settings to turn this on."
+      "enablePushDenied": "Blocked by your browser — allow notifications in site settings to turn this on.",
+      "wirdReminderTitle": "Daily Wird Reminder",
+      "wirdReminderDescription": "Daily reminder to keep up with your Quran reading at your preferred time",
+      "wirdReminderTime": "Reminder Time",
+      "wirdReminderPushBlocked": "Push notifications are blocked in your browser. Reminders will appear in your in-app feed.",
+      "wirdReminderEnablePush": "Enable push notifications on this device",
+      "wirdReminderLoadError": "Failed to load reminder settings",
+      "wirdReminderRetry": "Retry",
+      "searchTime": "Search time…",
+      "noTimeMatch": "No matching time."
     },
     "types": {
       "plansDailyReminder": {
-        "title": "Time for your daily wird",
-        "body": "Your {{template}} assignment for today is ready."
+        "title": "Daily Wird",
+        "multipleTasks": {
+          "one": "You have {{n}} task remaining in today's wird",
+          "other": "You have {{n}} tasks remaining in today's wird"
+        },
+        "singlePage": {
+          "one": "Today's wird: 1 page (p. {{start}})",
+          "other": "Today's wird: {{n}} pages (p. {{start}} to p. {{end}})"
+        },
+        "singleVerseOne": "Today's wird: verse {{verse}}",
+        "singleVerseRange": "Today's wird: verses {{range}}",
+        "completedCaption": "Completed for today"
       },
       "systemTest": {
         "title": "Test notification",

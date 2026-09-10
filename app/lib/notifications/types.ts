@@ -92,15 +92,23 @@ export type NotificationStore = {
     scheduledFor: Date;
     recurrence?: string | null;
     timezone?: string | null;
+    locale?: string | null;
     dedupeKey?: string;
   }) => Promise<{ id: number }>;
+  getScheduledReminderByDedupeKey: (dedupeKey: string) => Promise<ScheduledReminderRow | null>;
+  cancelScheduledReminder: (dedupeKey: string) => Promise<void>;
   claimDueReminders: (args: {
     now: Date;
     limit: number;
     claimId: string;
   }) => Promise<ScheduledReminderRow[]>;
   completeReminder: (id: number, dispatchedAt: Date) => Promise<void>;
-  rescheduleReminder: (id: number, nextScheduledFor: Date) => Promise<void>;
+  rescheduleReminder: (
+    id: number,
+    nextScheduledFor: Date,
+    lastError?: string | null,
+    expectedUpdatedAt?: Date
+  ) => Promise<void>;
   failReminder: (id: number, error: string) => Promise<void>;
 };
 
@@ -113,6 +121,9 @@ export type ScheduledReminderRow = {
   scheduled_for: Date;
   recurrence: string | null;
   timezone: string | null;
+  locale: string | null;
+  status: string;
+  updated_at?: Date;
 };
 
 export type Clock = () => Date;

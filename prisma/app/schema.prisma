@@ -144,6 +144,7 @@ model ScheduledNotification {
   scheduled_for  DateTime
   recurrence     String? // null = one-shot, "daily"
   timezone       String? // IANA, e.g. "Africa/Cairo"
+  locale         String? // e.g. "ar" | "en"
   status         String    @default("pending") // pending | dispatched | cancelled | failed
   dedupe_key     String?   @unique
   claim_id       String?

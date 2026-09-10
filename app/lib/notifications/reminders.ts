@@ -92,6 +92,7 @@ export const scheduleReminder = (
     scheduledFor: Date;
     recurrence?: "daily" | null;
     timezone?: string | null;
+    locale?: string | null;
     dedupeKey?: string;
   }
 ) => store.upsertScheduledReminder(input);

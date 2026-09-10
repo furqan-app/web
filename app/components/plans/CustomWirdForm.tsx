@@ -48,6 +48,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { NumberCombobox } from "@/components/ui/number-combobox";
 
 const formatLocalDate = (date: Date): string => {
   const y = date.getFullYear();
@@ -176,109 +177,6 @@ const SurahCombobox = ({
                         {toLocaleNumeral(chapter.verses_count, locale)}{" "}
                         {t("plans.verses", "verses")}
                       </span>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-};
-
-const NumberCombobox = ({
-  value,
-  onChange,
-  min = 1,
-  max = 604,
-  portalContainer,
-  disabled = false,
-  label,
-  prefix = "",
-  searchPlaceholder,
-  emptyText,
-}: {
-  value: number;
-  onChange: (n: number) => void;
-  min?: number;
-  max?: number;
-  portalContainer?: HTMLElement | null;
-  disabled?: boolean;
-  label: string;
-  prefix?: string;
-  searchPlaceholder?: string;
-  emptyText?: string;
-}) => {
-  const t = useTranslations();
-  const locale = useLocale();
-  const [open, setOpen] = useState(false);
-
-  const numbers = useMemo(() => {
-    const arr: number[] = [];
-    for (let i = min; i <= max; i++) {
-      arr.push(i);
-    }
-    return arr;
-  }, [min, max]);
-
-  return (
-    <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-      <label className="text-xs font-semibold text-muted-foreground">{label}</label>
-      <Popover open={open && !disabled} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            aria-expanded={open}
-            className="fq-focus-ring min-h-[44px] flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-start text-xs font-medium text-foreground transition-colors hover:bg-muted/30 disabled:opacity-50"
-          >
-            <span className="truncate">
-              {prefix ? `${prefix} ` : ""}
-              {toLocaleNumeral(value, locale)}
-            </span>
-            <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground opacity-60 flex-none" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-[--radix-popover-trigger-width] min-w-[140px] max-w-[90vw] p-0"
-          align="start"
-          container={portalContainer}
-        >
-          <Command>
-            <CommandInput
-              placeholder={searchPlaceholder ?? t("plans.startPoint.searchPages", "Search pages…")}
-            />
-            <CommandList className="fq-scroll-nice max-h-56">
-              <CommandEmpty>
-                {emptyText ?? t("plans.startPoint.noPageFound", "No match.")}
-              </CommandEmpty>
-              <CommandGroup>
-                {numbers.map((n) => {
-                  const isSelected = value === n;
-                  return (
-                    <CommandItem
-                      key={n}
-                      value={`${n} ${toLocaleNumeral(n, locale)}`}
-                      onSelect={() => {
-                        onChange(n);
-                        setOpen(false);
-                      }}
-                      className="min-h-[44px] cursor-pointer text-xs flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Check
-                          className={cn(
-                            "size-3.5 flex-none",
-                            isSelected ? "text-primary opacity-100" : "opacity-0"
-                          )}
-                        />
-                        <span className="font-medium text-foreground">
-                          {prefix ? `${prefix} ` : ""}
-                          {toLocaleNumeral(n, locale)}
-                        </span>
-                      </div>
                     </CommandItem>
                   );
                 })}

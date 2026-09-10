@@ -46,7 +46,11 @@ const baseDeps = (registry: ChannelRegistry): DispatchDeps => ({
   registry,
   clock: () => new Date("2026-08-03T00:00:00Z"),
   logger: fakeLogger,
-  renderContext: () => ({ locale: "en", t: (_k, fallback) => fallback }),
+  renderContext: () => ({
+    locale: "en",
+    t: (_k, fallback) => fallback,
+    tPlural: (_k, _c, fallback) => fallback,
+  }),
 });
 
 describe("dispatchNotification", () => {
@@ -56,7 +60,16 @@ describe("dispatchNotification", () => {
     const deps = baseDeps({ in_app: inApp, push });
 
     const outcome = await dispatchNotification(
-      { recipient, type: "plans.daily_reminder", payload: { planId: 1, templateKey: "x", templateLabel: "X" } },
+      {
+        recipient,
+        type: "plans.daily_reminder",
+        payload: {
+          pendingCount: 1,
+          primary: { unit: "page", rangeStart: 1, rangeEnd: 5 },
+          targetPage: 1,
+          targetUrlKind: "page",
+        },
+      },
       deps
     );
 
@@ -77,7 +90,16 @@ describe("dispatchNotification", () => {
     const deps = baseDeps({ in_app: inApp, push });
 
     const outcome = await dispatchNotification(
-      { recipient, type: "plans.daily_reminder", payload: { planId: 1, templateKey: "x", templateLabel: "X" } },
+      {
+        recipient,
+        type: "plans.daily_reminder",
+        payload: {
+          pendingCount: 1,
+          primary: { unit: "page", rangeStart: 1, rangeEnd: 5 },
+          targetPage: 1,
+          targetUrlKind: "page",
+        },
+      },
       deps
     );
 

@@ -1,12 +1,15 @@
 "use client";
 
-import { useLocale } from "next-intl";
-import { Check } from "lucide-react";
+import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
+import { Bell, Check, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { useTodayAssignments } from "@hooks/use-today-assignments";
 import { usePlanStreak } from "@hooks/use-plan-streak";
 import { useOnlineStatus } from "@hooks/use-online-status";
+import { useSettingsSidebar } from "@/app/contexts/SettingsSidebarContext";
+import { formatTimeOption } from "@/components/ui/time-combobox";
 import { PlanAssignmentRow } from "./PlanAssignmentRow";
 import type { StreakResult } from "@/app/lib/plans/streak";
 import { cn } from "@/lib/utils";
@@ -46,6 +49,49 @@ const WeekStrip = ({ week, label }: { week: StreakResult["week"]; label: string 
         ))}
       </div>
       <div className="text-[10px] font-semibold text-muted-foreground">{label}</div>
+    </div>
+  );
+};
+
+const HeroReminderRow = () => {
+  const t = useTranslations();
+  const tIntl = useNextIntlTranslations();
+  const locale = useLocale();
+  const { openSettings } = useSettingsSidebar();
+  const { data } = useQuery<{
+    enabled: boolean;
+    time: string;
+  } | null>({
+    queryKey: ["daily-wird-reminder"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications/daily-reminder");
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data;
+    },
+    staleTime: 60_000,
+  });
+
+  const formattedTime = data?.time ? formatTimeOption(data.time, locale) : "";
+
+  return (
+    <div className="pt-3 border-t border-border/60">
+      <button
+        type="button"
+        data-testid="plans-hero-reminder-row"
+        onClick={() => openSettings("wird-reminder")}
+        className="flex w-full items-center justify-between py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <div className="flex items-center gap-2">
+          <Bell className="size-3.5 text-muted-foreground shrink-0" />
+          <span>
+            {data?.enabled
+              ? tIntl("plans.hero.reminderLabel", { time: formattedTime })
+              : t("plans.hero.reminderSet", "Set daily reminder")}
+          </span>
+        </div>
+        <ChevronRight className="size-3 text-muted-foreground/60 rtl:rotate-180 shrink-0" />
+      </button>
     </div>
   );
 };
@@ -91,6 +137,7 @@ export const PlansTodayHero = () => {
             <WeekStrip week={week} label={t("plans.hero.last7Days", "Last 7 days")} />
           </div>
         ) : null}
+        <HeroReminderRow />
       </div>
     );
   }
@@ -148,6 +195,8 @@ export const PlansTodayHero = () => {
           </p>
         ) : null}
       </div>
+
+      <HeroReminderRow />
     </div>
   );
 };
