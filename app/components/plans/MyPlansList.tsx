@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import { ChevronDown, MoreVertical, Pause, Pencil, Play, Target, XCircle, CheckCircle2 } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
@@ -15,10 +15,13 @@ import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { PlansTodayHero } from "./PlansTodayHero";
 import { AddPlanButton } from "./AddPlanButton";
 import { PlansBrowseDialog, type PlansBrowseView } from "./PlansBrowseDialog";
+import { useQuery } from "@tanstack/react-query";
+import { fetchChapters } from "@/app/utils/recitation-api";
 import {
   quantityAmount,
   getPlanPaceSummary,
   computeTodayTaskCounts,
+  formatVerseRange,
 } from "@/app/lib/plans/ui-helpers";
 import {
   DropdownMenu,
@@ -54,6 +57,7 @@ const EDIT_VIEW_FOR_TEMPLATE: Record<string, PlansBrowseView> = {
   "memorizing-wird": "memorizing-wird",
   "reviewing-wird": "reviewing-wird",
   husun: "husun-settings",
+  custom: "custom",
 };
 
 const STATUS_LABEL: Record<UserPlanStatus, { labelKey: string; defaultLabel: string }> = {
@@ -130,11 +134,14 @@ const PlanHistorySection = ({ planId }: { planId: number }) => {
                 <div key={group.date} className="relative">
                   <span className="absolute -start-[18px] top-0.5 size-2.5 rounded-full bg-primary" />
                   <div className="text-xs font-bold text-foreground">
-                    {new Date(`${group.date}T00:00:00`).toLocaleDateString(locale, {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {new Date(`${group.date}T00:00:00`).toLocaleDateString(
+                      locale === "ar" ? "ar-u-nu-arab" : locale,
+                      {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      }
+                    )}
                   </div>
                   <div className="mt-0.5 flex flex-col gap-0.5">
                     {group.entries.map((entry) => {
@@ -175,7 +182,18 @@ const PlanHistorySection = ({ planId }: { planId: number }) => {
 
 export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
   const t = useTranslations();
+  const tIntl = useNextIntlTranslations();
   const locale = useLocale();
+  const isVerseCustom = plan.template_key === "custom" && plan.definition?.unit === "verse";
+  const verseIndex = usePlanVerseIndex({
+    enabled: isVerseCustom,
+  });
+  const { data: chapters } = useQuery({
+    queryKey: ["quran-chapters"],
+    queryFn: fetchChapters,
+    staleTime: Infinity,
+    enabled: isVerseCustom,
+  });
 
   const parts: string[] = [];
 
@@ -209,6 +227,75 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
     const pace = quantityAmount(plan.params.quantities?.reviewing, 1);
     const unit = plan.params.trackUnits?.reviewing;
     parts.push(getPlanPaceSummary(pace, unit, locale, t));
+  } else if (plan.template_key === "custom" && plan.definition) {
+    const def = plan.definition;
+    if (def.unit === "page") {
+      if (def.rangeStart === 1 && def.rangeEnd === 604) {
+        parts.push(t("plans.custom.rangeMode.wholeMushaf", "Whole Quran"));
+      } else if (def.rangeStart === def.rangeEnd) {
+        const pageStr = toLocaleNumeral(def.rangeStart, locale);
+        parts.push(tIntl("plans.custom.singlePage", { page: pageStr }));
+      } else {
+        const startStr = toLocaleNumeral(def.rangeStart, locale);
+        const endStr = toLocaleNumeral(def.rangeEnd, locale);
+        parts.push(
+          tIntl("plans.custom.pagesRange", { start: startStr, end: endStr })
+        );
+      }
+    } else {
+      const startKey = verseIndex.data?.verseKeyOf(def.rangeStart);
+      const endKey = verseIndex.data?.verseKeyOf(def.rangeEnd);
+      if (startKey && endKey) {
+        parts.push(formatVerseRange(startKey, endKey, locale, chapters));
+      } else {
+        const startStr = toLocaleNumeral(def.rangeStart, locale);
+        const endStr = toLocaleNumeral(def.rangeEnd, locale);
+        parts.push(
+          def.rangeStart === def.rangeEnd
+            ? `${t("plans.verse", "verse")} ${startStr}`
+            : `${t("plans.verses", "verses")} ${startStr} – ${endStr}`
+        );
+      }
+    }
+
+    if (def.cadence.type === "pace") {
+      const unitsPerDay = def.cadence.unitsPerDay;
+      if (Number.isInteger(unitsPerDay)) {
+        parts.push(
+          def.unit === "verse"
+            ? tIntl("plans.custom.versesPerDay", {
+                count: unitsPerDay,
+                n: toLocaleNumeral(unitsPerDay, locale),
+              })
+            : tIntl("plans.custom.pagesPerDay", {
+                count: unitsPerDay,
+                n: toLocaleNumeral(unitsPerDay, locale),
+              })
+        );
+      } else {
+        const weeklyAmount = Math.round(unitsPerDay * 7);
+        parts.push(
+          tIntl("plans.custom.pagesPerWeek", {
+            count: weeklyAmount,
+            n: toLocaleNumeral(weeklyAmount, locale),
+          })
+        );
+      }
+    } else if (def.cadence.type === "deadline") {
+      const dateLocale = locale === "ar" ? "ar-u-nu-arab" : locale;
+      const formattedDate = new Date(`${def.cadence.endDate}T00:00:00`).toLocaleDateString(
+        dateLocale,
+        {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }
+      );
+      parts.push(`${t("plans.custom.targetDate", "Target date")}: ${formattedDate}`);
+      if (def.cadence.repetitions && def.cadence.repetitions > 1) {
+        parts.push(`×${toLocaleNumeral(def.cadence.repetitions, locale)}`);
+      }
+    }
   }
 
   if (parts.length === 0) return null;
@@ -247,7 +334,11 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-extrabold text-foreground">
-                {ui ? t(ui.labelKey, ui.defaultLabel) : plan.template_key}
+                {plan.template_key === "custom" && plan.name
+                  ? plan.name
+                  : ui
+                    ? t(ui.labelKey, ui.defaultLabel)
+                    : plan.template_key}
               </span>
               <span
                 className={cn(
@@ -302,7 +393,12 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
       </div>
 
       {editView ? (
-        <PlansBrowseDialog open={editOpen} onOpenChange={setEditOpen} initialView={editView} />
+        <PlansBrowseDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          initialView={editView}
+          initialPlan={plan}
+        />
       ) : null}
 
       <PlanHistorySection planId={plan.id} />

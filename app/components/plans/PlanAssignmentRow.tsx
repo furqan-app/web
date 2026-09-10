@@ -2,6 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { Check, Loader2, Pause, Play, RotateCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
@@ -11,11 +12,14 @@ import { planPlaybackSessionId } from "@/app/lib/plans/assignment-range";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { usePageVerseBounds } from "@hooks/use-page-verse-bounds";
 import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
+import { fetchChapters } from "@/app/utils/recitation-api";
+import { formatVerseRange } from "@/app/lib/plans/ui-helpers";
 import { cn } from "@/lib/utils";
 
 type Props = {
   /** Owning plan — with trackKey, forms this row's playback session identity. */
   planId: number;
+  planName?: string | null;
   assignment: TrackAssignment;
   /** Check off when not yet completed, undo the check-off when it is. */
   onToggle: () => void;
@@ -28,14 +32,17 @@ const formatRange = (start: number, end: number, locale: string) =>
     ? toLocaleNumeral(start, locale)
     : `${toLocaleNumeral(start, locale)}–${toLocaleNumeral(end, locale)}`;
 
-// Verse-unit ranges (ADR 0038) display as surah:verse, not a raw ordinal.
-const formatVerseRange = (startKey: string, endKey: string) =>
-  startKey === endKey ? startKey : `${startKey}–${endKey}`;
-
 // One track's today-assignment: icon + label + page range + check-off. Shared
 // between the hub's MyPlansList and the reader's PlansWidget sheet so the two
 // surfaces never drift apart.
-export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, disabled }: Props) => {
+export const PlanAssignmentRow = ({
+  planId,
+  planName,
+  assignment,
+  onToggle,
+  isPending,
+  disabled,
+}: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const { activeOverride, status, play, togglePlayPause } = useRecitation();
@@ -55,6 +62,12 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
   // assets the engine uses server-side (ADR 0038), not re-derived here.
   // Gated: page-unit rows (the majority) never fetch/build the index.
   const verseIndex = usePlanVerseIndex({ enabled: isVerseUnit });
+  const { data: chapters } = useQuery({
+    queryKey: ["quran-chapters"],
+    queryFn: fetchChapters,
+    staleTime: Infinity,
+    enabled: isVerseUnit,
+  });
   const linkPage = isVerseUnit ? verseIndex.data?.pageOf(rangeStart) : rangeStart;
   // While the verse index is still loading (or failed), a verse-unit row has
   // no reliable page to link to — never guess by treating the raw ordinal as
@@ -102,14 +115,14 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
   const isRowPlaying = isActiveRow && status === "playing";
   const isRowLoading = boundsLoading || (isActiveRow && status === "loading");
 
-  // Verse-unit: "surah:verse–surah:verse" (falls back to the raw ordinal
-  // range while the client-side verse index is still loading). Page-unit:
-  // "Page N–M", unchanged.
+  // Verse-unit: "surah ayah–ayah" or "surah:verse–surah:verse" (falls back
+  // to localized raw keys while chapters load, or raw ordinal range while
+  // the verse index loads). Page-unit: "Page N–M", unchanged.
   const formatRangeText = (start: number, end: number) => {
     if (!isVerseUnit) return `${t("page", "Page")} ${formatRange(start, end, locale)}`;
     const s = verseIndex.data?.verseKeyOf(start);
     const e = verseIndex.data?.verseKeyOf(end);
-    return s && e ? formatVerseRange(s, e) : formatRange(start, end, locale);
+    return s && e ? formatVerseRange(s, e, locale, chapters) : formatRange(start, end, locale);
   };
   const rangeLabel = formatRangeText(assignment.rangeStart, assignment.rangeEnd);
 
@@ -128,7 +141,7 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
       togglePlayPause();
       return;
     }
-    const trackLabel = trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey;
+    const trackLabel = planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey);
     play(bounds.firstVerseKey, {
       stopVerseKey: bounds.lastVerseKey,
       stopChapterId: bounds.lastChapterId,
@@ -182,11 +195,15 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
 
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-foreground truncate">
-                {trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey}
+                {planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
-                {" · "}
+                {!planName && (
+                  <>
+                    {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
+                    {" · "}
+                  </>
+                )}
                 {rangeLabel}
                 {assignment.repetitions ? ` · ×${toLocaleNumeral(assignment.repetitions, locale)}` : ""}
               </div>

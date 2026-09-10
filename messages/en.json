@@ -329,7 +329,7 @@
       },
       "customWirdType": {
         "title": "Custom wird",
-        "description": "Choose a custom range, surah, or target completion date (coming soon)."
+        "description": "Pick a custom range and set its daily pace or an end date"
       },
       "comingSoon": "Soon"
     },
@@ -348,6 +348,59 @@
       "chooseSurah": "Choose a surah",
       "searchSurahs": "Search surahs…",
       "noSurahFound": "No surah found."
+    },
+    "custom": {
+      "newTitle": "New custom wird",
+      "editTitle": "Edit custom wird",
+      "description": "Set a custom range and cadence",
+      "nameLabel": "Wird name",
+      "namePlaceholder": "e.g. Surah Al-Baqarah memorization",
+      "activityLabel": "Activity",
+      "rangeLabel": "Target range",
+      "rangeMode": {
+        "wholeMushaf": "Whole Quran",
+        "surah": "By surah",
+        "juz": "By juz",
+        "page": "By page",
+        "verse": "By verse"
+      },
+      "fromSurah": "From surah",
+      "toSurah": "To surah",
+      "fromJuz": "From juz",
+      "toJuz": "To juz",
+      "fromPage": "From page",
+      "toPage": "To page",
+      "fromVerse": "From verse",
+      "toVerse": "To verse",
+      "versePrefix": "Ayah",
+      "cadenceLabel": "Schedule",
+      "cadenceType": {
+        "pace": "By pace",
+        "deadline": "By deadline"
+      },
+      "period": {
+        "day": "Daily",
+        "week": "Weekly"
+      },
+      "targetDate": "Target date",
+      "repetitions": "Repetitions",
+      "pagesRange": "Pages {start}–{end}",
+      "singlePage": "Page {page}",
+      "pagesCount": "{count, plural, one {{n} page} other {{n} pages}}",
+      "versesCount": "{count, plural, one {{n} verse} other {{n} verses}}",
+      "daysCount": "{count, plural, one {{n} day} other {{n} days}}",
+      "pagesPerDay": "{count, plural, one {{n} page/day} other {{n} pages/day}}",
+      "versesPerDay": "{count, plural, one {{n} verse/day} other {{n} verses/day}}",
+      "pagesPerWeek": "{count, plural, one {{n} page/week} other {{n} pages/week}}",
+      "estimate": {
+        "days": "≈ {count, plural, one {{n} day} other {{n} days}} to complete",
+        "pace": "≈ {pace} (re-adjusts on missed days)"
+      },
+      "rangeFrozen": "Target range is locked because progress has been logged",
+      "verseWeeklyUnavailable": "Weekly pace is not available for verses; specify daily verses or set a deadline",
+      "memorizeRepetitionsLocked": "Memorization plans track a single completion",
+      "submit": "Start wird",
+      "save": "Save changes"
     },
     "templates": {
       "dailyWird": {
@@ -369,6 +422,10 @@
       "husun": {
         "label": "الحصون الخمسة",
         "description": "A structured 5-track memorization program."
+      },
+      "custom": {
+        "label": "Custom wird",
+        "description": "A personalized goal with custom range and cadence."
       }
     },
     "tracks": {

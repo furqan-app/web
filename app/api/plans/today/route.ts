@@ -17,6 +17,7 @@ import {
 export type TodayPlanAssignments = {
   planId: number;
   templateKey: string;
+  name?: string | null;
   assignments: TrackAssignment[];
 };
 
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
     data.push({
       planId: plan.id,
       templateKey: plan.template_key,
+      name: plan.name,
       assignments: withNextPreview(template, params, entries, date, assignments),
     });
   }

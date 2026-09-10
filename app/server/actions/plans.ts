@@ -7,6 +7,10 @@ import type { TodayPlanAssignments } from "@/app/api/plans/today/route";
 import type { PlanProgressHistoryEntry } from "@/app/api/plans/[planId]/progress/route";
 import type { StreakResult } from "@/app/lib/plans/streak";
 import type { UserPlanParams, UserPlanStatus } from "@/app/constants/plans";
+import type {
+  CreateCustomPlanBody,
+  PatchCustomPlanBody,
+} from "@/app/lib/plans/validate-custom-definition";
 
 export type { UserPlanListItem, TodayPlanAssignments, PlanProgressHistoryEntry, StreakResult };
 
@@ -102,6 +106,39 @@ export const updatePlanParams = async ({
         target_juz_start: targetJuzStart,
         target_juz_end: targetJuzEnd,
       }),
+    }).then((r) => r.json());
+    return Boolean(success);
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+};
+
+export const enrollCustomPlan = async (
+  body: CreateCustomPlanBody
+): Promise<UserPlanListItem | null> => {
+  try {
+    const { data, success } = await fetch("/api/plans", {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify(body),
+    }).then((r) => r.json());
+    return success ? data : null;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+};
+
+export const updateCustomPlan = async ({
+  planId,
+  ...body
+}: { planId: number } & PatchCustomPlanBody): Promise<boolean> => {
+  try {
+    const { success } = await fetch(`/api/plans/${planId}`, {
+      method: "PATCH",
+      headers: JSON_HEADERS,
+      body: JSON.stringify(body),
     }).then((r) => r.json());
     return Boolean(success);
   } catch (e) {
