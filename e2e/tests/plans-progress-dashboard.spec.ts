@@ -17,11 +17,17 @@ test.describe("Plans Page: Progress Dashboard Tab (#599)", () => {
 
     await page.goto("/ar/plans");
 
-    // 2. Select Progress tab via stable test ID
+    // 2. Select Progress tab via stable test ID. The panel (and its dashboard
+    // query) mounts on the click, so arm the response wait first: resolving on
+    // the panel's own fetch is deterministic, unlike racing its skeleton.
+    const dashboardLoaded = page.waitForResponse((res) =>
+      res.url().includes("/api/plans/dashboard"),
+    );
     const progressTab = page.locator('[data-testid="tab-progress"]');
     await expect(progressTab).toBeVisible();
     await progressTab.click();
     await expect(progressTab).toHaveAttribute("aria-selected", "true");
+    await dashboardLoaded;
 
     // 3. Unconditionally assert visibility of dashboard sections
     const dashboardPanel = page.locator('[data-testid="tabpanel-progress"]');
