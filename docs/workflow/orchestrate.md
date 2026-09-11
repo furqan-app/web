@@ -113,8 +113,9 @@ When the orchestrator hits a decision it genuinely cannot make, it escalates thr
 (`default` or `halt`). Canonical triggers, not an exhaustive list:
 
 - Align agents diverge and the reconciliation has no defensible winner.
-- The resolved implementation lane is the orchestrator's own `claude` — separate process vs
-  inline (`delegate.md` Step 1).
+- The resolved implementation lane is the orchestrator's own `claude` — offer the separate
+  `claude` process, and take a declined or unanswered offer as "hand implement back to the
+  human" (`delegate.md` Step 1). Never as "implement it inline".
 - A plan premise turns out false mid-implement and the fix changes scope.
 - `/plan-fq-task` reaches a design question with no human answering.
 - A relay failure whose remedy is a judgment call — a `--dangerously-skip-permissions`
@@ -173,7 +174,12 @@ retrospect anyway. A genuinely ambiguous reconstruction is a question for the hu
 ## What the orchestrator never does
 
 - Type app code — `app/`, `components/`, `lib/`, `prisma/`, translation files, running-app
-  config. It sequences skills; implementation is always delegated through `fq-delegate`.
+  config. It sequences skills; implementation is always delegated through `fq-delegate`, or
+  handed back to the human when the only write-capable implementer is the orchestrator's own
+  `claude` and the caller will not spend a second context on it. There is no case, and no human
+  approval, that makes it correct for the orchestrator to type app code itself: if inline is the
+  right answer for a task, that task did not need the orchestrator — run `/start-fq-task`
+  directly instead.
 - Commit, push, merge, or create a worktree outside `/plan-fq-task`. `/ship-fq-task` opens the
   PR; merging is always a separate, explicit human action, and "PR opened" is not "task done"
   past reporting it.
