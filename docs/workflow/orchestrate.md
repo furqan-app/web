@@ -56,8 +56,11 @@ Runs before any phase, on every entry including a resume. Every phase after plan
 `fq-delegate`, and [`delegate.md`](delegate.md) Step 1 treats a missing lane map as a hard stop;
 finding that out at Implement wastes align and plan. Check these prerequisites first:
 
-1. **`.delegate/config.json` present** — if absent, **STOP** and tell the caller to run
-   `/setup-fq-fleet`. Do not start align or plan first.
+1. **A lane map resolves** — `node <delegate-setup-dir>/scripts/config.mjs load --cwd .`
+   returns lanes. If not, **STOP** and tell the caller to run `/setup-fq-fleet`. Do not start
+   align or plan first. Check that it resolves, not that a particular file exists: the map lives
+   at global scope precisely because a project `.delegate/config.json` is gitignored and so is
+   missing from the per-task worktree every dispatch runs in.
 2. **`delegate-setup` installed beside the relays** (`~/.agents/skills/delegate-setup/`) — `--lane`
    resolution shells out to it and fails hard without it. If missing, tell the caller to run
    `/setup-fq-fleet`.
@@ -66,7 +69,7 @@ finding that out at Implement wastes align and plan. Check these prerequisites f
 
 **Exception:** A caller who names the implementer explicitly bypasses lane resolution
 ([`delegate.md`](delegate.md) Step 1, first row), so preflight may proceed on a named implementer
-with no `.delegate/config.json`.
+with no lane map at all — it just inherits no dials (`delegate.md` Step 1).
 
 ## Fan-out sizing — a runtime decision, never a fixed number
 
