@@ -3,6 +3,7 @@ import path from "node:path";
 
 // Minimal unit-test config: pure-function tests only (colocated *.test.ts,
 // explicit `vitest` imports — no globals). The aliases mirror tsconfig.
+// `scripts/**/*.test.mjs` covers the plain-Node agent-tooling scripts.
 export default defineConfig({
   resolve: {
     alias: {
@@ -16,6 +17,6 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}"],
+    include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}", "scripts/**/*.test.mjs"],
   },
 });

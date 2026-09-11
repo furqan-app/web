@@ -29,8 +29,13 @@ than forcing a rename — the taxonomy is a starting proposal, not an enforced s
 ## `detect-fleet`
 
 1. Ensure the upstream `delegate-setup` skill is installed (`npx skills add
-   amElnagdy/delegate-skills -s delegate-setup`), confirming with the human first if it's
-   missing.
+   amElnagdy/delegate-skills -s delegate-setup --global`), confirming with the human first if
+   it's missing. **`--global` is load-bearing.** Without it `npx skills` auto-detects project
+   scope inside a repo and installs into `<repo>/.agents/skills/` — which here is a symlink to
+   `.claude/skills/`, so the skill lands *inside the repo*, untracked and not gitignored, and
+   drops a `skills-lock.json` at the root. The relays also resolve `delegate-setup` at
+   `~/.agents/skills/` relative to themselves, so a project-scope install is invisible to them
+   anyway.
 2. Run `node <delegate-setup-dir>/scripts/discover.mjs` for live CLI/auth/model capability
    data. This already covers every CLI in the `amElnagdy/delegate-skills` catalog (18 skills
    at last count), not just the four already installed for this repo.
@@ -39,9 +44,9 @@ than forcing a rename — the taxonomy is a starting proposal, not an enforced s
      `~/.agents/skills/<tool>-delegate/scripts/relay.mjs`.
    - `costTier` — see the derivation table in ADR 0063. `discover.mjs` reports capability, never
      billing, so this is fq's own best-effort layer, never a provider-billing-API scrape.
-4. If `<repo>/.delegate/config.json` exists and is trusted for this repo (`config.mjs load
-   --cwd <repo>`), include the current effective lane map for visibility only — `detect-fleet`
-   never proposes or writes lanes itself.
+4. If a lane map is configured and trusted (`config.mjs load --cwd <repo>` — global, or a
+   project `<repo>/.delegate/config.json` overlaying it), include the current effective lane map
+   for visibility only — `detect-fleet` never proposes or writes lanes itself.
 5. Cache the merged result to `.claude/fleet.json` with a `detectedAt` timestamp. This file
    describes one machine and is gitignored — never commit it.
 6. Support `--refresh` to force a re-probe instead of reusing the cache.
@@ -56,17 +61,26 @@ error.
 3. Hand off entirely to `delegate-setup`'s own flow (`discover → load → grounding menu →
    propose (with Basis) → scope → approve → write`), steering:
    - Lane **names** toward `implementation` / `planning` / `second-opinion`.
-   - Scope toward **project** (`<repo>/.delegate/config.json`), not global — each teammate's
-     installed CLI subset differs, so a global config would leak assumptions across projects.
+   - Scope toward **global** (`~/.config/delegate-skills/config.json`), *not* project.
+     Project scope is the natural choice — each teammate's installed CLI subset differs — but it
+     does not survive this project's flow: `.delegate/` is gitignored, `/plan-fq-task` creates a
+     fresh `../furqan-<slug>` worktree for every task, and `fq-delegate` dispatches with `--cd
+     <worktree>`. A project lane map therefore does not exist where the work actually happens,
+     and every lane resolve there fails `fleet lane not found` (exit 2). Global resolves from
+     both the main repo and any worktree. Prefer one scope only — a project map that duplicates
+     the global one silently wins in the main checkout and is absent in worktrees, which is worse
+     than either alone.
    - When `delegate-setup`'s proposal would bind the `implementation` lane to `agy`, surface the
      caveat from `agy-delegate`'s own `SKILL.md`: headless writes in `--print` mode can be
      silently auto-denied. This is a note for the human to weigh, not an automatic exclusion —
      `delegate-setup` already asks for basis and flags uncertainty on every lane.
-4. On approval, `delegate-setup` writes `.delegate/config.json` itself. `setup-fq-fleet` does
-   not touch that file directly.
+4. On approval, `delegate-setup` writes the config itself (`config.mjs write --scope global`).
+   `setup-fq-fleet` does not touch that file directly. The write also records the approval that
+   the relays check — a hand-edited config fails closed with "project fleet config is not
+   trusted".
 5. Only **after** approval, for each implementer actually assigned a lane, install its
    `*-delegate` skill if missing (`npx skills add amElnagdy/delegate-skills -s
-   <tool>-delegate`), confirming each install individually. Never install a skill for a CLI that
+   <tool>-delegate --global`), confirming each install individually. Never install a skill for a CLI that
    didn't end up in the lane map.
 6. Re-run `detect-fleet` for the "after" state and show the before/after diff.
 7. For any CLI that needs a login or a paid subscription the human doesn't have yet, **print**
@@ -76,8 +90,8 @@ error.
 
 - Do not reimplement `delegate-setup`'s discovery, interview, or config-writing logic — wrap it
   (ADR 0063).
-- Do not write to global scope (`~/.config/delegate-skills/config.json`) — always steer to
-  project scope.
+- Do not write the lane map to project scope (`<repo>/.delegate/config.json`) — it is gitignored
+  and so is absent from the per-task worktrees where dispatch actually runs. Use global.
 - Do not commit `.delegate/` or `.claude/fleet.json` — both describe one machine.
 - Do not install a `*-delegate` skill before the human has approved a lane map that uses it.
 - Do not auto-execute a CLI install or login command, even with `--yes`-style flags — print it

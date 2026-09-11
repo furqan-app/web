@@ -1,6 +1,6 @@
 ---
 name: setup-fq-fleet
-description: On-demand, human-confirmed setup for this project's coding-CLI fleet — installs missing delegate skills only for CLIs the human actually assigns a lane to, then hands off entirely to the upstream delegate-setup skill's interactive discover/propose/approve/write flow (steered toward fq's three lane names: implementation, planning, second-opinion). Never installs a CLI itself or touches credentials — prints those commands for the human to run. Trigger via /setup-fq-fleet, or when detect-fleet reports gaps the human wants to close.
+description: "On-demand, human-confirmed setup for this project's coding-CLI fleet — installs missing delegate skills only for CLIs the human actually assigns a lane to, then hands off entirely to the upstream delegate-setup skill's interactive discover/propose/approve/write flow (steered toward fq's three lane names: implementation, planning, second-opinion). Never installs a CLI itself or touches credentials — prints those commands for the human to run. Trigger via /setup-fq-fleet, or when detect-fleet reports gaps the human wants to close."
 ---
 
 # /setup-fq-fleet

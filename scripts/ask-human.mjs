@@ -33,6 +33,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "..");
 const ENV_FILE = path.join(REPO_ROOT, ".env.ask-human");
@@ -129,7 +130,7 @@ const NUMBER_EMOJI = [
 const optionBullet = (n) => NUMBER_EMOJI[n - 1] ?? `*${n}.*`;
 
 /** Pick the message language from the content the human wrote (Arabic script → Arabic). */
-const ARABIC_SCRIPT = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+const ARABIC_SCRIPT = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-ﻼ]/;
 const detectLang = (text) => (ARABIC_SCRIPT.test(text) ? "ar" : "en");
 
 const STRINGS = {
@@ -209,6 +210,52 @@ async function ack(token, channel, threadTs, text) {
   });
 }
 
+/**
+ * Map Arabic-Indic (U+0660–U+0669) and Extended Arabic-Indic (U+06F0–U+06F9)
+ * digits to ASCII 0-9 so bare-selection parsing works for Arabic-script replies.
+ * Returns a new string; the caller's original text is left untouched.
+ */
+export function normalizeDigits(text) {
+  return String(text ?? "")
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+}
+
+/**
+ * Classify a human thread reply for the poll loop.
+ *
+ * Returns { kind: "choice", choice: n } only when the reply is a BARE numeric
+ * selection and nothing else (optional `#`, an optional leading `option`/`رقم`
+ * word, surrounding whitespace, and one trailing `.` or `)` are allowed) with
+ * n in 1..optionCount; { kind: "freeform" } when it carries any other prose;
+ * and { kind: "empty" } when it has no text at all (e.g. an attachment-only
+ * reply — not an answer, the loop keeps polling). Digits are normalised before
+ * matching, but the emitted `text` always stays the human's original raw reply.
+ */
+export function classifyReply(text, optionCount) {
+  const raw = String(text ?? "").trim();
+  if (!raw) return { kind: "empty" };
+  const match = normalizeDigits(raw).match(/^(?:#\s*)?(?:(?:option|رقم)\s+)?#?\s*(\d+)\s*[.)]?\s*$/i);
+  const n = match ? Number(match[1]) : NaN;
+  if (Number.isInteger(n) && n >= 1 && n <= optionCount) return { kind: "choice", choice: n };
+  return { kind: "freeform" };
+}
+
+/**
+ * True when a `conversations.replies` message is a human reply in this thread.
+ * `thread_broadcast` (the human ticked "Also send to #channel") and `file_share`
+ * still count as human replies; every other subtype does not.
+ */
+export function isHumanReply(m, threadTs, selfUserId) {
+  return (
+    m.ts !== threadTs &&
+    !m.bot_id &&
+    (!m.subtype || m.subtype === "thread_broadcast" || m.subtype === "file_share") &&
+    m.user &&
+    m.user !== selfUserId
+  );
+}
+
 async function main() {
   const payloadPath = process.argv[2];
   if (!payloadPath) emit({ path: "error", reason: "invalid_payload: no payload file path given" }, 1);
@@ -263,7 +310,8 @@ async function main() {
     });
 
     if (replies.status === 429) {
-      await sleep(replies.retryAfter * 1000);
+      await sleep(Math.min(replies.retryAfter * 1000, Math.max(0, deadline - Date.now())));
+      waitMs = Math.min(waitMs * POLL_BACKOFF, POLL_CAP_MS);
       continue;
     }
     if (!replies.ok) {
@@ -273,27 +321,33 @@ async function main() {
           1,
         );
       }
+      waitMs = Math.min(waitMs * POLL_BACKOFF, POLL_CAP_MS);
       continue;
     }
     consecutiveFailures = 0;
 
-    const human = (replies.body.messages || []).find(
-      (m) => m.ts !== threadTs && !m.bot_id && !m.subtype && m.user && m.user !== selfUserId,
-    );
+    const humans = (replies.body.messages || []).filter((m) => isHumanReply(m, threadTs, selfUserId));
+    const parsed = humans.map((m) => ({ m, c: classifyReply(m.text, payload.options.length) }));
 
-    if (human) {
-      const text = String(human.text ?? "").trim();
-      const match = text.match(/^#?\s*(\d+)\b/);
-      const n = match ? Number(match[1]) : NaN;
-      if (Number.isInteger(n) && n >= 1 && n <= payload.options.length) {
-        await ack(token, channel, threadTs, s.ackAnswered(n, payload.options[n - 1].trim()));
-        emit(
-          { path: "answered", choice: n, label: payload.options[n - 1].trim(), replyBy: human.user, threadTs },
-          0,
-        );
-      }
+    // The LATEST bare numeric selection wins — pre-answer chatter is ignored, and a
+    // later bare number is the human correcting an earlier one.
+    const selected = [...parsed].reverse().find((p) => p.c.kind === "choice");
+    if (selected) {
+      const n = selected.c.choice;
+      await ack(token, channel, threadTs, s.ackAnswered(n, payload.options[n - 1].trim()));
+      emit(
+        { path: "answered", choice: n, label: payload.options[n - 1].trim(), replyBy: selected.m.user, threadTs },
+        0,
+      );
+    }
+
+    // Otherwise the LATEST freeform reply is the human's most recent word.
+    // Empty (attachment-only) replies are not answers — keep polling.
+    const latest = [...parsed].reverse().find((p) => p.c.kind === "freeform");
+    if (latest) {
+      const text = String(latest.m.text ?? "").trim();
       await ack(token, channel, threadTs, s.ackFreeform);
-      emit({ path: "answered-freeform", text, replyBy: human.user, threadTs }, 0);
+      emit({ path: "answered-freeform", text, replyBy: latest.m.user, threadTs }, 0);
     }
 
     waitMs = Math.min(waitMs * POLL_BACKOFF, POLL_CAP_MS);
@@ -312,4 +366,20 @@ async function main() {
   );
 }
 
-main();
+// Only run when executed directly — importing the module (e.g. in tests)
+// must not post anything or exit the process.
+const isDirectRun = () => {
+  if (!process.argv[1]) return false;
+  const here = fileURLToPath(import.meta.url);
+  try {
+    return fs.realpathSync(here) === fs.realpathSync(process.argv[1]);
+  } catch {
+    return path.resolve(here) === path.resolve(process.argv[1]);
+  }
+};
+
+if (isDirectRun()) {
+  main().catch((err) => {
+    emit({ path: "error", reason: `unexpected: ${String(err?.message || err)}` }, 1);
+  });
+}
