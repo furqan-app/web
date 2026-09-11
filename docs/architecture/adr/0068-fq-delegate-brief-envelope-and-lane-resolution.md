@@ -90,6 +90,25 @@ does not silently pick one path: it surfaces a first-class choice — dispatch t
 a second context/quota hit), or run `/start-fq-task` inline (cheaper, breaks the boundary for a
 one-subscription user). The orchestrator decides, escalating to `fq-ask-human` if it cannot.
 
+> **Amended 2026-09-11 — the inline option is withdrawn.** Offering "run `/start-fq-task` inline"
+> as a co-equal choice was wrong twice over. First, its stated justification does not hold:
+> `claude-delegate` dispatches to a separate *process*, not a separate *subscription*, so a
+> one-subscription user was never blocked — the inline path bought quota, not capability, and what
+> it spent was the review independence the whole epic exists to produce (an orchestrator that
+> implements then reviews and re-verifies its own diff makes "never accept a self-report"
+> self-referential). Second, a hard boundary with a documented, self-serve exception is not a
+> boundary; the post-merge audit found agents will take a documented option and believe they are
+> compliant, and routing the exception through `fq-ask-human` would be worse still — an
+> `onTimeout: "default"` payload would let a timeout waive it unattended.
+>
+> The replacement is neither inline nor a forced second process, because forcing one burns a
+> one-plan user's limit for no gain they chose: **the orchestrator offers the separate process,
+> and on a declined or unanswered offer hands the implement phase back to the human** — implement
+> with `/start-fq-task` in the worktree, re-enter at `--from review`. A human implementing is not
+> a boundary violation; the orchestrator is what must not type app code, and the reviewer still is
+> not the implementer. If inline is genuinely the right answer for a task, that task did not need
+> the orchestrator at all.
+
 ## Consequences
 
 - **+** No fq dispatch code to maintain across five relays; `npx skills update` keeps the
