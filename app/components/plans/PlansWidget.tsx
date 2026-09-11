@@ -378,13 +378,15 @@ export const PlansWidget = () => {
       )}
 
       {smartCompletion.activeOffer && !sheetOpen && (
+        // The offer is a transient call to action, not persistent chrome: it
+        // stays visible and tappable even while the nav overlay hides the dial
+        // itself — hiding it there made Confirm untappable on mobile.
         <div
           data-testid="smart-completion-offer"
           role="alert"
           aria-live="polite"
           className={cn(
             "fixed z-40 bottom-24 end-16 flex items-center gap-2.5 rounded-full bg-card border border-border py-1 ps-3.5 pe-1.5 shadow-[inset_0_1px_0_hsl(var(--surface-rim)/var(--surface-rim-alpha))] transition-all duration-300",
-            isOverlayMode && !overlayVisible && "translate-y-36 opacity-0 pointer-events-none",
             isFading && "opacity-0 scale-95",
           )}
           style={isOverlayMode ? { transitionTimingFunction: EASE_OUT } : undefined}
@@ -422,13 +424,14 @@ export const PlansWidget = () => {
       )}
 
       {smartCompletion.autoWriteNotice && (
+        // Same transient-chrome rule as the offer above: the auto-write notice
+        // (with its Undo) must stay visible while the dial hides.
         <div
           data-testid="smart-completion-auto-notice"
           role="status"
           aria-live="polite"
           className={cn(
             "fixed z-40 bottom-24 end-16 flex items-center gap-2.5 rounded-full bg-card border border-border py-1 ps-3.5 pe-1.5 shadow-[inset_0_1px_0_hsl(var(--surface-rim)/var(--surface-rim-alpha))] transition-all duration-300",
-            isOverlayMode && !overlayVisible && "translate-y-36 opacity-0 pointer-events-none",
             isFading && "opacity-0 scale-95",
           )}
           style={isOverlayMode ? { transitionTimingFunction: EASE_OUT } : undefined}

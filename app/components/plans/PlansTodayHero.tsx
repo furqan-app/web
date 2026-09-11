@@ -3,6 +3,7 @@
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import { Bell, Check, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { useTodayAssignments } from "@hooks/use-today-assignments";
@@ -10,6 +11,8 @@ import { usePlanStreak } from "@hooks/use-plan-streak";
 import { useOnlineStatus } from "@hooks/use-online-status";
 import { useSettingsSidebar } from "@/app/contexts/SettingsSidebarContext";
 import { formatTimeOption } from "@/components/ui/time-combobox";
+import { getLocalDateString } from "@/app/server/actions/plans";
+import { isAutoWritten } from "@/app/lib/plans/auto-write-log";
 import { PlanAssignmentRow } from "./PlanAssignmentRow";
 import type { StreakResult } from "@/app/lib/plans/streak";
 import { cn } from "@/lib/utils";
@@ -104,6 +107,9 @@ export const PlansTodayHero = () => {
   const t = useTranslations();
   const locale = useLocale();
   const isOnline = useOnlineStatus();
+  const { data: session } = useSession();
+  const userId = (session?.user as { id?: number } | undefined)?.id;
+  const todayDate = getLocalDateString();
   const { data: todayData, checkOff, uncheckOff } = useTodayAssignments();
   const { data: streak } = usePlanStreak();
 
@@ -113,6 +119,14 @@ export const PlansTodayHero = () => {
   const totalCount = rows.length;
   const doneCount = rows.filter((r) => r.assignment.completed).length;
   const allDone = totalCount > 0 && doneCount === totalCount;
+  // Completed assignments recorded automatically stay reversible here: the
+  // all-done celebration below replaces the row list, so without this an
+  // auto-written entry would have no visible marker and no undo affordance.
+  const autoRows = rows.filter(
+    (r) =>
+      r.assignment.completed &&
+      isAutoWritten(userId, r.plan.planId, r.assignment.trackKey, todayDate),
+  );
   const week = streak?.week ?? [];
   const streakLength = streak?.streakLength ?? 0;
 
@@ -135,6 +149,30 @@ export const PlansTodayHero = () => {
         {week.length === 7 ? (
           <div className="mt-4">
             <WeekStrip week={week} label={t("plans.hero.last7Days", "Last 7 days")} />
+          </div>
+        ) : null}
+        {autoRows.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-2 text-start">
+            {autoRows.map(({ plan, assignment }) => (
+              <PlanAssignmentRow
+                key={`${plan.planId}-${assignment.trackKey}`}
+                planId={plan.planId}
+                planName={plan.name}
+                assignment={assignment}
+                onToggle={() =>
+                  assignment.completed
+                    ? uncheckOff.mutate({ planId: plan.planId, trackKey: assignment.trackKey })
+                    : checkOff.mutate({
+                        planId: plan.planId,
+                        trackKey: assignment.trackKey,
+                        rangeStart: assignment.rangeStart,
+                        rangeEnd: assignment.rangeEnd,
+                      })
+                }
+                isPending={checkOff.isPending || uncheckOff.isPending}
+                disabled={!isOnline}
+              />
+            ))}
           </div>
         ) : null}
         <HeroReminderRow />
