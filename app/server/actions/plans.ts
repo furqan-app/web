@@ -6,13 +6,20 @@ import type { UserPlanListItem } from "@/app/api/plans/route";
 import type { TodayPlanAssignments } from "@/app/api/plans/today/route";
 import type { PlanProgressHistoryEntry } from "@/app/api/plans/[planId]/progress/route";
 import type { StreakResult } from "@/app/lib/plans/streak";
+import type { AwradDashboardData } from "@/app/lib/plans/dashboard";
 import type { UserPlanParams, UserPlanStatus } from "@/app/constants/plans";
 import type {
   CreateCustomPlanBody,
   PatchCustomPlanBody,
 } from "@/app/lib/plans/validate-custom-definition";
 
-export type { UserPlanListItem, TodayPlanAssignments, PlanProgressHistoryEntry, StreakResult };
+export type {
+  UserPlanListItem,
+  TodayPlanAssignments,
+  PlanProgressHistoryEntry,
+  StreakResult,
+  AwradDashboardData,
+};
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -195,6 +202,21 @@ export const getPlanStreak = async (date: string): Promise<StreakResult> => {
   } catch (e) {
     console.error(e);
     return { streakLength: 0, week: [] };
+  }
+};
+
+export const getPlanDashboard = async (
+  date: string
+): Promise<AwradDashboardData | null> => {
+  try {
+    const { data, success } = await fetch(
+      `/api/plans/dashboard?date=${encodeURIComponent(date)}`,
+      { headers: JSON_HEADERS }
+    ).then((r) => r.json());
+    return success && data ? data : null;
+  } catch (e) {
+    console.error(e);
+    return null;
   }
 };
 
