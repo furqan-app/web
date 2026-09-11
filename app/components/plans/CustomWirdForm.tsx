@@ -611,6 +611,8 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
               prefix={t("plans.startPoint.pagePrefix", "Page")}
               disabled={isRangeFrozen}
               portalContainer={containerEl}
+              searchPlaceholder={t("plans.startPoint.searchPages", "Search pages…")}
+              emptyText={t("plans.startPoint.noPageFound", "No match.")}
               onChange={(val) => {
                 setStartPage(val);
                 if (val > endPage) setEndPage(val);
@@ -624,6 +626,8 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
               prefix={t("plans.startPoint.pagePrefix", "Page")}
               disabled={isRangeFrozen}
               portalContainer={containerEl}
+              searchPlaceholder={t("plans.startPoint.searchPages", "Search pages…")}
+              emptyText={t("plans.startPoint.noPageFound", "No match.")}
               onChange={(val) => {
                 setEndPage(val);
               }}

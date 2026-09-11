@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useLocale } from "next-intl";
 import { toLocaleNumeral } from "@/app/utils/i18n";
-import useTranslations from "@/app/hooks/use-translations";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -91,7 +90,6 @@ export function NumberCombobox({
   itemClassName,
   variant = "default",
 }: NumberComboboxProps) {
-  const t = useTranslations();
   const locale = useLocale();
   const [open, setOpen] = useState(false);
 
@@ -142,7 +140,7 @@ export function NumberCombobox({
             placeholder={
               searchPlaceholder ??
               placeholder ??
-              t("search", "Search…")
+              "Search…"
             }
           />
           <CommandList
@@ -153,7 +151,7 @@ export function NumberCombobox({
             )}
           >
             <CommandEmpty>
-              {emptyText ?? t("noMatchesFound", "No match.")}
+              {emptyText ?? "No match."}
             </CommandEmpty>
             <CommandGroup>
               {numbers.map((n) => {

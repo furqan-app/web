@@ -370,6 +370,8 @@ const CustomRangePicker = ({
           onChange={(p) => onChange({ type: "page", page: p })}
           portalContainer={portalContainer}
           placeholder={t("recitation.rangeTypePage", "Page")}
+          searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+          emptyText={t("recitation.numberEmpty", "No match.")}
           disabled={disabled}
           format={(n) => toLocaleNumeral(n, locale)}
         />
@@ -406,6 +408,8 @@ const CustomRangePicker = ({
               }}
               portalContainer={portalContainer}
               placeholder={t("recitation.rangeTypeVerse", "Verse")}
+              searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+              emptyText={t("recitation.numberEmpty", "No match.")}
               disabled={disabled}
               format={(n) => toLocaleNumeral(n, locale)}
             />
@@ -814,6 +818,8 @@ export const RecitationSettingsSheet = () => {
                     onChange={(p) => pushEndPastStart({ type: "page", page: p })}
                     portalContainer={sheetContentEl}
                     placeholder={t("recitation.rangeTypePage", "Page")}
+                    searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+                    emptyText={t("recitation.numberEmpty", "No match.")}
                     format={(n) => toLocaleNumeral(n, locale)}
                   />
                 ) : (
@@ -845,6 +851,8 @@ export const RecitationSettingsSheet = () => {
                         }
                         portalContainer={sheetContentEl}
                         placeholder={t("recitation.rangeTypeVerse", "Verse")}
+                        searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+                        emptyText={t("recitation.numberEmpty", "No match.")}
                         format={(n) => toLocaleNumeral(n, locale)}
                       />
                     </div>
