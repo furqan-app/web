@@ -10,4 +10,8 @@ Read and follow [`docs/workflow/check-fq-standards.md`](../../../docs/workflow/c
 ## Context resolution
 
 - When invoked from inside a `/start-fq-task` worktree, grep the worktree's own `<abs>/docs/architecture/decisions/*.md` (and the `DECISIONS.md` index), not the main repo's — they may carry in-flight edits from the same task.
-- When invoked standalone (not from within `/start-fq-task`), diff against `main` (or the branch's actual base if not `main`) and use the current repo's `docs/architecture/decisions/*.md`.
+- When invoked standalone (not from within `/start-fq-task`) — including by the orchestrator on a
+  delegated implementer's diff — **default to the uncommitted working tree**, not `main...HEAD`.
+  A pre-ship branch has no commits, so a base-branch diff inspects nothing and reports clean.
+  Diff against `main` (or the branch's actual base) only once the branch actually carries
+  commits and the working tree is clean. Use the current repo's `docs/architecture/decisions/*.md`.

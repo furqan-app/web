@@ -50,6 +50,24 @@ default. Read the caller's intent; the flags are just the written form.
 terminal. When a question goes unanswered — the caller stepped away, or a routine invoked the
 skill — the *same* question is escalated through `fq-ask-human`. One code path, two audiences.
 
+## Preflight
+
+Runs before any phase, on every entry including a resume. Every phase after plan needs
+`fq-delegate`, and [`delegate.md`](delegate.md) Step 1 treats a missing lane map as a hard stop;
+finding that out at Implement wastes align and plan. Check these prerequisites first:
+
+1. **`.delegate/config.json` present** — if absent, **STOP** and tell the caller to run
+   `/setup-fq-fleet`. Do not start align or plan first.
+2. **`delegate-setup` installed beside the relays** (`~/.agents/skills/delegate-setup/`) — `--lane`
+   resolution shells out to it and fails hard without it. If missing, tell the caller to run
+   `/setup-fq-fleet`.
+3. **`.claude/fleet.json` present and not stale** — run `/detect-fleet --refresh` if it is missing
+   or stale.
+
+**Exception:** A caller who names the implementer explicitly bypasses lane resolution
+([`delegate.md`](delegate.md) Step 1, first row), so preflight may proceed on a named implementer
+with no `.delegate/config.json`.
+
 ## Fan-out sizing — a runtime decision, never a fixed number
 
 Two phases can run more than one agent: **align** (N planners in parallel) and **review** (N
@@ -80,7 +98,7 @@ refuses to make.
 |---|---|---|---|
 | **Align** *(skippable)* | [`fq-delegate`](delegate.md) `--lane planning --read-only`, ×N in parallel | 0, or N | Give every agent the **same** scoped brief — the issue body, the `DECISIONS.md` index, and the 1–3 domain files the task touches. Collect the proposed directions. **Reconcile them into one, and write down where they diverged and how each disagreement was resolved** — divergence is the signal the phase exists to produce, not noise to discard. Put the reconciliation in the plan's approach section; when align runs before a plan file exists, put it in an issue comment. If the agents split on something with no defensible winner → `fq-ask-human`. Skip align entirely for a low-blast-radius task. |
 | **Plan** | [`/plan-fq-task`](plan-task.md) | single | Runs **unchanged**. Socratic with the human while one is answering; an unresolved design question goes to `fq-ask-human` when unattended. Seeded with the aligned direction. Produces `docs/plans/<slug>.md` and the worktree that `fq-delegate` then implements in (`delegate.md` *Prerequisites*). |
-| **Implement** | [`/fq-delegate`](delegate.md) `--lane implementation` | single (retry ≠ parallel) | **Never the orchestrator itself.** Compose the brief per `delegate.md` — verbatim load-bearing `AGENTS.md` constraints, the 1–3 domain files, the plan link, the `<verification_loop>`, the no-commit boundary. `delegate.md`'s `<task>` block already tells the implementer to stop and check a doubtful plan premise against its source before coding against it. On return: re-run `npm run lint`, `npx tsc --noEmit`, and targeted `npx vitest run`, then `check-fq-standards` on the diff. Never accept a self-reported "gates passed". The delegated implementer does not run `start-task.md`'s decision-recording step — the orchestrator records any new decision and flips the plan to `status: implemented` itself. |
+| **Implement** | [`/fq-delegate`](delegate.md) `--lane implementation` | single (retry ≠ parallel) | **Never the orchestrator itself.** Compose the brief per `delegate.md` — verbatim load-bearing `AGENTS.md` constraints, the 1–3 domain files, the plan link, the `<verification_loop>`, the no-commit boundary. `delegate.md`'s `<task>` block already tells the implementer to stop and check a doubtful plan premise against its source before coding against it. On return: re-run `npm run lint`, `npx tsc --noEmit`, and targeted `npx vitest run`, then `check-fq-standards` on the **uncommitted working tree** (never `main...HEAD` — nothing is committed yet, so a base-branch diff inspects nothing and reports clean). Never accept a self-reported "gates passed". **If gates fail:** compose a delta brief carrying the actual gate output, re-dispatch to the same implementer with `--resume-last` / the recorded session id (bounded to 1–2 attempts), and escalate via `fq-ask-human` if it still fails. The delegated implementer does not run `start-task.md`'s decision-recording step — the orchestrator records any new decision and flips the plan to `status: implemented` itself. |
 | **Review** | [`/review-fq-work`](review-work.md) (working tree) and/or `fq-delegate --lane second-opinion` | 1–N | Point every reviewer at the **ADRs and specs**, not only the plan's summary of them (`review-work.md` §3). For a **UI-affecting** task the orchestrator runs a browser smoke **first** — both locales, all three themes, the persisted round-trip — because a static review plus unit tests structurally cannot catch layout / RTL / i18n / data-shape breakage. Fold findings via a delta brief to the implementer, reviewed like the first pass. |
 | **Retrospect** | [`/retrospect`](retrospect.md) | single | **Non-optional.** Runs before ship so its `decisions/*.md` and `docs/workflow/` edits land inside the PR. |
 | **Ship** | [`/ship-fq-task`](ship-task.md) | single | The **stopping point.** Opens the PR, moves the issue to `status:in-review`. The orchestrator **never merges** and never acts past the open PR. |
@@ -121,17 +139,22 @@ would:
 | What the orchestrator finds | Where it resumes |
 |---|---|
 | No worktree and no plan file for the issue | Before **align / plan** — check the issue for an align-reconciliation comment before re-running align |
-| Worktree + plan file, frontmatter `status: ready-to-implement`, `git diff` empty | Before **implement** |
-| `git diff` non-empty, plan still `status: ready-to-implement` | Implement has returned — re-verify the gates and `check-fq-standards` **from scratch** (do not trust a prior green), then flip the plan to `status: implemented` |
-| `git diff` non-empty, plan `status: implemented`, no `decisions/*.md` or `docs/workflow/` edits staged | Before **review / retrospect** |
-| Retro edits staged, nothing committed | Before **ship** |
-| The branch has a commit, or a PR exists | **Done** — report the PR and stop |
+| Worktree + plan file, relay process alive or dispatch produced no `result.json` | **In-flight dispatch** — attach, wait, or inspect; never re-dispatch. A `result.json` with `status: timeout` or `aborted` means a half-applied tree, not "implement returned" |
+| Worktree + plan file, frontmatter `status: ready-to-implement` or `in-progress`, `git diff` empty | Before **implement** |
+| `git diff` non-empty, plan `status: ready-to-implement` or `in-progress` | Implement has returned — re-verify the gates and `check-fq-standards` **from scratch** (do not trust a prior green), then flip the plan to `status: implemented` |
+| `git diff` non-empty, plan `status: implemented`, no unstaged `decisions/*.md` or `docs/workflow/` edits | Before **review / retrospect** |
+| Unstaged `decisions/*.md` or `docs/workflow/` edits present (for a non-workflow task), nothing committed | Before **ship** |
+| Branch has a commit, but no PR exists (check with `gh pr view`) | **Ship interrupted** — resume ship at push / PR-create (`ship-task.md` steps 4–5) |
+| A PR exists for the branch | **Done** — report the PR and stop |
+| Plan frontmatter `status: superseded` or `unknown` | **Stop and ask** — never a valid resume point; consult the human or `fq-ask-human` |
 
 "Before review" and "before retrospect" are not always distinguishable by artifact — a passed
-review folds no findings, and a retrospect with nothing to record stages no edit. When the
-signals do not separate them, re-running the later phase is cheap and safe; a genuinely
-ambiguous reconstruction is a question for the human or `fq-ask-human`, never a guess. Never
-assume a phase ran just because its predecessor did.
+review folds no findings, and a retrospect with nothing to record produces no edits. When the
+signals do not separate them, re-running the later phase is cheap and non-optional; re-run it
+rather than inferring it ran. For workflow or tooling tasks (where `docs/workflow/` edits are the
+task's implementation, not a retro artifact), that signal does not separate the phases — run
+retrospect anyway. A genuinely ambiguous reconstruction is a question for the human or
+`fq-ask-human`, never a guess. Never assume a phase ran just because its predecessor did.
 
 ## Context budget and the run report
 
