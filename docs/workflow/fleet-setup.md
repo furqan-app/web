@@ -2,8 +2,8 @@
 
 Two skills for Epic #490 (Track 2: agent orchestrator): `detect-fleet` (read-only capability
 report) and `setup-fq-fleet` (interactive install + lane configuration). Together they let the
-future orchestrator (T2.4) route work across whichever coding CLIs a team member actually has
-installed, without ever assuming a specific fleet. See
+orchestrator ([`orchestrate.md`](orchestrate.md)) route work across whichever coding CLIs a team
+member actually has installed, without ever assuming a specific fleet. See
 [ADR 0063](../architecture/adr/0063-fleet-detection-wraps-delegate-setup.md) for why both wrap
 the upstream `delegate-setup` skill instead of reimplementing discovery and lane setup.
 
@@ -83,4 +83,4 @@ error.
 - Do not auto-execute a CLI install or login command, even with `--yes`-style flags — print it
   and stop.
 - Do not try to detect or recover from a dispatch-time failure caused by a since-deprecated
-  model in an already-approved lane — that's T2.3/T2.4's concern, not fleet setup's.
+  model in an already-approved lane — `fq-delegate` owns that failure class ([ADR 0068](../architecture/adr/0068-fq-delegate-brief-envelope-and-lane-resolution.md)), not fleet setup.

@@ -64,6 +64,9 @@ to a temp / scratch file — **never** into the repo. Wrap the task-specific bod
 The bounded job, from docs/plans/<slug>.md: what to build, the current state, what to change, and
 explicitly what to leave untouched. Implement exactly what the plan specifies — do not expand scope.
 The plan file and its Constraints / What NOT to Do sections are in the worktree; read them.
+If you come to doubt a premise the plan states as fact — an invariant, a "this never happens", a
+claim that some file stays untouched — stop and check it against the ADR or spec it derives from
+before you write code against it. A plan can be confidently wrong.
 </task>
 
 <constraints>
@@ -160,6 +163,11 @@ accepts them.**
 
 `fq-delegate` is a drop-in for the Implement phase. Its summary feeds the normal cycle unchanged:
 `/review-fq-work` against the uncommitted working tree, then `/retrospect`, then `/ship-fq-task`.
+
+The delegated implementer runs **none** of `start-task.md`'s tail — it does not record new
+decisions, update `COMPONENTS.md`, or flip the plan to `status: implemented`. Whoever drove the
+dispatch (the orchestrator, or the human who typed `/fq-delegate`) does that after re-verifying
+the diff.
 
 The orchestrator surfaces the implementer's design decisions, defensible-but-unasked turns, and
 non-blocking nitpicks in the review rather than absorbing them, and stops for scope changes instead
