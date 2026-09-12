@@ -25,8 +25,6 @@ import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@/app/utils/i18n";
 import { getPendingCount, syncMarks } from "@/app/lib/marks/sync";
 import { menuRowClassName } from "./NavPillLink";
-import { useNotifications } from "@/app/hooks/use-notifications";
-import { NotificationBell } from "@components/notifications/NotificationBell";
 import { hardNavigateIfOffline } from "@/app/utils/platform";
 import { cn } from "@/lib/utils";
 
@@ -191,8 +189,6 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
   const t = useTranslations();
   const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
-  const { data: notifData } = useNotifications();
-  const unreadCount = notifData?.unread_count ?? 0;
 
   if (menuRow) {
     return (
@@ -206,9 +202,6 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
         >
           <span className="fq-well relative w-7 h-7 justify-center rounded-lg text-[hsl(var(--control-live))] flex-none">
             <User className="size-3.5" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -end-1 size-2.5 rounded-full bg-primary border-2 border-background" />
-            )}
           </span>
           <span>{t("account", "Account")}</span>
           {expanded ? (
@@ -269,17 +262,13 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
       {/* Neutral chrome, not --accent. The account entry says who you are —
           identity — and --accent is the state accent's family, so a saturated
           avatar put a live-state colour on the one permanently-present element
-          that is never live. The unread dot keeps --primary and becomes the
-          only accent on this control, which is the point. */}
+          that is never live. */}
       <DropdownMenuTrigger asChild>
         <button
           aria-label={t("account", "Account")}
           className="fq-focus-ring fq-well relative size-7 justify-center rounded-full text-[hsl(var(--control-live))] flex-none transition-colors"
         >
           <User className="size-[17px]" strokeWidth={1.8} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -end-0.5 size-3 rounded-full bg-primary border-[2px] border-background" />
-          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" container={container}>
@@ -295,7 +284,6 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
             {t("mushaf.navLink", "Shared mushaf")}
           </Link>
         </DropdownMenuItem>
-        <NotificationBell className="md:hidden" asDropdownItem container={container} />
 
 
         <DropdownMenuItem className="cursor-pointer" asChild>

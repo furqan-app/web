@@ -59,6 +59,8 @@ const HeroReminderRow = () => {
   const locale = useLocale();
   const { openSettings } = useSettingsSidebar();
   const { data } = useQuery<{
+    general?: { time: string }[];
+    dedicated?: { time: string; planId: number }[];
     enabled: boolean;
     time: string;
   } | null>({
@@ -72,7 +74,28 @@ const HeroReminderRow = () => {
     staleTime: 60_000,
   });
 
-  const formattedTime = data?.time ? formatTimeOption(data.time, locale) : "";
+  const generalCount = data?.general?.length ?? 0;
+  const dedicatedCount = data?.dedicated?.length ?? 0;
+  const totalCount =
+    data?.general || data?.dedicated
+      ? generalCount + dedicatedCount
+      : data?.enabled
+        ? 1
+        : 0;
+
+  let reminderText = t("plans.hero.reminderSet", "Set daily reminder");
+  if (data?.enabled && totalCount > 0) {
+    if (totalCount > 1) {
+      reminderText = tIntl("plans.hero.remindersMultiple", {
+        count: toLocaleNumeral(totalCount, locale),
+      });
+    } else {
+      const singleTime =
+        data?.general?.[0]?.time ?? data?.dedicated?.[0]?.time ?? data?.time;
+      const formattedTime = singleTime ? formatTimeOption(singleTime, locale) : "";
+      reminderText = tIntl("plans.hero.reminderLabel", { time: formattedTime });
+    }
+  }
 
   return (
     <div className="pt-3 border-t border-border/60">
@@ -84,11 +107,7 @@ const HeroReminderRow = () => {
       >
         <div className="flex items-center gap-2">
           <Bell className="size-3.5 text-muted-foreground shrink-0" />
-          <span>
-            {data?.enabled
-              ? tIntl("plans.hero.reminderLabel", { time: formattedTime })
-              : t("plans.hero.reminderSet", "Set daily reminder")}
-          </span>
+          <span>{reminderText}</span>
         </div>
         <ChevronRight className="size-3 text-muted-foreground/60 rtl:rotate-180 shrink-0" />
       </button>

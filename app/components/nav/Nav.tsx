@@ -8,7 +8,6 @@ import { RecitationReturnStrip } from "@components/recitation/RecitationReturnSt
 import { ContinueReadingLink } from "./ContinueReadingLink";
 
 import { UserMenu } from "./UserMenu";
-import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
@@ -169,7 +168,6 @@ export const Nav = () => {
               )}
             </button>
           )}
-          <NotificationBell className="hidden md:flex" />
         </div>
 
         <span className="hidden md:block h-4 w-px bg-border shrink-0 order-7 mx-1" aria-hidden="true" />

@@ -13,6 +13,29 @@ const urlBase64ToUint8Array = (base64: string) => {
   return Uint8Array.from(raw.split("").map((char) => char.charCodeAt(0)));
 };
 
+export const SW_READY_TIMEOUT_MS = 4000;
+
+export function getServiceWorkerReady(
+  timeoutMs = SW_READY_TIMEOUT_MS
+): Promise<ServiceWorkerRegistration> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
+    return Promise.reject(new Error("Service worker is not supported"));
+  }
+
+  let timer: NodeJS.Timeout | number;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error("Service worker ready timed out"));
+    }, timeoutMs);
+  });
+
+  return Promise.race([navigator.serviceWorker.ready, timeoutPromise]).finally(
+    () => {
+      clearTimeout(timer);
+    }
+  );
+}
+
 /** Web Push permission + subscribe/unsubscribe flow. Must be called from a user gesture; only works in an installed PWA on iOS. */
 export const usePushSubscription = () => {
   const [supported, setSupported] = useState(false);
@@ -29,9 +52,14 @@ export const usePushSubscription = () => {
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
       setSupported(true);
       if ("Notification" in window) setPermission(Notification.permission);
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-      setSubscribed(!!subscription);
+      try {
+        const registration = await getServiceWorkerReady();
+        const subscription = await registration.pushManager.getSubscription();
+        setSubscribed(!!subscription);
+      } catch {
+        // Service worker not ready or timed out (e.g. disabled in development)
+        // Keep subscribed false and avoid hanging promises
+      }
     };
     check();
   }, []);
@@ -46,7 +74,7 @@ export const usePushSubscription = () => {
       setPermission(result);
       if (result !== "granted") return false;
 
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await getServiceWorkerReady();
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
@@ -69,7 +97,7 @@ export const usePushSubscription = () => {
   const unsubscribe = useCallback(async () => {
     setLoading(true);
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await getServiceWorkerReady();
       const subscription = await registration.pushManager.getSubscription();
       if (!subscription) return true;
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
-import { ChevronDown, MoreVertical, Pause, Pencil, Play, Target, XCircle, CheckCircle2 } from "lucide-react";
+import { ChevronDown, MoreVertical, Pause, Pencil, Play, Target, XCircle, CheckCircle2, Bell, Plus, X } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
 import { usePlans } from "@hooks/use-plans";
@@ -15,7 +15,8 @@ import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { PlansTodayHero } from "./PlansTodayHero";
 import { AddPlanButton } from "./AddPlanButton";
 import { PlansBrowseDialog, type PlansBrowseView } from "./PlansBrowseDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { TimeCombobox, formatTimeOption } from "@/components/ui/time-combobox";
 import { fetchChapters } from "@/app/utils/recitation-api";
 import {
   quantityAmount,
@@ -314,6 +315,9 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
 
 const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   const t = useTranslations();
+  const tIntl = useNextIntlTranslations();
+  const locale = useLocale();
+  const queryClient = useQueryClient();
   const { setStatus } = usePlans();
   const [editOpen, setEditOpen] = useState(false);
 
@@ -322,6 +326,48 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   const statusUi = STATUS_LABEL[plan.status];
   const actions = STATUS_ACTIONS[plan.status];
   const editView = EDIT_VIEW_FOR_TEMPLATE[plan.template_key];
+
+  const { data: reminderData } = useQuery<{
+    dedicated?: { planId: number; time: string }[];
+  }>({
+    queryKey: ["daily-wird-reminder"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications/daily-reminder");
+      if (!res.ok) throw new Error("Failed to fetch reminder preference");
+      const json = await res.json();
+      return json.data;
+    },
+  });
+
+  const dedicatedReminder = reminderData?.dedicated?.find((d) => d.planId === plan.id);
+  const hasDedicatedReminder = Boolean(dedicatedReminder);
+  const dedicatedTime = dedicatedReminder?.time ?? "20:00";
+  const formattedTime = hasDedicatedReminder ? formatTimeOption(dedicatedTime, locale) : "";
+
+  const { mutate: updateDedicatedReminder } = useMutation({
+    mutationFn: async (payload: { planId: number; time?: string; enabled: boolean }) => {
+      const res = await fetch("/api/notifications/daily-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "dedicated",
+          planId: payload.planId,
+          time: payload.time ?? "20:00",
+          enabled: payload.enabled,
+          timezone:
+            typeof Intl !== "undefined"
+              ? Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+              : "UTC",
+          locale,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to update dedicated reminder");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily-wird-reminder"] });
+    },
+  });
 
   return (
     <div className={cn("flex flex-col gap-3.5 rounded-2xl border border-border bg-card p-4", CARD_SHADOW)}>
@@ -400,6 +446,64 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
           initialPlan={plan}
         />
       ) : null}
+
+      {plan.status === "active" && (
+        <div className="flex items-center justify-between border-t border-dashed border-border/70 pt-2.5 mt-1 text-xs">
+          <div className="flex items-center gap-2 text-muted-foreground min-w-0 flex-1">
+            <Bell className="size-3.5 shrink-0 text-muted-foreground" />
+            {hasDedicatedReminder ? (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-medium text-foreground">
+                  {tIntl("plans.dedicatedReminder.badge", {
+                    time: formattedTime,
+                  })}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  ({t("plans.dedicatedReminder.generalNotice", "Excluded from general reminders")})
+                </span>
+              </div>
+            ) : (
+              <span className="truncate">
+                {t("plans.dedicatedReminder.includedInGeneral", "Included in general reminders")}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 flex-none ms-2">
+            {hasDedicatedReminder ? (
+              <>
+                <TimeCombobox
+                  value={dedicatedTime}
+                  onChange={(newTime) =>
+                    updateDedicatedReminder({ planId: plan.id, time: newTime, enabled: true })
+                  }
+                  className="w-32"
+                  triggerTestId={`dedicated-reminder-time-trigger-${plan.id}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => updateDedicatedReminder({ planId: plan.id, enabled: false })}
+                  className="fq-focus-ring min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive flex items-center justify-center rounded-lg transition-colors"
+                  aria-label={t("plans.dedicatedReminder.remove", "Remove dedicated reminder")}
+                >
+                  <X className="size-3.5" />
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  updateDedicatedReminder({ planId: plan.id, time: "20:00", enabled: true })
+                }
+                className="fq-focus-ring min-h-[44px] inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-foreground hover:bg-accent/50 transition-colors"
+              >
+                <Plus className="size-3" />
+                <span>{t("plans.dedicatedReminder.set", "Set dedicated time")}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <PlanHistorySection planId={plan.id} />
     </div>

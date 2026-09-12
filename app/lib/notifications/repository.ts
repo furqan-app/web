@@ -4,25 +4,11 @@ import type { NotificationChannelKey } from "@/app/constants/notifications";
 import type {
   CreateNotificationInput,
   DeliveryResult,
-  NotificationRow,
   NotificationStore,
   ScheduledReminderRow,
 } from "@/app/lib/notifications/types";
 
 const STALE_LEASE_MS = 10 * 60 * 1000;
-
-const toNotificationRow = (row: {
-  id: number;
-  user_id: number;
-  type: string;
-  payload: unknown;
-  channels: unknown;
-  read_at: Date | null;
-  created_at: Date;
-}): NotificationRow => ({
-  ...row,
-  channels: (row.channels ?? []) as string[],
-});
 
 const toReminderRow = (row: {
   id: number;
@@ -35,12 +21,14 @@ const toReminderRow = (row: {
   timezone: string | null;
   locale?: string | null;
   status: string;
+  dedupe_key?: string | null;
   updated_at?: Date;
 }): ScheduledReminderRow => ({
   ...row,
   channels: (row.channels as NotificationChannelKey[] | null) ?? null,
   locale: row.locale ?? null,
   status: row.status,
+  dedupe_key: row.dedupe_key ?? null,
   updated_at: row.updated_at,
 });
 
@@ -74,43 +62,6 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
       create: { notification_id: notificationId, channel, attempts: 1, ...data },
       update: { attempts: { increment: 1 }, ...data },
     });
-  },
-
-  listNotifications: async ({ userId, cursor, limit, unreadOnly }) => {
-    const rows = await prisma.notification.findMany({
-      where: {
-        user_id: userId,
-        ...(cursor ? { id: { lt: cursor } } : {}),
-        ...(unreadOnly ? { read_at: null } : {}),
-      },
-      orderBy: { id: "desc" },
-      take: limit + 1,
-    });
-    const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(toNotificationRow);
-    return { items, nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null };
-  },
-
-  countUnread: (userId) => prisma.notification.count({ where: { user_id: userId, read_at: null } }),
-
-  markRead: async (userId, id) => {
-    // Idempotent: an already-read row is a successful no-op, not a 404 — the
-    // in-app feed calls this on every click, including re-clicks of a
-    // previously-read item.
-    const existing = await prisma.notification.findFirst({ where: { id, user_id: userId } });
-    if (!existing) return false;
-    if (existing.read_at) return true;
-
-    await prisma.notification.update({ where: { id }, data: { read_at: new Date() } });
-    return true;
-  },
-
-  markAllRead: async (userId) => {
-    const { count } = await prisma.notification.updateMany({
-      where: { user_id: userId, read_at: null },
-      data: { read_at: new Date() },
-    });
-    return count;
   },
 
   getPushSubscriptions: async (userId) => {
@@ -241,6 +192,18 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
       where: { dedupe_key: dedupeKey },
     });
     return row ? toReminderRow(row) : null;
+  },
+
+  listScheduledRemindersForUser: async (userId: number, type?: string) => {
+    const rows = await prisma.scheduledNotification.findMany({
+      where: {
+        user_id: userId,
+        ...(type ? { type } : {}),
+        status: "pending",
+      },
+      orderBy: { scheduled_for: "asc" },
+    });
+    return rows.map(toReminderRow);
   },
 
   cancelScheduledReminder: async (dedupeKey: string) => {
