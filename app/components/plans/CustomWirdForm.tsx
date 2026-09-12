@@ -326,6 +326,16 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     chapters,
   ]);
 
+  // Keep paceAmount within its content-bound max when the range shrinks or the
+  // period switches from week -> day (both lower the cap); a stale value here
+  // would submit a pace the wird can never actually need (#629).
+  useEffect(() => {
+    const paceMax = pacePeriod === "week" ? totalUnits * 7 : totalUnits;
+    if (paceAmount > paceMax) {
+      setPaceAmount(paceMax);
+    }
+  }, [totalUnits, pacePeriod, paceAmount]);
+
   const estimate = useMemo(() => {
     return computeCadenceEstimate({
       totalUnits,
@@ -818,6 +828,7 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
                 value={paceAmount}
                 onChange={setPaceAmount}
                 min={1}
+                max={pacePeriod === "week" ? totalUnits * 7 : totalUnits}
                 step={1}
               />
             </div>
@@ -885,6 +896,8 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
                   count: estimate.numericValue,
                   n: toLocaleNumeral(estimate.numericValue, locale),
                   amount: toLocaleNumeral(estimate.numericValue, locale),
+                  daysCount: estimate.estimatedDays ?? 0,
+                  daysN: toLocaleNumeral(estimate.estimatedDays ?? 0, locale),
                   pace:
                     estimate.unit === "verse"
                       ? tIntl("plans.custom.versesPerDay", {

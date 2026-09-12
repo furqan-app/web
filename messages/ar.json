@@ -449,7 +449,8 @@
       "pagesPerWeek": "{count, plural, one {{n} صفحة/أسبوع} two {{n} صفحتان/أسبوع} few {{n} صفحات/أسبوع} many {{n} صفحة/أسبوع} other {{n} صفحة/أسبوع}}",
       "estimate": {
         "days": "≈ {count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}} للإتمام",
-        "pace": "≈ {pace} (يُعاد حسابه تلقائيًا)"
+        "pace": "≈ {pace} (يُعاد حسابه تلقائيًا)",
+        "paceWithDays": "≈ {pace} (يُنجز في {daysCount, plural, zero {{daysN} يوم} one {يوم واحد} two {يومين} few {{daysN} أيام} many {{daysN} يومًا} other {{daysN} يوم}})"
       },
       "rangeFrozen": "تم تثبيت المقدار لتسجيل قراءات سابقة",
       "verseWeeklyUnavailable": "المعدل الأسبوعي غير متاح للآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء",
@@ -526,25 +527,6 @@
       "description": "المهام المطلوبة في هذه الصفحة من خططك النشطة.",
       "completed": "تم إنجاز ورد اليوم في هذه الصفحة",
       "viewAllPlans": "كل الخطط والسجل"
-    },
-    "detection": {
-      "readingOfferTitle": "أتممت ورد القراءة اليوم؟",
-      "listeningOfferTitle": "أتممت ورد الاستماع اليوم؟",
-      "memorizeOfferTitle": "أتممت ورد الحفظ اليوم؟",
-      "reviewOfferTitle": "أتممت ورد المراجعة اليوم؟",
-      "confirm": "تأكيد",
-      "dismiss": "ليس الآن",
-      "autoWriteNoticeReading": "تم تسجيل ورد القراءة تلقائياً",
-      "autoWriteNoticeListening": "تم تسجيل ورد الاستماع تلقائياً",
-      "autoWriteNoticeGeneric": "تم تسجيل إنجاز الورد تلقائياً",
-      "undo": "تراجع",
-      "autoRecordedBadge": "سُجّل تلقائياً",
-      "autoRecordedHint": "سُجّل هذا الإنجاز تلقائياً بناءً على القراءة أو الاستماع.",
-      "pagesRemaining": "{count, plural, zero {اكتملت جميع الصفحات} one {تبقى صفحة واحدة ({count})} two {تبقت صفحتان ({count})} few {تبقت {count} صفحات} many {تبقت {count} صفحة} other {تبقت {count} صفحة}}"
-    },
-    "settings": {
-      "autoWriteTitle": "التأشير التلقائي للورد",
-      "autoWriteDescription": "تسجيل إنجاز ورد القراءة أو الاستماع تلقائياً فور استيفاء وقت القراءة أو التلاوة دون طلب تأكيد."
     }
   },
   "recitation": {
