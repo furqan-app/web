@@ -483,6 +483,27 @@
     width: 0px;
   }
 
+  /* Quiet reveal pulse for linked settings sections (Issue #600) */
+  .fq-focus-pulse {
+    animation: fq-focus-pulse-anim 1.2s ease-out forwards;
+    border-radius: 0.75rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fq-focus-pulse {
+      animation: none;
+    }
+  }
+
+  @keyframes fq-focus-pulse-anim {
+    0% {
+      box-shadow: 0 0 0 2px hsl(var(--primary) / 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 2px transparent;
+    }
+  }
+
   /* Smooth, discreet scrollbar for reading sheets and panels */
   .fq-scroll-nice {
     overflow-y: auto;

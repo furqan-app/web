@@ -29,6 +29,30 @@ const lookup = (messages: Record<string, unknown>, key: string): string | undefi
   return typeof value === "string" ? value : undefined;
 };
 
+const lookupObject = (
+  messages: Record<string, unknown>,
+  key: string
+): Record<string, string> | undefined => {
+  const value = key.split(".").reduce<unknown>((acc, segment) => {
+    if (acc && typeof acc === "object") return (acc as Record<string, unknown>)[segment];
+    return undefined;
+  }, messages);
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, string>;
+  }
+  return undefined;
+};
+
+const pluralRulesCache = new Map<string, Intl.PluralRules>();
+const getPluralRules = (locale: string): Intl.PluralRules => {
+  let rules = pluralRulesCache.get(locale);
+  if (!rules) {
+    rules = new Intl.PluralRules(locale);
+    pluralRulesCache.set(locale, rules);
+  }
+  return rules;
+};
+
 const interpolate = (template: string, vars?: Record<string, string | number>): string => {
   if (!vars) return template;
   return Object.entries(vars).reduce(
@@ -56,6 +80,20 @@ export const buildRenderContext = (locale: string): RenderContext => {
       const raw =
         lookup(messages, key) ?? lookup(loadMessages(DEFAULT_LOCALE) ?? {}, key) ?? fallback;
       return interpolate(raw, vars);
+    },
+    tPlural: (key, count, fallback, vars) => {
+      const pluralMap =
+        lookupObject(messages, key) ??
+        lookupObject(loadMessages(DEFAULT_LOCALE) ?? {}, key);
+
+      if (!pluralMap) {
+        return interpolate(fallback, vars);
+      }
+
+      const category = getPluralRules(safeLocale).select(count);
+      const template = pluralMap[category] ?? pluralMap.other ?? fallback;
+
+      return interpolate(template, vars);
     },
   };
 };

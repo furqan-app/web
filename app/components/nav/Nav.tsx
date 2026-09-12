@@ -8,11 +8,11 @@ import { RecitationReturnStrip } from "@components/recitation/RecitationReturnSt
 import { ContinueReadingLink } from "./ContinueReadingLink";
 
 import { UserMenu } from "./UserMenu";
-import { NotificationBell } from "@components/notifications/NotificationBell";
 import { SettingsSidebar } from "../SettingsSidebar";
 import { FurqanLogo } from "./FurqanLogo";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useSidebar } from "@/app/contexts/SidebarContext";
+import { useSettingsSidebar } from "@/app/contexts/SettingsSidebarContext";
 import { useIsDesktopUp } from "@/app/hooks/use-is-desktop-up";
 import { useIsReaderRoute } from "@/app/hooks/use-is-reader-route";
 import { useIsomorphicLayoutEffect } from "@/app/hooks/use-isomorphic-layout-effect";
@@ -25,13 +25,13 @@ export const Nav = () => {
   const { overlayVisible } = useNavOverlay();
   const isDesktopUp = useIsDesktopUp();
   const { open, setOpen, currentSurah, currentJuzHizb } = useSidebar();
+  const { open: settingsOpen, setOpen: setSettingsOpen, openSettings } = useSettingsSidebar();
   const locale = useLocale();
   const isRTL = getLanguageDirection(locale) === "rtl";
   const isOnPagesRoute = useIsReaderRoute();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
     setFullscreenEnabled(!!document.fullscreenEnabled);
@@ -168,7 +168,6 @@ export const Nav = () => {
               )}
             </button>
           )}
-          <NotificationBell className="hidden md:flex" />
         </div>
 
         <span className="hidden md:block h-4 w-px bg-border shrink-0 order-7 mx-1" aria-hidden="true" />
@@ -178,7 +177,8 @@ export const Nav = () => {
             hovering it. */}
         <button
           type="button"
-          onClick={() => setSettingsOpen(true)}
+          data-testid="nav-settings-button"
+          onClick={() => openSettings()}
           aria-label={t("settings", "Settings")}
           className="fq-chrome-btn-live fq-focus-ring flex size-7 order-8 shrink-0"
         >

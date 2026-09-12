@@ -5,6 +5,11 @@ import { getNotificationDeps } from "@/app/lib/notifications/deps";
 import { dispatchNotification } from "@/app/lib/notifications/dispatch";
 import { nextOccurrence } from "@/app/lib/notifications/reminders";
 
+import {
+  resolveGeneralWirdDispatch,
+  resolveDedicatedWirdDispatch,
+} from "@/app/lib/notifications/wird-reminder-resolver";
+
 export const dynamic = "force-dynamic";
 
 const BATCH_LIMIT = 50;
@@ -43,12 +48,78 @@ const handle = async (request: NextRequest) => {
   const claimed = await deps.store.claimDueReminders({ now, limit: BATCH_LIMIT, claimId });
 
   let dispatched = 0;
+  let skipped = 0;
   let failed = 0;
 
   for (const reminder of claimed) {
-    // No per-user locale column exists yet (deferred, see plan) — default
-    // "ar" per the app's i18n decision. Email is looked up so the email
-    // channel has something to send to; cron requests have no session.
+    const locale = reminder.locale ?? "ar";
+
+    // For plans.daily_reminder, resolve live assignments and check skip guard (D2, D3).
+    let resolvedPayload: unknown = reminder.payload;
+    if (reminder.type === "plans.daily_reminder") {
+      try {
+        const payload = reminder.payload as { planId?: number; time?: string } | null;
+        let planId = payload?.planId;
+        if (planId === undefined && reminder.dedupe_key) {
+          const match = reminder.dedupe_key.match(/:plan:(\d+)$/);
+          if (match) {
+            planId = Number(match[1]);
+          }
+        }
+
+        const resolution =
+          planId !== undefined
+            ? await resolveDedicatedWirdDispatch(
+                reminder.user_id,
+                planId,
+                reminder.timezone ?? "UTC",
+                now
+              )
+            : await resolveGeneralWirdDispatch(
+                reminder.user_id,
+                reminder.timezone ?? "UTC",
+                now
+              );
+        if (!resolution.shouldSend) {
+          deps.logger.info("notifications.cron.wird_reminder_skipped", {
+            reminderId: reminder.id,
+            userId: reminder.user_id,
+            reason: resolution.reason,
+          });
+          skipped++;
+          try {
+            if (reminder.recurrence === "daily") {
+              const next = nextOccurrence(reminder.scheduled_for, reminder.recurrence, reminder.timezone, now);
+              await deps.store.rescheduleReminder(reminder.id, next, null, reminder.updated_at);
+            } else {
+              await deps.store.completeReminder(reminder.id, now);
+            }
+          } catch (rescheduleError) {
+            const message = rescheduleError instanceof Error ? rescheduleError.message : String(rescheduleError);
+            deps.logger.error("notifications.cron.reschedule_failed", { reminderId: reminder.id, error: message });
+          }
+          continue;
+        }
+        resolvedPayload = resolution.payload;
+      } catch (resolutionError) {
+        const message = resolutionError instanceof Error ? resolutionError.message : String(resolutionError);
+        deps.logger.error("notifications.cron.wird_resolver_failed", { reminderId: reminder.id, error: message });
+        failed++;
+        try {
+          if (reminder.recurrence === "daily") {
+            const next = nextOccurrence(reminder.scheduled_for, reminder.recurrence, reminder.timezone, now);
+            await deps.store.rescheduleReminder(reminder.id, next, message, reminder.updated_at);
+          } else {
+            await deps.store.failReminder(reminder.id, message);
+          }
+        } catch (rescheduleError) {
+          const resErr = rescheduleError instanceof Error ? rescheduleError.message : String(rescheduleError);
+          deps.logger.error("notifications.cron.reschedule_failed", { reminderId: reminder.id, error: resErr });
+        }
+        continue;
+      }
+    }
+
     let recipientEmail: string | null = null;
     try {
       const recipient = await deps.store.getRecipient(reminder.user_id);
@@ -56,9 +127,9 @@ const handle = async (request: NextRequest) => {
 
       await dispatchNotification(
         {
-          recipient: { userId: reminder.user_id, email: recipientEmail, locale: "ar" },
+          recipient: { userId: reminder.user_id, email: recipientEmail, locale },
           type: reminder.type,
-          payload: reminder.payload,
+          payload: resolvedPayload,
           channels: reminder.channels ?? undefined,
         },
         deps
@@ -77,7 +148,7 @@ const handle = async (request: NextRequest) => {
     try {
       if (reminder.recurrence === "daily") {
         const next = nextOccurrence(reminder.scheduled_for, reminder.recurrence, reminder.timezone, now);
-        await deps.store.rescheduleReminder(reminder.id, next);
+        await deps.store.rescheduleReminder(reminder.id, next, null, reminder.updated_at);
       } else {
         await deps.store.completeReminder(reminder.id, now);
       }
@@ -87,7 +158,7 @@ const handle = async (request: NextRequest) => {
     }
   }
 
-  return jsonResponse({ data: { claimed: claimed.length, dispatched, failed } });
+  return jsonResponse({ data: { claimed: claimed.length, dispatched, skipped, failed } });
 };
 
 export const POST = handle;

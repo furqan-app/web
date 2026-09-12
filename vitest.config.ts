@@ -16,7 +16,17 @@ export default defineConfig({
       "@types": path.resolve(__dirname, "app/types"),
     },
   },
+  oxc: {
+    jsx: {
+      runtime: "automatic",
+    },
+  },
   test: {
-    include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}", "scripts/**/*.test.mjs"],
+    include: [
+      "app/**/*.test.{ts,tsx}",
+      "lib/**/*.test.{ts,tsx}",
+      "components/**/*.test.{ts,tsx}",
+      "scripts/**/*.test.mjs",
+    ],
   },
 });

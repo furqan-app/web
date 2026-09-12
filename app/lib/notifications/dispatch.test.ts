@@ -24,16 +24,13 @@ const makeStore = (): NotificationStore => {
     recordDelivery: vi.fn(async (id, channel, result) => {
       deliveries[`${id}:${channel}`] = result;
     }),
-    listNotifications: vi.fn(),
-    countUnread: vi.fn(),
-    markRead: vi.fn(),
-    markAllRead: vi.fn(),
     getPushSubscriptions: vi.fn(async () => []),
     savePushSubscription: vi.fn(),
     deletePushSubscriptionByHash: vi.fn(),
     touchPushSubscription: vi.fn(),
     getRecipient: vi.fn(),
     upsertScheduledReminder: vi.fn(),
+    listScheduledRemindersForUser: vi.fn(async () => []),
     claimDueReminders: vi.fn(),
     completeReminder: vi.fn(),
     rescheduleReminder: vi.fn(),
@@ -46,43 +43,57 @@ const baseDeps = (registry: ChannelRegistry): DispatchDeps => ({
   registry,
   clock: () => new Date("2026-08-03T00:00:00Z"),
   logger: fakeLogger,
-  renderContext: () => ({ locale: "en", t: (_k, fallback) => fallback }),
+  renderContext: () => ({
+    locale: "en",
+    t: (_k, fallback) => fallback,
+    tPlural: (_k, _c, fallback) => fallback,
+  }),
 });
 
 describe("dispatchNotification", () => {
   it("persists once and invokes every selected channel", async () => {
-    const inApp = { key: "in_app" as const, send: vi.fn(async () => ({ status: "sent" as const })) };
     const push = { key: "push" as const, send: vi.fn(async () => ({ status: "sent" as const })) };
-    const deps = baseDeps({ in_app: inApp, push });
+    const deps = baseDeps({ push });
 
     const outcome = await dispatchNotification(
-      { recipient, type: "plans.daily_reminder", payload: { planId: 1, templateKey: "x", templateLabel: "X" } },
+      {
+        recipient,
+        type: "plans.daily_reminder",
+        payload: {
+          pendingCount: 1,
+          primary: { unit: "page", rangeStart: 1, rangeEnd: 5 },
+          targetPage: 1,
+          targetUrlKind: "page",
+        },
+      },
       deps
     );
 
     expect(deps.store.createNotification).toHaveBeenCalledTimes(1);
-    expect(inApp.send).toHaveBeenCalledTimes(1);
     expect(push.send).toHaveBeenCalledTimes(1);
     expect(outcome.notificationId).toBe(42);
-    expect(outcome.results.in_app).toEqual({ status: "sent" });
     expect(outcome.results.push).toEqual({ status: "sent" });
   });
 
   it("one failing channel does not block or fail the others", async () => {
-    const inApp = { key: "in_app" as const, send: vi.fn(async () => ({ status: "sent" as const })) };
-    const push = {
-      key: "push" as const,
+    const push = { key: "push" as const, send: vi.fn(async () => ({ status: "sent" as const })) };
+    const email = {
+      key: "email" as const,
       send: vi.fn(async () => ({ status: "failed" as const, error: "boom" })),
     };
-    const deps = baseDeps({ in_app: inApp, push });
+    const deps = baseDeps({ push, email });
 
     const outcome = await dispatchNotification(
-      { recipient, type: "plans.daily_reminder", payload: { planId: 1, templateKey: "x", templateLabel: "X" } },
+      {
+        recipient,
+        type: "system.test",
+        payload: {},
+      },
       deps
     );
 
-    expect(outcome.results.in_app).toEqual({ status: "sent" });
-    expect(outcome.results.push).toEqual({ status: "failed", error: "boom" });
+    expect(outcome.results.push).toEqual({ status: "sent" });
+    expect(outcome.results.email).toEqual({ status: "failed", error: "boom" });
   });
 
   it("an unknown type returns null notificationId without throwing", async () => {

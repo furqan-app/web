@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Furqan • Awrad Daily Wird Reminder Mockup Gallery (#600)</title>
+  <style>
+    /* ==========================================================================
+       THEME TOKENS & SYSTEM FOUNDATION
+       Directly transcribed from app/globals.css and docs/standards/styling.md
+       ========================================================================== */
+    :root {
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --radius-full: 9999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Arabic", "Amiri", sans-serif;
+      --transition: all 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #0b1016;
+      color: #ebe8df;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 80px;
+      line-height: 1.5;
+    }
+
+    /* --------------------------------------------------------------------------
+       THEME SCOPES (Light, Gold, Dark)
+       -------------------------------------------------------------------------- */
+    .theme-light {
+      --background: 210 36% 95%;
+      --foreground: 209 36% 14%;
+      --card: 0 0% 100%;
+      --border: 210 31% 88%;
+      --primary: 169 88% 26%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 210 20% 92%;
+      --muted-foreground: 208 18% 40%;
+      --accent: 169 50% 92%;
+      --accent-foreground: 169 88% 26%;
+      --surface-rim: inset 0 1px 0 hsl(0 0% 100%);
+      --popover-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.12), 0 0 0 1px hsl(210 31% 88%);
+      --item-hover: hsl(210 25% 96%);
+    }
+
+    .theme-gold {
+      --background: 43 48% 87%;
+      --foreground: 39 25% 13%;
+      --card: 46 52% 96%;
+      --border: 43 40% 79%;
+      --primary: 168 72% 24%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 43 35% 88%;
+      --muted-foreground: 39 18% 31%;
+      --accent: 168 40% 90%;
+      --accent-foreground: 168 72% 24%;
+      --surface-rim: inset 0 1px 0 hsl(46 52% 100%);
+      --popover-shadow: 0 12px 28px -6px rgba(42, 36, 30, 0.15), 0 0 0 1px hsl(43 40% 79%);
+      --item-hover: hsl(44 45% 93%);
+    }
+
+    .theme-dark {
+      --background: 213 31% 7%;
+      --foreground: 45 18% 91%;
+      --card: 213 21% 10%;
+      --border: 210 26% 20%;
+      --primary: 169 88% 26%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 213 21% 14%;
+      --muted-foreground: 206 9% 56%;
+      --accent: 169 88% 12%;
+      --accent-foreground: 169 80% 65%;
+      /* Warm catch-light rim along top edge (ADR 0032) — NO alpha, NO drop shadows */
+      --surface-rim: inset 0 1px 0 hsl(210 20% 28%);
+      --popover-shadow: inset 0 1px 0 hsl(210 20% 28%), 0 16px 36px rgba(0, 0, 0, 0.7);
+      --item-hover: hsl(213 20% 15%);
+    }
+
+    /* --------------------------------------------------------------------------
+       SCROLL CONTAINER (fq-scroll-nice standard)
+       -------------------------------------------------------------------------- */
+    .fq-scroll-nice {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--border)) transparent;
+    }
+    .fq-scroll-nice::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .fq-scroll-nice::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .fq-scroll-nice::-webkit-scrollbar-thumb {
+      background: hsl(var(--border));
+      border-radius: var(--radius-full);
+    }
+    .fq-scroll-nice::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--muted-foreground));
+    }
+
+    /* ==========================================================================
+       CONTROL DOCK (Header & Interactive Switchers)
+       ========================================================================== */
+    .control-dock {
+      width: 100%;
+      max-width: 1180px;
+      background: #151a20;
+      border: 1px solid #242c38;
+      border-radius: var(--radius-xl);
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      box-shadow: inset 0 1px 0 hsl(210 20% 28%), 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .dock-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .dock-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dock-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dock-tag {
+      background: hsl(169 88% 26%);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .seg-group {
+      display: flex;
+      background: #0b1016;
+      border: 1px solid #242c38;
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 2px;
+    }
+    .seg-btn {
+      background: transparent;
+      border: none;
+      color: #8e98a5;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .seg-btn:hover {
+      color: #fff;
+    }
+    .seg-btn.active {
+      background: hsl(169 88% 26%);
+      color: #fff;
+    }
+    .dock-legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      font-size: 12px;
+      color: #9ba3af;
+      border-top: 1px solid #242c38;
+      padding-top: 14px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .legend-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: hsl(169 88% 26%);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       THEME SECTION & SHOWCASE CONTAINER
+       ========================================================================== */
+    .theme-container {
+      width: 100%;
+      max-width: 1180px;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-xl);
+      padding: 32px 24px;
+      margin-bottom: 36px;
+      box-shadow: var(--surface-rim), 0 12px 36px rgba(0, 0, 0, 0.3);
+      transition: var(--transition);
+    }
+    .theme-container.hidden {
+      display: none;
+    }
+    .theme-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid hsl(var(--border));
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .theme-title-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .theme-label {
+      font-size: 18px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .swatch-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+      padding: 2px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid hsl(var(--border));
+    }
+    .swatch-pip {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: hsl(var(--primary));
+    }
+
+    /* ==========================================================================
+       GRID & CARD LAYOUTS
+       ========================================================================== */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .showcase-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--surface-rim);
+      position: relative;
+    }
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid hsl(var(--border) / 0.6);
+      padding-bottom: 10px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .card-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+    .card-caption {
+      font-size: 11.5px;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.45;
+      margin-top: -4px;
+    }
+
+    /* ==========================================================================
+       SETTINGS SIDEBAR SECTION COMPONENTS
+       ========================================================================== */
+    .sidebar-slice {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .sidebar-section-header {
+      padding: 10px 14px;
+      background: hsl(var(--muted) / 0.5);
+      border-bottom: 1px solid hsl(var(--border));
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(var(--muted-foreground));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .fq-section-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border-bottom: 1px solid hsl(var(--border) / 0.6);
+    }
+    .fq-section-row:last-child {
+      border-bottom: none;
+    }
+    .row-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .row-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      display: block;
+      line-height: 1.3;
+    }
+    .row-desc {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .row-desc.alert-desc {
+      color: hsl(38 92% 50%);
+    }
+
+    /* Switch Component (Radix Switch Mirror) */
+    .switch-wrap {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+    }
+    .switch {
+      width: 38px;
+      height: 22px;
+      background: hsl(var(--muted));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-full);
+      position: relative;
+      cursor: pointer;
+      transition: background 150ms ease, border-color 150ms ease;
+    }
+    .switch.active {
+      background: hsl(var(--primary));
+      border-color: hsl(var(--primary));
+    }
+    .switch.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .switch-thumb {
+      width: 18px;
+      height: 18px;
+      background: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    /* In RTL: switch thumb starts at left (which is end) or flips */
+    [dir="rtl"] .switch-thumb {
+      right: 1px;
+      left: auto;
+    }
+    .switch.active .switch-thumb {
+      transform: translateX(16px);
+    }
+    [dir="rtl"] .switch.active .switch-thumb {
+      transform: translateX(-16px);
+    }
+
+    /* ==========================================================================
+       15-MINUTE TIME COMBOBOX COMPONENT
+       ========================================================================== */
+    .time-picker-row {
+      padding: 12px 16px;
+      background: hsl(var(--muted) / 0.25);
+      border-top: 1px dashed hsl(var(--border));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .time-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .combobox-trigger {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      cursor: pointer;
+      box-shadow: var(--surface-rim);
+      transition: var(--transition);
+      min-width: 130px;
+    }
+    .combobox-trigger:hover:not(:disabled) {
+      background: var(--item-hover);
+      border-color: hsl(var(--primary) / 0.5);
+    }
+    .combobox-trigger:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .chevrons-icon {
+      width: 14px;
+      height: 14px;
+      opacity: 0.6;
+      flex-shrink: 0;
+    }
+
+    /* Popover Menu Container */
+    .popover-container {
+      width: 100%;
+      max-width: 240px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-lg);
+      box-shadow: var(--popover-shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .popover-search-box {
+      padding: 8px 12px;
+      border-bottom: 1px solid hsl(var(--border));
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: hsl(var(--muted) / 0.3);
+    }
+    .popover-search-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 12px;
+      color: hsl(var(--foreground));
+    }
+    .popover-search-input::placeholder {
+      color: hsl(var(--muted-foreground));
+    }
+    .popover-list {
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .popover-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      color: hsl(var(--foreground));
+      cursor: pointer;
+      transition: background 120ms ease;
+    }
+    .popover-item:hover {
+      background: var(--item-hover);
+    }
+    .popover-item.selected {
+      background: hsl(var(--accent));
+      color: hsl(var(--accent-foreground));
+      font-weight: 700;
+    }
+    .check-icon {
+      width: 14px;
+      height: 14px;
+      color: hsl(var(--primary));
+    }
+
+    /* ==========================================================================
+       /PLANS HERO CARD ENTRY ROW
+       ========================================================================== */
+    .hero-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--surface-rim), 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .hero-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .hero-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .hero-sub {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 2px;
+    }
+    .hero-streak-box {
+      text-align: end;
+    }
+    .hero-streak-num {
+      font-size: 20px;
+      font-weight: 900;
+      color: hsl(var(--primary));
+      line-height: 1;
+    }
+    .hero-streak-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: hsl(var(--muted-foreground));
+    }
+    .hero-wird-row {
+      background: hsl(var(--muted) / 0.4);
+      border: 1px solid hsl(var(--border) / 0.8);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hero-wird-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hero-wird-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .hero-wird-range {
+      font-size: 11.5px;
+      color: hsl(var(--muted-foreground));
+    }
+    .hero-check-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid hsl(var(--primary));
+      background: transparent;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: hsl(var(--primary));
+    }
+
+    /* The Quiet Hero Reminder Entry Row */
+    .hero-reminder-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid hsl(var(--border) / 0.6);
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .hero-reminder-row:hover .reminder-text {
+      color: hsl(var(--primary));
+    }
+    .reminder-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .reminder-bell {
+      width: 14px;
+      height: 14px;
+      color: hsl(var(--muted-foreground));
+    }
+    .reminder-text {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      transition: color 140ms ease;
+    }
+    .reminder-action {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: hsl(var(--primary));
+    }
+    .chevron-mini {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* ==========================================================================
+       NOTIFICATION SURFACE RENDERING
+       ========================================================================== */
+    .notif-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    /* Web Push OS Banner Style */
+    .os-banner {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      box-shadow: var(--popover-shadow);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      position: relative;
+    }
+    .app-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: hsl(var(--primary));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 14px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .banner-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .banner-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .banner-app-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: hsl(var(--muted-foreground));
+    }
+    .banner-time {
+      font-size: 10px;
+      color: hsl(var(--muted-foreground));
+    }
+    .banner-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+      margin-top: 2px;
+    }
+    .banner-text {
+      font-size: 12px;
+      color: hsl(var(--foreground) / 0.85);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+    .banner-deeplink {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: hsl(var(--primary));
+      text-decoration: none;
+    }
+
+    /* In-App Feed Row Style */
+    .in-app-row {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .in-app-unread-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: hsl(var(--primary));
+      flex-shrink: 0;
+    }
+    .in-app-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .in-app-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .in-app-desc {
+      font-size: 11.5px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 1px;
+    }
+
+    /* Skip Guard Notice Banner */
+    .skip-guard-box {
+      background: hsl(169 88% 26% / 0.08);
+      border: 1px dashed hsl(var(--primary) / 0.4);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11.5px;
+      color: hsl(var(--foreground));
+    }
+    .skip-guard-icon {
+      width: 18px;
+      height: 18px;
+      color: hsl(var(--primary));
+      flex-shrink: 0;
+    }
+
+    /* SVG Inlines */
+    .icon {
+      display: inline-block;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+<body class="theme-dark">
+
+  <!-- ========================================================================
+       CONTROL DOCK (Header & Interactive Controls)
+       ======================================================================== -->
+  <header class="control-dock">
+    <div class="dock-header">
+      <div class="dock-title-group">
+        <h1 class="dock-title">
+          <span>فرقان • تذكير الورد اليومي</span>
+          <span class="dock-tag">Issue #600</span>
+        </h1>
+      </div>
+      <div class="dock-actions">
+        <!-- Direction Switcher -->
+        <div class="seg-group" id="dir-seg">
+          <button type="button" class="seg-btn active" data-dir="rtl" data-lang="ar">العربية (RTL)</button>
+          <button type="button" class="seg-btn" data-dir="ltr" data-lang="en">English (LTR)</button>
+        </div>
+        <!-- Theme Filter -->
+        <div class="seg-group" id="theme-seg">
+          <button type="button" class="seg-btn active" data-theme="all">جميع السمات</button>
+          <button type="button" class="seg-btn" data-theme="theme-dark">Dark</button>
+          <button type="button" class="seg-btn" data-theme="theme-light">Light</button>
+          <button type="button" class="seg-btn" data-theme="theme-gold">Gold</button>
+        </div>
+      </div>
+    </div>
+    <div class="dock-legend">
+      <div class="legend-item">
+        <div class="legend-dot"></div>
+        <span><strong>D1 & D5:</strong> إشعار واحد مجمّع لكل مستخدم في الإعدادات — ليس لكل ورد.</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot"></div>
+        <span><strong>D3 (حارس الاكتمال):</strong> إذا أتمّ المستخدم ورده لليوم، لا يُرسل أي إشعار مطلقاً.</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot"></div>
+        <span><strong>D4 (الربط المباشر):</strong> رابط الإشعار يفتح صفحة المصحف مباشرة للورد الفردي.</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot"></div>
+        <span><strong>D6:</strong> قائمة منسدلة بخطوات ١٥ دقيقة وبحث سريع — لا يُستخدم time input خام.</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       MACRO: THEME PREVIEW TEMPLATE (Instantiated for Dark, Light, Gold)
+       ======================================================================== -->
+
+  <!-- 1. DARK THEME SECTION -->
+  <section class="theme-container theme-dark" id="sec-dark">
+    <div class="theme-header">
+      <div class="theme-title-box">
+        <h2 class="theme-label i18n-dark-title">سمة الداكن (Dark Theme)</h2>
+        <div class="swatch-badge">
+          <span class="swatch-pip"></span>
+          <span>--card: 213 21% 10% · Inset Rim</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Grid for Dark -->
+    <div class="showcase-grid">
+
+      <!-- State A: Settings - Reminder OFF -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-off-title">الإعدادات: التذكير معطّل</span>
+          <span class="card-tag">State 1</span>
+        </div>
+        <p class="card-caption i18n-state-off-caption">المفتاح معطّل؛ منتقي الوقت غير نشط وبشفافية مخفّضة.</p>
+
+        <div class="sidebar-slice">
+          <div class="sidebar-section-header i18n-device-header">الجهاز والتلاوة</div>
+          <div class="fq-section-row">
+            <div class="row-info">
+              <span class="row-title i18n-reminder-label">تذكير الورد اليومي</span>
+              <p class="row-desc i18n-reminder-desc">تنبيه يومي لمتابعة وردك القرآني في الوقت المحدد</p>
+            </div>
+            <div class="switch-wrap">
+              <div class="switch">
+                <div class="switch-thumb"></div>
+              </div>
+            </div>
+          </div>
+          <div class="time-picker-row">
+            <span class="time-label i18n-time-label">
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              وقت التذكير
+            </span>
+            <button type="button" class="combobox-trigger" disabled>
+              <span class="i18n-time-val-off">٠٨:٠٠ ص</span>
+              <svg class="icon chevrons-icon" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- State B: Settings - Reminder ON & Active -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-on-title">الإعدادات: التذكير مفعّل</span>
+          <span class="card-tag">State 2</span>
+        </div>
+        <p class="card-caption i18n-state-on-caption">المفتاح مفعّل، ومنتقي الوقت نشط بخطوات ١٥ دقيقة محدد على ٠٨:٣٠ ص.</p>
+
+        <div class="sidebar-slice">
+          <div class="sidebar-section-header i18n-device-header">الجهاز والتلاوة</div>
+          <div class="fq-section-row">
+            <div class="row-info">
+              <span class="row-title i18n-reminder-label">تذكير الورد اليومي</span>
+              <p class="row-desc i18n-reminder-desc">تنبيه يومي لمتابعة وردك القرآني في الوقت المحدد</p>
+            </div>
+            <div class="switch-wrap">
+              <div class="switch active">
+                <div class="switch-thumb"></div>
+              </div>
+            </div>
+          </div>
+          <div class="time-picker-row">
+            <span class="time-label i18n-time-label">
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              وقت التذكير
+            </span>
+            <button type="button" class="combobox-trigger">
+              <span class="i18n-time-val-on">٠٨:٣٠ ص</span>
+              <svg class="icon chevrons-icon" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- State C: Settings - Push Permission Blocked (Graceful Fallback) -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-blocked-title">إشعارات المتصفح محظورة</span>
+          <span class="card-tag">Fallback</span>
+        </div>
+        <p class="card-caption i18n-state-blocked-caption">عند حظر الـ Push من المتصفح، يبقى التذكير مفعّلاً وتصل التنبيهات داخل التطبيق.</p>
+
+        <div class="sidebar-slice">
+          <div class="sidebar-section-header i18n-device-header">الجهاز والتلاوة</div>
+          <div class="fq-section-row">
+            <div class="row-info">
+              <span class="row-title i18n-reminder-label">تذكير الورد اليومي</span>
+              <p class="row-desc alert-desc i18n-blocked-notice">الإشعارات الفورية محظورة في متصفحك. ستصلك التذكيرات في قائمة الإشعارات داخل التطبيق.</p>
+            </div>
+            <div class="switch-wrap">
+              <div class="switch active">
+                <div class="switch-thumb"></div>
+              </div>
+            </div>
+          </div>
+          <div class="time-picker-row">
+            <span class="time-label i18n-time-label">
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 16 14"/></svg>
+              وقت التذكير
+            </span>
+            <button type="button" class="combobox-trigger">
+              <span class="i18n-time-val-on">٠٨:٣٠ ص</span>
+              <svg class="icon chevrons-icon" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- State D: 15-Minute Combobox Open Popover -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-combo-title">قائمة الوقت المفتوحة (Combobox)</span>
+          <span class="card-tag">Interactive</span>
+        </div>
+        <p class="card-caption i18n-state-combo-caption">قائمة منبثقة بخطوات ١٥ دقيقة، بحث سريع، وتمرير fq-scroll-nice.</p>
+
+        <div style="display: flex; justify-content: center;">
+          <div class="popover-container">
+            <div class="popover-search-box">
+              <svg class="icon" width="13" height="13" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="popover-search-input i18n-search-placeholder" placeholder="ابحث عن وقت…" value="08:">
+            </div>
+            <div class="popover-list fq-scroll-nice">
+              <div class="popover-item">
+                <span class="i18n-time-0800">٠٨:٠٠ ص</span>
+              </div>
+              <div class="popover-item">
+                <span class="i18n-time-0815">٠٨:١٥ ص</span>
+              </div>
+              <div class="popover-item selected">
+                <span class="i18n-time-0830">٠٨:٣٠ ص</span>
+                <svg class="icon check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="popover-item">
+                <span class="i18n-time-0845">٠٨:٤٥ ص</span>
+              </div>
+              <div class="popover-item">
+                <span class="i18n-time-0900">٠٩:٠٠ ص</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State E: /plans Hero Card with Reminder Row -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-hero-card-title">بطاقة اليوم في صفحة الأوراد (/plans)</span>
+          <span class="card-tag">Hero</span>
+        </div>
+        <p class="card-caption i18n-hero-card-caption">سطر تذكير هادئ في أسفل بطاقة اليوم يفتح قائمة الإعدادات عبر SettingsSidebarContext مع التمرير والتركيز بهدوء على قسم التذكير.</p>
+
+        <div class="hero-card">
+          <div class="hero-header">
+            <div>
+              <div class="hero-title i18n-hero-title">ورد اليوم</div>
+              <div class="hero-sub i18n-hero-sub">مهمة واحدة متبقية من ٢ اليوم</div>
+            </div>
+            <div class="hero-streak-box">
+              <div class="hero-streak-num i18n-streak-num">٧</div>
+              <div class="hero-streak-lbl i18n-streak-lbl">أيام متتالية</div>
+            </div>
+          </div>
+
+          <div class="hero-wird-row">
+            <div class="hero-wird-details">
+              <span class="hero-wird-name i18n-task-name">قراءة الحزب اليومي</span>
+              <span class="hero-wird-range i18n-task-range">ص ٢٣ إلى ص ٢٧ (٥ صفحات)</span>
+            </div>
+            <button type="button" class="hero-check-btn" title="تحديد كمكتمل">
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+            </button>
+          </div>
+
+          <!-- The Quiet Reminder Entry Row -->
+          <a href="#settings" class="hero-reminder-row">
+            <div class="reminder-content">
+              <svg class="icon reminder-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <span class="reminder-text i18n-hero-reminder-text">تذكير الورد اليومي: ٠٨:٣٠ ص</span>
+            </div>
+            <div class="reminder-action">
+              <span class="i18n-adjust-label">تعديل</span>
+              <svg class="icon chevron-mini" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- State F: Realistic Notifications & The Skip Guard -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-notif-title">معاينة الإشعارات وحارس الاكتمال</span>
+          <span class="card-tag">Delivery</span>
+        </div>
+        <p class="card-caption i18n-notif-caption">حقول رقمية محايدة لغوياً (Structured Payload) تُصاغ ديناميكياً بحسب لغة واجهة المستخدم مع ربط مباشر لصفحة المصحف (#597).</p>
+
+        <div class="notif-wrapper">
+          <!-- Push OS Banner (Single Page Range) -->
+          <div class="os-banner">
+            <div class="app-icon">ف</div>
+            <div class="banner-body">
+              <div class="banner-header">
+                <span class="banner-app-title">FURQAN • فرقان</span>
+                <span class="banner-time i18n-banner-now">الآن</span>
+              </div>
+              <div class="banner-title i18n-notif-wird-title">وردك اليومي</div>
+              <div class="banner-text i18n-notif-body-page">ورد اليوم: ٥ صفحات — النساء ٢٣ إلى النساء ٦٠</div>
+              <a href="#reader" class="banner-deeplink i18n-notif-link-text">
+                <span>فتح المصحف (ص ٢٣) مباشرة</span>
+                <svg class="icon" width="12" height="12" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- In-App Feed Notification (Verse Range) -->
+          <div class="in-app-row">
+            <div class="in-app-unread-dot"></div>
+            <div class="in-app-content">
+              <div class="in-app-title i18n-notif-wird-title">وردك اليومي</div>
+              <div class="in-app-desc i18n-notif-body-verse">حفظ سورة الكهف: الآيات ١–١٠</div>
+            </div>
+          </div>
+
+          <!-- Skip Guard Notice -->
+          <div class="skip-guard-box">
+            <svg class="icon skip-guard-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            <div>
+              <strong class="i18n-skip-strong">حارس الاكتمال (D3):</strong>
+              <span class="i18n-skip-desc">إذا كان ورد اليوم مكتملاً بالكامل، يتم إلغاء الإرسال وتأجيل الموعد للغد تلقائياً دون إزعاج المستخدم.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 2. LIGHT THEME SECTION -->
+  <section class="theme-container theme-light" id="sec-light">
+    <div class="theme-header">
+      <div class="theme-title-box">
+        <h2 class="theme-label i18n-light-title">سمة الفاتح (Light Theme)</h2>
+        <div class="swatch-badge">
+          <span class="swatch-pip"></span>
+          <span>--card: 0 0% 100% · Border Tint</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Grid for Light -->
+    <div class="showcase-grid">
+
+      <!-- Settings Slice (Active State) -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-on-title">الإعدادات: التذكير مفعّل</span>
+          <span class="card-tag">Active</span>
+        </div>
+        <div class="sidebar-slice">
+          <div class="sidebar-section-header i18n-device-header">الجهاز والتلاوة</div>
+          <div class="fq-section-row">
+            <div class="row-info">
+              <span class="row-title i18n-reminder-label">تذكير الورد اليومي</span>
+              <p class="row-desc i18n-reminder-desc">تنبيه يومي لمتابعة وردك القرآني في الوقت المحدد</p>
+            </div>
+            <div class="switch-wrap">
+              <div class="switch active">
+                <div class="switch-thumb"></div>
+              </div>
+            </div>
+          </div>
+          <div class="time-picker-row">
+            <span class="time-label i18n-time-label">
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              وقت التذكير
+            </span>
+            <button type="button" class="combobox-trigger">
+              <span class="i18n-time-val-on">٠٨:٣٠ ص</span>
+              <svg class="icon chevrons-icon" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Popover Menu in Light -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-combo-title">منتقي الوقت المفتوح (Combobox)</span>
+          <span class="card-tag">Open Popover</span>
+        </div>
+        <div style="display: flex; justify-content: center;">
+          <div class="popover-container">
+            <div class="popover-search-box">
+              <svg class="icon" width="13" height="13" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="popover-search-input i18n-search-placeholder" placeholder="ابحث عن وقت…" value="08:">
+            </div>
+            <div class="popover-list fq-scroll-nice">
+              <div class="popover-item"><span class="i18n-time-0800">٠٨:٠٠ ص</span></div>
+              <div class="popover-item"><span class="i18n-time-0815">٠٨:١٥ ص</span></div>
+              <div class="popover-item selected">
+                <span class="i18n-time-0830">٠٨:٣٠ ص</span>
+                <svg class="icon check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="popover-item"><span class="i18n-time-0845">٠٨:٤٥ ص</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Push Notification Banner in Light -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-notif-title">إشعار الدفع الفوري</span>
+          <span class="card-tag">Push Banner</span>
+        </div>
+        <div class="os-banner">
+          <div class="app-icon">ف</div>
+          <div class="banner-body">
+            <div class="banner-header">
+              <span class="banner-app-title">FURQAN • فرقان</span>
+              <span class="banner-time i18n-banner-now">الآن</span>
+            </div>
+            <div class="banner-title i18n-notif-wird-title">وردك اليومي</div>
+            <div class="banner-text i18n-notif-body-page">ورد اليوم: ٥ صفحات — النساء ٢٣ إلى النساء ٦٠</div>
+            <a href="#reader" class="banner-deeplink i18n-notif-link-text">
+              <span>فتح المصحف (ص ٢٣) مباشرة</span>
+              <svg class="icon" width="12" height="12" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3. GOLD THEME SECTION -->
+  <section class="theme-container theme-gold" id="sec-gold">
+    <div class="theme-header">
+      <div class="theme-title-box">
+        <h2 class="theme-label i18n-gold-title">سمة الذهبي (Gold Theme)</h2>
+        <div class="swatch-badge">
+          <span class="swatch-pip"></span>
+          <span>--card: 46 52% 96% · Warm Parchment</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Grid for Gold -->
+    <div class="showcase-grid">
+
+      <!-- Settings Slice in Gold -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-on-title">الإعدادات: التذكير مفعّل</span>
+          <span class="card-tag">Active</span>
+        </div>
+        <div class="sidebar-slice">
+          <div class="sidebar-section-header i18n-device-header">الجهاز والتلاوة</div>
+          <div class="fq-section-row">
+            <div class="row-info">
+              <span class="row-title i18n-reminder-label">تذكير الورد اليومي</span>
+              <p class="row-desc i18n-reminder-desc">تنبيه يومي لمتابعة وردك القرآني في الوقت المحدد</p>
+            </div>
+            <div class="switch-wrap">
+              <div class="switch active">
+                <div class="switch-thumb"></div>
+              </div>
+            </div>
+          </div>
+          <div class="time-picker-row">
+            <span class="time-label i18n-time-label">
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              وقت التذكير
+            </span>
+            <button type="button" class="combobox-trigger">
+              <span class="i18n-time-val-on">٠٨:٣٠ ص</span>
+              <svg class="icon chevrons-icon" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Popover in Gold -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-state-combo-title">منتقي الوقت المفتوح (Combobox)</span>
+          <span class="card-tag">Open Popover</span>
+        </div>
+        <div style="display: flex; justify-content: center;">
+          <div class="popover-container">
+            <div class="popover-search-box">
+              <svg class="icon" width="13" height="13" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="popover-search-input i18n-search-placeholder" placeholder="ابحث عن وقت…" value="08:">
+            </div>
+            <div class="popover-list fq-scroll-nice">
+              <div class="popover-item"><span class="i18n-time-0800">٠٨:٠٠ ص</span></div>
+              <div class="popover-item"><span class="i18n-time-0815">٠٨:١٥ ص</span></div>
+              <div class="popover-item selected">
+                <span class="i18n-time-0830">٠٨:٣٠ ص</span>
+                <svg class="icon check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="popover-item"><span class="i18n-time-0845">٠٨:٤٥ ص</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Card in Gold -->
+      <div class="showcase-card">
+        <div class="card-meta">
+          <span class="card-title i18n-hero-card-title">بطاقة اليوم في الأوراد</span>
+          <span class="card-tag">Hero</span>
+        </div>
+        <div class="hero-card">
+          <div class="hero-header">
+            <div>
+              <div class="hero-title i18n-hero-title">ورد اليوم</div>
+              <div class="hero-sub i18n-hero-sub">مهمة واحدة متبقية من ٢ اليوم</div>
+            </div>
+            <div class="hero-streak-box">
+              <div class="hero-streak-num i18n-streak-num">٧</div>
+              <div class="hero-streak-lbl i18n-streak-lbl">أيام متتالية</div>
+            </div>
+          </div>
+          <a href="#settings" class="hero-reminder-row">
+            <div class="reminder-content">
+              <svg class="icon reminder-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <span class="reminder-text i18n-hero-reminder-text">تذكير الورد اليومي: ٠٨:٣٠ ص</span>
+            </div>
+            <div class="reminder-action">
+              <span class="i18n-adjust-label">تعديل</span>
+              <svg class="icon chevron-mini" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       INTERACTIVE SCRIPT (Theme Toggle, Direction Switching, i18n Strings)
+       ======================================================================== -->
+  <script>
+    (function() {
+      // 1. Theme Filter Logic
+      const themeButtons = document.querySelectorAll('#theme-seg .seg-btn');
+      const containers = {
+        'theme-dark': document.getElementById('sec-dark'),
+        'theme-light': document.getElementById('sec-light'),
+        'theme-gold': document.getElementById('sec-gold')
+      };
+
+      themeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          themeButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const chosen = btn.dataset.theme;
+
+          if (chosen === 'all') {
+            Object.values(containers).forEach(c => c.classList.remove('hidden'));
+          } else {
+            Object.entries(containers).forEach(([theme, el]) => {
+              if (theme === chosen) {
+                el.classList.remove('hidden');
+              } else {
+                el.classList.add('hidden');
+              }
+            });
+          }
+        });
+      });
+
+      // 2. Language & Direction Toggle Logic
+      const dirButtons = document.querySelectorAll('#dir-seg .seg-btn');
+      const htmlEl = document.documentElement;
+
+      const dictionary = {
+        ar: {
+          darkTitle: "سمة الداكن (Dark Theme)",
+          lightTitle: "سمة الفاتح (Light Theme)",
+          goldTitle: "سمة الذهبي (Gold Theme)",
+          stateOffTitle: "الإعدادات: التذكير معطّل",
+          stateOffCaption: "المفتاح معطّل؛ منتقي الوقت غير نشط وبشفافية مخفّضة.",
+          stateOnTitle: "الإعدادات: التذكير مفعّل",
+          stateOnCaption: "المفتاح مفعّل، ومنتقي الوقت نشط بخطوات ١٥ دقيقة محدد على ٠٨:٣٠ ص.",
+          stateBlockedTitle: "إشعارات المتصفح محظورة",
+          stateBlockedCaption: "عند حظر الـ Push من المتصفح، يبقى التذكير مفعّلاً وتصل التنبيهات داخل التطبيق.",
+          stateComboTitle: "قائمة الوقت المفتوحة (Combobox)",
+          stateComboCaption: "قائمة منبثقة بخطوات ١٥ دقيقة، بحث سريع، وتمرير fq-scroll-nice.",
+          heroCardTitle: "بطاقة اليوم في صفحة الأوراد (/plans)",
+          heroCardCaption: "سطر تذكير هادئ في أسفل بطاقة اليوم يفتح قائمة الإعدادات عبر SettingsSidebarContext مع التمرير والتركيز بهدوء على قسم التذكير.",
+          notifTitle: "معاينة الإشعارات وحارس الاكتمال",
+          notifCaption: "حقول رقمية محايدة لغوياً (Structured Payload) تُصاغ ديناميكياً بحسب لغة واجهة المستخدم مع ربط مباشر لصفحة المصحف (#597).",
+          deviceHeader: "الجهاز والتلاوة",
+          reminderLabel: "تذكير الورد اليومي",
+          reminderDesc: "تنبيه يومي لمتابعة وردك القرآني في الوقت المحدد",
+          blockedNotice: "الإشعارات الفورية محظورة في متصفحك. ستصلك التذكيرات في قائمة الإشعارات داخل التطبيق.",
+          timeLabel: "وقت التذكير",
+          timeValOff: "٠٨:٠٠ ص",
+          timeValOn: "٠٨:٣٠ ص",
+          searchPlaceholder: "ابحث عن وقت…",
+          time0800: "٠٨:٠٠ ص",
+          time0815: "٠٨:١٥ ص",
+          time0830: "٠٨:٣٠ ص",
+          time0845: "٠٨:٤٥ ص",
+          time0900: "٠٩:٠٠ ص",
+          heroTitle: "ورد اليوم",
+          heroSub: "مهمة واحدة متبقية من ٢ اليوم",
+          streakNum: "٧",
+          streakLbl: "أيام متتالية",
+          taskName: "قراءة الحزب اليومي",
+          taskRange: "ص ٢٣ إلى ص ٢٧ (٥ صفحات)",
+          heroReminderText: "تذكير الورد اليومي: ٠٨:٣٠ ص",
+          adjustLabel: "تعديل",
+          bannerNow: "الآن",
+          notifWirdTitle: "وردك اليومي",
+          notifBodyPage: "ورد اليوم: ٥ صفحات — النساء ٢٣ إلى النساء ٦٠",
+          notifBodyVerse: "حفظ سورة الكهف: الآيات ١–١٠",
+          notifLinkText: "فتح المصحف (ص ٢٣) مباشرة",
+          skipStrong: "حارس الاكتمال (D3):",
+          skipDesc: "إذا كان ورد اليوم مكتملاً بالكامل، يتم إلغاء الإرسال وتأجيل الموعد للغد تلقائياً دون إزعاج المستخدم."
+        },
+        en: {
+          darkTitle: "Dark Theme",
+          lightTitle: "Light Theme",
+          goldTitle: "Gold Theme",
+          stateOffTitle: "Settings: Reminder Disabled",
+          stateOffCaption: "Switch is OFF; time combobox is disabled with dimmed opacity.",
+          stateOnTitle: "Settings: Reminder Enabled",
+          stateOnCaption: "Switch is ON; 15-minute time combobox is active, set to 08:30 AM.",
+          stateBlockedTitle: "Push Permissions Blocked",
+          stateBlockedCaption: "When Web Push is blocked, reminder stays enabled and delivers to the in-app feed.",
+          stateComboTitle: "Open Time Combobox Popover",
+          stateComboCaption: "15-minute stepped popover with search filter and fq-scroll-nice scrollbar.",
+          heroCardTitle: "Today's Card on /plans",
+          heroCardCaption: "A quiet hairline reminder row at the bottom of the card that opens SettingsSidebar via SettingsSidebarContext, focusing smoothly on the reminder section.",
+          notifTitle: "Notification Preview & The Skip Guard",
+          notifCaption: "Payload is stored as structured, language-neutral fields; notification text and deep link are rendered dynamically in the reader's live locale (#597).",
+          deviceHeader: "Device & Recitation",
+          reminderLabel: "Daily Wird Reminder",
+          reminderDesc: "Daily notification to keep up with your Quran reading at your set time",
+          blockedNotice: "Push notifications are blocked in your browser. Reminders will appear in your in-app feed.",
+          timeLabel: "Reminder Time",
+          timeValOff: "08:00 AM",
+          timeValOn: "08:30 AM",
+          searchPlaceholder: "Search time…",
+          time0800: "08:00 AM",
+          time0815: "08:15 AM",
+          time0830: "08:30 AM",
+          time0845: "08:45 AM",
+          time0900: "09:00 AM",
+          heroTitle: "Today's wird",
+          heroSub: "1 of 2 tasks remaining today",
+          streakNum: "7",
+          streakLbl: "day streak",
+          taskName: "Daily Hizb Reading",
+          taskRange: "p. 23 to p. 27 (5 pages)",
+          heroReminderText: "Daily reminder: 08:30 AM",
+          adjustLabel: "Edit",
+          bannerNow: "now",
+          notifWirdTitle: "Daily Wird",
+          notifBodyPage: "Today's wird: 5 pages — An-Nisa 23 to An-Nisa 60",
+          notifBodyVerse: "Al-Kahf Memorization: Verses 1–10",
+          notifLinkText: "Open Mushaf (p. 23) directly",
+          skipStrong: "Complete-Today Skip Guard (D3):",
+          skipDesc: "If today's wird is already 100% complete, notification dispatch is cancelled and rescheduled to tomorrow."
+        }
+      };
+
+      function updateLanguage(lang, dir) {
+        htmlEl.setAttribute('lang', lang);
+        htmlEl.setAttribute('dir', dir);
+        const t = dictionary[lang];
+
+        const mappings = [
+          ['.i18n-dark-title', t.darkTitle],
+          ['.i18n-light-title', t.lightTitle],
+          ['.i18n-gold-title', t.goldTitle],
+          ['.i18n-state-off-title', t.stateOffTitle],
+          ['.i18n-state-off-caption', t.stateOffCaption],
+          ['.i18n-state-on-title', t.stateOnTitle],
+          ['.i18n-state-on-caption', t.stateOnCaption],
+          ['.i18n-state-blocked-title', t.stateBlockedTitle],
+          ['.i18n-state-blocked-caption', t.stateBlockedCaption],
+          ['.i18n-state-combo-title', t.stateComboTitle],
+          ['.i18n-state-combo-caption', t.stateComboCaption],
+          ['.i18n-hero-card-title', t.heroCardTitle],
+          ['.i18n-hero-card-caption', t.heroCardCaption],
+          ['.i18n-notif-title', t.notifTitle],
+          ['.i18n-notif-caption', t.notifCaption],
+          ['.i18n-device-header', t.deviceHeader],
+          ['.i18n-reminder-label', t.reminderLabel],
+          ['.i18n-reminder-desc', t.reminderDesc],
+          ['.i18n-blocked-notice', t.blockedNotice],
+          ['.i18n-time-label', t.timeLabel],
+          ['.i18n-time-val-off', t.timeValOff],
+          ['.i18n-time-val-on', t.timeValOn],
+          ['.i18n-time-0800', t.time0800],
+          ['.i18n-time-0815', t.time0815],
+          ['.i18n-time-0830', t.time0830],
+          ['.i18n-time-0845', t.time0845],
+          ['.i18n-time-0900', t.time0900],
+          ['.i18n-hero-title', t.heroTitle],
+          ['.i18n-hero-sub', t.heroSub],
+          ['.i18n-streak-num', t.streakNum],
+          ['.i18n-streak-lbl', t.streakLbl],
+          ['.i18n-task-name', t.taskName],
+          ['.i18n-task-range', t.taskRange],
+          ['.i18n-hero-reminder-text', t.heroReminderText],
+          ['.i18n-adjust-label', t.adjustLabel],
+          ['.i18n-banner-now', t.bannerNow],
+          ['.i18n-notif-wird-title', t.notifWirdTitle],
+          ['.i18n-notif-body-page', t.notifBodyPage],
+          ['.i18n-notif-body-verse', t.notifBodyVerse],
+          ['.i18n-notif-link-text span', t.notifLinkText],
+          ['.i18n-skip-strong', t.skipStrong],
+          ['.i18n-skip-desc', t.skipDesc]
+        ];
+
+        mappings.forEach(([sel, text]) => {
+          document.querySelectorAll(sel).forEach(el => {
+            el.textContent = text;
+          });
+        });
+
+        document.querySelectorAll('.i18n-search-placeholder').forEach(el => {
+          el.setAttribute('placeholder', t.searchPlaceholder);
+        });
+      }
+
+      dirButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          dirButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const dir = btn.dataset.dir;
+          const lang = btn.dataset.lang;
+          updateLanguage(lang, dir);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -312,7 +312,17 @@
       "streakDays": "day streak",
       "last7Days": "Last 7 days",
       "allDone": "Well done, you've completed today's wird",
-      "keepGoing": "Keep going — you're now on"
+      "keepGoing": "Keep going — you're now on",
+      "reminderLabel": "Daily reminder: {time}",
+      "remindersMultiple": "Daily reminders: {count}",
+      "reminderSet": "Set daily reminder"
+    },
+    "dedicatedReminder": {
+      "includedInGeneral": "Included in general reminders",
+      "badge": "Dedicated reminder: {time}",
+      "generalNotice": "Excluded from general reminders",
+      "set": "Set dedicated time",
+      "remove": "Remove dedicated reminder"
     },
     "browse": {
       "title": "New wird or plan",
@@ -536,23 +546,41 @@
     "offlineNotice": "Connect to the internet to download."
   },
   "notifications": {
-    "bellLabel": "Notifications",
-    "feed": {
-      "title": "Notifications",
-      "empty": "No notifications yet",
-      "loading": "Loading…",
-      "markAllRead": "Mark all read"
-    },
     "settings": {
       "title": "Notifications",
-      "enablePush": "Push notifications",
-      "enablePushDescription": "Get notified about reminders and updates on this device",
-      "enablePushDenied": "Blocked by your browser — allow notifications in site settings to turn this on."
+      "enablePush": "Reminders",
+      "enablePushDescription": "Receive your daily wird reminders on this device",
+      "enablePushDenied": "Blocked by your browser — allow notifications in site settings to turn this on.",
+      "wirdReminderTitle": "Daily Wird Reminders",
+      "wirdReminderDescription": "Daily reminders to keep up with your Quran reading at your preferred times (up to 3 times)",
+      "wirdReminderSlotLabel": "Reminder {n}",
+      "wirdReminderAdd": "Add another time",
+      "wirdReminderRemove": "Remove this reminder",
+      "wirdReminderMaxReached": "Maximum of 3 general reminders reached",
+      "allPlansBoundNotice": "All your active plans have dedicated reminders. General reminders will not send alerts until an unbound plan is active.",
+      "wirdReminderTime": "Reminder Time",
+      "wirdReminderPushBlocked": "Push notifications are blocked in your browser. Enable them in browser settings to receive reminders.",
+      "wirdReminderEnablePush": "Enable push notifications on this device",
+      "wirdReminderLoadError": "Failed to load reminder settings",
+      "wirdReminderRetry": "Retry",
+      "searchTime": "Search time…",
+      "noTimeMatch": "No matching time."
     },
     "types": {
       "plansDailyReminder": {
-        "title": "Time for your daily wird",
-        "body": "Your {{template}} assignment for today is ready."
+        "title": "Daily Wird",
+        "dedicatedTitle": "Reminder: {{name}}",
+        "multipleTasks": {
+          "one": "You have {{n}} task remaining in today's wird",
+          "other": "You have {{n}} tasks remaining in today's wird"
+        },
+        "singlePage": {
+          "one": "Today's wird: 1 page (p. {{start}})",
+          "other": "Today's wird: {{n}} pages (p. {{start}} to p. {{end}})"
+        },
+        "singleVerseOne": "Today's wird: verse {{verse}}",
+        "singleVerseRange": "Today's wird: verses {{range}}",
+        "completedCaption": "Completed for today"
       },
       "systemTest": {
         "title": "Test notification",

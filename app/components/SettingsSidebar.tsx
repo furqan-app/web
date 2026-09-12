@@ -13,12 +13,11 @@ import { MushafLayoutSection } from "@components/mushaf/MushafLayoutSection";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
+import { DailyWirdReminderSection } from "@components/notifications/DailyWirdReminderSection";
 import { SettingsSection } from "@components/settings/SettingsSection";
 import { useIsMobile } from "@hooks/use-is-mobile";
 import { useKeepScreenAwake } from "@contexts/KeepScreenAwakeContext";
-import { usePushSubscription } from "@/app/hooks/use-push-subscription";
-import { isStandaloneDisplayMode } from "@/app/utils/platform";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -37,6 +36,7 @@ type Props = {
 };
 
 export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
+  const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -44,17 +44,11 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const isMobile = useIsMobile();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
     useKeepScreenAwake();
-  const { supported: pushSupported } = usePushSubscription();
-  const [isStandalone, setIsStandalone] = useState(false);
-
-  useEffect(() => {
-    setIsStandalone(isStandaloneDisplayMode());
-  }, []);
 
   const controlled = onOpenChange !== undefined;
   useCloseOnBackGesture(open ?? false, () => onOpenChange?.(false));
 
-  const hasDeviceSettings = (isMobile || isTablet) || pushSupported || isStandalone;
+  const hasDeviceSettings = true;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -71,6 +65,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
         </SheetTrigger>
       )}
       <SheetContent
+        ref={setSheetContentEl}
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
         className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
@@ -147,6 +142,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
               )}
 
               <EnablePushToggle />
+              <DailyWirdReminderSection portalContainer={sheetContentEl} />
               <OfflineRecitationSection />
               <OfflineTafsirSection />
             </SettingsSection>

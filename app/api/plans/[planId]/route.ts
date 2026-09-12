@@ -12,6 +12,8 @@ import {
 } from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
 import { resolveCustomPlanEdit } from "@/app/lib/plans/validate-custom-definition";
+import { cancelDedicatedWirdReminder } from "@/app/lib/notifications/wird-reminder";
+import { getNotificationDeps } from "@/app/lib/notifications/deps";
 
 const serializePlan = (plan: {
   id: number;
@@ -34,6 +36,24 @@ const serializePlan = (plan: {
   status: plan.status as UserPlanStatus,
   has_progress: (plan._count?.progress ?? 0) > 0,
 });
+
+async function cancelDedicatedIfLeavingActive(
+  userId: number,
+  planId: number,
+  newStatus?: UserPlanStatus
+): Promise<void> {
+  if (newStatus !== undefined && newStatus !== "active") {
+    try {
+      const deps = getNotificationDeps();
+      await cancelDedicatedWirdReminder(userId, planId, deps.store);
+    } catch (err) {
+      console.error(
+        `Failed to cancel dedicated wird reminder for user ${userId}, plan ${planId}:`,
+        err
+      );
+    }
+  }
+}
 
 /**
  * PATCH /api/plans/:planId — change enrollment status (pause/resume/complete/
@@ -112,6 +132,8 @@ export async function PATCH(
       include: { _count: { select: { progress: true } } },
     });
 
+    await cancelDedicatedIfLeavingActive(user.id, planId, data.status);
+
     return jsonResponse({
       data: serializePlan(updated),
     });
@@ -145,6 +167,8 @@ export async function PATCH(
     where: { id: planId },
     data,
   });
+
+  await cancelDedicatedIfLeavingActive(user.id, planId, data.status);
 
   return jsonResponse({
     data: {

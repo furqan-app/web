@@ -28,6 +28,7 @@ import { toLocaleNumeral } from "@/app/utils/i18n";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import type { StartPoint } from "@/app/contexts/RecitationContext";
 import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
+import { NumberCombobox } from "@/components/ui/number-combobox";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import useTranslations from "@/app/hooks/use-translations";
 import {
@@ -233,78 +234,6 @@ const pageSurahRange = (
   return [1, 114];
 };
 
-// Generic searchable numeric dropdown (#390 follow-up: page/ayah pickers are
-// dropdowns, not free-number inputs). Portaled to `container` when nested in
-// a Sheet — same contract as SurahCombobox.
-const NumberCombobox = ({
-  values,
-  value,
-  onChange,
-  portalContainer,
-  placeholder,
-  disabled = false,
-  format,
-}: {
-  values: number[];
-  value: number;
-  onChange: (v: number) => void;
-  portalContainer: HTMLElement | null;
-  placeholder?: string;
-  disabled?: boolean;
-  // Eastern Arabic numeral policy: display strings come pre-localized.
-  format?: (n: number) => string;
-}) => {
-  const t = useTranslations();
-  const [open, setOpen] = useState(false);
-  const fmt = format ?? ((n: number) => String(n));
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-label={placeholder}
-          disabled={disabled}
-          className="fq-section-row w-full rounded-xl border border-border bg-card text-start py-2 px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/30 disabled:opacity-50"
-        >
-          <span>{fmt(value)}</span>
-          <ChevronsUpDown className="float-end mt-0.5 size-3.5 shrink-0 text-muted-foreground opacity-60" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
-        align="start"
-        container={portalContainer}
-      >
-        <Command>
-          <CommandInput placeholder={t("recitation.numberSearchPlaceholder", "Search…")} />
-          <CommandList>
-            <CommandEmpty>{t("recitation.numberEmpty", "No match.")}</CommandEmpty>
-            <CommandGroup>
-              {values.map((v) => (
-                <CommandItem
-                  key={v}
-                  value={String(v)}
-                  onSelect={() => {
-                    onChange(v);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer text-[13px]"
-                >
-                  <Check
-                    className={`me-2 size-3.5 ${v === value ? "opacity-100 text-primary" : "opacity-0"}`}
-                  />
-                  <span className="text-foreground">{fmt(v)}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-};
-
 // Module-level memory of the last explicitly-chosen verse point in the
 // Stop-At custom picker. The picker unmounts whenever stopPoint leaves
 // "custom", which would otherwise wipe the user's selection on every
@@ -427,6 +356,7 @@ const CustomRangePicker = ({
 
       {type === "page" ? (
         <NumberCombobox
+          variant="settings"
           values={Array.from({ length: MUSHAF_LAST_PAGE }, (_, i) => i + 1).filter(
             // Page floor derives from the approx-surah of the drafted start:
             // a page whose surah precedes the start's surah is behind it.
@@ -440,6 +370,8 @@ const CustomRangePicker = ({
           onChange={(p) => onChange({ type: "page", page: p })}
           portalContainer={portalContainer}
           placeholder={t("recitation.rangeTypePage", "Page")}
+          searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+          emptyText={t("recitation.numberEmpty", "No match.")}
           disabled={disabled}
           format={(n) => toLocaleNumeral(n, locale)}
         />
@@ -466,6 +398,7 @@ const CustomRangePicker = ({
           </div>
           <div className="w-24 shrink-0">
             <NumberCombobox
+              variant="settings"
               values={Array.from({ length: ayahCeil }, (_, i) => i + 1)}
               value={ayah}
               onChange={(a) => {
@@ -475,6 +408,8 @@ const CustomRangePicker = ({
               }}
               portalContainer={portalContainer}
               placeholder={t("recitation.rangeTypeVerse", "Verse")}
+              searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+              emptyText={t("recitation.numberEmpty", "No match.")}
               disabled={disabled}
               format={(n) => toLocaleNumeral(n, locale)}
             />
@@ -877,11 +812,14 @@ export const RecitationSettingsSheet = () => {
 
                 {startPoint.type === "page" ? (
                   <NumberCombobox
+                    variant="settings"
                     values={Array.from({ length: MUSHAF_LAST_PAGE }, (_, i) => i + 1)}
                     value={Math.max(startPoint.page, 1)}
                     onChange={(p) => pushEndPastStart({ type: "page", page: p })}
                     portalContainer={sheetContentEl}
                     placeholder={t("recitation.rangeTypePage", "Page")}
+                    searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+                    emptyText={t("recitation.numberEmpty", "No match.")}
                     format={(n) => toLocaleNumeral(n, locale)}
                   />
                 ) : (
@@ -900,6 +838,7 @@ export const RecitationSettingsSheet = () => {
                     </div>
                     <div className="w-24 shrink-0">
                       <NumberCombobox
+                        variant="settings"
                         values={
                           Array.from(
                             { length: chapters.find((c) => c.id === startPoint.surah)?.verses_count ?? 286 },
@@ -912,6 +851,8 @@ export const RecitationSettingsSheet = () => {
                         }
                         portalContainer={sheetContentEl}
                         placeholder={t("recitation.rangeTypeVerse", "Verse")}
+                        searchPlaceholder={t("recitation.numberSearchPlaceholder", "Search…")}
+                        emptyText={t("recitation.numberEmpty", "No match.")}
                         format={(n) => toLocaleNumeral(n, locale)}
                       />
                     </div>

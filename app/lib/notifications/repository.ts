@@ -1,28 +1,14 @@
-import type { PrismaClient as AppPrismaClient } from "@/app/generated/app-client";
+import type { AppPrismaClient } from "@/app/utils/db";
 import type { FqLogger } from "@/lib/fq-logger";
 import type { NotificationChannelKey } from "@/app/constants/notifications";
 import type {
   CreateNotificationInput,
   DeliveryResult,
-  NotificationRow,
   NotificationStore,
   ScheduledReminderRow,
 } from "@/app/lib/notifications/types";
 
 const STALE_LEASE_MS = 10 * 60 * 1000;
-
-const toNotificationRow = (row: {
-  id: number;
-  user_id: number;
-  type: string;
-  payload: unknown;
-  channels: unknown;
-  read_at: Date | null;
-  created_at: Date;
-}): NotificationRow => ({
-  ...row,
-  channels: (row.channels ?? []) as string[],
-});
 
 const toReminderRow = (row: {
   id: number;
@@ -33,9 +19,17 @@ const toReminderRow = (row: {
   scheduled_for: Date;
   recurrence: string | null;
   timezone: string | null;
+  locale?: string | null;
+  status: string;
+  dedupe_key?: string | null;
+  updated_at?: Date;
 }): ScheduledReminderRow => ({
   ...row,
   channels: (row.channels as NotificationChannelKey[] | null) ?? null,
+  locale: row.locale ?? null,
+  status: row.status,
+  dedupe_key: row.dedupe_key ?? null,
+  updated_at: row.updated_at,
 });
 
 /** Only module importing `appPrisma` for notifications — the rest of the notification lib depends on the narrow `NotificationStore` interface, not Prisma. */
@@ -68,43 +62,6 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
       create: { notification_id: notificationId, channel, attempts: 1, ...data },
       update: { attempts: { increment: 1 }, ...data },
     });
-  },
-
-  listNotifications: async ({ userId, cursor, limit, unreadOnly }) => {
-    const rows = await prisma.notification.findMany({
-      where: {
-        user_id: userId,
-        ...(cursor ? { id: { lt: cursor } } : {}),
-        ...(unreadOnly ? { read_at: null } : {}),
-      },
-      orderBy: { id: "desc" },
-      take: limit + 1,
-    });
-    const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(toNotificationRow);
-    return { items, nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null };
-  },
-
-  countUnread: (userId) => prisma.notification.count({ where: { user_id: userId, read_at: null } }),
-
-  markRead: async (userId, id) => {
-    // Idempotent: an already-read row is a successful no-op, not a 404 — the
-    // in-app feed calls this on every click, including re-clicks of a
-    // previously-read item.
-    const existing = await prisma.notification.findFirst({ where: { id, user_id: userId } });
-    if (!existing) return false;
-    if (existing.read_at) return true;
-
-    await prisma.notification.update({ where: { id }, data: { read_at: new Date() } });
-    return true;
-  },
-
-  markAllRead: async (userId) => {
-    const { count } = await prisma.notification.updateMany({
-      where: { user_id: userId, read_at: null },
-      data: { read_at: new Date() },
-    });
-    return count;
   },
 
   getPushSubscriptions: async (userId) => {
@@ -171,9 +128,21 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
     scheduledFor,
     recurrence,
     timezone,
+    locale,
     dedupeKey,
   }) => {
     if (dedupeKey) {
+      const staleBefore = new Date(Date.now() - STALE_LEASE_MS);
+      const existing = await prisma.scheduledNotification.findUnique({
+        where: { dedupe_key: dedupeKey },
+      });
+
+      const isActivelyLeased =
+        existing &&
+        existing.claim_id !== null &&
+        existing.locked_at !== null &&
+        existing.locked_at >= staleBefore;
+
       const row = await prisma.scheduledNotification.upsert({
         where: { dedupe_key: dedupeKey },
         create: {
@@ -184,9 +153,21 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
           scheduled_for: scheduledFor,
           recurrence: recurrence ?? null,
           timezone: timezone ?? null,
+          locale: locale ?? null,
           dedupe_key: dedupeKey,
         },
-        update: {},
+        update: {
+          scheduled_for: scheduledFor,
+          timezone: timezone ?? null,
+          locale: locale ?? null,
+          payload: payload as object,
+          channels: (channels ?? null) as unknown as object,
+          recurrence: recurrence ?? null,
+          status: "pending",
+          ...(isActivelyLeased ? {} : { claim_id: null, locked_at: null }),
+          last_error: null,
+          dispatched_at: null,
+        },
       });
       return { id: row.id };
     }
@@ -200,9 +181,36 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
         scheduled_for: scheduledFor,
         recurrence: recurrence ?? null,
         timezone: timezone ?? null,
+        locale: locale ?? null,
       },
     });
     return { id: row.id };
+  },
+
+  getScheduledReminderByDedupeKey: async (dedupeKey: string) => {
+    const row = await prisma.scheduledNotification.findUnique({
+      where: { dedupe_key: dedupeKey },
+    });
+    return row ? toReminderRow(row) : null;
+  },
+
+  listScheduledRemindersForUser: async (userId: number, type?: string) => {
+    const rows = await prisma.scheduledNotification.findMany({
+      where: {
+        user_id: userId,
+        ...(type ? { type } : {}),
+        status: "pending",
+      },
+      orderBy: { scheduled_for: "asc" },
+    });
+    return rows.map(toReminderRow);
+  },
+
+  cancelScheduledReminder: async (dedupeKey: string) => {
+    await prisma.scheduledNotification.updateMany({
+      where: { dedupe_key: dedupeKey },
+      data: { status: "cancelled", claim_id: null, locked_at: null },
+    });
   },
 
   claimDueReminders: async ({ now, limit, claimId }) => {
@@ -246,12 +254,49 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
     });
   },
 
-  rescheduleReminder: async (id, nextScheduledFor) => {
+  rescheduleReminder: async (
+    id,
+    nextScheduledFor,
+    lastError = null,
+    expectedUpdatedAt?: Date
+  ) => {
+    if (expectedUpdatedAt) {
+      const result = await prisma.scheduledNotification.updateMany({
+        where: {
+          id,
+          updated_at: expectedUpdatedAt,
+        },
+        data: {
+          scheduled_for: nextScheduledFor,
+          status: "pending",
+          last_error: lastError,
+          claim_id: null,
+          locked_at: null,
+          dispatched_at: null,
+        },
+      });
+
+      if (result.count === 0) {
+        // The user updated their settings while cron was in-flight!
+        // Release the lease without overwriting their newly updated scheduled_for.
+        await prisma.scheduledNotification.updateMany({
+          where: { id },
+          data: {
+            claim_id: null,
+            locked_at: null,
+          },
+        });
+        return;
+      }
+      return;
+    }
+
     await prisma.scheduledNotification.update({
       where: { id },
       data: {
         scheduled_for: nextScheduledFor,
         status: "pending",
+        last_error: lastError,
         claim_id: null,
         locked_at: null,
         dispatched_at: null,
