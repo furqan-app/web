@@ -62,7 +62,7 @@ field.
 - **`timed-out`** with `onTimeout:"halt"` — stop. Surface the question and report to your
   operator.
 - **`no-token`** — no `.env.ask-human` configured. Surface the question and options in the
-  terminal and halt (or apply your `default` locally if `onTimeout:"default"`).
+  terminal and halt.
 - **`error`** — a hard Slack failure (bad token, channel not found, bot not in channel, repeated
   network errors). Handle it exactly like `no-token`.
 

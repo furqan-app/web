@@ -30,6 +30,11 @@ When in doubt, ask. Never act unilaterally. Don't make any changes until you hav
 
 **Scope — AI tooling files are exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/` (excluding `docs/workflow/`), translation files, and config that affects the running app. Changes to AI agent tooling — `.claude/`, `.agents/`, `docs/workflow/`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules` — are meta/infra and do not require the plan → implement flow. Still confirm with the user before making tooling changes.
 
+The whole cycle can be driven for one issue by `/orchestrate-fq-task <issue>`
+([`docs/workflow/orchestrate.md`](docs/workflow/orchestrate.md)), which sequences these same
+phases and delegates the implementation to a fleet CLI instead of typing it. It does not
+replace or relax the two steps above.
+
 ## Radical transparency
 
 Never act unilaterally, assume intent, or silently compromise:

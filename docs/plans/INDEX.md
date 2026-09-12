@@ -96,5 +96,6 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | workflow | [Fleet Detection + On-Demand Setup (detect-fleet, setup-fq-fleet)](fleet-detection-setup.md) | implemented | feature |
 | workflow | [fq-ask-human: Slack escalation — post a question, await a threaded human decision](fq-ask-human.md) | implemented | feature |
 | workflow | [fq-delegate: fq-aware wrapper over the upstream delegate relays](fq-delegate.md) | implemented | feature |
+| workflow | [orchestrate-fq-task: the align→plan→implement→review→retrospect→ship phase driver](orchestrate-fq-task.md) | implemented | feature |
 | workflow | [Remove 5 workflow skills (impeccable, visualize-fq-design, compress-fq-docs, mujaz, ui-motion)](remove-workflow-skills.md) | implemented | feature |
 | workflow | [AI-First Documentation & Workflow System](ai-docs-workflow-system.md) | superseded | feature |

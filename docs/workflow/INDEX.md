@@ -15,6 +15,8 @@ Refine → Plan → Implement → Review → Retrospect → Ship
 4. **[Retrospect](retrospect.md)** — reconcile `decisions/*.md` + workflow docs with what the session learned; runs *before* ship so its edits are committed inside the PR
 5. **[Ship a task](ship-task.md)** — sync, branch, commit, PR, ticket update
 
+**[Orchestrate a task](orchestrate.md)** (`/orchestrate-fq-task <issue>`) drives one issue through phases 1–5 (after an optional multi-agent *align* pass) as an orchestrator that never types app code — sequencing these skills unchanged and stopping at an open PR. Epic #490 Track 2; [ADR 0069](../architecture/adr/0069-orchestrator-doc-only-phase-sequencer.md).
+
 ---
 
 ## Architecture & decision records
@@ -26,7 +28,7 @@ The AI-first docs system (adopted 2026-06-28): `CLAUDE.md` is a slim pointer, he
 - **`CLAUDE.md` stays a slim pointer** — never architecture detail, standards, or decisions.
 - Adding a new decision **domain file** → add its row to the Domains table in `DECISIONS.md` in the same commit.
 - Workflow / process decisions are recorded **here**, not in `decisions/`.
-- **A gate that runs before `/ship-fq-task` must default to the uncommitted working tree.** `ship-task.md` owns the only sanctioned `git commit`, so anything in the cycle ahead of it sees a branch with no commits; a `main...HEAD` default silently inspects an empty diff and reports clean. `/review-fq-work` was fixed for this (#564) — apply the same rule to any future pre-ship gate.
+- **A gate that runs before `/ship-fq-task` must default to the uncommitted working tree.** `ship-task.md` owns the only sanctioned `git commit`, so anything in the cycle ahead of it sees a branch with no commits; a `main...HEAD` default silently inspects an empty diff and reports clean. `/review-fq-work` was fixed for this (#564), and `check-fq-standards` for the same bug once the orchestrator started invoking it standalone — apply the same rule to any future pre-ship gate.
 - **Task plans** live in [`../plans/`](../plans/), each opening with a YAML frontmatter block; [`../plans/INDEX.md`](../plans/INDEX.md) is generated from that frontmatter by `.claude/skills/scripts/gen-plans-index.sh` and is what `/plan-fq-task` step 0 reads ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Finished, uncited plans are swept into [`../plans/archive/`](../plans/archive/INDEX.md) by `.claude/skills/scripts/sweep-archived-plans.sh` (explicitly invoked, never automatic) — archived plans are history, not task context.
 
 ---
@@ -83,3 +85,4 @@ When a shared rule changes, edit `AGENTS.md` only. Do not re-bloat the pointer f
 | `/setup-fq-fleet` | [fleet-setup.md](fleet-setup.md) | On-demand, human-confirmed install + lane setup — hands off to `delegate-setup`'s interactive flow, steered to fq's three roles (`implementation` / `planning` / `second-opinion`) |
 | `/fq-delegate` | [delegate.md](delegate.md) | The Implement phase — dispatch one planned task to a fleet implementer via the `*-delegate` relays, wrapped in a Furqan brief envelope; the implementer comes from the approved `.delegate` lane, not a heuristic. Never commits or creates a worktree ([ADR 0068](../architecture/adr/0068-fq-delegate-brief-envelope-and-lane-resolution.md)) |
 | `/fq-ask-human` | [ask-human.md](ask-human.md) | Escalation valve — post a numbered decision to Slack and block on a threaded human answer; `no-token` and timeout degrade to a defined terminal state. Local bot token, no deployed-app route ([ADR 0064](../architecture/adr/0064-agent-slack-escalation.md)) |
+| `/orchestrate-fq-task` | [orchestrate.md](orchestrate.md) | The phase driver — runs one issue through align → plan → implement → review → retrospect → ship as an orchestrator that never types app code. Sequences the phase skills unchanged, sizes per-phase fan-out at runtime, re-verifies every delegated result, escalates via `fq-ask-human`, stops at an open PR. Doc-only, no state file ([ADR 0069](../architecture/adr/0069-orchestrator-doc-only-phase-sequencer.md)) |

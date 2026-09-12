@@ -13,7 +13,13 @@ This is not a replacement for `docs/architecture/decisions/*.md` or the standard
 
 ## Post-check (after implementing, before reporting done)
 
-1. `git diff` against the base branch for everything changed.
+1. Get the diff. **Default to the uncommitted working tree** (`git diff` + `git diff --cached` +
+   untracked), not `main...HEAD`. `ship-task.md` owns the only sanctioned `git commit`, so every
+   pre-ship caller — `/start-fq-task`, and the orchestrator re-verifying a delegated diff
+   ([`orchestrate.md`](orchestrate.md)) — runs on a branch with no commits, where a base-branch
+   diff is empty and this gate silently reports clean. Fall back to the base-branch diff only
+   when the working tree is clean and the branch already carries commits. (Same rule, and the
+   same bug, as `/review-fq-work` in #564 — see `docs/workflow/INDEX.md`.)
 2. For every changed file, re-grep the `decisions/*.md` file(s) for its domain the same way as the pre-check — catches anything the plan didn't originally anticipate touching.
 3. Walk "Regression Classes" below against the diff — each item is a concrete thing that must still hold.
 4. Walk "General Engineering Bar" below against the diff.
