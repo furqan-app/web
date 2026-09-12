@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { resolveDailyWirdDispatch } from "@/app/lib/notifications/wird-reminder-resolver";
+import {
+  resolveGeneralWirdDispatch,
+  resolveDedicatedWirdDispatch,
+} from "@/app/lib/notifications/wird-reminder-resolver";
 import type { AppPrismaClient } from "@/app/utils/db";
 import { pageOfVerse, verseKeyOfOrdinal } from "@/app/lib/plans/verse-index";
 
@@ -7,18 +10,44 @@ import { getEnrollmentTemplate, type UserPlanParams } from "@/app/constants/plan
 import { deriveAssignments, type ProgressLogEntry } from "@/app/lib/plans/engine";
 import { toLocalDateString } from "@/app/lib/notifications/wird-reminder-resolver";
 
-describe("resolveDailyWirdDispatch", () => {
+describe("resolveGeneralWirdDispatch", () => {
   const date = new Date("2026-09-11T08:30:00Z");
   const timezone = "UTC";
 
   it("returns shouldSend: false with reason 'no_active_plans' when user has no active plans", async () => {
     const mockPrisma = {
+      scheduledNotification: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       userPlan: {
         findMany: vi.fn().mockResolvedValue([]),
       },
     } as unknown as AppPrismaClient;
 
-    const res = await resolveDailyWirdDispatch(1, timezone, date, mockPrisma);
+    const res = await resolveGeneralWirdDispatch(1, timezone, date, mockPrisma);
+    expect(res).toEqual({ shouldSend: false, reason: "no_active_plans" });
+  });
+
+  it("excludes bound plans from general reminder resolution", async () => {
+    const mockPrisma = {
+      scheduledNotification: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            dedupe_key: "plans.daily_reminder:1:plan:10",
+            payload: { planId: 10 },
+          },
+        ]),
+      },
+      userPlan: {
+        findMany: vi.fn().mockImplementation(async ({ where }) => {
+          // Assert that id 10 is excluded via notIn
+          expect(where.id?.notIn).toEqual([10]);
+          return [];
+        }),
+      },
+    } as unknown as AppPrismaClient;
+
+    const res = await resolveGeneralWirdDispatch(1, timezone, date, mockPrisma);
     expect(res).toEqual({ shouldSend: false, reason: "no_active_plans" });
   });
 
@@ -52,17 +81,23 @@ describe("resolveDailyWirdDispatch", () => {
     expect(assignments.every((a) => a.completed)).toBe(true);
 
     const mockPrisma = {
+      scheduledNotification: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       userPlan: {
         findMany: vi.fn().mockResolvedValue([plan]),
       },
     } as unknown as AppPrismaClient;
 
-    const res = await resolveDailyWirdDispatch(1, timezone, date, mockPrisma);
+    const res = await resolveGeneralWirdDispatch(1, timezone, date, mockPrisma);
     expect(res).toEqual({ shouldSend: false, reason: "all_completed" });
   });
 
   it("generates structured payload for a single pending page-unit assignment with deep link targetPage", async () => {
     const mockPrisma = {
+      scheduledNotification: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       userPlan: {
         findMany: vi.fn().mockResolvedValue([
           {
@@ -76,7 +111,7 @@ describe("resolveDailyWirdDispatch", () => {
       },
     } as unknown as AppPrismaClient;
 
-    const res = await resolveDailyWirdDispatch(1, timezone, date, mockPrisma);
+    const res = await resolveGeneralWirdDispatch(1, timezone, date, mockPrisma);
     expect(res.shouldSend).toBe(true);
     if (!res.shouldSend) return;
 
@@ -96,6 +131,9 @@ describe("resolveDailyWirdDispatch", () => {
 
   it("resolves targetPage and verse keys for a single pending verse-unit assignment", async () => {
     const mockPrisma = {
+      scheduledNotification: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       userPlan: {
         findMany: vi.fn().mockResolvedValue([
           {
@@ -113,7 +151,7 @@ describe("resolveDailyWirdDispatch", () => {
       },
     } as unknown as AppPrismaClient;
 
-    const res = await resolveDailyWirdDispatch(1, timezone, date, mockPrisma);
+    const res = await resolveGeneralWirdDispatch(1, timezone, date, mockPrisma);
     expect(res.shouldSend).toBe(true);
     if (!res.shouldSend) return;
 
@@ -131,6 +169,9 @@ describe("resolveDailyWirdDispatch", () => {
 
   it("returns targetPage: null and targetUrlKind: 'plans' when multiple assignments are pending", async () => {
     const mockPrisma = {
+      scheduledNotification: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       userPlan: {
         findMany: vi.fn().mockResolvedValue([
           {
@@ -151,7 +192,7 @@ describe("resolveDailyWirdDispatch", () => {
       },
     } as unknown as AppPrismaClient;
 
-    const res = await resolveDailyWirdDispatch(1, timezone, date, mockPrisma);
+    const res = await resolveGeneralWirdDispatch(1, timezone, date, mockPrisma);
     expect(res.shouldSend).toBe(true);
     if (!res.shouldSend) return;
 
@@ -159,5 +200,46 @@ describe("resolveDailyWirdDispatch", () => {
     expect(res.payload.primary).toBeNull();
     expect(res.payload.targetPage).toBeNull();
     expect(res.payload.targetUrlKind).toBe("plans");
+  });
+});
+
+describe("resolveDedicatedWirdDispatch", () => {
+  const date = new Date("2026-09-11T08:30:00Z");
+  const timezone = "UTC";
+
+  it("returns shouldSend: false with reason 'plan_not_active' when plan does not exist or is inactive", async () => {
+    const mockPrisma = {
+      userPlan: {
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+    } as unknown as AppPrismaClient;
+
+    const res = await resolveDedicatedWirdDispatch(1, 999, timezone, date, mockPrisma);
+    expect(res).toEqual({ shouldSend: false, reason: "plan_not_active" });
+  });
+
+  it("returns shouldSend: true with planName and targeted assignment for active plan", async () => {
+    const mockPrisma = {
+      userPlan: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 42,
+          user_id: 1,
+          name: "Morning Fajr Wird",
+          template_key: "daily-wird",
+          status: "active",
+          params: { startPage: 50, quantities: { reading: 1 } },
+          progress: [],
+        }),
+      },
+    } as unknown as AppPrismaClient;
+
+    const res = await resolveDedicatedWirdDispatch(1, 42, timezone, date, mockPrisma);
+    expect(res.shouldSend).toBe(true);
+    if (!res.shouldSend) return;
+
+    expect(res.payload.planName).toBe("Morning Fajr Wird");
+    expect(res.payload.pendingCount).toBe(1);
+    expect(res.payload.primary?.rangeStart).toBe(50);
+    expect(res.payload.targetPage).toBe(50);
   });
 });

@@ -13,7 +13,9 @@ import { formatRawVerseKey } from "@/app/lib/plans/ui-helpers";
 // The channel registry (app/lib/notifications/channels/registry.ts) is the
 // single source of truth for which channels actually exist at runtime; this
 // is a type-only enumeration of the possible keys, not a second list.
-export type NotificationChannelKey = "in_app" | "push" | "email";
+export type NotificationChannelKey = "push" | "email";
+
+export const MAX_GENERAL_WIRD_REMINDERS = 3;
 
 export type NotificationContent = {
   title: string;
@@ -44,7 +46,7 @@ export type NotificationTypeDef<P = unknown> = {
   key: string;
   /** Channels used when the caller doesn't request specific ones. */
   defaultChannels: NotificationChannelKey[];
-  /** Used for in_app + push (title/body/url). */
+  /** Used for push (title/body/url). */
   render: (payload: P, ctx: RenderContext) => NotificationContent;
   /** Used for email. Falls back to a generic text/html shell built from `render` when absent. */
   renderEmail?: (payload: P, ctx: RenderContext) => NotificationEmailContent;
@@ -61,6 +63,7 @@ export type PlanDailyReminderPayload = {
   } | null;
   targetPage: number | null; // mushaf page (1–604) for single-assignment deep link, null if multiple/ambiguous
   targetUrlKind: "page" | "plans";
+  planName?: string | null;
 };
 
 export type SystemTestPayload = {
@@ -70,10 +73,16 @@ export type SystemTestPayload = {
 export const NOTIFICATION_TYPES: Record<string, NotificationTypeDef> = {
   "plans.daily_reminder": {
     key: "plans.daily_reminder",
-    defaultChannels: ["in_app", "push"],
+    defaultChannels: ["push"],
     render: (payload: PlanDailyReminderPayload, ctx: RenderContext) => {
       const { t, tPlural, locale } = ctx;
-      const title = t("notifications.types.plansDailyReminder.title", "Daily Wird");
+      const title = payload.planName
+        ? t(
+            "notifications.types.plansDailyReminder.dedicatedTitle",
+            "Reminder: {{name}}",
+            { name: payload.planName }
+          )
+        : t("notifications.types.plansDailyReminder.title", "Daily Wird");
       const url =
         payload.targetUrlKind === "page" && payload.targetPage
           ? `/${locale}/pages/${payload.targetPage}`
@@ -131,7 +140,7 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeDef> = {
 
   "system.test": {
     key: "system.test",
-    defaultChannels: ["in_app", "push", "email"],
+    defaultChannels: ["push", "email"],
     render: (payload: SystemTestPayload, { t }) => ({
       title: t("notifications.types.systemTest.title", "Test notification"),
       body: payload.message ?? t("notifications.types.systemTest.body", "This is a test notification."),

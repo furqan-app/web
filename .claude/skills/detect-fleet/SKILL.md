@@ -1,6 +1,6 @@
 ---
 name: detect-fleet
-description: Read-only report of which coding CLIs (claude, codex, agy, opencode, and any other CLI in the amElnagdy/delegate-skills catalog) are installed, authenticated, and what models each currently offers — plus fq-only cost_tier and delegate-skill-installed enrichment. Wraps the upstream delegate-setup skill's discover.mjs rather than probing CLIs directly. Caches to .claude/fleet.json (gitignored, describes one machine). Side-effect free. Trigger via /detect-fleet, or when setup-fq-fleet or the future orchestrator need a fresh capability report.
+description: Read-only report of which coding CLIs (claude, codex, agy, opencode, and any other CLI in the amElnagdy/delegate-skills catalog) are installed, authenticated, and what models each currently offers — plus fq-only cost_tier and delegate-skill-installed enrichment. Wraps the upstream delegate-setup skill's discover.mjs rather than probing CLIs directly. Caches to .claude/fleet.json (gitignored, describes one machine). Read-only apart from its own cache file. Trigger via /detect-fleet, or when setup-fq-fleet or the future orchestrator need a fresh capability report.
 ---
 
 # /detect-fleet

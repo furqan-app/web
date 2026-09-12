@@ -359,7 +359,15 @@
       "allDone": "أحسنت، أتممتَ وِردك لهذا اليوم",
       "keepGoing": "استمر — أنت الآن على",
       "reminderLabel": "تذكير يومي: {time}",
+      "remindersMultiple": "تذكيرات اليوم: {count}",
       "reminderSet": "ضبط تذكير الورد اليومي"
+    },
+    "dedicatedReminder": {
+      "includedInGeneral": "يتبع التذكيرات العامة",
+      "badge": "تذكير مخصص: {time}",
+      "generalNotice": "مستثنى من التذكيرات العامة",
+      "set": "تخصيص وقت",
+      "remove": "إلغاء التخصيص والعودة للتذكير العام"
     },
     "browse": {
       "title": "أورادٌ وخطط جديدة",
@@ -602,22 +610,20 @@
     "offlineNotice": "اتصل بالإنترنت للتنزيل."
   },
   "notifications": {
-    "bellLabel": "الإشعارات",
-    "feed": {
-      "title": "الإشعارات",
-      "empty": "لا توجد إشعارات بعد",
-      "loading": "جارٍ التحميل…",
-      "markAllRead": "تحديد الكل كمقروء"
-    },
     "settings": {
       "title": "الإشعارات",
-      "enablePush": "إشعارات الدفع",
-      "enablePushDescription": "احصل على إشعارات بالتذكيرات والتحديثات على هذا الجهاز",
+      "enablePush": "تذكيرات",
+      "enablePushDescription": "استقبل تذكيرات وردك القرآني على هذا الجهاز",
       "enablePushDenied": "محظورة من المتصفح — اسمح بالإشعارات في إعدادات الموقع لتفعيلها.",
       "wirdReminderTitle": "تذكير الورد اليومي",
-      "wirdReminderDescription": "تنبيه يومي لمتابعة وردك القرآني في الوقت المحدد",
+      "wirdReminderDescription": "تنبيهات يومية لمتابعة وردك القرآني في أوقاتك المفضلة (حتى ٣ أوقات)",
+      "wirdReminderSlotLabel": "التذكير {n}",
+      "wirdReminderAdd": "إضافة وقت آخر",
+      "wirdReminderRemove": "حذف هذا التذكير",
+      "wirdReminderMaxReached": "الحد الأقصى ٣ تذكيرات عامة",
+      "allPlansBoundNotice": "جميع أورادك النشطة مرتبطة بتذكيرات مخصصة. التذكيرات العامة لن ترسل تنبيهات حتى تفعيل ورد غير مخصص.",
       "wirdReminderTime": "وقت التذكير",
-      "wirdReminderPushBlocked": "الإشعارات الفورية محظورة في متصفحك. ستصلك التذكيرات في قائمة الإشعارات داخل التطبيق.",
+      "wirdReminderPushBlocked": "الإشعارات الفورية محظورة في متصفحك. فعّلها من إعدادات المتصفح لتلقي التذكيرات.",
       "wirdReminderEnablePush": "تفعيل الإشعارات الفورية على هذا الجهاز",
       "wirdReminderLoadError": "تعذر تحميل إعدادات التذكير",
       "wirdReminderRetry": "إعادة المحاولة",
@@ -627,6 +633,7 @@
     "types": {
       "plansDailyReminder": {
         "title": "وردك اليومي",
+        "dedicatedTitle": "تذكير: {{name}}",
         "multipleTasks": {
           "zero": "لا توجد مهام متبقية في ورد اليوم",
           "one": "لديك مهمة واحدة متبقية في ورد اليوم",

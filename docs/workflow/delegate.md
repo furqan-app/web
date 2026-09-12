@@ -21,8 +21,8 @@ only sanctioned commit path; the worktree is created in the plan phase.
    plan; it does not create one.
 2. **`/setup-fq-fleet` has run at least once.** It installs `delegate-setup` beside the relays
    (the `--lane` resolution shells out to `delegate-setup/scripts/lane.mjs` and fails hard without
-   it), writes the human-approved `.delegate/config.json` lane map, and installs the `*-delegate`
-   skill for each implementer a lane actually uses. If `.delegate/config.json` is absent, stop and
+   it), writes the human-approved lane map at global scope, and installs the `*-delegate`
+   skill for each implementer a lane actually uses. If no lane map resolves, stop and
    tell the caller to run `/setup-fq-fleet`.
 3. **`.claude/fleet.json` is reasonably fresh** (`/detect-fleet`, or `--refresh` if it looks
    stale) — it is the availability check in step 1.
@@ -42,17 +42,18 @@ and the brief body differ.
 
 | Condition | Action |
 |---|---|
-| Caller named an implementer explicitly | Use that relay directly; skip lane resolution. Pass `--model` / `--sandbox` only if the caller specified them. The per-lane `--read-only` rule (Step 3) still applies — an explicit `planning` / `second-opinion` dispatch is still read-only. |
-| `.delegate/config.json` absent | **Stop** — "run `/setup-fq-fleet` first". |
-| Relay stderr says `--lane requires the delegate-setup skill installed beside this relay` (exit 2, no `result.json`) | **Stop** — `delegate-setup` is not installed; run `/setup-fq-fleet` (it installs `delegate-setup`). Do **not** treat this as a malformed dispatch. |
-| Lane resolves; implementer is on PATH, authenticated, and its `~/.agents/skills/<tool>-delegate/scripts/relay.mjs` resolves (check `.claude/fleet.json`) | Dispatch (step 3). |
-| Lane resolves; implementer missing / unauthenticated / no `*-delegate` skill | **Stop** — "run `/setup-fq-fleet`" (or `/detect-fleet --refresh` if the cache is just stale). |
-| Lane resolves to the same `claude` the orchestrator is running as | **First-class choice, do not pick silently:** dispatch through `claude-delegate` to a *separate* `claude` process (keeps the never-implement boundary, costs a second context/quota hit), or run `/start-fq-task` inline (cheaper, breaks the boundary for a one-subscription user). The orchestrator decides; escalate to `fq-ask-human` if it cannot. |
+| Caller named an implementer explicitly | Use that relay directly, and **drop `--lane`** unless that lane's implementer *is* the tool you named: `lane.mjs` is called with the relay's own hardcoded key, so a mismatch exits 2 (`fleet lane "<lane>" → <other> (use <other>-delegate); this relay is <named>`). A named implementer therefore inherits **nothing** from a lane bound to a different tool — pass its dials explicitly, and note `opencode` always requires `--model`. Same tool as the lane is the one case where `--lane` still applies: the lane's dials fill in and any flag you passed wins. The per-lane `--read-only` rule (Step 3) still applies — an explicit `planning` / `second-opinion` dispatch is still read-only. |
+| No lane map resolves (`config.mjs load --cwd <dir>` empty) | **Stop** — "run `/setup-fq-fleet` first". The map lives at global scope (`~/.config/delegate-skills/config.json`); a project `.delegate/config.json` is gitignored and so is absent from the per-task worktrees dispatch runs in. |
+| `delegate-setup` missing beside relays (`~/.agents/skills/delegate-setup/` absent) | **Stop** — `delegate-setup` is not installed; run `/setup-fq-fleet` (it installs `delegate-setup`). |
+| Lane in `.claude/fleet.json` resolves; implementer is on PATH, authenticated, and its `~/.agents/skills/<tool>-delegate/scripts/relay.mjs` resolves | Dispatch (step 3). |
+| Lane in `.claude/fleet.json` maps to missing / unauthenticated implementer or no `*-delegate` skill | **Stop** — "run `/setup-fq-fleet`" (or `/detect-fleet --refresh` if the cache is just stale). |
+| Lane resolves to the same `claude` the orchestrator is running as | **Hand the implement phase back to the human — do not implement inline, and do not force a second process.** Offer `claude-delegate` to a *separate* `claude` process, but only as an option the caller may decline: it preserves the boundary at the cost of a second context/quota hit against the same subscription, which is a real cost to someone on one plan. If the caller declines, or nobody is there to ask, **stop the implement phase** and report: implement it yourself in the worktree with `/start-fq-task`, then re-enter at `/orchestrate-fq-task <issue> --from review`. A human implementing is not a boundary violation — the orchestrator is what must not type app code, and review independence survives because the reviewer still is not the implementer. Never run `/start-fq-task` inline as the orchestrator. |
 
-You do not read `.delegate/config.json` yourself — passing `--lane <name>` to the relay triggers its
-own resolution (implementer + model/effort/sandbox dials) via `delegate-setup` (which must be
-installed beside the relays, or the relay exits 2 with the stderr message above). Explicit relay
-flags override lane dials.
+Step 1 resolves the implementer from `.claude/fleet.json`'s effective lane map (never by
+parsing `.delegate/config.json` directly). Step 3 then dispatches that tool's relay,
+passing `--lane <name>` so the relay applies the lane's dials (model/effort/sandbox) and
+validates that the lane is assigned to this implementer via `delegate-setup`. Explicit
+relay flags override lane dials.
 
 ## Step 2 — Compose the brief
 
@@ -64,6 +65,9 @@ to a temp / scratch file — **never** into the repo. Wrap the task-specific bod
 The bounded job, from docs/plans/<slug>.md: what to build, the current state, what to change, and
 explicitly what to leave untouched. Implement exactly what the plan specifies — do not expand scope.
 The plan file and its Constraints / What NOT to Do sections are in the worktree; read them.
+If you come to doubt a premise the plan states as fact — an invariant, a "this never happens", a
+claim that some file stays untouched — stop and check it against the ADR or spec it derives from
+before you write code against it. A plan can be confidently wrong.
 </task>
 
 <constraints>
@@ -83,9 +87,9 @@ the orchestrator commits. Confirm `git status` shows only the intended changes.
 </verification_loop>
 
 <action_safety>
-Scope changes to the task. No unrelated refactors, renames, or cleanup. Do NOT run `git add` or
-`git commit` — you cannot reliably write .git and the orchestrator commits after review. Leave the
-work uncommitted in the working tree.
+Scope changes to the task. No unrelated refactors, renames, or cleanup. Do NOT run `git add`,
+`git commit`, or `git push`, and do NOT create, push to, or merge any PR — the orchestrator ships
+through `/ship-fq-task` after review. Leave the work uncommitted in the working tree.
 </action_safety>
 
 <structured_output_contract>
@@ -161,6 +165,11 @@ accepts them.**
 `fq-delegate` is a drop-in for the Implement phase. Its summary feeds the normal cycle unchanged:
 `/review-fq-work` against the uncommitted working tree, then `/retrospect`, then `/ship-fq-task`.
 
+The delegated implementer runs **none** of `start-task.md`'s tail — it does not record new
+decisions, update `COMPONENTS.md`, or flip the plan to `status: implemented`. Whoever drove the
+dispatch (the orchestrator, or the human who typed `/fq-delegate`) does that after re-verifying
+the diff.
+
 The orchestrator surfaces the implementer's design decisions, defensible-but-unasked turns, and
 non-blocking nitpicks in the review rather than absorbing them, and stops for scope changes instead
 of expanding its own mandate.
@@ -170,8 +179,10 @@ of expanding its own mandate.
 - Do not build a `fleet.json` suitability / `cost_tier` ranking to pick the implementer — lane
   assignment is the human's, made in `/setup-fq-fleet` (ADR 0068, superseding #573's original
   wording).
-- Do not read or write `.delegate/config.json` directly — only the relay's `--lane` resolution
-  touches it.
+- Do not read or write the lane-map config directly — read the effective map from
+  `.claude/fleet.json`; only the relay's `--lane` resolution touches the config file itself.
+  Never hand-edit it: the relays verify an approval recorded by `config.mjs write`, and an edited
+  config fails closed as "not trusted".
 - Do not let `fq-delegate` commit, push, create a worktree, or write a brief file into the repo.
 - Do not pass a permission-bypass flag (`--dangerously-skip-permissions` for `agy`,
   `--allow-all-tools` for `copilot`) without explicit human approval for that run.

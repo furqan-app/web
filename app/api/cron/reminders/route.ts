@@ -5,7 +5,10 @@ import { getNotificationDeps } from "@/app/lib/notifications/deps";
 import { dispatchNotification } from "@/app/lib/notifications/dispatch";
 import { nextOccurrence } from "@/app/lib/notifications/reminders";
 
-import { resolveDailyWirdDispatch } from "@/app/lib/notifications/wird-reminder-resolver";
+import {
+  resolveGeneralWirdDispatch,
+  resolveDedicatedWirdDispatch,
+} from "@/app/lib/notifications/wird-reminder-resolver";
 
 export const dynamic = "force-dynamic";
 
@@ -55,11 +58,28 @@ const handle = async (request: NextRequest) => {
     let resolvedPayload: unknown = reminder.payload;
     if (reminder.type === "plans.daily_reminder") {
       try {
-        const resolution = await resolveDailyWirdDispatch(
-          reminder.user_id,
-          reminder.timezone ?? "UTC",
-          now
-        );
+        const payload = reminder.payload as { planId?: number; time?: string } | null;
+        let planId = payload?.planId;
+        if (planId === undefined && reminder.dedupe_key) {
+          const match = reminder.dedupe_key.match(/:plan:(\d+)$/);
+          if (match) {
+            planId = Number(match[1]);
+          }
+        }
+
+        const resolution =
+          planId !== undefined
+            ? await resolveDedicatedWirdDispatch(
+                reminder.user_id,
+                planId,
+                reminder.timezone ?? "UTC",
+                now
+              )
+            : await resolveGeneralWirdDispatch(
+                reminder.user_id,
+                reminder.timezone ?? "UTC",
+                now
+              );
         if (!resolution.shouldSend) {
           deps.logger.info("notifications.cron.wird_reminder_skipped", {
             reminderId: reminder.id,
