@@ -367,10 +367,10 @@ No mocks of React components or network; test the pure state machines.
 1. **`app/lib/plans/dwell-detector.test.ts`:**
    - **Threshold Boundary:** Dwell of 59s returns `met: false`; dwell of 60s returns `met: true`.
    - **Bounce Rejection:** Visits of 3s across pages 1, 2, 3 accumulate 0s; page visits $< 5\text{s}$ are purged.
-   - **Idle Timeout:** 40s active + 60s idle accumulates exactly 40s, not 100s.
+   - ~~**Idle Timeout:** 40s active + 60s idle accumulates exactly 40s, not 100s.~~ Removed — see §11 Revision History (2026-09-13): the idle timeout no longer exists, this test was deleted.
    - **Backgrounded Tab:** When `document.visibilityState === "hidden"`, ticking advances 0s.
    - **Multi-Page Assignment:** 5-page assignment requires all 5 pages to have $\ge 60\text{s}$; 4 pages at 60s + 1 page at 0s returns `met: false`.
-   - **Overnight Simulation:** 8 hours with zero interaction accumulates at most 45s (stops before 60s threshold).
+   - ~~**Overnight Simulation:** 8 hours with zero interaction accumulates at most 45s (stops before 60s threshold).~~ Removed — see §11 Revision History (2026-09-13): an unattended foregrounded+focused tab is now an accepted trade-off, this test was deleted.
 
 2. **`app/lib/plans/playback-detector.test.ts`:**
    - **Coverage Fraction:** 89% verses heard returns `met: false`; 90% returns `met: true`.
@@ -431,6 +431,8 @@ test("Option A: smart nudge appears on meeting dwell threshold and checks off in
 
 ### Additional Bullet to Record under Awrad Invariants:
 > `- Smart completion detection (2026-09-11, #598): Dwell detection requires ≥60s active presence per assigned page with a 45s idle timeout; playback detection requires ≥90% range coverage at verified speed. Detection state is strictly ephemeral in client memory and never persisted as a database table or column. Option B auto-write provides an immediate visual completion flourish, an aria-live announcement, and a durable all-local-day reversal (auto-recorded badge + existing DELETE progress path), not a 5-second undo grace period.`
+>
+> **Superseded (2026-09-13, see §11 Revision History):** the "45s idle timeout" clause above is no longer accurate — the idle timeout was removed. `decisions/plans.md` carries the current wording; don't copy the quote above into it verbatim.
 
 ---
 

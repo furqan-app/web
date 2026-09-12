@@ -527,6 +527,25 @@
       "description": "المهام المطلوبة في هذه الصفحة من خططك النشطة.",
       "completed": "تم إنجاز ورد اليوم في هذه الصفحة",
       "viewAllPlans": "كل الخطط والسجل"
+    },
+    "detection": {
+      "readingOfferTitle": "أتممت ورد القراءة اليوم؟",
+      "listeningOfferTitle": "أتممت ورد الاستماع اليوم؟",
+      "memorizeOfferTitle": "أتممت ورد الحفظ اليوم؟",
+      "reviewOfferTitle": "أتممت ورد المراجعة اليوم؟",
+      "confirm": "تأكيد",
+      "dismiss": "ليس الآن",
+      "autoWriteNoticeReading": "تم تسجيل ورد القراءة تلقائياً",
+      "autoWriteNoticeListening": "تم تسجيل ورد الاستماع تلقائياً",
+      "autoWriteNoticeGeneric": "تم تسجيل إنجاز الورد تلقائياً",
+      "undo": "تراجع",
+      "autoRecordedBadge": "سُجّل تلقائياً",
+      "autoRecordedHint": "سُجّل هذا الإنجاز تلقائياً بناءً على القراءة أو الاستماع.",
+      "pagesRemaining": "{count, plural, zero {اكتملت جميع الصفحات} one {تبقى صفحة واحدة ({count})} two {تبقت صفحتان ({count})} few {تبقت {count} صفحات} many {تبقت {count} صفحة} other {تبقت {count} صفحة}}"
+    },
+    "settings": {
+      "autoWriteTitle": "التأشير التلقائي للورد",
+      "autoWriteDescription": "تسجيل إنجاز ورد القراءة أو الاستماع تلقائياً فور استيفاء وقت القراءة أو التلاوة دون طلب تأكيد."
     }
   },
   "recitation": {

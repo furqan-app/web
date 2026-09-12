@@ -121,6 +121,10 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
 
       expect(result.type).toBe("pace");
       expect(result.numericValue).toBe(21); // ceil(604 / 30) = 21
+      // ceil(604 / 21) = 29 days, finishing 1 day before the 30-day deadline —
+      // the "finishes early" textKey must fire so the early finish isn't hidden.
+      expect(result.estimatedDays).toBe(29);
+      expect(result.textKey).toBe("plans.custom.estimate.paceWithDays");
     });
 
     it("computes 604 pages within 30 days with K=3 -> 61 pages/day", () => {
@@ -135,6 +139,10 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
 
       expect(result.type).toBe("pace");
       expect(result.numericValue).toBe(61); // ceil(1812 / 30) = 61
+      // ceil(1812 / 61) = 30 days -> exactly fills the deadline, no early
+      // finish to announce, so the plain pace textKey must stay.
+      expect(result.estimatedDays).toBe(30);
+      expect(result.textKey).toBe("plans.custom.estimate.pace");
     });
 
     it("handles dynamic re-adjustment with past/today date offsets safely", () => {

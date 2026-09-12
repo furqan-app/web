@@ -4,7 +4,6 @@
  * Pure state machine — no React, no DOM, no clock side-effects.
  * Tracks active presence across Mushaf pages with strictly conservative thresholds:
  * - 60s active dwell floor per page
- * - 45s idle inactivity timeout (pauses accumulation when no user input is received)
  * - 5s bounce filter (discards visits < 5s)
  * - 15min maximum cap per page
  * - 100% page coverage required for multi-page assignments
@@ -98,7 +97,7 @@ export function setActivePages(
 /**
  * Advances the dwell accumulator by the elapsed time between `state.lastTickAt` and `now`.
  * Pure state transition: computes creditable seconds based on foreground status,
- * idle timeout, bounce threshold, and page max cap.
+ * bounce threshold, and page max cap.
  */
 export function tickDwell(
   state: PageDwellState,

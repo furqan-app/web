@@ -198,7 +198,7 @@ export function useSmartCompletion({
     setAutoWriteNotice(null);
   }, [enabled, visiblePages]);
 
-  // Window interaction listeners for dwell foreground detection
+  // Visibility/focus listeners for dwell foreground detection
   useEffect(() => {
     if (!enabled) return;
 

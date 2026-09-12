@@ -59,8 +59,6 @@ describe("dwell-detector", () => {
     expect(isPageDwellMet(state, 5)).toBe(true);
   });
 
-
-
   it("freezes accumulation when tab is backgrounded (isForeground: false)", () => {
     let state = createDwellState(0, [7]);
 
