@@ -274,7 +274,51 @@
     "manageHint": "تريد تعديل خطتك أو مراجعة السجل؟ انتقل إلى إدارة الخطط ←",
     "tabs": {
       "today": "مهام اليوم",
+      "progress": "التقدّم",
       "manage": "إدارة الخطط"
+    },
+    "dashboard": {
+      "title": "سجل الإنجاز والتقدّم",
+      "subtitle": "متابعة الاستمرار في التلاوة والاستماع والحفظ والمراجعة",
+      "streaks": {
+        "read": "التلاوة",
+        "listen": "الاستماع",
+        "memorize": "الحفظ",
+        "review": "المراجعة",
+        "daysCount": "{count, plural, zero {ولا يوم} one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يوماً} other {{n} يوم}}",
+        "activeDaysCount": "{count, plural, zero {ابدأ اليوم} one {يوم واحد نشط} two {يومان نشطان} few {{n} أيام نشطة} many {{n} يوماً نشطاً} other {{n} يوم نشط}}",
+        "completedToday": "أُنجز اليوم",
+        "pendingToday": "متبقٍ لليوم",
+        "noActivePlan": "لا توجد خطة مفعلة"
+      },
+      "totals": {
+        "title": "إجمالي ما أتممته",
+        "readPages": "صفحات تمت قراءتها",
+        "listenedPages": "صفحات تم الاستماع إليها",
+        "memorizedVerses": "آيات تم حفظها",
+        "reviewedPages": "صفحات تمت مراجعتها",
+        "pagesCount": "{count, plural, zero {ولا صفحة} one {صفحة واحدة} two {صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
+        "versesCount": "{count, plural, zero {ولا آية} one {آية واحدة} two {آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
+        "khatmatCount": "{count, plural, zero {ولا ختمة} one {ختمة واحدة} two {ختمتان} few {{n} ختمات} many {{n} ختمة} other {{n} ختمة}}"
+      },
+      "heatmap": {
+        "title": "خريطة النشاط والمدارسة",
+        "summary": "{activeDays, plural, zero {لم تسجل نشاطاً بعد} one {يوم واحد من المدارسة في آخر سنة} two {يومان من المدارسة في آخر سنة} few {{activeDaysFormatted} أيام من المدارسة في آخر سنة} many {{activeDaysFormatted} يوماً من المدارسة في آخر سنة} other {{activeDaysFormatted} يوم من المدارسة في آخر سنة}}",
+        "directionHint": "الأسبوع الحالي على اليمين ← الماضي على اليسار",
+        "viewInHistory": "عرض في سجل الخطط ←",
+        "currentMonthNow": "الآن",
+        "legendCaption": "كل نقطة تمثل يوماً أنجزت فيه ورداً أو أكثر",
+        "legendLess": "أقل",
+        "legendMore": "أكثر",
+        "tooltipTasks": "{count, plural, zero {لا مهام} one {مهمة واحدة منجزة} two {مهمتان منجزتان} few {{n} مهام منجزة} many {{n} مهمة منجزة} other {{n} مهمة منجزة}}"
+      },
+      "empty": {
+        "title": "لا توجد خطط مسجلة بعد",
+        "hint": "اختر ورداً يومياً أو خطة مخصصة لتبدأ متابعة إنجازك وتثبيت التزامك."
+      },
+      "sparse": {
+        "encouragement": "بداية مباركة — كل خطوة في مدارسة القرآن أجر وثبات."
+      }
     },
     "summary": {
       "allQuran": "كامل المصحف (٣٠ جزءاً)",

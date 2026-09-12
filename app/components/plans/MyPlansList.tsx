@@ -14,6 +14,7 @@ import type { UserPlanStatus } from "@constants/plans";
 import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { PlansTodayHero } from "./PlansTodayHero";
 import { AddPlanButton } from "./AddPlanButton";
+import { PlansProgressTab } from "./PlansProgressTab";
 import { PlansBrowseDialog, type PlansBrowseView } from "./PlansBrowseDialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TimeCombobox, formatTimeOption } from "@/components/ui/time-combobox";
@@ -517,7 +518,10 @@ export const MyPlansList = () => {
   const locale = useLocale();
   const { data: plans, isLoading } = usePlans();
   const { data: todayData } = useTodayAssignments();
-  const [activeTab, setActiveTab] = useState<"today" | "plans">("today");
+  const items = plans ?? [];
+  const active = items.filter((p) => p.status === "active");
+  const other = items.filter((p) => p.status !== "active" && p.status !== "abandoned");
+  const [activeTab, setActiveTab] = useState<"today" | "progress" | "plans">("today");
 
   if (isLoading) {
     return (
@@ -528,38 +532,11 @@ export const MyPlansList = () => {
     );
   }
 
-  const items = plans ?? [];
-  if (items.length === 0) {
-    return (
-      <div className="flex flex-col gap-6">
-        {/* Designed empty state rather than a bare centred sentence. */}
-        <div className="fq-section-group flex flex-col items-center gap-3 px-6 py-14 text-center">
-          <span className="fq-well grid size-12 place-items-center rounded-2xl text-[hsl(var(--control-inert))]">
-            <Target className="size-6" strokeWidth={1.6} />
-          </span>
-          <p className="text-sm font-medium text-foreground">
-            {t("plans.empty", "No plans yet — enroll in one below.")}
-          </p>
-          <p className="max-w-xs text-xs text-muted-foreground">
-            {t(
-              "plans.emptyHint",
-              "A plan gives you a daily portion to read, listen to, or memorise.",
-            )}
-          </p>
-        </div>
-        <AddPlanButton />
-      </div>
-    );
-  }
-
-  const active = items.filter((p) => p.status === "active");
-  const other = items.filter((p) => p.status !== "active" && p.status !== "abandoned");
-
   const { totalTasks, pendingTasks } = computeTodayTaskCounts(todayData);
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Segmented Dual-View Navigation Tabs */}
+      {/* Segmented Navigation Tabs */}
       <div
         className="flex p-1 rounded-2xl bg-muted/50 border border-border text-xs font-semibold"
         role="tablist"
@@ -569,6 +546,7 @@ export const MyPlansList = () => {
           type="button"
           role="tab"
           id="tab-today"
+          data-testid="tab-today"
           aria-selected={activeTab === "today"}
           aria-controls="tabpanel-today"
           onClick={() => setActiveTab("today")}
@@ -597,7 +575,26 @@ export const MyPlansList = () => {
         <button
           type="button"
           role="tab"
+          id="tab-progress"
+          data-testid="tab-progress"
+          aria-selected={activeTab === "progress"}
+          aria-controls="tabpanel-progress"
+          onClick={() => setActiveTab("progress")}
+          className={cn(
+            "flex-1 min-h-[44px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-150 fq-focus-ring",
+            activeTab === "progress"
+              ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <span>{t("plans.tabs.progress", "Progress")}</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
           id="tab-plans"
+          data-testid="tab-plans"
           aria-selected={activeTab === "plans"}
           aria-controls="tabpanel-plans"
           onClick={() => setActiveTab("plans")}
@@ -619,8 +616,26 @@ export const MyPlansList = () => {
 
       {/* Tab 1: Today's Tasks */}
       {activeTab === "today" ? (
-        <div id="tabpanel-today" role="tabpanel" aria-labelledby="tab-today" className="flex flex-col gap-4">
-          {active.length > 0 ? (
+        <div id="tabpanel-today" data-testid="tabpanel-today" role="tabpanel" aria-labelledby="tab-today" className="flex flex-col gap-4">
+          {items.length === 0 ? (
+            <div className="fq-section-group flex flex-col items-center gap-3 px-6 py-14 text-center">
+              <span className="fq-well grid size-12 place-items-center rounded-2xl text-[hsl(var(--control-inert))]">
+                <Target className="size-6" strokeWidth={1.6} />
+              </span>
+              <p className="text-sm font-medium text-foreground">
+                {t("plans.empty", "No plans yet — enroll in one below.")}
+              </p>
+              <p className="max-w-xs text-xs text-muted-foreground">
+                {t(
+                  "plans.emptyHint",
+                  "A plan gives you a daily portion to read, listen to, or memorise.",
+                )}
+              </p>
+              <div className="w-full pt-2">
+                <AddPlanButton />
+              </div>
+            </div>
+          ) : active.length > 0 ? (
             <>
               <PlansTodayHero />
               <div className="text-center pt-2">
@@ -656,22 +671,51 @@ export const MyPlansList = () => {
         </div>
       ) : null}
 
-      {/* Tab 2: Plan Management */}
-      {activeTab === "plans" ? (
-        <div id="tabpanel-plans" role="tabpanel" aria-labelledby="tab-plans" className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3.5">
-            <div className="fq-overline">
-              {t("plans.myPlans", "My plans")}
-            </div>
-            {active.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} />
-            ))}
-            {other.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} />
-            ))}
-          </div>
+      {/* Tab 2: Progress Dashboard */}
+      {activeTab === "progress" ? (
+        <div id="tabpanel-progress" data-testid="tabpanel-progress" role="tabpanel" aria-labelledby="tab-progress" className="flex flex-col gap-4">
+          <PlansProgressTab hasPlans={items.length > 0} onSelectTab={setActiveTab} />
+        </div>
+      ) : null}
 
-          <AddPlanButton />
+      {/* Tab 3: Plan Management */}
+      {activeTab === "plans" ? (
+        <div id="tabpanel-plans" data-testid="tabpanel-plans" role="tabpanel" aria-labelledby="tab-plans" className="flex flex-col gap-5">
+          {items.length === 0 ? (
+            <div className="fq-section-group flex flex-col items-center gap-3 px-6 py-14 text-center">
+              <span className="fq-well grid size-12 place-items-center rounded-2xl text-[hsl(var(--control-inert))]">
+                <Target className="size-6" strokeWidth={1.6} />
+              </span>
+              <p className="text-sm font-medium text-foreground">
+                {t("plans.empty", "No plans yet — enroll in one below.")}
+              </p>
+              <p className="max-w-xs text-xs text-muted-foreground">
+                {t(
+                  "plans.emptyHint",
+                  "A plan gives you a daily portion to read, listen to, or memorise.",
+                )}
+              </p>
+              <div className="w-full pt-2">
+                <AddPlanButton />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-3.5">
+                <div className="fq-overline">
+                  {t("plans.myPlans", "My plans")}
+                </div>
+                {active.map((plan) => (
+                  <PlanCard key={plan.id} plan={plan} />
+                ))}
+                {other.map((plan) => (
+                  <PlanCard key={plan.id} plan={plan} />
+                ))}
+              </div>
+
+              <AddPlanButton />
+            </>
+          )}
         </div>
       ) : null}
     </div>
