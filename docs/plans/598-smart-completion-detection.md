@@ -63,9 +63,8 @@ To prevent false streaks and inflated totals (critical given #599's progress das
 | Threshold Parameter | Value | Rationale & Defense |
 |---|---|---|
 | **Page Active Dwell ($T_{page}$)** | **`60 seconds`** | Standard Quranic reading pace averages 1.5–2.5 minutes per 15-line page (~130 words). 60s represents a conservative floor: fast readers or reviewers can achieve it, while rapid skimming or accidental stops do not qualify. |
-| **Idle Inactivity Timeout ($T_{idle}$)** | **`45 seconds`** | An engaged reader interacts with the device (scrolling, micro-swipes, subtle taps, mouse movement, or arrow keys) at least once every 30–40 seconds. After 45s of zero user input, the timer pauses to exclude idle screens, unattended desks, and sleeping users. |
 | **Bounce Filter ($T_{bounce}$)** | **`5 seconds`** | Flipping rapidly through pages to find a reference (e.g. flipping past pages 20–25) must not accumulate dwell on traversed pages. Accumulated time on a page is discarded if total duration is $< 5\text{s}$. |
-| **Single-Page Accumulation Cap ($T_{cap}$)** | **`15 minutes`** | Prevents runaway accumulation if an ambient input noise source (e.g. jittery mouse, media player tick) continuously trips the idle detector. |
+| **Single-Page Accumulation Cap ($T_{cap}$)** | **`15 minutes`** | Prevents runaway accumulation. |
 | **Multi-Page Assignment Coverage** | **`100% of pages`** | For a multi-page assignment (e.g. 5 pages: 1–5), reading 3 minutes on page 2 must **never** complete the 5-page assignment. Every individual page in the assigned range must independently satisfy $T_{page} \ge 60\text{s}$ on the local date. |
 
 ### 2.2 Active Presence State Machine
@@ -76,22 +75,21 @@ To prevent false streaks and inflated totals (critical given #599's progress das
                                  ▼
                      ┌───────────────────────┐
                      │     PAGE MOUNTED      │
-                     │  elapsed = 0, idle = 0│
+                     │      elapsed = 0      │
                      └───────────┬───────────┘
                                  │
                                  ▼
                      ┌───────────────────────┐
-      ┌─────────────►│    ACTIVE TICKING     │◄────────────┐
-      │              │ (every 1s interval)   │             │
-      │              └───────────┬───────────┘             │
-User input event                 │                         │ User input event
-(pointer / touch /               │ document.hidden OR      │ (pointermove / touchstart /
-key / scroll)                    │ idle >= 45s             │ keydown)
-      │                          ▼                         │
-      │              ┌───────────────────────┐             │
-      └──────────────┤    PAUSED / FROZEN    ├─────────────┘
-                     │ Accumulation stopped  │
-                     └───────────────────────┘
+       ┌─────────────►│    ACTIVE TICKING     │◄────────────┐
+       │              │ (every 1s interval)   │             │
+       │              └───────────┬───────────┘             │
+       │                          │                         │
+       │                          │ document.hidden         │ Tab gains focus
+       │                          ▼                         │
+       │              ┌───────────────────────┐             │
+       └──────────────┤    PAUSED / FROZEN    ├─────────────┘
+                      │ Accumulation stopped  │
+                      └───────────────────────┘
 ```
 
 #### Module Signature:
@@ -101,8 +99,6 @@ key / scroll)                    │ idle >= 45s             │ keydown)
 export type PageDwellState = {
   /** Map of pageNumber -> accumulated active seconds */
   pageSeconds: Map<number, number>;
-  /** Timestamp of last detected user interaction */
-  lastInteractionAt: number;
   /** True if tab is currently visible and has focus */
   isForeground: boolean;
 };
@@ -124,16 +120,13 @@ export interface DwellCriterionResult {
 
 #### Signals Monitored:
 1. **Window / Tab Visibility:**
-   - Listens to `document.addEventListener("visibilitychange", ...)` and `window.addEventListener("blur", ...)`.
+   - Listens to `document.addEventListener("visibilitychange", ...)` and `window.addEventListener("focus" / "blur", ...)`.
    - If `document.visibilityState !== "visible"` or `!document.hasFocus()`, the accumulator halts immediately.
    - Backgrounded tabs, minimized windows, and split-screen switches freeze accumulation with 0ms delay.
-2. **User Interaction & Idle Timeout:**
-   - Monitored user events: `pointerdown`, `pointermove`, `touchstart`, `scroll`, `keydown`.
-   - An internal `idleTimerRef` tracks seconds since the last interaction.
-   - When `idleSeconds < 45`: each elapsed second adds 1s to the active page dwell accumulator.
-   - When `idleSeconds >= 45`: accumulator freezes. Once new user input occurs, `idleSeconds` resets to 0 and accumulation resumes. The initial 45s is credited, but no subsequent time is added while inactive.
+2. **Foreground Focus:**
+   - While the tab is visible and focused, every second is accumulated.
 3. **Overnight & Long-Idle Protection:**
-   - A user leaving a page open overnight with screen awake accumulates at most 45 seconds on that page before freezing. It never reaches the 60s threshold, completely eliminating overnight false positives.
+   - Overnight false-positives are now a known and accepted trade-off (idle timeout was removed since it penalized silent reading). A focused, foregrounded tab will accumulate up to the 15-minute cap per page even if unattended.
 
 ### 2.3 Ephemeral Lifecycle & Boundary Transitions (D3)
 
@@ -444,14 +437,17 @@ test("Option A: smart nudge appears on meeting dwell threshold and checks off in
 ## 10. Risks & Open Questions
 
 ### 10.1 The Single Biggest False-Positive Risk
-The **"Distracted Reading Desk" with Keep-Screen-Awake**:
+The **"Distracted Reading Desk"**:
 - A user enables "Keep screen awake" in settings and leaves Furqan open on page 1 on their desk while eating, taking a call, or working on another monitor.
-- If the user occasionally brushes against their mouse or taps their tablet screen to prevent screen dimming, the idle detector resets its 45s window every time.
-- The 60-second active dwell threshold is reached, triggering completion on a page the user never actually read.
+- Because the idle timeout was removed, the 60-second active dwell threshold is reached, triggering completion on a page the user never actually read.
 - **Mitigation:**
+  - This is an accepted trade-off. Normal silent reading was being penalized by the idle timeout. We accept that a foregrounded and focused tab left unattended will accumulate completion time.
   - Option A (default) completely prevents false writes: the offer displays quietly, and if unconfirmed, expires harmlessly without altering progress logs or streaks.
   - Option B (auto-write) warns the user explicitly before activation, marks the entry as automatic, and keeps it reversible for the rest of the local day (no expiring undo window).
 
 ### 10.2 Out of Scope / Undeliverable Items
-- **Cross-session / Closed-tab reconstruction:** If a user reads for 45s and closes the browser tab, that time is discarded. Software cannot reconstruct unpersisted reading time without heavy tracking infrastructure, which Furqan's privacy-first architecture explicitly forbids.
-- **Physical Eye Gaze Tracking:** True gaze tracking is impossible without webcam access, which Furqan will never employ. Interaction proxies (pointer, scroll, touch, keys) remain the sole privacy-preserving heuristic.
+- **Cross-session / Closed-tab reconstruction:** If a user closes the browser tab before a page reaches the 60s threshold, that partial time is discarded. Software cannot reconstruct unpersisted reading time without heavy tracking infrastructure, which Furqan's privacy-first architecture explicitly forbids.
+- **Physical Eye Gaze Tracking:** True gaze tracking is impossible without webcam access, which Furqan will never employ. Foreground + focus remains the sole privacy-preserving presence heuristic (interaction proxies were removed — see Revision History).
+
+## 11. Revision History
+- **2026-09-13**: Interaction-based idle timeout removed by product decision — normal silent reading was being penalized (idle window had to be shorter than the 60s completion threshold to be effective at all, which meant any real quiet reading session tripped it); accepted trade-off is that a foregrounded+focused-but-unattended tab can now complete a wird after 60s.

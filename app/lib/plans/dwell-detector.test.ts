@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   createDwellState,
-  recordUserInteraction,
   setVisibility,
   setActivePages,
   tickDwell,
@@ -48,7 +47,6 @@ describe("dwell-detector", () => {
 
     // Keep active with interaction every 30s
     state = tickDwell(state, 30000);
-    state = recordUserInteraction(state, 30000);
 
     // Tick to 59 seconds: 59s < 60s, isPageDwellMet is false
     state = tickDwell(state, 59000);
@@ -61,42 +59,7 @@ describe("dwell-detector", () => {
     expect(isPageDwellMet(state, 5)).toBe(true);
   });
 
-  it("halts accumulation after 45s of user inactivity (idle timeout)", () => {
-    let state = createDwellState(0, [10]);
 
-    // No user interaction after t=0.
-    // At t=40s: within 45s idle window -> 40s accumulated
-    state = tickDwell(state, 40000);
-    expect(state.pageSeconds.get(10)).toBe(40);
-
-    // At t=60s: idle window expired at 45s -> exactly 45s accumulated
-    state = tickDwell(state, 60000);
-    expect(state.pageSeconds.get(10)).toBe(45);
-
-    // At t=100s: still inactive -> still 45s
-    state = tickDwell(state, 100000);
-    expect(state.pageSeconds.get(10)).toBe(45);
-    expect(isPageDwellMet(state, 10)).toBe(false);
-
-    // User interacts at t=100s
-    state = recordUserInteraction(state, 100000);
-
-    // Tick to 116s (16s of active presence): 45s + 16s = 61s -> met!
-    state = tickDwell(state, 116000);
-    expect(state.pageSeconds.get(10)).toBe(61);
-    expect(isPageDwellMet(state, 10)).toBe(true);
-  });
-
-  it("prevents false completion on an overnight idle tab", () => {
-    let state = createDwellState(0, [1]);
-
-    // Tab left open for 8 hours (28,800,000 ms) with zero interaction
-    state = tickDwell(state, 28800000);
-
-    // Accumulates at most 45s and freezes
-    expect(state.pageSeconds.get(1)).toBe(DWELL_CONSTANTS.IDLE_TIMEOUT_SECONDS);
-    expect(isPageDwellMet(state, 1)).toBe(false);
-  });
 
   it("freezes accumulation when tab is backgrounded (isForeground: false)", () => {
     let state = createDwellState(0, [7]);
@@ -114,7 +77,6 @@ describe("dwell-detector", () => {
 
     // Tab returned to foreground at t=50s
     state = setVisibility(state, true, 50000);
-    state = recordUserInteraction(state, 50000);
 
     // Tick 40s active (t=90s): 20 + 40 = 60s -> met
     state = tickDwell(state, 90000);
@@ -131,13 +93,11 @@ describe("dwell-detector", () => {
 
     // Flip to page 21 and read for 20 seconds
     state = setActivePages(state, [21], 35000);
-    state = recordUserInteraction(state, 35000);
     state = tickDwell(state, 55000);
     expect(state.pageSeconds.get(21)).toBe(20);
 
     // Return to page 20: previous 35s is preserved
     state = setActivePages(state, [20], 55000);
-    state = recordUserInteraction(state, 55000);
     expect(state.pageSeconds.get(20)).toBe(35);
 
     // Read for 25 more seconds: 35 + 25 = 60s -> met!
@@ -152,7 +112,6 @@ describe("dwell-detector", () => {
     // Keep active across 20 minutes (interact every 30s)
     for (let t = 30000; t <= 1200000; t += 30000) {
       state = tickDwell(state, t);
-      state = recordUserInteraction(state, t);
     }
 
     // Must not exceed 900s (15 min)
@@ -165,7 +124,6 @@ describe("dwell-detector", () => {
 
     // Read page 1 actively for 60s (with interaction at 30s)
     state = tickDwell(state, 30000);
-    state = recordUserInteraction(state, 30000);
     state = tickDwell(state, 60000);
     expect(isPageDwellMet(state, 1)).toBe(true);
 
@@ -180,10 +138,8 @@ describe("dwell-detector", () => {
     let t = 60000;
     for (const page of [2, 3, 4]) {
       state = setActivePages(state, [page], t);
-      state = recordUserInteraction(state, t);
       t += 30000;
       state = tickDwell(state, t);
-      state = recordUserInteraction(state, t);
       t += 30000;
       state = tickDwell(state, t);
       expect(isPageDwellMet(state, page)).toBe(true);
@@ -197,10 +153,8 @@ describe("dwell-detector", () => {
 
     // Complete final page 5
     state = setActivePages(state, [5], t);
-    state = recordUserInteraction(state, t);
     t += 30000;
     state = tickDwell(state, t);
-    state = recordUserInteraction(state, t);
     t += 30000;
     state = tickDwell(state, t);
     expect(isPageDwellMet(state, 5)).toBe(true);
@@ -217,7 +171,6 @@ describe("dwell-detector", () => {
     let state = createDwellState(0, [2, 3]);
 
     state = tickDwell(state, 30000);
-    state = recordUserInteraction(state, 30000);
     state = tickDwell(state, 60000);
 
     expect(isPageDwellMet(state, 2)).toBe(true);

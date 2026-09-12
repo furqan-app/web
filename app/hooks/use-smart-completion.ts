@@ -10,7 +10,6 @@ import {
 } from "@/app/lib/plans/auto-write-log";
 import {
   createDwellState,
-  recordUserInteraction,
   setVisibility,
   setActivePages,
   tickDwell,
@@ -199,13 +198,9 @@ export function useSmartCompletion({
     setAutoWriteNotice(null);
   }, [enabled, visiblePages]);
 
-  // Window interaction listeners for dwell idle timeout
+  // Window interaction listeners for dwell foreground detection
   useEffect(() => {
     if (!enabled) return;
-
-    const handleInteraction = () => {
-      dwellStateRef.current = recordUserInteraction(dwellStateRef.current, Date.now());
-    };
 
     const handleVisibility = () => {
       const isFg =
@@ -215,21 +210,11 @@ export function useSmartCompletion({
       dwellStateRef.current = setVisibility(dwellStateRef.current, isFg, Date.now());
     };
 
-    window.addEventListener("pointerdown", handleInteraction, { passive: true });
-    window.addEventListener("pointermove", handleInteraction, { passive: true });
-    window.addEventListener("touchstart", handleInteraction, { passive: true });
-    window.addEventListener("scroll", handleInteraction, { passive: true });
-    window.addEventListener("keydown", handleInteraction, { passive: true });
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("focus", handleVisibility);
     window.addEventListener("blur", handleVisibility);
 
     return () => {
-      window.removeEventListener("pointerdown", handleInteraction);
-      window.removeEventListener("pointermove", handleInteraction);
-      window.removeEventListener("touchstart", handleInteraction);
-      window.removeEventListener("scroll", handleInteraction);
-      window.removeEventListener("keydown", handleInteraction);
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("focus", handleVisibility);
       window.removeEventListener("blur", handleVisibility);
@@ -321,7 +306,6 @@ export function useSmartCompletion({
         }
       ).__advanceDwellTimeForTesting = (seconds: number) => {
         if (!visiblePages || visiblePages.length === 0) return;
-        dwellStateRef.current = recordUserInteraction(dwellStateRef.current, Date.now());
         for (const p of visiblePages) {
           const cur = dwellStateRef.current.pageSeconds.get(p) ?? 0;
           dwellStateRef.current.pageSeconds.set(p, cur + seconds);

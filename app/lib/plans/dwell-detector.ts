@@ -12,7 +12,6 @@
 
 export const DWELL_CONSTANTS = {
   PAGE_THRESHOLD_SECONDS: 60,
-  IDLE_TIMEOUT_SECONDS: 45,
   BOUNCE_THRESHOLD_SECONDS: 5,
   PAGE_MAX_CAP_SECONDS: 900, // 15 minutes
 } as const;
@@ -20,8 +19,6 @@ export const DWELL_CONSTANTS = {
 export type PageDwellState = {
   /** Map of pageNumber -> total committed active dwell in seconds */
   pageSeconds: Map<number, number>;
-  /** Timestamp (ms) of the last detected user interaction */
-  lastInteractionAt: number;
   /** Whether the document/window is in foreground and focused */
   isForeground: boolean;
   /** Currently visible page numbers */
@@ -43,26 +40,11 @@ export function createDwellState(
 ): PageDwellState {
   return {
     pageSeconds: new Map(),
-    lastInteractionAt: now,
     isForeground: true,
     activePages: [...initialPages],
     visitStartedAt: now,
     provisionalSeconds: 0,
     lastTickAt: now,
-  };
-}
-
-/**
- * Records a user interaction (touch, pointer, scroll, keydown),
- * resetting the idle timeout window.
- */
-export function recordUserInteraction(
-  state: PageDwellState,
-  now = Date.now(),
-): PageDwellState {
-  return {
-    ...state,
-    lastInteractionAt: now,
   };
 }
 
@@ -134,23 +116,7 @@ export function tickDwell(
     };
   }
 
-  // Compute creditable active time considering idle timeout
-  const idleSinceSeconds = Math.max(0, (now - state.lastInteractionAt) / 1000);
-  const idleBeforeDeltaSeconds = Math.max(0, idleSinceSeconds - deltaSeconds);
-
-  let creditableSeconds = 0;
-  if (idleBeforeDeltaSeconds < DWELL_CONSTANTS.IDLE_TIMEOUT_SECONDS) {
-    // Some or all of this tick was within the active window
-    const availableActiveInTick = DWELL_CONSTANTS.IDLE_TIMEOUT_SECONDS - idleBeforeDeltaSeconds;
-    creditableSeconds = Math.min(deltaSeconds, availableActiveInTick);
-  }
-
-  if (creditableSeconds <= 0) {
-    return {
-      ...state,
-      lastTickAt: now,
-    };
-  }
+  const creditableSeconds = deltaSeconds;
 
   const prevProvisional = state.provisionalSeconds;
   const nextProvisional = prevProvisional + creditableSeconds;
