@@ -121,6 +121,10 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
 
       expect(result.type).toBe("pace");
       expect(result.numericValue).toBe(21); // ceil(604 / 30) = 21
+      // ceil(604 / 21) = 29 days, finishing 1 day before the 30-day deadline —
+      // the "finishes early" textKey must fire so the early finish isn't hidden.
+      expect(result.estimatedDays).toBe(29);
+      expect(result.textKey).toBe("plans.custom.estimate.paceWithDays");
     });
 
     it("computes 604 pages within 30 days with K=3 -> 61 pages/day", () => {
@@ -135,6 +139,10 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
 
       expect(result.type).toBe("pace");
       expect(result.numericValue).toBe(61); // ceil(1812 / 30) = 61
+      // ceil(1812 / 61) = 30 days -> exactly fills the deadline, no early
+      // finish to announce, so the plain pace textKey must stay.
+      expect(result.estimatedDays).toBe(30);
+      expect(result.textKey).toBe("plans.custom.estimate.pace");
     });
 
     it("handles dynamic re-adjustment with past/today date offsets safely", () => {
@@ -147,6 +155,7 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
         endDate: "2026-09-09",
         repetitions: 1,
       });
+      expect(sameDay.type).toBe("pace");
       expect(sameDay.numericValue).toBe(10);
 
       // End date in past relative to start date -> clamped to 1 day minimum
@@ -158,7 +167,36 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
         endDate: "2026-09-05",
         repetitions: 1,
       });
+      expect(pastDay.type).toBe("pace");
       expect(pastDay.numericValue).toBe(15);
+    });
+
+    it("shows a 'finishes in 1 day' estimate only when the deadline itself gives more than 1 day — not when the deadline is today/overdue", () => {
+      // Small wird (1 page), deadline a month away: rounds up to 1 page/day but
+      // really finishes immediately — the "early finish" story is worth telling.
+      const smallWirdLongDeadline = computeCadenceEstimate({
+        totalUnits: 1,
+        unit: "page",
+        cadenceType: "deadline",
+        startDate: "2026-09-13",
+        endDate: "2026-10-13", // 31 days inclusive
+        repetitions: 1,
+      });
+      expect(smallWirdLongDeadline.type).toBe("days");
+      expect(smallWirdLongDeadline.numericValue).toBe(1);
+
+      // Same 1-page wird, but the deadline IS today: there is no "early finish"
+      // story — the real daily pace (1) must stay visible, not be replaced.
+      const smallWirdTodayDeadline = computeCadenceEstimate({
+        totalUnits: 1,
+        unit: "page",
+        cadenceType: "deadline",
+        startDate: "2026-09-13",
+        endDate: "2026-09-13",
+        repetitions: 1,
+      });
+      expect(smallWirdTodayDeadline.type).toBe("pace");
+      expect(smallWirdTodayDeadline.numericValue).toBe(1);
     });
   });
 

@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Furqan • Awrad Smart Completion Detection Mockup Gallery (#598)</title>
+  <style>
+    /* ==========================================================================
+       THEME TOKENS & SYSTEM FOUNDATION
+       Directly transcribed from app/globals.css and docs/standards/styling.md
+       ========================================================================== */
+    :root {
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --radius-full: 9999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Arabic", "Amiri", "Traditional Arabic", sans-serif;
+      --transition: all 180ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #0b1016;
+      color: #ebe8df;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 80px;
+      line-height: 1.5;
+    }
+
+    /* --------------------------------------------------------------------------
+       THEME SCOPES (Light, Gold, Dark)
+       -------------------------------------------------------------------------- */
+    .theme-light {
+      --background: 210 36% 95%;
+      --foreground: 209 36% 14%;
+      --card: 0 0% 100%;
+      --border: 210 31% 88%;
+      --primary: 169 88% 26%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 210 20% 92%;
+      --muted-foreground: 208 18% 40%;
+      --accent: 169 50% 92%;
+      --accent-foreground: 169 88% 26%;
+      --desk-bg: hsl(210 36% 95%);
+      --paper-bg: hsl(0 0% 100%);
+      --text-line: hsl(209 36% 14% / 0.12);
+      --widget-bg: hsl(0 0% 100%);
+      --widget-border: hsl(210 31% 86%);
+      --surface-rim: inset 0 1px 0 hsl(0 0% 100%);
+      --stub-bg: hsl(0 0% 98%);
+      --stub-border: hsl(210 31% 88%);
+      --switch-bg: hsl(210 20% 82%);
+      --switch-checked: hsl(169 88% 26%);
+    }
+
+    .theme-gold {
+      --background: 43 48% 87%;
+      --foreground: 39 25% 13%;
+      --card: 46 52% 96%;
+      --border: 43 40% 79%;
+      --primary: 168 72% 24%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 43 35% 88%;
+      --muted-foreground: 39 18% 31%;
+      --accent: 168 40% 90%;
+      --accent-foreground: 168 72% 24%;
+      --desk-bg: hsl(43 48% 87%);
+      --paper-bg: hsl(46 52% 96%);
+      --text-line: hsl(39 25% 13% / 0.13);
+      --widget-bg: hsl(46 52% 96%);
+      --widget-border: hsl(43 40% 77%);
+      --surface-rim: inset 0 1px 0 hsl(46 52% 100%);
+      --stub-bg: hsl(44 49% 93%);
+      --stub-border: hsl(43 40% 78%);
+      --switch-bg: hsl(43 35% 75%);
+      --switch-checked: hsl(168 72% 24%);
+    }
+
+    .theme-dark {
+      --background: 213 31% 7%;
+      --foreground: 45 18% 91%;
+      --card: 213 21% 10%;
+      --border: 210 26% 20%;
+      --primary: 169 88% 26%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 213 21% 14%;
+      --muted-foreground: 206 9% 56%;
+      --accent: 169 88% 12%;
+      --accent-foreground: 169 80% 65%;
+      --desk-bg: hsl(213 31% 7%);
+      --paper-bg: hsl(210 30% 10%);
+      --text-line: hsl(45 18% 91% / 0.11);
+      --widget-bg: hsl(213 21% 10%);
+      --widget-border: hsl(210 26% 22%);
+      /* Warm catch-light rim along top edge (ADR 0032) — zero drop shadows */
+      --surface-rim: inset 0 1px 0 hsl(210 20% 28%);
+      --stub-bg: hsl(213 21% 9%);
+      --stub-border: hsl(210 26% 17%);
+      --switch-bg: hsl(213 21% 20%);
+      --switch-checked: hsl(169 88% 26%);
+    }
+
+    /* --------------------------------------------------------------------------
+       SCROLL CONTAINER (fq-scroll-nice standard)
+       -------------------------------------------------------------------------- */
+    .fq-scroll-nice {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--border)) transparent;
+    }
+    .fq-scroll-nice::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .fq-scroll-nice::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .fq-scroll-nice::-webkit-scrollbar-thumb {
+      background: hsl(var(--border));
+      border-radius: var(--radius-full);
+    }
+    .fq-scroll-nice::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--muted-foreground));
+    }
+
+    /* ==========================================================================
+       CONTROL DOCK (Header & Interactive Switchers)
+       ========================================================================== */
+    .control-dock {
+      width: 100%;
+      max-width: 1200px;
+      background: #151a20;
+      border: 1px solid #242c38;
+      border-radius: var(--radius-xl);
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      box-shadow: inset 0 1px 0 hsl(210 20% 28%), 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .dock-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .dock-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dock-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dock-tag {
+      background: hsl(169 88% 26%);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .seg-group {
+      display: flex;
+      background: #0b1016;
+      border: 1px solid #242c38;
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 2px;
+    }
+    .seg-btn {
+      background: transparent;
+      border: none;
+      color: #8e98a5;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .seg-btn:hover {
+      color: #fff;
+    }
+    .seg-btn.active {
+      background: hsl(169 88% 26%);
+      color: #fff;
+    }
+
+    .spec-legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #9ba3af;
+      border-top: 1px solid #242c38;
+      padding-top: 16px;
+    }
+    .spec-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .spec-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: hsl(169 88% 26%);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       THEME CONTAINER & GALLERY GRID
+       ========================================================================== */
+    .theme-section {
+      width: 100%;
+      max-width: 1200px;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-xl);
+      padding: 28px 24px;
+      margin-bottom: 36px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+    .theme-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid hsl(var(--border));
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .theme-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .theme-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .swatches {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid hsl(var(--border));
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 22px;
+    }
+
+    /* ==========================================================================
+       CARD & SIMULATED READER CANVAS
+       ========================================================================== */
+    .state-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--surface-rim);
+    }
+    .state-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .state-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .state-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--foreground) / 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .state-desc {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.4;
+    }
+
+    .dual-direction-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 768px) {
+      .dual-direction-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .view-frame {
+      position: relative;
+      height: 270px;
+      background: var(--paper-bg);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 14px 0;
+    }
+
+    .frame-badge {
+      position: absolute;
+      top: 6px;
+      inset-inline-start: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--foreground) / 0.07);
+      padding: 1px 5px;
+      border-radius: 3px;
+      z-index: 5;
+      text-transform: uppercase;
+    }
+
+    /* Header info inside mushaf page */
+    .mushaf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      border-bottom: 1px solid hsl(var(--border) / 0.5);
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+
+    /* Quranic surah title banner simulation */
+    .surah-banner {
+      border: 1px solid hsl(var(--primary) / 0.35);
+      border-radius: 4px;
+      background: hsl(var(--primary) / 0.05);
+      text-align: center;
+      padding: 4px 8px;
+      margin-bottom: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: hsl(var(--primary));
+    }
+
+    /* Quranic text lines */
+    .mock-text-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      width: 100%;
+      user-select: none;
+      pointer-events: none;
+    }
+    .text-line {
+      height: 5px;
+      border-radius: 3px;
+      background: var(--text-line);
+    }
+    .text-line.w-full { width: 100%; }
+    .text-line.w-90   { width: 90%; }
+    .text-line.w-80   { width: 80%; }
+    .text-line.w-70   { width: 70%; }
+    .text-line.w-60   { width: 60%; }
+
+    /* Recitation player bar stub at bottom (76px) */
+    .mock-recitation-stub {
+      position: absolute;
+      bottom: 0;
+      inset-inline: 0;
+      height: 64px;
+      background: var(--stub-bg);
+      border-top: 1px solid var(--stub-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .stub-reciter {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stub-name {
+      font-size: 10px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .stub-verse {
+      font-size: 9px;
+      color: hsl(var(--muted-foreground));
+    }
+    .stub-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* ==========================================================================
+       PLANS WIDGET & OFFER AFFORDANCE (The Core Feature)
+       ========================================================================== */
+    .widget-anchor {
+      position: absolute;
+      bottom: 5.25rem; /* ~84px */
+      inset-inline-end: 1rem; /* 16px */
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Dial Button (Hit target >= 44x44px; visual circle 42x42px) */
+    .widget-button {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      padding: 1px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      outline: none;
+      flex-shrink: 0;
+    }
+    .widget-surface {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background-color: var(--widget-bg);
+      border: 1px solid var(--widget-border);
+      box-shadow: var(--surface-rim);
+      display: grid;
+      place-items: center;
+      transition: var(--transition);
+    }
+    .widget-ring-svg {
+      position: absolute;
+      inset: 0;
+      width: 42px;
+      height: 42px;
+      pointer-events: none;
+    }
+    .widget-label {
+      font-size: 7.5px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      user-select: none;
+      pointer-events: none;
+      letter-spacing: -0.02em;
+    }
+
+    /* Smart Nudge Offer Callout Pill */
+    .offer-callout {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      box-shadow: var(--surface-rim), 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-radius: var(--radius-full);
+      padding: 4px 6px 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      animation: offerSlideIn 240ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    [dir="ltr"] .offer-callout {
+      padding: 4px 12px 4px 6px;
+    }
+
+    @keyframes offerSlideIn {
+      from { opacity: 0; transform: scale(0.92) translateX(8px); }
+      to   { opacity: 1; transform: scale(1) translateX(0); }
+    }
+
+    .offer-text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .offer-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+      line-height: 1.2;
+    }
+    .offer-subtitle {
+      font-size: 9px;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.1;
+    }
+    .offer-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .offer-btn-confirm {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      font-family: inherit;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 5px 10px;
+      min-height: 28px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .offer-btn-confirm:hover {
+      opacity: 0.92;
+    }
+    .offer-btn-dismiss {
+      background: transparent;
+      color: hsl(var(--muted-foreground));
+      border: none;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 6px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .offer-btn-dismiss:hover {
+      color: hsl(var(--foreground));
+    }
+
+    /* Auto-write notice pill with undo */
+    .autowrite-notice {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      box-shadow: var(--surface-rim), 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-radius: var(--radius-full);
+      padding: 4px 8px 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    [dir="ltr"] .autowrite-notice {
+      padding: 4px 12px 4px 8px;
+    }
+    .autowrite-icon {
+      width: 14px;
+      height: 14px;
+      color: hsl(var(--primary));
+    }
+    .autowrite-text {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .autowrite-btn-undo {
+      background: hsl(var(--foreground) / 0.08);
+      color: hsl(var(--foreground));
+      border: none;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .autowrite-btn-undo:hover {
+      background: hsl(var(--foreground) / 0.14);
+    }
+
+    /* Flourish pulse */
+    .flourish-active .widget-surface {
+      transform: scale(1.06);
+      border-color: hsl(var(--primary));
+    }
+
+    /* ==========================================================================
+       SETTINGS SECTION SIMULATION (State 6)
+       ========================================================================== */
+    .settings-panel-mock {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .settings-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: hsl(var(--muted-foreground));
+      padding-bottom: 6px;
+      border-bottom: 1px solid hsl(var(--border) / 0.6);
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .settings-label-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+    .settings-label-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .settings-label-desc {
+      font-size: 10.5px;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.35;
+    }
+    /* Switch component */
+    .mock-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      border-radius: var(--radius-full);
+      background: var(--switch-bg);
+      cursor: pointer;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    .mock-switch.checked {
+      background: var(--switch-checked);
+    }
+    .mock-switch-thumb {
+      position: absolute;
+      top: 2px;
+      inset-inline-start: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      transition: var(--transition);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .mock-switch.checked .mock-switch-thumb {
+      transform: translateX(18px);
+    }
+    [dir="rtl"] .mock-switch.checked .mock-switch-thumb {
+      transform: translateX(-18px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       TOP INTERACTIVE CONTROL DOCK
+       ======================================================================== -->
+  <header class="control-dock">
+    <div class="dock-header">
+      <div class="dock-title-group">
+        <h1 class="dock-title">
+          <span>التحقق الذكي لإنجاز الورد</span>
+          <span style="font-size: 13px; color: #8e98a5;">• Smart Completion Detection</span>
+        </h1>
+        <span class="dock-tag">Issue #598</span>
+      </div>
+      <div class="dock-actions">
+        <!-- Theme Segmented Button -->
+        <div class="seg-group" role="group" aria-label="Theme selector">
+          <button type="button" class="seg-btn" onclick="setTheme('light')" id="btn-theme-light">فاتح • Light</button>
+          <button type="button" class="seg-btn" onclick="setTheme('gold')" id="btn-theme-gold">ذهبي • Gold</button>
+          <button type="button" class="seg-btn active" onclick="setTheme('dark')" id="btn-theme-dark">داكن • Dark</button>
+        </div>
+
+        <!-- Direction Segmented Button -->
+        <div class="seg-group" role="group" aria-label="Direction selector">
+          <button type="button" class="seg-btn active" onclick="setGlobalDir('rtl')" id="btn-dir-rtl">العربية (RTL)</button>
+          <button type="button" class="seg-btn" onclick="setGlobalDir('ltr')" id="btn-dir-ltr">English (LTR)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architectural Binding Legend -->
+    <div class="spec-legend">
+      <div class="spec-item">
+        <div class="spec-dot"></div>
+        <div><strong>D1 — النغزة الذكية (Option A افتراضياً):</strong> إشعار هادئ مدمج مع القرص يتيح التأشير بنقرة واحدة عند استيفاء المعايير.</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-dot"></div>
+        <div><strong>D2 & D6 — التأشير التلقائي (Option B اختياري):</strong> خيار مخصص في الإعدادات، معطل افتراضياً، مع إشعار تراجع فوري (5 ثوانٍ).</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-dot"></div>
+        <div><strong>D3 — معايير محافظة:</strong> القراءة: دقيقة كاملة (60 ثانية) مع توقف عند 45 ثانية خمول؛ الاستماع: 90% تغطية فعلية وسرعة محققة.</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-dot"></div>
+        <div><strong>D5 — التكامل مع قرص #597:</strong> يظهر العرض ككبسولة متصلة بقرص الورد أسفل الشاشة، دون استحداث لافتات عائمة تنافس النص.</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       MAIN MOCKUP GALLERY CONTAINER
+       ======================================================================== -->
+  <main id="gallery-root" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+
+    <!-- Rendered dynamically by JavaScript to support Light, Gold, Dark themes and RTL/LTR -->
+
+  </main>
+
+  <script>
+    // Theme configuration
+    let currentTheme = 'dark';
+    let currentDir = 'rtl';
+
+    const themes = [
+      { id: 'dark', titleAr: 'السمة الداكنة', titleEn: 'Dark Theme', class: 'theme-dark', swatch: '#0e151f' },
+      { id: 'gold', titleAr: 'السمة الذهبية (المخطوطة)', titleEn: 'Gold Theme', class: 'theme-gold', swatch: '#ebdcc0' },
+      { id: 'light', titleAr: 'السمة الفاتحة', titleEn: 'Light Theme', class: 'theme-light', swatch: '#f0f4f8' }
+    ];
+
+    function setTheme(themeId) {
+      currentTheme = themeId;
+      document.querySelectorAll('[id^="btn-theme-"]').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('btn-theme-' + themeId)?.classList.add('active');
+      renderGallery();
+    }
+
+    function setGlobalDir(dir) {
+      currentDir = dir;
+      document.documentElement.setAttribute('dir', dir);
+      document.documentElement.setAttribute('lang', dir === 'rtl' ? 'ar' : 'en');
+      document.querySelectorAll('[id^="btn-dir-"]').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('btn-dir-' + dir)?.classList.add('active');
+      renderGallery();
+    }
+
+    function renderGallery() {
+      const root = document.getElementById('gallery-root');
+      if (!root) return;
+
+      const activeThemeObj = themes.find(t => t.id === currentTheme) || themes[0];
+
+      root.innerHTML = `
+        <section class="theme-section ${activeThemeObj.class}" dir="${currentDir}">
+          <div class="theme-header">
+            <div class="theme-title-group">
+              <div class="swatch" style="background: ${activeThemeObj.swatch};"></div>
+              <h2 class="theme-title">${currentDir === 'rtl' ? activeThemeObj.titleAr : activeThemeObj.titleEn}</h2>
+            </div>
+            <span class="dock-tag">${currentDir.toUpperCase()}</span>
+          </div>
+
+          <div class="gallery-grid">
+
+            <!-- ================================================================
+                 STATE 1: Reference - #597 Dial at Rest
+                 ================================================================ -->
+            <div class="state-card">
+              <div class="state-header">
+                <span class="state-name">${currentDir === 'rtl' ? '١. حالة المرجع — قرص الورد في وضعه الطبيعي (#597)' : '1. Reference — #597 Dial in Normal State'}</span>
+                <span class="state-badge">${currentDir === 'rtl' ? 'المرجع' : 'Reference'}</span>
+              </div>
+              <p class="state-desc">${currentDir === 'rtl' ? 'يظهر القرص بهدوء أسفل الشاشة بمقاس 42px مع أقواس التقدم وعنوان الورد دون أي إزعاج للمصحف.' : 'Quiet 42px dial mounted at bottom-24 end-4 with segmented arcs showing page-scoped wird progress.'}</p>
+              
+              <div class="view-frame">
+                <span class="frame-badge">سورة البقرة • ص ٢</span>
+                <div class="mushaf-header">
+                  <span>سورة البقرة</span>
+                  <span>الجزء الأول</span>
+                </div>
+                <div class="surah-banner">سورة البقرة</div>
+                <div class="mock-text-lines">
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-90"></div>
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-80"></div>
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-70"></div>
+                </div>
+                <div class="mock-recitation-stub">
+                  <div class="stub-reciter">
+                    <span class="stub-name">${currentDir === 'rtl' ? 'محمود خليل الحصري' : 'Mahmoud Khalil Al-Husary'}</span>
+                    <span class="stub-verse">${currentDir === 'rtl' ? 'الآية ١' : 'Ayah 1'}</span>
+                  </div>
+                  <div class="stub-controls"><span>▶</span> <span>1.0×</span></div>
+                </div>
+
+                <!-- Widget at rest -->
+                <div class="widget-anchor">
+                  <button class="widget-button" aria-label="Wird dial">
+                    <div class="widget-surface">
+                      <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(var(--primary) / 0.6)" stroke-width="3" />
+                        <path d="M 20 3 A 17 17 0 0 1 37 20" fill="none" stroke="hsl(var(--primary))" stroke-width="3" stroke-linecap="round" />
+                      </svg>
+                      <span class="widget-label">${currentDir === 'rtl' ? 'ورد' : 'wird'}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ================================================================
+                 STATE 2: Offer State - Reading Dwell Criterion Met (Option A)
+                 ================================================================ -->
+            <div class="state-card">
+              <div class="state-header">
+                <span class="state-name">${currentDir === 'rtl' ? '٢. استيفاء مدة القراءة — ظهور النغزة الذكية (خيار أ)' : '2. Reading Dwell Met — Smart Nudge Offer (Option A)'}</span>
+                <span class="state-badge" style="color: hsl(var(--primary));">${currentDir === 'rtl' ? 'عرض التأشير' : 'Offer State'}</span>
+              </div>
+              <p class="state-desc">${currentDir === 'rtl' ? 'بعد قضاء دقيقة نشطة على الصفحة مع تفاعل حقيقي، تنبثق كبسولة هادئة بجانب القرص تتيح التأشير بنقرة واحدة.' : 'After 60s active dwell without 45s idle, a quiet callout pill expands beside the dial offering 1-tap confirmation.'}</p>
+              
+              <div class="view-frame">
+                <span class="frame-badge">سورة البقرة • ص ٣</span>
+                <div class="mushaf-header">
+                  <span>سورة البقرة</span>
+                  <span>الجزء الأول</span>
+                </div>
+                <div class="mock-text-lines" style="margin-top: 8px;">
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-90"></div>
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-80"></div>
+                  <div class="text-line w-70"></div>
+                </div>
+
+                <!-- Offer state -->
+                <div class="widget-anchor">
+                  <div class="offer-callout" data-testid="smart-completion-offer">
+                    <div class="offer-text-group">
+                      <span class="offer-title">${currentDir === 'rtl' ? 'أتممت ورد القراءة اليوم؟' : 'Finished today\'s reading?'}</span>
+                      <span class="offer-subtitle">${currentDir === 'rtl' ? 'الورد اليومي • صفحة ٣ من ٥' : 'Daily wird • Page 3 of 5'}</span>
+                    </div>
+                    <div class="offer-actions">
+                      <button type="button" class="offer-btn-confirm" data-testid="smart-completion-confirm">
+                        <span>✓</span>
+                        <span>${currentDir === 'rtl' ? 'تأكيد' : 'Confirm'}</span>
+                      </button>
+                      <button type="button" class="offer-btn-dismiss" data-testid="smart-completion-dismiss">${currentDir === 'rtl' ? 'ليس الآن' : 'Not now'}</button>
+                    </div>
+                  </div>
+
+                  <button class="widget-button">
+                    <div class="widget-surface" style="border-color: hsl(var(--primary)); box-shadow: inset 0 1px 0 hsl(var(--surface-rim)/var(--surface-rim-alpha)), 0 0 8px hsl(var(--primary)/0.3);">
+                      <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(var(--primary))" stroke-width="3" />
+                      </svg>
+                      <span class="widget-label" style="color: hsl(var(--primary)); font-weight: 700;">✓</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ================================================================
+                 STATE 3: Offer State - Listening Playback Coverage Met
+                 ================================================================ -->
+            <div class="state-card">
+              <div class="state-header">
+                <span class="state-name">${currentDir === 'rtl' ? '٣. استيفاء التلاوة — اكتمال ورد الاستماع' : '3. Playback Met — Listening Wird Offer'}</span>
+                <span class="state-badge" style="color: hsl(var(--primary));">${currentDir === 'rtl' ? 'استماع ٩٠٪' : 'Listen 90%'}</span>
+              </div>
+              <p class="state-desc">${currentDir === 'rtl' ? 'عند سماع ≥٩٠٪ من آيات النطاق المخصص مع إنهاء التكرارات المطلوبة، يُعرض التأشير فور توقف التلاوة.' : 'When >= 90% of assigned range audio finishes naturally without skips, the listening offer displays.'}</p>
+              
+              <div class="view-frame">
+                <span class="frame-badge">سورة الكهف • ص ٢٩٣</span>
+                <div class="mushaf-header">
+                  <span>سورة الكهف</span>
+                  <span>الجزء الخامس عشر</span>
+                </div>
+                <div class="surah-banner">سورة الكهف</div>
+                <div class="mock-text-lines">
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-90"></div>
+                  <div class="text-line w-80"></div>
+                </div>
+                <div class="mock-recitation-stub">
+                  <div class="stub-reciter">
+                    <span class="stub-name">${currentDir === 'rtl' ? 'مشاري العفاسي' : 'Mishari Al-Afasy'}</span>
+                    <span class="stub-verse">${currentDir === 'rtl' ? 'تم استماع الآيات ١–١٠' : 'Completed Verses 1–10'}</span>
+                  </div>
+                  <div class="stub-controls"><span style="color: hsl(var(--primary));">✔ ${currentDir === 'rtl' ? 'مكتمل' : 'Done'}</span></div>
+                </div>
+
+                <!-- Listening offer -->
+                <div class="widget-anchor">
+                  <div class="offer-callout">
+                    <div class="offer-text-group">
+                      <span class="offer-title">${currentDir === 'rtl' ? 'أتممت ورد الاستماع؟' : 'Finished today\'s recitation?'}</span>
+                      <span class="offer-subtitle">${currentDir === 'rtl' ? 'ورد الاستماع • سورة الكهف' : 'Listening wird • Al-Kahf'}</span>
+                    </div>
+                    <div class="offer-actions">
+                      <button type="button" class="offer-btn-confirm">
+                        <span>✓</span>
+                        <span>${currentDir === 'rtl' ? 'تأكيد' : 'Confirm'}</span>
+                      </button>
+                      <button type="button" class="offer-btn-dismiss">${currentDir === 'rtl' ? 'ليس الآن' : 'Not now'}</button>
+                    </div>
+                  </div>
+
+                  <button class="widget-button">
+                    <div class="widget-surface" style="border-color: hsl(var(--primary));">
+                      <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(var(--primary))" stroke-width="3" />
+                      </svg>
+                      <span class="widget-label" style="color: hsl(var(--primary));">🎧</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ================================================================
+                 STATE 4: Flourish State - Immediately After 1-Tap Accept
+                 ================================================================ -->
+            <div class="state-card">
+              <div class="state-header">
+                <span class="state-name">${currentDir === 'rtl' ? '٤. فور قبول العرض — نبضة الإنجاز والاحتفاء (#597)' : '4. After 1-Tap Accept — Completion Flourish'}</span>
+                <span class="state-badge" style="background: hsl(var(--primary)/0.2); color: hsl(var(--primary));">${currentDir === 'rtl' ? 'احتفاء ١٫٢ ث' : 'Flourish 1.2s'}</span>
+              </div>
+              <p class="state-desc">${currentDir === 'rtl' ? 'يتحول القرص فور النقر إلى دائرة خضراء مكتملة مع نبضة قياس 1.05 لمدة 1.2 ثانية وإعلان صوتي للمكفوفين، ثم يختفي بسلاسة.' : 'Ring seals solid emerald, pulses 1.05 for 1.2s, announces via aria-live, then fades out in 300ms.'}</p>
+              
+              <div class="view-frame">
+                <span class="frame-badge">سورة البقرة • ص ٣</span>
+                <div class="mock-text-lines" style="margin-top: 24px;">
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-80"></div>
+                  <div class="text-line w-90"></div>
+                </div>
+
+                <!-- Flourishing dial -->
+                <div class="widget-anchor flourish-active">
+                  <button class="widget-button">
+                    <div class="widget-surface" style="transform: scale(1.08); border-color: hsl(var(--primary)); background: hsl(var(--primary)/0.08);">
+                      <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(var(--primary))" stroke-width="3.5" />
+                      </svg>
+                      <span class="widget-label" style="color: hsl(var(--primary)); font-weight: 700;">✓</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ================================================================
+                 STATE 5: Dismissed State - User Tapped "Not Now"
+                 ================================================================ -->
+            <div class="state-card">
+              <div class="state-header">
+                <span class="state-name">${currentDir === 'rtl' ? '٥. حالة التجاهل — النقر على «ليس الآن»' : '5. Dismissed State — Tapped "Not Now"'}</span>
+                <span class="state-badge">${currentDir === 'rtl' ? 'خمود ٣٠ د' : '30m Cooldown'}</span>
+              </div>
+              <p class="state-desc">${currentDir === 'rtl' ? 'تنسحب الكبسولة بسلاسة ويعود القرص لشكله الهادئ مع كتم العرض لمدة 30 دقيقة، مع بقاء إمكانية التأشير اليدوي عبر الورقة.' : 'Callout collapses smoothly into dial; offer suppressed for 30 mins while manual sheet check-off remains accessible.'}</p>
+              
+              <div class="view-frame">
+                <span class="frame-badge">سورة البقرة • ص ٣</span>
+                <div class="mock-text-lines" style="margin-top: 24px;">
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-90"></div>
+                  <div class="text-line w-full"></div>
+                </div>
+
+                <!-- Dial back at rest -->
+                <div class="widget-anchor">
+                  <button class="widget-button">
+                    <div class="widget-surface">
+                      <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(var(--primary) / 0.6)" stroke-width="3" />
+                        <path d="M 20 3 A 17 17 0 0 1 37 20" fill="none" stroke="hsl(var(--primary))" stroke-width="3" stroke-linecap="round" />
+                      </svg>
+                      <span class="widget-label">${currentDir === 'rtl' ? 'ورد' : 'wird'}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ================================================================
+                 STATE 6: Settings Sidebar - Auto-Write Toggle (Option B, D6)
+                 ================================================================ -->
+            <div class="state-card">
+              <div class="state-header">
+                <span class="state-name">${currentDir === 'rtl' ? '٦. إعداد التأشير التلقائي (الخيار ب — D6)' : '6. Settings Sidebar — Auto-Write Toggle (Option B)'}</span>
+                <span class="state-badge">${currentDir === 'rtl' ? 'الإعدادات' : 'Settings'}</span>
+              </div>
+              <p class="state-desc">${currentDir === 'rtl' ? 'يقع في الشريط الجانبي للإعدادات بجوار تذكير الورد اليومي (#600)، معطل افتراضياً لمنع السلاسل الوهمية.' : 'Housed in SettingsSidebar beside DailyWirdReminderSection (#600 pattern); default OFF to prevent false streaks.'}</p>
+              
+              <div class="settings-panel-mock">
+                <div class="settings-section-title">${currentDir === 'rtl' ? 'إعدادات الأوراد والقراءة' : 'Awrad & Reading Settings'}</div>
+                
+                <!-- Toggle OFF (Default) -->
+                <div class="settings-row" style="padding: 6px 0; border-bottom: 1px solid hsl(var(--border)/0.5);">
+                  <div class="settings-label-group">
+                    <span class="settings-label-title">${currentDir === 'rtl' ? 'التأشير التلقائي للورد (معطل افتراضياً)' : 'Automatic Wird Completion (Default OFF)'}</span>
+                    <span class="settings-label-desc">${currentDir === 'rtl' ? 'تسجيل إنجاز ورد القراءة أو الاستماع تلقائياً فور استيفاء وقت القراءة أو التلاوة دون طلب تأكيد.' : 'Automatically record reading or listening progress once dwell or playback criteria are met, without prompting.'}</span>
+                  </div>
+                  <div class="mock-switch" role="switch" aria-checked="false" aria-label="Auto-write toggle">
+                    <div class="mock-switch-thumb"></div>
+                  </div>
+                </div>
+
+                <!-- Toggle ON -->
+                <div class="settings-row" style="padding: 6px 0;">
+                  <div class="settings-label-group">
+                    <span class="settings-label-title">${currentDir === 'rtl' ? 'التأشير التلقائي للورد (مفعّل باختيار المستخدم)' : 'Automatic Wird Completion (User Enabled)'}</span>
+                    <span class="settings-label-desc" style="color: hsl(var(--primary));">${currentDir === 'rtl' ? 'سيتم تسجيل الإنجاز في الخلفية فور استيفاء المعايير مع إتاحة ٥ ثوانٍ للتراجع.' : 'Progress will be recorded silently in background with a 5-second undo grace period.'}</span>
+                  </div>
+                  <div class="mock-switch checked" role="switch" aria-checked="true" aria-label="Auto-write toggle on">
+                    <div class="mock-switch-thumb"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ================================================================
+                 STATE 7: Auto-Write Triggered - Notice with 5s Undo
+                 ================================================================ -->
+            <div class="state-card">
+              <div class="state-header">
+                <span class="state-name">${currentDir === 'rtl' ? '٧. بعد التسجيل التلقائي — إشعار الإنجاز مع خيار التراجع' : '7. Auto-Write Executed — Notice with 5s Undo'}</span>
+                <span class="state-badge" style="color: hsl(var(--primary));">${currentDir === 'rtl' ? 'تراجع ٥ ث' : 'Undo 5s'}</span>
+              </div>
+              <p class="state-desc">${currentDir === 'rtl' ? 'عند تفعيل الخيار ب واستيفاء الشروط، يُسجل الإنجاز مباشرة وينبض القرص مع إشعار «تم التسجيل تلقائياً» وزر تراجع لمدة 5 ثوانٍ.' : 'When Option B is on, progress logs automatically; dial pulses and shows notice with 5s undo button before unmounting.'}</p>
+              
+              <div class="view-frame">
+                <span class="frame-badge">سورة البقرة • ص ٥</span>
+                <div class="mock-text-lines" style="margin-top: 24px;">
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-full"></div>
+                  <div class="text-line w-90"></div>
+                  <div class="text-line w-80"></div>
+                </div>
+
+                <!-- Auto-write notice with undo -->
+                <div class="widget-anchor flourish-active">
+                  <div class="autowrite-notice" data-testid="smart-completion-auto-notice">
+                    <svg class="autowrite-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span class="autowrite-text">${currentDir === 'rtl' ? 'تم تسجيل ورد القراءة تلقائياً' : 'Reading wird auto-recorded'}</span>
+                    <button type="button" class="autowrite-btn-undo" data-testid="smart-completion-undo">
+                      <span>↺</span>
+                      <span>${currentDir === 'rtl' ? 'تراجع' : 'Undo'}</span>
+                    </button>
+                  </div>
+
+                  <button class="widget-button">
+                    <div class="widget-surface" style="border-color: hsl(var(--primary));">
+                      <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(var(--primary))" stroke-width="3" />
+                      </svg>
+                      <span class="widget-label" style="color: hsl(var(--primary)); font-weight: 700;">✓</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      `;
+    }
+
+    // Initial render
+    renderGallery();
+  </script>
+</body>
+</html>

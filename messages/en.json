@@ -448,7 +448,8 @@
       "pagesPerWeek": "{count, plural, one {{n} page/week} other {{n} pages/week}}",
       "estimate": {
         "days": "≈ {count, plural, one {{n} day} other {{n} days}} to complete",
-        "pace": "≈ {pace} (re-adjusts on missed days)"
+        "pace": "≈ {pace} (re-adjusts on missed days)",
+        "paceWithDays": "≈ {pace} (finishes in {daysCount, plural, one {1 day} other {{daysN} days}})"
       },
       "rangeFrozen": "Target range is locked because progress has been logged",
       "verseWeeklyUnavailable": "Weekly pace is not available for verses; specify daily verses or set a deadline",
@@ -525,6 +526,25 @@
       "description": "Assignments due on this page for your active plans.",
       "completed": "Today's wird on this page is done",
       "viewAllPlans": "All plans & history"
+    },
+    "detection": {
+      "readingOfferTitle": "Finished today's reading?",
+      "listeningOfferTitle": "Finished today's recitation?",
+      "memorizeOfferTitle": "Finished today's memorization?",
+      "reviewOfferTitle": "Finished today's review?",
+      "confirm": "Confirm",
+      "dismiss": "Not now",
+      "autoWriteNoticeReading": "Reading wird auto-recorded",
+      "autoWriteNoticeListening": "Listening wird auto-recorded",
+      "autoWriteNoticeGeneric": "Wird completion automatically recorded",
+      "undo": "Undo",
+      "autoRecordedBadge": "Auto-recorded",
+      "autoRecordedHint": "This entry was automatically recorded based on your reading or listening.",
+      "pagesRemaining": "{count, plural, =0 {All pages completed} one {1 page remaining} other {{count} pages remaining}}"
+    },
+    "settings": {
+      "autoWriteTitle": "Automatic Wird Completion",
+      "autoWriteDescription": "Automatically record reading or listening progress once dwell or playback criteria are met, without prompting."
     }
   },
   "recitation": {

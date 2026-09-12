@@ -14,6 +14,9 @@ import { usePageVerseBounds } from "@hooks/use-page-verse-bounds";
 import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { fetchChapters } from "@/app/utils/recitation-api";
 import { formatVerseRange } from "@/app/lib/plans/ui-helpers";
+import { useSession } from "next-auth/react";
+import { getLocalDateString } from "@/app/server/actions/plans";
+import { isAutoWritten, clearAutoWritten } from "@/app/lib/plans/auto-write-log";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -46,6 +49,17 @@ export const PlanAssignmentRow = ({
   const t = useTranslations();
   const locale = useLocale();
   const { activeOverride, status, play, togglePlayPause } = useRecitation();
+  const { data: session } = useSession();
+  const userId = (session?.user as { id?: number } | undefined)?.id;
+  const todayDate = getLocalDateString();
+  const isAuto = assignment.completed && isAutoWritten(userId, planId, assignment.trackKey, todayDate);
+
+  const handleToggle = () => {
+    if (assignment.completed && isAuto) {
+      clearAutoWritten(userId, planId, assignment.trackKey, todayDate);
+    }
+    onToggle();
+  };
 
   const trackUi = PLAN_TRACK_UI[assignment.trackKey];
   const activityUi = PLAN_ACTIVITY_UI[assignment.activity];
@@ -194,8 +208,22 @@ export const PlanAssignmentRow = ({
             ) : null}
 
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-foreground truncate">
-                {planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey)}
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-medium text-foreground truncate">
+                  {planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey)}
+                </div>
+                {isAuto ? (
+                  <span
+                    data-testid="auto-recorded-badge"
+                    title={t(
+                      "plans.detection.autoRecordedHint",
+                      "This entry was automatically recorded based on your reading or listening.",
+                    )}
+                    className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 shrink-0"
+                  >
+                    <span>{t("plans.detection.autoRecordedBadge", "Auto-recorded")}</span>
+                  </span>
+                ) : null}
               </div>
               <div className="text-xs text-muted-foreground">
                 {!planName && (
@@ -232,7 +260,8 @@ export const PlanAssignmentRow = ({
 
       <button
         type="button"
-        onClick={onToggle}
+        data-testid="plan-assignment-toggle"
+        onClick={handleToggle}
         disabled={disabled || isPending}
         aria-label={
           assignment.completed

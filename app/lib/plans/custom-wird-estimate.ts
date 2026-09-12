@@ -14,6 +14,7 @@ export type CustomCadenceType = "pace" | "deadline";
 export type EstimateResult = {
   type: "days" | "pace";
   numericValue: number;
+  estimatedDays?: number;
   unit: "page" | "verse";
   textKey: string;
 };
@@ -165,11 +166,28 @@ export const computeCadenceEstimate = ({
   // Deadline cadence
   const days = Math.max(1, dayCountInclusive(startDate, endDate ?? startDate));
   const effectiveReps = Math.max(1, repetitions);
-  const dailyPace = Math.ceil((totalUnits * effectiveReps) / days);
+  const totalItems = totalUnits * effectiveReps;
+  const dailyPace = Math.ceil(totalItems / days);
+  const estimatedDays = Math.ceil(totalItems / dailyPace);
+
+  // Only worth announcing "finishes early" when the deadline actually gives more
+  // than 1 day to work with — when the deadline itself is today/overdue (days <= 1),
+  // dailyPace already equals the true remaining content and must stay visible, not
+  // be replaced by a generic "1 day" message that would hide how much is due right now.
+  if (estimatedDays === 1 && days > 1) {
+    return {
+      type: "days",
+      numericValue: 1,
+      unit,
+      textKey: "plans.custom.estimate.days",
+    };
+  }
+
   return {
     type: "pace",
     numericValue: dailyPace,
+    estimatedDays,
     unit,
-    textKey: "plans.custom.estimate.pace",
+    textKey: estimatedDays < days ? "plans.custom.estimate.paceWithDays" : "plans.custom.estimate.pace",
   };
 };

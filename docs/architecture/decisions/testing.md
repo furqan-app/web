@@ -23,6 +23,19 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 
 ---
 
+## Dev-Mode Diagnosis: Hook-Count Errors Are Not Evidence
+
+**Status:** active
+
+**Decision (2026-09-11, #598):** A `Rendered more hooks than during the previous render` error seen in `next dev` is **not** evidence of a Rules-of-Hooks bug — verify it on a production build before investigating. Fast Refresh can hot-swap a module into an already-mounted fiber whose recorded hook list is shorter than the new source's, and React reports the mismatch against the component with a full stack, indistinguishable from a genuine violation. It survives `rm -rf .next` and a dev-server restart, because the drift lives in the mounted client fiber, not in the build.
+
+**Constraints:**
+- Before investigating any hook-count error seen in `next dev`, reproduce it on a production build (`next build` + `next start`). If it does not reproduce there, it is a dev artifact — stop.
+- When reading accumulated console output, establish an empty baseline first. The buffer survives soft navigation and can outlive the page, so an error from an earlier run reads identically to a fresh one — a "reproduction" that reuses the same tab proves nothing.
+- A healthy post-action end state (the element gone, the write landed) is observationally identical to an error-boundary teardown. Never infer a crash from a missing element alone.
+
+---
+
 ## CI: E2E Skip on Config-Only PRs
 
 **Status:** active
