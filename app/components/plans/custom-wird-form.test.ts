@@ -23,6 +23,7 @@ describe("Custom Wird Form State Mapping & Invariants (CustomWirdForm)", () => {
     paceAmount: 5,
     deadlineEndDate: "2026-10-09",
     repetitions: 1,
+    weekday: 5,
   };
 
   describe("Create Request Body Serialization", () => {
@@ -138,6 +139,19 @@ describe("Custom Wird Form State Mapping & Invariants (CustomWirdForm)", () => {
       });
       expect((body.cadence as { repetitions?: number }).repetitions).toBeUndefined();
     });
+
+    it("serializes weekly cadence into { type: 'weekly', weekday }", () => {
+      const body = buildCustomCreateBody({
+        ...baseState,
+        cadenceType: "weekly",
+        weekday: 5,
+      });
+
+      expect(body.cadence).toEqual({
+        type: "weekly",
+        weekday: 5,
+      });
+    });
   });
 
   describe("Patch Request Body Serialization & Range Freeze Invariants", () => {
@@ -200,6 +214,22 @@ describe("Custom Wird Form State Mapping & Invariants (CustomWirdForm)", () => {
         endDate: "2026-12-31",
       });
       expect((patchBody.cadence as { repetitions?: number }).repetitions).toBeUndefined();
+    });
+
+    it("serializes weekly cadence in PATCH body", () => {
+      const patchBody = buildCustomPatchBody(
+        {
+          ...baseState,
+          cadenceType: "weekly",
+          weekday: 0,
+        },
+        false
+      );
+
+      expect(patchBody.cadence).toEqual({
+        type: "weekly",
+        weekday: 0,
+      });
     });
   });
 });

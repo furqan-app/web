@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
+  resolveCustomCadence,
   resolveCustomPlanEnrollment,
   resolveCustomPlanEdit,
   type CreateCustomPlanBody,
@@ -273,6 +274,62 @@ describe("validate-custom-definition", () => {
       };
 
       const res = await resolveCustomPlanEnrollment(body);
+      expect("error" in res).toBe(true);
+      if ("error" in res) {
+        expect(res.error).toBe("Unexpected field in cadence");
+      }
+    });
+  });
+
+  describe("weekly cadence (ADR 0070, #628)", () => {
+    it("resolves a weekly cadence to { type: 'weekly', weekday } with no endDate", async () => {
+      const body: CreateCustomPlanBody = {
+        template_key: "custom",
+        name: "Al-Kahf Fridays",
+        activity: "read",
+        range: { mode: "page", startPage: 294, endPage: 297 },
+        cadence: { type: "weekly", weekday: 5 },
+      };
+
+      const res = await resolveCustomPlanEnrollment(body);
+      expect("error" in res).toBe(false);
+      if ("error" in res) return;
+
+      expect(res.definition.cadence).toEqual({ type: "weekly", weekday: 5 });
+      expect(res.params.endDate).toBeUndefined();
+    });
+
+    it("accepts Sunday (0) and Saturday (6) boundaries", () => {
+      expect(resolveCustomCadence({ type: "weekly", weekday: 0 }, "page", "read", "2026-09-08")).toEqual({
+        cadence: { type: "weekly", weekday: 0 },
+      });
+      expect(resolveCustomCadence({ type: "weekly", weekday: 6 }, "page", "read", "2026-09-08")).toEqual({
+        cadence: { type: "weekly", weekday: 6 },
+      });
+    });
+
+    it("rejects out-of-range, non-integer, and missing weekdays", () => {
+      for (const weekday of [7, -1, 1.5, "5", undefined, null]) {
+        const res = resolveCustomCadence(
+          { type: "weekly", weekday },
+          "page",
+          "read",
+          "2026-09-08"
+        );
+        expect("error" in res).toBe(true);
+        if ("error" in res) {
+          expect(res.error).toBe("cadence.weekday must be an integer 0..6");
+        }
+      }
+    });
+
+    it("rejects unexpected fields in a weekly cadence", () => {
+      const res = resolveCustomCadence(
+        { type: "weekly", weekday: 5, amount: 1 },
+        "page",
+        "read",
+        "2026-09-08"
+      );
       expect("error" in res).toBe(true);
       if ("error" in res) {
         expect(res.error).toBe("Unexpected field in cadence");

@@ -27,6 +27,8 @@ export type CustomWirdFormState = {
   paceAmount: number;
   deadlineEndDate: string;
   repetitions: number;
+  /** Due weekday (0–6) — only read when cadenceType === "weekly". */
+  weekday: number;
 };
 
 export const buildRangeInput = (
@@ -56,7 +58,12 @@ export const buildCustomCreateBody = (
   const range = buildRangeInput(state);
 
   let cadence: CustomWirdCadenceInput;
-  if (state.cadenceType === "pace") {
+  if (state.cadenceType === "weekly") {
+    cadence = {
+      type: "weekly",
+      weekday: state.weekday,
+    };
+  } else if (state.cadenceType === "pace") {
     cadence = {
       type: "pace",
       period: state.pacePeriod,
@@ -93,7 +100,12 @@ export const buildCustomPatchBody = (
     body.range = buildRangeInput(state);
   }
 
-  if (state.cadenceType === "pace") {
+  if (state.cadenceType === "weekly") {
+    body.cadence = {
+      type: "weekly",
+      weekday: state.weekday,
+    };
+  } else if (state.cadenceType === "pace") {
     body.cadence = {
       type: "pace",
       period: state.pacePeriod,

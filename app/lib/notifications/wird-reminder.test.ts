@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   computeInitialScheduledFor,
+  computeInitialWeeklyScheduledFor,
   getDailyWirdReminders,
   setGeneralWirdReminder,
   cancelGeneralWirdReminder,
@@ -32,6 +33,177 @@ describe("wird-reminder service", () => {
 
       expect(scheduled.toISOString()).toBe("2026-09-12T05:30:00.000Z");
       expect(scheduled.getTime()).toBeGreaterThan(now.getTime());
+    });
+  });
+
+  describe("computeInitialWeeklyScheduledFor (ADR 0070)", () => {
+    it("schedules for today when the weekday matches and the time hasn't passed", () => {
+      // Friday 2026-09-11 06:00 UTC = 09:00 Cairo; target Friday 10:00 Cairo.
+      const now = new Date("2026-09-11T06:00:00Z");
+      const scheduled = computeInitialWeeklyScheduledFor("10:00", 5, "Africa/Cairo", now);
+
+      expect(scheduled.toISOString()).toBe("2026-09-11T07:00:00.000Z");
+      expect(scheduled.getUTCDay()).toBe(5);
+    });
+
+    it("seeks the next matching weekday when today doesn't match", () => {
+      // Friday 2026-09-11; target Wednesday (3) 08:00 Cairo → 2026-09-16.
+      const now = new Date("2026-09-11T06:00:00Z");
+      const scheduled = computeInitialWeeklyScheduledFor("08:00", 3, "Africa/Cairo", now);
+
+      expect(scheduled.toISOString()).toBe("2026-09-16T05:00:00.000Z");
+      expect(scheduled.getUTCDay()).toBe(3);
+      expect(scheduled.getTime()).toBeGreaterThan(now.getTime());
+    });
+
+    it("rolls to next week when the weekday matches but the time already passed", () => {
+      // Friday 2026-09-11 11:00 UTC = 14:00 Cairo; target Friday 08:00 Cairo.
+      const now = new Date("2026-09-11T11:00:00Z");
+      const scheduled = computeInitialWeeklyScheduledFor("08:00", 5, "Africa/Cairo", now);
+
+      expect(scheduled.toISOString()).toBe("2026-09-18T05:00:00.000Z");
+      expect(scheduled.getUTCDay()).toBe(5);
+    });
+  });
+
+  describe("weekly recurrence passthrough", () => {
+    const makeStore = () => {
+      const storedRows: Map<string, ScheduledReminderRow> = new Map();
+      const mockStore = {
+        upsertScheduledReminder: vi.fn(async (input) => {
+          const row: ScheduledReminderRow = {
+            id: storedRows.size + 1,
+            user_id: input.userId,
+            type: input.type,
+            payload: input.payload,
+            channels: input.channels ?? null,
+            scheduled_for: input.scheduledFor,
+            recurrence: input.recurrence ?? null,
+            weekday: input.weekday ?? null,
+            timezone: input.timezone ?? null,
+            locale: input.locale ?? null,
+            status: "pending",
+            dedupe_key: input.dedupeKey ?? null,
+          };
+          storedRows.set(input.dedupeKey!, row);
+          return { id: row.id };
+        }),
+        listScheduledRemindersForUser: vi.fn(async (userId: number) => {
+          return Array.from(storedRows.values()).filter(
+            (r) => r.user_id === userId && r.status === "pending"
+          );
+        }),
+        cancelScheduledReminder: vi.fn(async (dedupeKey: string) => {
+          const row = storedRows.get(dedupeKey);
+          if (row) row.status = "cancelled";
+        }),
+      } as unknown as NotificationStore;
+      return { mockStore, storedRows };
+    };
+
+    it("stores recurrence/weekday on a weekly general slot and reads them back", async () => {
+      const { mockStore } = makeStore();
+      const clock = () => new Date("2026-09-11T05:00:00Z"); // Friday
+
+      await setGeneralWirdReminder(
+        {
+          userId: 1,
+          slot: 1,
+          time: "08:00",
+          timezone: "Africa/Cairo",
+          locale: "ar",
+          recurrence: "weekly",
+          weekday: 3,
+        },
+        mockStore,
+        clock
+      );
+
+      expect(mockStore.upsertScheduledReminder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dedupeKey: "plans.daily_reminder:1:slot:1",
+          recurrence: "weekly",
+          weekday: 3,
+        })
+      );
+
+      const prefs = await getDailyWirdReminders(1, mockStore);
+      expect(prefs.general[0]).toMatchObject({
+        slot: 1,
+        recurrence: "weekly",
+        weekday: 3,
+      });
+    });
+
+    it("stores recurrence/weekday on a weekly dedicated reminder", async () => {
+      const { mockStore } = makeStore();
+      const clock = () => new Date("2026-09-11T05:00:00Z"); // Friday
+
+      await setDedicatedWirdReminder(
+        {
+          userId: 1,
+          planId: 42,
+          time: "18:00",
+          timezone: "Africa/Cairo",
+          locale: "ar",
+          recurrence: "weekly",
+          weekday: 0,
+        },
+        mockStore,
+        clock
+      );
+
+      expect(mockStore.upsertScheduledReminder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dedupeKey: "plans.daily_reminder:1:plan:42",
+          recurrence: "weekly",
+          weekday: 0,
+        })
+      );
+
+      const prefs = await getDailyWirdReminders(1, mockStore);
+      expect(prefs.dedicated[0]).toMatchObject({
+        planId: 42,
+        recurrence: "weekly",
+        weekday: 0,
+      });
+    });
+
+    it("defaults to daily with null weekday when recurrence is omitted", async () => {
+      const { mockStore } = makeStore();
+      const clock = () => new Date("2026-09-11T05:00:00Z");
+
+      await setGeneralWirdReminder(
+        { userId: 1, slot: 1, time: "08:00", timezone: "Africa/Cairo", locale: "ar" },
+        mockStore,
+        clock
+      );
+
+      const prefs = await getDailyWirdReminders(1, mockStore);
+      expect(prefs.general[0]).toMatchObject({
+        recurrence: "daily",
+        weekday: null,
+      });
+    });
+
+    it("throws when recurrence is weekly but no weekday is given", async () => {
+      const { mockStore } = makeStore();
+      const clock = () => new Date("2026-09-11T05:00:00Z");
+
+      await expect(
+        setGeneralWirdReminder(
+          {
+            userId: 1,
+            slot: 1,
+            time: "08:00",
+            timezone: "Africa/Cairo",
+            locale: "ar",
+            recurrence: "weekly",
+          },
+          mockStore,
+          clock
+        )
+      ).rejects.toThrow("Weekly reminders require a weekday (0-6)");
     });
   });
 

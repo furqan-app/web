@@ -279,5 +279,22 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
       expect(dayCountInclusive("2026-09-01", "2026-09-10")).toBe(10);
       expect(dayCountInclusive("2026-09-01", "2026-09-30")).toBe(30);
     });
+
+    it("returns a weekly result carrying the weekday index (day names resolve via i18n)", () => {
+      const estimate = computeCadenceEstimate({
+        totalUnits: 4,
+        unit: "page",
+        cadenceType: "weekly",
+        startDate: "2026-09-08",
+        weekday: 5,
+      });
+      expect(estimate).toEqual({
+        type: "weekly",
+        numericValue: 5,
+        unit: "page",
+        textKey: "plans.custom.estimate.weekly",
+        weekday: 5,
+      });
+    });
   });
 });

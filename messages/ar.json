@@ -431,8 +431,11 @@
       "cadenceLabel": "الوتيرة",
       "cadenceType": {
         "pace": "بمعدل ثابت",
-        "deadline": "بتاريخ إتمام"
+        "deadline": "بتاريخ إتمام",
+        "weekly": "تكرار أسبوعي"
       },
+      "weekdayLabel": "يوم الاستحقاق",
+      "weeklyHint": "يُستحق في نفس اليوم من كل أسبوع",
       "period": {
         "day": "يوميًا",
         "week": "أسبوعيًا"
@@ -450,7 +453,8 @@
       "estimate": {
         "days": "≈ {count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}} للإتمام",
         "pace": "≈ {pace} (يُعاد حسابه تلقائيًا)",
-        "paceWithDays": "≈ {pace} (يُنجز في {daysCount, plural, zero {{daysN} يوم} one {يوم واحد} two {يومين} few {{daysN} أيام} many {{daysN} يومًا} other {{daysN} يوم}})"
+        "paceWithDays": "≈ {pace} (يُنجز في {daysCount, plural, zero {{daysN} يوم} one {يوم واحد} two {يومين} few {{daysN} أيام} many {{daysN} يومًا} other {{daysN} يوم}})",
+        "weekly": "كل {weekday}"
       },
       "rangeFrozen": "تم تثبيت المقدار لتسجيل قراءات سابقة",
       "verseWeeklyUnavailable": "المعدل الأسبوعي غير متاح للآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء",
@@ -619,6 +623,9 @@
       "wirdReminderTitle": "تذكير الورد اليومي",
       "wirdReminderDescription": "تنبيهات يومية لمتابعة وردك القرآني في أوقاتك المفضلة (حتى ٣ أوقات)",
       "wirdReminderSlotLabel": "التذكير {n}",
+      "wirdReminderRecurrence": "التكرار",
+      "wirdReminderDaily": "يومي",
+      "wirdReminderWeekly": "أسبوعي",
       "wirdReminderAdd": "إضافة وقت آخر",
       "wirdReminderRemove": "حذف هذا التذكير",
       "wirdReminderMaxReached": "الحد الأقصى ٣ تذكيرات عامة",
