@@ -130,8 +130,11 @@ model PushSubscription {
 // A reminder: the same notification concept (type + payload + channels),
 // triggered later by the cron-polled dispatcher instead of immediately.
 // timezone is captured from the client at enqueue time (no User.timezone
-// column exists) so `daily` recurrence can compute the next local-day
-// occurrence. dedupe_key makes enqueueing idempotent (e.g.
+// column exists) so `daily`/`weekly` recurrence can compute the next
+// local-day occurrence. weekday (0 = Sunday … 6 = Saturday) is scheduling
+// metadata for `weekly` recurrence — a first-class column like
+// timezone/locale, never payload JSON (ADR 0070). dedupe_key makes
+// enqueueing idempotent (e.g.
 // "plans.daily_reminder:<userId>:<date>"). claim_id/locked_at implement a
 // lease so the cron route can safely claim a batch under MySQL (no
 // UPDATE...RETURNING).
@@ -142,7 +145,8 @@ model ScheduledNotification {
   payload        Json
   channels       Json?
   scheduled_for  DateTime
-  recurrence     String? // null = one-shot, "daily"
+  recurrence     String? // null = one-shot, "daily" | "weekly"
+  weekday        Int? // 0–6, Date.getUTCDay() convention, for "weekly" recurrence
   timezone       String? // IANA, e.g. "Africa/Cairo"
   locale         String? // e.g. "ar" | "en"
   status         String    @default("pending") // pending | dispatched | cancelled | failed

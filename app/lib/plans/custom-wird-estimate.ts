@@ -9,14 +9,17 @@ import type { SurahResult } from "@/app/types";
 import juzStarts from "@/public/quran/juz-starts.json";
 
 export type CustomWirdFormMode = "mushaf" | "surah" | "juz" | "page" | "verse";
-export type CustomCadenceType = "pace" | "deadline";
+export type CustomCadenceType = "pace" | "deadline" | "weekly";
 
 export type EstimateResult = {
-  type: "days" | "pace";
+  type: "days" | "pace" | "weekly";
   numericValue: number;
   estimatedDays?: number;
   unit: "page" | "verse";
   textKey: string;
+  /** Due weekday index (0–6) — only set when type is "weekly". Display text
+   * (day names) is resolved by the caller via i18n, never here. */
+  weekday?: number;
 };
 
 /**
@@ -141,16 +144,28 @@ export const computeCadenceEstimate = ({
   startDate,
   endDate,
   repetitions = 1,
+  weekday = 5,
 }: {
   totalUnits: number;
   unit: "page" | "verse";
-  cadenceType: "pace" | "deadline";
+  cadenceType: "pace" | "deadline" | "weekly";
   pacePeriod?: "day" | "week";
   paceAmount?: number;
   startDate: string;
   endDate?: string;
   repetitions?: number;
+  weekday?: number;
 }): EstimateResult => {
+  if (cadenceType === "weekly") {
+    return {
+      type: "weekly",
+      numericValue: weekday,
+      unit,
+      textKey: "plans.custom.estimate.weekly",
+      weekday,
+    };
+  }
+
   if (cadenceType === "pace") {
     const amount = paceAmount > 0 ? paceAmount : 1;
     const unitsPerDay = pacePeriod === "week" ? amount / 7 : amount;

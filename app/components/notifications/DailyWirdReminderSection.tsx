@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import { Plus, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,8 @@ type GeneralSlot = {
   timezone: string;
   locale: string;
   scheduledFor: string | null;
+  recurrence: "daily" | "weekly";
+  weekday: number | null;
 };
 
 type DedicatedSlot = {
@@ -29,6 +31,8 @@ type DedicatedSlot = {
   timezone: string;
   locale: string;
   scheduledFor: string | null;
+  recurrence: "daily" | "weekly";
+  weekday: number | null;
 };
 
 type ReminderApiResponse = {
@@ -86,6 +90,15 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
   const enabled = data?.enabled ?? false;
   const generalSlots = data?.general ?? [];
 
+  // Localized short weekday names in Sun–Sat order (0–6), resolved once per locale.
+  const weekdayNames = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
+    return Array.from(
+      { length: 7 },
+      (_, i) => fmt.format(new Date(Date.UTC(2026, 0, 4 + i)))
+    );
+  }, [locale]);
+
   const { mutate: updateReminder, isPending: isUpdating } = useMutation({
     mutationFn: async (payload: {
       type?: "general" | "dedicated";
@@ -95,6 +108,8 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
       time?: string;
       timezone?: string;
       locale?: string;
+      recurrence?: "daily" | "weekly";
+      weekday?: number;
     }) => {
       const res = await fetch("/api/notifications/daily-reminder", {
         method: "POST",
@@ -118,18 +133,26 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
     if (!next) {
       updateReminder({ type: "general", enabled: false });
     } else {
+      const current = generalSlots.find((g) => g.slot === 1);
+      const recurrence = current?.recurrence ?? "daily";
       updateReminder({
         type: "general",
         slot: 1,
-        time: "08:00",
+        time: current?.time ?? "08:00",
         enabled: true,
         timezone: getResolvedTimezone(),
         locale,
+        recurrence,
+        ...(recurrence === "weekly"
+          ? { weekday: current?.weekday ?? 5 }
+          : {}),
       });
     }
   };
 
   const handleSlotTimeChange = (slot: number, nextTime: string) => {
+    const current = generalSlots.find((g) => g.slot === slot);
+    const recurrence = current?.recurrence ?? "daily";
     updateReminder({
       type: "general",
       slot,
@@ -137,6 +160,30 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
       enabled: true,
       timezone: getResolvedTimezone(),
       locale,
+      recurrence,
+      // A weekly slot always carries an explicit weekday (the UI renders
+      // `?? 5` as the displayed default) — omitting it trips the API's 422.
+      ...(recurrence === "weekly" ? { weekday: current?.weekday ?? 5 } : {}),
+    });
+  };
+
+  const handleSlotRecurrenceChange = (
+    slot: number,
+    recurrence: "daily" | "weekly",
+    weekday?: number
+  ) => {
+    const current = generalSlots.find((g) => g.slot === slot);
+    updateReminder({
+      type: "general",
+      slot,
+      time: current?.time ?? "08:00",
+      enabled: true,
+      timezone: getResolvedTimezone(),
+      locale,
+      recurrence,
+      ...(recurrence === "weekly"
+        ? { weekday: weekday ?? current?.weekday ?? 5 }
+        : {}),
     });
   };
 
@@ -244,40 +291,107 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
             <div className="border-t border-dashed border-border bg-muted/25 px-3.5 py-3 space-y-2.5">
               {generalSlots.map((slot, index) => {
                 const isFirst = index === 0;
+                const isWeekly = slot.recurrence === "weekly";
+                const slotWeekday = slot.weekday ?? 5;
                 return (
-                  <div
-                    key={slot.slot}
-                    className="flex items-center justify-between gap-3"
-                  >
-                    <label className="text-[12px] font-medium text-foreground shrink-0">
-                      {tIntl("notifications.settings.wirdReminderSlotLabel", {
-                        n: toLocaleNumeral(index + 1, locale),
-                      })}
-                    </label>
-                    <div className="flex items-center gap-1.5 flex-1 justify-end max-w-[200px]">
-                      <TimeCombobox
-                        value={slot.time}
-                        onChange={(newTime) => handleSlotTimeChange(slot.slot, newTime)}
-                        disabled={isLoading || isUpdating}
-                        portalContainer={portalContainer}
-                        triggerTestId={
-                          isFirst
-                            ? "wird-reminder-time-trigger"
-                            : `wird-reminder-time-trigger-slot-${slot.slot}`
-                        }
-                      />
-                      {generalSlots.length > 1 && (
+                  <div key={slot.slot} className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-[12px] font-medium text-foreground shrink-0">
+                        {tIntl("notifications.settings.wirdReminderSlotLabel", {
+                          n: toLocaleNumeral(index + 1, locale),
+                        })}
+                      </label>
+                      <div className="flex items-center gap-1.5 flex-1 justify-end max-w-[200px]">
+                        <TimeCombobox
+                          value={slot.time}
+                          onChange={(newTime) => handleSlotTimeChange(slot.slot, newTime)}
+                          disabled={isLoading || isUpdating}
+                          portalContainer={portalContainer}
+                          triggerTestId={
+                            isFirst
+                              ? "wird-reminder-time-trigger"
+                              : `wird-reminder-time-trigger-slot-${slot.slot}`
+                          }
+                        />
+                        {generalSlots.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSlot(slot.slot)}
+                            disabled={isLoading || isUpdating}
+                            aria-label={t("notifications.settings.wirdReminderRemove", "Remove this reminder")}
+                            className="fq-focus-ring min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive flex items-center justify-center rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <div
+                        role="radiogroup"
+                        aria-label={t("notifications.settings.wirdReminderRecurrence", "Repeat")}
+                        className="flex gap-1 rounded-full bg-muted/60 p-0.5"
+                      >
                         <button
                           type="button"
-                          onClick={() => handleRemoveSlot(slot.slot)}
+                          role="radio"
+                          aria-checked={!isWeekly}
                           disabled={isLoading || isUpdating}
-                          aria-label={t("notifications.settings.wirdReminderRemove", "Remove this reminder")}
-                          className="fq-focus-ring min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive flex items-center justify-center rounded-lg transition-colors disabled:opacity-50"
+                          onClick={() => handleSlotRecurrenceChange(slot.slot, "daily")}
+                          className={`min-h-[44px] px-2.5 rounded-full text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                            !isWeekly
+                              ? "bg-primary text-primary-foreground font-semibold"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
                         >
-                          <Trash2 className="size-4" />
+                          {t("notifications.settings.wirdReminderDaily", "Daily")}
                         </button>
-                      )}
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={isWeekly}
+                          disabled={isLoading || isUpdating}
+                          onClick={() => handleSlotRecurrenceChange(slot.slot, "weekly")}
+                          className={`min-h-[44px] px-2.5 rounded-full text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                            isWeekly
+                              ? "bg-primary text-primary-foreground font-semibold"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {t("notifications.settings.wirdReminderWeekly", "Weekly")}
+                        </button>
+                      </div>
                     </div>
+                    {isWeekly && (
+                      <div
+                        role="radiogroup"
+                        aria-label={t("plans.custom.weekdayLabel", "Due weekday")}
+                        className="flex gap-1 overflow-x-auto fq-scroll-nice"
+                      >
+                        {weekdayNames.map((dayName, i) => {
+                          const isSelected = slotWeekday === i;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              role="radio"
+                              aria-checked={isSelected}
+                              disabled={isLoading || isUpdating}
+                              onClick={() =>
+                                handleSlotRecurrenceChange(slot.slot, "weekly", i)
+                              }
+                              className={`flex-1 min-h-[44px] min-w-[44px] whitespace-nowrap px-1 rounded-lg text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                                isSelected
+                                  ? "bg-primary text-primary-foreground font-semibold"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                              }`}
+                            >
+                              {dayName}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })}

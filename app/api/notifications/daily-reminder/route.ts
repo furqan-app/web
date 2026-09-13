@@ -4,6 +4,7 @@ import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
 import { getNotificationDeps } from "@/app/lib/notifications/deps";
 import {
+  dedicatedRecurrenceForDefinition,
   getDailyWirdReminders,
   setGeneralWirdReminder,
   cancelGeneralWirdReminder,
@@ -31,8 +32,17 @@ const validateReminderFields = (body: {
   time?: unknown;
   timezone?: unknown;
   locale?: unknown;
+  recurrence?: unknown;
+  weekday?: unknown;
 }):
-  | { valid: true; time: string; timezone: string; locale: string }
+  | {
+      valid: true;
+      time: string;
+      timezone: string;
+      locale: string;
+      recurrence: "daily" | "weekly";
+      weekday: number | null;
+    }
   | { valid: false; message: string } => {
   if (typeof body.time !== "string" || !TIME_REGEX.test(body.time)) {
     return {
@@ -58,11 +68,43 @@ const validateReminderFields = (body: {
     };
   }
 
+  const recurrence = body.recurrence ?? "daily";
+  if (recurrence !== "daily" && recurrence !== "weekly") {
+    return {
+      valid: false,
+      message: "recurrence must be 'daily' or 'weekly'",
+    };
+  }
+
+  if (recurrence === "weekly") {
+    if (
+      typeof body.weekday !== "number" ||
+      !Number.isInteger(body.weekday) ||
+      body.weekday < 0 ||
+      body.weekday > 6
+    ) {
+      return {
+        valid: false,
+        message: "weekday must be an integer 0..6 when recurrence is 'weekly'",
+      };
+    }
+    return {
+      valid: true,
+      time: body.time,
+      timezone: body.timezone,
+      locale: body.locale,
+      recurrence,
+      weekday: body.weekday,
+    };
+  }
+
   return {
     valid: true,
     time: body.time,
     timezone: body.timezone,
     locale: body.locale,
+    recurrence,
+    weekday: null,
   };
 };
 
@@ -82,6 +124,8 @@ export async function GET(request: NextRequest) {
         timezone: g.timezone,
         locale: g.locale,
         scheduledFor: g.scheduledFor ? g.scheduledFor.toISOString() : null,
+        recurrence: g.recurrence,
+        weekday: g.weekday,
       })),
       dedicated: pref.dedicated.map((d) => ({
         id: d.id,
@@ -90,6 +134,8 @@ export async function GET(request: NextRequest) {
         timezone: d.timezone,
         locale: d.locale,
         scheduledFor: d.scheduledFor ? d.scheduledFor.toISOString() : null,
+        recurrence: d.recurrence,
+        weekday: d.weekday,
       })),
       enabled: pref.enabled,
       time: pref.time,
@@ -111,6 +157,8 @@ export async function POST(request: NextRequest) {
     time?: unknown;
     timezone?: unknown;
     locale?: unknown;
+    recurrence?: unknown;
+    weekday?: unknown;
   };
   try {
     body = await request.json();
@@ -165,6 +213,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const derived = dedicatedRecurrenceForDefinition(plan.definition);
     const result = await setDedicatedWirdReminder(
       {
         userId: user.id,
@@ -172,6 +221,9 @@ export async function POST(request: NextRequest) {
         time: reminderValidation.time,
         timezone: reminderValidation.timezone,
         locale: reminderValidation.locale,
+        // A dedicated reminder's weekday is derived from the plan's cadence,
+        // never trusted from the client (ADR 0070) — see below.
+        ...derived,
       },
       deps.store,
       deps.clock
@@ -183,6 +235,8 @@ export async function POST(request: NextRequest) {
         enabled: true,
         planId,
         time: reminderValidation.time,
+        recurrence: derived.recurrence,
+        weekday: derived.weekday ?? null,
         scheduledFor: result.scheduledFor.toISOString(),
       },
     });
@@ -242,6 +296,10 @@ export async function POST(request: NextRequest) {
       time: reminderValidation.time,
       timezone: reminderValidation.timezone,
       locale: reminderValidation.locale,
+      recurrence: reminderValidation.recurrence,
+      ...(reminderValidation.weekday !== null
+        ? { weekday: reminderValidation.weekday }
+        : {}),
     },
     deps.store,
     deps.clock
@@ -253,6 +311,8 @@ export async function POST(request: NextRequest) {
       enabled: true,
       slot,
       time: reminderValidation.time,
+      recurrence: reminderValidation.recurrence,
+      weekday: reminderValidation.weekday,
       scheduledFor: result.scheduledFor.toISOString(),
     },
   });

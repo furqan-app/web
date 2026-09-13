@@ -74,6 +74,15 @@ const dayCountInclusive = (from: string, to: string) => {
 
 const clampQuantity = (n: number) => Math.max(1, Math.floor(n));
 
+/**
+ * Weekday of a "YYYY-MM-DD" local-calendar-day string (0 = Sunday …
+ * 6 = Saturday, Date.getUTCDay() convention). Parses the already-local day
+ * as UTC to avoid server-timezone contamination — same pattern as
+ * dayCountInclusive's `Date.parse(`${to}T00:00:00Z`)` above (ADR 0070).
+ */
+export const dateWeekday = (date: string): number =>
+  new Date(`${date}T00:00:00Z`).getUTCDay();
+
 type TrackState = {
   /**
    * range_end of the latest-dated entry, or null if never logged. Cursors
@@ -296,6 +305,13 @@ const deriveSourceFreeTrack = (
   const rule = track.rule;
 
   if (rule.kind === "fixed_cycle") {
+    // Weekly-recurring custom wird gate (ADR 0070): on a non-matching local
+    // weekday the track produces no assignment — not due today. Runs after
+    // the todayEntryAssignment echo above (an already-logged day echoes
+    // verbatim regardless of weekday) and before computing start.
+    if (rule.weekday !== undefined && dateWeekday(date) !== rule.weekday) {
+      return null;
+    }
     const { start: boundStart, end: boundEnd } = fixedCycleBounds(rule, unit);
     const isStop = rule.onComplete === "stop";
     const K = rule.repetitions ?? 1;

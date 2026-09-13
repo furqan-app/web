@@ -430,8 +430,11 @@
       "cadenceLabel": "Schedule",
       "cadenceType": {
         "pace": "By pace",
-        "deadline": "By deadline"
+        "deadline": "By deadline",
+        "weekly": "Weekly recurrence"
       },
+      "weekdayLabel": "Due weekday",
+      "weeklyHint": "Due on the same weekday every week",
       "period": {
         "day": "Daily",
         "week": "Weekly"
@@ -449,7 +452,8 @@
       "estimate": {
         "days": "≈ {count, plural, one {{n} day} other {{n} days}} to complete",
         "pace": "≈ {pace} (re-adjusts on missed days)",
-        "paceWithDays": "≈ {pace} (finishes in {daysCount, plural, one {1 day} other {{daysN} days}})"
+        "paceWithDays": "≈ {pace} (finishes in {daysCount, plural, one {1 day} other {{daysN} days}})",
+        "weekly": "Every {weekday}"
       },
       "rangeFrozen": "Target range is locked because progress has been logged",
       "verseWeeklyUnavailable": "Weekly pace is not available for verses; specify daily verses or set a deadline",
@@ -618,6 +622,9 @@
       "wirdReminderTitle": "Daily Wird Reminders",
       "wirdReminderDescription": "Daily reminders to keep up with your Quran reading at your preferred times (up to 3 times)",
       "wirdReminderSlotLabel": "Reminder {n}",
+      "wirdReminderRecurrence": "Repeat",
+      "wirdReminderDaily": "Daily",
+      "wirdReminderWeekly": "Weekly",
       "wirdReminderAdd": "Add another time",
       "wirdReminderRemove": "Remove this reminder",
       "wirdReminderMaxReached": "Maximum of 3 general reminders reached",

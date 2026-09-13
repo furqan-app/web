@@ -50,6 +50,10 @@ export type CustomWirdCadenceInput =
       type: "deadline";
       endDate: string;
       repetitions?: number;
+    }
+  | {
+      type: "weekly";
+      weekday: number;
     };
 
 export type CreateCustomPlanBody = {
@@ -111,6 +115,7 @@ const ALLOWED_KEYS_BY_MODE: Record<string, string[]> = {
 const ALLOWED_CADENCE_KEYS_BY_TYPE: Record<string, string[]> = {
   pace: ["type", "period", "amount"],
   deadline: ["type", "endDate", "repetitions"],
+  weekly: ["type", "weekday"],
 };
 
 export const resolveCustomRange = async (
@@ -336,6 +341,24 @@ export const resolveCustomCadence = (
         ...(repetitions > 1 ? { repetitions } : {}),
       },
       endDate,
+    };
+  }
+
+  if (type === "weekly") {
+    const weekday = cadence.weekday;
+    if (
+      typeof weekday !== "number" ||
+      !Number.isInteger(weekday) ||
+      weekday < 0 ||
+      weekday > 6
+    ) {
+      return { error: "cadence.weekday must be an integer 0..6" };
+    }
+    return {
+      cadence: {
+        type: "weekly",
+        weekday,
+      },
     };
   }
 

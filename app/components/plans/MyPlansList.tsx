@@ -297,6 +297,11 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
       if (def.cadence.repetitions && def.cadence.repetitions > 1) {
         parts.push(`×${toLocaleNumeral(def.cadence.repetitions, locale)}`);
       }
+    } else if (def.cadence.type === "weekly") {
+      const dayName = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(
+        new Date(Date.UTC(2026, 0, 4 + def.cadence.weekday))
+      );
+      parts.push(tIntl("plans.custom.estimate.weekly", { weekday: dayName }));
     }
   }
 
@@ -344,6 +349,18 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   const hasDedicatedReminder = Boolean(dedicatedReminder);
   const dedicatedTime = dedicatedReminder?.time ?? "20:00";
   const formattedTime = hasDedicatedReminder ? formatTimeOption(dedicatedTime, locale) : "";
+
+  // Weekly-recurring custom wirds (ADR 0070): the due weekday is derived from
+  // the plan's cadence — read-only here, never picked on this surface.
+  const def = plan.template_key === "custom" ? plan.definition : null;
+  const weeklyWeekday =
+    def && def.cadence.type === "weekly" ? def.cadence.weekday : null;
+  const weeklyDayName =
+    weeklyWeekday !== null
+      ? new Intl.DateTimeFormat(locale, { weekday: "long" }).format(
+          new Date(Date.UTC(2026, 0, 4 + weeklyWeekday))
+        )
+      : null;
 
   const { mutate: updateDedicatedReminder } = useMutation({
     mutationFn: async (payload: { planId: number; time?: string; enabled: boolean }) => {
@@ -452,6 +469,11 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
         <div className="flex items-center justify-between border-t border-dashed border-border/70 pt-2.5 mt-1 text-xs">
           <div className="flex items-center gap-2 text-muted-foreground min-w-0 flex-1">
             <Bell className="size-3.5 shrink-0 text-muted-foreground" />
+            {weeklyDayName ? (
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary whitespace-nowrap flex-none">
+                {weeklyDayName}
+              </span>
+            ) : null}
             {hasDedicatedReminder ? (
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-medium text-foreground">

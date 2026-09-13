@@ -18,6 +18,7 @@ const toReminderRow = (row: {
   channels: unknown;
   scheduled_for: Date;
   recurrence: string | null;
+  weekday?: number | null;
   timezone: string | null;
   locale?: string | null;
   status: string;
@@ -26,6 +27,7 @@ const toReminderRow = (row: {
 }): ScheduledReminderRow => ({
   ...row,
   channels: (row.channels as NotificationChannelKey[] | null) ?? null,
+  weekday: row.weekday ?? null,
   locale: row.locale ?? null,
   status: row.status,
   dedupe_key: row.dedupe_key ?? null,
@@ -127,6 +129,7 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
     channels,
     scheduledFor,
     recurrence,
+    weekday,
     timezone,
     locale,
     dedupeKey,
@@ -152,6 +155,7 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
           channels: (channels ?? null) as unknown as object,
           scheduled_for: scheduledFor,
           recurrence: recurrence ?? null,
+          weekday: weekday ?? null,
           timezone: timezone ?? null,
           locale: locale ?? null,
           dedupe_key: dedupeKey,
@@ -163,6 +167,7 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
           payload: payload as object,
           channels: (channels ?? null) as unknown as object,
           recurrence: recurrence ?? null,
+          weekday: weekday ?? null,
           status: "pending",
           ...(isActivelyLeased ? {} : { claim_id: null, locked_at: null }),
           last_error: null,
@@ -180,6 +185,7 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
         channels: (channels ?? null) as unknown as object,
         scheduled_for: scheduledFor,
         recurrence: recurrence ?? null,
+        weekday: weekday ?? null,
         timezone: timezone ?? null,
         locale: locale ?? null,
       },

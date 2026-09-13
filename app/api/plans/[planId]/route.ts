@@ -12,7 +12,11 @@ import {
 } from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
 import { resolveCustomPlanEdit } from "@/app/lib/plans/validate-custom-definition";
-import { cancelDedicatedWirdReminder } from "@/app/lib/notifications/wird-reminder";
+import {
+  cancelDedicatedWirdReminder,
+  dedicatedRecurrenceForDefinition,
+  setDedicatedWirdReminder,
+} from "@/app/lib/notifications/wird-reminder";
 import { getNotificationDeps } from "@/app/lib/notifications/deps";
 
 const serializePlan = (plan: {
@@ -52,6 +56,54 @@ async function cancelDedicatedIfLeavingActive(
         err
       );
     }
+  }
+}
+
+/**
+ * After a cadence edit on an active custom wird, re-derive the bound
+ * dedicated reminder from the updated plan when the derived
+ * recurrence/weekday changed (e.g. Friday → Sunday, or weekly → pace):
+ * re-`setDedicatedWirdReminder` with the new weekday reuses the same dedupe
+ * key, so the row is replaced in place and no orphaned row remains
+ * (ADR 0070, plan Case 4). No-op when no dedicated reminder exists, when the
+ * plan isn't active, or when the derivation is unchanged. Never fails the
+ * PATCH — a reminder miss is logged, not thrown.
+ */
+async function rederiveDedicatedIfCadenceChanged(
+  userId: number,
+  planId: number,
+  oldDefinition: unknown,
+  newDefinition: CustomWirdDefinition
+): Promise<void> {
+  try {
+    const before = dedicatedRecurrenceForDefinition(oldDefinition);
+    const after = dedicatedRecurrenceForDefinition(newDefinition);
+    if (before.recurrence === after.recurrence && before.weekday === after.weekday) {
+      return;
+    }
+    const deps = getNotificationDeps();
+    const row = await deps.store.getScheduledReminderByDedupeKey(
+      `plans.daily_reminder:${userId}:plan:${planId}`
+    );
+    if (!row || row.status !== "pending") return;
+    const payload = row.payload as { time?: string } | null;
+    await setDedicatedWirdReminder(
+      {
+        userId,
+        planId,
+        time: payload?.time ?? "20:00",
+        timezone: row.timezone ?? "UTC",
+        locale: row.locale ?? "ar",
+        ...after,
+      },
+      deps.store,
+      deps.clock
+    );
+  } catch (err) {
+    console.error(
+      `Failed to re-derive dedicated wird reminder for user ${userId}, plan ${planId}:`,
+      err
+    );
   }
 }
 
@@ -133,6 +185,15 @@ export async function PATCH(
     });
 
     await cancelDedicatedIfLeavingActive(user.id, planId, data.status);
+
+    if (resolved.definition !== undefined && updated.status === "active") {
+      await rederiveDedicatedIfCadenceChanged(
+        user.id,
+        planId,
+        plan.definition,
+        resolved.definition
+      );
+    }
 
     return jsonResponse({
       data: serializePlan(updated),

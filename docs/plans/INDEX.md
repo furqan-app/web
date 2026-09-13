@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-92 active plans.
+94 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -22,6 +22,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | awrad | [Daily Awrad UI](daily-awrad-ui.md) | implemented | feature |
 | awrad | [Daily wird presets: add memorize & review flavours, reframe as \"Daily wird — <activity>\" + optional start point](607-daily-wird-activity-flavours.md) | implemented | feature |
 | awrad | [Verse & Fractional-Page Granularity for Awrad](awrad-verse-granularity.md) | implemented | feature |
+| awrad | [Weekly-Recurring Custom Wirds with Matching Weekly Reminders](weekly-custom-wirds.md) | implemented | feature |
 | ci | [CI Quality Gate: PR Lint, Typecheck & Vitest Workflow](ci-quality-gate.md) | implemented | feature |
 | ci | [Dev Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit](local-build-and-test-ergonomics.md) | implemented | feature |
 | ci | [Local E2E runs against a production build, like CI](local-e2e-build-path.md) | implemented | chore |
