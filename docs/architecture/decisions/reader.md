@@ -253,3 +253,12 @@ payload; windowing removes the mass mount.
 - Do not add `startTransition` — Next.js App Router already wraps its router dispatch in `startTransition` internally; double-wrapping is a no-op (confirmed in Addendum 8/9).
 - Do not use `sessionStorage` or `document.documentElement` attributes as fade-signal carriers — these mechanisms are superseded.
 - **Exception (tablet double-view only):** the tablet spread uses a real 3-panel carousel that *does* render adjacent spreads — see [ADR 0027](../adr/0027-tablet-swipe-carousel.md). This is a scoped divergence justified by static generation (adjacent fetch cost is build-time) and the reveal being a wanted feature, not a flicker fix. It does **not** relax the above constraints for mobile/single-view, which stay single-slot. The "no entry animation on mount" rule still holds even for the carousel — the incoming route renders statically centered.
+
+---
+
+## Ephemeral Reader Chrome Mount Predicates Must Use Layout Effects
+
+**Status:** active
+
+**Decision:** Any conditionally-mounted reader chrome whose render-time mount predicate depends on state transitioned by an effect must use `useIsomorphicLayoutEffect` (not `useEffect`) for that transition. With a standard `useEffect`, the render where the triggering condition drops to zero (e.g. `pendingCount === 0`) evaluates the mount guard as unmounted (`null`) and the browser paints a "chrome gone" frame before the effect can transition lifecycle state (e.g. to a completing flourish) — producing a visible one-frame blink. `useIsomorphicLayoutEffect` commits the transition before paint, preventing the unmount flicker.
+

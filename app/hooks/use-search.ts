@@ -37,11 +37,15 @@ const loadSearchIndex = (): Promise<SearchIndexRow[]> => {
         }
         return parsed;
       })
-      .catch(() => {
-        // Index absent (never precached) — drop the memo so a later online
-        // session retries, and resolve empty so the UI shows no-results, never a throw.
+      .catch((err) => {
+        // Index absent (never precached, or the cached entry failed) — drop
+        // the memo so a later retry re-attempts the fetch, and rethrow so the
+        // queries reach their error state (the results page shows
+        // error-plus-retry) instead of silently rendering "Nothing found".
+        // The overlay has no error branch and keeps showing its no-results
+        // state on query error, so this changes nothing visible there.
         indexPromise = null;
-        return [] as SearchIndexRow[];
+        throw err instanceof Error ? err : new Error("search-index.json unavailable");
       });
   }
   return indexPromise;
@@ -123,6 +127,12 @@ export const getOfflineVerseMatches = (
       };
     })();
     offlineMatchesCache.set(key, cached);
+    // A rejection must not stick: Retry (and React Query's own retries) call
+    // the fetcher again, and a cached rejection would replay the error
+    // without re-attempting the SW-cached fetch.
+    void cached.catch(() => {
+      if (offlineMatchesCache.get(key) === cached) offlineMatchesCache.delete(key);
+    });
     // Bounded LRU: a long-lived tab issues many distinct queries; without a
     // cap this memo grows for the session lifetime. Map preserves insertion
     // order, so the first key is the oldest.

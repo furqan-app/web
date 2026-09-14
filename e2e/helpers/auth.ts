@@ -91,3 +91,33 @@ export async function clearUserMarks(userId = 1): Promise<void> {
   const pool = getAppDbPool();
   await pool.query("DELETE FROM marks WHERE to_user = ?", [userId]);
 }
+
+/**
+ * Clears all plans and progress entries for a given user from the e2e app database.
+ */
+export async function clearUserPlans(userId = 1): Promise<void> {
+  const pool = getAppDbPool();
+  await pool.query(
+    "DELETE pe FROM plan_progress_entries pe INNER JOIN user_plans up ON pe.user_plan_id = up.id WHERE up.user_id = ?",
+    [userId]
+  );
+  await pool.query("DELETE FROM user_plans WHERE user_id = ?", [userId]);
+}
+
+/**
+ * Inserts an active test plan directly into the e2e app database for user_plans.
+ */
+export async function createTestPlan(
+  userId = 1,
+  templateKey = "daily-wird",
+  params: Record<string, unknown> = { quantities: { reading: 5 } }
+): Promise<number> {
+  const pool = getAppDbPool();
+  const today = new Date().toISOString().slice(0, 10);
+  const [result] = await pool.query<mysql.ResultSetHeader>(
+    "INSERT INTO user_plans (user_id, template_key, params, start_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'active', NOW(), NOW())",
+    [userId, templateKey, JSON.stringify(params), today]
+  );
+  return result.insertId;
+}
+

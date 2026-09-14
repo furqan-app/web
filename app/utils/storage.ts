@@ -17,7 +17,9 @@ export type StorageKey =
   | 'tafsirDownloads'
   | 'localMarks'
   | 'localMarksOwner'
-  | 'guestMarkPromptDismissed';
+  | 'guestMarkPromptDismissed'
+  | 'awradAutoWriteCompletion'
+  | 'autoWrittenProgress';
 
 type StorageValueType = {
   theme: 'light' | 'dark' | 'gold';
@@ -60,6 +62,12 @@ type StorageValueType = {
   localMarksOwner: string;
   // Dismissal state for the one-line guest marking sign-in prompt in the installed PWA (#550).
   guestMarkPromptDismissed: boolean;
+  // Opt-in silent auto-write for awrad completion detection (Issue #598).
+  // Per-user map keyed by user id string — never a global boolean, so a
+  // shared browser cannot leak one account's preference onto another.
+  awradAutoWriteCompletion: Record<string, boolean>;
+  // Local day log of entries automatically recorded, keyed by `${userId}:${planId}:${trackKey}:${date}`.
+  autoWrittenProgress: Record<string, number>;
 };
 
 export const isQuotaExceededError = (err: unknown): boolean => {

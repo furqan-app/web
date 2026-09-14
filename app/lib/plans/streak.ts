@@ -13,13 +13,28 @@
 
 import { deriveAssignments, type ProgressLogEntry } from "@/app/lib/plans/engine";
 import { addDays } from "@/app/lib/plans/dates";
-import type { PlanTemplate, UserPlanParams } from "@/app/constants/plans";
+import {
+  PLAN_ACTIVITIES,
+  type PlanActivity,
+  type PlanTemplate,
+  type UserPlanParams,
+} from "@/app/constants/plans";
 
 export type StreakPlanInput = {
   startDate: string; // "YYYY-MM-DD"
   template: PlanTemplate;
   params: UserPlanParams;
   entries: ProgressLogEntry[];
+};
+
+export type ActivityStreakResult = {
+  streakLength: number;
+  /** Whether the user completed an assignment for this activity on client 'today'. */
+  completedToday: boolean;
+  /** Earliest start date across active plans containing this activity ("YYYY-MM-DD" | null). */
+  startDate: string | null;
+  /** Total active days for this activity in the last 365 days. */
+  activeDaysCount: number;
 };
 
 const MAX_LOOKBACK_DAYS = 400;
@@ -87,3 +102,103 @@ export const deriveStreak = (plans: StreakPlanInput[], today: string): StreakRes
 
   return { streakLength, week };
 };
+
+/**
+ * Derives per-activity streaks grouped by PlanActivity ("read" | "listen" | "memorize" | "review").
+ *
+ * Rule (D3): A day counts toward an activity's streak when at least one assignment
+ * belonging to that activity was completed on that local date.
+ */
+export const deriveActivityStreaks = (
+  plans: StreakPlanInput[],
+  today: string
+): Record<PlanActivity, ActivityStreakResult> => {
+  const result: Record<PlanActivity, ActivityStreakResult> = {
+    read: { streakLength: 0, completedToday: false, startDate: null, activeDaysCount: 0 },
+    listen: { streakLength: 0, completedToday: false, startDate: null, activeDaysCount: 0 },
+    memorize: { streakLength: 0, completedToday: false, startDate: null, activeDaysCount: 0 },
+    review: { streakLength: 0, completedToday: false, startDate: null, activeDaysCount: 0 },
+  };
+
+  const minDay365 = addDays(today, -364);
+
+  for (const act of PLAN_ACTIVITIES) {
+    const activityPlans = plans
+      .map((plan) => ({
+        plan,
+        trackKeys: new Set(
+          plan.template.tracks.filter((t) => t.activity === act).map((t) => t.key)
+        ),
+      }))
+      .filter((item) => item.trackKeys.size > 0);
+
+    if (activityPlans.length === 0) continue;
+
+    const earliestStart = activityPlans.reduce<string | null>(
+      (min, item) => (min === null || item.plan.startDate < min ? item.plan.startDate : min),
+      null
+    );
+
+    if (!earliestStart) continue;
+
+    const activityDayStatus = (date: string): DayStatus => {
+      let anyAssignment = false;
+      for (const { plan, trackKeys } of activityPlans) {
+        if (date < plan.startDate) continue;
+        const entriesUpToDate = plan.entries.filter((e) => e.date <= date);
+        const assignments = deriveAssignments(plan.template, plan.params, entriesUpToDate, date);
+        const actAssignments = assignments.filter((a) => trackKeys.has(a.trackKey));
+        if (actAssignments.length > 0) {
+          anyAssignment = true;
+          if (!actAssignments.every((a) => a.completed)) return "missed";
+        }
+      }
+      return anyAssignment ? "done" : "none";
+    };
+
+    const todayStatus = activityDayStatus(today);
+    const completedToday = todayStatus === "done";
+
+    // Compute active days in the rolling 365-day window
+    const activeDates = new Set<string>();
+    for (const { plan, trackKeys } of activityPlans) {
+      for (const e of plan.entries) {
+        if (
+          trackKeys.has(e.track_key) &&
+          e.date >= plan.startDate &&
+          e.date >= minDay365 &&
+          e.date <= today
+        ) {
+          activeDates.add(e.date);
+        }
+      }
+    }
+
+    let streakLength = 0;
+    if (activeDates.size > 0) {
+      let count = 0;
+      let hasDone = false;
+      let cursor = continuesStreak(todayStatus) ? today : addDays(today, -1);
+      while (cursor >= earliestStart && count < MAX_LOOKBACK_DAYS) {
+        const status = activityDayStatus(cursor);
+        if (!continuesStreak(status)) break;
+        if (status === "done") hasDone = true;
+        count += 1;
+        cursor = addDays(cursor, -1);
+      }
+      if (hasDone) {
+        streakLength = count;
+      }
+    }
+
+    result[act] = {
+      streakLength,
+      completedToday,
+      startDate: earliestStart,
+      activeDaysCount: activeDates.size,
+    };
+  }
+
+  return result;
+};
+

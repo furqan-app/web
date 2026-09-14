@@ -13,12 +13,10 @@ import { MushafLayoutSection } from "@components/mushaf/MushafLayoutSection";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
+import { AutoWriteSettingSection } from "@components/plans/AutoWriteSettingSection";
 import { SettingsSection } from "@components/settings/SettingsSection";
 import { useIsMobile } from "@hooks/use-is-mobile";
 import { useKeepScreenAwake } from "@contexts/KeepScreenAwakeContext";
-import { usePushSubscription } from "@/app/hooks/use-push-subscription";
-import { isStandaloneDisplayMode } from "@/app/utils/platform";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -44,17 +42,11 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
   const isMobile = useIsMobile();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } =
     useKeepScreenAwake();
-  const { supported: pushSupported } = usePushSubscription();
-  const [isStandalone, setIsStandalone] = useState(false);
-
-  useEffect(() => {
-    setIsStandalone(isStandaloneDisplayMode());
-  }, []);
 
   const controlled = onOpenChange !== undefined;
   useCloseOnBackGesture(open ?? false, () => onOpenChange?.(false));
 
-  const hasDeviceSettings = (isMobile || isTablet) || pushSupported || isStandalone;
+  const hasDeviceSettings = true;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -147,6 +139,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
               )}
 
               <EnablePushToggle />
+              <AutoWriteSettingSection />
               <OfflineRecitationSection />
               <OfflineTafsirSection />
             </SettingsSection>

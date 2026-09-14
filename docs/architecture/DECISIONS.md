@@ -23,6 +23,7 @@ rationale in the linked domain file.
 - **`useSession()` is never the input to persistent per-user state.** It reports unauthenticated on every offline launch; distinguish "no session" from "unknown". → [`decisions/api.md`](decisions/api.md)
 - **A sync or reconciliation read must never fall through to `defaultCache`.** Same-origin `GET /api/*` is cached 24h; such endpoints need `NetworkOnly` in `app/sw.ts`. → [`decisions/pwa.md`](decisions/pwa.md)
 - **Any verse→page lookup resolves through the active mushaf edition** — never `Verse.page_number` directly, never locale-flipped `next`/`prev` href logic. ADR 0033. → [`decisions/rendering.md`](decisions/rendering.md)
+- **`DEFAULT_MUSHAF_ID` is only the reader's opening edition.** `SEEDED_WORDS_MUSHAF_ID`, `CANONICAL_PAGE_MUSHAF_ID`, and `PRECACHE_MUSHAF_ID` (all mushaf 2) are separate constants — never collapse them into the default. ADR 0066. → [`decisions/rendering.md`](decisions/rendering.md)
 
 ---
 

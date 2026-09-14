@@ -1574,3 +1574,232 @@ backoff. Judged too narrow an edge case (transient Cache Storage I/O failure, no
 warrant added complexity before shipping. `reportStatus` also does not mark `verifiedByMushaf` on its
 own successful full walk, leaving a redundant deferred re-walk schedulable right after — a missed
 optimization, not a correctness issue, left for a future pass if it matters in practice.
+
+---
+
+# Addendum 11 (2026-09-07): Serve /marks and /search HTML offline (shared route coverage)
+
+**Type:** feature
+**Status:** implemented (lint + typecheck + `build:local` clean; built `public/sw.js` + static shells inspected — see Implementation Outcome; throttled/offline browser pass deferred to stg + siblings #592/#593)
+**Issue:** https://github.com/furqan-app/web/issues/591 (epic #590)
+**ADR:** [0014 Addendum 10](../architecture/adr/0014-pwa-offline-architecture.md)
+
+## Summary
+
+The offline engines for marks (local-first store, ADR 0061) and search (precached `search-index.json`,
+ADR 0062) already run with no connection — but the `/marks` and `/search` page documents themselves are
+online-only. `app/sw.ts` caches reader-page HTML only (`isSelfReaderPage`); any other failed navigation
+falls through to `setCatchHandler`, which serves the static terminal `offline-{ar,en}.html`. An offline
+navigation to `/marks` or `/search` therefore never loads the real React page, so neither engine ever
+runs. This addendum is the shared route-coverage half of epic #590 (siblings #592/#593 own per-page
+offline behavior and E2E): precache the four app-shell documents (`/{ar,en}/marks`, `/{ar,en}/search`)
+at build time exactly like the reader shells (Addendum 8), serve query-bearing navigations
+(`/search?q=…`) from the same shells via a tiny query-normalizing runtime rule, static-ify `/marks`
+(its `getServerSession` makes it dynamic today — per-user HTML must never sit in the shared precache),
+and hard-navigate the two self links when tapped offline (in-app `<Link>` taps are RSC, which fails
+offline for never-visited pages and lands on `error.tsx` plus a Sentry report).
+
+## Root Cause / Approach
+
+Three independent gaps, one fix each:
+
+1. **No document source offline.** Reader pages have the precached shell + the four-row tree; `/marks`
+   and `/search` have neither. Fix: append the four shells to the build-time precache manifest via the
+   existing `manifestTransforms` entry (same revision hash, same atomic-install guarantee as Addendum 8).
+   Shells are small (`/ar/search.html` is 74 KB raw in the current build; `/marks` will match once
+   static) — roughly 300 KB raw / ~70 KB gzip for all four (to confirm at build time), against the
+   114 KB gzip the two reader shells already added.
+2. **Query-bearing navigations miss the precache.** Serwist's precache matcher strips only `utm_*` /
+   `fbclid`, so the overlay's "view all" link (`/search?q=…`, `SearchBar.tsx:195`) never matches a
+   precached `/ar/search`. Fix: one `runtimeCaching` rule ahead of `...defaultCache`, matching
+   navigate-mode requests to the two paths and serving `serwist.matchPrecache(url.pathname)`
+   (`pathname` excludes the query by definition). Exact-path navigations never reach the rule —
+   `PrecacheRoute` is registered ahead of `runtimeCaching` (Addendum 8) — so there is exactly one
+   source of truth and no second versioned cache to drift. A `matchPrecache` miss (unreachable on a
+   healthy worker, since install is atomic) falls through to `fetch(request)`, letting `setCatchHandler`
+   produce the terminal document as today.
+3. **`/marks` HTML is per-user.** `app/[locale]/marks/page.tsx` calls `getServerSession`, so it renders
+   dynamically — pinning that HTML in a per-origin shared precache would leak one user's session state
+   to the next user on shared browsers and freeze sign-in state for the deploy lifetime. Fix: drop the
+   server session (the page becomes static like `/search`) and client-seed the session. `MyMarksList`
+   already resolves the live session via `useSession`; the only change is never showing the signed-out
+   prompt while `status === "loading"` — render the existing skeleton instead, so the online
+   signed-in path keeps its current no-flash behavior without the server seed.
+4. **In-app taps are RSC, not documents.** Tapping My Marks (`UserMenu.tsx:226,289`) or "view all"
+   offline issues an RSC fetch through `defaultCache`'s `rsc` rule (`NetworkFirst`, 32 entries): cached
+   (previously visited) works stale, uncached fails into `app/[locale]/error.tsx` — which also fires
+   `Sentry.captureException`, spamming Sentry with offline taps. Fix: both self links hard-navigate
+   (`window.location.assign`) when `navigator.onLine === false` at click time; online behavior is
+   byte-for-byte today's soft nav. Grant links (`/mushaf/[grant]/search`) are excluded — online-only
+   scope, unchanged.
+
+## Decision Tree / Algorithm
+
+SW request routing after this change (rule order is load-bearing — the new entry sits with the other
+custom rules, ahead of `...defaultCache`):
+
+| # | Request | Handler | Result |
+|---|---|---|---|
+| 1 | `navigate` to `/{ar,en}/pages/{id}` | reader four-row tree | unchanged (Addenda 4–10) |
+| 2a | `navigate` to exact `/{ar,en}/marks`, `/{ar,en}/search` | `PrecacheRoute` (registered ahead of `runtimeCaching`) | precached shell, no network |
+| 2b | `navigate` to those paths **with a query** (`?q=…`, `?_rsc=`-free) | new `isAppShellPage(url) && request.mode === "navigate"` rule → `matchPrecache(url.pathname)` | same shell bytes (pages are static; `?q=` is seeded client-side) |
+| 2c | `matchPrecache` miss (atomic install makes this unreachable) | fall through to `fetch(request)` | network or `setCatchHandler` terminal doc, as today |
+| 3 | RSC / soft-nav to any path (fetch mode `cors`, `RSC: 1`) | `defaultCache` `rsc` rule | unchanged — cached serves stale offline, uncached errors (mitigated client-side by row 5) |
+| 4 | any other failed navigation | `setCatchHandler` | terminal `offline-{locale}.html`, unchanged |
+| 5 | in-app tap on a self `/marks` or `/search` link | online: `<Link>` default soft nav; offline at click time: `preventDefault` + hard navigate | offline tap lands on row 2a/2b instead of `error.tsx` + Sentry |
+| 6 | in-app tap on a grant `/mushaf/[grant]/search` link | `<Link>` default, always | unchanged (online-only scope) |
+
+`/marks` static-ification gating inside `MyMarksList`:
+
+| `useSession` status | `canMark` (gates.ts, unchanged) | Renders |
+|---|---|---|
+| `loading`, online | — (not evaluated) | existing skeleton (new branch — no prompt flash) |
+| `loading`, offline | evaluated immediately from the sticky stamp | list for a stamped owner / PWA guest, prompt for a tab guest — no ~3s skeleton wait for the session abort that can never authenticate |
+| loaded, `canMark` true | true | list (offline signed-in via sticky stamp, PWA guest, online signed-in — all unchanged) |
+| loaded, `canMark` false | false | `MarksSignedOutPrompt` (unchanged, still the post-load state `word-marking.spec.ts:77` asserts) |
+
+## Verified Test Cases
+
+Walked through and confirmed by the user 2026-09-07:
+
+1. Cold offline → `/ar/marks` → precached shell → store renders for a stamped owner; guest in a plain
+   tab sees the sign-in prompt.
+2. Cold offline → `/ar/search?q=…` → row 2b strips the query → shell → client seeds `q` → offline
+   engine results (verses + surahs).
+3. Online → `/ar/search?q=x` → precache-vintage shell (freshness bounded by the per-deploy revision) →
+   seeds `q` → online API results. No behavior change vs today.
+4. Offline in-app Marks tap, page never visited → row 5 hard nav → case 1. Previously `error.tsx` +
+   Sentry; both gone.
+5. Offline in-app "view all" with `q` → row 5 hard nav → case 2.
+6. Online in-app taps on both links → soft RSC nav, unchanged.
+7. Grant "view all" link (`/mushaf/[grant]/search`) → always soft nav, unchanged.
+8. Fresh deploy → manifest revision bump → four shells refetched at install; `SwUpdateBanner` flow and
+   `activate` cleanup unchanged.
+9. First-ever install while offline → install fails atomically, no worker (unchanged — `launch.html`
+   already behaves this way).
+10. Shared browser: A signs in, visits `/marks` online, signs out; B signs in → byte-identical static
+    shell, no session leakage (the static-ify guarantee).
+
+## Files to Change
+
+- `next.config.mjs` — extend the existing `manifestTransforms` entry (`appendReaderFallbackShells`)
+  to also append `/{ar,en}/marks` + `/{ar,en}/search`, built from `READER_FALLBACK_SHELL_LOCALES` so no
+  second locale list can drift (same constraint that list already carries vs `FALLBACK_LOCALES`). Same
+  revision hash, `size: 0` with the existing comment. `globPublicPatterns` untouched.
+- `app/sw.ts` — new `isAppShellPage(url)` matcher (`/^\/(ar|en)\/(marks|search)$/` — matches neither
+  `/api/*` nor `/ar/mushaf/…` nor `/ar` by construction) + one `runtimeCaching` entry ahead of
+  `...defaultCache`: navigate-only handler returning `serwist.matchPrecache(url.pathname)`, falling
+  through to `fetch(request)` on a miss. Explicit `Promise<Response>`-style return annotation (the
+  TS7022 lesson from Addendum 8). No new cache, no `activate` change, no message-contract change.
+- `app/constants/offline.ts` — comment-only: the matcher regex duplicates the four shell paths (this
+  module is TS behind a path alias and cannot be imported into `next.config.mjs`'s plain ESM — same
+  reason `FALLBACK_LOCALES` is duplicated there); cross-link both sites so a fifth shell updates both.
+- `app/[locale]/marks/page.tsx` — drop `getServerSession`/`authOptions`; render `<MyMarksList />`
+  with no `initialSessionUser` (route becomes static).
+- `app/components/marks/MyMarksList.tsx` — while `useSession` `status === "loading"` **online**
+  (or pre-mount),
+  render the existing skeleton; evaluate the `!canMark` → prompt gate only after load. `gates.ts`,
+  the store, and the sync engine are untouched.
+- `app/components/nav/UserMenu.tsx` — both `/marks` links (expanded-menu row and dropdown item): on
+  click, when `navigator.onLine === false`, `preventDefault` + hard navigate to the link `href`.
+- `app/components/search/SearchBar.tsx` — "view all" link: same offline hard-nav, applied only when
+  `toSearchPath(basePath)` returns the self `/search` path (grant path excluded).
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 10 (written with this plan).
+- `docs/architecture/decisions/pwa.md` — new "Offline App-Shell Pages" section (written with this plan).
+
+No changes to: the reader tree/rows, `setCatchHandler`, `activate` cleanup, `globPublicPatterns`,
+`ReaderPager`, the SW message contract, the marks sync engine, the search index format or generation,
+`error.tsx`, the middleware matcher (precached app paths are real locale routes, not `public/` files —
+unlike `offline-*.html` they need no exclusion), or any Settings/offline surface.
+
+## Constraints
+
+- A document appended to the precache manifest MUST be user-agnostic static HTML — per-request HTML in
+  the install precache is a cross-user session leak on shared browsers (this is why `/marks` is
+  static-ified here, and why the grant reader, which is per-grant dynamic, is permanently excluded).
+  Recorded as the new invariant in ADR 0014 Addendum 10.
+- The precache manifest stays the single source of truth for these shells: no second versioned cache,
+  no populate-on-miss, no manual version string (Addendum 4's auto-versioning rationale applies — a
+  string that must be remembered is a string that will be forgotten).
+- The `request.mode === "navigate"` guard stays — without it this rule would swallow RSC flight data
+  for the same paths (Addendum 4, found in review).
+- The matcher regex must stay exact (`/^\/(ar|en)\/(marks|search)$/`): it must never match `/api/*`
+  (the marks `NetworkOnly` rule owns those), grant paths, or `/ar` itself.
+- The `matchPrecache` miss path must fall through to the network, never synthesize a response —
+  only `setCatchHandler` decides the terminal document.
+- The link fallback reads connectivity at click time and applies offline-only; the online path keeps
+  today's soft nav byte-for-byte. No new copy, no new affordance — the `href`s are unchanged, so no
+  breakpoint or route loses access.
+- No new translation keys: the loading state reuses the existing skeleton copy/structure.
+- Verify per `docs/standards/pwa-testing.md` (`npm run build:local && npm start`; Serwist is disabled
+  in dev): the built `public/sw.js` manifest lists all six shell entries (`pages/1` × 2 + the four new
+  ones) with the same revision; offline cold loads of `/ar/marks`, `/en/marks`, `/ar/search`,
+  `/en/search`, `/ar/search?q=…`; a soft-nav to `/ar/search` still returns RSC flight data; sign-out →
+  sign-in as a different user serves the identical shell bytes.
+- Targeted specs that assert the touched behavior must keep passing: `e2e/tests/word-marking.spec.ts`
+  (signed-out prompt at `/ar/marks`), `e2e/tests/search-results-page.spec.ts` (online `?q=`
+  navigations), `e2e/tests/offline-pwa.spec.ts` (marks `NetworkOnly`, terminal doc for other routes).
+  Full offline page-level E2E belongs to siblings #592/#593, not this task. Unit scope is unchanged
+  (`gates.ts`, store pure functions untouched) — `npx vitest run app/hooks/use-all-marks.test.ts` as
+  the smoke check.
+
+## What NOT to Do
+
+- Do not add a `CacheFirst` + versioned-cache rule for these documents — considered first and rejected
+  during planning: the precache already versions per deploy, and a second cache is a second staleness
+  profile to drift (this corrects the plan's own first draft — see Decisions Made).
+- Do not pass the shells via `additionalPrecacheEntries` (replaces the public glob — Addendum 8) and
+  do not copy built HTML into `public/` + glob it (one build stale, chunk URLs 404 — Addendum 8).
+- Do not intercept RSC/soft-nav in the SW or "fix" offline RSC with a cache rule — RSC stays on
+  `defaultCache`; the uncovered corner (offline tap to a never-visited page) is handled client-side by
+  the link fallback, which also removes the Sentry spam at its source. Do not touch `error.tsx` for this.
+- Do not apply the link fallback online or to grant links — online keeps soft nav; grant routes stay
+  online-only (ADR 0012 / ADR 0061 cut-off).
+- Do not bulk-precache page HTML, change the consent gate, or touch any Settings/offline surface.
+- Do not re-derive display-mode or add standalone gating anywhere in this task — nothing here needs it.
+- Do not widen this to `/plans`, `/settings`, home, or the grant reader — terminal-doc behavior for
+  those routes is unchanged.
+
+## Decisions Made
+
+- **User, 2026-09-07:** in-app taps covered (hard-nav fallback), precache-four-shells + runtime rule
+  over runtime-cache-only, and the routing tree + ten test cases above confirmed as specified.
+- **Precache + query-normalizing rule, over runtime-cache-as-visited:** runtime-only leaves the exact
+  PWA flow broken (Settings → Marks having never visited Marks online serves the terminal doc). Four
+  tiny static shells (~300 KB raw est.) buy works-before-first-visit with zero protocol.
+- **Plan correction recorded (step 3b sweep):** the first draft specified a `CacheFirst` versioned
+  cache with populate-on-miss alongside the precache. Reading `PrecacheRoute` ordering (registered
+  ahead of `runtimeCaching`, Addendum 8) plus the static-ness of both pages showed the runtime cache
+  would only ever hold the same bytes — pure drift surface. Replaced with `matchPrecache(pathname)`
+  normalization; the precache is the single source of truth.
+- **Sweep findings folded in:** `word-marking.spec.ts:77` pins the post-load signed-out prompt (hence
+  the loading-skeleton branch, not a gate change); `search-results-page.spec.ts` pins online `?q=`
+  navigations (same-bytes shell, client seeds `q`); `offline-pwa.spec.ts` pins marks `NetworkOnly` and
+  other-routes terminal behavior (matcher verified disjoint by opening both matchers); `gates.ts` and
+  store pure functions are untouched so `MarkModal.test.ts` / `use-all-marks.test.ts` are unaffected.
+- **`/marks` static-ify is this task's prerequisite, not #592's:** cacheability is a property of the
+  document, and only the route change establishes it. #592 owns everything the user does with the page
+  once it loads (read/delete/banners/E2E).
+
+## Implementation Outcome (2026-09-07)
+
+Shipped as planned, with one implementation-found refinement: the loading skeleton holds **online
+only** — offline, the sticky owner stamp decides immediately instead of waiting out the ~3s session
+abort that can never authenticate (gating table row 2 above; the plan's first draft waited
+unconditionally). No new files, no message-contract change.
+
+| Check | Result |
+|---|---|
+| `npm run lint` | clean |
+| `npx tsc --noEmit` | clean |
+| `npm run build:local` | succeeds |
+| `/marks` static | `.next/server/app/{ar,en}/marks.html` prerendered (79/73 KB raw — the ~300 KB estimate holds) |
+| Static shell neutrality | built `/ar/marks.html` contains the skeleton (`fq-section-group`) and zero sign-in markers — no session baked in |
+| Manifest in built `public/sw.js` | all six shells (`pages/1` × 2 + the four new ones) under one revision `2943cf083d2e72c6`; public-glob entries (`launch.html`, `offline-*.html`, icons, `chapters.json`, `search-index.json`) all survived |
+| New rule in built `public/sw.js` | `marks|search` matcher compiled alongside the `navigate`-mode plumbing |
+| Dev smoke (`:3006`) | `/ar/marks` → 200, `/ar/search?q=test` → 200 |
+
+Not verified locally (needs a served production build + real offline toggle — Serwist is disabled in
+dev): offline cold loads of both pages + `?q=`, offline in-app taps, and soft-nav-to-`/ar/search`
+still returning RSC flight data. That pass belongs to the stg device run and siblings #592/#593,
+consistent with every prior addendum's deferral.

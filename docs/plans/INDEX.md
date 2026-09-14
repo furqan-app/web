@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-81 active plans.
+95 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -11,9 +11,18 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | a11y | [Fix Dialog Missing Title/Description A11y Warnings](fix-dialog-missing-description.md) | implemented | bug |
 | api | [Fix ByteString Crash on Non-ASCII Usernames in Auth Middleware](fix-arabic-username-auth-header.md) | implemented | bug |
 | api | [Fix RSC Cache Poisoning on Hostinger](fix-rsc-cache-poisoning.md) | implemented | bug |
+| awrad | [Awrad Dashboard: Dedicated motivation & progress hub with per-activity streaks](599-awrad-progress-dashboard.md) | implemented | feature |
+| awrad | [Awrad Notifications: turn on the daily wird reminder — enqueue layer, content-aware dispatch & per-user time picker](600-daily-wird-reminder.md) | implemented | feature |
+| awrad | [Awrad Reader UX: Refine PlansWidget into an unobtrusive, page-scoped check-off shortcut](597-reader-wird-checkoff.md) | implemented | feature |
+| awrad | [Awrad Smart Completion: Dwell time & recitation playback detection with smart nudge and opt-in auto-write](598-smart-completion-detection.md) | implemented | feature |
+| awrad | [Custom wird creation & edit UI in /plans (two-decision form: range + cadence)](610-custom-wird-ui.md) | implemented | feature |
+| awrad | [Custom wird engine + storage: user-authored single-track plan definitions](608-custom-wird-engine.md) | implemented | feature |
+| awrad | [Custom wird enrollment API: range + cadence resolution & validation](609-custom-wird-enrollment-api.md) | implemented | feature |
 | awrad | [Daily Awrad & Learning Plans Engine (Foundation)](awrad-learning-plans.md) | implemented | feature |
 | awrad | [Daily Awrad UI](daily-awrad-ui.md) | implemented | feature |
+| awrad | [Daily wird presets: add memorize & review flavours, reframe as \"Daily wird — <activity>\" + optional start point](607-daily-wird-activity-flavours.md) | implemented | feature |
 | awrad | [Verse & Fractional-Page Granularity for Awrad](awrad-verse-granularity.md) | implemented | feature |
+| awrad | [Weekly-Recurring Custom Wirds with Matching Weekly Reminders](weekly-custom-wirds.md) | implemented | feature |
 | ci | [CI Quality Gate: PR Lint, Typecheck & Vitest Workflow](ci-quality-gate.md) | implemented | feature |
 | ci | [Dev Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit](local-build-and-test-ergonomics.md) | implemented | feature |
 | ci | [Local E2E runs against a production build, like CI](local-e2e-build-path.md) | implemented | chore |
@@ -68,6 +77,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | recitation | [Recitation Bar: Vertical Rail (Desktop)](recitation-bar-vertical-rail.md) | implemented | feature |
 | release | [Protect prod Branch: Enforce Merges from release/* Only](protect-prod-branch.md) | implemented | feature |
 | release | [Release-Branch Deployment Workflow](release-branch-workflow.md) | implemented | feature |
+| rendering | [Add QCF V2 (Madani, 1421H) mushaf edition and make it the default](qcf-v2-mushaf-edition.md) | implemented | feature |
 | rendering | [Add Tajweed color-coded mushaf mode](tajweed-mushaf-mode.md) | implemented | feature |
 | rendering | [Fix Tajweed Mushaf Font Size to Match Regular Mushaf](fix-tajweed-font-size.md) | implemented | bug |
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |
@@ -86,7 +96,10 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |
+| workflow | [Epic #623 follow-up — resolve the 6 open orchestrator doc decisions in one PR](623-orchestrator-review-decisions.md) | implemented | chore |
 | workflow | [Fleet Detection + On-Demand Setup (detect-fleet, setup-fq-fleet)](fleet-detection-setup.md) | implemented | feature |
 | workflow | [fq-ask-human: Slack escalation — post a question, await a threaded human decision](fq-ask-human.md) | implemented | feature |
+| workflow | [fq-delegate: fq-aware wrapper over the upstream delegate relays](fq-delegate.md) | implemented | feature |
+| workflow | [orchestrate-fq-task: the align→plan→implement→review→retrospect→ship phase driver](orchestrate-fq-task.md) | implemented | feature |
 | workflow | [Remove 5 workflow skills (impeccable, visualize-fq-design, compress-fq-docs, mujaz, ui-motion)](remove-workflow-skills.md) | implemented | feature |
 | workflow | [AI-First Documentation & Workflow System](ai-docs-workflow-system.md) | superseded | feature |

@@ -169,7 +169,7 @@ type RecitationContextType = {
   // restarts the range from there — both repeat counters reset, stop target
   // unchanged. No-op when idle (idle starts go through play()).
   applyStartSeek: (verseKey: string, effectiveSettings?: RecitationSettings) => void;
-  play: (startVerseKey: string, overrides?: PlaybackOverride, effectiveSettings?: RecitationSettings) => void;
+  play: (startVerseKey: string, overrides?: PlaybackOverride, effectiveSettings?: RecitationSettings) => Promise<boolean>;
   togglePlayPause: () => void;
   stop: () => void;
   // Repeat-cycle button (#391): zeroes the per-ayah repeat counter so the
@@ -188,9 +188,9 @@ type RecitationContextType = {
   // docs/plans/listening-wird-inline-playback.md.
   activeOverride: ActiveOverride | null;
   // Set when a play() attempt fails while offline (no cached audio for that
-  // reciter+chapter) — RecitationPlayerBar shows a brief inline notice.
+  // reciter+chapter) or playback rejects — RecitationPlayerBar shows a brief inline notice.
   // Cleared at the start of every play() call. See ADR 0046.
-  playbackError: "offline-unavailable" | null;
+  playbackError: "offline-unavailable" | "playback-failed" | null;
 };
 
 // A drafted Start From point (#393). Per-session, never persisted — derived
@@ -242,7 +242,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [currentPageNumber, setCurrentPageNumber] = useState<number | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeOverride, setActiveOverride] = useState<ActiveOverride | null>(null);
-  const [playbackError, setPlaybackError] = useState<"offline-unavailable" | null>(null);
+  const [playbackError, setPlaybackError] = useState<"offline-unavailable" | "playback-failed" | null>(null);
   const isOnline = useOnlineStatus();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -378,7 +378,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     ) => {
       const s = effectiveSettings ?? settings;
       const reciterId = s.reciterId ?? reciters[0]?.id;
-      if (!reciterId) return;
+      if (!reciterId) return false;
 
       const chapterId = parseChapterIdFromVerseKey(verseKey);
       setStatus("loading");
@@ -414,10 +414,15 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         const startTiming = chapterAudio.verseTimings.find((vt) => vt.verseKey === verseKey);
         const audio = audioRef.current;
         if (!startTiming || !audio) {
+          console.error("[RecitationContext] Cannot play - missing timing or audio element", {
+            hasTiming: Boolean(startTiming),
+            hasAudio: Boolean(audio),
+          });
           setStatus("idle");
           rangeRepeatOverrideRef.current = null;
           setActiveOverride(null);
-          return;
+          setPlaybackError("playback-failed");
+          return false;
         }
 
         verseTimingsRef.current = chapterAudio.verseTimings;
@@ -456,7 +461,9 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         audio.currentTime = startTiming.timestampFrom / 1000;
         await audio.play();
         setStatus("playing");
-      } catch {
+        return true;
+      } catch (err) {
+        console.error("[RecitationContext] Playback failed:", err);
         // play() can reject (autoplay policy, network) — the optimistic
         // override set above must not survive it, or the settings sheet
         // keeps showing "Playing: …" with nothing actually playing.
@@ -464,9 +471,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         rangeRepeatOverrideRef.current = null;
         setActiveOverride(null);
         setIsFollowing(false);
-        // Only a real "not downloaded" case, not e.g. an autoplay-policy
-        // rejection while online.
-        if (!isOnline) setPlaybackError("offline-unavailable");
+        if (!isOnline) {
+          setPlaybackError("offline-unavailable");
+        } else {
+          setPlaybackError("playback-failed");
+        }
+        return false;
       }
     },
     [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline],

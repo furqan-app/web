@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="theme-dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Furqan • Custom Wird Form Mockup (#610)</title>
+  <style>
+    /* ==========================================================================
+       THEME TOKENS & SYSTEM FOUNDATION
+       Sourced from app/globals.css and docs/standards/styling.md
+       ========================================================================== */
+    :root {
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --radius-full: 9999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Arabic", "Amiri", sans-serif;
+      --transition: all 150ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .theme-dark {
+      --bg: #0b1016;
+      --card: #151a20;
+      --card-border: #242c38;
+      --card-subtle: #12161b;
+      --foreground: #ebe8df;
+      --muted: #1c232d;
+      --muted-foreground: #8e98a5;
+      --primary: #087f69;
+      --primary-hover: #0a9b80;
+      --primary-foreground: #ffffff;
+      --accent: #11362e;
+      --accent-foreground: #1cd4a8;
+      --border: #242c38;
+      --input: #1b2129;
+      --ring: #087f69;
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.12);
+      --destructive: #ef4444;
+      --destructive-bg: rgba(239, 68, 68, 0.12);
+      --badge-bg: #202731;
+      --badge-fg: #a2acb9;
+      --header-bg: rgba(11, 16, 22, 0.85);
+      --options-bg: #141a22;
+      --code-bg: #0d1217;
+      --shadow-modal: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px #242c38;
+    }
+
+    .theme-light {
+      --bg: #edf2f7;
+      --card: #ffffff;
+      --card-border: #dbe3ed;
+      --card-subtle: #f8fafc;
+      --foreground: #17212b;
+      --muted: #e2e8f0;
+      --muted-foreground: #556677;
+      --primary: #087f69;
+      --primary-hover: #076b58;
+      --primary-foreground: #ffffff;
+      --accent: #e6f7f2;
+      --accent-foreground: #087f69;
+      --border: #cbd5e1;
+      --input: #f1f5f9;
+      --ring: #087f69;
+      --warning: #b45309;
+      --warning-bg: rgba(180, 83, 9, 0.1);
+      --destructive: #dc2626;
+      --destructive-bg: rgba(220, 38, 38, 0.08);
+      --badge-bg: #e2e8f0;
+      --badge-fg: #475569;
+      --header-bg: rgba(237, 242, 247, 0.85);
+      --options-bg: #f8fafc;
+      --code-bg: #e2e8f0;
+      --shadow-modal: 0 20px 40px -15px rgba(15, 23, 42, 0.12), 0 0 0 1px #cbd5e1;
+    }
+
+    .theme-gold {
+      --bg: #ece3cc;
+      --card: #fdfaf2;
+      --card-border: #dcd0b3;
+      --card-subtle: #f5eedc;
+      --foreground: #2a241e;
+      --muted: #e2d7bd;
+      --muted-foreground: #6c5f4d;
+      --primary: #0c5c44;
+      --primary-hover: #0e6e52;
+      --primary-foreground: #ffffff;
+      --accent: #daf0e8;
+      --accent-foreground: #0c5c44;
+      --border: #cfc19f;
+      --input: #eae0c7;
+      --ring: #0c5c44;
+      --warning: #92400e;
+      --warning-bg: rgba(146, 64, 14, 0.12);
+      --destructive: #b91c1c;
+      --destructive-bg: rgba(185, 28, 28, 0.08);
+      --badge-bg: #dfd3b7;
+      --badge-fg: #5b4f3e;
+      --header-bg: rgba(236, 227, 204, 0.85);
+      --options-bg: #f7f1e1;
+      --code-bg: #dfd4ba;
+      --shadow-modal: 0 20px 40px -15px rgba(70, 52, 24, 0.22), 0 0 0 1px #cfc19f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--foreground);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 60px;
+      line-height: 1.5;
+      transition: background-color 200ms ease, color 200ms ease;
+    }
+
+    /* ==========================================================================
+       TOP CONTROL BAR (Sticky)
+       ========================================================================== */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-title span.badge {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      font-weight: 800;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .segmented-compact {
+      display: inline-flex;
+      background: var(--muted);
+      padding: 2px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+    }
+    .segmented-compact button {
+      border: 0;
+      background: transparent;
+      color: var(--muted-foreground);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: var(--transition);
+      min-height: 28px;
+    }
+    .segmented-compact button.active {
+      background: var(--card);
+      color: var(--foreground);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+
+    /* ==========================================================================
+       DESIGN DECISIONS DRAWER / COLLAPSIBLE PANEL
+       ========================================================================== */
+    .options-drawer {
+      width: 100%;
+      max-width: 540px;
+      margin: 16px auto;
+      padding: 0 16px;
+    }
+    .options-panel {
+      background: var(--options-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .options-header {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      background: var(--muted);
+      border-bottom: 1px solid transparent;
+      transition: var(--transition);
+    }
+    .options-header:hover {
+      background: var(--border);
+    }
+    .options-header h2 {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .options-content {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .options-content.collapsed {
+      display: none;
+    }
+    .decision-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .decision-row:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+    .decision-title {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .decision-desc {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+    .decision-toggle-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .decision-toggle-group button {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--card);
+      color: var(--muted-foreground);
+      cursor: pointer;
+      transition: var(--transition);
+      min-height: 36px;
+      text-align: center;
+    }
+    .decision-toggle-group button.active {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border-color: var(--primary);
+    }
+
+    /* Simulation switch */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--muted);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      margin-top: 4px;
+    }
+    .switch-label {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       MAIN MODAL SIMULATOR FRAME
+       ========================================================================== */
+    .modal-frame-container {
+      width: 100%;
+      max-width: 410px;
+      padding: 0 16px;
+      margin: 10px auto 24px;
+    }
+    .modal-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      box-shadow: var(--shadow-modal);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      margin-bottom: 10px;
+      font-family: inherit;
+    }
+    .back-btn:hover {
+      color: var(--foreground);
+    }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .modal-desc {
+      font-size: 12px;
+      color: var(--muted-foreground);
+      margin-top: 2px;
+    }
+
+    .modal-body {
+      padding: 18px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Form Fields */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--foreground);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .field-char-count {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+
+    .text-input {
+      width: 100%;
+      min-height: 44px;
+      background: var(--input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--foreground);
+      font-family: inherit;
+      outline: none;
+      transition: var(--transition);
+    }
+    .text-input:focus {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    /* Activity Segmented Control (Read / Listen / Memorize / Review) */
+    .activity-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      background: var(--muted);
+      padding: 4px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+    }
+    .activity-btn {
+      min-height: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: transparent;
+      border: 0;
+      border-radius: var(--radius-lg);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted-foreground);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .activity-btn svg {
+      width: 17px;
+      height: 17px;
+      stroke-width: 2;
+    }
+    .activity-btn.active {
+      background: var(--card);
+      color: var(--foreground);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .activity-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* Sub-Cards: Range & Cadence */
+    .subcard {
+      background: var(--card-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .subcard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .subcard-title {
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Range Mode Segmented Tabs */
+    .tabs-segmented {
+      display: flex;
+      background: var(--muted);
+      padding: 3px;
+      border-radius: var(--radius-lg);
+      gap: 3px;
+      overflow-x: auto;
+    }
+    .tabs-segmented button {
+      flex: 1;
+      min-height: 38px;
+      border: 0;
+      background: transparent;
+      color: var(--muted-foreground);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 4px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+    .tabs-segmented button.active {
+      background: var(--card);
+      color: var(--foreground);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Range controls per mode */
+    .range-controls-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .control-item label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+    }
+    .select-dropdown {
+      min-height: 44px;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--foreground);
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+    .number-input-wrap {
+      display: flex;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      min-height: 44px;
+      padding: 0 8px;
+    }
+    .number-input {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--foreground);
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      text-align: center;
+      outline: none;
+    }
+
+    .info-chip-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .chip-badge {
+      background: var(--badge-bg);
+      color: var(--badge-fg);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Range Locked Banner */
+    .locked-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--warning-bg);
+      border: 1px solid var(--warning);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+      color: var(--foreground);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .locked-banner svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: var(--warning);
+      margin-top: 1px;
+    }
+
+    /* Cadence Sub-form */
+    .cadence-subform {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Stepper (- N +) matching QuantityStepper.tsx */
+    .stepper-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 4px 0;
+    }
+    .stepper-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
+      border: 1.5px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .stepper-btn:hover:not(:disabled) {
+      background: var(--accent);
+    }
+    .stepper-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .stepper-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.4;
+    }
+    .stepper-val {
+      font-size: 22px;
+      font-weight: 800;
+      min-width: 60px;
+      text-align: center;
+      color: var(--foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Quick Date Chips */
+    .chips-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .chip-btn {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted-foreground);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: 32px;
+      transition: var(--transition);
+    }
+    .chip-btn:hover {
+      border-color: var(--primary);
+      color: var(--foreground);
+    }
+
+    /* Live Estimate Highlight Card */
+    .estimate-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-lg);
+      padding: 10px 14px;
+      color: var(--foreground);
+      transition: var(--transition);
+    }
+    .estimate-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .estimate-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+    .estimate-content {
+      display: flex;
+      flex-direction: column;
+    }
+    .estimate-main {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--foreground);
+    }
+    .estimate-sub {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+    }
+
+    /* Submit CTA */
+    .submit-btn {
+      min-height: 48px;
+      width: 100%;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border: 0;
+      border-radius: var(--radius-lg);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(8, 127, 105, 0.25);
+    }
+    .submit-btn:hover {
+      background: var(--primary-hover);
+    }
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Validation Toast / Alert Banner */
+    .alert-box {
+      background: var(--destructive-bg);
+      border: 1px solid var(--destructive);
+      color: var(--destructive);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Collapsible advanced row */
+    .advanced-toggle {
+      background: transparent;
+      border: 0;
+      color: var(--muted-foreground);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 4px 0;
+    }
+    .advanced-toggle:hover {
+      color: var(--foreground);
+    }
+
+    /* ==========================================================================
+       FOOTER DOCUMENTATION & ESTIMATE MATH
+       ========================================================================== */
+    .doc-section {
+      width: 100%;
+      max-width: 540px;
+      margin: 10px auto;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .doc-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .doc-card h3 {
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--foreground);
+    }
+    .math-formula {
+      background: var(--code-bg);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-family: monospace;
+      font-size: 11px;
+      margin: 6px 0;
+      direction: ltr;
+      text-align: left;
+      color: var(--foreground);
+    }
+    .doc-note {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       STICKY TOP CONTROL BAR
+       ========================================================================== -->
+  <header class="top-bar">
+    <div class="brand-title">
+      <span>فرقان • Furqan</span>
+      <span class="badge">#610 Mockup</span>
+    </div>
+
+    <div class="top-controls">
+      <!-- Language Toggle -->
+      <div class="segmented-compact" id="langToggle">
+        <button type="button" class="active" data-lang="ar">العربية</button>
+        <button type="button" data-lang="en">English</button>
+      </div>
+
+      <!-- Theme Toggle -->
+      <div class="segmented-compact" id="themeToggle">
+        <button type="button" class="active" data-theme="dark" title="Dark theme">داكن</button>
+        <button type="button" data-theme="light" title="Light theme">فاتح</button>
+        <button type="button" data-theme="gold" title="Gold theme">ذهبي</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       DESIGN DECISIONS TOGGLE PANEL (A/B TESTING)
+       ========================================================================== -->
+  <section class="options-drawer">
+    <div class="options-panel">
+      <div class="options-header" id="optionsHeader" role="button" tabindex="0">
+        <h2>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span id="txt-optionsTitle">خيارات التصميم المتاحة للتجربة (A / B)</span>
+        </h2>
+        <span id="optionsChevron" style="font-size: 11px; font-weight: bold; color: var(--muted-foreground);">▼</span>
+      </div>
+
+      <div class="options-content" id="optionsContent">
+        <!-- Decision 1 -->
+        <div class="decision-row">
+          <div class="decision-title">
+            <span id="txt-dec1Title">١. موضع تكرار الختمات (K)</span>
+          </div>
+          <div class="decision-desc" id="txt-dec1Desc">
+            هل يظهر عداد تكرار الختمة مباشرة داخل نموذج الموعد، أم يوضع في خيارات متقدمة قابلة للطي؟
+          </div>
+          <div class="decision-toggle-group" id="dec1Toggle">
+            <button type="button" class="active" data-val="A" id="txt-dec1OptA">خيار A: عداد مباشر في الواجهة</button>
+            <button type="button" data-val="B" id="txt-dec1OptB">خيار B: داخل «خيارات متقدمة»</button>
+          </div>
+        </div>
+
+        <!-- Decision 2: Edit mode Range Freeze -->
+        <div class="decision-row">
+          <div class="decision-title">
+            <span id="txt-dec2Title">٢. سلوك تثبيت المقدار عند التعديل</span>
+          </div>
+          <div class="decision-desc" id="txt-dec2Desc">
+            عند وجود قراءات مسجلة سابقًا: هل يظهر قسم المقدار معطلًا ومقفولًا، أم يُخفى تمامًا ويُستبدل بملخص نصي؟
+          </div>
+          <div class="switch-row">
+            <span class="switch-label" id="txt-simEdit">محاكاة خطة قيد التقدم (تم تسجيل قراءات):</span>
+            <div class="segmented-compact" id="simProgressToggle">
+              <button type="button" class="active" data-val="false" id="txt-simNew">جديدة</button>
+              <button type="button" data-val="true" id="txt-simActive">قيد التقدم</button>
+            </div>
+          </div>
+          <div class="decision-toggle-group" id="dec2Toggle" style="margin-top: 6px;">
+            <button type="button" class="active" data-val="A" id="txt-dec2OptA">خيار A: قسم معطّل مع قفل وتنبيه</button>
+            <button type="button" data-val="B" id="txt-dec2OptB">خيار B: إخفاء القسم وملخص سطر واحد</button>
+          </div>
+        </div>
+
+        <!-- Decision 3: Verse-mode Weekly Pace -->
+        <div class="decision-row">
+          <div class="decision-title">
+            <span id="txt-dec3Title">٣. المعدل الأسبوعي في ورد الآيات</span>
+          </div>
+          <div class="decision-desc" id="txt-dec3Desc">
+            السيرفر يرفض المعدل الأسبوعي للآيات: هل نعطّل زر «أسبوعيًا» مع تنبيه إرشادي، أم نتركه ونعرض خطأ عند الحفظ؟
+          </div>
+          <div class="decision-toggle-group" id="dec3Toggle">
+            <button type="button" class="active" data-val="A" id="txt-dec3OptA">خيار A: تعطيل الزر استباقيًا</button>
+            <button type="button" data-val="B" id="txt-dec3OptB">خيار B: تنبيه خطأ عند الإرسال</button>
+          </div>
+        </div>
+
+        <!-- Decision 4: Whole Quran Affordance -->
+        <div class="decision-row">
+          <div class="decision-title">
+            <span id="txt-dec4Title">٤. طريقة اختيار كامل المصحف</span>
+          </div>
+          <div class="decision-desc" id="txt-dec4Desc">
+            هل يكون كامل المصحف تبويبًا مستقلًا من الخيارات الخمسة، أم زر اختصار داخل وضع «بالصفحة»؟
+          </div>
+          <div class="decision-toggle-group" id="dec4Toggle">
+            <button type="button" class="active" data-val="A" id="txt-dec4OptA">خيار A: تبويب مستقل (كامل المصحف)</button>
+            <button type="button" data-val="B" id="txt-dec4OptB">خيار B: زر اختصار في وضع الصفحات</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       PHONE / MODAL CONTAINER (Simulates PlansBrowseDialog)
+       ========================================================================== -->
+  <main class="modal-frame-container">
+    <div class="modal-card">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="back-btn" id="btnBack">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="rtl-flip"><path d="m15 18-6-6 6-6"/></svg>
+          <span id="txt-back">رجوع</span>
+        </button>
+        <h1 class="modal-title" id="txt-dialogTitle">ورد مخصص جديد</h1>
+        <p class="modal-desc" id="txt-dialogDesc">حدد المقدار والوتيرة المناسبة لختمتك أو حفظك</p>
+      </div>
+
+      <!-- Modal Body (CustomWirdForm) -->
+      <form class="modal-body" id="customWirdForm" onsubmit="return false;">
+
+        <!-- 1. NAME FIELD -->
+        <div class="field-group">
+          <label class="field-label" for="wirdName">
+            <span id="txt-wirdNameLabel">اسم الورد</span>
+            <span class="field-char-count" id="nameCharCount">٠/١٠٠</span>
+          </label>
+          <input
+            type="text"
+            id="wirdName"
+            class="text-input"
+            maxlength="100"
+            placeholder="مثال: ورد سورة البقرة، ختمة رمضان..."
+            value="ورد سورة البقرة"
+          />
+        </div>
+
+        <!-- 2. ACTIVITY PICKER -->
+        <div class="field-group">
+          <label class="field-label">
+            <span id="txt-activityLabel">نوع النشاط</span>
+            <span id="activityLockedBadge" class="chip-badge" style="display:none; color: var(--warning);">مقفول</span>
+          </label>
+          <div class="activity-grid" id="activityGrid">
+            <button type="button" class="activity-btn active" data-activity="read" id="act-read">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span id="txt-actRead">قراءة</span>
+            </button>
+            <button type="button" class="activity-btn" data-activity="listen" id="act-listen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+              <span id="txt-actListen">استماع</span>
+            </button>
+            <button type="button" class="activity-btn" data-activity="memorize" id="act-memorize">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>
+              <span id="txt-actMemorize">حفظ</span>
+            </button>
+            <button type="button" class="activity-btn" data-activity="review" id="act-review">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <span id="txt-actReview">مراجعة</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. RANGE CARD ("WHAT") -->
+        <div class="subcard" id="rangeCard">
+          <div class="subcard-header">
+            <span class="subcard-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+              <span id="txt-rangeSectionTitle">المقدار القرآني</span>
+            </span>
+            <span class="chip-badge" id="rangeSpanSummary">٤٨ صفحة</span>
+          </div>
+
+          <!-- If Edit mode & Progress logged -> Decision 2 B replaces everything with this box -->
+          <div id="rangeSummaryCompact" class="info-chip-box" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--warning);"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span id="rangeSummaryCompactText" style="font-weight: 700;">سورة البقرة (الصفحات ٢–٤٩)</span>
+            </div>
+            <span class="chip-badge" id="txt-lockedBadge">مثبّت</span>
+          </div>
+
+          <!-- Normal Range Controls (or Disabled in Decision 2 A) -->
+          <div id="rangeInteractiveArea" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Range Mode Tabs -->
+            <div class="tabs-segmented" id="rangeModeTabs">
+              <button type="button" data-mode="mushaf" id="tab-mushaf">كامل المصحف</button>
+              <button type="button" class="active" data-mode="surah" id="tab-surah">بالسورة</button>
+              <button type="button" data-mode="juz" id="tab-juz">بالجزء</button>
+              <button type="button" data-mode="page" id="tab-page">بالصفحة</button>
+              <button type="button" data-mode="verse" id="tab-verse">بالآية</button>
+            </div>
+
+            <!-- Mode 1: Whole Mushaf -->
+            <div id="rangeControls-mushaf" class="range-controls-box" style="display: none;">
+              <div class="info-chip-box">
+                <span id="txt-mushafDesc">كامل المصحف الشريف من الفاتحة إلى الناس</span>
+                <span class="chip-badge" id="txt-mushafPages">٦٠٤ صفحات</span>
+              </div>
+            </div>
+
+            <!-- Mode 2: By Surah -->
+            <div id="rangeControls-surah" class="range-controls-box">
+              <div class="select-grid">
+                <div class="control-item">
+                  <label id="txt-fromSurah">من سورة</label>
+                  <select id="startSurahSelect" class="select-dropdown"></select>
+                </div>
+                <div class="control-item">
+                  <label id="txt-toSurah">إلى سورة</label>
+                  <select id="endSurahSelect" class="select-dropdown"></select>
+                </div>
+              </div>
+              <div class="doc-note" id="surahPagesHint" style="text-align: start; padding: 0 2px;">
+                الصفحات ٢ إلى ٤٩ (٤٨ صفحة)
+              </div>
+            </div>
+
+            <!-- Mode 3: By Juz -->
+            <div id="rangeControls-juz" class="range-controls-box" style="display: none;">
+              <div class="select-grid">
+                <div class="control-item">
+                  <label id="txt-fromJuz">من الجزء</label>
+                  <select id="startJuzSelect" class="select-dropdown"></select>
+                </div>
+                <div class="control-item">
+                  <label id="txt-toJuz">إلى الجزء</label>
+                  <select id="endJuzSelect" class="select-dropdown"></select>
+                </div>
+              </div>
+              <div class="doc-note" id="juzPagesHint" style="text-align: start; padding: 0 2px;">
+                الصفحات ٥٨٢ إلى ٦٠٤ (٢٣ صفحة)
+              </div>
+            </div>
+
+            <!-- Mode 4: By Page -->
+            <div id="rangeControls-page" class="range-controls-box" style="display: none;">
+              <div class="select-grid">
+                <div class="control-item">
+                  <label id="txt-fromPage">من صفحة</label>
+                  <div class="number-input-wrap">
+                    <input type="number" id="startPageInput" class="number-input" min="1" max="604" value="1" />
+                  </div>
+                </div>
+                <div class="control-item">
+                  <label id="txt-toPage">إلى صفحة</label>
+                  <div class="number-input-wrap">
+                    <input type="number" id="endPageInput" class="number-input" min="1" max="604" value="20" />
+                  </div>
+                </div>
+              </div>
+              <!-- In Decision 4 Option B, this button shows up -->
+              <button type="button" id="btnSelectWholeMushafPage" class="chip-btn" style="display: none; align-self: flex-start;">
+                ⚡ <span id="txt-selectWholeQuranBtn">تحديد كامل المصحف (١–٦٠٤)</span>
+              </button>
+            </div>
+
+            <!-- Mode 5: By Verse -->
+            <div id="rangeControls-verse" class="range-controls-box" style="display: none;">
+              <div class="select-grid">
+                <div class="control-item">
+                  <label id="txt-verseStart">البداية</label>
+                  <div style="display: flex; gap: 4px;">
+                    <select id="verseStartSurah" class="select-dropdown" style="flex: 2;"></select>
+                    <input type="number" id="verseStartAyah" class="number-input text-input" style="flex: 1; padding: 4px;" value="1" min="1" />
+                  </div>
+                </div>
+                <div class="control-item">
+                  <label id="txt-verseEnd">النهاية</label>
+                  <div style="display: flex; gap: 4px;">
+                    <select id="verseEndSurah" class="select-dropdown" style="flex: 2;"></select>
+                    <input type="number" id="verseEndAyah" class="number-input text-input" style="flex: 1; padding: 4px;" value="286" min="1" />
+                  </div>
+                </div>
+              </div>
+              <div class="doc-note" id="verseSpanHint" style="text-align: start; padding: 0 2px;">
+                ٢٨٦ آية
+              </div>
+            </div>
+
+            <!-- Decision 2 Option A: Locked notice when edit mode simulated -->
+            <div class="locked-banner" id="rangeLockedNotice" style="display: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span id="txt-lockedNoticeDesc">
+                تم تثبيت المقدار لأن الورد قيد الإنجاز بالفعل وتم تسجيل قراءات له. لتغيير المقدار، أنشئ وردًا جديدًا.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. CADENCE CARD ("HOW") -->
+        <div class="subcard" id="cadenceCard">
+          <div class="subcard-header">
+            <span class="subcard-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span id="txt-cadenceSectionTitle">الوتيرة والجدول</span>
+            </span>
+          </div>
+
+          <!-- Cadence Sub-form Tabs ([ Pace | Deadline ]) -->
+          <div class="tabs-segmented" id="cadenceTypeTabs">
+            <button type="button" class="active" data-cadence="pace" id="tab-pace">بمعدل ثابت</button>
+            <button type="button" data-cadence="deadline" id="tab-deadline">بتاريخ انتهاء محدد</button>
+          </div>
+
+          <!-- Sub-form 1: PACE -->
+          <div id="cadenceSubform-pace" class="cadence-subform">
+            <!-- Period Toggle -->
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span class="doc-note" style="font-weight: 700;" id="txt-periodLabel">المدة:</span>
+              <div class="segmented-compact" id="periodToggle">
+                <button type="button" class="active" data-period="day" id="btnPeriodDay">يوميًا</button>
+                <button type="button" data-period="week" id="btnPeriodWeek">أسبوعيًا</button>
+              </div>
+            </div>
+
+            <!-- Warning if verse weekly (Decision 3 A) -->
+            <div class="doc-note" id="verseWeeklyDisabledNote" style="display: none; color: var(--warning);">
+              ⚠️ <span id="txt-verseWeeklyDisabled">المعدل الأسبوعي غير متاح لورد الآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء.</span>
+            </div>
+
+            <!-- Amount Stepper -->
+            <div class="stepper-container">
+              <button type="button" class="stepper-btn" id="btnPaceDec" aria-label="Decrease">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <div class="stepper-val" id="paceVal">٤</div>
+              <button type="button" class="stepper-btn" id="btnPaceInc" aria-label="Increase">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </div>
+            <div style="text-align: center; font-size: 11px; font-weight: 700; color: var(--muted-foreground);" id="paceUnitText">
+              صفحات يوميًا
+            </div>
+          </div>
+
+          <!-- Sub-form 2: DEADLINE -->
+          <div id="cadenceSubform-deadline" class="cadence-subform" style="display: none;">
+            <div class="field-group">
+              <label class="field-label" for="deadlineDateInput" id="txt-deadlineDateLabel">موعد الختم المستهدف</label>
+              <input type="date" id="deadlineDateInput" class="text-input" />
+            </div>
+
+            <!-- Quick Chips -->
+            <div class="chips-row">
+              <button type="button" class="chip-btn" data-days="15" id="chip-15d">+١٥ يومًا</button>
+              <button type="button" class="chip-btn" data-days="30" id="chip-30d">+٣٠ يومًا</button>
+              <button type="button" class="chip-btn" data-days="60" id="chip-60d">+٦٠ يومًا</button>
+              <button type="button" class="chip-btn" data-days="90" id="chip-90d">+٩٠ يومًا</button>
+            </div>
+
+            <!-- Repetitions (K) -->
+            <!-- Decision 1 Option A: In-place stepper -->
+            <div id="repsContainer-direct" class="field-group" style="margin-top: 4px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span class="field-label" id="txt-repsLabel">عدد الختمات (التكرار)</span>
+                <span id="repsMemorizeNote" class="doc-note" style="display: none; color: var(--warning);">ختمة واحدة فقط للحفظ</span>
+              </div>
+              <div class="stepper-container" id="repsStepperDirect">
+                <button type="button" class="stepper-btn" id="btnRepsDec" aria-label="Decrease">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="stepper-val" id="repsVal">١</div>
+                <button type="button" class="stepper-btn" id="btnRepsInc" aria-label="Increase">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Decision 1 Option B: Advanced accordion -->
+            <div id="repsContainer-advanced" style="display: none; flex-direction: column; gap: 8px;">
+              <button type="button" class="advanced-toggle" id="btnToggleAdvanced">
+                <span id="advChevron">▼</span>
+                <span id="txt-advancedLabel">خيارات متقدمة (تكرار الختمات)</span>
+              </button>
+              <div id="advancedBody" style="display: none; background: var(--muted); padding: 10px; border-radius: var(--radius-md);">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <span style="font-size: 11px; font-weight: 700;" id="txt-repsLabelAdv">عدد الختمات:</span>
+                  <div class="segmented-compact">
+                    <button type="button" class="active rep-btn" data-rep="1">١</button>
+                    <button type="button" class="rep-btn" data-rep="2">٢</button>
+                    <button type="button" class="rep-btn" data-rep="3">٣</button>
+                    <button type="button" class="rep-btn" data-rep="5">٥</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Derived Estimate Box -->
+          <div class="estimate-card">
+            <div class="estimate-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+            </div>
+            <div class="estimate-content">
+              <div class="estimate-main" id="estimateMainText">≈ ١٢ يومًا للإتمام</div>
+              <div class="estimate-sub" id="estimateSubText">حساب تقديري مباشر للعرض فقط</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline Submission Alert (Decision 3 B) -->
+        <div class="alert-box" id="submitAlert" style="display: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="submitAlertText">خطأ في الإرسال</span>
+        </div>
+
+        <!-- SUBMIT BUTTON -->
+        <button type="button" class="submit-btn" id="btnSubmit">
+          <span id="txt-btnSubmit">ابدأ الورد</span>
+        </button>
+
+        <!-- Simulated payload feedback -->
+        <div id="payloadViewer" style="display: none; background: var(--code-bg); padding: 10px; border-radius: var(--radius-md); font-family: monospace; font-size: 10px; direction: ltr; text-align: left; overflow-x: auto; white-space: pre-wrap;"></div>
+      </form>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       FOOTER: ESTIMATE MATH & DECISIONS NOTE
+       ========================================================================== -->
+  <section class="doc-section">
+    <!-- Math Card -->
+    <div class="doc-card">
+      <h3>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span id="txt-mathTitle">معادلات التقدير المباشر (Derived Estimate Math)</span>
+      </h3>
+      <p class="doc-note" id="txt-mathIntro">
+        المعادلات الحسابية التي تحاكي السيرفر مباشرة لتحديث سطر التقدير لحظيًا أثناء تحريك المؤشرات:
+      </p>
+
+      <div style="margin-top: 8px;">
+        <strong style="font-size: 11px;">١. حساب الوتيرة الثابتة (By Pace):</strong>
+        <div class="math-formula">
+unitsPerDay = (period === "week") ? (amount / 7) : amount;
+estimatedDays = Math.ceil(totalUnits / unitsPerDay);
+        </div>
+      </div>
+
+      <div style="margin-top: 8px;">
+        <strong style="font-size: 11px;">٢. حساب الموعد المستهدف (By Deadline):</strong>
+        <div class="math-formula">
+days = Math.max(1, dayCountInclusive(today, endDate));
+dailyPace = Math.ceil((totalUnits * K) / days);
+        </div>
+      </div>
+
+      <p class="doc-note" style="margin-top: 8px;" id="txt-mathNotice">
+        ⚠️ تنبيه معماري: هذا الحساب يُعرض للمستخدم فقط (Display-Only) ولا يُحفظ في قاعدة البيانات؛ السيرفر هو المصدر الوحيد لحساب وتحديث الجداول.
+      </p>
+    </div>
+
+    <!-- Non-Visual Decisions Note -->
+    <div class="doc-card">
+      <h3>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span id="txt-nonVisualTitle">القرارات المعمارية غير المرئية (Decisions 6 & 7)</span>
+      </h3>
+      <ul style="padding-inline-start: 18px; margin-top: 6px; font-size: 11px; color: var(--muted-foreground);" id="txt-nonVisualList">
+        <li><strong>قرار ٦ (حقل has_progress):</strong> نوصي بإرجاع `has_progress: boolean` مباشرة ضمن `UserPlanListItem` في `GET /api/plans` عبر `_count.progress_entries` لتلافي طلب شبكة إضافي عند فتح شاشة التعديل.</li>
+        <li><strong>قرار ٧ (توجيه التعديل initialPlan):</strong> نوصي بتمرير `initialPlan` كخاصية لـ `PlansBrowseDialog` لضمان تعديل الخطة الصحيحة عند وجود أكثر من ورد مخصص نشط لنفس المستخدم.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       VANILLA JAVASCRIPT: DATA & INTERACTIONS
+       ========================================================================== -->
+  <script>
+    // --------------------------------------------------------------------------
+    // STATIC QURAN DATA (Chapters & Juz start pages)
+    // --------------------------------------------------------------------------
+    const CHAPTERS = [
+      { id: 1, ar: "الفاتحة", en: "Al-Fatihah", start: 1, end: 1, verses: 7 },
+      { id: 2, ar: "البقرة", en: "Al-Baqarah", start: 2, end: 49, verses: 286 },
+      { id: 3, ar: "آل عمران", en: "Ali 'Imran", start: 50, end: 76, verses: 200 },
+      { id: 4, ar: "النساء", en: "An-Nisa", start: 77, end: 106, verses: 176 },
+      { id: 5, ar: "المائدة", en: "Al-Ma'idah", start: 106, end: 127, verses: 120 },
+      { id: 6, ar: "الأنعام", en: "Al-An'am", start: 128, end: 150, verses: 165 },
+      { id: 7, ar: "الأعراف", en: "Al-A'raf", start: 151, end: 176, verses: 206 },
+      { id: 8, ar: "الأنفال", en: "Al-Anfal", start: 177, end: 186, verses: 75 },
+      { id: 9, ar: "التوبة", en: "At-Tawbah", start: 187, end: 207, verses: 129 },
+      { id: 10, ar: "يونس", en: "Yunus", start: 208, end: 221, verses: 109 },
+      { id: 11, ar: "هود", en: "Hud", start: 221, end: 235, verses: 123 },
+      { id: 12, ar: "يوسف", en: "Yusuf", start: 235, end: 248, verses: 111 },
+      { id: 13, ar: "الرعد", en: "Ar-Ra'd", start: 249, end: 255, verses: 43 },
+      { id: 14, ar: "إبراهيم", en: "Ibrahim", start: 255, end: 261, verses: 52 },
+      { id: 15, ar: "الحجر", en: "Al-Hijr", start: 262, end: 267, verses: 99 },
+      { id: 16, ar: "النحل", en: "An-Nahl", start: 267, end: 281, verses: 128 },
+      { id: 17, ar: "الإسراء", en: "Al-Isra", start: 282, end: 293, verses: 111 },
+      { id: 18, ar: "الكهف", en: "Al-Kahf", start: 293, end: 304, verses: 110 },
+      { id: 19, ar: "مريم", en: "Maryam", start: 305, end: 312, verses: 98 },
+      { id: 20, ar: "طه", en: "Taha", start: 312, end: 321, verses: 135 },
+      { id: 36, ar: "يس", en: "Ya-Sin", start: 440, end: 445, verses: 83 },
+      { id: 55, ar: "الرحمن", en: "Ar-Rahman", start: 531, end: 534, verses: 78 },
+      { id: 56, ar: "الواقعة", en: "Al-Waqi'ah", start: 534, end: 537, verses: 96 },
+      { id: 67, ar: "الملك", en: "Al-Mulk", start: 562, end: 564, verses: 30 },
+      { id: 78, ar: "النبأ", en: "An-Naba", start: 582, end: 583, verses: 40 },
+      { id: 112, ar: "الإخلاص", en: "Al-Ikhlas", start: 604, end: 604, verses: 4 },
+      { id: 113, ar: "الفلق", en: "Al-Falaq", start: 604, end: 604, verses: 5 },
+      { id: 114, ar: "الناس", en: "An-Nas", start: 604, end: 604, verses: 6 }
+    ];
+
+    const JUZ_STARTS = [
+      1, 22, 42, 62, 82, 102, 121, 142, 162, 182,
+      201, 222, 242, 262, 282, 302, 322, 342, 362, 382,
+      402, 422, 442, 462, 482, 502, 522, 542, 562, 582
+    ];
+
+    // --------------------------------------------------------------------------
+    // LOCALIZATION DICTIONARY
+    // --------------------------------------------------------------------------
+    const I18N = {
+      ar: {
+        dir: "rtl",
+        optionsTitle: "خيارات التصميم المتاحة للتجربة (A / B)",
+        dec1Title: "١. موضع تكرار الختمات (K)",
+        dec1Desc: "هل يظهر عداد تكرار الختمة مباشرة داخل نموذج الموعد، أم يوضع في خيارات متقدمة قابلة للطي؟",
+        dec1OptA: "خيار A: عداد مباشر في الواجهة",
+        dec1OptB: "خيار B: داخل «خيارات متقدمة»",
+        dec2Title: "٢. سلوك تثبيت المقدار عند التعديل",
+        dec2Desc: "عند وجود قراءات مسجلة سابقًا: هل يظهر قسم المقدار معطلًا ومقفولًا، أم يُخفى تمامًا ويُستبدل بملخص نصي؟",
+        simEdit: "محاكاة خطة قيد التقدم (تم تسجيل قراءات):",
+        simNew: "جديدة",
+        simActive: "قيد التقدم",
+        dec2OptA: "خيار A: قسم معطّل مع قفل وتنبيه",
+        dec2OptB: "خيار B: إخفاء القسم وملخص سطر واحد",
+        dec3Title: "٣. المعدل الأسبوعي في ورد الآيات",
+        dec3Desc: "السيرفر يرفض المعدل الأسبوعي للآيات: هل نعطّل زر «أسبوعيًا» مع تنبيه إرشادي، أم نتركه ونعرض خطأ عند الحفظ؟",
+        dec3OptA: "خيار A: تعطيل الزر استباقيًا",
+        dec3OptB: "خيار B: تنبيه خطأ عند الإرسال",
+        dec4Title: "٤. طريقة اختيار كامل المصحف",
+        dec4Desc: "هل يكون كامل المصحف تبويبًا مستقلًا من الخيارات الخمسة، أم زر اختصار داخل وضع «بالصفحة»؟",
+        dec4OptA: "خيار A: تبويب مستقل (كامل المصحف)",
+        dec4OptB: "خيار B: زر اختصار في وضع الصفحات",
+        back: "رجوع",
+        dialogTitleNew: "ورد مخصص جديد",
+        dialogTitleEdit: "تعديل الورد المخصص",
+        dialogDesc: "حدد المقدار والوتيرة المناسبة لختمتك أو حفظك",
+        wirdNameLabel: "اسم الورد",
+        activityLabel: "نوع النشاط",
+        actRead: "قراءة",
+        actListen: "استماع",
+        actMemorize: "حفظ",
+        actReview: "مراجعة",
+        rangeSectionTitle: "المقدار القرآني",
+        tabMushaf: "كامل المصحف",
+        tabSurah: "بالسورة",
+        tabJuz: "بالجزء",
+        tabPage: "بالصفحة",
+        tabVerse: "بالآية",
+        mushafDesc: "كامل المصحف الشريف من الفاتحة إلى الناس",
+        mushafPages: "٦٠٤ صفحات",
+        fromSurah: "من سورة",
+        toSurah: "إلى سورة",
+        fromJuz: "من الجزء",
+        toJuz: "إلى الجزء",
+        fromPage: "من صفحة",
+        toPage: "إلى صفحة",
+        selectWholeQuranBtn: "تحديد كامل المصحف (١–٦٠٤)",
+        verseStart: "البداية",
+        verseEnd: "النهاية",
+        lockedNoticeDesc: "تم تثبيت المقدار لأن الورد قيد الإنجاز بالفعل وتم تسجيل قراءات له. لتغيير المقدار، أنشئ وردًا جديدًا.",
+        cadenceSectionTitle: "الوتيرة والجدول",
+        tabPace: "بمعدل ثابت",
+        tabDeadline: "بتاريخ انتهاء محدد",
+        periodLabel: "المدة:",
+        periodDay: "يوميًا",
+        periodWeek: "أسبوعيًا",
+        verseWeeklyDisabled: "المعدل الأسبوعي غير متاح لورد الآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء.",
+        deadlineDateLabel: "موعد الختم المستهدف",
+        repsLabel: "عدد الختمات (التكرار)",
+        repsLabelAdv: "عدد الختمات:",
+        repsMemorizeNote: "ختمة واحدة فقط للحفظ",
+        advancedLabel: "خيارات متقدمة (تكرار الختمات)",
+        estimateDays: (n) => `≈ ${toArabic(n)} يومًا للإتمام`,
+        estimatePacePage: (n) => `≈ ${toArabic(n)} صفحات/يوم (يُعاد حسابه تلقائيًا)`,
+        estimatePaceVerse: (n) => `≈ ${toArabic(n)} آيات/يوم (يُعاد حسابه تلقائيًا)`,
+        estimateSub: "حساب تقديري مباشر للعرض فقط",
+        btnSubmitNew: "ابدأ الورد",
+        btnSubmitEdit: "حفظ التعديلات",
+        pagesUnit: (n, p) => p === "week" ? "صفحات أسبوعيًا" : "صفحات يوميًا",
+        versesUnit: (n, p) => p === "week" ? "آيات أسبوعيًا" : "آيات يوميًا",
+        mathTitle: "معادلات التقدير المباشر (Derived Estimate Math)",
+        mathIntro: "المعادلات الحسابية التي تحاكي السيرفر مباشرة لتحديث سطر التقدير لحظيًا أثناء تحريك المؤشرات:",
+        mathNotice: "⚠️ تنبيه معماري: هذا الحساب يُعرض للمستخدم فقط (Display-Only) ولا يُحفظ في قاعدة البيانات؛ السيرفر هو المصدر الوحيد لحساب وتحديث الجداول.",
+        nonVisualTitle: "القرارات المعمارية غير المرئية (Decisions 6 & 7)",
+        nonVisualList: `
+          <li><strong>قرار ٦ (حقل has_progress):</strong> نوصي بإرجاع <code>has_progress: boolean</code> مباشرة ضمن <code>UserPlanListItem</code> في <code>GET /api/plans</code> عبر <code>_count.progress_entries</code> لتلافي طلب شبكة إضافي عند فتح شاشة التعديل.</li>
+          <li><strong>قرار ٧ (توجيه التعديل initialPlan):</strong> نوصي بتمرير <code>initialPlan</code> كخاصية لـ <code>PlansBrowseDialog</code> لضمان تعديل الخطة الصحيحة عند وجود أكثر من ورد مخصص نشط لنفس المستخدم.</li>
+        `
+      },
+      en: {
+        dir: "ltr",
+        optionsTitle: "Design Options Under Test (A / B)",
+        dec1Title: "1. Repetitions (K) Placement",
+        dec1Desc: "Should the repeat count stepper appear directly in the Deadline form, or tucked inside an Advanced options row?",
+        dec1OptA: "Option A: Direct in-form stepper",
+        dec1OptB: "Option B: Inside Advanced row",
+        dec2Title: "2. Range-Freeze UX in Edit Mode",
+        dec2Desc: "When readings have already been logged: should the Range section be disabled with lock badge, or hidden with a 1-line summary?",
+        simEdit: "Simulate active plan (readings logged):",
+        simNew: "New plan",
+        simActive: "In-progress",
+        dec2OptA: "Option A: Disabled with lock banner",
+        dec2OptB: "Option B: Hidden with 1-line summary",
+        dec3Title: "3. Verse-mode Weekly Pace",
+        dec3Desc: "Server rejects weekly pace for verses: disable 'Week' proactively with tooltip, or show error on submit?",
+        dec3OptA: "Option A: Proactively disable Week",
+        dec3OptB: "Option B: Error alert on submit",
+        dec4Title: "4. Whole Quran Affordance",
+        dec4Desc: "Should Whole Quran be a dedicated 5th tab, or a shortcut button inside the Page tab?",
+        dec4OptA: "Option A: Dedicated 5th tab",
+        dec4OptB: "Option B: Shortcut in Page tab",
+        back: "Back",
+        dialogTitleNew: "New custom wird",
+        dialogTitleEdit: "Edit custom wird",
+        dialogDesc: "Set a custom range and cadence for your reading or memorization",
+        wirdNameLabel: "Wird name",
+        activityLabel: "Activity",
+        actRead: "Read",
+        actListen: "Listen",
+        actMemorize: "Memorize",
+        actReview: "Review",
+        rangeSectionTitle: "Target Range",
+        tabMushaf: "Whole Quran",
+        tabSurah: "By Surah",
+        tabJuz: "By Juz",
+        tabPage: "By Page",
+        tabVerse: "By Verse",
+        mushafDesc: "The entire Quran from Al-Fatihah to An-Nas",
+        mushafPages: "604 pages",
+        fromSurah: "From surah",
+        toSurah: "To surah",
+        fromJuz: "From juz",
+        toJuz: "To juz",
+        fromPage: "From page",
+        toPage: "To page",
+        selectWholeQuranBtn: "Select Entire Quran (1–604)",
+        verseStart: "Start",
+        verseEnd: "End",
+        lockedNoticeDesc: "Target range is locked because readings have already been logged. To change range, start a new custom wird.",
+        cadenceSectionTitle: "Schedule & Cadence",
+        tabPace: "By Pace",
+        tabDeadline: "By Deadline",
+        periodLabel: "Period:",
+        periodDay: "Daily",
+        periodWeek: "Weekly",
+        verseWeeklyDisabled: "Weekly pace is not available for verse wirds; select daily verses or set a deadline.",
+        deadlineDateLabel: "Target completion date",
+        repsLabel: "Repetitions (passes)",
+        repsLabelAdv: "Repetitions:",
+        repsMemorizeNote: "Single pass only for memorization",
+        advancedLabel: "Advanced options (repetitions)",
+        estimateDays: (n) => `≈ ${n} days to complete`,
+        estimatePacePage: (n) => `≈ ${n} pages/day (re-adjusts on missed days)`,
+        estimatePaceVerse: (n) => `≈ ${n} verses/day (re-adjusts on missed days)`,
+        estimateSub: "Display-only live preview",
+        btnSubmitNew: "Start wird",
+        btnSubmitEdit: "Save changes",
+        pagesUnit: (n, p) => p === "week" ? "pages per week" : "pages per day",
+        versesUnit: (n, p) => p === "week" ? "verses per week" : "verses per day",
+        mathTitle: "Derived Estimate Math",
+        mathIntro: "Client formulas mirroring engine.ts rules to keep the live preview instant without network lag:",
+        mathNotice: "⚠️ Architectural note: This preview is strictly DISPLAY-ONLY and never stored. The server remains the single source of truth.",
+        nonVisualTitle: "Non-Visual Architectural Decisions (6 & 7)",
+        nonVisualList: `
+          <li><strong>Decision 6 (has_progress field):</strong> We recommend returning <code>has_progress: boolean</code> directly on <code>UserPlanListItem</code> in <code>GET /api/plans</code> via Prisma <code>_count.progress_entries</code> to eliminate secondary network waterfalls when opening the edit modal.</li>
+          <li><strong>Decision 7 (initialPlan routing prop):</strong> We recommend passing <code>initialPlan</code> as a prop to <code>PlansBrowseDialog</code> to guarantee editing the specific clicked card when multiple custom wirds exist.</li>
+        `
+      }
+    };
+
+    function toArabic(n) {
+      if (currentLang !== "ar") return String(n);
+      return String(n).replace(/[0-9]/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+    }
+
+    // --------------------------------------------------------------------------
+    // FORM & DESIGN STATE
+    // --------------------------------------------------------------------------
+    let currentLang = "ar";
+    let currentTheme = "dark";
+
+    // Design Decision Toggles
+    const decisions = {
+      dec1RepsPlacement: "A",   // "A" (direct stepper) | "B" (advanced row)
+      dec2RangeFreeze: "A",     // "A" (disabled with banner) | "B" (hidden with 1-line summary)
+      dec3VerseWeekly: "A",     // "A" (disabled button) | "B" (error on submit)
+      dec4WholeQuran: "A",      // "A" (dedicated tab) | "B" (page shortcut)
+      simProgressLogged: false  // false (new wird) | true (active edit)
+    };
+
+    // Form inputs state
+    const formState = {
+      name: "ورد سورة البقرة",
+      activity: "read", // "read" | "listen" | "memorize" | "review"
+      rangeMode: "surah", // "mushaf" | "surah" | "juz" | "page" | "verse"
+      startSurah: 2,
+      endSurah: 2,
+      startJuz: 30,
+      endJuz: 30,
+      startPage: 2,
+      endPage: 49,
+      verseStartSurah: 2,
+      verseStartAyah: 1,
+      verseEndSurah: 2,
+      verseEndAyah: 286,
+      cadenceType: "pace", // "pace" | "deadline"
+      pacePeriod: "day", // "day" | "week"
+      paceAmount: 4,
+      deadlineEndDate: "",
+      repetitions: 1
+    };
+
+    // Initialize default deadline to today + 30 days
+    const initDate = new Date();
+    initDate.setDate(initDate.getDate() + 30);
+    formState.deadlineEndDate = initDate.toISOString().slice(0, 10);
+
+    // --------------------------------------------------------------------------
+    // DOM CACHE
+    // --------------------------------------------------------------------------
+    const el = {
+      wirdName: document.getElementById("wirdName"),
+      nameCharCount: document.getElementById("nameCharCount"),
+      activityGrid: document.getElementById("activityGrid"),
+      rangeModeTabs: document.getElementById("rangeModeTabs"),
+      startSurahSelect: document.getElementById("startSurahSelect"),
+      endSurahSelect: document.getElementById("endSurahSelect"),
+      startJuzSelect: document.getElementById("startJuzSelect"),
+      endJuzSelect: document.getElementById("endJuzSelect"),
+      startPageInput: document.getElementById("startPageInput"),
+      endPageInput: document.getElementById("endPageInput"),
+      verseStartSurah: document.getElementById("verseStartSurah"),
+      verseStartAyah: document.getElementById("verseStartAyah"),
+      verseEndSurah: document.getElementById("verseEndSurah"),
+      verseEndAyah: document.getElementById("verseEndAyah"),
+      surahPagesHint: document.getElementById("surahPagesHint"),
+      juzPagesHint: document.getElementById("juzPagesHint"),
+      verseSpanHint: document.getElementById("verseSpanHint"),
+      rangeSpanSummary: document.getElementById("rangeSpanSummary"),
+      rangeSummaryCompact: document.getElementById("rangeSummaryCompact"),
+      rangeSummaryCompactText: document.getElementById("rangeSummaryCompactText"),
+      rangeInteractiveArea: document.getElementById("rangeInteractiveArea"),
+      rangeLockedNotice: document.getElementById("rangeLockedNotice"),
+      cadenceTypeTabs: document.getElementById("cadenceTypeTabs"),
+      cadenceSubformPace: document.getElementById("cadenceSubform-pace"),
+      cadenceSubformDeadline: document.getElementById("cadenceSubform-deadline"),
+      periodToggle: document.getElementById("periodToggle"),
+      btnPeriodDay: document.getElementById("btnPeriodDay"),
+      btnPeriodWeek: document.getElementById("btnPeriodWeek"),
+      verseWeeklyDisabledNote: document.getElementById("verseWeeklyDisabledNote"),
+      paceVal: document.getElementById("paceVal"),
+      paceUnitText: document.getElementById("paceUnitText"),
+      btnPaceDec: document.getElementById("btnPaceDec"),
+      btnPaceInc: document.getElementById("btnPaceInc"),
+      deadlineDateInput: document.getElementById("deadlineDateInput"),
+      repsVal: document.getElementById("repsVal"),
+      btnRepsDec: document.getElementById("btnRepsDec"),
+      btnRepsInc: document.getElementById("btnRepsInc"),
+      repsContainerDirect: document.getElementById("repsContainer-direct"),
+      repsContainerAdvanced: document.getElementById("repsContainer-advanced"),
+      repsMemorizeNote: document.getElementById("repsMemorizeNote"),
+      btnToggleAdvanced: document.getElementById("btnToggleAdvanced"),
+      advancedBody: document.getElementById("advancedBody"),
+      advChevron: document.getElementById("advChevron"),
+      estimateMainText: document.getElementById("estimateMainText"),
+      btnSubmit: document.getElementById("btnSubmit"),
+      submitAlert: document.getElementById("submitAlert"),
+      submitAlertText: document.getElementById("submitAlertText"),
+      payloadViewer: document.getElementById("payloadViewer"),
+      btnSelectWholeMushafPage: document.getElementById("btnSelectWholeMushafPage")
+    };
+
+    // --------------------------------------------------------------------------
+    // POPULATE DROPDOWNS
+    // --------------------------------------------------------------------------
+    function populateDropdowns() {
+      // Surahs
+      const makeSurahOptions = () => CHAPTERS.map(c => `
+        <option value="${c.id}">${c.id}. ${currentLang === "ar" ? c.ar : c.en}</option>
+      `).join("");
+
+      el.startSurahSelect.innerHTML = makeSurahOptions();
+      el.endSurahSelect.innerHTML = makeSurahOptions();
+      el.verseStartSurah.innerHTML = makeSurahOptions();
+      el.verseEndSurah.innerHTML = makeSurahOptions();
+
+      el.startSurahSelect.value = formState.startSurah;
+      el.endSurahSelect.value = formState.endSurah;
+      el.verseStartSurah.value = formState.verseStartSurah;
+      el.verseEndSurah.value = formState.verseEndSurah;
+
+      // Juz
+      let juzOpts = "";
+      for (let j = 1; j <= 30; j++) {
+        const lbl = currentLang === "ar" ? `الجزء ${toArabic(j)}` : `Juz ${j}`;
+        juzOpts += `<option value="${j}">${lbl}</option>`;
+      }
+      el.startJuzSelect.innerHTML = juzOpts;
+      el.endJuzSelect.innerHTML = juzOpts;
+      el.startJuzSelect.value = formState.startJuz;
+      el.endJuzSelect.value = formState.endJuz;
+
+      el.deadlineDateInput.value = formState.deadlineEndDate;
+    }
+
+    // --------------------------------------------------------------------------
+    // ESTIMATE COMPUTATION (Exact formulas from plan)
+    // --------------------------------------------------------------------------
+    function computeRangeUnits() {
+      if (formState.rangeMode === "mushaf") {
+        return { units: 604, type: "page" };
+      }
+      if (formState.rangeMode === "page") {
+        const s = Math.min(formState.startPage, formState.endPage);
+        const e = Math.max(formState.startPage, formState.endPage);
+        return { units: Math.max(1, e - s + 1), type: "page" };
+      }
+      if (formState.rangeMode === "juz") {
+        const s = Math.min(formState.startJuz, formState.endJuz);
+        const e = Math.max(formState.startJuz, formState.endJuz);
+        const startP = JUZ_STARTS[s - 1];
+        const endP = (e === 30) ? 604 : (JUZ_STARTS[e] - 1);
+        return { units: Math.max(1, endP - startP + 1), type: "page" };
+      }
+      if (formState.rangeMode === "surah") {
+        const s = Math.min(formState.startSurah, formState.endSurah);
+        const e = Math.max(formState.startSurah, formState.endSurah);
+        const sChap = CHAPTERS.find(c => c.id === s) || CHAPTERS[0];
+        const eChap = CHAPTERS.find(c => c.id === e) || sChap;
+        return { units: Math.max(1, eChap.end - sChap.start + 1), type: "page" };
+      }
+      if (formState.rangeMode === "verse") {
+        const sChap = CHAPTERS.find(c => c.id === formState.verseStartSurah) || CHAPTERS[0];
+        const eChap = CHAPTERS.find(c => c.id === formState.verseEndSurah) || sChap;
+        let vCount = 1;
+        if (sChap.id === eChap.id) {
+          vCount = Math.max(1, formState.verseEndAyah - formState.verseStartAyah + 1);
+        } else {
+          vCount = (sChap.verses - formState.verseStartAyah + 1) + formState.verseEndAyah;
+        }
+        return { units: vCount, type: "verse" };
+      }
+      return { units: 1, type: "page" };
+    }
+
+    function updateEstimate() {
+      const { units, type } = computeRangeUnits();
+      const t = I18N[currentLang];
+
+      // Update range span badges & hints
+      if (type === "page") {
+        el.rangeSpanSummary.textContent = `${toArabic(units)} ${currentLang === "ar" ? "صفحة" : "pages"}`;
+      } else {
+        el.rangeSpanSummary.textContent = `${toArabic(units)} ${currentLang === "ar" ? "آية" : "verses"}`;
+      }
+
+      // Live calculation
+      if (formState.cadenceType === "pace") {
+        const amount = formState.paceAmount;
+        const unitsPerDay = (formState.pacePeriod === "week") ? (amount / 7) : amount;
+        const days = Math.ceil(units / Math.max(0.1, unitsPerDay));
+        el.estimateMainText.textContent = t.estimateDays(days);
+      } else {
+        // Deadline
+        const today = new Date();
+        const endD = new Date(formState.deadlineEndDate);
+        const diffMs = endD.getTime() - today.getTime();
+        const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        const effectiveReps = (formState.activity === "memorize") ? 1 : formState.repetitions;
+        const dailyPace = Math.ceil((units * effectiveReps) / days);
+
+        if (type === "page") {
+          el.estimateMainText.textContent = t.estimatePacePage(dailyPace);
+        } else {
+          el.estimateMainText.textContent = t.estimatePaceVerse(dailyPace);
+        }
+      }
+
+      // Stepper label
+      if (type === "page") {
+        el.paceUnitText.textContent = t.pagesUnit(formState.paceAmount, formState.pacePeriod);
+      } else {
+        el.paceUnitText.textContent = t.versesUnit(formState.paceAmount, formState.pacePeriod);
+      }
+
+      el.paceVal.textContent = toArabic(formState.paceAmount);
+      el.repsVal.textContent = toArabic(formState.repetitions);
+    }
+
+    // --------------------------------------------------------------------------
+    // RENDER / SYNC UI WITH STATE
+    // --------------------------------------------------------------------------
+    function renderUI() {
+      const t = I18N[currentLang];
+
+      // RTL / LTR
+      document.documentElement.dir = t.dir;
+      document.documentElement.lang = currentLang;
+
+      // Text strings update
+      document.getElementById("txt-optionsTitle").textContent = t.optionsTitle;
+      document.getElementById("txt-dec1Title").textContent = t.dec1Title;
+      document.getElementById("txt-dec1Desc").textContent = t.dec1Desc;
+      document.getElementById("txt-dec1OptA").textContent = t.dec1OptA;
+      document.getElementById("txt-dec1OptB").textContent = t.dec1OptB;
+      document.getElementById("txt-dec2Title").textContent = t.dec2Title;
+      document.getElementById("txt-dec2Desc").textContent = t.dec2Desc;
+      document.getElementById("txt-simEdit").textContent = t.simEdit;
+      document.getElementById("txt-simNew").textContent = t.simNew;
+      document.getElementById("txt-simActive").textContent = t.simActive;
+      document.getElementById("txt-dec2OptA").textContent = t.dec2OptA;
+      document.getElementById("txt-dec2OptB").textContent = t.dec2OptB;
+      document.getElementById("txt-dec3Title").textContent = t.dec3Title;
+      document.getElementById("txt-dec3Desc").textContent = t.dec3Desc;
+      document.getElementById("txt-dec3OptA").textContent = t.dec3OptA;
+      document.getElementById("txt-dec3OptB").textContent = t.dec3OptB;
+      document.getElementById("txt-dec4Title").textContent = t.dec4Title;
+      document.getElementById("txt-dec4Desc").textContent = t.dec4Desc;
+      document.getElementById("txt-dec4OptA").textContent = t.dec4OptA;
+      document.getElementById("txt-dec4OptB").textContent = t.dec4OptB;
+
+      document.getElementById("txt-back").textContent = t.back;
+      document.getElementById("txt-dialogTitle").textContent = decisions.simProgressLogged ? t.dialogTitleEdit : t.dialogTitleNew;
+      document.getElementById("txt-dialogDesc").textContent = t.dialogDesc;
+      document.getElementById("txt-wirdNameLabel").textContent = t.wirdNameLabel;
+      document.getElementById("txt-activityLabel").textContent = t.activityLabel;
+      document.getElementById("txt-actRead").textContent = t.actRead;
+      document.getElementById("txt-actListen").textContent = t.actListen;
+      document.getElementById("txt-actMemorize").textContent = t.actMemorize;
+      document.getElementById("txt-actReview").textContent = t.actReview;
+
+      document.getElementById("txt-rangeSectionTitle").textContent = t.rangeSectionTitle;
+      document.getElementById("tab-mushaf").textContent = t.tabMushaf;
+      document.getElementById("tab-surah").textContent = t.tabSurah;
+      document.getElementById("tab-juz").textContent = t.tabJuz;
+      document.getElementById("tab-page").textContent = t.tabPage;
+      document.getElementById("tab-verse").textContent = t.tabVerse;
+      document.getElementById("txt-mushafDesc").textContent = t.mushafDesc;
+      document.getElementById("txt-mushafPages").textContent = t.mushafPages;
+      document.getElementById("txt-fromSurah").textContent = t.fromSurah;
+      document.getElementById("txt-toSurah").textContent = t.toSurah;
+      document.getElementById("txt-fromJuz").textContent = t.fromJuz;
+      document.getElementById("txt-toJuz").textContent = t.toJuz;
+      document.getElementById("txt-fromPage").textContent = t.fromPage;
+      document.getElementById("txt-toPage").textContent = t.toPage;
+      document.getElementById("txt-selectWholeQuranBtn").textContent = t.selectWholeQuranBtn;
+      document.getElementById("txt-verseStart").textContent = t.verseStart;
+      document.getElementById("txt-verseEnd").textContent = t.verseEnd;
+      document.getElementById("txt-lockedNoticeDesc").textContent = t.lockedNoticeDesc;
+
+      document.getElementById("txt-cadenceSectionTitle").textContent = t.cadenceSectionTitle;
+      document.getElementById("tab-pace").textContent = t.tabPace;
+      document.getElementById("tab-deadline").textContent = t.tabDeadline;
+      document.getElementById("txt-periodLabel").textContent = t.periodLabel;
+      document.getElementById("btnPeriodDay").textContent = t.periodDay;
+      document.getElementById("btnPeriodWeek").textContent = t.periodWeek;
+      document.getElementById("txt-verseWeeklyDisabled").textContent = t.verseWeeklyDisabled;
+      document.getElementById("txt-deadlineDateLabel").textContent = t.deadlineDateLabel;
+      document.getElementById("txt-repsLabel").textContent = t.repsLabel;
+      document.getElementById("txt-repsLabelAdv").textContent = t.repsLabelAdv;
+      document.getElementById("txt-repsMemorizeNote").textContent = t.repsMemorizeNote;
+      document.getElementById("txt-advancedLabel").textContent = t.advancedLabel;
+      document.getElementById("estimateSubText").textContent = t.estimateSub;
+      document.getElementById("txt-btnSubmit").textContent = decisions.simProgressLogged ? t.btnSubmitEdit : t.btnSubmitNew;
+
+      document.getElementById("txt-mathTitle").textContent = t.mathTitle;
+      document.getElementById("txt-mathIntro").textContent = t.mathIntro;
+      document.getElementById("txt-mathNotice").textContent = t.mathNotice;
+      document.getElementById("txt-nonVisualTitle").textContent = t.nonVisualTitle;
+      document.getElementById("txt-nonVisualList").innerHTML = t.nonVisualList;
+
+      // Decision 4 (Whole Quran tab vs shortcut button)
+      const tabMushaf = document.getElementById("tab-mushaf");
+      if (decisions.dec4WholeQuran === "A") {
+        tabMushaf.style.display = "block";
+        el.btnSelectWholeMushafPage.style.display = "none";
+      } else {
+        tabMushaf.style.display = "none";
+        if (formState.rangeMode === "mushaf") {
+          formState.rangeMode = "page";
+        }
+        el.btnSelectWholeMushafPage.style.display = (formState.rangeMode === "page") ? "block" : "none";
+      }
+
+      // Range mode tab buttons
+      Array.from(el.rangeModeTabs.children).forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === formState.rangeMode);
+      });
+
+      // Range subform visibility
+      ["mushaf", "surah", "juz", "page", "verse"].forEach(mode => {
+        const box = document.getElementById(`rangeControls-${mode}`);
+        if (box) box.style.display = (formState.rangeMode === mode) ? "flex" : "none";
+      });
+
+      // Decision 2: Edit-mode Range Freeze
+      const isLocked = decisions.simProgressLogged;
+      const activityButtons = el.activityGrid.querySelectorAll(".activity-btn");
+      activityButtons.forEach(b => b.disabled = isLocked);
+      document.getElementById("activityLockedBadge").style.display = isLocked ? "inline-block" : "none";
+
+      if (isLocked) {
+        if (decisions.dec2RangeFreeze === "A") {
+          // Option A: disabled controls with lock banner
+          el.rangeSummaryCompact.style.display = "none";
+          el.rangeInteractiveArea.style.display = "flex";
+          el.rangeInteractiveArea.style.opacity = "0.6";
+          el.rangeInteractiveArea.style.pointerEvents = "none";
+          el.rangeLockedNotice.style.display = "flex";
+        } else {
+          // Option B: hide controls, show compact summary
+          el.rangeInteractiveArea.style.display = "none";
+          el.rangeSummaryCompact.style.display = "flex";
+          el.rangeLockedNotice.style.display = "none";
+        }
+      } else {
+        el.rangeInteractiveArea.style.display = "flex";
+        el.rangeInteractiveArea.style.opacity = "1";
+        el.rangeInteractiveArea.style.pointerEvents = "auto";
+        el.rangeSummaryCompact.style.display = "none";
+        el.rangeLockedNotice.style.display = "none";
+      }
+
+      // Cadence Type tabs
+      document.getElementById("tab-pace").classList.toggle("active", formState.cadenceType === "pace");
+      document.getElementById("tab-deadline").classList.toggle("active", formState.cadenceType === "deadline");
+      el.cadenceSubformPace.style.display = (formState.cadenceType === "pace") ? "flex" : "none";
+      el.cadenceSubformDeadline.style.display = (formState.cadenceType === "deadline") ? "flex" : "none";
+
+      // Period buttons
+      el.btnPeriodDay.classList.toggle("active", formState.pacePeriod === "day");
+      el.btnPeriodWeek.classList.toggle("active", formState.pacePeriod === "week");
+
+      // Decision 3: Verse-mode weekly pace
+      const isVerseMode = (formState.rangeMode === "verse");
+      if (isVerseMode) {
+        if (decisions.dec3VerseWeekly === "A") {
+          el.btnPeriodWeek.disabled = true;
+          el.btnPeriodWeek.style.opacity = "0.4";
+          el.btnPeriodWeek.style.cursor = "not-allowed";
+          el.verseWeeklyDisabledNote.style.display = "block";
+          if (formState.pacePeriod === "week") formState.pacePeriod = "day";
+          el.btnPeriodDay.classList.add("active");
+          el.btnPeriodWeek.classList.remove("active");
+        } else {
+          el.btnPeriodWeek.disabled = false;
+          el.btnPeriodWeek.style.opacity = "1";
+          el.btnPeriodWeek.style.cursor = "pointer";
+          el.verseWeeklyDisabledNote.style.display = "none";
+        }
+      } else {
+        el.btnPeriodWeek.disabled = false;
+        el.btnPeriodWeek.style.opacity = "1";
+        el.btnPeriodWeek.style.cursor = "pointer";
+        el.verseWeeklyDisabledNote.style.display = "none";
+      }
+
+      // Decision 1: Repetitions (K) placement
+      const isMemorize = (formState.activity === "memorize");
+      if (decisions.dec1RepsPlacement === "A") {
+        el.repsContainerDirect.style.display = "flex";
+        el.repsContainerAdvanced.style.display = "none";
+        if (isMemorize) {
+          el.repsVal.textContent = toArabic(1);
+          el.btnRepsDec.disabled = true;
+          el.btnRepsInc.disabled = true;
+          el.repsMemorizeNote.style.display = "inline";
+        } else {
+          el.btnRepsDec.disabled = (formState.repetitions <= 1);
+          el.btnRepsInc.disabled = false;
+          el.repsMemorizeNote.style.display = "none";
+        }
+      } else {
+        el.repsContainerDirect.style.display = "none";
+        el.repsContainerAdvanced.style.display = "flex";
+      }
+
+      // Surah / Juz hints update
+      const sC = CHAPTERS.find(c => c.id === Number(el.startSurahSelect.value)) || CHAPTERS[0];
+      const eC = CHAPTERS.find(c => c.id === Number(el.endSurahSelect.value)) || sC;
+      el.surahPagesHint.textContent = (currentLang === "ar")
+        ? `الصفحات ${toArabic(sC.start)} إلى ${toArabic(eC.end)} (${toArabic(eC.end - sC.start + 1)} صفحة)`
+        : `Pages ${sC.start} to ${eC.end} (${eC.end - sC.start + 1} pages)`;
+
+      const sJ = Number(el.startJuzSelect.value);
+      const eJ = Number(el.endJuzSelect.value);
+      const jStart = JUZ_STARTS[sJ - 1];
+      const jEnd = (eJ === 30) ? 604 : (JUZ_STARTS[eJ] - 1);
+      el.juzPagesHint.textContent = (currentLang === "ar")
+        ? `الصفحات ${toArabic(jStart)} إلى ${toArabic(jEnd)} (${toArabic(jEnd - jStart + 1)} صفحة)`
+        : `Pages ${jStart} to ${jEnd} (${jEnd - jStart + 1} pages)`;
+
+      // Compact summary string
+      el.rangeSummaryCompactText.textContent = (formState.rangeMode === "surah")
+        ? `${sC.ar} (${toArabic(sC.start)}–${toArabic(eC.end)})`
+        : `${currentLang === "ar" ? "المقدار المحدد" : "Selected range"}`;
+
+      updateEstimate();
+    }
+
+    // --------------------------------------------------------------------------
+    // EVENT LISTENERS
+    // --------------------------------------------------------------------------
+
+    // Language switcher
+    document.getElementById("langToggle").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#langToggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentLang = btn.dataset.lang;
+      populateDropdowns();
+      renderUI();
+    });
+
+    // Theme switcher
+    document.getElementById("themeToggle").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#themeToggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentTheme = btn.dataset.theme;
+      document.documentElement.className = `theme-${currentTheme}`;
+    });
+
+    // Options Collapsible
+    document.getElementById("optionsHeader").addEventListener("click", () => {
+      const content = document.getElementById("optionsContent");
+      const isCollapsed = content.classList.toggle("collapsed");
+      document.getElementById("optionsChevron").textContent = isCollapsed ? "▲" : "▼";
+    });
+
+    // Decision 1 Toggle (Reps placement)
+    document.getElementById("dec1Toggle").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#dec1Toggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      decisions.dec1RepsPlacement = btn.dataset.val;
+      renderUI();
+    });
+
+    // Decision 2 Toggle (Range freeze UX)
+    document.getElementById("dec2Toggle").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#dec2Toggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      decisions.dec2RangeFreeze = btn.dataset.val;
+      renderUI();
+    });
+
+    // Simulate Active progress Toggle
+    document.getElementById("simProgressToggle").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#simProgressToggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      decisions.simProgressLogged = (btn.dataset.val === "true");
+      renderUI();
+    });
+
+    // Decision 3 Toggle (Verse weekly)
+    document.getElementById("dec3Toggle").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#dec3Toggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      decisions.dec3VerseWeekly = btn.dataset.val;
+      renderUI();
+    });
+
+    // Decision 4 Toggle (Whole Quran tab vs button)
+    document.getElementById("dec4Toggle").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#dec4Toggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      decisions.dec4WholeQuran = btn.dataset.val;
+      renderUI();
+    });
+
+    // Activity Selector
+    el.activityGrid.addEventListener("click", e => {
+      const btn = e.target.closest(".activity-btn");
+      if (!btn || btn.disabled) return;
+      el.activityGrid.querySelectorAll(".activity-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      formState.activity = btn.dataset.activity;
+      if (formState.activity === "memorize") formState.repetitions = 1;
+      renderUI();
+    });
+
+    // Range Mode Tabs
+    el.rangeModeTabs.addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      formState.rangeMode = btn.dataset.mode;
+      renderUI();
+    });
+
+    // Select all shortcut (Decision 4 Option B)
+    el.btnSelectWholeMushafPage.addEventListener("click", () => {
+      formState.startPage = 1;
+      formState.endPage = 604;
+      el.startPageInput.value = 1;
+      el.endPageInput.value = 604;
+      renderUI();
+    });
+
+    // Surah selection
+    el.startSurahSelect.addEventListener("change", e => {
+      formState.startSurah = Number(e.target.value);
+      if (formState.endSurah < formState.startSurah) {
+        formState.endSurah = formState.startSurah;
+        el.endSurahSelect.value = formState.startSurah;
+      }
+      renderUI();
+    });
+    el.endSurahSelect.addEventListener("change", e => {
+      formState.endSurah = Number(e.target.value);
+      if (formState.endSurah < formState.startSurah) {
+        formState.startSurah = formState.endSurah;
+        el.startSurahSelect.value = formState.endSurah;
+      }
+      renderUI();
+    });
+
+    // Juz selection
+    el.startJuzSelect.addEventListener("change", e => {
+      formState.startJuz = Number(e.target.value);
+      if (formState.endJuz < formState.startJuz) {
+        formState.endJuz = formState.startJuz;
+        el.endJuzSelect.value = formState.startJuz;
+      }
+      renderUI();
+    });
+    el.endJuzSelect.addEventListener("change", e => {
+      formState.endJuz = Number(e.target.value);
+      if (formState.endJuz < formState.startJuz) {
+        formState.startJuz = formState.endJuz;
+        el.startJuzSelect.value = formState.endJuz;
+      }
+      renderUI();
+    });
+
+    // Page inputs
+    el.startPageInput.addEventListener("input", e => {
+      formState.startPage = Math.max(1, Math.min(604, Number(e.target.value) || 1));
+      renderUI();
+    });
+    el.endPageInput.addEventListener("input", e => {
+      formState.endPage = Math.max(1, Math.min(604, Number(e.target.value) || 1));
+      renderUI();
+    });
+
+    // Verse inputs
+    el.verseStartSurah.addEventListener("change", e => {
+      formState.verseStartSurah = Number(e.target.value);
+      renderUI();
+    });
+    el.verseEndSurah.addEventListener("change", e => {
+      formState.verseEndSurah = Number(e.target.value);
+      renderUI();
+    });
+    el.verseStartAyah.addEventListener("input", e => {
+      formState.verseStartAyah = Number(e.target.value) || 1;
+      renderUI();
+    });
+    el.verseEndAyah.addEventListener("input", e => {
+      formState.verseEndAyah = Number(e.target.value) || 1;
+      renderUI();
+    });
+
+    // Cadence Mode Tabs
+    el.cadenceTypeTabs.addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      formState.cadenceType = btn.dataset.cadence;
+      renderUI();
+    });
+
+    // Period Toggle
+    el.periodToggle.addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn || btn.disabled) return;
+      formState.pacePeriod = btn.dataset.period;
+      renderUI();
+    });
+
+    // Pace Steppers
+    el.btnPaceDec.addEventListener("click", () => {
+      if (formState.paceAmount > 1) {
+        formState.paceAmount--;
+        renderUI();
+      }
+    });
+    el.btnPaceInc.addEventListener("click", () => {
+      formState.paceAmount++;
+      renderUI();
+    });
+
+    // Reps Steppers
+    el.btnRepsDec.addEventListener("click", () => {
+      if (formState.repetitions > 1) {
+        formState.repetitions--;
+        renderUI();
+      }
+    });
+    el.btnRepsInc.addEventListener("click", () => {
+      if (formState.repetitions < 100) {
+        formState.repetitions++;
+        renderUI();
+      }
+    });
+
+    // Quick Date chips
+    document.querySelectorAll(".chip-btn[data-days]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const d = Number(btn.dataset.days);
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + d);
+        formState.deadlineEndDate = nextDate.toISOString().slice(0, 10);
+        el.deadlineDateInput.value = formState.deadlineEndDate;
+        renderUI();
+      });
+    });
+
+    el.deadlineDateInput.addEventListener("change", e => {
+      formState.deadlineEndDate = e.target.value;
+      renderUI();
+    });
+
+    // Name char count
+    el.wirdName.addEventListener("input", e => {
+      formState.name = e.target.value;
+      el.nameCharCount.textContent = `${toArabic(e.target.value.length)}/١٠٠`;
+    });
+
+    // Advanced toggle
+    el.btnToggleAdvanced.addEventListener("click", () => {
+      const isHidden = (el.advancedBody.style.display === "none");
+      el.advancedBody.style.display = isHidden ? "block" : "none";
+      el.advChevron.textContent = isHidden ? "▲" : "▼";
+    });
+
+    document.querySelectorAll(".rep-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".rep-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        formState.repetitions = Number(btn.dataset.rep);
+        renderUI();
+      });
+    });
+
+    // Submit Simulation
+    el.btnSubmit.addEventListener("click", () => {
+      el.submitAlert.style.display = "none";
+      el.payloadViewer.style.display = "none";
+
+      // Check Decision 3 Option B (Error on submit if weekly pace with verse)
+      if (formState.rangeMode === "verse" && formState.cadenceType === "pace" && formState.pacePeriod === "week") {
+        if (decisions.dec3VerseWeekly === "B") {
+          el.submitAlertText.textContent = (currentLang === "ar")
+            ? "خطأ (422): المعدل الأسبوعي غير مدعوم لورد الآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء."
+            : "Error (422): Weekly pace is not supported for verse-level wirds; specify verses per day or use a deadline.";
+          el.submitAlert.style.display = "flex";
+          return;
+        }
+      }
+
+      // Build simulated API JSON payload
+      let payload;
+      if (decisions.simProgressLogged) {
+        // PATCH
+        payload = {
+          name: formState.name,
+          cadence: (formState.cadenceType === "pace") ? {
+            type: "pace",
+            period: formState.pacePeriod,
+            amount: formState.paceAmount
+          } : {
+            type: "deadline",
+            endDate: formState.deadlineEndDate,
+            repetitions: formState.activity === "memorize" ? 1 : formState.repetitions
+          }
+        };
+      } else {
+        // POST
+        let rangeObj;
+        if (formState.rangeMode === "mushaf") {
+          rangeObj = { mode: "page", startPage: 1, endPage: 604 };
+        } else if (formState.rangeMode === "surah") {
+          rangeObj = { mode: "surah", startSurah: formState.startSurah, endSurah: formState.endSurah };
+        } else if (formState.rangeMode === "juz") {
+          rangeObj = { mode: "juz", startJuz: formState.startJuz, endJuz: formState.endJuz };
+        } else if (formState.rangeMode === "page") {
+          rangeObj = { mode: "page", startPage: formState.startPage, endPage: formState.endPage };
+        } else {
+          rangeObj = {
+            mode: "verse",
+            startVerse: `${formState.verseStartSurah}:${formState.verseStartAyah}`,
+            endVerse: `${formState.verseEndSurah}:${formState.verseEndAyah}`
+          };
+        }
+
+        payload = {
+          template_key: "custom",
+          name: formState.name,
+          activity: formState.activity,
+          range: rangeObj,
+          cadence: (formState.cadenceType === "pace") ? {
+            type: "pace",
+            period: formState.pacePeriod,
+            amount: formState.paceAmount
+          } : {
+            type: "deadline",
+            endDate: formState.deadlineEndDate,
+            repetitions: formState.activity === "memorize" ? 1 : formState.repetitions
+          }
+        };
+      }
+
+      el.payloadViewer.style.display = "block";
+      el.payloadViewer.textContent = `// ${decisions.simProgressLogged ? "PATCH /api/plans/:planId" : "POST /api/plans"} Payload:\n` + JSON.stringify(payload, null, 2);
+    });
+
+    // Initial run
+    populateDropdowns();
+    renderUI();
+  </script>
+</body>
+</html>

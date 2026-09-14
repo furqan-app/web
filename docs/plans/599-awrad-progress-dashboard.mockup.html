@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Furqan • Awrad Progress Dashboard Mockup Gallery (#599)</title>
+  <style>
+    /* ==========================================================================
+       THEME TOKENS & SYSTEM FOUNDATION
+       Directly transcribed from app/globals.css and docs/standards/styling.md
+       ========================================================================== */
+    :root {
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --radius-2xl: 20px;
+      --radius-full: 9999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Arabic", "Tajawal", "Amiri", sans-serif;
+      --transition: all 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #0b1016;
+      color: #ebe8df;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 80px;
+      line-height: 1.5;
+    }
+
+    /* --------------------------------------------------------------------------
+       THEME SCOPES (Light, Gold, Dark)
+       -------------------------------------------------------------------------- */
+    .theme-light {
+      --background: 210 36% 95%;
+      --foreground: 209 36% 14%;
+      --card: 0 0% 100%;
+      --card-foreground: 209 36% 14%;
+      --border: 210 31% 90%;
+      --primary: 169 88% 26%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 208 30% 92%;
+      --muted-foreground: 208 18% 40%;
+      --accent: 165 53% 93%;
+      --accent-foreground: 169 88% 26%;
+      --surface-rim: inset 0 1px 0 hsl(0 0% 100%);
+      --panel-cast: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
+      --cell-empty: hsl(208 30% 90%);
+      --cell-step1: hsl(169 88% 26% / 0.18);
+      --cell-step2: hsl(169 88% 26% / 0.42);
+      --cell-step3: hsl(169 88% 26% / 0.68);
+      --cell-step4: hsl(169 88% 26%);
+    }
+
+    .theme-gold {
+      --background: 43 48% 87%;
+      --foreground: 39 25% 13%;
+      --card: 46 52% 96%;
+      --card-foreground: 39 25% 13%;
+      --border: 43 40% 81%;
+      --primary: 168 72% 24%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 43 38% 84%;
+      --muted-foreground: 39 18% 31%;
+      --accent: 165 42% 88%;
+      --accent-foreground: 168 72% 24%;
+      --surface-rim: inset 0 1px 0 hsl(46 52% 100%);
+      --panel-cast: 0 4px 16px -2px rgba(45, 32, 14, 0.12);
+      --cell-empty: hsl(43 38% 82%);
+      --cell-step1: hsl(168 72% 24% / 0.20);
+      --cell-step2: hsl(168 72% 24% / 0.45);
+      --cell-step3: hsl(168 72% 24% / 0.70);
+      --cell-step4: hsl(168 72% 24%);
+    }
+
+    .theme-dark {
+      --background: 213 31% 7%;
+      --foreground: 45 18% 91%;
+      --card: 213 21% 10%;
+      --card-foreground: 45 18% 91%;
+      --border: 210 26% 19%;
+      --primary: 169 88% 26%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 213 21% 14%;
+      --muted-foreground: 206 9% 56%;
+      --accent: 161 58% 15%;
+      --accent-foreground: 169 88% 39%;
+      /* Warm catch-light rim along top edge (ADR 0032) — NO drop shadow on dark */
+      --surface-rim: inset 0 1px 0 hsl(210 20% 28%);
+      --panel-cast: inset 0 1px 0 hsl(210 20% 28%);
+      --cell-empty: hsl(213 21% 13%);
+      --cell-step1: hsl(169 88% 26% / 0.25);
+      --cell-step2: hsl(169 88% 26% / 0.50);
+      --cell-step3: hsl(169 88% 26% / 0.75);
+      --cell-step4: hsl(169 88% 26%);
+    }
+
+    /* --------------------------------------------------------------------------
+       SCROLL CONTAINER (fq-scroll-nice standard)
+       -------------------------------------------------------------------------- */
+    .fq-scroll-nice {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--border)) transparent;
+    }
+    .fq-scroll-nice::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .fq-scroll-nice::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .fq-scroll-nice::-webkit-scrollbar-thumb {
+      background: hsl(var(--border));
+      border-radius: var(--radius-full);
+    }
+    .fq-scroll-nice::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--muted-foreground));
+    }
+
+    /* --------------------------------------------------------------------------
+       REDUCED MOTION PREFERENCE (Accessibility)
+       -------------------------------------------------------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .heat-cell:hover, .heat-cell:focus {
+        transform: none !important;
+        box-shadow: 0 0 0 2px hsl(var(--foreground) / 0.5) !important;
+      }
+      .seg-btn, .tab-item, .header-btn, .empty-cta-btn {
+        transition: none !important;
+        transform: none !important;
+      }
+    }
+
+    /* ==========================================================================
+       GALLERY CHROME & CONTROLS DOCK
+       ========================================================================== */
+    .mockup-dock {
+      position: sticky;
+      top: 16px;
+      z-index: 100;
+      width: 100%;
+      max-width: 1180px;
+      background: #141b24;
+      border: 1px solid #242c38;
+      border-radius: var(--radius-xl);
+      padding: 14px 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .dock-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .dock-title-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dock-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #34d399;
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.25);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+    }
+    .dock-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .control-groups {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .seg-picker {
+      display: inline-flex;
+      background: #0d1217;
+      border: 1px solid #242c38;
+      border-radius: var(--radius-md);
+      padding: 2px;
+      gap: 2px;
+    }
+    .seg-btn {
+      background: transparent;
+      border: none;
+      color: #8e98a5;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .seg-btn:hover {
+      color: #fff;
+    }
+    .seg-btn.active {
+      background: hsl(169 88% 26%);
+      color: #fff;
+    }
+    .dock-note {
+      font-size: 11.5px;
+      color: #9ba3af;
+      border-top: 1px solid #242c38;
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dock-note-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       THEME SECTION & CONTAINER
+       ========================================================================== */
+    .theme-container {
+      width: 100%;
+      max-width: 1180px;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-2xl);
+      padding: 32px 24px;
+      margin-bottom: 36px;
+      box-shadow: var(--surface-rim), 0 12px 36px rgba(0, 0, 0, 0.25);
+      transition: var(--transition);
+    }
+    .theme-container.hidden {
+      display: none;
+    }
+    .theme-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid hsl(var(--border));
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .theme-title-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .theme-label {
+      font-size: 18px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .swatch-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid hsl(var(--border));
+    }
+    .swatch-pip {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: hsl(var(--primary));
+    }
+
+    /* ==========================================================================
+       SECTION SHOWCASE WRAPPER
+       ========================================================================== */
+    .view-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: var(--panel-cast);
+      position: relative;
+    }
+    .view-card.hidden {
+      display: none;
+    }
+    .view-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid hsl(var(--border) / 0.6);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .view-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .view-tag-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .view-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+    .dir-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .dir-badge.rtl {
+      background: hsl(169 88% 26% / 0.15);
+      color: hsl(var(--primary));
+      border: 1px solid hsl(169 88% 26% / 0.3);
+    }
+    .dir-badge.ltr {
+      background: hsl(210 30% 50% / 0.15);
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+    }
+    .view-caption {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.5;
+      margin-top: 4px;
+      margin-bottom: 20px;
+    }
+
+    /* ==========================================================================
+       APP SHELL SIMULATION (/plans hub page container)
+       ========================================================================== */
+    .plans-shell {
+      max-width: 672px; /* max-w-2xl */
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .plans-shell.mobile-shell {
+      max-width: 390px;
+      border: 1px dashed hsl(var(--border));
+      padding: 16px 12px;
+      border-radius: var(--radius-xl);
+      background: hsl(var(--background));
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-title-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .header-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      padding: 8px 14px;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+    }
+
+    /* --------------------------------------------------------------------------
+       TAB STRIP (3 Tabs: مهام اليوم | التقدّم | إدارة الخطط)
+       -------------------------------------------------------------------------- */
+    .tab-strip {
+      display: flex;
+      background: hsl(var(--muted) / 0.5);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-xl);
+      padding: 4px;
+      gap: 4px;
+    }
+    .tab-item {
+      flex: 1;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .tab-item.active {
+      background: hsl(var(--card));
+      color: hsl(var(--foreground));
+      font-weight: 700;
+      border-color: hsl(var(--border) / 0.6);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: 700;
+      background: hsl(var(--muted));
+      color: hsl(var(--muted-foreground));
+    }
+    .tab-badge.done {
+      background: hsl(var(--primary) / 0.15);
+      color: hsl(var(--primary));
+    }
+
+    /* --------------------------------------------------------------------------
+       DASHBOARD HERO & SUMMARY
+       -------------------------------------------------------------------------- */
+    .dashboard-hero {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-2xl);
+      padding: 20px 24px;
+      box-shadow: var(--panel-cast);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .hero-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hero-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .hero-subtitle {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+    }
+    .hero-streak-box {
+      text-align: end;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .hero-streak-num {
+      font-size: 26px;
+      font-weight: 900;
+      color: hsl(var(--primary));
+      line-height: 1;
+    }
+    .hero-streak-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: hsl(var(--muted-foreground));
+      margin-top: 3px;
+    }
+
+    /* --------------------------------------------------------------------------
+       PER-ACTIVITY STREAKS GRID
+       -------------------------------------------------------------------------- */
+    .activity-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 540px) {
+      .activity-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .activity-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: var(--panel-cast);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .act-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .act-title-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .act-icon-well {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      background: hsl(var(--muted));
+      display: grid;
+      place-items: center;
+      color: hsl(var(--primary));
+    }
+    .act-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .act-status-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: hsl(var(--muted));
+      color: hsl(var(--muted-foreground));
+    }
+    .act-status-pill.done {
+      background: hsl(var(--primary) / 0.15);
+      color: hsl(var(--primary));
+    }
+    .act-status-pill.zero {
+      background: hsl(var(--muted) / 0.6);
+      color: hsl(var(--muted-foreground));
+    }
+    .act-body {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      border-top: 1px solid hsl(var(--border) / 0.6);
+      padding-top: 8px;
+    }
+    .act-streak-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .act-streak-lbl {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+    }
+    .act-meta {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* --------------------------------------------------------------------------
+       TOTALS LATTICE SECTION
+       -------------------------------------------------------------------------- */
+    .totals-group {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      box-shadow: var(--panel-cast);
+    }
+    .totals-header {
+      padding: 14px 18px;
+      background: hsl(var(--muted) / 0.35);
+      border-bottom: 1px solid hsl(var(--border));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .totals-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(var(--muted-foreground));
+    }
+    .khatma-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: hsl(var(--primary));
+      background: hsl(var(--primary) / 0.12);
+      border: 1px solid hsl(var(--primary) / 0.25);
+      padding: 2px 9px;
+      border-radius: var(--radius-full);
+    }
+    .total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid hsl(var(--border) / 0.6);
+    }
+    .total-row:last-child {
+      border-bottom: none;
+    }
+    .total-row-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .total-row-numbers {
+      text-align: end;
+    }
+    .total-primary-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .total-secondary-val {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* --------------------------------------------------------------------------
+       HEATMAP / 52-WEEK CALENDAR SECTION
+       -------------------------------------------------------------------------- */
+    .heatmap-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-2xl);
+      padding: 20px 22px;
+      box-shadow: var(--panel-cast);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .heatmap-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .heatmap-title-box {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .heatmap-heading {
+      font-size: 14px;
+      font-weight: 800;
+      color: hsl(var(--foreground));
+    }
+    .heatmap-sub {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+    }
+    .heatmap-scroll-area {
+      overflow-x: auto;
+      padding-bottom: 6px;
+      padding-top: 4px;
+      width: 100%;
+    }
+    .heatmap-grid-table {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: max-content;
+    }
+    .heatmap-month-row {
+      display: flex;
+      gap: 3px;
+      height: 16px;
+      margin-bottom: 2px;
+    }
+    .heatmap-month-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: hsl(var(--muted-foreground));
+      width: 58px;
+      text-align: start;
+    }
+    .heatmap-days-matrix {
+      display: flex;
+      gap: 3px;
+    }
+    .heatmap-week-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .heat-cell {
+      width: 12px;
+      height: 12px;
+      border-radius: 2.5px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    /* Touch target extension via pseudo-element */
+    .heat-cell::before {
+      content: "";
+      position: absolute;
+      inset: -4px -2px;
+      border-radius: 4px;
+    }
+    .heat-cell:hover, .heat-cell:focus {
+      transform: scale(1.3);
+      z-index: 10;
+      box-shadow: 0 0 0 2px hsl(var(--foreground) / 0.25);
+    }
+    .cell-0 { background: var(--cell-empty); }
+    .cell-1 { background: var(--cell-step1); }
+    .cell-2 { background: var(--cell-step2); }
+    .cell-3 { background: var(--cell-step3); }
+    .cell-4 { background: var(--cell-step4); }
+
+    .heatmap-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid hsl(var(--border) / 0.5);
+      padding-top: 10px;
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .heatmap-legend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-cell {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    /* --------------------------------------------------------------------------
+       QUIET EMPTY STATE (Dignified & Calm)
+       -------------------------------------------------------------------------- */
+    .empty-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-2xl);
+      padding: 44px 24px;
+      text-align: center;
+      box-shadow: var(--panel-cast);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .empty-icon-well {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-xl);
+      background: hsl(var(--muted));
+      display: grid;
+      place-items: center;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 4px;
+    }
+    .empty-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .empty-desc {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      max-width: 340px;
+      line-height: 1.5;
+    }
+    .empty-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      padding: 10px 18px;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* --------------------------------------------------------------------------
+       SVG ICON UTILITIES (Clean & Inlined)
+       -------------------------------------------------------------------------- */
+    .icon {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .icon-sm {
+      width: 13px;
+      height: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       TOP DOCK: INTERACTIVE CONTROLS & ARCHITECTURE DISCLOSURE
+       ======================================================================== -->
+  <header class="mockup-dock">
+    <div class="dock-row">
+      <div class="dock-title-box">
+        <span class="dock-badge">#599 SPECIFICATION</span>
+        <h1 class="dock-title">Awrad Progress Dashboard Mockup Gallery</h1>
+      </div>
+
+      <div class="control-groups">
+        <!-- Language / Direction Switcher -->
+        <div class="seg-picker">
+          <button type="button" class="seg-btn active" id="btn-dir-both" onclick="setDirectionFilter('both')">Both RTL & LTR</button>
+          <button type="button" class="seg-btn" id="btn-dir-rtl" onclick="setDirectionFilter('rtl')">العربية (RTL)</button>
+          <button type="button" class="seg-btn" id="btn-dir-ltr" onclick="setDirectionFilter('ltr')">English (LTR)</button>
+        </div>
+
+        <!-- Theme Switcher -->
+        <div class="seg-picker">
+          <button type="button" class="seg-btn active" id="btn-theme-all" onclick="setThemeFilter('all')">All Themes</button>
+          <button type="button" class="seg-btn" id="btn-theme-light" onclick="setThemeFilter('theme-light')">Light</button>
+          <button type="button" class="seg-btn" id="btn-theme-gold" onclick="setThemeFilter('theme-gold')">Gold</button>
+          <button type="button" class="seg-btn" id="btn-theme-dark" onclick="setThemeFilter('theme-dark')">Dark</button>
+        </div>
+
+        <!-- View Filter -->
+        <div class="seg-picker">
+          <button type="button" class="seg-btn active" id="btn-view-all" onclick="setViewFilter('all')">All Views</button>
+          <button type="button" class="seg-btn" id="btn-view-desktop" onclick="setViewFilter('desktop')">Desktop Hub</button>
+          <button type="button" class="seg-btn" id="btn-view-mobile" onclick="setViewFilter('mobile')">Mobile Hub</button>
+          <button type="button" class="seg-btn" id="btn-view-heatmaps" onclick="setViewFilter('heatmaps')">Heatmaps</button>
+          <button type="button" class="seg-btn" id="btn-view-empty" onclick="setViewFilter('empty')">Empty State</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dock-note">
+      <span class="dock-note-dot"></span>
+      <span><strong>Invariants (D1–D6):</strong> Third tab on <code>/plans</code> • 100% Derived at read-time (ADR 0030) • Grouped by activity (D3) • Hours listened CUT (D4) • Quiet Emerald Ramp (D6) • RTL/LTR Reversed Flow.</span>
+    </div>
+  </header>
+
+
+  <!-- ========================================================================
+       THEME 1: LIGHT THEME
+       ======================================================================== -->
+  <section class="theme-container theme-light" id="container-theme-light">
+    <div class="theme-header">
+      <div class="theme-title-box">
+        <h2 class="theme-label">Light Theme • المظهر النهاري</h2>
+        <span class="swatch-badge"><span class="swatch-pip"></span>#087F69 Emerald Primary</span>
+      </div>
+      <span class="swatch-badge">Background: hsl(210, 36%, 95%) • Card: White</span>
+    </div>
+
+    <!-- 1A. RTL DESKTOP VIEW -->
+    <div class="view-card view-desktop sec-rtl" dir="rtl">
+      <div class="view-card-header">
+        <div class="view-title">
+          <svg class="icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          <span>Progress Hub at Desktop Width • الواجهة الكاملة على سطح المكتب</span>
+        </div>
+        <div class="view-tag-group">
+          <span class="dir-badge rtl">RTL • العربية</span>
+          <span class="view-tag">max-w-2xl container</span>
+        </div>
+      </div>
+      <p class="view-caption">العرض العربي الأساسي: شريط تصفح ثلاثي، بطاقة انعكاس علوية، شبكة سلاسل الالتزام (٢×٢)، جدول إجمالي المدارسة، وخريطة النشاط والمدارسة (الأسبوع الحالي على اليمين).</p>
+
+      <div class="plans-shell">
+        <header class="page-header">
+          <div class="header-title-box"><h1 class="header-h1">الأوراد وخطط التعلم</h1></div>
+          <button type="button" class="header-btn">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>ورد جديد</span>
+          </button>
+        </header>
+
+        <nav class="tab-strip" role="tablist">
+          <button type="button" class="tab-item" role="tab">
+            <span>مهام اليوم</span>
+            <span class="tab-badge done">✓</span>
+          </button>
+          <button type="button" class="tab-item active" role="tab">
+            <span>التقدّم</span>
+          </button>
+          <button type="button" class="tab-item" role="tab">
+            <span>إدارة الخطط</span>
+            <span class="tab-badge">٢</span>
+          </button>
+        </nav>
+
+        <div class="dashboard-hero">
+          <div class="hero-info">
+            <div class="hero-title">سجل الإنجاز والمدارسة</div>
+            <div class="hero-subtitle">بداية مباركة — كل خطوة في مدارسة القرآن أجر وثبات</div>
+          </div>
+          <div class="hero-streak-box">
+            <div class="hero-streak-num">١٤</div>
+            <div class="hero-streak-lbl">يوم التزام متواصل</div>
+          </div>
+        </div>
+
+        <div class="activity-grid">
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                <span class="act-name">التلاوة</span>
+              </div>
+              <span class="act-status-pill done">أُنجز اليوم</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">١٤</span> <span class="act-streak-lbl">يوماً متواصلاً</span></div>
+              <span class="act-meta">٤٢ يوماً نشطاً</span>
+            </div>
+          </div>
+
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span>
+                <span class="act-name">الاستماع</span>
+              </div>
+              <span class="act-status-pill">متبقٍ لليوم</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">٣</span> <span class="act-streak-lbl">أيام متواصلة</span></div>
+              <span class="act-meta">١٨ يوماً نشطاً</span>
+            </div>
+          </div>
+
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z"/><path d="M19 11v2a7 7 0 0 1-14 0v-2"/></svg></span>
+                <span class="act-name">الحفظ</span>
+              </div>
+              <span class="act-status-pill zero">٠ يوم</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">٠</span> <span class="act-streak-lbl">يوم</span></div>
+              <span class="act-meta">ابدأ الحفظ اليوم</span>
+            </div>
+          </div>
+
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></span>
+                <span class="act-name">المراجعة</span>
+              </div>
+              <span class="act-status-pill done">أُنجز اليوم</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">٧</span> <span class="act-streak-lbl">أيام متواصلة</span></div>
+              <span class="act-meta">٣٥ يوماً نشطاً</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="totals-group">
+          <div class="totals-header">
+            <span class="totals-title">إجمالي ما أتممته</span>
+            <span class="khatma-badge">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>ختمة واحدة كاملة</span>
+            </span>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>صفحات تمت تلاوتها</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">٦٢٤ صفحة</div><div class="total-secondary-val">٦,٤٣٨ آية قرانية</div></div>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg><span>صفحات تم الاستماع إليها</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">٨٠ صفحة</div><div class="total-secondary-val">٨٢٠ آية مستمعة</div></div>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z"/><path d="M19 11v2a7 7 0 0 1-14 0v-2"/></svg><span>آيات تم حفظها</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">١٤٨ آية</div><div class="total-secondary-val">يعادل ١٠ صفحات تقريباً</div></div>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg><span>صفحات تمت مراجعتها</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">١٢٠ صفحة</div><div class="total-secondary-val">الحصون الخمسة (قريب وبعيد)</div></div>
+          </div>
+        </div>
+
+        <div class="heatmap-card">
+          <div class="heatmap-header">
+            <div class="heatmap-title-box">
+              <span class="heatmap-heading">خريطة النشاط والمدارسة</span>
+              <span class="heatmap-sub">٥٨ يوماً من المدارسة في آخر سنة</span>
+            </div>
+            <span class="view-tag">الأسبوع الحالي على اليمين ← الماضي على اليسار</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice">
+            <div class="heatmap-grid-table">
+              <div class="heatmap-month-row">
+                <span class="heatmap-month-label">رمضان</span>
+                <span class="heatmap-month-label">شوال</span>
+                <span class="heatmap-month-label">ذو القعدة</span>
+                <span class="heatmap-month-label">ذو الحجة</span>
+                <span class="heatmap-month-label">محرم</span>
+                <span class="heatmap-month-label">صفر</span>
+                <span class="heatmap-month-label">ربيع الأول</span>
+                <span class="heatmap-month-label">الآن</span>
+              </div>
+              <div class="heatmap-days-matrix" id="light-heatmap-rtl"></div>
+            </div>
+          </div>
+          <div class="heatmap-footer">
+            <span>كل نقطة تمثل يوماً أنجزت فيه ورداً واحداً أو أكثر</span>
+            <div class="heatmap-legend">
+              <span>أقل</span>
+              <span class="legend-cell cell-0"></span><span class="legend-cell cell-1"></span><span class="legend-cell cell-2"></span><span class="legend-cell cell-3"></span><span class="legend-cell cell-4"></span>
+              <span>أكثر</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 1B. LTR DESKTOP VIEW -->
+    <div class="view-card view-desktop sec-ltr" dir="ltr">
+      <div class="view-card-header">
+        <div class="view-title">
+          <svg class="icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          <span>Progress Hub at Desktop Width (English Locale / LTR Layout)</span>
+        </div>
+        <div class="view-tag-group">
+          <span class="dir-badge ltr">LTR • English</span>
+          <span class="view-tag">max-w-2xl container</span>
+        </div>
+      </div>
+      <p class="view-caption">Complete English LTR parity: Left-to-right tab strip, English reflection hero, 2x2 activity streaks, totals with natural English plurals, and <strong>reversed heatmap flow (52 weeks ago on the left, current week on the right)</strong>.</p>
+
+      <div class="plans-shell">
+        <header class="page-header">
+          <div class="header-title-box"><h1 class="header-h1">Daily Awrad & Learning Plans</h1></div>
+          <button type="button" class="header-btn">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>New wird</span>
+          </button>
+        </header>
+
+        <nav class="tab-strip" role="tablist">
+          <button type="button" class="tab-item" role="tab">
+            <span>Today's Tasks</span>
+            <span class="tab-badge done">✓</span>
+          </button>
+          <button type="button" class="tab-item active" role="tab">
+            <span>Progress</span>
+          </button>
+          <button type="button" class="tab-item" role="tab">
+            <span>My Plans</span>
+            <span class="tab-badge">2</span>
+          </button>
+        </nav>
+
+        <div class="dashboard-hero">
+          <div class="hero-info">
+            <div class="hero-title">Progress & Milestones</div>
+            <div class="hero-subtitle">A blessed beginning — every single step in reciting the Qur'an brings reward.</div>
+          </div>
+          <div class="hero-streak-box">
+            <div class="hero-streak-num">14</div>
+            <div class="hero-streak-lbl">day streak</div>
+          </div>
+        </div>
+
+        <div class="activity-grid">
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                <span class="act-name">Reading</span>
+              </div>
+              <span class="act-status-pill done">Completed today</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">14</span> <span class="act-streak-lbl">days</span></div>
+              <span class="act-meta">42 active days</span>
+            </div>
+          </div>
+
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span>
+                <span class="act-name">Listening</span>
+              </div>
+              <span class="act-status-pill">Pending today</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">3</span> <span class="act-streak-lbl">days</span></div>
+              <span class="act-meta">18 active days</span>
+            </div>
+          </div>
+
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z"/><path d="M19 11v2a7 7 0 0 1-14 0v-2"/></svg></span>
+                <span class="act-name">Memorization</span>
+              </div>
+              <span class="act-status-pill zero">0 days</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">0</span> <span class="act-streak-lbl">days</span></div>
+              <span class="act-meta">Start memorizing today</span>
+            </div>
+          </div>
+
+          <div class="activity-card">
+            <div class="act-header">
+              <div class="act-title-box">
+                <span class="act-icon-well"><svg class="icon" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg></span>
+                <span class="act-name">Review</span>
+              </div>
+              <span class="act-status-pill done">Completed today</span>
+            </div>
+            <div class="act-body">
+              <div><span class="act-streak-val">7</span> <span class="act-streak-lbl">days</span></div>
+              <span class="act-meta">35 active days</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="totals-group">
+          <div class="totals-header">
+            <span class="totals-title">Cumulative Accomplishments</span>
+            <span class="khatma-badge">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>1 Complete Khatma</span>
+            </span>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Pages read</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">624 pages</div><div class="total-secondary-val">6,438 verses</div></div>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg><span>Pages listened</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">80 pages</div><div class="total-secondary-val">820 verses</div></div>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z"/><path d="M19 11v2a7 7 0 0 1-14 0v-2"/></svg><span>Verses memorized</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">148 verses</div><div class="total-secondary-val">~10 pages equivalent</div></div>
+          </div>
+          <div class="total-row">
+            <div class="total-row-name"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg><span>Pages reviewed</span></div>
+            <div class="total-row-numbers"><div class="total-primary-val">120 pages</div><div class="total-secondary-val">Al-Husun Al-Khamsa (near & distant)</div></div>
+          </div>
+        </div>
+
+        <div class="heatmap-card">
+          <div class="heatmap-header">
+            <div class="heatmap-title-box">
+              <span class="heatmap-heading">Study & Habit Calendar</span>
+              <span class="heatmap-sub">58 active days in the past year</span>
+            </div>
+            <span class="view-tag">Past on Left → Current Week on Right</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice">
+            <div class="heatmap-grid-table">
+              <div class="heatmap-month-row">
+                <span class="heatmap-month-label">Sep</span>
+                <span class="heatmap-month-label">Nov</span>
+                <span class="heatmap-month-label">Jan</span>
+                <span class="heatmap-month-label">Mar</span>
+                <span class="heatmap-month-label">May</span>
+                <span class="heatmap-month-label">Jul</span>
+                <span class="heatmap-month-label">Aug</span>
+                <span class="heatmap-month-label">Now</span>
+              </div>
+              <div class="heatmap-days-matrix" id="light-heatmap-ltr"></div>
+            </div>
+          </div>
+          <div class="heatmap-footer">
+            <span>Each dot represents a day where one or more wird tasks were completed</span>
+            <div class="heatmap-legend">
+              <span>Less</span>
+              <span class="legend-cell cell-0"></span><span class="legend-cell cell-1"></span><span class="legend-cell cell-2"></span><span class="legend-cell cell-3"></span><span class="legend-cell cell-4"></span>
+              <span>More</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 1C. MOBILE VIEWS (RTL & LTR SIDE-BY-SIDE) -->
+    <div class="view-card view-mobile">
+      <div class="view-card-header">
+        <div class="view-title">
+          <svg class="icon" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg>
+          <span>Mobile Viewport Comparison (مقارنة شاشة الجوال: عربي وإنجليزي)</span>
+        </div>
+        <span class="view-tag">~390px Shell • 44px Touch Targets</span>
+      </div>
+
+      <div style="display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;">
+        <!-- Mobile RTL -->
+        <div class="plans-shell mobile-shell sec-rtl" dir="rtl">
+          <div style="font-size: 11px; font-weight: 700; color: hsl(var(--primary)); margin-bottom: 8px;">[RTL • العربية]</div>
+          <header class="page-header">
+            <h1 class="header-h1" style="font-size: 17px;">الأوراد والخطط</h1>
+            <button type="button" class="header-btn" style="padding: 6px 12px; font-size: 11px;"><span>+ ورد جديد</span></button>
+          </header>
+          <nav class="tab-strip" role="tablist">
+            <button type="button" class="tab-item" style="font-size: 11px; padding: 6px;"><span>مهام اليوم</span><span class="tab-badge done">✓</span></button>
+            <button type="button" class="tab-item active" style="font-size: 11px; padding: 6px;"><span>التقدّم</span></button>
+            <button type="button" class="tab-item" style="font-size: 11px; padding: 6px;"><span>إدارة الخطط</span></button>
+          </nav>
+          <div class="dashboard-hero" style="padding: 14px 16px;">
+            <div><div style="font-weight: 800; font-size: 14px;">سجل الإنجاز</div><div style="font-size: 11px; color: hsl(var(--muted-foreground));">١٤ يوماً التزام</div></div>
+            <div style="font-size: 22px; font-weight: 900; color: hsl(var(--primary));">١٤</div>
+          </div>
+          <div class="activity-grid" style="gap: 8px;">
+            <div class="activity-card" style="padding: 12px;">
+              <div class="act-header"><span class="act-name" style="font-size: 12px;">التلاوة</span><span class="act-status-pill done">أُنجز</span></div>
+              <div class="act-body" style="padding-top: 6px;"><span class="act-streak-val" style="font-size: 16px;">١٤ يوماً</span></div>
+            </div>
+            <div class="activity-card" style="padding: 12px;">
+              <div class="act-header"><span class="act-name" style="font-size: 12px;">الحفظ</span><span class="act-status-pill zero">٠</span></div>
+              <div class="act-body" style="padding-top: 6px;"><span class="act-streak-val" style="font-size: 16px;">٠ يوم</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile LTR -->
+        <div class="plans-shell mobile-shell sec-ltr" dir="ltr">
+          <div style="font-size: 11px; font-weight: 700; color: hsl(var(--muted-foreground)); margin-bottom: 8px;">[LTR • English]</div>
+          <header class="page-header">
+            <h1 class="header-h1" style="font-size: 17px;">Daily Awrad</h1>
+            <button type="button" class="header-btn" style="padding: 6px 12px; font-size: 11px;"><span>+ New</span></button>
+          </header>
+          <nav class="tab-strip" role="tablist">
+            <button type="button" class="tab-item" style="font-size: 11px; padding: 6px;"><span>Today</span><span class="tab-badge done">✓</span></button>
+            <button type="button" class="tab-item active" style="font-size: 11px; padding: 6px;"><span>Progress</span></button>
+            <button type="button" class="tab-item" style="font-size: 11px; padding: 6px;"><span>Plans</span></button>
+          </nav>
+          <div class="dashboard-hero" style="padding: 14px 16px;">
+            <div><div style="font-weight: 800; font-size: 14px;">Progress</div><div style="font-size: 11px; color: hsl(var(--muted-foreground));">14-day streak</div></div>
+            <div style="font-size: 22px; font-weight: 900; color: hsl(var(--primary));">14</div>
+          </div>
+          <div class="activity-grid" style="gap: 8px;">
+            <div class="activity-card" style="padding: 12px;">
+              <div class="act-header"><span class="act-name" style="font-size: 12px;">Reading</span><span class="act-status-pill done">Done</span></div>
+              <div class="act-body" style="padding-top: 6px;"><span class="act-streak-val" style="font-size: 16px;">14 days</span></div>
+            </div>
+            <div class="activity-card" style="padding: 12px;">
+              <div class="act-header"><span class="act-name" style="font-size: 12px;">Memorize</span><span class="act-status-pill zero">0</span></div>
+              <div class="act-body" style="padding-top: 6px;"><span class="act-streak-val" style="font-size: 16px;">0 days</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 1D. HEATMAP DENSITIES (RTL & LTR) -->
+    <div class="view-card view-heatmaps">
+      <div class="view-card-header">
+        <div class="view-title">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Heatmap Cohort Densities & Direction Reversal Comparison</span>
+        </div>
+        <span class="view-tag">3 Densities • RTL vs LTR</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Density 1: 365-Day User RTL vs LTR -->
+        <div class="heatmap-card sec-rtl" dir="rtl">
+          <div class="heatmap-header">
+            <div><span class="dir-badge rtl">RTL</span> <strong>١. مستخدم منتظم على مدار عام كامل (٣٦٥ يوماً)</strong></div>
+            <span class="view-tag">اليوم على اليمين ← الماضي على اليسار</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="density-365-rtl"></div></div>
+        </div>
+
+        <div class="heatmap-card sec-ltr" dir="ltr">
+          <div class="heatmap-header">
+            <div><span class="dir-badge ltr">LTR</span> <strong>1. Year-Long Regular Reciter (365 Days)</strong></div>
+            <span class="view-tag">Past on Left → Today on Right</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="density-365-ltr"></div></div>
+        </div>
+
+        <!-- Density 2: 3-Week User RTL vs LTR -->
+        <div class="heatmap-card sec-rtl" dir="rtl">
+          <div class="heatmap-header">
+            <div><span class="dir-badge rtl">RTL</span> <strong>٢. مستخدم جديد منذ ثلاثة أسابيع (٢١ يوماً)</strong></div>
+            <span class="view-tag">الأسابيع الحديثة تظهر على يمين الشبكة</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="density-21-rtl"></div></div>
+        </div>
+
+        <div class="heatmap-card sec-ltr" dir="ltr">
+          <div class="heatmap-header">
+            <div><span class="dir-badge ltr">LTR</span> <strong>2. 3-Week-Old User (21 Days)</strong></div>
+            <span class="view-tag">Recent 3 weeks on the far right</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="density-21-ltr"></div></div>
+        </div>
+
+        <!-- Density 3: Brand New Single-Day User -->
+        <div class="heatmap-card sec-rtl" dir="rtl">
+          <div class="heatmap-header">
+            <div><span class="dir-badge rtl">RTL</span> <strong>٣. مستخدم جديد في يومه الأول (نقطة واحدة فقط)</strong></div>
+            <span class="view-tag">أول إنجاز في أقصى اليمين (اليوم)</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="density-1-rtl"></div></div>
+        </div>
+
+        <div class="heatmap-card sec-ltr" dir="ltr">
+          <div class="heatmap-header">
+            <div><span class="dir-badge ltr">LTR</span> <strong>3. Brand-New User with Single Logged Day</strong></div>
+            <span class="view-tag">Single green dot on the far right (Today)</span>
+          </div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="density-1-ltr"></div></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 1E. EMPTY STATES (RTL & LTR) -->
+    <div class="view-card view-empty">
+      <div class="view-card-header">
+        <div class="view-title">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>
+          <span>Dignified Empty State (الحالة الهادئة عند عدم وجود خطط مسجلة)</span>
+        </div>
+        <span class="view-tag">Zero Active Plans</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+        <!-- RTL Empty -->
+        <div class="empty-card sec-rtl" dir="rtl">
+          <span class="dir-badge rtl">RTL • العربية</span>
+          <div class="empty-icon-well">
+            <svg class="icon" style="width: 24px; height: 24px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <div class="empty-title">لا توجد خطط مسجلة بعد</div>
+          <div class="empty-desc">سجل في ورد يومي للقراءة أو الاستماع أو خطة الحفظ لتبدأ متابعة إنجازك وتثبيت التزامك بمدارسة كتاب الله.</div>
+          <button type="button" class="empty-cta-btn">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>ابدأ ورداً جديداً الآن</span>
+          </button>
+        </div>
+
+        <!-- LTR Empty -->
+        <div class="empty-card sec-ltr" dir="ltr">
+          <span class="dir-badge ltr">LTR • English</span>
+          <div class="empty-icon-well">
+            <svg class="icon" style="width: 24px; height: 24px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <div class="empty-title">No plans enrolled yet</div>
+          <div class="empty-desc">Enroll in a daily wird or custom plan to begin tracking your progress and maintaining consistency in reciting the Qur'an.</div>
+          <button type="button" class="empty-cta-btn">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Start a new wird</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ========================================================================
+       THEME 2: GOLD THEME (WARM PARCHMENT)
+       ======================================================================== -->
+  <section class="theme-container theme-gold hidden" id="container-theme-gold">
+    <div class="theme-header">
+      <div class="theme-title-box">
+        <h2 class="theme-label">Gold Theme • المظهر الذهبي (ورق دافئ)</h2>
+        <span class="swatch-badge"><span class="swatch-pip"></span>#116850 Deep Emerald</span>
+      </div>
+      <span class="swatch-badge">Background: hsl(43, 48%, 87%) • Card: Warm Ivory</span>
+    </div>
+
+    <!-- 2A. Gold RTL -->
+    <div class="view-card view-desktop sec-rtl" dir="rtl">
+      <div class="view-card-header">
+        <div class="view-title"><span>Progress Hub in Gold Theme (المظهر الذهبي — واجهة عربية)</span></div>
+        <div class="view-tag-group"><span class="dir-badge rtl">RTL</span><span class="view-tag">Warm Ivory Parchment</span></div>
+      </div>
+      <div class="plans-shell">
+        <nav class="tab-strip" role="tablist">
+          <button type="button" class="tab-item"><span>مهام اليوم</span></button>
+          <button type="button" class="tab-item active"><span>التقدّم</span></button>
+          <button type="button" class="tab-item"><span>إدارة الخطط</span></button>
+        </nav>
+        <div class="dashboard-hero">
+          <div class="hero-info"><div class="hero-title">سجل الإنجاز والمدارسة</div><div class="hero-subtitle">تثبيت واستمرار في المدارسة القرآنية</div></div>
+          <div class="hero-streak-box"><div class="hero-streak-num">١٤</div><div class="hero-streak-lbl">يوم التزام</div></div>
+        </div>
+        <div class="activity-grid">
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">التلاوة</span><span class="act-status-pill done">أُنجز</span></div>
+            <div class="act-body"><span class="act-streak-val">١٤ يوماً</span><span class="act-meta">٤٢ يوماً نشطاً</span></div>
+          </div>
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">الحفظ</span><span class="act-status-pill zero">٠</span></div>
+            <div class="act-body"><span class="act-streak-val">٠ يوم</span><span class="act-meta">ابدأ الحفظ</span></div>
+          </div>
+        </div>
+        <div class="heatmap-card">
+          <div class="heatmap-header"><span class="heatmap-heading">خريطة النشاط</span><span class="view-tag">اليمين: اليوم</span></div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="gold-heatmap-rtl"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2B. Gold LTR -->
+    <div class="view-card view-desktop sec-ltr" dir="ltr">
+      <div class="view-card-header">
+        <div class="view-title"><span>Progress Hub in Gold Theme (English LTR View)</span></div>
+        <div class="view-tag-group"><span class="dir-badge ltr">LTR</span><span class="view-tag">Warm Ivory Parchment</span></div>
+      </div>
+      <div class="plans-shell">
+        <nav class="tab-strip" role="tablist">
+          <button type="button" class="tab-item"><span>Today</span></button>
+          <button type="button" class="tab-item active"><span>Progress</span></button>
+          <button type="button" class="tab-item"><span>Plans</span></button>
+        </nav>
+        <div class="dashboard-hero">
+          <div class="hero-info"><div class="hero-title">Progress & Milestones</div><div class="hero-subtitle">Consistency across daily Qur'an study</div></div>
+          <div class="hero-streak-box"><div class="hero-streak-num">14</div><div class="hero-streak-lbl">day streak</div></div>
+        </div>
+        <div class="activity-grid">
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">Reading</span><span class="act-status-pill done">Done</span></div>
+            <div class="act-body"><span class="act-streak-val">14 days</span><span class="act-meta">42 active days</span></div>
+          </div>
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">Memorize</span><span class="act-status-pill zero">0</span></div>
+            <div class="act-body"><span class="act-streak-val">0 days</span><span class="act-meta">Start today</span></div>
+          </div>
+        </div>
+        <div class="heatmap-card">
+          <div class="heatmap-header"><span class="heatmap-heading">Habit Calendar</span><span class="view-tag">Left: Past → Right: Today</span></div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="gold-heatmap-ltr"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ========================================================================
+       THEME 3: DARK THEME (MANUSCRIPT UNDER A LAMP)
+       ======================================================================== -->
+  <section class="theme-container theme-dark hidden" id="container-theme-dark">
+    <div class="theme-header">
+      <div class="theme-title-box">
+        <h2 class="theme-label">Dark Theme • المظهر الليلي (مخطوطة تحت مصباح)</h2>
+        <span class="swatch-badge"><span class="swatch-pip"></span>Emerald Accent • Navy Surface</span>
+      </div>
+      <span class="swatch-badge">Background: (7,15,23) • Opaque Cards • Surface Rim</span>
+    </div>
+
+    <!-- 3A. Dark RTL -->
+    <div class="view-card view-desktop sec-rtl" dir="rtl">
+      <div class="view-card-header">
+        <div class="view-title"><span>Progress Hub in Dark Theme (المظهر الليلي الهادئ — عربي)</span></div>
+        <div class="view-tag-group"><span class="dir-badge rtl">RTL</span><span class="view-tag">ADR 0032 Inset Catch-Light</span></div>
+      </div>
+      <div class="plans-shell">
+        <nav class="tab-strip" role="tablist">
+          <button type="button" class="tab-item"><span>مهام اليوم</span></button>
+          <button type="button" class="tab-item active"><span>التقدّم</span></button>
+          <button type="button" class="tab-item"><span>إدارة الخطط</span></button>
+        </nav>
+        <div class="dashboard-hero">
+          <div class="hero-info"><div class="hero-title">سجل الإنجاز والمدارسة</div><div class="hero-subtitle">الهدوء والوقار القرآني في المظهر الليلي</div></div>
+          <div class="hero-streak-box"><div class="hero-streak-num">١٤</div><div class="hero-streak-lbl">يوم التزام</div></div>
+        </div>
+        <div class="activity-grid">
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">التلاوة</span><span class="act-status-pill done">أُنجز</span></div>
+            <div class="act-body"><span class="act-streak-val">١٤ يوماً</span><span class="act-meta">٤٢ يوماً نشطاً</span></div>
+          </div>
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">الحفظ</span><span class="act-status-pill zero">٠</span></div>
+            <div class="act-body"><span class="act-streak-val">٠ يوم</span><span class="act-meta">ابدأ الحفظ</span></div>
+          </div>
+        </div>
+        <div class="heatmap-card">
+          <div class="heatmap-header"><span class="heatmap-heading">خريطة النشاط</span><span class="view-tag">اليمين: اليوم</span></div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="dark-heatmap-rtl"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3B. Dark LTR -->
+    <div class="view-card view-desktop sec-ltr" dir="ltr">
+      <div class="view-card-header">
+        <div class="view-title"><span>Progress Hub in Dark Theme (English LTR View)</span></div>
+        <div class="view-tag-group"><span class="dir-badge ltr">LTR</span><span class="view-tag">ADR 0032 Inset Catch-Light</span></div>
+      </div>
+      <div class="plans-shell">
+        <nav class="tab-strip" role="tablist">
+          <button type="button" class="tab-item"><span>Today</span></button>
+          <button type="button" class="tab-item active"><span>Progress</span></button>
+          <button type="button" class="tab-item"><span>Plans</span></button>
+        </nav>
+        <div class="dashboard-hero">
+          <div class="hero-info"><div class="hero-title">Progress & Milestones</div><div class="hero-subtitle">Quiet night reflection with dignified contrast</div></div>
+          <div class="hero-streak-box"><div class="hero-streak-num">14</div><div class="hero-streak-lbl">day streak</div></div>
+        </div>
+        <div class="activity-grid">
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">Reading</span><span class="act-status-pill done">Done</span></div>
+            <div class="act-body"><span class="act-streak-val">14 days</span><span class="act-meta">42 active days</span></div>
+          </div>
+          <div class="activity-card">
+            <div class="act-header"><span class="act-name">Memorize</span><span class="act-status-pill zero">0</span></div>
+            <div class="act-body"><span class="act-streak-val">0 days</span><span class="act-meta">Start today</span></div>
+          </div>
+        </div>
+        <div class="heatmap-card">
+          <div class="heatmap-header"><span class="heatmap-heading">Habit Calendar</span><span class="view-tag">Left: Past → Right: Today</span></div>
+          <div class="heatmap-scroll-area fq-scroll-nice"><div class="heatmap-days-matrix" id="dark-heatmap-ltr"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ========================================================================
+       INTERACTIVE GALLERY SCRIPTS
+       Zero external dependencies. Pure vanilla JS.
+       ======================================================================== -->
+  <script>
+    // --- 1. Direction Filter (Both / RTL Only / LTR Only) ---
+    function setDirectionFilter(mode) {
+      document.querySelectorAll("[id^='btn-dir-']").forEach(b => b.classList.remove("active"));
+      document.getElementById(`btn-dir-${mode}`).classList.add("active");
+
+      const rtlSections = document.querySelectorAll(".sec-rtl");
+      const ltrSections = document.querySelectorAll(".sec-ltr");
+
+      if (mode === "both") {
+        rtlSections.forEach(s => s.style.display = "");
+        ltrSections.forEach(s => s.style.display = "");
+      } else if (mode === "rtl") {
+        rtlSections.forEach(s => s.style.display = "");
+        ltrSections.forEach(s => s.style.display = "none");
+      } else if (mode === "ltr") {
+        rtlSections.forEach(s => s.style.display = "none");
+        ltrSections.forEach(s => s.style.display = "");
+      }
+    }
+
+    // --- 2. Theme Filtering ---
+    function setThemeFilter(theme) {
+      const themes = ["theme-light", "theme-gold", "theme-dark"];
+      document.querySelectorAll("[id^='btn-theme-']").forEach(b => b.classList.remove("active"));
+      document.getElementById(`btn-theme-${theme === 'all' ? 'all' : theme.replace('theme-', '')}`).classList.add("active");
+
+      themes.forEach(t => {
+        const el = document.getElementById(`container-${t}`);
+        if (!el) return;
+        if (theme === "all" || theme === t) {
+          el.classList.remove("hidden");
+        } else {
+          el.classList.add("hidden");
+        }
+      });
+    }
+
+    // --- 3. View Filtering ---
+    function setViewFilter(view) {
+      document.querySelectorAll("[id^='btn-view-']").forEach(b => b.classList.remove("active"));
+      document.getElementById(`btn-view-${view}`).classList.add("active");
+
+      const views = ["desktop", "mobile", "heatmaps", "empty"];
+      views.forEach(v => {
+        document.querySelectorAll(`.view-${v}`).forEach(el => {
+          if (view === "all" || view === v) {
+            el.classList.remove("hidden");
+          } else {
+            el.classList.add("hidden");
+          }
+        });
+      });
+    }
+
+    // --- 4. Heatmap Matrix Generators (RTL vs LTR Reversal) ---
+    function renderHeatmapMatrix(targetId, patternType, isLtr = false) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      el.innerHTML = "";
+
+      const WEEKS = 52;
+      const DAYS_PER_WEEK = 7;
+
+      for (let colIdx = 0; colIdx < WEEKS; colIdx++) {
+        // Chronological Week Mapping:
+        // isLtr: colIdx 0 is 52 weeks ago, colIdx 51 is current week (flow: left to right).
+        // isRtl: colIdx 0 is current week (at the right edge in dir="rtl"), colIdx 51 is 52 weeks ago.
+        const weekNumber = isLtr ? colIdx : (51 - colIdx);
+
+        const col = document.createElement("div");
+        col.className = "heatmap-week-col";
+
+        for (let d = 0; d < DAYS_PER_WEEK; d++) {
+          const cell = document.createElement("div");
+          cell.className = "heat-cell";
+
+          let level = 0;
+          if (patternType === "regular") {
+            const r = Math.sin(weekNumber * 0.3 + d * 0.5) * 0.5 + 0.5;
+            if (weekNumber >= 42) {
+              level = r > 0.4 ? (r > 0.75 ? (r > 0.9 ? 4 : 3) : 2) : 1;
+            } else if (weekNumber >= 15 && weekNumber <= 19) {
+              level = r > 0.2 ? (r > 0.6 ? 4 : 3) : 2;
+            } else {
+              level = r > 0.55 ? (r > 0.8 ? 2 : 1) : 0;
+            }
+          } else if (patternType === "3weeks") {
+            if (weekNumber >= 49) {
+              const r = Math.sin(weekNumber + d) * 0.5 + 0.5;
+              level = r > 0.3 ? (r > 0.7 ? 2 : 1) : 0;
+            } else {
+              level = 0;
+            }
+          } else if (patternType === "1day") {
+            if (weekNumber === 51 && d === 6) {
+              level = 1;
+            } else {
+              level = 0;
+            }
+          }
+
+          cell.classList.add(`cell-${level}`);
+          cell.title = isLtr 
+            ? `Week ${weekNumber + 1} • Activity level ${level}`
+            : `الأسبوع ${weekNumber + 1} • إنجاز مستوى ${level}`;
+          col.appendChild(cell);
+        }
+        el.appendChild(col);
+      }
+    }
+
+    // Initialize all heatmaps across themes and directions
+    document.addEventListener("DOMContentLoaded", () => {
+      // Light Theme
+      renderHeatmapMatrix("light-heatmap-rtl", "regular", false);
+      renderHeatmapMatrix("light-heatmap-ltr", "regular", true);
+      renderHeatmapMatrix("density-365-rtl", "regular", false);
+      renderHeatmapMatrix("density-365-ltr", "regular", true);
+      renderHeatmapMatrix("density-21-rtl", "3weeks", false);
+      renderHeatmapMatrix("density-21-ltr", "3weeks", true);
+      renderHeatmapMatrix("density-1-rtl", "1day", false);
+      renderHeatmapMatrix("density-1-ltr", "1day", true);
+
+      // Gold Theme
+      renderHeatmapMatrix("gold-heatmap-rtl", "regular", false);
+      renderHeatmapMatrix("gold-heatmap-ltr", "regular", true);
+
+      // Dark Theme
+      renderHeatmapMatrix("dark-heatmap-rtl", "regular", false);
+      renderHeatmapMatrix("dark-heatmap-ltr", "regular", true);
+    });
+  </script>
+</body>
+</html>

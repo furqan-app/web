@@ -8,6 +8,7 @@ import {
   FALLBACK_LOCALES,
   PAGES_CACHE_NAME,
   PRECACHE_CONCURRENCY,
+  PRECACHE_MUSHAF_ID,
   PREFS_CACHE_NAME,
   QDC_TAFSIR_HOST,
   RECITATION_AUDIO_HOST,
@@ -22,7 +23,7 @@ import {
   versePagesUrl,
 } from "@constants/offline";
 import type { ClientToSwMessage, SwToClientMessage } from "@constants/offline";
-import { DEFAULT_MUSHAF_ID, getMushafEdition } from "@utils/mushaf-editions";
+import { getMushafEdition } from "@utils/mushaf-editions";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -75,6 +76,14 @@ const READER_HTML_CACHE_NAME = `${READER_HTML_CACHE_PREFIX}${hashString(JSON.str
 
 const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
+
+// Offline app-shell pages (ADR 0014 Addendum 10, #591). Self /marks and
+// /search are static shells whose content resolves client-side, so any query
+// string (?q=…, seeded client-side) maps to the same precached bytes. Exact
+// by construction: /api/* starts with /api, grant paths live under
+// /{locale}/mushaf/, and the bare /{locale} home matches neither alternative.
+const isAppShellPage = (url: URL) =>
+  /^\/(ar|en)\/(marks|search)$/.test(url.pathname);
 
 // ADR 0014 Addendum 6: a cache miss on a slow-but-alive connection must not
 // stall a cold launch for the full SSR document fetch — the catch handler only
@@ -212,11 +221,13 @@ async function isPrecacheComplete(
  * The edition the client is about to render, mirrored into Cache Storage by
  * QuranMushafProvider (ADR 0014 Addendum 8) — a worker cannot read the
  * localStorage that actually owns it, and the reader URL is edition-agnostic by
- * design (ADR 0033). Every failure mode resolves to DEFAULT_MUSHAF_ID, which is
- * this probe's pre-Addendum-8 behavior, so no existing install regresses:
- * absent marker (fresh install, or one predating this build), an id no longer
- * in the registry, and an unreadable cache all land there — the last via
- * getMushafEdition's own fallback.
+ * design (ADR 0033). Every failure mode resolves to PRECACHE_MUSHAF_ID — the
+ * edition the consent-gated bulk download actually fetches (ADR 0066), which is
+ * not necessarily DEFAULT_MUSHAF_ID. Absent marker (fresh install, or one
+ * predating this build), an id no longer in the registry, and an unreadable
+ * cache all land there — the last via getMushafEdition's own fallback. Falling
+ * back to the reader default instead would make this probe ask about an edition
+ * the gate never downloaded, reintroducing #439's wasted 3s race.
  *
  * Deliberately NOT memoized. It is one cache.match against a single-entry
  * cache, and caching it would make an edition switch invisible to the handler
@@ -226,10 +237,10 @@ async function readActiveMushafId(): Promise<number> {
   try {
     const cache = await caches.open(PREFS_CACHE_NAME);
     const stored = await cache.match(ACTIVE_MUSHAF_URL);
-    if (!stored) return DEFAULT_MUSHAF_ID;
+    if (!stored) return PRECACHE_MUSHAF_ID;
     return getMushafEdition(Number(await stored.text())).id;
   } catch {
-    return DEFAULT_MUSHAF_ID;
+    return PRECACHE_MUSHAF_ID;
   }
 }
 
@@ -255,8 +266,18 @@ const fallbackLocale = (url: URL) =>
 const serveReaderFallbackShell = (url: URL): Promise<Response | undefined> =>
   serwist.matchPrecache(fallbackDocumentUrl(fallbackLocale(url)));
 
+// Serves the precached shell for the request's own path (URL.pathname excludes
+// the query by definition, so /ar/search?q=… resolves to the /ar/search shell
+// — the query is seeded client-side and the HTML is identical). Falls through
+// to the network on a miss so only setCatchHandler ever decides the terminal
+// document. Annotated rather than inferred for the same TS7022/TS7023 cycle as
+// serveReaderFallbackShell above (reads `serwist`, whose type is inferred from
+// the runtimeCaching handler calling this).
+const serveAppShellPage = (url: URL): Promise<Response | undefined> =>
+  serwist.matchPrecache(url.pathname);
+
 const isPageFont = (url: URL) =>
-  /^\/fonts\/(v1|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
+  /^\/fonts\/(v1|v2|v4\/colrv1)\/woff2\/p[0-9]+\.woff2$/.test(url.pathname);
 
 // Static per-page content JSON the pager fetches (ADR 0028) — immutable.
 // Scoped per mushaf edition: page N of one edition holds different words than
@@ -374,6 +395,22 @@ const serwist = new Serwist({
           event.waitUntil(network.then(() => {}, () => {}));
           return shell;
         },
+      },
+    },
+    // Offline app-shell pages (ADR 0014 Addendum 10, #591): exact-path
+    // navigations are already served by PrecacheRoute (registered ahead of
+    // runtimeCaching), so this rule only ever fires for query-bearing variants
+    // like /ar/search?q=…, normalizing them onto the same precached shell.
+    // The `request.mode === "navigate"` guard carries the same load as the
+    // reader rule above: without it RSC flight data for these paths would be
+    // servable as documents. No second cache, no populate-on-miss — the
+    // precache manifest is the single source of truth.
+    {
+      matcher: ({ url, request }) =>
+        isAppShellPage(url) && request.mode === "navigate",
+      handler: {
+        handle: async ({ request, url }) =>
+          (await serveAppShellPage(url)) ?? fetch(request),
       },
     },
     // Page fonts are genuinely immutable (Static Generation Strategy

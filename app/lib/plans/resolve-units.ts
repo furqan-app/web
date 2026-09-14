@@ -55,3 +55,28 @@ export const getRubPageRange = async (rubNumber: number): Promise<PageRange | nu
     endPage: rub.endVerse.page_number,
   };
 };
+
+export const getSurahPageRange = async (
+  startSurah: number,
+  endSurah: number = startSurah
+): Promise<PageRange | null> => {
+  if (
+    !Number.isInteger(startSurah) ||
+    !Number.isInteger(endSurah) ||
+    startSurah < 1 ||
+    endSurah > 114 ||
+    startSurah > endSurah
+  ) {
+    return null;
+  }
+  const agg = await quranPrisma.verse.aggregate({
+    where: {
+      chapter_id: { gte: startSurah, lte: endSurah },
+    },
+    _min: { page_number: true },
+    _max: { page_number: true },
+  });
+  if (agg._min.page_number === null || agg._max.page_number === null) return null;
+  return { startPage: agg._min.page_number, endPage: agg._max.page_number };
+};
+

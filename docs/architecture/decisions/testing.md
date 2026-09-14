@@ -17,6 +17,22 @@ Active decisions for testing & CI — Playwright e2e, CI gates, dev ergonomics. 
 - On failure in CI, the Playwright HTML report is uploaded as a standard GitHub Actions artifact (`playwright-report/`). Dedicated `gh-pages` deployments and sticky PR comments for screenshot diffing are discontinued.
 - Tests assert behavioral outcomes and interactive state transitions (DOM visibility, navigation URL, focus, accessibility roles, and localStorage persistence) rather than pixel-diff matching.
 - **Locators in the search test must be scoped to the searchbar under test.** Mobile opens search in a dialog while the nav's own searchbar stays mounted, so two `SearchQueryResults` render and any page-level locator fails with a Playwright strict-mode violation.
+- **Assert reader and navigation chrome by `data-testid`, never by localized `aria-label` text.** A localized text match (e.g. `button[aria-label*="خطط"]`) silently breaks when copy or translations change (e.g. #597 renaming to "أشّر ورد اليوم"); interactive chrome targeted by specs must carry a stable `data-testid` (e.g. `data-testid="plans-widget-trigger"`).
+- **E2E assertions must be unconditional — never wrap assertions in conditional visibility guards.** A conditional check (`if (await x.isVisible()) { ...assert... }`) turns the test into a silent no-op when the database fixture does not contain the required prerequisite data (caught in #600 when the plans hero reminder row passed vacuously on an empty fixture). If a test requires specific state, seed it deterministically in the test setup (e.g. `createTestPlan` / `clearUserPlans` in `e2e/helpers/auth.ts`) and assert presence unconditionally.
+
+
+---
+
+## Dev-Mode Diagnosis: Hook-Count Errors Are Not Evidence
+
+**Status:** active
+
+**Decision (2026-09-11, #598):** A `Rendered more hooks than during the previous render` error seen in `next dev` is **not** evidence of a Rules-of-Hooks bug — verify it on a production build before investigating. Fast Refresh can hot-swap a module into an already-mounted fiber whose recorded hook list is shorter than the new source's, and React reports the mismatch against the component with a full stack, indistinguishable from a genuine violation. It survives `rm -rf .next` and a dev-server restart, because the drift lives in the mounted client fiber, not in the build.
+
+**Constraints:**
+- Before investigating any hook-count error seen in `next dev`, reproduce it on a production build (`next build` + `next start`). If it does not reproduce there, it is a dev artifact — stop.
+- When reading accumulated console output, establish an empty baseline first. The buffer survives soft navigation and can outlive the page, so an error from an earlier run reads identically to a fresh one — a "reproduction" that reuses the same tab proves nothing.
+- A healthy post-action end state (the element gone, the write landed) is observationally identical to an error-boundary teardown. Never infer a crash from a missing element alone.
 
 ---
 

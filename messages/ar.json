@@ -99,9 +99,13 @@
     "switchAction": "التبديل إلى هذا المصحف",
     "active": "نشط",
     "downloaded": "تم التنزيل",
+    "activeNeedsDownload": "مصحفك الحالي — نزّله للقراءة دون إنترنت",
     "editions": {
       "2": {
         "name": "مصحف مجمع الملك فهد (طبعة ١٤٠٥هـ)"
+      },
+      "1": {
+        "name": "مصحف مجمع الملك فهد (طبعة ١٤٢١هـ)"
       },
       "19": {
         "name": "مصحف التجويد"
@@ -264,6 +268,63 @@
     "empty": "لا توجد خطط بعد — اشترك في إحداها بالأسفل.",
     "emptyHint": "تمنحك الخطة ورداً يومياً للقراءة أو الاستماع أو الحفظ.",
     "nothingToday": "لا يوجد شيء مستحق اليوم.",
+    "noTasksToday": "لا توجد مهام مستحقة اليوم.",
+    "noTasksHint": "قد تكون خططك متوقفة مؤقتاً أو مكتملة. يمكنك متابعتها من إدارة الخطط.",
+    "goToManage": "الانتقال إلى إدارة الخطط ←",
+    "manageHint": "تريد تعديل خطتك أو مراجعة السجل؟ انتقل إلى إدارة الخطط ←",
+    "tabs": {
+      "today": "مهام اليوم",
+      "progress": "التقدّم",
+      "manage": "إدارة الخطط",
+      "reminders": "إدارة التذكيرات"
+    },
+    "dashboard": {
+      "title": "سجل الإنجاز والتقدّم",
+      "subtitle": "متابعة الاستمرار في التلاوة والاستماع والحفظ والمراجعة",
+      "streaks": {
+        "read": "التلاوة",
+        "listen": "الاستماع",
+        "memorize": "الحفظ",
+        "review": "المراجعة",
+        "daysCount": "{count, plural, zero {ولا يوم} one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يوماً} other {{n} يوم}}",
+        "activeDaysCount": "{count, plural, zero {ابدأ اليوم} one {يوم واحد نشط} two {يومان نشطان} few {{n} أيام نشطة} many {{n} يوماً نشطاً} other {{n} يوم نشط}}",
+        "completedToday": "أُنجز اليوم",
+        "pendingToday": "متبقٍ لليوم",
+        "noActivePlan": "لا توجد خطة مفعلة"
+      },
+      "totals": {
+        "title": "إجمالي ما أتممته",
+        "readPages": "صفحات تمت قراءتها",
+        "listenedPages": "صفحات تم الاستماع إليها",
+        "memorizedVerses": "آيات تم حفظها",
+        "reviewedPages": "صفحات تمت مراجعتها",
+        "pagesCount": "{count, plural, zero {ولا صفحة} one {صفحة واحدة} two {صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
+        "versesCount": "{count, plural, zero {ولا آية} one {آية واحدة} two {آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
+        "khatmatCount": "{count, plural, zero {ولا ختمة} one {ختمة واحدة} two {ختمتان} few {{n} ختمات} many {{n} ختمة} other {{n} ختمة}}"
+      },
+      "heatmap": {
+        "title": "خريطة النشاط والمدارسة",
+        "summary": "{activeDays, plural, zero {لم تسجل نشاطاً بعد} one {يوم واحد من المدارسة في آخر سنة} two {يومان من المدارسة في آخر سنة} few {{activeDaysFormatted} أيام من المدارسة في آخر سنة} many {{activeDaysFormatted} يوماً من المدارسة في آخر سنة} other {{activeDaysFormatted} يوم من المدارسة في آخر سنة}}",
+        "directionHint": "الأسبوع الحالي على اليمين ← الماضي على اليسار",
+        "viewInHistory": "عرض في سجل الخطط ←",
+        "currentMonthNow": "الآن",
+        "legendCaption": "كل نقطة تمثل يوماً أنجزت فيه ورداً أو أكثر",
+        "legendLess": "أقل",
+        "legendMore": "أكثر",
+        "tooltipTasks": "{count, plural, zero {لا مهام} one {مهمة واحدة منجزة} two {مهمتان منجزتان} few {{n} مهام منجزة} many {{n} مهمة منجزة} other {{n} مهمة منجزة}}"
+      },
+      "empty": {
+        "title": "لا توجد خطط مسجلة بعد",
+        "hint": "اختر ورداً يومياً أو خطة مخصصة لتبدأ متابعة إنجازك وتثبيت التزامك."
+      },
+      "sparse": {
+        "encouragement": "بداية مباركة — كل خطوة في مدارسة القرآن أجر وثبات."
+      }
+    },
+    "summary": {
+      "allQuran": "كامل المصحف (٣٠ جزءاً)",
+      "juzRange": "الجزء {start} إلى {end}"
+    },
     "checkOff": "وضع علامة إتمام",
     "undoCheckOff": "التراجع عن علامة الإتمام",
     "nextAssignment": "التالي",
@@ -271,7 +332,8 @@
       "play": "تشغيل",
       "pause": "إيقاف مؤقت",
       "loading": "جارٍ التحميل",
-      "retry": "إعادة المحاولة"
+      "retry": "إعادة المحاولة",
+      "failed": "فشل التشغيل"
     },
     "pagesPerDay": "صفحة/يوم",
     "versesPerDay": "آية/يوم",
@@ -297,7 +359,17 @@
       "streakDays": "يوماً متتالياً",
       "last7Days": "آخر ٧ أيام",
       "allDone": "أحسنت، أتممتَ وِردك لهذا اليوم",
-      "keepGoing": "استمر — أنت الآن على"
+      "keepGoing": "استمر — أنت الآن على",
+      "reminderLabel": "تذكير يومي: {time}",
+      "remindersMultiple": "تذكيرات اليوم: {count}",
+      "reminderSet": "ضبط تذكير الورد اليومي"
+    },
+    "dedicatedReminder": {
+      "includedInGeneral": "يتبع التذكيرات العامة",
+      "badge": "تذكير مخصص: {time}",
+      "generalNotice": "مستثنى من التذكيرات العامة",
+      "set": "تخصيص وقت",
+      "remove": "إلغاء التخصيص والعودة للتذكير العام"
     },
     "browse": {
       "title": "أورادٌ وخطط جديدة",
@@ -307,25 +379,122 @@
       "back": "رجوع",
       "next": "التالي",
       "previous": "السابق",
-      "husunOverview": "خمسة مسارات مترابطة: تحفظ صفحة جديدة يومياً، وتحضّرها، وتراجعها قريباً وبعيداً — تلقائياً حسب ما تحفظه. تختار أنت فقط معدل الحفظ ونطاقه."
+      "husunOverview": "خمسة مسارات مترابطة: تحفظ صفحة جديدة يومياً، وتحضّرها، وتراجعها قريباً وبعيداً — تلقائياً حسب ما تحفظه. تختار أنت فقط معدل الحفظ ونطاقه.",
+      "dailyWirdType": {
+        "title": "الورد اليومي",
+        "description": "ختمة كاملة متكررة للمصحف بنشاط ومعدل تختارهما"
+      },
+      "customWirdType": {
+        "title": "ورد مخصص",
+        "description": "اختَر مقدارًا مخصّصًا وحدِّد وتيرته اليومية أو تاريخ انتهائه"
+      },
+      "comingSoon": "قريباً"
+    },
+    "startPoint": {
+      "label": "نقطة البداية (اختياري)",
+      "fromBeginning": "من الصفحة الأولى",
+      "pagePrefix": "صفحة",
+      "lockedNotice": "بدأ الورد بالفعل — تُستأنف القراءة تلقائياً من حيث توقفت",
+      "byPage": "بالصفحة",
+      "bySurah": "بالسورة",
+      "pageNumber": "رقم الصفحة",
+      "pageRangeHint": "(١–٦٠٤)",
+      "choosePage": "اختر الصفحة",
+      "searchPages": "ابحث عن صفحة…",
+      "noPageFound": "لم يُعثر على صفحة.",
+      "chooseSurah": "اختر السورة",
+      "searchSurahs": "ابحث عن سورة…",
+      "noSurahFound": "لم يُعثر على سور."
+    },
+    "custom": {
+      "newTitle": "ورد مخصص جديد",
+      "editTitle": "تعديل الورد المخصص",
+      "description": "حدد المقدار والوتيرة المناسبة لك",
+      "nameLabel": "اسم الورد",
+      "namePlaceholder": "مثال: حفظ سورة البقرة",
+      "activityLabel": "نوع الورد",
+      "rangeLabel": "المقدار",
+      "rangeMode": {
+        "wholeMushaf": "كامل المصحف",
+        "surah": "بالسورة",
+        "juz": "بالجزء",
+        "page": "بالصفحة",
+        "verse": "بالآية"
+      },
+      "fromSurah": "من سورة",
+      "toSurah": "إلى سورة",
+      "fromJuz": "من الجزء",
+      "toJuz": "إلى الجزء",
+      "fromPage": "من صفحة",
+      "toPage": "إلى صفحة",
+      "fromVerse": "من آية",
+      "toVerse": "إلى آية",
+      "versePrefix": "آية",
+      "cadenceLabel": "الوتيرة",
+      "cadenceType": {
+        "pace": "بمعدل ثابت",
+        "deadline": "بتاريخ إتمام",
+        "weekly": "تكرار أسبوعي"
+      },
+      "weekdayLabel": "يوم الاستحقاق",
+      "weeklyHint": "يُستحق في نفس اليوم من كل أسبوع",
+      "period": {
+        "day": "يوميًا",
+        "week": "أسبوعيًا"
+      },
+      "targetDate": "موعد الانتهاء",
+      "repetitions": "عدد الختمات",
+      "pagesRange": "صفحات {start}–{end}",
+      "singlePage": "صفحة {page}",
+      "pagesCount": "{count, plural, one {{n} صفحة} two {{n} صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
+      "versesCount": "{count, plural, one {{n} آية} two {{n} آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
+      "daysCount": "{count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}}",
+      "pagesPerDay": "{count, plural, one {{n} صفحة/يوم} two {{n} صفحتان/يوم} few {{n} صفحات/يوم} many {{n} صفحة/يوم} other {{n} صفحة/يوم}}",
+      "versesPerDay": "{count, plural, one {{n} آية/يوم} two {{n} آيتان/يوم} few {{n} آيات/يوم} many {{n} آية/يوم} other {{n} آية/يوم}}",
+      "pagesPerWeek": "{count, plural, one {{n} صفحة/أسبوع} two {{n} صفحتان/أسبوع} few {{n} صفحات/أسبوع} many {{n} صفحة/أسبوع} other {{n} صفحة/أسبوع}}",
+      "estimate": {
+        "days": "≈ {count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}} للإتمام",
+        "pace": "≈ {pace} (يُعاد حسابه تلقائيًا)",
+        "paceWithDays": "≈ {pace} (يُنجز في {daysCount, plural, zero {{daysN} يوم} one {يوم واحد} two {يومين} few {{daysN} أيام} many {{daysN} يومًا} other {{daysN} يوم}})",
+        "weekly": "كل {weekday}"
+      },
+      "rangeFrozen": "تم تثبيت المقدار لتسجيل قراءات سابقة",
+      "verseWeeklyUnavailable": "المعدل الأسبوعي غير متاح للآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء",
+      "memorizeRepetitionsLocked": "خطط الحفظ تقتصر على ختمة واحدة",
+      "submit": "ابدأ الورد",
+      "save": "حفظ التعديلات"
     },
     "templates": {
       "dailyWird": {
-        "label": "الورد اليومي",
+        "label": "الورد اليومي — قراءة",
         "description": "اقرأ عددًا من الصفحات يوميًا، وتدور القراءة على كامل المصحف."
       },
       "listeningWird": {
-        "label": "ورد الاستماع",
+        "label": "الورد اليومي — استماع",
         "description": "استمع إلى عدد من الصفحات يوميًا، وتدور الاستماع على كامل المصحف."
+      },
+      "memorizingWird": {
+        "label": "الورد اليومي — حفظ",
+        "description": "احفظ عددًا من الصفحات يوميًا، وتدور على كامل المصحف."
+      },
+      "reviewingWird": {
+        "label": "الورد اليومي — مراجعة",
+        "description": "راجع عددًا من الصفحات يوميًا، وتدور على كامل المصحف."
       },
       "husun": {
         "label": "الحصون الخمسة",
         "description": "برنامج حفظ متكامل من خمسة مسارات."
+      },
+      "custom": {
+        "label": "ورد مخصص",
+        "description": "ورد مخصص بمقدار ووتيرة حسب اختيارك."
       }
     },
     "tracks": {
       "reading": "القراءة",
       "listening": "الاستماع",
+      "memorizing": "الحفظ",
+      "reviewing": "المراجعة",
       "tilawa": "القراءة المستمرة",
       "hifz": "الحفظ الجديد",
       "tahdeer": "التحضير",
@@ -358,9 +527,31 @@
       "empty": "لا يوجد سجل بعد."
     },
     "widget": {
-      "open": "خطط اليوم",
-      "title": "خطط اليوم",
-      "description": "المهام المطلوبة اليوم من خططك النشطة."
+      "open": "أشّر ورد اليوم",
+      "dialLabel": "ورد",
+      "title": "ورد اليوم",
+      "description": "المهام المطلوبة في هذه الصفحة من خططك النشطة.",
+      "completed": "تم إنجاز ورد اليوم في هذه الصفحة",
+      "viewAllPlans": "كل الخطط والسجل"
+    },
+    "detection": {
+      "readingOfferTitle": "أتممت ورد القراءة اليوم؟",
+      "listeningOfferTitle": "أتممت ورد الاستماع اليوم؟",
+      "memorizeOfferTitle": "أتممت ورد الحفظ اليوم؟",
+      "reviewOfferTitle": "أتممت ورد المراجعة اليوم؟",
+      "confirm": "تأكيد",
+      "dismiss": "ليس الآن",
+      "autoWriteNoticeReading": "تم تسجيل ورد القراءة تلقائياً",
+      "autoWriteNoticeListening": "تم تسجيل ورد الاستماع تلقائياً",
+      "autoWriteNoticeGeneric": "تم تسجيل إنجاز الورد تلقائياً",
+      "undo": "تراجع",
+      "autoRecordedBadge": "سُجّل تلقائياً",
+      "autoRecordedHint": "سُجّل هذا الإنجاز تلقائياً بناءً على القراءة أو الاستماع.",
+      "pagesRemaining": "{count, plural, zero {اكتملت جميع الصفحات} one {تبقى صفحة واحدة ({count})} two {تبقت صفحتان ({count})} few {تبقت {count} صفحات} many {تبقت {count} صفحة} other {تبقت {count} صفحة}}"
+    },
+    "settings": {
+      "autoWriteTitle": "التأشير التلقائي للورد",
+      "autoWriteDescription": "تسجيل إنجاز ورد القراءة أو الاستماع تلقائياً فور استيفاء وقت القراءة أو التلاوة دون طلب تأكيد."
     }
   },
   "recitation": {
@@ -396,6 +587,7 @@
     "surahSearchPlaceholder": "ابحث عن سورة…",
     "surahEmpty": "لم يتم العثور على سورة.",
     "offlineUnavailable": "غير متاح دون اتصال",
+    "playbackFailed": "فشل تشغيل التلاوة",
     "repeatCycleOff": "بدون تكرار للآية",
     "repeatCycleTimes": "تكرار الآية {n} مرة",
     "repeatCycleInfinite": "تكرار الآية باستمرار",
@@ -426,23 +618,52 @@
     "offlineNotice": "اتصل بالإنترنت للتنزيل."
   },
   "notifications": {
-    "bellLabel": "الإشعارات",
-    "feed": {
-      "title": "الإشعارات",
-      "empty": "لا توجد إشعارات بعد",
-      "loading": "جارٍ التحميل…",
-      "markAllRead": "تحديد الكل كمقروء"
-    },
     "settings": {
       "title": "الإشعارات",
-      "enablePush": "إشعارات الدفع",
-      "enablePushDescription": "احصل على إشعارات بالتذكيرات والتحديثات على هذا الجهاز",
-      "enablePushDenied": "محظورة من المتصفح — اسمح بالإشعارات في إعدادات الموقع لتفعيلها."
+      "enablePush": "تذكيرات",
+      "enablePushDescription": "استقبل تذكيرات وردك القرآني على هذا الجهاز",
+      "enablePushDenied": "محظورة من المتصفح — اسمح بالإشعارات في إعدادات الموقع لتفعيلها.",
+      "wirdReminderTitle": "تذكير الورد اليومي",
+      "wirdReminderDescription": "تنبيهات يومية لمتابعة وردك القرآني في أوقاتك المفضلة (حتى ٣ أوقات)",
+      "wirdReminderSlotLabel": "التذكير {n}",
+      "wirdReminderRecurrence": "التكرار",
+      "wirdReminderDaily": "يومي",
+      "wirdReminderWeekly": "أسبوعي",
+      "wirdReminderAdd": "إضافة وقت آخر",
+      "wirdReminderRemove": "حذف هذا التذكير",
+      "wirdReminderMaxReached": "الحد الأقصى ٣ تذكيرات عامة",
+      "allPlansBoundNotice": "جميع أورادك النشطة مرتبطة بتذكيرات مخصصة. التذكيرات العامة لن ترسل تنبيهات حتى تفعيل ورد غير مخصص.",
+      "dedicatedNoticeOnDisable": "تم إيقاف التذكيرات العامة. يُرجى ملاحظة أن التذكيرات المخصصة لبعض أورادك ما زالت مفعّلة ولن تتوقف، ويمكنك إدارتها من بطاقة كل ورد في تبويب إدارة الخطط.",
+      "wirdReminderTime": "وقت التذكير",
+      "wirdReminderPushBlocked": "الإشعارات الفورية محظورة في متصفحك. فعّلها من إعدادات المتصفح لتلقي التذكيرات.",
+      "wirdReminderEnablePush": "تفعيل الإشعارات الفورية على هذا الجهاز",
+      "wirdReminderLoadError": "تعذر تحميل إعدادات التذكير",
+      "wirdReminderRetry": "إعادة المحاولة",
+      "searchTime": "ابحث عن وقت…",
+      "noTimeMatch": "لا يوجد وقت مطابق."
     },
     "types": {
       "plansDailyReminder": {
-        "title": "حان وقت وردك اليومي",
-        "body": "مهمة {{template}} لهذا اليوم جاهزة."
+        "title": "وردك اليومي",
+        "dedicatedTitle": "تذكير: {{name}}",
+        "multipleTasks": {
+          "zero": "لا توجد مهام متبقية في ورد اليوم",
+          "one": "لديك مهمة واحدة متبقية في ورد اليوم",
+          "two": "لديك مهمتان متبقيتان في ورد اليوم",
+          "few": "لديك {{n}} مهام متبقية في ورد اليوم",
+          "many": "لديك {{n}} مهمة متبقية في ورد اليوم",
+          "other": "لديك {{n}} مهمة متبقية في ورد اليوم"
+        },
+        "singlePage": {
+          "one": "ورد اليوم: صفحة واحدة (ص {{start}})",
+          "two": "ورد اليوم: صفحتان (ص {{start}} إلى ص {{end}})",
+          "few": "ورد اليوم: {{n}} صفحات (ص {{start}} إلى ص {{end}})",
+          "many": "ورد اليوم: {{n}} صفحة (ص {{start}} إلى ص {{end}})",
+          "other": "ورد اليوم: {{n}} صفحة (ص {{start}} إلى ص {{end}})"
+        },
+        "singleVerseOne": "ورد اليوم: الآية {{verse}}",
+        "singleVerseRange": "ورد اليوم: الآيات {{range}}",
+        "completedCaption": "مكتمل لهذا اليوم"
       },
       "systemTest": {
         "title": "إشعار تجريبي",

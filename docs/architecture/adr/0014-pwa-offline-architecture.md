@@ -477,3 +477,65 @@ any time; once per worker lifetime is the chosen balance. Do not sample-probe a 
 remove the deferred walk entirely — that is the bare-sentinel reduction Addendum 2 forbade, and it
 makes an evicted cache report ready forever. Do not make the Settings rows defer their status request
 — they are the surface that displays counts and heals stale sentinels on demand.
+
+## Addendum 10 (2026-09-07): Non-reader app-shell pages are served offline from precached shells
+
+**Issue:** [#591](https://github.com/furqan-app/web/issues/591) (epic #590)
+
+**Amends:** Addendum 7's shell set (two reader shells → six documents: plus `/{ar,en}/marks` and
+`/{ar,en}/search`), and adds one invariant Addendum 7 never needed: a document appended to the
+precache manifest MUST be user-agnostic static HTML.
+
+**Context.** The marks (ADR 0061) and search (ADR 0062) engines both run fully offline, but their page
+documents were online-only: the worker cached reader HTML only, and every other failed navigation fell
+through to `setCatchHandler`'s terminal `offline-{ar,en}.html`. An offline navigation to `/marks` or
+`/search` never loaded the React page, so neither engine ever ran. Both pages are static shells whose
+content resolves client-side (marks from the local store, search from the precached index) — the same
+property that made `/{locale}/pages/1` a valid shell — so the Addendum 7 mechanism extends to them
+directly, with two deltas: the overlay's "view all" link navigates to `/search?q=…`, which the
+precache matcher (strips only `utm_*`/`fbclid`) never matches; and `/marks` rendered dynamically via
+`getServerSession`, which is disqualifying for a shared per-origin install cache (see the invariant).
+
+**Decision — worker side.** The build-time `manifestTransforms` entry appends four more documents
+(`/ar|en/marks`, `/ar|en/search`) under the same webpack-hash revision, so shell freshness and
+`reader-html-{hash}` busting still move together and install stays atomic (a failed shell fetch
+discards the worker; the previous deploy keeps serving). One `runtimeCaching` rule, registered with
+the other custom rules ahead of `...defaultCache`, matches navigate-mode requests to exactly
+`/^\/(ar|en)\/(marks|search)$/` and serves `serwist.matchPrecache(url.pathname)` — `pathname` excludes
+the query by definition, so `?q=…` normalizes to the same shell bytes (the query is seeded
+client-side; the HTML is identical). Exact-path navigations never reach the rule: `PrecacheRoute` is
+registered ahead of `runtimeCaching`. A `matchPrecache` miss falls through to `fetch(request)`, so
+only `setCatchHandler` ever decides the terminal document. No second cache, no populate-on-miss, no
+`activate` change, no message-contract change. RSC/soft-nav stays on `defaultCache` untouched.
+
+**Decision — client side.** `/marks` drops its server session and renders statically; `MyMarksList`
+shows its existing skeleton (never the signed-out prompt) while the live session is still resolving,
+preserving the no-flash behavior the server seed used to provide. The two self links (both `/marks`
+entries in `UserMenu`, the overlay's self "view all") hard-navigate when tapped while
+`navigator.onLine === false`; online taps and all grant links keep today's soft nav. This also closes
+the Sentry spam from offline taps landing on the route `error.tsx`.
+
+**The new invariant.** Any document appended to the precache manifest must be static and identical for
+every user. Per-request HTML in the install precache pins one user's session state into a cache shared
+by the whole origin until the next deploy — a cross-user leak on shared browsers, not a staleness
+quirk. This is why `/marks` is static-ified here and why the per-grant dynamic reader is permanently
+out of scope for this mechanism.
+
+**Consequences**
+
+- **+** Offline cold/reload/hard navigation to both pages works before first visit, with zero new
+  protocol and zero new cache to version or clean up.
+- **+** Offline in-app taps to both pages land on content instead of the error boundary, with no new
+  copy and no online behavior change.
+- **−** Every production visitor's install precaches four more documents (~300 KB raw est.,
+  `/ar/search.html` measured at 74 KB; exact figure confirmed at build time). Bounded, one-time per
+  deploy, same profile as the two reader shells.
+- **−** Query-bearing navigations always serve install-vintage HTML — correct here (identical bytes),
+  but the rule must never be widened to a path whose query changes server HTML.
+
+**What NOT to do:** do not append a dynamic (per-user, per-grant) document to the precache manifest —
+that is the leak above, not a performance trade-off. Do not add a second versioned runtime cache for
+these shells alongside the precache (same bytes, second staleness profile). Do not widen the matcher
+regex beyond the two static paths (it must never meet `/api/*`, grant paths, or `/ar` itself). Do not
+drop the `navigate`-mode guard (RSC flight data for the same paths). Do not synthesize a response on
+a `matchPrecache` miss — fall through to the network and let the catch handler decide.

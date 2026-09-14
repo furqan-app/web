@@ -25,18 +25,59 @@ export type PlanActivity = (typeof PLAN_ACTIVITIES)[number];
  */
 export type PlanUnit = "page" | "verse";
 
+export type CustomWirdCadence =
+  | {
+      type: "pace";
+      /** Units (pages or verses, depending on track unit) per day. */
+      unitsPerDay: number;
+    }
+  | {
+      type: "deadline";
+      /** "YYYY-MM-DD" target completion date in user's local timezone. */
+      endDate: string;
+      /** Repeat count: number of times the full range is covered (K >= 1). Default 1. */
+      repetitions?: number;
+    }
+  | {
+      type: "weekly";
+      /** Due weekday: 0 = Sunday … 6 = Saturday (Date.getUTCDay() convention, ADR 0070). */
+      weekday: number;
+    };
+
+export type CustomWirdDefinition = {
+  activity: PlanActivity;
+  unit: PlanUnit;
+  rangeStart: number;
+  rangeEnd: number;
+  cadence: CustomWirdCadence;
+};
+
 export type TrackRule =
   | {
-      /** Cycle a fixed range at N units/day, wrap on completion (khatma). */
+      /** Cycle a fixed range at N units/day, wrap on completion (khatma) or stop at end. */
       kind: "fixed_cycle";
       rangeStart: number;
       rangeEnd: number;
       defaultUnitsPerDay: number;
+      onComplete?: "wrap" | "stop";
+      boundsUnit?: PlanUnit;
+      repetitions?: number;
+      /**
+       * Optional weekday gate (0 = Sunday … 6 = Saturday, Date.getUTCDay()
+       * convention). When set, the track produces an assignment only on dates
+       * whose local weekday matches — a weekly-recurring custom wird
+       * (ADR 0070). Unset means every day (daily wirds, husun, pace/deadline
+       * custom wirds).
+       */
+      weekday?: number;
     }
   | {
       /** Advance a cursor N units/day through a target range; stops at end. */
       kind: "cursor_advance";
       defaultUnitsPerDay: number;
+      targetStart?: number;
+      targetEnd?: number;
+      boundsUnit?: PlanUnit;
     }
   | {
       /** Re-visit the last `windowSize` units completed by `sourceTrack`. */
@@ -72,9 +113,11 @@ export type PlanTrack = {
 /**
  * Missed-day policy (D4): "cursor" — the plan shifts forward, tomorrow resumes
  * where you stopped; "calendar" — a fixed end date, remaining quantity is
- * recomputed over remaining days (requires params.endDate).
+ * recomputed over remaining days (requires params.endDate); "weekly" —
+ * documentation-only label for weekly-recurring custom wirds (ADR 0070), no
+ * engine branch reads it — the `fixed_cycle` weekday gate governs recurrence.
  */
-export type MissedDayPolicy = "cursor" | "calendar";
+export type MissedDayPolicy = "cursor" | "calendar" | "weekly";
 
 export type PlanTemplate = {
   key: string;
@@ -174,6 +217,42 @@ export const PLAN_TEMPLATES: Record<string, PlanTemplate> = {
       },
     ],
   },
+  /** Same shape as daily-wird, for a memorization khatma (defaults mirror husun hifz). */
+  "memorizing-wird": {
+    key: "memorizing-wird",
+    missedDayPolicy: "cursor",
+    tracks: [
+      {
+        key: "memorizing",
+        activity: "memorize",
+        unit: "page",
+        rule: {
+          kind: "fixed_cycle",
+          rangeStart: MUSHAF_FIRST_PAGE,
+          rangeEnd: MUSHAF_LAST_PAGE,
+          defaultUnitsPerDay: 1,
+        },
+      },
+    ],
+  },
+  /** Same shape as daily-wird, for a review khatma (defaults mirror husun baeed). */
+  "reviewing-wird": {
+    key: "reviewing-wird",
+    missedDayPolicy: "cursor",
+    tracks: [
+      {
+        key: "reviewing",
+        activity: "review",
+        unit: "page",
+        rule: {
+          kind: "fixed_cycle",
+          rangeStart: MUSHAF_FIRST_PAGE,
+          rangeEnd: MUSHAF_LAST_PAGE,
+          defaultUnitsPerDay: 1,
+        },
+      },
+    ],
+  },
   /**
    * الحصون الخمسة (Dr. Saeed Hamza) — the forcing case for all five rule
    * kinds (see docs/plans/daily-awrad-ui.md and ADR 0030). Quantities are a
@@ -243,6 +322,96 @@ export const getPlanTemplate = (key: string): PlanTemplate | null =>
   PLAN_TEMPLATES[key] ?? null;
 
 /**
+ * Purely constructs a PlanTemplate from a stored CustomWirdDefinition (ADR 0067).
+ * Single track with key "custom", deriving cursor_advance for memorize and
+ * fixed_cycle (with onComplete: "stop") for read/listen/review — except the
+ * "weekly" cadence, which is a weekday-gated fixed_cycle with onComplete:
+ * "wrap" and defaultUnitsPerDay set to the full range span, regardless of
+ * activity (ADR 0070): the due day's assignment is the entire range in one
+ * shot, recurring indefinitely.
+ */
+export const planTemplateFromDefinition = (
+  definition: CustomWirdDefinition
+): PlanTemplate => {
+  if (definition.cadence.type === "weekly") {
+    return {
+      key: "custom",
+      missedDayPolicy: "weekly",
+      tracks: [
+        {
+          key: "custom",
+          activity: definition.activity,
+          unit: definition.unit,
+          rule: {
+            kind: "fixed_cycle",
+            rangeStart: definition.rangeStart,
+            rangeEnd: definition.rangeEnd,
+            boundsUnit: definition.unit,
+            defaultUnitsPerDay: definition.rangeEnd - definition.rangeStart + 1,
+            onComplete: "wrap",
+            weekday: definition.cadence.weekday,
+          },
+        },
+      ],
+    };
+  }
+
+  const isMemorize = definition.activity === "memorize";
+  const isDeadline = definition.cadence.type === "deadline";
+  const defaultUnitsPerDay =
+    definition.cadence.type === "pace" ? definition.cadence.unitsPerDay : 1;
+
+  const repetitions =
+    definition.cadence.type === "deadline" ? (definition.cadence.repetitions ?? 1) : 1;
+
+  const rule: TrackRule = isMemorize
+    ? {
+        kind: "cursor_advance",
+        defaultUnitsPerDay,
+        targetStart: definition.rangeStart,
+        targetEnd: definition.rangeEnd,
+        boundsUnit: definition.unit,
+      }
+    : {
+        kind: "fixed_cycle",
+        rangeStart: definition.rangeStart,
+        rangeEnd: definition.rangeEnd,
+        boundsUnit: definition.unit,
+        defaultUnitsPerDay,
+        onComplete: "stop",
+        repetitions,
+      };
+
+  return {
+    key: "custom",
+    missedDayPolicy: isDeadline ? "calendar" : "cursor",
+    tracks: [
+      {
+        key: "custom",
+        activity: definition.activity,
+        unit: definition.unit,
+        rule,
+      },
+    ],
+  };
+};
+
+/**
+ * Resolves an enrollment's PlanTemplate: from definition for custom wirds,
+ * or from PLAN_TEMPLATES for static presets.
+ */
+export const getEnrollmentTemplate = (plan: {
+  template_key: string;
+  definition?: unknown;
+}): PlanTemplate | null => {
+  if (plan.template_key === "custom") {
+    if (!plan.definition || typeof plan.definition !== "object") return null;
+    return planTemplateFromDefinition(plan.definition as CustomWirdDefinition);
+  }
+  return getPlanTemplate(plan.template_key);
+};
+
+/**
  * The unit an independent (`fixed_cycle`/`cursor_advance`) track's own range
  * math runs in — chosen per-enrollment via `params.trackUnits`, "page" if
  * absent. Only source-free tracks can be looked up this way.
@@ -254,7 +423,8 @@ export const independentTrackUnit = (
 
 /**
  * The unit `trackKey`'s range math actually runs in. Independent tracks
- * (`fixed_cycle`/`cursor_advance`) resolve from `params.trackUnits`; a
+ * (`fixed_cycle`/`cursor_advance`) resolve from `params.trackUnits` with
+ * fallback to the track's own unit (ADR 0038, widened); a
  * dependent track (`trailing_window`/`completed_cycle`/`lookahead`) always
  * inherits its `sourceTrack`'s resolved unit — it slices that track's own
  * logged numbers directly, so it can never disagree with them (ADR 0038).
@@ -268,7 +438,7 @@ export const resolveTrackUnit = (
   const track = template.tracks.find((t) => t.key === trackKey);
   if (!track) return "page";
   if (track.rule.kind === "fixed_cycle" || track.rule.kind === "cursor_advance") {
-    return independentTrackUnit(params, trackKey);
+    return params.trackUnits?.[trackKey] ?? track.unit ?? "page";
   }
   return resolveTrackUnit(template, params, track.rule.sourceTrack);
 };

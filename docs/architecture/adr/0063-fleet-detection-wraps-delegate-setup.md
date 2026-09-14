@@ -76,6 +76,17 @@ member is a first-class case per the epic), so there is nothing to commit. The o
 ships in the repo is the role-taxonomy convention itself, in
 [`docs/workflow/fleet-setup.md`](../../workflow/fleet-setup.md).
 
+> **Amended 2026-09-11 — the lane map moved to global scope.** The project-scope choice above did
+> not survive first contact with this project's own flow. `.delegate/` is gitignored, and
+> `/plan-fq-task` creates a fresh `../furqan-<slug>` worktree for every task that `fq-delegate`
+> then dispatches into with `--cd <worktree>`. A project lane map is therefore absent from the
+> only place dispatch ever runs, and every resolve there fails `fleet lane not found` (exit 2) —
+> observed the first time the epic was actually configured. The map now lives at
+> `~/.config/delegate-skills/config.json`, which resolves from the main checkout and every
+> worktree. The reasoning for project scope — each machine's fleet differs, so nothing should be
+> committed — still holds and is still satisfied: the global config is outside the repo entirely.
+> The fail-closed approval-hash trust model is unchanged and applies to both scopes.
+
 ## Consequences
 
 - **+** No fq-owned per-CLI probing code to maintain across 17+ CLIs' auth quirks — `discover.mjs`

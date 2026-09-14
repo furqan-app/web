@@ -11,8 +11,9 @@ import {
 // agree: that one feeds the static JSON the reader fetches, this one serves the
 // DB-backed API route. See ADR 0033.
 const GLYPH_FIELD: Record<number, "code_v1" | "code_v2"> = {
-  2: "code_v1",
-  19: "code_v2",
+  2: "code_v1", // QCF V1
+  1: "code_v2", // QCF V2 — same column as tajweed, paired with the plain V2 font
+  19: "code_v2", // QCF V4 tajweed (COLRv1)
 };
 
 export type PageWords = {
@@ -25,7 +26,9 @@ export type PageWords = {
  *
  * Composition comes from `mushaf_word_layouts` — that edition's own page AND line
  * assignment. Never from `Word.page_number`/`Word.line_number`, which are only a
- * denormalized mirror of the default edition: composing a page from one edition
+ * denormalized mirror of the seeded-words edition (mushaf 2 —
+ * `SEEDED_WORDS_MUSHAF_ID` / `CANONICAL_PAGE_MUSHAF_ID`, NOT `DEFAULT_MUSHAF_ID`,
+ * which is QCF V2 since ADR 0066): composing a page from one edition
  * while taking line numbers from another splices two different printed books, and
  * because each page's font has its own local codepoint space that renders words
  * from the wrong page instead of failing (ADR 0033).

@@ -4,7 +4,7 @@ import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
 import {
   PLAN_DATE_RE,
-  getPlanTemplate,
+  getEnrollmentTemplate,
   type UserPlanParams,
 } from "@/app/constants/plans";
 import {
@@ -17,6 +17,7 @@ import {
 export type TodayPlanAssignments = {
   planId: number;
   templateKey: string;
+  name?: string | null;
   assignments: TrackAssignment[];
 };
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
   const data: TodayPlanAssignments[] = [];
 
   for (const plan of plans) {
-    const template = getPlanTemplate(plan.template_key);
+    const template = getEnrollmentTemplate(plan);
     // An enrollment referencing a template this build no longer ships is
     // skipped, not an error — templates are code (ADR 0030).
     if (!template) continue;
@@ -57,10 +58,12 @@ export async function GET(request: NextRequest) {
 
     const params = (plan.params ?? {}) as UserPlanParams;
     const assignments = deriveAssignments(template, params, entries, date);
+    if (assignments.length === 0 && plan.template_key === "custom") continue;
 
     data.push({
       planId: plan.id,
       templateKey: plan.template_key,
+      name: plan.name,
       assignments: withNextPreview(template, params, entries, date, assignments),
     });
   }
