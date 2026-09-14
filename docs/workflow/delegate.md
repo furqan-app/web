@@ -147,6 +147,7 @@ with stderr text, so check the denial cases first.
 |---|---|
 | `status: completed`, `touchedFiles` non-empty | Review-ready. Re-verify the gates and run `check-fq-standards` on the diff — do not accept the self-report. |
 | `status: completed`, `touchedFiles` `[]` or `null` on a write lane | No diff to review (`null` = git couldn't report). Read `finalMessage` for why before re-dispatching. |
+| `status: completed`, `touchedFiles` `[]` on a read-only lane | Clean — proceed. |
 | `status: failed`, implementer is `agy` under `--print` | `agy` auto-denied writes headless. Needs **explicit human approval** of `--dangerously-skip-permissions` for one re-dispatch, or a different implementer. Never add that flag on your own judgment. |
 | `status: failed`, implementer is `copilot` without `--allow-all-tools` | copilot auto-denied its tool calls headless. Needs **explicit human approval** of `--allow-all-tools` for one re-dispatch (mutually exclusive with `--read-only`), or a different implementer. |
 | `status: <tool>_unavailable` (exit 127, result file written) | `<tool>` not on PATH — run `/setup-fq-fleet`. |
@@ -155,7 +156,7 @@ with stderr text, so check the denial cases first.
 | `status: failed`, not a denial, stderr shows the model was rejected | The `<lane>` lane's model is dead — re-run `/setup-fq-fleet` to reconfigure that lane. |
 | `status: timeout` | The watchdog killed the run; the tree may be half-applied. Inspect it before choosing a longer `--timeout` (and `--print-timeout` for `agy`), a smaller brief, or a resume. Do not auto-resume. |
 | `status: aborted` | The relay itself was killed. Inspect the working tree and the run's `events.jsonl` before re-dispatching. |
-| read-only lane, `readOnlyViolation: true` or `touchedFiles` non-empty | The implementer edited files under a read-only lane — discard the tree, do not fold the output into a review. Only the `agy` and `claude` relays emit `readOnlyViolation`; for `opencode` / `copilot` check `touchedFiles` yourself. Re-dispatch on the hard-sandbox implementer (`codex`) if the lane needs a guarantee. |
+| read-only lane, `readOnlyViolation: true`, `touchedFiles` non-empty, or `touchedFiles: null` | `touchedFiles: null` on a read-only lane is a **violation** — discard the tree and re-dispatch on the hard-sandbox implementer (`codex`). Allow (null case only): the implementer explicitly states "no file changes" in `finalMessage` → proceed. Never read `null` as clean. `readOnlyViolation: true` or non-empty `touchedFiles` is always a violation — discard the tree. Only the `agy` and `claude` relays emit `readOnlyViolation`; for `opencode` / `copilot` check `touchedFiles` yourself. |
 
 Every summary ends the same way: **the orchestrator re-verifies gate claims and "done"; it never
 accepts them.**

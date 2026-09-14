@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-92 active plans.
+94 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -95,6 +95,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |
+| workflow | [Epic #623 follow-up — resolve the 6 open orchestrator doc decisions in one PR](623-orchestrator-review-decisions.md) | implemented | chore |
 | workflow | [Fleet Detection + On-Demand Setup (detect-fleet, setup-fq-fleet)](fleet-detection-setup.md) | implemented | feature |
 | workflow | [fq-ask-human: Slack escalation — post a question, await a threaded human decision](fq-ask-human.md) | implemented | feature |
 | workflow | [fq-delegate: fq-aware wrapper over the upstream delegate relays](fq-delegate.md) | implemented | feature |
