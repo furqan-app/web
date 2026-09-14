@@ -17,7 +17,6 @@ import { AutoWriteSettingSection } from "@components/plans/AutoWriteSettingSecti
 import { SettingsSection } from "@components/settings/SettingsSection";
 import { useIsMobile } from "@hooks/use-is-mobile";
 import { useKeepScreenAwake } from "@contexts/KeepScreenAwakeContext";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -36,7 +35,6 @@ type Props = {
 };
 
 export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
-  const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
   const locale = useLocale();
   const t = useTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
@@ -65,7 +63,6 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
         </SheetTrigger>
       )}
       <SheetContent
-        ref={setSheetContentEl}
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
         className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
