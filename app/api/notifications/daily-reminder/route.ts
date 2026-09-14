@@ -138,6 +138,7 @@ export async function GET(request: NextRequest) {
         weekday: d.weekday,
       })),
       enabled: pref.enabled,
+      generalEnabled: pref.generalEnabled,
       time: pref.time,
       timezone: pref.timezone || null,
       locale: pref.locale || null,

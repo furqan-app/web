@@ -13,7 +13,6 @@ import { MushafLayoutSection } from "@components/mushaf/MushafLayoutSection";
 import { useIsTablet } from "@hooks/use-is-tablet";
 import { QuranSafhaViewToggle } from "@components/QuranSafhaViewToggle";
 import { EnablePushToggle } from "@components/notifications/EnablePushToggle";
-import { DailyWirdReminderSection } from "@components/notifications/DailyWirdReminderSection";
 import { AutoWriteSettingSection } from "@components/plans/AutoWriteSettingSection";
 import { SettingsSection } from "@components/settings/SettingsSection";
 import { useIsMobile } from "@hooks/use-is-mobile";
@@ -143,7 +142,6 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
               )}
 
               <EnablePushToggle />
-              <DailyWirdReminderSection portalContainer={sheetContentEl} />
               <AutoWriteSettingSection />
               <OfflineRecitationSection />
               <OfflineTafsirSection />

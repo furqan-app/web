@@ -217,6 +217,10 @@ export const RecitationPlayerBar = () => {
             <p className="truncate text-xs text-destructive">
               {t("recitation.offlineUnavailable", "Not available offline")}
             </p>
+          ) : isIdle && playbackError === "playback-failed" ? (
+            <p className="truncate text-xs text-destructive">
+              {t("recitation.playbackFailed", "Playback failed")}
+            </p>
           ) : (
             <p className="fq-recitation-verse-key truncate text-[10px] leading-tight text-muted-foreground">
               {verseLabelParts

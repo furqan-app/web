@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
-import { Plus, Trash2 } from "lucide-react";
+import { Info, Plus, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { TimeCombobox } from "@/components/ui/time-combobox";
@@ -39,6 +39,7 @@ type ReminderApiResponse = {
   general: GeneralSlot[];
   dedicated: DedicatedSlot[];
   enabled: boolean;
+  generalEnabled?: boolean;
   time: string;
   timezone: string | null;
   locale: string | null;
@@ -87,8 +88,8 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
     },
   });
 
-  const enabled = data?.enabled ?? false;
   const generalSlots = data?.general ?? [];
+  const enabled = data?.generalEnabled ?? generalSlots.length > 0;
 
   // Localized short weekday names in Sun–Sat order (0–6), resolved once per locale.
   const weekdayNames = useMemo(() => {
@@ -98,6 +99,8 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
       (_, i) => fmt.format(new Date(Date.UTC(2026, 0, 4 + i)))
     );
   }, [locale]);
+
+  const [saveError, setSaveError] = useState(false);
 
   const { mutate: updateReminder, isPending: isUpdating } = useMutation({
     mutationFn: async (payload: {
@@ -119,8 +122,16 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
       if (!res.ok) throw new Error("Failed to update reminder preference");
       return res.json();
     },
+    onMutate: () => {
+      setSaveError(false);
+    },
     onSuccess: () => {
+      setSaveError(false);
       queryClient.invalidateQueries({ queryKey: ["daily-wird-reminder"] });
+    },
+    onError: (err) => {
+      console.error("[DailyWirdReminderSection] Failed to update reminder:", err);
+      setSaveError(true);
     },
   });
 
@@ -241,7 +252,9 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
   const canPromptPush = pushSupported && permission !== "denied" && !subscribed && enabled;
 
   const activePlans = plans?.filter((p) => p.status === "active") ?? [];
-  const dedicatedPlanIds = new Set((data?.dedicated ?? []).map((d) => d.planId));
+  const dedicatedSlots = data?.dedicated ?? [];
+  const hasDedicatedReminders = dedicatedSlots.length > 0;
+  const dedicatedPlanIds = new Set(dedicatedSlots.map((d) => d.planId));
   const allActivePlansBound =
     activePlans.length > 0 && activePlans.every((p) => dedicatedPlanIds.has(p.id));
 
@@ -286,6 +299,34 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
               onCheckedChange={handleToggle}
             />
           </div>
+
+          {saveError && (
+            <div className="px-3.5 py-2 bg-destructive/10 border-t border-destructive/20 text-xs text-destructive flex items-center justify-between">
+              <span>{t("notifications.settings.wirdReminderLoadError", "Failed to update reminder settings")}</span>
+              <button
+                type="button"
+                onClick={() => setSaveError(false)}
+                className="text-[11px] underline font-medium hover:opacity-80"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {hasDedicatedReminders && !enabled && (
+            <div
+              data-testid="dedicated-reminders-remain-notice"
+              className="px-3.5 py-2.5 bg-muted/20 border-t border-border/60 text-[11px] text-muted-foreground leading-relaxed flex items-start gap-2"
+            >
+              <Info className="size-4 shrink-0 text-primary mt-0.5" />
+              <span>
+                {t(
+                  "notifications.settings.dedicatedNoticeOnDisable",
+                  "General reminders are turned off. Dedicated reminders for specific plans remain active and can be managed from each plan's card under My Plans."
+                )}
+              </span>
+            </div>
+          )}
 
           {enabled && (
             <div className="border-t border-dashed border-border bg-muted/25 px-3.5 py-3 space-y-2.5">

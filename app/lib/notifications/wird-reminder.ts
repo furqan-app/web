@@ -30,6 +30,7 @@ export type MultiWirdReminderPreference = {
   general: GeneralWirdReminderSlot[];
   dedicated: DedicatedWirdReminder[];
   enabled: boolean;
+  generalEnabled: boolean;
   time: string; // Primary time (slot 1) or fallback
   timezone: string;
   locale: string;
@@ -263,11 +264,13 @@ export async function getDailyWirdReminders(
 
   const primary = general[0] ?? dedicated[0];
   const enabled = general.length > 0 || dedicated.length > 0;
+  const generalEnabled = general.length > 0;
 
   return {
     general,
     dedicated,
     enabled,
+    generalEnabled,
     time: primary?.time ?? "08:00",
     timezone: primary?.timezone ?? "",
     locale: primary?.locale ?? "ar",

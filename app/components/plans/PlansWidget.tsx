@@ -148,12 +148,22 @@ export const PlansWidget = () => {
     playbackSpeed: recitationSettings.playbackSpeed,
     verseIndex: verseIndex.data,
     onCheckOff: (input) => {
-      checkOff.mutate({
-        planId: input.planId,
-        trackKey: input.trackKey,
-        rangeStart: input.rangeStart,
-        rangeEnd: input.rangeEnd,
-      });
+      checkOff.mutate(
+        {
+          planId: input.planId,
+          trackKey: input.trackKey,
+          rangeStart: input.rangeStart,
+          rangeEnd: input.rangeEnd,
+        },
+        {
+          onSuccess: () => {
+            input.onSuccess?.();
+          },
+          onError: (err) => {
+            input.onError?.(err);
+          },
+        },
+      );
     },
     onUncheckOff: (input) => {
       uncheckOff.mutate({
@@ -242,7 +252,7 @@ export const PlansWidget = () => {
     !isSelfReaderRoute ||
     !isSignedIn ||
     !visiblePages ||
-    totalCount === 0 ||
+    (totalCount === 0 && !smartCompletion.autoWriteNotice) ||
     (flourishState === "done" && !smartCompletion.autoWriteNotice) ||
     (flourishState === "idle" &&
       pendingCount === 0 &&
@@ -255,6 +265,7 @@ export const PlansWidget = () => {
 
   const isFlourishing = flourishState === "flourishing" || flourishState === "fading";
   const isFading = flourishState === "fading";
+  const isFlourishDone = flourishState === "done";
 
   const getOfferTitle = (activity?: string) => {
     switch (activity) {
@@ -387,7 +398,7 @@ export const PlansWidget = () => {
           aria-live="polite"
           className={cn(
             "fixed z-40 bottom-24 end-16 flex items-center gap-2.5 rounded-full bg-card border border-border py-1 ps-3.5 pe-1.5 shadow-[inset_0_1px_0_hsl(var(--surface-rim)/var(--surface-rim-alpha))] transition-all duration-300",
-            isFading && "opacity-0 scale-95",
+            (isFading || isFlourishDone) && "opacity-0 scale-95 pointer-events-none",
           )}
           style={isOverlayMode ? { transitionTimingFunction: EASE_OUT } : undefined}
         >
@@ -432,7 +443,7 @@ export const PlansWidget = () => {
           aria-live="polite"
           className={cn(
             "fixed z-40 bottom-24 end-16 flex items-center gap-2.5 rounded-full bg-card border border-border py-1 ps-3.5 pe-1.5 shadow-[inset_0_1px_0_hsl(var(--surface-rim)/var(--surface-rim-alpha))] transition-all duration-300",
-            isFading && "opacity-0 scale-95",
+            smartCompletion.autoWriteNotice.isDismissing && "opacity-0 scale-95 pointer-events-none",
           )}
           style={isOverlayMode ? { transitionTimingFunction: EASE_OUT } : undefined}
         >
@@ -475,7 +486,8 @@ export const PlansWidget = () => {
             "fixed z-40 bottom-24 end-4 size-11 flex items-center justify-center p-0.5 fq-focus-ring rounded-full",
             isOverlayMode && "transition-all duration-300",
             isOverlayMode && !overlayVisible && "translate-y-36 opacity-0 pointer-events-none",
-            isFading && "opacity-0 scale-95 transition-all duration-300 ease-out",
+            (isFading || isFlourishDone || totalCount === 0) &&
+              "opacity-0 scale-95 pointer-events-none transition-all duration-300 ease-out",
           )}
           style={isOverlayMode ? { transitionTimingFunction: EASE_OUT } : undefined}
         >

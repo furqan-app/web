@@ -56,7 +56,7 @@ const WeekStrip = ({ week, label }: { week: StreakResult["week"]; label: string 
   );
 };
 
-const HeroReminderRow = () => {
+const HeroReminderRow = ({ onSelectReminders }: { onSelectReminders?: () => void }) => {
   const t = useTranslations();
   const tIntl = useNextIntlTranslations();
   const locale = useLocale();
@@ -105,7 +105,13 @@ const HeroReminderRow = () => {
       <button
         type="button"
         data-testid="plans-hero-reminder-row"
-        onClick={() => openSettings("wird-reminder")}
+        onClick={() => {
+          if (onSelectReminders) {
+            onSelectReminders();
+          } else {
+            openSettings("wird-reminder");
+          }
+        }}
         className="flex w-full items-center justify-between py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
       >
         <div className="flex items-center gap-2">
@@ -122,7 +128,11 @@ const HeroReminderRow = () => {
 // row list, swapping to a celebratory all-done state once every row is
 // checked off. Streak + week strip are derived (never stored) via
 // usePlanStreak. Renders nothing if there are no active plans (caller-gated).
-export const PlansTodayHero = () => {
+export const PlansTodayHero = ({
+  onSelectReminders,
+}: {
+  onSelectReminders?: () => void;
+} = {}) => {
   const t = useTranslations();
   const locale = useLocale();
   const isOnline = useOnlineStatus();
@@ -194,7 +204,7 @@ export const PlansTodayHero = () => {
             ))}
           </div>
         ) : null}
-        <HeroReminderRow />
+        <HeroReminderRow onSelectReminders={onSelectReminders} />
       </div>
     );
   }
@@ -253,7 +263,7 @@ export const PlansTodayHero = () => {
         ) : null}
       </div>
 
-      <HeroReminderRow />
+      <HeroReminderRow onSelectReminders={onSelectReminders} />
     </div>
   );
 };

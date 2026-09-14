@@ -20,6 +20,12 @@ the three UI surfaces the issue names. See [ADR 0070](../architecture/adr/0070-w
 for the full architectural rationale (reusing `fixed_cycle` rather than a new rule kind, the
 weekday-storage split between dedicated and general reminders, and the new typed column).
 
+Additionally, this work addresses friction points discovered during implementation and usability:
+relocating wird reminder management from generic settings to a dedicated 4th tab on `/plans`,
+simplifying reminder time selection, making plan management cards directly navigable to the reader,
+tracking listening wirds during standard ambient recitation, decoupling auto-write completion notices
+from dial fade, and adding graceful error recovery for recitation playback.
+
 This plan was produced by the `/orchestrate-fq-task` orchestrator running unattended (no Slack
 escalation for this run, by explicit operator instruction). Two independent read-only align agents
 proposed a direction first (see [issue #628 comment](https://github.com/furqan-app/web/issues/628#issuecomment-5649438862));
@@ -56,6 +62,32 @@ A weekly custom wird reuses `fixed_cycle`'s existing khatma-wrap mechanics:
   `"daily"` — this is a **live bug fix**, not just new-feature plumbing: today, any recurrence
   value other than `"daily"` (including a bare `"weekly"` string, if one existed) falls into the
   `else` branch and gets **terminally completed/failed after one send**, never rescheduled.
+
+### Reminder Hub & UI Simplifications
+
+- `DailyWirdReminderSection` is relocated from the generic `SettingsSidebar` to `/plans` under a
+  dedicated 4th tab (`tab-reminders` / "إدارة التذكيرات"), giving wird reminders a primary home in
+  the Awrad hub alongside "مهام اليوم", "التقدّم", and "إدارة الخطط".
+- `HeroReminderRow` in `PlansTodayHero` switches directly to `tab-reminders` in `/plans` instead of
+  opening `SettingsSidebar`.
+- `TimeCombobox` removes `<CommandInput>` and `<CommandEmpty>` to transform into a direct, scrollable
+  15-minute intervals list that auto-scrolls to the selected time on open.
+- General reminder master toggle is decoupled from dedicated reminders (`generalSlots.length > 0`),
+  allowing general reminders to be turned off while dedicated reminders remain active. A notice
+  banner is displayed when toggling off general reminders while active dedicated reminders exist.
+
+### Plan Navigation & Ambient Tracking
+
+- `PlanCard` in `app/components/plans/MyPlansList.tsx` is made fully clickable, navigating directly
+  to the start page of today's assignment (or the plan's base start page) in the reader, with inner
+  controls (edit, delete, reminder picker, history accordion) stopping click propagation.
+- `useSmartCompletion` enables listening wird completion tracking during standard ambient recitation
+  in the reader (matching current verse key against uncompleted listening assignments), without
+  requiring playback to be initiated from the wird card's inline play button.
+- Auto-write completion notice is decoupled from the dial flourish animation fade (persisting 6s)
+  and remains mounted even when pending assignment count transitions to 0.
+- Recitation playback errors in `RecitationContext` are captured and surfaced in `PlanAssignmentRow`
+  with a retry button (`RotateCw`) and clear failure indicator.
 
 ## Decision Tree — Engine Weekday Gate
 
@@ -193,18 +225,34 @@ assignment was already completed earlier that day. `resolveGeneralWirdDispatch` 
   new weekday (Case 4 above). Read the file to find the exact post-update hook before wiring this.
 - `app/components/plans/MyPlansList.tsx` — when the plan's cadence is `"weekly"`, render a
   read-only weekday badge next to the dedicated-reminder `TimeCombobox` (derived from the plan,
-  matching the "no plan variance to trust past the source" model
-  above) instead of letting the user pick a day directly on this surface.
+  matching the "no plan variance to trust past the source" model above); add dedicated tab 4
+  ("إدارة التذكيرات" / `tab-reminders`) embedding `DailyWirdReminderSection`; make `PlanCard` full card
+  clickable navigating to the active assignment page in the reader.
+- `app/components/plans/PlansTodayHero.tsx` — wire reminder row click to navigate directly to
+  `tab-reminders` in `/plans`.
+- `app/components/SettingsSidebar.tsx` — remove `DailyWirdReminderSection` (relocated to `/plans`).
 - `app/components/notifications/DailyWirdReminderSection.tsx` — each general slot gets a
   recurrence toggle (Daily / Weekly); when Weekly is selected, a weekday pill selector appears next
   to that slot's `TimeCombobox`. Wire through `handleSlotTimeChange`-equivalent state to the POST
-  body's new `recurrence`/`weekday` fields.
+  body's new `recurrence`/`weekday` fields; display informational notice banner when general
+  reminders are turned off while active dedicated reminders exist; display mutation error state.
+- `components/ui/time-combobox.tsx` — remove search input (`<CommandInput>` and `<CommandEmpty>`)
+  for a direct scrollable interval selection.
+- `app/hooks/use-smart-completion.ts` — ambient recitation tracking for listening wirds; decouple
+  auto-write notice timing and add unmount cleanup.
+- `app/components/plans/PlansWidget.tsx` — prevent unmounting on `totalCount === 0` while auto-write
+  notice is showing; forward mutation callbacks.
+- `app/contexts/RecitationContext.tsx` — error handling and `playbackError` tracking in `play()`.
+- `app/components/plans/PlanAssignmentRow.tsx` — retry button and failure status on playback error.
 - `prisma/app/schema.prisma` — add `weekday Int?` to `ScheduledNotification`; update the model's
   leading comment to mention `"weekly"` alongside `"daily"`. Run
   `npm run app-migrate-dev -- --name add_scheduled_notification_weekday`.
 - `messages/ar.json` / `messages/en.json` — new i18n keys for the weekly cadence type, the weekday
   picker (7 day names, both locales already need Arabic weekday names for date displays elsewhere —
-  reuse if a shared source exists, otherwise add), and the "Every <weekday>" estimate/reminder copy.
+  reuse if a shared source exists, otherwise add), "Every <weekday>" estimate/reminder copy,
+  tab-reminders, error notices, and retry labels.
+- `e2e/tests/wird-reminder-settings.spec.ts` — updated e2e test covering `/plans` tab-reminders and
+  simplified time combobox.
 - `app/lib/plans/*.test.ts` (colocated, per the repo's vitest convention) — unit tests for the new
   `dateWeekday` helper, the `fixed_cycle` weekday-gate branch (all 5 verified cases above), and
   `resolveCustomCadence`'s new `"weekly"` branch.
@@ -258,3 +306,16 @@ assignment was already completed earlier that day. `resolveGeneralWirdDispatch` 
 - `onComplete` for a weekly wird is always `"wrap"`, never `"stop"` — a weekly wird recurs
   indefinitely and must never auto-transition `UserPlan.status` to `"completed"` the first time its
   one weekly range is finished (a risk both align agents flagged independently).
+- Reminder management hub: Placed inside `/plans` under a dedicated 4th tab ("إدارة التذكيرات" / `tab-reminders`),
+  removing it from general `SettingsSidebar`.
+- Warning banner for dedicated reminders: Displayed when toggling off general reminders if dedicated
+  reminders remain active on plans.
+- Auto-write completion notice decoupling: Independent 6s display duration for the notice, decoupled
+  from dial flourish animation and kept mounted when pending assignments hit 0.
+- Ambient recitation listening tracking: Match recitation to uncompleted listening wirds by active
+  verse key without requiring explicit wird play button activation.
+- Playback error recovery: Expose playback failures and retry action in assignment rows and reader player bar.
+
+## Revision History
+
+- 2026-09-14: Folded addendum (reminder time picker simplification, plan card navigation, general/dedicated reminder decouple & warning banner, `/plans` reminder hub relocation, listening wird auto-write tracking & notice decoupling, playback error resilience).

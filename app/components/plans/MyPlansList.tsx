@@ -15,10 +15,13 @@ import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
 import { PlansTodayHero } from "./PlansTodayHero";
 import { AddPlanButton } from "./AddPlanButton";
 import { PlansProgressTab } from "./PlansProgressTab";
+import { DailyWirdReminderSection } from "@/app/components/notifications/DailyWirdReminderSection";
 import { PlansBrowseDialog, type PlansBrowseView } from "./PlansBrowseDialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useRouter } from "@/i18n/routing";
 import { TimeCombobox, formatTimeOption } from "@/components/ui/time-combobox";
 import { fetchChapters } from "@/app/utils/recitation-api";
+import { JUZ_START_PAGES } from "@/app/lib/plans/custom-wird-estimate";
 import {
   quantityAmount,
   getPlanPaceSummary,
@@ -103,7 +106,7 @@ const PlanHistorySection = ({ planId }: { planId: number }) => {
   const verseIndex = usePlanVerseIndex({ enabled: expanded && hasVerseUnitEntry });
 
   return (
-    <div className="border-t border-border pt-2.5">
+    <div className="border-t border-border pt-2.5" onClick={(e) => e.stopPropagation()}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -333,6 +336,69 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   const actions = STATUS_ACTIONS[plan.status];
   const editView = EDIT_VIEW_FOR_TEMPLATE[plan.template_key];
 
+  const { data: todayData } = useTodayAssignments();
+  const verseIndex = usePlanVerseIndex();
+  const { data: chapters } = useQuery({
+    queryKey: ["quran-chapters"],
+    queryFn: fetchChapters,
+    staleTime: Infinity,
+  });
+
+  const router = useRouter();
+
+  const targetPage = useMemo(() => {
+    // 1. Check if there is an assignment for this plan today
+    const todayPlan = todayData?.find((p) => p.planId === plan.id);
+    const activeAssignment =
+      todayPlan?.assignments.find((a) => !a.completed) ?? todayPlan?.assignments[0];
+    if (activeAssignment) {
+      if (activeAssignment.unit === "verse") {
+        return verseIndex.data?.pageOf(activeAssignment.rangeStart) ?? 1;
+      }
+      return activeAssignment.rangeStart ?? 1;
+    }
+
+    // 2. Fallback to the plan's defined starting point
+    if (plan.template_key === "custom" && plan.definition) {
+      const d = plan.definition;
+      if (d.unit === "page") return d.rangeStart ?? 1;
+      if (d.unit === "verse") return verseIndex.data?.pageOf(d.rangeStart) ?? 1;
+      if (d.unit === "surah") {
+        const ch = chapters?.find((c) => c.id === d.rangeStart);
+        if (ch) {
+          const firstPage = parseInt(ch.pages.split("-")[0], 10);
+          if (Number.isInteger(firstPage)) return firstPage;
+        }
+        return 1;
+      }
+      if (d.unit === "juz") {
+        return JUZ_START_PAGES[d.rangeStart] ?? 1;
+      }
+    }
+
+    // 3. Fallback for standard plans
+    if (plan.target_juz_start) {
+      return JUZ_START_PAGES[plan.target_juz_start] ?? 1;
+    }
+    if (plan.params.targetStart) {
+      return plan.params.targetStart;
+    }
+
+    return 1;
+  }, [todayData, plan, verseIndex.data, chapters]);
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (
+      target?.closest(
+        "button, a, input, select, textarea, [role='button'], [role='menuitem'], [data-radix-collection-item]"
+      )
+    ) {
+      return;
+    }
+    router.push(`/pages/${targetPage}`);
+  };
+
   const { data: reminderData } = useQuery<{
     dedicated?: { planId: number; time: string }[];
   }>({
@@ -388,16 +454,26 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   });
 
   return (
-    <div className={cn("flex flex-col gap-3.5 rounded-2xl border border-border bg-card p-4", CARD_SHADOW)}>
+    <div
+      onClick={handleCardClick}
+      className={cn(
+        "flex flex-col gap-3.5 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/40 cursor-pointer group/card",
+        CARD_SHADOW
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
+        <Link
+          href={`/pages/${targetPage}`}
+          locale={locale}
+          className="flex items-start gap-3 flex-1 min-w-0 group cursor-pointer hover:opacity-85 transition-opacity"
+        >
           {/* Identity icon */}
-          <span className="grid place-items-center size-9 rounded-xl bg-primary/10 text-primary flex-none mt-0.5">
+          <span className="grid place-items-center size-9 rounded-xl bg-primary/10 text-primary flex-none mt-0.5 group-hover:bg-primary/20 group-hover/card:bg-primary/20 transition-colors">
             {Icon ? <Icon className="size-[19px]" strokeWidth={1.6} /> : null}
           </span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-extrabold text-foreground">
+              <span className="text-sm font-extrabold text-foreground group-hover:text-primary group-hover/card:text-primary transition-colors">
                 {plan.template_key === "custom" && plan.name
                   ? plan.name
                   : ui
@@ -417,9 +493,9 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
             </div>
             <PlanParametersSummary plan={plan} />
           </div>
-        </div>
+        </Link>
 
-        <div className="flex items-center gap-1.5 flex-none">
+        <div className="flex items-center gap-1.5 flex-none" onClick={(e) => e.stopPropagation()}>
           {editView ? (
             <button
               type="button"
@@ -466,7 +542,10 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
       ) : null}
 
       {plan.status === "active" && (
-        <div className="flex items-center justify-between border-t border-dashed border-border/70 pt-2.5 mt-1 text-xs">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-between border-t border-dashed border-border/70 pt-2.5 mt-1 text-xs"
+        >
           <div className="flex items-center gap-2 text-muted-foreground min-w-0 flex-1">
             <Bell className="size-3.5 shrink-0 text-muted-foreground" />
             {weeklyDayName ? (
@@ -543,7 +622,7 @@ export const MyPlansList = () => {
   const items = plans ?? [];
   const active = items.filter((p) => p.status === "active");
   const other = items.filter((p) => p.status !== "active" && p.status !== "abandoned");
-  const [activeTab, setActiveTab] = useState<"today" | "progress" | "plans">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "progress" | "plans" | "reminders">("today");
 
   if (isLoading) {
     return (
@@ -634,6 +713,24 @@ export const MyPlansList = () => {
             </span>
           ) : null}
         </button>
+
+        <button
+          type="button"
+          role="tab"
+          id="tab-reminders"
+          data-testid="tab-reminders"
+          aria-selected={activeTab === "reminders"}
+          aria-controls="tabpanel-reminders"
+          onClick={() => setActiveTab("reminders")}
+          className={cn(
+            "flex-1 min-h-[44px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-150 fq-focus-ring",
+            activeTab === "reminders"
+              ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <span>{t("plans.tabs.reminders", "Reminders")}</span>
+        </button>
       </div>
 
       {/* Tab 1: Today's Tasks */}
@@ -659,7 +756,7 @@ export const MyPlansList = () => {
             </div>
           ) : active.length > 0 ? (
             <>
-              <PlansTodayHero />
+              <PlansTodayHero onSelectReminders={() => setActiveTab("reminders")} />
               <div className="text-center pt-2">
                 <button
                   type="button"
@@ -738,6 +835,21 @@ export const MyPlansList = () => {
               <AddPlanButton />
             </>
           )}
+        </div>
+      ) : null}
+
+      {/* Tab 4: Reminder Management */}
+      {activeTab === "reminders" ? (
+        <div
+          id="tabpanel-reminders"
+          data-testid="tabpanel-reminders"
+          role="tabpanel"
+          aria-labelledby="tab-reminders"
+          className="flex flex-col gap-4"
+        >
+          <div className="fq-card p-4">
+            <DailyWirdReminderSection />
+          </div>
         </div>
       ) : null}
     </div>
