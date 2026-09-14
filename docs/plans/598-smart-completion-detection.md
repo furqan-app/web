@@ -453,3 +453,73 @@ The **"Distracted Reading Desk"**:
 
 ## 11. Revision History
 - **2026-09-13**: Interaction-based idle timeout removed by product decision — normal silent reading was being penalized (idle window had to be shorter than the 60s completion threshold to be effective at all, which meant any real quiet reading session tripped it); accepted trade-off is that a foregrounded+focused-but-unattended tab can now complete a wird after 60s.
+- **2026-09-14**: Staging-PR e2e sync hardening shipped (§12) — spec-only synchronization fixes for three specs that failed/flaked on staging PR #638; no app behavior changed.
+
+## 12. Staging-PR e2e sync hardening (2026-09-14)
+
+### Context
+Staging promotion PR #638 (`main` → `stg`) went red on e2e: 312 passed, 1 failed, 2 flaky
+(CI run `34795080526`). Lint/typecheck/unit all green. No app behavior changed — all three
+failures are spec-side synchronization: each asserts before the server roundtrip it depends on
+has landed, which holds on a fast runner and breaks under CI load.
+
+### Root cause per spec
+1. **`e2e/tests/awrad-smart-completion.spec.ts:111` (Option B, hard fail).** After the undo
+   toggle click, the spec waits only for the `auto-recorded-badge` to hide — but that hides
+   instantly via the synchronous `clearAutoWritten` localStorage clear in `PlanAssignmentRow`,
+   independent of the `DELETE /api/plans/:planId/progress` mutation (`uncheckTrack` is
+   fire-and-forget `mutate`, UI never awaits it). The final `GET .../progress` therefore races
+   the DELETE and reads the still-present row (`Expected: 0, Received: 1`). Contrast Option A
+   in the same file, which waits for the server-driven widget unmount before its GET.
+2. **`e2e/tests/word-marking.spec.ts:234` (flaky).** After hard reload the spec waits only for
+   reader content, then asserts the persisted highlight within 10s. Self-reader highlights come
+   from the marks store hydration + sync-engine pull (`fetchAllMarks` → `/api/marks?all=true`),
+   which `waitForReaderContent` does not cover — under load the pull lands after the 10s window.
+3. **`e2e/tests/wird-reminder-settings.spec.ts:35` (mobile flaky).** `TimeCombobox` is
+   `disabled={isLoading || isUpdating}` with no optimistic update, so after the toggle click the
+   trigger stays disabled until the `POST /api/notifications/daily-reminder` roundtrip +
+   refetch settle. The 5s default `toBeEnabled` timeout loses under load (button resolved as
+   `disabled` at timeout).
+
+### Files to change (specs only, no app code)
+- `e2e/tests/awrad-smart-completion.spec.ts` — arm `page.waitForResponse` for
+  `DELETE .../api/plans/${planId}/progress` before the toggle click; after the click, await the
+  response, then await the server-driven `aria-pressed="false"` on the toggle, and only then
+  assert badge-hidden + `GET .../progress` length 0.
+- `e2e/tests/word-marking.spec.ts` — after reload + `waitForReaderContent`, tolerantly await the
+  marks sync response (`waitForResponse(/\/api\/marks/)`, `.catch(() => {})` so pure-local
+  hydration never hangs), then assert the highlight with a 30s timeout.
+- `e2e/tests/wird-reminder-settings.spec.ts` — arm `page.waitForResponse` for
+  `POST /api/notifications/daily-reminder` before the toggle click; await it after the toggle
+  reads checked, then assert the time trigger enabled with a 15s timeout.
+
+### Constraints
+- Test-only change: no `app/`, schema, SW, or copy changes. The app's fire-and-forget mutation
+  shape is intentional (React Query); the specs must synchronize to it, not the reverse.
+- `waitForResponse` predicates must be scoped to the spec's own plan/endpoint (planId in URL,
+  HTTP method check) so parallel workers' traffic can't satisfy them.
+- Keep unconditional assertions (decisions/testing.md) — waits gate timing only, never skip
+  assertions.
+
+### What NOT to Do
+- Do not "fix" by making app mutations awaitable/blocking for tests, and do not add test hooks
+  (`__advanceDwellTimeForTesting`-style) for these three — network-response waits suffice.
+- Do not add a `NetworkOnly` SW rule for plans progress reads here: `page.request` bypasses the
+  SW, so SW caching cannot explain these failures; that invariant discussion stays out of scope.
+- Do not paper over with fixed `waitForTimeout` sleeps.
+
+### Decisions Made
+- Scope extended beyond this plan's own spec per explicit user direction ("fix all three specs"):
+  the word-marking (marks/reader area) and reminder (#600 area) hardenings ride in the same pass
+  since one staging-PR CI signal covers all three; no new plan file per plan-task step 0.
+- No separate tracking issue: verification rides on staging PR #638's CI re-run after this lands
+  on `main` (merge queue re-runs e2e on the `main`→`stg` diff).
+- Sweep (plan-task 3b): no app behavior changes, so no existing unit/e2e assertions are
+  invalidated; no SW interaction (`waitForResponse` is a passive observer, `page.request`
+  bypasses the SW); no offline-derived state; no UI affordances added/removed.
+
+### Verification
+- `npm run lint` + `npx tsc --noEmit` in the worktree (spec-typing for the
+  `waitForResponse` predicates).
+- No local e2e (CI owns it per start-task; ~4min build + full suite): land on `main`, then
+  re-run/observe PR #638 e2e — Option B must pass outright, the other two must stop flaking.

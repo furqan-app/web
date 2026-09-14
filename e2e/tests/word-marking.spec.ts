@@ -226,12 +226,19 @@ test.describe("Reload Persistence & Modal Edit Mode", () => {
     await page.reload();
     await waitForReaderContent(page);
 
+    // Let the marks store settle: the sync-engine pull (when it runs) must
+    // complete before the highlight is asserted. Pure-local hydration fires no
+    // request, so never let this gate hang the test.
+    await page
+      .waitForResponse(/\/api\/marks/, { timeout: 15000 })
+      .catch(() => undefined);
+
     const reloadedWord = getActivePanel(page)
       .locator('[data-fq-word="1:1:1"]')
       .first();
 
     // Highlight must persist post-reload
-    await expect(reloadedWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
+    await expect(reloadedWord).toHaveClass(/bg-red-400/, { timeout: 30000 });
 
     // Click marked word to open in edit mode
     await reloadedWord.click();
