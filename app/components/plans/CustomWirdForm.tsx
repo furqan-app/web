@@ -414,17 +414,17 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
 
     if (isEdit) {
       const patchBody = buildCustomPatchBody(state, hasProgress);
-      const success = await updateCustom.mutateAsync({
+      const result = await updateCustom.mutateAsync({
         planId: existingPlan.id,
         ...patchBody,
       });
-      if (success) onDone();
-      else setError(t("plans.enrollError", "Something went wrong. Try again."));
+      if (result.success) onDone();
+      else setError(result.errorMessage ?? t("plans.enrollError", "Something went wrong. Try again."));
     } else {
       const createBody = buildCustomCreateBody(state);
-      const res = await enrollCustom.mutateAsync(createBody);
-      if (res) onDone();
-      else setError(t("plans.enrollError", "Something went wrong. Try again."));
+      const result = await enrollCustom.mutateAsync(createBody);
+      if (result.plan) onDone();
+      else setError(result.errorMessage ?? t("plans.enrollError", "Something went wrong. Try again."));
     }
   };
 
@@ -713,7 +713,10 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
                 portalContainer={containerEl}
                 onChange={(s) => {
                   const nextSurah = Math.max(s, startVerse.surah);
-                  setEndVerse({ surah: nextSurah, ayah: 1 });
+                  setEndVerse({
+                    surah: nextSurah,
+                    ayah: nextSurah === startVerse.surah ? Math.max(1, startVerse.ayah) : 1,
+                  });
                 }}
               />
               <div className="w-24 flex-none">

@@ -50,7 +50,7 @@ export const PLAN_TEMPLATE_UI: Record<
   },
   husun: {
     labelKey: "plans.templates.husun.label",
-    defaultLabel: "الحصون الخمسة",
+    defaultLabel: "Al-Husun Al-Khamsa",
     descriptionKey: "plans.templates.husun.description",
     defaultDescription: "A structured 5-track memorization program.",
     icon: Castle,

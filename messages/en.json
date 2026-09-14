@@ -62,6 +62,9 @@
     "ayahRangeHint": "Pick a number between 1 and {max}",
     "ayahChipLabel": "Ayah {n}"
   },
+  "common": {
+    "close": "Close"
+  },
   "signInModal": {
     "description": "Sign in to mark words and verses in the Quran."
   },
@@ -481,7 +484,7 @@
         "description": "Review N pages a day, cycling the whole mushaf."
       },
       "husun": {
-        "label": "الحصون الخمسة",
+        "label": "Al-Husun Al-Khamsa",
         "description": "A structured 5-track memorization program."
       },
       "custom": {

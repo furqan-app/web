@@ -359,6 +359,7 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
                             type="button"
                             onClick={() => handleRemoveSlot(slot.slot)}
                             disabled={isLoading || isUpdating}
+                            data-testid={`wird-reminder-remove-slot-${slot.slot}`}
                             aria-label={t("notifications.settings.wirdReminderRemove", "Remove this reminder")}
                             className="fq-focus-ring min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive flex items-center justify-center rounded-lg transition-colors disabled:opacity-50"
                           >
@@ -442,6 +443,7 @@ export function DailyWirdReminderSection({ portalContainer: externalContainer }:
                   type="button"
                   onClick={handleAddSlot}
                   disabled={isLoading || isUpdating}
+                  data-testid="wird-reminder-add-slot"
                   className="w-full min-h-[44px] border border-dashed border-border/80 hover:bg-muted/30 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                 >
                   <Plus className="size-3.5" />

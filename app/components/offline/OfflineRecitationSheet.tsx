@@ -148,7 +148,7 @@ export const OfflineRecitationSheet = () => {
           <ChevronRight className={isRTL ? "size-4 rotate-180 text-[hsl(var(--control-inert))]" : "size-4 text-[hsl(var(--control-inert))]"} />
         </button>
       </SheetTrigger>
-      <SheetContent ref={setSheetContentEl} side={isRTL ? "left" : "right"} dir={getLanguageDirection(locale)}>
+      <SheetContent ref={setSheetContentEl} side={isRTL ? "left" : "right"} dir={getLanguageDirection(locale)} closeLabel={t("common.close", "Close")}>
         <SheetHeader>
           <SheetTitle>{t("offlineRecitation.title", "Offline Recitation")}</SheetTitle>
           <SheetDescription className="sr-only">
