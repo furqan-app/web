@@ -20,19 +20,28 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     const reminderSection = page.locator('[data-testid="settings-section-wird-reminder"]');
     await expect(reminderSection).toBeVisible();
 
-    // Toggle reminder switch ON
+    // Toggle reminder switch ON. The time trigger stays disabled until the
+    // toggle's POST roundtrip + refetch settle (no optimistic update), so arm
+    // the save-response wait before clicking — never assert on a fixed sleep.
     const toggle = reminderSection.locator('[data-testid="wird-reminder-toggle"]');
     await expect(toggle).toBeVisible();
 
     const isChecked = (await toggle.getAttribute("data-state")) === "checked";
     if (!isChecked) {
+      const savePromise = page.waitForResponse(
+        (res) =>
+          res.request().method() === "POST" &&
+          res.url().includes("/api/notifications/daily-reminder"),
+        { timeout: 30000 }
+      );
       await toggle.click();
       await expect(toggle).toHaveAttribute("data-state", "checked");
+      await savePromise;
     }
 
     // Open time picker combobox
     const timeTrigger = reminderSection.locator('[data-testid="wird-reminder-time-trigger"]');
-    await expect(timeTrigger).toBeEnabled();
+    await expect(timeTrigger).toBeEnabled({ timeout: 15000 });
     await timeTrigger.click();
 
     // Popover opens
