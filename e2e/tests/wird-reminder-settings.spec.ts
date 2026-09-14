@@ -6,15 +6,15 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     await authenticateAsUser(context);
   });
 
-  test("configures daily reminder time in SettingsSidebar and verifies persistence", async ({
+  test("configures daily reminder time in Reminders tab and verifies persistence", async ({
     page,
   }) => {
     await page.goto("/ar/plans");
 
-    // Open settings sheet
-    const settingsBtn = page.locator('[data-testid="nav-settings-button"]').first();
-    await expect(settingsBtn).toBeVisible();
-    await settingsBtn.click();
+    // Open reminders tab
+    const remindersTab = page.locator('[data-testid="tab-reminders"]');
+    await expect(remindersTab).toBeVisible();
+    await remindersTab.click();
 
     // Verify reminder section is present
     const reminderSection = page.locator('[data-testid="settings-section-wird-reminder"]');
@@ -39,13 +39,9 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     const popover = page.locator('[data-testid="wird-reminder-time-popover"]');
     await expect(popover).toBeVisible();
 
-    // Search for 08:30
-    const searchInput = popover.locator('[data-testid="wird-reminder-time-search"]');
-    await expect(searchInput).toBeVisible();
-    await searchInput.fill("08:30");
-
     // Click 08:30 option
     const option0830 = popover.locator('[data-testid="wird-reminder-time-option-0830"]');
+    await option0830.scrollIntoViewIfNeeded();
     await expect(option0830).toBeVisible();
     await option0830.click();
 
@@ -56,8 +52,8 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     // Reload page and verify settings persisted
     await page.reload();
 
-    const settingsBtnReloaded = page.locator('[data-testid="nav-settings-button"]').first();
-    await settingsBtnReloaded.click();
+    const remindersTabReloaded = page.locator('[data-testid="tab-reminders"]');
+    await remindersTabReloaded.click();
 
     const reloadedToggle = page.locator('[data-testid="wird-reminder-toggle"]');
     await expect(reloadedToggle).toHaveAttribute("data-state", "checked");
@@ -66,7 +62,7 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     await expect(reloadedTimeTrigger).toContainText("٠٨:٣٠");
   });
 
-  test("clicking plans hero reminder row opens settings sidebar with section revealed", async ({
+  test("clicking plans hero reminder row switches to reminders tab with section revealed", async ({
     page,
   }) => {
     await clearUserPlans(1);
@@ -77,6 +73,9 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     const heroRow = page.locator('[data-testid="plans-hero-reminder-row"]');
     await expect(heroRow).toBeVisible();
     await heroRow.click();
+
+    const remindersTab = page.locator('[data-testid="tab-reminders"]');
+    await expect(remindersTab).toHaveAttribute("aria-selected", "true");
 
     const reminderSection = page.locator('[data-testid="settings-section-wird-reminder"]');
     await expect(reminderSection).toBeVisible();

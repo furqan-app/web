@@ -248,7 +248,11 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
 
   // Cadence
   const [cadenceType, setCadenceType] = useState<CustomCadenceType>(
-    existingDef?.cadence.type === "deadline" ? "deadline" : "pace"
+    existingDef?.cadence.type === "deadline"
+      ? "deadline"
+      : existingDef?.cadence.type === "weekly"
+        ? "weekly"
+        : "pace"
   );
   const [pacePeriod, setPacePeriod] = useState<"day" | "week">(
     existingDef?.cadence.type === "pace" && !Number.isInteger(existingDef.cadence.unitsPerDay)
@@ -270,8 +274,21 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
   const [repetitions, setRepetitions] = useState<number>(
     existingDef?.cadence.type === "deadline" ? existingDef.cadence.repetitions ?? 1 : 1
   );
+  // Weekly recurrence due weekday (0 = Sunday … 6 = Saturday). Default Friday.
+  const [weekday, setWeekday] = useState<number>(
+    existingDef?.cadence.type === "weekly" ? existingDef.cadence.weekday : 5
+  );
 
   const [error, setError] = useState<string | null>(null);
+
+  // Localized short weekday names in Sun–Sat order (0–6), resolved once per locale.
+  const weekdayNames = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
+    return Array.from(
+      { length: 7 },
+      (_, i) => fmt.format(new Date(Date.UTC(2026, 0, 4 + i)))
+    );
+  }, [locale]);
 
   // Silently force pacePeriod to "day" if switching to verse mode
   const handleRangeModeChange = (newMode: CustomWirdFormMode) => {
@@ -346,6 +363,7 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
       startDate: getTodayString(),
       endDate: deadlineEndDate,
       repetitions: activity === "memorize" ? 1 : repetitions,
+      weekday,
     });
   }, [
     totalUnits,
@@ -356,6 +374,7 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     deadlineEndDate,
     activity,
     repetitions,
+    weekday,
   ]);
 
   const isRangeFrozen = isEdit && hasProgress;
@@ -390,6 +409,7 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
       paceAmount,
       deadlineEndDate,
       repetitions,
+      weekday,
     };
 
     if (isEdit) {
@@ -757,7 +777,56 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
           >
             {t("plans.custom.cadenceType.deadline", "By deadline")}
           </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={cadenceType === "weekly"}
+            onClick={() => setCadenceType("weekly")}
+            className={cn(
+              "flex-1 min-h-[44px] py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
+              cadenceType === "weekly"
+                ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t("plans.custom.cadenceType.weekly", "Weekly recurrence")}
+          </button>
         </div>
+
+        {/* Sub-form: Weekly recurrence */}
+        {cadenceType === "weekly" ? (
+          <div className="flex flex-col gap-2 pt-1">
+            <span className="text-xs text-muted-foreground text-center">
+              {t("plans.custom.weeklyHint", "Due on the same weekday every week")}
+            </span>
+            <div
+              role="radiogroup"
+              aria-label={t("plans.custom.weekdayLabel", "Due weekday")}
+              className="flex gap-1 p-1 rounded-xl bg-muted/60 border border-border overflow-x-auto fq-scroll-nice"
+            >
+              {weekdayNames.map((dayName, i) => {
+                const isSelected = weekday === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => setWeekday(i)}
+                    className={cn(
+                      "flex-1 min-h-[44px] min-w-[40px] whitespace-nowrap px-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
+                      isSelected
+                        ? "bg-primary text-primary-foreground font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {dayName}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         {/* Sub-form: Pace */}
         {cadenceType === "pace" ? (
@@ -887,7 +956,11 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
         <div className="flex items-center gap-2.5 rounded-xl bg-primary/5 border border-primary/20 px-3.5 py-2.5 text-xs text-primary font-medium mt-1">
           <Sparkles className="size-4 flex-none" />
           <span>
-            {estimate.type === "days"
+            {estimate.type === "weekly"
+              ? tIntl(estimate.textKey, {
+                  weekday: weekdayNames[estimate.weekday ?? weekday] ?? "",
+                })
+              : estimate.type === "days"
               ? tIntl(estimate.textKey, {
                   count: estimate.numericValue,
                   n: toLocaleNumeral(estimate.numericValue, locale),

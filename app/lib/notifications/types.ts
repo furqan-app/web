@@ -72,6 +72,8 @@ export type NotificationStore = {
     channels?: NotificationChannelKey[];
     scheduledFor: Date;
     recurrence?: string | null;
+    /** 0–6 (Date.getUTCDay() convention) for "weekly" recurrence, else null (ADR 0070). */
+    weekday?: number | null;
     timezone?: string | null;
     locale?: string | null;
     dedupeKey?: string;
@@ -105,6 +107,7 @@ export type ScheduledReminderRow = {
   channels: NotificationChannelKey[] | null;
   scheduled_for: Date;
   recurrence: string | null;
+  weekday?: number | null;
   timezone: string | null;
   locale: string | null;
   status: string;

@@ -37,6 +37,11 @@ export type CustomWirdCadence =
       endDate: string;
       /** Repeat count: number of times the full range is covered (K >= 1). Default 1. */
       repetitions?: number;
+    }
+  | {
+      type: "weekly";
+      /** Due weekday: 0 = Sunday … 6 = Saturday (Date.getUTCDay() convention, ADR 0070). */
+      weekday: number;
     };
 
 export type CustomWirdDefinition = {
@@ -57,6 +62,14 @@ export type TrackRule =
       onComplete?: "wrap" | "stop";
       boundsUnit?: PlanUnit;
       repetitions?: number;
+      /**
+       * Optional weekday gate (0 = Sunday … 6 = Saturday, Date.getUTCDay()
+       * convention). When set, the track produces an assignment only on dates
+       * whose local weekday matches — a weekly-recurring custom wird
+       * (ADR 0070). Unset means every day (daily wirds, husun, pace/deadline
+       * custom wirds).
+       */
+      weekday?: number;
     }
   | {
       /** Advance a cursor N units/day through a target range; stops at end. */
@@ -100,9 +113,11 @@ export type PlanTrack = {
 /**
  * Missed-day policy (D4): "cursor" — the plan shifts forward, tomorrow resumes
  * where you stopped; "calendar" — a fixed end date, remaining quantity is
- * recomputed over remaining days (requires params.endDate).
+ * recomputed over remaining days (requires params.endDate); "weekly" —
+ * documentation-only label for weekly-recurring custom wirds (ADR 0070), no
+ * engine branch reads it — the `fixed_cycle` weekday gate governs recurrence.
  */
-export type MissedDayPolicy = "cursor" | "calendar";
+export type MissedDayPolicy = "cursor" | "calendar" | "weekly";
 
 export type PlanTemplate = {
   key: string;
@@ -309,11 +324,38 @@ export const getPlanTemplate = (key: string): PlanTemplate | null =>
 /**
  * Purely constructs a PlanTemplate from a stored CustomWirdDefinition (ADR 0067).
  * Single track with key "custom", deriving cursor_advance for memorize and
- * fixed_cycle (with onComplete: "stop") for read/listen/review.
+ * fixed_cycle (with onComplete: "stop") for read/listen/review — except the
+ * "weekly" cadence, which is a weekday-gated fixed_cycle with onComplete:
+ * "wrap" and defaultUnitsPerDay set to the full range span, regardless of
+ * activity (ADR 0070): the due day's assignment is the entire range in one
+ * shot, recurring indefinitely.
  */
 export const planTemplateFromDefinition = (
   definition: CustomWirdDefinition
 ): PlanTemplate => {
+  if (definition.cadence.type === "weekly") {
+    return {
+      key: "custom",
+      missedDayPolicy: "weekly",
+      tracks: [
+        {
+          key: "custom",
+          activity: definition.activity,
+          unit: definition.unit,
+          rule: {
+            kind: "fixed_cycle",
+            rangeStart: definition.rangeStart,
+            rangeEnd: definition.rangeEnd,
+            boundsUnit: definition.unit,
+            defaultUnitsPerDay: definition.rangeEnd - definition.rangeStart + 1,
+            onComplete: "wrap",
+            weekday: definition.cadence.weekday,
+          },
+        },
+      ],
+    };
+  }
+
   const isMemorize = definition.activity === "memorize";
   const isDeadline = definition.cadence.type === "deadline";
   const defaultUnitsPerDay =

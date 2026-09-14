@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { Check, Loader2, Pause, Play, RotateCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -119,7 +120,14 @@ export const PlanAssignmentRow = ({
       : null;
   // A failed /bounds fetch (or verse-index fetch) must not spin forever —
   // surface it as a retry affordance instead.
+  const [playFailed, setPlayFailed] = useState(false);
+
+  useEffect(() => {
+    setPlayFailed(false);
+  }, [assignment.rangeStart, assignment.rangeEnd, assignment.completed]);
+
   const boundsError = isListen && (isVerseUnit ? verseIndex.isError : startBounds.isError || endBoundsQuery.isError);
+  const hasError = boundsError || playFailed;
   const boundsLoading = isListen && !bounds && !boundsError;
 
   // Identity, not page overlap: an unrelated session (player bar, MarkModal)
@@ -140,7 +148,7 @@ export const PlanAssignmentRow = ({
   };
   const rangeLabel = formatRangeText(assignment.rangeStart, assignment.rangeEnd);
 
-  const handlePlayTap = () => {
+  const handlePlayTap = async () => {
     if (isRowLoading) return;
     if (boundsError) {
       if (isVerseUnit) verseIndex.refetch();
@@ -155,14 +163,18 @@ export const PlanAssignmentRow = ({
       togglePlayPause();
       return;
     }
+    setPlayFailed(false);
     const trackLabel = planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey);
-    play(bounds.firstVerseKey, {
+    const success = await play(bounds.firstVerseKey, {
       stopVerseKey: bounds.lastVerseKey,
       stopChapterId: bounds.lastChapterId,
       rangeRepeatCount: assignment.repetitions ?? 1,
       id: sessionId,
       label: `${trackLabel} · ${rangeLabel}`,
     });
+    if (!success) {
+      setPlayFailed(true);
+    }
   };
 
   return (
@@ -178,17 +190,22 @@ export const PlanAssignmentRow = ({
           aria-label={
             isRowLoading
               ? t("plans.playback.loading", "Loading")
-              : boundsError
+              : hasError
                 ? t("plans.playback.retry", "Retry loading")
                 : isRowPlaying
                   ? t("plans.playback.pause", "Pause")
                   : t("plans.playback.play", "Play")
           }
-          className="grid place-items-center size-8 rounded-lg bg-primary/10 text-primary flex-none disabled:cursor-default disabled:opacity-50"
+          className={cn(
+            "grid place-items-center size-8 rounded-lg flex-none disabled:cursor-default disabled:opacity-50 transition-colors",
+            hasError
+              ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+              : "bg-primary/10 text-primary hover:bg-primary/15"
+          )}
         >
           {isRowLoading ? (
             <Loader2 className="size-4 animate-spin" strokeWidth={1.7} />
-          ) : boundsError ? (
+          ) : hasError ? (
             <RotateCw className="size-4" strokeWidth={1.7} />
           ) : isRowPlaying ? (
             <Pause className="size-4" strokeWidth={1.7} />
@@ -234,6 +251,11 @@ export const PlanAssignmentRow = ({
                 )}
                 {rangeLabel}
                 {assignment.repetitions ? ` · ×${toLocaleNumeral(assignment.repetitions, locale)}` : ""}
+                {playFailed ? (
+                  <span className="text-destructive ms-1 font-medium">
+                    · {t("plans.playback.failed", "Playback failed")}
+                  </span>
+                ) : null}
               </div>
               {assignment.completed && assignment.next ? (
                 <div className="text-xs text-muted-foreground/70">

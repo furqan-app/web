@@ -68,7 +68,7 @@ export const ProgressEmptyState = () => {
 interface HeatmapCellProps {
   day: DashboardHeatmapDay;
   locale: string;
-  onSelectTab?: (tab: "today" | "progress" | "plans") => void;
+  onSelectTab?: (tab: "today" | "progress" | "plans" | "reminders") => void;
 }
 
 const HeatmapCell = ({ day, locale, onSelectTab }: HeatmapCellProps) => {
@@ -137,7 +137,7 @@ interface HeatmapWeek {
 
 export interface PlansProgressTabProps {
   hasPlans?: boolean;
-  onSelectTab?: (tab: "today" | "progress" | "plans") => void;
+  onSelectTab?: (tab: "today" | "progress" | "plans" | "reminders") => void;
 }
 
 export const PlansProgressTab = ({ hasPlans = true, onSelectTab }: PlansProgressTabProps) => {

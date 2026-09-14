@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
-import useTranslations from "@/app/hooks/use-translations";
 import {
   Popover,
   PopoverContent,
@@ -12,9 +11,7 @@ import {
 } from "@/components/ui/popover";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
@@ -26,7 +23,6 @@ export type TimeComboboxProps = {
   className?: string;
   triggerTestId?: string;
   popoverTestId?: string;
-  searchTestId?: string;
   portalContainer?: HTMLElement | null;
 };
 
@@ -64,10 +60,8 @@ export function TimeCombobox({
   className,
   triggerTestId = "wird-reminder-time-trigger",
   popoverTestId = "wird-reminder-time-popover",
-  searchTestId = "wird-reminder-time-search",
   portalContainer,
 }: TimeComboboxProps) {
-  const t = useTranslations();
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -114,35 +108,17 @@ export function TimeCombobox({
         container={portalContainer}
       >
         <Command>
-          <CommandInput
-            data-testid={searchTestId}
-            placeholder={t("notifications.settings.searchTime", "Search time…")}
-          />
           <CommandList ref={listRef} className="fq-scroll-nice max-h-56">
-            <CommandEmpty>
-              {t("notifications.settings.noTimeMatch", "No matching time.")}
-            </CommandEmpty>
             <CommandGroup>
               {TIME_OPTIONS.map((time) => {
                 const isSelected = value === time;
                 const formatted = formatTimeOption(time, locale);
-                const [hStr, mStr] = time.split(":");
-                const hNum = parseInt(hStr, 10);
-                const h12 = hNum % 12 === 0 ? 12 : hNum % 12;
-                const arTime = toArabicDigits(time);
-                const arH12 = toArabicDigits(String(h12));
-                const arMin = toArabicDigits(mStr);
-                const keywords =
-                  hNum < 12
-                    ? "am morning ص صباحا صباحاً"
-                    : "pm evening م مساء مساءً";
-                const searchKeywords = `${time} ${time.replace(":", "")} ${h12}:${mStr} ${h12}${mStr} ${arTime} ${arH12}:${arMin} ${formatted} ${keywords}`;
                 const optionKey = time.replace(":", "");
 
                 return (
                   <CommandItem
                     key={time}
-                    value={searchKeywords}
+                    value={time}
                     data-testid={`wird-reminder-time-option-${optionKey}`}
                     onSelect={() => {
                       onChange(time);

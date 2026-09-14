@@ -44,7 +44,7 @@ const getTimezoneOffsetMs = (date: Date, timeZone: string): number => {
 };
 
 /** One day forward, preserving the same local wall-clock time in `timeZone` (DST-corrected). */
-const advanceOneDay = (from: Date, timeZone: string): Date => {
+export const advanceOneDay = (from: Date, timeZone: string): Date => {
   const offsetBefore = getTimezoneOffsetMs(from, timeZone);
   const naiveNext = new Date(from.getTime() + DAY_MS);
   const offsetAfter = getTimezoneOffsetMs(naiveNext, timeZone);
@@ -53,11 +53,15 @@ const advanceOneDay = (from: Date, timeZone: string): Date => {
 };
 
 /**
- * Pure: the next `daily`-recurrence instant that preserves the same local
- * wall-clock time in `timezone`, correcting for DST — and is strictly after
- * `now`. A single `scheduledFor + 1 day` is not enough: after a cron outage
- * longer than 24h, that would still land in the past and the reminder would
- * re-fire on every subsequent poll until it caught up. Non-"daily" recurrence
+ * Pure: the next `daily`/`weekly`-recurrence instant that preserves the same
+ * local wall-clock time in `timezone`, correcting for DST — and is strictly
+ * after `now`. A single `scheduledFor + 1 day` is not enough: after a cron
+ * outage longer than 24h, that would still land in the past and the reminder
+ * would re-fire on every subsequent poll until it caught up. The `weekly`
+ * branch advances by seven sequential DST-corrected single-day steps per
+ * iteration (reusing `advanceOneDay`, never a new date-math primitive) —
+ * advancing by exactly 7 calendar days preserves the target weekday
+ * indefinitely without tracking it here. Non-"daily"/"weekly" recurrence
  * (including null/one-shot) returns `scheduledFor` unchanged — callers only
  * advance recurring reminders.
  */
@@ -67,13 +71,23 @@ export const nextOccurrence = (
   timezone: string | null,
   now: Date
 ): Date => {
-  if (recurrence !== "daily") return scheduledFor;
+  if (recurrence !== "daily" && recurrence !== "weekly") return scheduledFor;
 
   const tz = timezone ?? "UTC";
-  let next = advanceOneDay(scheduledFor, tz);
+  const advance = (from: Date): Date => {
+    if (recurrence === "weekly") {
+      let next = from;
+      for (let i = 0; i < 7; i++) {
+        next = advanceOneDay(next, tz);
+      }
+      return next;
+    }
+    return advanceOneDay(from, tz);
+  };
+  let next = advance(scheduledFor);
   let steps = 0;
   while (next.getTime() <= now.getTime() && steps < MAX_ADVANCE_STEPS) {
-    next = advanceOneDay(next, tz);
+    next = advance(next);
     steps++;
   }
   return next;
@@ -82,7 +96,7 @@ export const nextOccurrence = (
 /** Pure: is this reminder due at `now`? */
 export const isDue = (scheduledFor: Date, now: Date): boolean => scheduledFor.getTime() <= now.getTime();
 
-export const scheduleReminder = (
+export const   scheduleReminder = (
   store: NotificationStore,
   input: {
     userId: number;
@@ -90,7 +104,8 @@ export const scheduleReminder = (
     payload: unknown;
     channels?: NotificationChannelKey[];
     scheduledFor: Date;
-    recurrence?: "daily" | null;
+    recurrence?: "daily" | "weekly" | null;
+    weekday?: number | null;
     timezone?: string | null;
     locale?: string | null;
     dedupeKey?: string;

@@ -5,7 +5,7 @@ import { pageOfVerse, verseKeyOfOrdinal } from "@/app/lib/plans/verse-index";
 import type { PlanDailyReminderPayload } from "@/app/constants/notifications";
 
 export type WirdDispatchResolution =
-  | { shouldSend: false; reason: "all_completed" | "no_active_plans" | "plan_not_active" }
+  | { shouldSend: false; reason: "all_completed" | "no_active_plans" | "plan_not_active" | "not_due_today" }
   | { shouldSend: true; payload: PlanDailyReminderPayload };
 
 const toSafeTimeZone = (timeZone: string): string => {
@@ -147,7 +147,12 @@ export async function resolveGeneralWirdDispatch(
 
   const pending = allAssignments.filter((a) => !a.completed);
   if (pending.length === 0) {
-    return { shouldSend: false, reason: "all_completed" };
+    // Weekday gating (ADR 0070) makes deriveAssignments return [] on
+    // non-due days — "nothing due today" is distinct from "everything done".
+    return {
+      shouldSend: false,
+      reason: allAssignments.length === 0 ? "not_due_today" : "all_completed",
+    };
   }
 
   return {
@@ -195,7 +200,10 @@ export async function resolveDedicatedWirdDispatch(
 
   const pending = assignments.filter((a) => !a.completed);
   if (pending.length === 0) {
-    return { shouldSend: false, reason: "all_completed" };
+    return {
+      shouldSend: false,
+      reason: assignments.length === 0 ? "not_due_today" : "all_completed",
+    };
   }
 
   const planName = plan.name || null;

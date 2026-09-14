@@ -13,31 +13,7 @@ import {
   type UserPlanParams,
 } from "@/app/constants/plans";
 import { MUSHAF_FIRST_VERSE, MUSHAF_LAST_VERSE } from "@/app/lib/plans/verse-index";
-
-type ProgressDbClient = Pick<typeof appPrisma, "planProgressEntry">;
-
-const isCustomPlanCompleted = async (
-  planId: number,
-  definition: CustomWirdDefinition,
-  db: ProgressDbClient = appPrisma
-): Promise<boolean> => {
-  if (definition.activity === "memorize") {
-    const entries = await db.planProgressEntry.findMany({
-      where: { user_plan_id: planId, track_key: "custom" },
-    });
-    return entries.some((e) => Number(e.range_end) >= definition.rangeEnd);
-  }
-
-  const K = definition.cadence.type === "deadline" ? (definition.cadence.repetitions ?? 1) : 1;
-  const endCount = await db.planProgressEntry.count({
-    where: {
-      user_plan_id: planId,
-      track_key: "custom",
-      range_end: String(definition.rangeEnd),
-    },
-  });
-  return endCount >= K;
-};
+import { isCustomPlanCompleted } from "@/app/lib/plans/custom-plan-completion";
 
 export type PlanProgressHistoryEntry = {
   id: number;

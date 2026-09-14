@@ -31,6 +31,7 @@ import {
   type PageRelevantAssignment,
 } from "@/app/lib/plans/assignment-range";
 import type { PlanVerseIndex } from "@hooks/use-plan-verse-index";
+export type { PlanVerseIndex };
 
 export type ActiveOffer = {
   planId: number;
@@ -42,6 +43,7 @@ export type AutoWriteNotice = {
   planId: number;
   trackKey: string;
   activity: TrackAssignment["activity"];
+  isDismissing?: boolean;
 };
 
 export type UseSmartCompletionOptions = {
@@ -58,6 +60,8 @@ export type UseSmartCompletionOptions = {
     trackKey: string;
     rangeStart: number;
     rangeEnd: number;
+    onSuccess?: () => void;
+    onError?: (err: unknown) => void;
   }) => void;
   onUncheckOff: (input: { planId: number; trackKey: string }) => void;
   onStartFlourish: () => void;
@@ -187,7 +191,18 @@ export function useSmartCompletion({
   const playbackTrackKeyRef = useRef<string | null>(null);
   const lastVerseKeyRef = useRef<string | null>(null);
   const autoWriteNoticeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingAutoWriteRef = useRef<Set<string>>(new Set());
   const dwellDayRef = useRef<string>(getLocalDateString());
+
+  // Cleanup autoWrite timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoWriteNoticeTimerRef.current) {
+        clearTimeout(autoWriteNoticeTimerRef.current);
+        autoWriteNoticeTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Synchronize visible pages with dwell state
   useEffect(() => {
@@ -196,6 +211,10 @@ export function useSmartCompletion({
     // Dismiss active offer and auto-write notice on page turn
     setActiveOffer(null);
     setAutoWriteNotice(null);
+    if (autoWriteNoticeTimerRef.current) {
+      clearTimeout(autoWriteNoticeTimerRef.current);
+      autoWriteNoticeTimerRef.current = null;
+    }
   }, [enabled, visiblePages]);
 
   // Visibility/focus listeners for dwell foreground detection
@@ -229,22 +248,36 @@ export function useSmartCompletion({
         // Suppressed for 30 minutes on this page
         return;
       }
+      if (pendingAutoWriteRef.current.has(cooldownKey)) {
+        // Already in flight
+        return;
+      }
 
       // Per-user opt-in; an unknown user (signed-out or transient session)
       // reads as OFF, never as whatever another account stored.
       const autoWriteEnabled = isAutoWriteEnabled(userId);
 
       if (autoWriteEnabled) {
+        pendingAutoWriteRef.current.add(cooldownKey);
+        dismissedOffersRef.current.set(cooldownKey, Date.now());
+
         // Option B: Opt-in automatic completion
         onCheckOff({
           planId,
           trackKey: assignment.trackKey,
           rangeStart: assignment.rangeStart,
           rangeEnd: assignment.rangeEnd,
+          onSuccess: () => {
+            pendingAutoWriteRef.current.delete(cooldownKey);
+            const todayDate = getLocalDateString();
+            recordAutoWritten(userId, planId, assignment.trackKey, todayDate);
+          },
+          onError: (err) => {
+            console.error("[useSmartCompletion] Auto-write check-off failed:", err);
+            pendingAutoWriteRef.current.delete(cooldownKey);
+            setAutoWriteNotice(null);
+          },
         });
-
-        const todayDate = getLocalDateString();
-        recordAutoWritten(userId, planId, assignment.trackKey, todayDate);
 
         setAutoWriteNotice({
           planId,
@@ -254,14 +287,17 @@ export function useSmartCompletion({
 
         onStartFlourish();
 
-        // Acknowledgement pill stays visible through flourish
+        // Acknowledgement pill stays visible through flourish (5.7s display + 300ms fade-out)
         if (autoWriteNoticeTimerRef.current) {
           clearTimeout(autoWriteNoticeTimerRef.current);
         }
         autoWriteNoticeTimerRef.current = setTimeout(() => {
-          setAutoWriteNotice(null);
-          autoWriteNoticeTimerRef.current = null;
-        }, 5000);
+          setAutoWriteNotice((prev) => (prev ? { ...prev, isDismissing: true } : null));
+          autoWriteNoticeTimerRef.current = setTimeout(() => {
+            setAutoWriteNotice(null);
+            autoWriteNoticeTimerRef.current = null;
+          }, 300);
+        }, 5700);
       } else {
         // Option A: Smart nudge offer
         setActiveOffer({
@@ -348,10 +384,41 @@ export function useSmartCompletion({
       return;
     }
 
-    // Find active listening assignment matching current recitation session
-    const activeItem = uncompletedListenAssignments.find(
-      (r) => activeOverrideId === planPlaybackSessionId(r.plan.planId, r.assignment.trackKey),
-    );
+    // Find active listening assignment matching current recitation session:
+    // 1. Explicit override when playback is started from the wird row's button.
+    // 2. Current reciting verse key matching the assignment's verse keys.
+    // 3. Previously tracked assignment session on pause/idle stop to finalize.
+    // 4. Single uncompleted listening assignment on the page if current verse is not yet emitted.
+    const explicitItem = activeOverrideId
+      ? uncompletedListenAssignments.find(
+          (r) => activeOverrideId === planPlaybackSessionId(r.plan.planId, r.assignment.trackKey),
+        )
+      : undefined;
+
+    const verseMatchingItem =
+      currentVerseKey && verseIndex
+        ? uncompletedListenAssignments.find((r) => {
+            const targetKeys = getTargetVerseKeysForAssignment(r.assignment, verseIndex);
+            return targetKeys.includes(currentVerseKey);
+          })
+        : undefined;
+
+    const previousItem = playbackTrackKeyRef.current
+      ? uncompletedListenAssignments.find(
+          (r) => r.assignment.trackKey === playbackTrackKeyRef.current,
+        )
+      : undefined;
+
+    const fallbackSingleItem =
+      !currentVerseKey && uncompletedListenAssignments.length === 1
+        ? uncompletedListenAssignments[0]
+        : undefined;
+
+    const activeItem =
+      explicitItem ??
+      verseMatchingItem ??
+      (recitationStatus === "idle" ? previousItem : undefined) ??
+      fallbackSingleItem;
 
     if (!activeItem || recitationStatus === "idle") {
       // If playback stopped or session ended, check if criteria were met
@@ -360,6 +427,8 @@ export function useSmartCompletion({
         if (result.isMet) {
           handleCriterionMet(activeItem.plan.planId, activeItem.plan.name, activeItem.assignment);
         }
+        playbackStateRef.current = null;
+        playbackTrackKeyRef.current = null;
       }
       return;
     }

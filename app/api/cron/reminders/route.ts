@@ -88,7 +88,7 @@ const handle = async (request: NextRequest) => {
           });
           skipped++;
           try {
-            if (reminder.recurrence === "daily") {
+            if (reminder.recurrence === "daily" || reminder.recurrence === "weekly") {
               const next = nextOccurrence(reminder.scheduled_for, reminder.recurrence, reminder.timezone, now);
               await deps.store.rescheduleReminder(reminder.id, next, null, reminder.updated_at);
             } else {
@@ -106,7 +106,7 @@ const handle = async (request: NextRequest) => {
         deps.logger.error("notifications.cron.wird_resolver_failed", { reminderId: reminder.id, error: message });
         failed++;
         try {
-          if (reminder.recurrence === "daily") {
+          if (reminder.recurrence === "daily" || reminder.recurrence === "weekly") {
             const next = nextOccurrence(reminder.scheduled_for, reminder.recurrence, reminder.timezone, now);
             await deps.store.rescheduleReminder(reminder.id, next, message, reminder.updated_at);
           } else {
@@ -146,7 +146,7 @@ const handle = async (request: NextRequest) => {
     // The notification already went out — a failure past this point must
     // never re-label a delivered reminder as "failed" (that would be a lie).
     try {
-      if (reminder.recurrence === "daily") {
+      if (reminder.recurrence === "daily" || reminder.recurrence === "weekly") {
         const next = nextOccurrence(reminder.scheduled_for, reminder.recurrence, reminder.timezone, now);
         await deps.store.rescheduleReminder(reminder.id, next, null, reminder.updated_at);
       } else {

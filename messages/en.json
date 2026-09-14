@@ -274,7 +274,8 @@
     "tabs": {
       "today": "Today's Tasks",
       "progress": "Progress",
-      "manage": "My Plans"
+      "manage": "My Plans",
+      "reminders": "Reminders"
     },
     "dashboard": {
       "title": "Progress & Milestones",
@@ -330,7 +331,8 @@
       "play": "Play",
       "pause": "Pause",
       "loading": "Loading",
-      "retry": "Retry loading"
+      "retry": "Retry loading",
+      "failed": "Playback failed"
     },
     "pagesPerDay": "pages/day",
     "versesPerDay": "verses/day",
@@ -430,8 +432,11 @@
       "cadenceLabel": "Schedule",
       "cadenceType": {
         "pace": "By pace",
-        "deadline": "By deadline"
+        "deadline": "By deadline",
+        "weekly": "Weekly recurrence"
       },
+      "weekdayLabel": "Due weekday",
+      "weeklyHint": "Due on the same weekday every week",
       "period": {
         "day": "Daily",
         "week": "Weekly"
@@ -449,7 +454,8 @@
       "estimate": {
         "days": "≈ {count, plural, one {{n} day} other {{n} days}} to complete",
         "pace": "≈ {pace} (re-adjusts on missed days)",
-        "paceWithDays": "≈ {pace} (finishes in {daysCount, plural, one {1 day} other {{daysN} days}})"
+        "paceWithDays": "≈ {pace} (finishes in {daysCount, plural, one {1 day} other {{daysN} days}})",
+        "weekly": "Every {weekday}"
       },
       "rangeFrozen": "Target range is locked because progress has been logged",
       "verseWeeklyUnavailable": "Weekly pace is not available for verses; specify daily verses or set a deadline",
@@ -580,6 +586,7 @@
     "surahSearchPlaceholder": "Search surahs…",
     "surahEmpty": "No surah found.",
     "offlineUnavailable": "Not available offline",
+    "playbackFailed": "Playback failed",
     "repeatCycleOff": "No ayah repetition",
     "repeatCycleTimes": "Repeat current ayah {n} times",
     "repeatCycleInfinite": "Repeat current ayah endlessly",
@@ -618,10 +625,14 @@
       "wirdReminderTitle": "Daily Wird Reminders",
       "wirdReminderDescription": "Daily reminders to keep up with your Quran reading at your preferred times (up to 3 times)",
       "wirdReminderSlotLabel": "Reminder {n}",
+      "wirdReminderRecurrence": "Repeat",
+      "wirdReminderDaily": "Daily",
+      "wirdReminderWeekly": "Weekly",
       "wirdReminderAdd": "Add another time",
       "wirdReminderRemove": "Remove this reminder",
       "wirdReminderMaxReached": "Maximum of 3 general reminders reached",
       "allPlansBoundNotice": "All your active plans have dedicated reminders. General reminders will not send alerts until an unbound plan is active.",
+      "dedicatedNoticeOnDisable": "General reminders are turned off. Dedicated reminders for specific plans remain active and can be managed from each plan's card under My Plans.",
       "wirdReminderTime": "Reminder Time",
       "wirdReminderPushBlocked": "Push notifications are blocked in your browser. Enable them in browser settings to receive reminders.",
       "wirdReminderEnablePush": "Enable push notifications on this device",
