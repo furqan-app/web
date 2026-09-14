@@ -93,3 +93,6 @@ call returns `path:"no-token"` and the caller degrades to the terminal — nothi
   `.env.local` or Hostinger's env panel.
 - Every escalation carries an explicit terminal state — a `default` or a `halt`. An agent that
   blocks forever on a Slack reply is worse than one that guesses.
+- A reply landing after the timeout is **informational only** — the applied decision stands and
+  is recorded; the thread stays for audit. Override by re-invoking the task (`--from` the phase
+  to redo).
