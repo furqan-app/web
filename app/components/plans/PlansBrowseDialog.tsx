@@ -352,6 +352,7 @@ export const PlansBrowseDialog = ({
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
       <DialogContent
+        closeLabel={t("common.close", "Close")}
         className={cn(
           "w-[calc(100vw-2rem)] max-h-[85dvh] grid-cols-[minmax(0,1fr)] overflow-y-auto rounded-[20px] fq-scroll-nice",
           view === "custom" ? "sm:max-w-lg p-5 sm:p-6" : "max-w-[360px] p-5"

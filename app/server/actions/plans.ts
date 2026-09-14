@@ -121,36 +121,60 @@ export const updatePlanParams = async ({
   }
 };
 
+export type EnrollCustomPlanResult = {
+  plan: UserPlanListItem | null;
+  /** Server's `message` on failure (e.g. a 422 range error); null when the body carries none. */
+  errorMessage: string | null;
+};
+
+export type UpdateCustomPlanResult = {
+  success: boolean;
+  /** Server's `message` on failure (e.g. a 422 range error); null when the body carries none. */
+  errorMessage: string | null;
+};
+
+const readErrorMessage = (body: unknown): string | null => {
+  const message = (body as { message?: unknown } | null)?.message;
+  return typeof message === "string" && message.length > 0 ? message : null;
+};
+
 export const enrollCustomPlan = async (
   body: CreateCustomPlanBody
-): Promise<UserPlanListItem | null> => {
+): Promise<EnrollCustomPlanResult> => {
   try {
-    const { data, success } = await fetch("/api/plans", {
+    const json = await fetch("/api/plans", {
       method: "POST",
       headers: JSON_HEADERS,
       body: JSON.stringify(body),
     }).then((r) => r.json());
-    return success ? data : null;
+    const { data, success } = json;
+    return success
+      ? { plan: data, errorMessage: null }
+      : { plan: null, errorMessage: readErrorMessage(json) };
   } catch (e) {
     console.error(e);
-    return null;
+    return { plan: null, errorMessage: null };
   }
 };
 
 export const updateCustomPlan = async ({
   planId,
   ...body
-}: { planId: number } & PatchCustomPlanBody): Promise<boolean> => {
+}: { planId: number } & PatchCustomPlanBody): Promise<UpdateCustomPlanResult> => {
   try {
-    const { success } = await fetch(`/api/plans/${planId}`, {
+    const json = await fetch(`/api/plans/${planId}`, {
       method: "PATCH",
       headers: JSON_HEADERS,
       body: JSON.stringify(body),
     }).then((r) => r.json());
-    return Boolean(success);
+    const ok = Boolean(json.success);
+    return {
+      success: ok,
+      errorMessage: ok ? null : readErrorMessage(json),
+    };
   } catch (e) {
     console.error(e);
-    return false;
+    return { success: false, errorMessage: null };
   }
 };
 

@@ -65,6 +65,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
       <SheetContent
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
+        closeLabel={t("common.close", "Close")}
         className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
         <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-5 border-b border-border/70 text-start">

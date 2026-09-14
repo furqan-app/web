@@ -548,10 +548,20 @@ Namespace: `plans.custom.*`
 - Enforcement: Repetitions hidden/forced to 1 when `activity === "memorize"`.
 
 ### 3. E2E Verification (`e2e/tests/plans-custom-wird.spec.ts`)
+
+> **Status: DISABLED.** The spec is wrapped in `test.describe.skip` with a `TODO(#610-followup)` comment. It was authored alongside the feature but never run before merge; it has real selector/strict-mode issues against the shipped DOM (duplicate "تعديل" / "المقدار" matches once a plan card + its per-card `PlansBrowseDialog` are mounted, plus radiogroup vs tab semantics).
+
+**What actually covers the feature today:**
+- Colocated unit tests: estimate helper tests (`app/lib/plans/custom-wird-estimate.test.ts`) and state-mapping/validation tests (`app/components/plans/custom-wird-form.test.ts`) documented in subsections 1–2 above.
+- Manual browser verification at merge time in both ar and en locales, dark and light themes.
+
+**Intended-but-unexecuted E2E flow** (the spec's original 4 steps, not passing coverage):
 - Clicking "ورد مخصص" in `PlansBrowseDialog` opens the custom wird creation form.
 - Filling Name, choosing Surah range (Al-Kahf, 18), setting pace 2 pages/day, and creating the plan.
 - Verifying the newly created custom wird card appears in `/plans` under "My Plans" with correct parameters summary.
 - Clicking "Edit" on the custom plan card, changing pace from 2 to 4 pages/day, saving, and verifying updated params.
+
+**What re-enabling requires:** Fix the selectors locally against `npm run e2e:serve` (address the duplicate-match and radiogroup-vs-tab issues), then un-skip the `describe` block. A half-fixed spec is worse than an honest doc.
 
 ---
 
@@ -598,7 +608,7 @@ Namespace: `plans.custom.*`
 | `app/api/plans/route.ts` | **MODIFY**: Include `has_progress` flag on `UserPlanListItem` via `_count.progress`. | +15 lines |
 | `messages/en.json` | **MODIFY**: Add `plans.custom.*` namespace and update custom wird card description. | +45 lines |
 | `messages/ar.json` | **MODIFY**: Add `plans.custom.*` Arabic keys and update custom wird card description. | +45 lines |
-| `e2e/tests/plans-custom-wird.spec.ts` | **NEW**: Playwright E2E testing creation, preview, and edit flows for custom wirds. | +120 lines |
+| `e2e/tests/plans-custom-wird.spec.ts` | **NEW (DISABLED)**: Playwright E2E spec authored but `describe.skip` due to selector/strict-mode issues against shipped DOM. Not yet run. | +120 lines |
 
 ---
 

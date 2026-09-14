@@ -10,6 +10,7 @@
 import {
   MUSHAF_FIRST_PAGE,
   MUSHAF_LAST_PAGE,
+  PLAN_DATE_RE,
   independentTrackKeys,
   independentTrackUnit,
   type PlanTemplate,
@@ -182,6 +183,13 @@ export const resolvePlanParams = async (
     params.targetStart > params.targetEnd
   ) {
     return { error: "params.targetStart must be <= params.targetEnd" };
+  }
+
+  if (
+    params.endDate !== undefined &&
+    !PLAN_DATE_RE.test(params.endDate)
+  ) {
+    return { error: "Invalid params.endDate" };
   }
 
   if (params.quantities) {
