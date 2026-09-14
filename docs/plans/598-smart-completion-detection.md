@@ -493,6 +493,20 @@ has landed, which holds on a fast runner and breaks under CI load.
   `POST /api/notifications/daily-reminder` before the toggle click; await it after the toggle
   reads checked, then assert the time trigger enabled with a 15s timeout.
 
+### Round 2 (PR #641 CI, 2026-09-14)
+Round 1 fixed its three targets (all passed) but the run surfaced three more sync failures:
+- `word-marking:1031` (sign-out, hard fail): `signOut()` hard-navigates; the spec's `page.reload()`
+  fired mid-navigation → `net::ERR_ABORTED, frame detached`. Fix: arm `page.waitForNavigation`
+  before clicking "sign out anyway" (tolerant catch — the cookie poll + reload still rule if the
+  path ever stops navigating), await it before the cookie poll + reload.
+- `plans-progress-dashboard:14` (flaky): dashboard fetch awaited, but section render stalled past
+  the 5s default under load. Fix: 30s visibility timeouts on the three section locators.
+- `word-marking:203` (still flaky): 30s of no-highlight means the mark never reached the server
+  pre-reload — the save writes the store synchronously but pushes async, and a pre-push reload
+  lets the post-reload pull reconcile the mark away as absent-from-server. Fix: poll the local
+  mark to `sync === "synced"` before `page.reload()` (same `getLocalMark` pattern the sign-out
+  tests already use for `pending`).
+
 ### Constraints
 - Test-only change: no `app/`, schema, SW, or copy changes. The app's fire-and-forget mutation
   shape is intentional (React Query); the specs must synchronize to it, not the reverse.

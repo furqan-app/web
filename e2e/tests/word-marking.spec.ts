@@ -222,6 +222,15 @@ test.describe("Reload Persistence & Modal Edit Mode", () => {
     await expect(initialDialog).toBeHidden();
     await expect(firstWord).toHaveClass(/bg-red-400/, { timeout: 10000 });
 
+    // Server-persistence gate: the save writes the store synchronously but
+    // pushes async — reloading while still pending lets the post-reload pull
+    // reconcile the mark away as absent-from-server. Never reload pre-push.
+    await expect
+      .poll(async () => (await getLocalMark(page, "word:1:1:1"))?.sync, {
+        timeout: 30000,
+      })
+      .toBe("synced");
+
     // Hard reload
     await page.reload();
     await waitForReaderContent(page);
@@ -1052,7 +1061,16 @@ test.describe("Offline & Guest Marking (ADR 0061)", () => {
 
     await page.getByRole("button", { name: "حسابي" }).first().click();
     await page.getByRole("menuitem", { name: "تسجيل الخروج" }).click();
+    // signOut() hard-navigates; reloading mid-navigation detaches the frame
+    // (net::ERR_ABORTED). Arm the navigation wait before clicking, so the
+    // reload below only fires once the sign-out navigation has settled.
+    // Tolerant: if this path ever stops navigating, the cookie poll + reload
+    // below still rule.
+    const signOutNav = page
+      .waitForNavigation({ timeout: 30000 })
+      .catch(() => undefined);
     await page.getByRole("button", { name: "تسجيل الخروج على أي حال" }).click();
+    await signOutNav;
 
     // Session is gone — the NextAuth session cookie is cleared from the context.
     await expect

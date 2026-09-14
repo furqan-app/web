@@ -34,13 +34,13 @@ test.describe("Plans Page: Progress Dashboard Tab (#599)", () => {
     await expect(dashboardPanel).toBeVisible();
 
     const streaksGrid = page.locator('[data-testid="progress-streaks-grid"]');
-    await expect(streaksGrid).toBeVisible();
+    await expect(streaksGrid).toBeVisible({ timeout: 30000 });
 
     const totalsCard = page.locator('[data-testid="progress-totals-card"]');
-    await expect(totalsCard).toBeVisible();
+    await expect(totalsCard).toBeVisible({ timeout: 30000 });
 
     const heatmap = page.locator('[data-testid="progress-heatmap-card"]');
-    await expect(heatmap).toBeVisible();
+    await expect(heatmap).toBeVisible({ timeout: 30000 });
   });
 
   test("renders calm empty state when user has zero plans", async ({ page }) => {
