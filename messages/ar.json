@@ -62,6 +62,9 @@
     "ayahRangeHint": "اختر رقمًا بين ١ و {max}",
     "ayahChipLabel": "آية {n}"
   },
+  "common": {
+    "close": "إغلاق"
+  },
   "signInModal": {
     "description": "سجّل الدخول لتحديد الكلمات والآيات في القرآن."
   },

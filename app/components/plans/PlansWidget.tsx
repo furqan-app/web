@@ -525,7 +525,7 @@ export const PlansWidget = () => {
           </span>
         </SheetTrigger>
 
-        <SheetContent side="bottom" className="max-h-[70dvh] overflow-y-auto fq-scroll-nice">
+        <SheetContent side="bottom" closeLabel={t("common.close", "Close")} className="max-h-[70dvh] overflow-y-auto fq-scroll-nice">
           <SheetHeader>
             <SheetTitle>{t("plans.widget.title", "Today's wird")}</SheetTitle>
             <SheetDescription className="sr-only">

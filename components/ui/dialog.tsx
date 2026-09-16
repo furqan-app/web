@@ -33,8 +33,9 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     hideDefaultClose?: boolean;
+    closeLabel?: string;
   }
->(({ className, children, hideDefaultClose, ...props }, ref) => (
+>(({ className, children, hideDefaultClose, closeLabel = "Close", ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -50,7 +51,7 @@ const DialogContent = React.forwardRef<
       {!hideDefaultClose && (
         <DialogPrimitive.Close className="fq-focus-ring fq-control-live absolute end-4 top-4 rounded-full p-1.5 opacity-70 transition-[opacity,background-color,color] duration-150 hover:opacity-100 hover:bg-accent hover:text-accent-foreground active:scale-90 motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none">
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{closeLabel}</span>
         </DialogPrimitive.Close>
       )}
     </DialogPrimitive.Content>
