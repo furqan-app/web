@@ -161,10 +161,24 @@ test.describe("Awrad Smart Completion Detection (#598)", () => {
     const badge = page.getByTestId("auto-recorded-badge");
     await expect(badge).toBeVisible();
 
-    // Durable Reversal: uncheck the assignment
+    // Durable Reversal: uncheck the assignment. The badge hides instantly via
+    // a synchronous localStorage clear, so it cannot gate the DB assertion —
+    // synchronize on the DELETE roundtrip plus the server-driven toggle state.
     const toggleBtn = page.getByTestId("plan-assignment-toggle").first();
     await expect(toggleBtn).toBeVisible();
+    const deletePromise = page.waitForResponse(
+      (res) =>
+        res.request().method() === "DELETE" &&
+        res.url().includes(`/api/plans/${planId}/progress`),
+      { timeout: 30000 }
+    );
     await toggleBtn.click();
+    await deletePromise;
+
+    // Server-driven uncompleted state (flips only after the today refetch lands)
+    await expect(toggleBtn).toHaveAttribute("aria-pressed", "false", {
+      timeout: 15000,
+    });
 
     // Auto-recorded badge must be removed upon reversal
     await expect(badge).not.toBeVisible();
