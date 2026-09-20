@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-96 active plans.
+97 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -64,6 +64,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Complex E2E & Fix: Boundary Wrap-Arounds & Error Route Recovery Navigation](e2e-boundary-wraparound-recovery.md) | implemented | feature |
 | reader | [Fix QuranSafha Swipe Flicker (font-ready flash + mark re-renders)](fix-safha-swipe-flicker.md) | implemented | bug |
 | reader | [Fix Reversed Mobile Swipe Navigation Direction](fix-mobile-swipe-direction.md) | implemented | bug |
+| reader | [Fix tablet-band reader for non-touch laptops via input-capability gating](fix-tablet-band-fine-pointer.md) | implemented | bug |
 | reader | [Fix Tajweed Mushaf Swipe Flicker](fix-tajweed-swipe-flicker.md) | implemented | bug |
 | reader | [Loading Placeholder Toggles the Scrollbar, Reflowing the Whole Document](fix-panel-placeholder-reflow.md) | implemented | bug |
 | reader | [Mushaf Double-Page Spread Toggle](mushaf-double-page-view.md) | implemented | feature |

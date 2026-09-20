@@ -72,6 +72,9 @@ const NavigationArrow = ({
           : undefined
       }
       aria-label={isNext ? "Next page" : "Previous page"}
+      // Native tooltip matching the accessible name — a small discoverability
+      // hint for mouse users. Zero visual change.
+      title={isNext ? "Next page" : "Previous page"}
       // A quiet rim that warms on hover, not a filled chip — two saturated
       // blobs flanking the page compete with it. It was --primary, the state
       // accent, on a control that is navigation and never live.

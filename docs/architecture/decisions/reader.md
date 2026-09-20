@@ -262,3 +262,16 @@ payload; windowing removes the mass mount.
 
 **Decision:** Any conditionally-mounted reader chrome whose render-time mount predicate depends on state transitioned by an effect must use `useIsomorphicLayoutEffect` (not `useEffect`) for that transition. With a standard `useEffect`, the render where the triggering condition drops to zero (e.g. `pendingCount === 0`) evaluates the mount guard as unmounted (`null`) and the browser paints a "chrome gone" frame before the effect can transition lifecycle state (e.g. to a completing flourish) — producing a visible one-frame blink. `useIsomorphicLayoutEffect` commits the transition before paint, preventing the unmount flicker.
 
+---
+
+## Reader Interaction Gates on Input Capability, Layout Stays Width-Gated
+
+**Status:** active
+
+**Decision:** Reader *interaction* branches on primary-input capability (`useIsCoarsePointer()`, `(pointer: coarse)`, SSR default `false`); reader *layout* stays on the width hooks (`useIsTablet()` / `useIsLgUp()`) with their CSS `@media` twins unchanged. `NavOverlayContext` therefore exposes two flags: `isOverlayMode` (layout — width + pages-route, drives chrome positioning/auto-hide transforms) and the capability-gated interaction flag (drives `QuranWord` click-vs-long-press and the `ReaderPager` strip tap-toggle). Forced double-page (`isDouble`), pair-step nav, and the 1024–1366px band itself are untouched. See [ADR 0071](../adr/0071-reader-interaction-capability-gating.md).
+
+**Constraints:**
+- Capability must never drive `position`/`display` — interaction-only, which is what makes the hook's one-frame SSR-`false` staleness acceptable under ADR 0043.
+- Keep the width queries numerically identical to their CSS twins; the capability query is additive, never a replacement.
+- True-coarse-primary hybrids with a mouse keep touch interaction — accepted tradeoff, do not special-case per-device.
+
