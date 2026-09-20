@@ -56,7 +56,11 @@ vi.mock("@/app/contexts/RecitationContext", () => ({
 }));
 
 vi.mock("@/app/contexts/NavOverlayContext", () => ({
-  useNavOverlay: () => ({ isOverlayMode: false, overlayVisible: true }),
+  useNavOverlay: () => ({
+    isOverlayMode: false,
+    isTouchOverlay: false,
+    overlayVisible: true,
+  }),
 }));
 
 vi.mock("@hooks/use-online-status", () => ({

@@ -44,7 +44,15 @@ export default defineConfig({
     },
     {
       name: "mobile",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } },
+      // hasTouch: real phones are coarse-pointer devices and the reader keys
+      // word interaction off that capability (ADR 0071) — without touch
+      // emulation the mobile project reports a fine pointer and long-press
+      // specs silently test nothing (#642). Viewport stays phone-width.
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+      },
     },
   ],
 });

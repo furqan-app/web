@@ -385,7 +385,10 @@ export const QuranSafha = ({
   const { desktopQuranFontSize } = useDesktopQuranFontSize();
   const { edition } = useQuranMushaf();
   const isTablet = useIsTablet();
-  const { isOverlayMode } = useNavOverlay();
+  // Word interaction follows the capability-gated flag (ADR 0071), not the
+  // width-gated layout mode: a fine-pointer laptop in the tablet band keeps
+  // click-to-mark while the band keeps its tablet shape around it.
+  const { isTouchOverlay } = useNavOverlay();
 
   const [selectedForMark, setSelectedForMark] = useState<
     WordWithVerse | VerseForMark | null
@@ -835,7 +838,7 @@ export const QuranSafha = ({
                         key={item.lineKey}
                         onWordClicked={wordClicked}
                         onWordLongPressed={wordLongPressed}
-                        isOverlayMode={isOverlayMode}
+                        isOverlayMode={isTouchOverlay}
                         words={lines[item.lineKey]}
                         marks={marks ?? {}}
                         suppressInlineHeaderForSurahId={item.suppressSurahId}
