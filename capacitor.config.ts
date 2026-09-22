@@ -1,0 +1,42 @@
+import type { CapacitorConfig } from "@capacitor/cli";
+
+// Furqan native shell (ADR 0072, plan mobile-app-capacitor): HTTPS-hosted
+// hybrid — the shell loads the live web app, never a bundled static export
+// and never `capacitor://`. `server.url` is per environment via
+// CAP_SERVER_URL so dev / TestFlight / prod each point at their own host;
+// allowNavigation always covers the active host plus production.
+const PROD_HOST = "furqan.taha7.com";
+
+const serverUrl = process.env.CAP_SERVER_URL ?? `https://${PROD_HOST}`;
+// `allowNavigation` must cover whichever host `server.url` points at —
+// otherwise internal navigation opens the external browser on dev/staging
+// builds. `cleartext` follows the URL scheme for plain-HTTP LAN dev
+// (Android side; iOS LAN dev additionally needs an ATS exception, a
+// device-stage concern, not a config one).
+const serverHost = (() => {
+  try {
+    return new URL(serverUrl).hostname;
+  } catch {
+    return PROD_HOST;
+  }
+})();
+
+const config: CapacitorConfig = {
+  // Pre-release value — cheap to change before the first store upload,
+  // frozen once the apps are published (OS identity + push credentials).
+  appId: "app.furqan",
+  appName: "Furqan",
+  // Unused while hosted (no static export per ADR 0072) but required by the
+  // CLI — points at the always-present public dir so `cap sync`/`copy` never
+  // fail on a missing folder. Never bake Quran/font assets here — bulk
+  // content downloads post-install per edition with sentinel + verify-and-heal.
+  webDir: "public",
+  server: {
+    url: serverUrl,
+    allowNavigation: Array.from(new Set([PROD_HOST, serverHost])),
+    cleartext: !serverUrl.startsWith("https://"),
+    androidScheme: "https",
+  },
+};
+
+export default config;

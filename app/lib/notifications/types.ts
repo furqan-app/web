@@ -37,6 +37,9 @@ export type NotificationChannel = {
 
 export type ChannelRegistry = Partial<Record<NotificationChannelKey, NotificationChannel>>;
 
+/** Native push providers for DeviceToken rows (ADR 0072) — validated by an allowlist guard at the route, never a silent default. */
+export type DeviceTokenProvider = "apns" | "fcm";
+
 export type CreateNotificationInput = {
   userId: number;
   type: string;
@@ -64,6 +67,18 @@ export type NotificationStore = {
   }) => Promise<void>;
   deletePushSubscriptionByHash: (userId: number, endpointHash: string) => Promise<void>;
   touchPushSubscription: (endpointHash: string) => Promise<void>;
+  saveDeviceToken: (input: {
+    userId: number;
+    provider: DeviceTokenProvider;
+    token: string;
+    tokenHash: string;
+  }) => Promise<void>;
+  deleteDeviceTokenByHash: (userId: number, tokenHash: string) => Promise<void>;
+  getDeviceTokens: (userId: number) => Promise<
+    { id: number; provider: DeviceTokenProvider; tokenHash: string }[]
+  >;
+  /** Raw token read — only the native-push channel calls this, at send time. */
+  getDeviceToken: (userId: number, tokenHash: string) => Promise<string | null>;
   getRecipient: (userId: number) => Promise<{ email: string | null } | null>;
   upsertScheduledReminder: (input: {
     userId: number;

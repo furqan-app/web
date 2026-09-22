@@ -13,7 +13,7 @@ import { formatRawVerseKey } from "@/app/lib/plans/ui-helpers";
 // The channel registry (app/lib/notifications/channels/registry.ts) is the
 // single source of truth for which channels actually exist at runtime; this
 // is a type-only enumeration of the possible keys, not a second list.
-export type NotificationChannelKey = "push" | "email";
+export type NotificationChannelKey = "push" | "email" | "native_push";
 
 export const MAX_GENERAL_WIRD_REMINDERS = 3;
 
