@@ -3,6 +3,7 @@ import type { EmailTransport } from "@/app/lib/notifications/channels/email/tran
 import type { ChannelRegistry, NotificationStore } from "@/app/lib/notifications/types";
 import { createEmailChannel } from "@/app/lib/notifications/channels/email";
 import { createPushChannel } from "@/app/lib/notifications/channels/push";
+import { createNativePushChannel } from "@/app/lib/notifications/channels/native-push";
 import type webpush from "web-push";
 
 /**
@@ -17,4 +18,7 @@ export const createChannelRegistry = (deps: {
 }): ChannelRegistry => ({
   email: createEmailChannel({ transport: deps.emailTransport, logger: deps.logger }),
   push: createPushChannel({ store: deps.store, webpush: deps.webpush, logger: deps.logger }),
+  // Phase 2 push plugs a real sender here; until then every native_push
+  // delivery records an explicit no_sender skip (never silent, never failed).
+  native_push: createNativePushChannel({ store: deps.store, sender: undefined, logger: deps.logger }),
 });

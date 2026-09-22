@@ -103,11 +103,11 @@
     "downloaded": "Downloaded",
     "activeNeedsDownload": "Your current layout — download it to read offline",
     "editions": {
-      "2": {
-        "name": "King Fahd Complex Mushaf (1405H print)"
-      },
       "1": {
         "name": "King Fahd Complex Mushaf (1421H print)"
+      },
+      "2": {
+        "name": "King Fahd Complex Mushaf (1405H print)"
       },
       "19": {
         "name": "Tajweed mushaf"
@@ -554,7 +554,8 @@
     "settings": {
       "autoWriteTitle": "Automatic Wird Completion",
       "autoWriteDescription": "Automatically record reading or listening progress once dwell or playback criteria are met, without prompting."
-    }
+    },
+    "verse": "verse"
   },
   "recitation": {
     "settingsTitle": "Recitation settings",
@@ -734,9 +735,9 @@
     "close": "Close",
     "availableOffline": "Available offline"
   },
-  "light": "",
-  "gold": "",
-  "dark": "",
+  "light": "Light",
+  "gold": "Gold",
+  "dark": "Dark",
   "overline": "",
   "title": "",
   "tagline": "",
@@ -760,5 +761,25 @@
     "notEnoughSpace": "Not enough storage space for this edition.",
     "alsoMushafLabel": "Also download the mushaf pages",
     "alsoMushafHint": "The commentary sheet opens over the mushaf page — download it too (~{size} MB) so the page renders offline."
-  }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "updated": "Last updated: September 2026",
+    "intro": "Furqan is a word-focused Quran reading app. This policy explains what data we collect and why. We show no ads, sell no data, and use no third-party trackers.",
+    "s1t": "Account information",
+    "s1b": "When you sign in with Google, we receive your name and email address and store them to identify your account. Signing in is optional — reading, marking, and offline downloads work without an account.",
+    "s2t": "Reading data",
+    "s2b": "Marks (word- and verse-level, with optional comments), reading plans and progress, and notification preferences are stored on our servers so they sync across your devices. Mushaf sharing grants expose your progress only to the specific people you approve, and either side can revoke access at any time.",
+    "s3t": "Notifications",
+    "s3b": "If you enable reminders, we store push subscriptions and device tokens to deliver them. You can disable notifications at any time from Settings or your device.",
+    "s4t": "On-device data",
+    "s4b": "Downloaded mushaf pages, fonts, recitation audio, and tafsir stay on your device. Clearing the app storage or uninstalling removes them.",
+    "s5t": "Diagnostics",
+    "s5b": "Crash reports help us fix bugs. They contain no advertising identifiers and are never used for advertising.",
+    "s7t": "Deletion",
+    "s7b": "To delete your account and all associated data, contact us at the email below. Downloads on your device are removed by clearing storage or uninstalling.",
+    "s8t": "Changes and contact",
+    "s8b": "We will update this page if our practices change. Questions or deletion requests: {email}."
+  },
+  "close": "Close"
 }

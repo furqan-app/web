@@ -201,3 +201,37 @@ model PlanProgressEntry {
   @@unique([user_plan_id, track_key, date])
   @@map("plan_progress_entries")
 }
+
+// One-time native-shell session bootstrap code (ADR 0071). Minted server-side
+// after a system-browser sign-in; the shell exchanges it once for a session
+// cookie via POST /api/auth/native-bootstrap, then it is spent. Scalar user
+// ref only (no relation — ADR 0008 pattern).
+model NativeBootstrapCode {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique
+  user_id    Int
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("native_bootstrap_codes")
+}
+
+// Native push-device registration (ADR 0071, Phase 2 push). Mirrors
+// PushSubscription's hash-as-unique-key pattern — raw APNs/FCM tokens exceed
+// MySQL's practical utf8mb4 index length. Scalar user ref only (ADR 0008).
+// No API touches it until the push slice lands.
+model DeviceToken {
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  provider     String // apns | fcm
+  token        String    @db.Text
+  token_hash   String    @unique @db.Char(64)
+  created_at   DateTime  @default(now())
+  last_used_at DateTime?
+  failed_at    DateTime?
+
+  @@index([user_id])
+  @@map("device_tokens")
+}

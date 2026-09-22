@@ -17,6 +17,10 @@ const protectedRoutes = [
   // state (ADR 0037). Deliberately excludes /api/cron/reminders, which is
   // machine-called and secret-guarded instead.
   new RegExp("^/api/notifications"),
+  // Native-shell bootstrap minter (ADR 0071): a caller may only mint a code
+  // for themselves. Narrow exact path — never a broad ^/api/auth prefix,
+  // which would also guard the exchange endpoint and NextAuth's own routes.
+  new RegExp("^/api/auth/native-bootstrap-code/?$"),
 ];
 
 export const withAuth = (middleware: CustomMiddleware) => {

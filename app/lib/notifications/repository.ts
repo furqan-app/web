@@ -110,6 +110,56 @@ export const createNotificationStore = (prisma: AppPrismaClient, logger: FqLogge
     await prisma.pushSubscription.deleteMany({ where: { user_id: userId, endpoint_hash: endpointHash } });
   },
 
+  saveDeviceToken: async ({ userId, provider, token, tokenHash }) => {
+    const existing = await prisma.deviceToken.findUnique({ where: { token_hash: tokenHash } });
+    if (existing && existing.user_id !== userId) {
+      // Same ownership-transfer rule as push subscriptions: one device token
+      // belongs to exactly one user; a re-login elsewhere moves it, loudly.
+      // deleteMany (not delete) so a concurrent transfer converges instead of
+      // throwing RecordNotFound; sequential logins — the only realistic case,
+      // a physical token can't be held by two users at once — stay exact.
+      logger.warn("notifications.device_token.ownership_transfer", {
+        tokenHash,
+        fromUserId: existing.user_id,
+        toUserId: userId,
+      });
+      await prisma.$transaction([
+        prisma.deviceToken.deleteMany({ where: { token_hash: tokenHash } }),
+        prisma.deviceToken.create({
+          data: { user_id: userId, provider, token, token_hash: tokenHash },
+        }),
+      ]);
+      return;
+    }
+
+    await prisma.deviceToken.upsert({
+      where: { token_hash: tokenHash },
+      create: { user_id: userId, provider, token, token_hash: tokenHash },
+      update: { user_id: userId, provider, token, failed_at: null },
+    });
+  },
+
+  deleteDeviceTokenByHash: async (userId, tokenHash) => {
+    await prisma.deviceToken.deleteMany({ where: { user_id: userId, token_hash: tokenHash } });
+  },
+
+  getDeviceTokens: async (userId) => {
+    const rows = await prisma.deviceToken.findMany({ where: { user_id: userId } });
+    return rows.map((row) => ({
+      id: row.id,
+      provider: row.provider as "apns" | "fcm",
+      tokenHash: row.token_hash,
+    }));
+  },
+
+  getDeviceToken: async (userId, tokenHash) => {
+    const row = await prisma.deviceToken.findFirst({
+      where: { user_id: userId, token_hash: tokenHash },
+      select: { token: true },
+    });
+    return row?.token ?? null;
+  },
+
   touchPushSubscription: async (endpointHash) => {
     await prisma.pushSubscription.updateMany({
       where: { endpoint_hash: endpointHash },

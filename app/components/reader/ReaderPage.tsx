@@ -64,7 +64,12 @@ export const ReaderPage = async ({
   // and the theme script in the root layout (ADR 0020 scopes only <style>).
   // Hand-synced literals, same discipline as launch.html: the display-mode list
   // from app/utils/platform.ts and the 1367px breakpoint from DESKTOP_UP_QUERY.
-  const coverRevealScript = `(function(){try{var s=window.matchMedia("(display-mode: standalone)").matches||window.matchMedia("(display-mode: fullscreen)").matches||navigator.standalone===true;var d=window.matchMedia("(min-width: 1367px)").matches;if(s&&!d){document.documentElement.classList.add("fq-launch-cover")}}catch(e){}})();`;
+  // The Capacitor branch mirrors isNativePlatform() (ADR 0072) — the hosted
+  // shell matches no display-mode query, and without it shell launches never
+  // receive the cover. Guarded: the bridge may not exist (web) or may arrive
+  // after parse (degrades to no cover, today's behavior — never a throw).
+  // launch.html needs no such branch: the shell never loads it.
+  const coverRevealScript = `(function(){try{var s=window.matchMedia("(display-mode: standalone)").matches||window.matchMedia("(display-mode: fullscreen)").matches||navigator.standalone===true||(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()===true);var d=window.matchMedia("(min-width: 1367px)").matches;if(s&&!d){document.documentElement.classList.add("fq-launch-cover")}}catch(e){}})();`;
 
   return (
     <>
