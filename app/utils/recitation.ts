@@ -1,5 +1,5 @@
-import { QURAN_LAST_CHAPTER_ID } from "@/app/constants/recitation";
-import { RepeatCount, VerseTiming } from "@/app/types/recitation";
+import { QURAN_LAST_CHAPTER_ID, QURAN_LAST_VERSE_KEY } from "@/app/constants/recitation";
+import { RecitationStatus, RepeatCount, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
 import type { SurahResult } from "@/app/types";
 import { getPagePair } from "@/app/utils/quran-pages";
@@ -183,4 +183,395 @@ export const getFirstVerseKeyOfPage = (
     if (firstWord) return firstWord.verse_key;
   }
   return null;
+};
+
+// ── Skip verse transport decisions ──────────────────────────────────────────
+
+export type SkipVerseDecision =
+  | { action: "seek-timing"; targetVerseKey: string; timestampFrom: number }
+  | { action: "load-chapter"; chapterId: number }
+  | { action: "none" };
+
+export const canSkipToPrevious = (
+  currentVerseKey: string | null,
+  status: RecitationStatus,
+): boolean => {
+  if (status === "idle" || !currentVerseKey) return false;
+  return currentVerseKey !== "1:1";
+};
+
+export const canSkipToNext = (
+  currentVerseKey: string | null,
+  status: RecitationStatus,
+  stopVerseKey: string | null = null,
+  stopChapterId: number | null = null,
+): boolean => {
+  if (status === "idle" || !currentVerseKey) return false;
+  if (currentVerseKey === QURAN_LAST_VERSE_KEY) return false;
+  if (
+    stopVerseKey &&
+    currentVerseKey === stopVerseKey &&
+    stopChapterId !== null &&
+    parseChapterIdFromVerseKey(currentVerseKey) === stopChapterId
+  ) {
+    return false;
+  }
+  return true;
+};
+
+export const decideSkipVerse = (
+  direction: "next" | "prev",
+  currentVerseKey: string,
+  verseTimings: VerseTiming[],
+  currentChapterId: number,
+  stopVerseKey: string | null = null,
+  stopChapterId: number | null = null,
+): SkipVerseDecision => {
+  if (direction === "next") {
+    if (currentVerseKey === QURAN_LAST_VERSE_KEY) return { action: "none" };
+    if (
+      stopVerseKey &&
+      currentVerseKey === stopVerseKey &&
+      stopChapterId !== null &&
+      currentChapterId === stopChapterId
+    ) {
+      return { action: "none" };
+    }
+    const currentIndex = verseTimings.findIndex((vt) => vt.verseKey === currentVerseKey);
+    if (currentIndex >= 0 && currentIndex < verseTimings.length - 1) {
+      const nextTiming = verseTimings[currentIndex + 1];
+      return {
+        action: "seek-timing",
+        targetVerseKey: nextTiming.verseKey,
+        timestampFrom: nextTiming.timestampFrom,
+      };
+    }
+    if (currentChapterId < QURAN_LAST_CHAPTER_ID) {
+      const nextChapterId = currentChapterId + 1;
+      if (stopChapterId !== null && nextChapterId > stopChapterId) {
+        return { action: "none" };
+      }
+      return { action: "load-chapter", chapterId: nextChapterId };
+    }
+    return { action: "none" };
+  } else {
+    if (currentVerseKey === "1:1") return { action: "none" };
+    const currentIndex = verseTimings.findIndex((vt) => vt.verseKey === currentVerseKey);
+    if (currentIndex > 0) {
+      const prevTiming = verseTimings[currentIndex - 1];
+      return {
+        action: "seek-timing",
+        targetVerseKey: prevTiming.verseKey,
+        timestampFrom: prevTiming.timestampFrom,
+      };
+    }
+    if (currentChapterId > 1) {
+      return { action: "load-chapter", chapterId: currentChapterId - 1 };
+    }
+    return { action: "none" };
+  }
+};
+
+// ── Skip word transport decisions ───────────────────────────────────────────
+
+export type SkipWordDecision =
+  | {
+      action: "seek";
+      targetVerseKey: string;
+      wordIndex: number;
+      timestampMs: number;
+    }
+  | {
+      action: "load-chapter";
+      chapterId: number;
+      target: "first-word" | "last-word";
+    }
+  | { action: "none" };
+
+export const canSkipToPreviousWord = (
+  currentVerseKey: string | null,
+  status: RecitationStatus,
+  currentWordIndex?: number | null,
+): boolean => {
+  if (status === "idle" || !currentVerseKey) return false;
+  if (currentVerseKey === "1:1") {
+    if (currentWordIndex !== undefined && (currentWordIndex === null || currentWordIndex <= 1)) {
+      return false;
+    }
+  }
+  return true;
+};
+
+export const canSkipToNextWord = (
+  currentVerseKey: string | null,
+  status: RecitationStatus,
+  currentWordIndex?: number | null,
+  totalWordsInVerse?: number | null,
+  stopVerseKey: string | null = null,
+  stopChapterId: number | null = null,
+): boolean => {
+  if (status === "idle" || !currentVerseKey) return false;
+  const isStopVerse =
+    stopVerseKey &&
+    currentVerseKey === stopVerseKey &&
+    stopChapterId !== null &&
+    parseChapterIdFromVerseKey(currentVerseKey) === stopChapterId;
+
+  if (currentVerseKey === QURAN_LAST_VERSE_KEY || isStopVerse) {
+    if (
+      currentWordIndex !== undefined &&
+      currentWordIndex !== null &&
+      totalWordsInVerse !== undefined &&
+      totalWordsInVerse !== null &&
+      currentWordIndex >= totalWordsInVerse
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
+export const decideSkipWord = (
+  direction: "next" | "prev",
+  currentTimeMs: number,
+  currentVerseKey: string,
+  verseTimings: VerseTiming[],
+  currentChapterId: number,
+  stopVerseKey: string | null = null,
+  stopChapterId: number | null = null,
+): SkipWordDecision => {
+  if (direction === "next") {
+    if (currentVerseKey === QURAN_LAST_VERSE_KEY) {
+      const currentTiming = verseTimings.find((vt) => vt.verseKey === currentVerseKey);
+      if (currentTiming && currentTiming.segments.length > 0) {
+        const lastSeg = currentTiming.segments[currentTiming.segments.length - 1];
+        if (currentTimeMs >= lastSeg[1]) return { action: "none" };
+      }
+    }
+
+    if (
+      stopVerseKey &&
+      currentVerseKey === stopVerseKey &&
+      stopChapterId !== null &&
+      currentChapterId === stopChapterId
+    ) {
+      const currentTiming = verseTimings.find((vt) => vt.verseKey === currentVerseKey);
+      if (currentTiming && currentTiming.segments.length > 0) {
+        const lastSeg = currentTiming.segments[currentTiming.segments.length - 1];
+        if (currentTimeMs >= lastSeg[1]) return { action: "none" };
+      }
+    }
+
+    const vIdx = verseTimings.findIndex((vt) => vt.verseKey === currentVerseKey);
+    if (vIdx === -1) return { action: "none" };
+    const currentTiming = verseTimings[vIdx];
+
+    if (!currentTiming.segments || currentTiming.segments.length === 0) {
+      if (vIdx < verseTimings.length - 1) {
+        const nextTiming = verseTimings[vIdx + 1];
+        return {
+          action: "seek",
+          targetVerseKey: nextTiming.verseKey,
+          wordIndex: nextTiming.segments[0]?.[0] ?? 1,
+          timestampMs: nextTiming.segments[0]?.[1] ?? nextTiming.timestampFrom,
+        };
+      }
+      if (currentChapterId < QURAN_LAST_CHAPTER_ID) {
+        if (stopChapterId !== null && currentChapterId >= stopChapterId) return { action: "none" };
+        return { action: "load-chapter", chapterId: currentChapterId + 1, target: "first-word" };
+      }
+      return { action: "none" };
+    }
+
+    const segIdx = currentTiming.segments.findIndex(
+      ([, s, e]) => currentTimeMs >= s && currentTimeMs < e,
+    );
+
+    if (segIdx >= 0) {
+      if (segIdx < currentTiming.segments.length - 1) {
+        const nextSeg = currentTiming.segments[segIdx + 1];
+        return {
+          action: "seek",
+          targetVerseKey: currentTiming.verseKey,
+          wordIndex: nextSeg[0],
+          timestampMs: nextSeg[1],
+        };
+      }
+      if (currentTiming.verseKey === QURAN_LAST_VERSE_KEY) return { action: "none" };
+      if (
+        stopVerseKey &&
+        currentTiming.verseKey === stopVerseKey &&
+        stopChapterId !== null &&
+        currentChapterId === stopChapterId
+      ) {
+        return { action: "none" };
+      }
+      if (vIdx < verseTimings.length - 1) {
+        const nextTiming = verseTimings[vIdx + 1];
+        const firstSeg = nextTiming.segments[0];
+        return {
+          action: "seek",
+          targetVerseKey: nextTiming.verseKey,
+          wordIndex: firstSeg ? firstSeg[0] : 1,
+          timestampMs: firstSeg ? firstSeg[1] : nextTiming.timestampFrom,
+        };
+      }
+      if (currentChapterId < QURAN_LAST_CHAPTER_ID) {
+        if (stopChapterId !== null && currentChapterId >= stopChapterId) return { action: "none" };
+        return { action: "load-chapter", chapterId: currentChapterId + 1, target: "first-word" };
+      }
+      return { action: "none" };
+    }
+
+    // Gap handling
+    if (currentTimeMs < currentTiming.segments[0][1]) {
+      const firstSeg = currentTiming.segments[0];
+      return {
+        action: "seek",
+        targetVerseKey: currentTiming.verseKey,
+        wordIndex: firstSeg[0],
+        timestampMs: firstSeg[1],
+      };
+    }
+
+    if (currentTimeMs >= currentTiming.segments[currentTiming.segments.length - 1][2]) {
+      if (currentTiming.verseKey === QURAN_LAST_VERSE_KEY) return { action: "none" };
+      if (
+        stopVerseKey &&
+        currentTiming.verseKey === stopVerseKey &&
+        stopChapterId !== null &&
+        currentChapterId === stopChapterId
+      ) {
+        return { action: "none" };
+      }
+      if (vIdx < verseTimings.length - 1) {
+        const nextTiming = verseTimings[vIdx + 1];
+        const firstSeg = nextTiming.segments[0];
+        return {
+          action: "seek",
+          targetVerseKey: nextTiming.verseKey,
+          wordIndex: firstSeg ? firstSeg[0] : 1,
+          timestampMs: firstSeg ? firstSeg[1] : nextTiming.timestampFrom,
+        };
+      }
+      if (currentChapterId < QURAN_LAST_CHAPTER_ID) {
+        if (stopChapterId !== null && currentChapterId >= stopChapterId) return { action: "none" };
+        return { action: "load-chapter", chapterId: currentChapterId + 1, target: "first-word" };
+      }
+      return { action: "none" };
+    }
+
+    const nextSeg = currentTiming.segments.find(([, s]) => s > currentTimeMs);
+    if (nextSeg) {
+      return {
+        action: "seek",
+        targetVerseKey: currentTiming.verseKey,
+        wordIndex: nextSeg[0],
+        timestampMs: nextSeg[1],
+      };
+    }
+    return { action: "none" };
+  } else {
+    // direction === "prev"
+    if (currentVerseKey === "1:1") {
+      const currentTiming = verseTimings.find((vt) => vt.verseKey === "1:1");
+      if (currentTiming && currentTiming.segments.length > 0) {
+        const firstSeg = currentTiming.segments[0];
+        if (currentTimeMs <= firstSeg[2]) return { action: "none" };
+      }
+    }
+
+    const vIdx = verseTimings.findIndex((vt) => vt.verseKey === currentVerseKey);
+    if (vIdx === -1) return { action: "none" };
+    const currentTiming = verseTimings[vIdx];
+
+    if (!currentTiming.segments || currentTiming.segments.length === 0) {
+      if (vIdx > 0) {
+        const prevTiming = verseTimings[vIdx - 1];
+        const lastSeg = prevTiming.segments[prevTiming.segments.length - 1];
+        return {
+          action: "seek",
+          targetVerseKey: prevTiming.verseKey,
+          wordIndex: lastSeg ? lastSeg[0] : 1,
+          timestampMs: lastSeg ? lastSeg[1] : prevTiming.timestampFrom,
+        };
+      }
+      if (currentChapterId > 1) {
+        return { action: "load-chapter", chapterId: currentChapterId - 1, target: "last-word" };
+      }
+      return { action: "none" };
+    }
+
+    const segIdx = currentTiming.segments.findIndex(
+      ([, s, e]) => currentTimeMs >= s && currentTimeMs < e,
+    );
+
+    if (segIdx > 0) {
+      const prevSeg = currentTiming.segments[segIdx - 1];
+      return {
+        action: "seek",
+        targetVerseKey: currentTiming.verseKey,
+        wordIndex: prevSeg[0],
+        timestampMs: prevSeg[1],
+      };
+    }
+
+    if (segIdx === 0) {
+      if (currentTiming.verseKey === "1:1") return { action: "none" };
+      if (vIdx > 0) {
+        const prevTiming = verseTimings[vIdx - 1];
+        const lastSeg = prevTiming.segments[prevTiming.segments.length - 1];
+        return {
+          action: "seek",
+          targetVerseKey: prevTiming.verseKey,
+          wordIndex: lastSeg ? lastSeg[0] : 1,
+          timestampMs: lastSeg ? lastSeg[1] : prevTiming.timestampFrom,
+        };
+      }
+      if (currentChapterId > 1) {
+        return { action: "load-chapter", chapterId: currentChapterId - 1, target: "last-word" };
+      }
+      return { action: "none" };
+    }
+
+    // Gap handling
+    if (currentTimeMs < currentTiming.segments[0][1]) {
+      if (currentTiming.verseKey === "1:1") return { action: "none" };
+      if (vIdx > 0) {
+        const prevTiming = verseTimings[vIdx - 1];
+        const lastSeg = prevTiming.segments[prevTiming.segments.length - 1];
+        return {
+          action: "seek",
+          targetVerseKey: prevTiming.verseKey,
+          wordIndex: lastSeg ? lastSeg[0] : 1,
+          timestampMs: lastSeg ? lastSeg[1] : prevTiming.timestampFrom,
+        };
+      }
+      if (currentChapterId > 1) {
+        return { action: "load-chapter", chapterId: currentChapterId - 1, target: "last-word" };
+      }
+      return { action: "none" };
+    }
+
+    if (currentTimeMs >= currentTiming.segments[currentTiming.segments.length - 1][2]) {
+      const lastSeg = currentTiming.segments[currentTiming.segments.length - 1];
+      return {
+        action: "seek",
+        targetVerseKey: currentTiming.verseKey,
+        wordIndex: lastSeg[0],
+        timestampMs: lastSeg[1],
+      };
+    }
+
+    const prevSeg = [...currentTiming.segments].reverse().find(([, , e]) => e <= currentTimeMs);
+    if (prevSeg) {
+      return {
+        action: "seek",
+        targetVerseKey: currentTiming.verseKey,
+        wordIndex: prevSeg[0],
+        timestampMs: prevSeg[1],
+      };
+    }
+    return { action: "none" };
+  }
 };

@@ -1,9 +1,10 @@
 ---
 title: Add Quran Recitation Playback with Reciter Selection
 type: feature
-date: 2026-07-10
+date: 2026-09-23
 status: implemented
 area: recitation
+issue: 379
 adr: [0021, 0056]
 ---
 
@@ -64,6 +65,19 @@ Because a hizb/rub/juz/`none` boundary — and even a `page` that spans a surah 
 - The `activeOverride` read-only banner and its disabling of the Stop-at `RadioGroup` / `CustomRangePicker` / Repeat-whole-range stepper carry over (gating now applies to draft writes) — see `listening-wird-inline-playback.md`.
 - Sheet UI (Addendum 5b): stop-point is a `grid grid-cols-2` of pill `label`s wrapping `sr-only` `RadioGroupItem`s (one lucide icon each); the reciter list is a `Popover` + `Command` combobox; section headers carry a small `text-primary` lucide icon; grouped surfaces are `rounded-xl border border-border bg-card p-3`.
 
+### Verse and word transport navigation (#379)
+
+The player bar provides dual-granularity navigation: verse skipping (`SkipBack`/`SkipForward`, `|<` / `>|`) and word stepping (`ChevronLeft`/`ChevronRight`, `<` / `>`). On mobile/tablet (<1367px or <800px), `RecitationPlayerBar` uses a **2-row layout (Option 2)**:
+- **Row 1** (Top): Reciter name dropdown + verse reference label (`recitedVerseLabel`), flanked by secondary utilities (`[Repeat]`, `[Settings]`, `[Stop]`) with a bottom hairline (`border-b border-border/30 pb-1`).
+- **Row 2** (Bottom): Centered 5-button transport cluster: `[Previous Verse] [Previous Word] [Play/Pause] [Next Word] [Next Verse]`.
+On desktop rail mode (`≥1367px`×`≥800px`), `.fq-recitation-row-lead` has `display: contents`, allowing `.fq-rail-lead` (top), `.fq-rail-transport` (5 buttons stacked vertically in a centered flex column), and `.fq-rail-utils` (bottom) to position absolutely without structural DOM duplication.
+
+Navigation logic is driven by pure decision functions in `app/utils/recitation.ts`:
+- `decideSkipVerse`: seeks audio within the chapter or chains cross-chapter (`loadChapter`), respecting `1:1`, `114:6`, and active `stopVerseKey`.
+- `decideSkipWord`: seeks `audio.currentTime` to target word start millisecond, updates `currentVerseKey` and `recitedPage` when crossing verse/page boundaries, and applies DOM-direct word highlight via `applyWordHighlight` without React state re-renders (~4Hz firewall preserved).
+- Stepping while paused updates the audio timeline and word highlight while preserving paused state.
+- Bidirectional support: All 4 navigation icons carry `rtl:rotate-180`. In Arabic RTL, previous buttons point right toward earlier text, and next buttons point left toward subsequent text.
+
 ### "Play from here"
 
 `MarkModal`'s "play from here" is a **single instant-play button** — it does **not** open the settings sheet (Addendum 6 removed `openSettings(startVerseKey)` as dead code; it is not reintroduced). `MarkModal` gets no second recitation button (Addendum 12 #394's original MarkModal scope was dropped).
@@ -80,6 +94,26 @@ Because a hizb/rub/juz/`none` boundary — and even a `page` that spans a surah 
 | user manually navigates while playing | audio keeps playing on its own timeline; the leaf **detaches** (no snap-back) and the return strip appears |
 | user leaves the reader route | `RecitationFollow` unmounts → detached; playback continues; return strip is the second nav row |
 
+### Word stepping (skipToNextWord / skipToPreviousWord)
+
+For `skipToNextWord()`:
+| Condition | Action |
+|---|---|
+| `status === "idle"` or `!currentVerseKey` | No-op (`canSkipNextWord = false`) |
+| Current word is last word of `114:6` or last word of `stopVerseKey` | No-op (`canSkipNextWord = false`) |
+| Current word index < `segments.length - 1` | Seek to `segments[idx + 1].startMs`, apply highlight, update `recitedPage`, preserve pause state |
+| Current word is last word in verse, and next verse exists in chapter | Jump to `verseTimings[vIdx + 1].segments[0].startMs`, update `currentVerseKey`, sync `recitedPage`, apply highlight |
+| Current word is last word of chapter, and `chapterId < 114` | Advance to next chapter (`loadChapter`), start at verse 1 word 1 |
+
+For `skipToPreviousWord()`:
+| Condition | Action |
+|---|---|
+| `status === "idle"` or `!currentVerseKey` | No-op (`canSkipPreviousWord = false`) |
+| Current word is first word of `1:1` | No-op (`canSkipPreviousWord = false`) |
+| Current word index > 0 | Seek to `segments[idx - 1].startMs`, apply highlight, preserve pause state |
+| Current word is first word in verse, and previous verse exists in chapter | Jump to `verseTimings[vIdx - 1].segments.at(-1).startMs`, update `currentVerseKey`, sync `recitedPage`, apply highlight |
+| Current word is first word in chapter, and `chapterId > 1` | Jump to previous chapter (`loadChapter`), land on last verse's last word |
+
 ## Verified Test Cases
 
 - **Route leave keeps playback.** Play on p1 → tap Home/Marks → audio still playing, player bar gone, return strip is a second nav row with "back to page 1" → tap Return → lands on `/pages/1`, follow attached.
@@ -91,25 +125,31 @@ Because a hizb/rub/juz/`none` boundary — and even a `page` that spans a surah 
 - **Juz 1, start 1:1:** `scope=juz` → `{2:141, ch 2}`; ch 1 plays to end → chain to ch 2 → stop at 2:141. **`none` from 2:5:** chains ch 3…114, `stop()` at 114:6. **`page` page 106, start 4:176:** `scope=page` → `{5:2, ch 5}`; ch 4 → chain ch 5 → stop 5:2.
 - **Whole-range repeat, stopPoint "surah", rangeRepeat 2, start 1:1:** reaches 1:7 → `seekToRangeStart` seeks to 1:1 **and sets `currentVerseKeyRef.current = "1:1"`** → next tick `isStopVerse` false → plays forward again → second 1:7 → `stop()`.
 - Draft: open sheet playing 2:100, draft Start 2:255, Apply → seeks, counters reset, continues. Dismiss via back gesture → committed settings byte-identical, playback untouched.
+- **Within-verse forward/backward word step:** Jumping by word updates `audio.currentTime` to segment boundary and moves DOM highlight.
+- **Cross-verse & cross-chapter word transitions:** Stepping past end of verse advances to next verse/chapter first word; stepping back before start of verse jumps to previous verse/chapter last word.
+- **Transport boundaries:** `1:1` disables previous verse/word; `114:6` or `stopVerseKey` disables next verse/word.
+- **Paused stepping:** Audio position and word highlight update while keeping audio paused.
+- **2-Row Responsive Player Bar:** Mobile/tablet renders Row 1 (reciter metadata + utilities) and Row 2 (centered 5 transport buttons); desktop rail renders vertical 5-button stack.
 
 ## Files to Change
 
 - `app/api/quran/recitations/reciters/route.ts`, `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts`, `app/api/quran/chapters/[chapterId]/verse-pages/route.ts` — QDC proxies + verse→page map.
 - `app/api/quran/verses/[verseKey]/stop-point/route.ts` — `?scope=page|rub|hizb|juz|rub-start`, plain Prisma, `findFirst`.
 - `app/lib/recitation/qdc-provider.ts` — the single QDC normalization layer (segment 3-tuple filtering).
-- `app/contexts/RecitationContext.tsx` — `<audio>`, reciter (persisted), settings, `stopVerseKeyRef`/`stopChapterIdRef` (resolved async in `play()` and the stop-point-changed effect, against `currentVerseKeyRef` falling back to `startVerseKeyRef`); real `"ended"` detection → `decideChapterEnd`/`chainToNextChapter`/`loadChapter`; `seekToRangeStart` sets `currentVerseKeyRef` on the same-chapter branch; `isFollowing` state (not persisted; `play()` publishes `recitedPage` synchronously but does **not** force `isFollowing`; `stop()` + failure path reset it); `resetPerAyahRepeat()`; apply-time seek-to-drafted-start; Start From resolution helpers. **No** `rangeProgress`/`perAyahProgress` (Addendum 12 #394 badge deleted; `perAyahRepeatsDoneRef`/`rangeRepeatsDoneRef`/`resolveRepeatTarget` stay).
+- `app/contexts/RecitationContext.tsx` — `<audio>`, reciter (persisted), settings, `stopVerseKeyRef`/`stopChapterIdRef` (resolved async in `play()` and the stop-point-changed effect, against `currentVerseKeyRef` falling back to `startVerseKeyRef`); real `"ended"` detection → `decideChapterEnd`/`chainToNextChapter`/`loadChapter`; `seekToRangeStart` sets `currentVerseKeyRef` on the same-chapter branch; `isFollowing` state (not persisted; `play()` publishes `recitedPage` synchronously but does **not** force `isFollowing`; `stop()` + failure path reset it); `resetPerAyahRepeat()`; apply-time seek-to-drafted-start; Start From resolution helpers; `skipToNextVerse`, `skipToPreviousVerse`, `skipToNextWord`, `skipToPreviousWord` with pause preservation and highlight updates. **No** `rangeProgress`/`perAyahProgress` (Addendum 12 #394 badge deleted; `perAyahRepeatsDoneRef`/`rangeRepeatsDoneRef`/`resolveRepeatTarget` stay).
+- `app/types/recitation.ts` — `canSkipNextWord`, `canSkipPreviousWord`, and skip word methods in `RecitationContextType`.
 - `app/components/reader/RecitationFollow.tsx` — the attach/detach machine (thin wrapper over `decideRecitationFollow`; keeps `prevRecitedPage` stale on a follow; unmount → detach).
 - `app/components/recitation/RecitationReturnStrip.tsx` — **new**; the second nav row.
 - `app/components/nav/Nav.tsx` — render `<RecitationReturnStrip />` as the last child of `<nav>`.
-- `app/components/RecitationPlayerBar.tsx` — reader-route-only render gate; `recitedVerseLabel`; per-ayah repeat cycle button; no hard stop, no #394 badge.
+- `app/components/RecitationPlayerBar.tsx` — reader-route-only render gate; `recitedVerseLabel`; per-ayah repeat cycle button; 2-row layout on mobile/tablet; centered 5-button transport cluster (`SkipBack`, `ChevronLeft`, `Play`, `ChevronRight`, `SkipForward`).
 - `app/components/RecitationSettingsSheet.tsx` — draft model + sticky-footer CTA; Start From section + push-apart; stop-point pill grid; reciter combobox (`Popover` `container` = the sheet's own `SheetContent` node — the reusable nested-Popover-in-Sheet focus-trap fix, Addendum 5b); grouped surfaces.
 - `app/components/MarkModal.tsx` — a single instant "play from here" button (no `openSettings`).
 - `app/components/QuranWord.tsx` — `data-fq-word={word.location}`; drop `useRecitation()`.
-- `app/utils/recitation.ts` — `decideChapterEnd`, `decideRecitationFollow`, `recitedVerseLabelParts` (+ tests).
+- `app/utils/recitation.ts` & `app/utils/recitation.test.ts` — `decideChapterEnd`, `decideRecitationFollow`, `recitedVerseLabelParts`, `decideSkipVerse`, `decideSkipWord`, `canSkipToPreviousWord`, `canSkipToNextWord` (+ comprehensive unit tests).
 - `app/hooks/use-is-reader-route.ts` — **new**; extracted `pathname.includes("/pages/")` predicate (now render-decision-load-bearing, ADR 0056); `RecitationPlayerBar`/`Nav`/`PlansWidget` migrated onto it.
 - `components/ui/popover.tsx` — `container` prop on `PopoverContent` (forwarded to the Portal) — the reusable Dialog/Sheet-nested-Popover fix.
-- `app/globals.css` — `--fq-nav-extra`; `.fq-recitation-strip-open`; the settings-sheet / cycle-button styling.
-- `messages/{en,ar}.json` — reciter/stop-point/Start-From/cycle/CTA keys; `recitation.recitedVerseLabel`, `recitation.returnToRecitedVerse`; **removed** `recitation.rangeProgress*`.
+- `app/globals.css` — `--fq-nav-extra`; `.fq-recitation-strip-open`; the settings-sheet / cycle-button styling; `.fq-recitation-bar-rail .fq-recitation-row-lead { display: contents; }` for rail mode.
+- `messages/{en,ar}.json` — reciter/stop-point/Start-From/cycle/CTA keys; `recitation.recitedVerseLabel`, `recitation.returnToRecitedVerse`; `nextAyah`, `previousAyah`, `nextWord`, `previousWord`; **removed** `recitation.rangeProgress*`.
 - `docs/architecture/adr/0021-recitation-playback.md` (+ its 2026-07-16 no-cross-chapter and 2026-08-03 highlight addenda, and the note that Addendum 10's hard stop is superseded), `adr/0056-…`, `docs/architecture/DECISIONS.md`.
 - `e2e/tests/recitation-lifecycle.spec.ts` — **new** (route-leave, page-away, return, stop, pause/resume, mobile overlay-toggle; recitation APIs + a silent-WAV data URI stubbed via `page.route`).
 
@@ -129,6 +169,9 @@ Because a hizb/rub/juz/`none` boundary — and even a `page` that spans a surah 
 - Rail invariants (Desktop Reading Group / ADR 0021): new controls join `fq-rail-utils`; no zone restructuring, no width change.
 - `isFollowing` is session state, not persisted. Practice-config reset on `stop()` is unchanged.
 - The strip's return link uses the `<Link href={/pages/N}> + onClick → jumpTo(N)` client-handoff pattern (a known-duplicated pattern — extracting a shared `<ReaderJumpLink>` is a noted follow-up).
+- Word highlight on step must be DOM-direct (`applyWordHighlight`) without re-rendering the mushaf tree.
+- Stepping while paused must update audio position, active verse, and word highlight while preserving paused state (no auto-play).
+- Touch targets must remain comfortable (minimum 28px buttons with 44px hit-box clearance).
 
 ## What NOT to Do
 
@@ -143,6 +186,8 @@ Because a hizb/rub/juz/`none` boundary — and even a `page` that spans a surah 
 - Do **not** validate ranges with error states or a disabled Apply — mutual push-apart only. Do **not** restart audio / seek when a committed draft's Start From equals the current position.
 - Do **not** gate the reader route check anywhere but `use-is-reader-route.ts`.
 - Do **not** touch the cross-chapter `loadChapter` branch to "also fix" the same-chapter repeat bug — it was already correct.
+- Do **not** re-render the whole mushaf tree on word step (DOM-direct highlight only).
+- Do **not** auto-play when stepping while paused.
 
 ## Decisions Made
 
@@ -155,6 +200,10 @@ Because a hizb/rub/juz/`none` boundary — and even a `page` that spans a surah 
 - Settings sheet uses a draft model with an explicit Apply/Start footer; a per-session Start From picker (never persisted); a per-ayah repeat cycle button on the bar/rail. Addendum 9's "no independent from picker" survives everywhere except the sheet; Addendum 12 #394's progress badge was removed.
 - "Play from here" is a single instant-play button — never opens the sheet.
 - Nested `Popover`/`Command` inside a `Dialog`/`Sheet` must pass a `container` prop pointed at the parent's own portaled node (reusable primitive fix, DECISIONS.md).
+- Reorganization on mobile uses Option 2 (2-Row Layout): Row 1 keeps full reciter metadata and utilities cleanly separated; Row 2 centers the 5-button transport cluster (`[Prev Verse] [Prev Word] [Play/Pause] [Next Word] [Next Verse]`).
+- Word stepping uses `ChevronLeft` and `ChevronRight` with `rtl:rotate-180` alongside `SkipBack` and `SkipForward`.
+- Stepping backward always lands on the start of the previous word (deterministic 1-step per click).
+- Hard boundaries enforce no overshooting beyond `1:1` or `114:6` / active stop target.
 
 ## Revision History
 
@@ -169,3 +218,5 @@ Because a hizb/rub/juz/`none` boundary — and even a `page` that spans a surah 
 - 2026-08-03 — folded Addendum 11: the word-level highlight landed on the wrong DOM copy (the pager mounts three panels). **Deleted the DOM ref registry** — highlight by `data-fq-word` attribute + `document.querySelectorAll` toggle on every match; `QuranWord` stops consuming the context; segment resolution filters malformed QDC 1-/2-element segments and holds the last highlight on a `null` (inter-word gaps + verse-boundary skew). Recorded as ADR 0021's 2026-08-03 addendum.
 - 2026-08-25 — folded Addendum 12 (Issues #390–#394): the settings sheet draft model + explicit Apply/Start footer (#392); a per-session Start From picker above "Stop at", never persisted, `start ≤ end` by mutual push-apart (#393); a per-ayah repeat cycle button on the bar/rail (#391). Explicitly superseded Addendum 9's "no independent from picker" (sheet only) and its "displayed==committed" invariant (broken inside the open sheet by the draft). #394's progress badge was added and then **removed** on 2026-09-01.
 - 2026-09-01 — folded Addendum 13 (Issue #467, [ADR 0056](../architecture/adr/0056-recitation-global-playback-and-detachable-follow.md)). **Supersedes Addendum 10** (hard stop on route leave) **and** the "swiping away while playing snaps back" forced follow. Playback is now one app-wide lifecycle; follow is a two-state `isFollowing` attach/detach machine in the `RecitationFollow` leaf (`ReaderPager` still gains no `useRecitation()`); the way back to a detached session is `RecitationReturnStrip`, a second nav row that reserves space (`--fq-nav-extra`) and toggles with the nav overlay. Deleted Addendum 12 #394's `rangeProgress`/`perAyahProgress` state and badge; `RecitationPlayerBar` is reader-route-only and its verse-key line became `recitedVerseLabel`. **Known follow-up:** `followTo` still silently drops a follow issued mid drag/commit — the stale-`prevRecitedPage` retry covers the common case but not a follow lost right before a sub-threshold drag-return.
+- 2026-09-23 — folded Addendum 14 (Issue #379): Next/Previous verse navigation (SkipBack/SkipForward) and word stepping (ChevronLeft/ChevronRight) added to RecitationContext and RecitationPlayerBar. Reorganized mobile/tablet player bar into a 2-row tiered layout (Row 1 context & utilities, Row 2 centered 5-button transport cluster) with vertical stacking on desktop rail. Pure decision functions decideSkipVerse, decideSkipWord, canSkipToPreviousWord, and canSkipToNextWord with full unit test coverage.
+
