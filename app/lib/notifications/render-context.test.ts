@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildRenderContext } from "@/app/lib/notifications/render-context";
 import { toLocaleNumeral } from "@/app/utils/i18n";
+import { NOTIFICATION_TYPES } from "@/app/constants/notifications";
 
 describe("RenderContext - t and tPlural", () => {
   it("preserves backward compatibility of t with standard string keys", () => {
@@ -64,5 +65,103 @@ describe("RenderContext - t and tPlural", () => {
       { n: "5" }
     );
     expect(missingResult).toBe("Fallback template for 5");
+  });
+});
+
+describe("NOTIFICATION_TYPES['plans.daily_reminder'] render title fallback", () => {
+  const renderReminder = NOTIFICATION_TYPES["plans.daily_reminder"].render;
+
+  it("renders custom plan name when planName is present", () => {
+    const ctxAr = buildRenderContext("ar");
+    const contentAr = renderReminder(
+      {
+        pendingCount: 1,
+        primary: null,
+        targetPage: null,
+        targetUrlKind: "plans",
+        planName: "ختمة رمضان",
+      },
+      ctxAr
+    );
+    expect(contentAr.title).toBe("تذكير: ختمة رمضان");
+
+    const ctxEn = buildRenderContext("en");
+    const contentEn = renderReminder(
+      {
+        pendingCount: 1,
+        primary: null,
+        targetPage: null,
+        targetUrlKind: "plans",
+        planName: "Ramadan Khatma",
+      },
+      ctxEn
+    );
+    expect(contentEn.title).toBe("Reminder: Ramadan Khatma");
+  });
+
+  it("renders template label when planName is absent but templateKey is provided", () => {
+    const ctxAr = buildRenderContext("ar");
+    const contentHusunAr = renderReminder(
+      {
+        pendingCount: 1,
+        primary: null,
+        targetPage: null,
+        targetUrlKind: "plans",
+        templateKey: "husun",
+      },
+      ctxAr
+    );
+    expect(contentHusunAr.title).toBe("تذكير: الحصون الخمسة");
+
+    const contentDailyAr = renderReminder(
+      {
+        pendingCount: 1,
+        primary: null,
+        targetPage: null,
+        targetUrlKind: "plans",
+        templateKey: "daily-wird",
+      },
+      ctxAr
+    );
+    expect(contentDailyAr.title).toBe("تذكير: الورد اليومي — قراءة");
+
+    const ctxEn = buildRenderContext("en");
+    const contentHusunEn = renderReminder(
+      {
+        pendingCount: 1,
+        primary: null,
+        targetPage: null,
+        targetUrlKind: "plans",
+        templateKey: "husun",
+      },
+      ctxEn
+    );
+    expect(contentHusunEn.title).toBe("Reminder: Al-Husun Al-Khamsa");
+  });
+
+  it("renders generic Daily Wird when neither planName nor templateKey is provided", () => {
+    const ctxAr = buildRenderContext("ar");
+    const contentAr = renderReminder(
+      {
+        pendingCount: 2,
+        primary: null,
+        targetPage: null,
+        targetUrlKind: "plans",
+      },
+      ctxAr
+    );
+    expect(contentAr.title).toBe("وردك اليومي");
+
+    const ctxEn = buildRenderContext("en");
+    const contentEn = renderReminder(
+      {
+        pendingCount: 2,
+        primary: null,
+        targetPage: null,
+        targetUrlKind: "plans",
+      },
+      ctxEn
+    );
+    expect(contentEn.title).toBe("Daily Wird");
   });
 });

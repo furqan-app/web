@@ -238,8 +238,32 @@ describe("resolveDedicatedWirdDispatch", () => {
     if (!res.shouldSend) return;
 
     expect(res.payload.planName).toBe("Morning Fajr Wird");
+    expect(res.payload.templateKey).toBe("daily-wird");
     expect(res.payload.pendingCount).toBe(1);
     expect(res.payload.primary?.rangeStart).toBe(50);
     expect(res.payload.targetPage).toBe(50);
+  });
+
+  it("returns templateKey without planName when plan has no custom name", async () => {
+    const mockPrisma = {
+      userPlan: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 43,
+          user_id: 1,
+          name: null,
+          template_key: "husun",
+          status: "active",
+          params: {},
+          progress: [],
+        }),
+      },
+    } as unknown as AppPrismaClient;
+
+    const res = await resolveDedicatedWirdDispatch(1, 43, timezone, date, mockPrisma);
+    expect(res.shouldSend).toBe(true);
+    if (!res.shouldSend) return;
+
+    expect(res.payload.planName).toBeUndefined();
+    expect(res.payload.templateKey).toBe("husun");
   });
 });
