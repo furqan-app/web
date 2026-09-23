@@ -41,6 +41,26 @@ describe("isCustomPlanCompleted", () => {
     ).toBe(false);
   });
 
+  it("never completes a daily recurring read wird, even with a full-range entry logged", async () => {
+    const dailyRead: CustomWirdDefinition = {
+      ...weeklyRead,
+      cadence: { type: "daily" },
+    };
+    expect(await isCustomPlanCompleted(1, dailyRead, dbWithFullRangeEntry)).toBe(
+      false
+    );
+  });
+
+  it("never completes a daily recurring memorize wird, even at/past the range end", async () => {
+    const dailyMemorize: CustomWirdDefinition = {
+      ...weeklyMemorize,
+      cadence: { type: "daily" },
+    };
+    expect(
+      await isCustomPlanCompleted(1, dailyMemorize, dbWithFullRangeEntry)
+    ).toBe(false);
+  });
+
   it("still completes a pace read wird once the full range is logged", async () => {
     const pace: CustomWirdDefinition = {
       ...weeklyRead,

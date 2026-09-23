@@ -12,7 +12,23 @@ export const isStandaloneDisplayMode = () =>
   // Addendum 3).
   window.matchMedia("(display-mode: fullscreen)").matches ||
   // iOS Safari has no `display-mode: standalone` media query support.
-  (navigator as unknown as { standalone?: boolean }).standalone === true;
+  (navigator as unknown as { standalone?: boolean }).standalone === true ||
+  // Capacitor native shell (ADR 0072): the hosted shell runs the same app at
+  // HTTPS inside a WebView, where no display-mode query ever matches — treat
+  // the shell as standalone so every PWA-gated surface (first-run gate,
+  // precache, downloads, back guards, guest marking) stays reachable there.
+  isNativePlatform();
+
+// Capacitor native-shell detection (ADR 0072, plan mobile-app-capacitor).
+// Duck-typed on purpose: the web build carries no @capacitor/core dependency,
+// and the bridge object only exists inside the shell's WebView.
+export const isNativePlatform = () =>
+  typeof window !== "undefined" &&
+  (
+    window as unknown as {
+      Capacitor?: { isNativePlatform?: () => boolean };
+    }
+  ).Capacitor?.isNativePlatform?.() === true;
 
 // Used to scope the back-exit guard to Android — iOS has no back
 // button/gesture to trap, and `window.close()` has no effect there (ADR 0040).

@@ -585,6 +585,7 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
                 <button
                   type="button"
                   onClick={() => updateDedicatedReminder({ planId: plan.id, enabled: false })}
+                  data-testid={`plan-card-dedicated-remove-${plan.id}`}
                   className="fq-focus-ring min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive flex items-center justify-center rounded-lg transition-colors"
                   aria-label={t("plans.dedicatedReminder.remove", "Remove dedicated reminder")}
                 >
@@ -597,6 +598,7 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
                 onClick={() =>
                   updateDedicatedReminder({ planId: plan.id, time: "20:00", enabled: true })
                 }
+                data-testid={`plan-card-dedicated-set-${plan.id}`}
                 className="fq-focus-ring min-h-[44px] inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-foreground hover:bg-accent/50 transition-colors"
               >
                 <Plus className="size-3" />

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import useAppTranslations from "@hooks/use-translations";
 import {
   Check,
   ChevronRight,
@@ -40,6 +41,7 @@ const bytesToMb = (bytes: number) => Math.round((bytes / 1024 / 1024) * 10) / 10
 export const OfflineTafsirSheet = () => {
   const locale = useLocale();
   const t = useTranslations("offlineTafsir");
+  const tCommon = useAppTranslations();
   const isRTL = getLanguageDirection(locale) === "rtl";
 
   const [open, setOpen] = useState(false);
@@ -65,6 +67,7 @@ export const OfflineTafsirSheet = () => {
       <SheetContent
         side={isRTL ? "left" : "right"}
         dir={getLanguageDirection(locale)}
+        closeLabel={tCommon("common.close", "Close")}
         className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
         <SheetHeader className="shrink-0 px-5 pb-3.5 pt-5 border-b border-border/70 text-start">

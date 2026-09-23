@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108">
+    <!-- Intentionally empty: the API 24-25 adaptive foreground carries no
+         artwork; the ivory ic_launcher_background shows through. The brand
+         mark lives in the mipmap PNG foregrounds (API 26+). -->
+</vector>

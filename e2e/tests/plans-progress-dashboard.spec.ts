@@ -59,3 +59,55 @@ test.describe("Plans Page: Progress Dashboard Tab (#599)", () => {
     await expect(addPlanCta).toBeVisible();
   });
 });
+
+test.describe("Plans Page: Progress Dashboard Tab — English locale (#599)", () => {
+  test.beforeEach(async ({ context }) => {
+    await clearUserPlans(1);
+    await authenticateAsUser(context);
+  });
+
+  test.afterEach(async () => {
+    await clearUserPlans(1);
+  });
+
+  test("unconditionally switches to Progress tab and renders dashboard sections", async ({ page }) => {
+    await createTestPlan(1, "daily-wird", { quantities: { reading: 5 } });
+
+    await page.goto("/en/plans");
+
+    const dashboardLoaded = page.waitForResponse((res) =>
+      res.url().includes("/api/plans/dashboard"),
+    );
+    const progressTab = page.locator('[data-testid="tab-progress"]');
+    await expect(progressTab).toBeVisible();
+    await progressTab.click();
+    await expect(progressTab).toHaveAttribute("aria-selected", "true");
+    await dashboardLoaded;
+
+    const dashboardPanel = page.locator('[data-testid="tabpanel-progress"]');
+    await expect(dashboardPanel).toBeVisible();
+
+    const streaksGrid = page.locator('[data-testid="progress-streaks-grid"]');
+    await expect(streaksGrid).toBeVisible({ timeout: 30000 });
+
+    const totalsCard = page.locator('[data-testid="progress-totals-card"]');
+    await expect(totalsCard).toBeVisible({ timeout: 30000 });
+
+    const heatmap = page.locator('[data-testid="progress-heatmap-card"]');
+    await expect(heatmap).toBeVisible({ timeout: 30000 });
+  });
+
+  test("renders calm empty state when user has zero plans", async ({ page }) => {
+    await page.goto("/en/plans");
+
+    const progressTab = page.locator('[data-testid="tab-progress"]');
+    await expect(progressTab).toBeVisible();
+    await progressTab.click();
+
+    const emptyState = page.locator('[data-testid="progress-empty-state"]');
+    await expect(emptyState).toBeVisible();
+
+    const addPlanCta = emptyState.locator('[data-testid="add-plan-button"]');
+    await expect(addPlanCta).toBeVisible();
+  });
+});

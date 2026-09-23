@@ -14,7 +14,7 @@ export const isCustomPlanCompleted = async (
   definition: CustomWirdDefinition,
   db: ProgressDbClient
 ): Promise<boolean> => {
-  if (definition.cadence.type === "weekly") {
+  if (definition.cadence.type === "weekly" || definition.cadence.type === "daily") {
     return false;
   }
 

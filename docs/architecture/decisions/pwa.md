@@ -218,3 +218,19 @@ pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 - The precache manifest is the single source of truth for these shells: no second versioned cache, no populate-on-miss, no manual version string.
 - The matcher stays exact (`/^\/(ar|en)\/(marks|search)$/`) with the `navigate`-mode guard — it must never meet `/api/*` (the marks `NetworkOnly` rule owns those), grant paths, or RSC flight data.
 - A `matchPrecache` miss falls through to the network; only `setCatchHandler` decides the terminal document. All other non-reader routes keep terminal-doc behavior unchanged.
+
+---
+
+## Mobile App Packaging (Capacitor Hosted Shell)
+
+**Status:** active
+
+**Decision (2026-09-16, #644):** Phone + tablet apps (iOS + Android) ship as a minimal-binary Capacitor **HTTPS-hosted hybrid shell** around the existing Next.js app — never a local static export, never `capacitor://`. First launch requires connectivity, then offers the base mushaf edition download or continue-online (same consent model as the bulk precache gate). A later native track must not be blocked by this work. See [ADR 0072](../adr/0072-mobile-app-capacitor-hosted-shell.md).
+
+**Constraints:**
+- Never attempt a full-app static export (26 API route handlers plus cookie-session NextAuth cannot export — no true Server Actions exist) or service workers on `capacitor://` (broken on iOS WebKit) — both are permanent rejections, not fallbacks.
+- Never run Google OAuth inside the WebView (Google rejects embedded user agents) and never rely on Web Push for native notifications (excluded from WKWebView) — use a system-browser session + bootstrap and native APNs/FCM tokens instead.
+- iOS Tajweed is a physical-device screenshot-parity gate (ship vs omit-on-iOS in v1); no CSS fallback preserves the mushaf.
+- Never promise "offline from first launch" for the native shell; never bake the ~263 MiB font/Quran asset set into the binary.
+- Shell detection is a Phase 0 prerequisite: `isStandaloneDisplayMode()` is false inside a Capacitor WebView, so every PWA-gated surface (first-run gate, precache, recitation/tafsir downloads, back guards, guest marking) needs an `isNativePlatform()` branch before any POC — without it the whole downloader/offline UI renders `null` in the shell.
+- Backend additions for native (token/session bootstrap, Sign in with Apple + account linking, `DeviceToken` store) must keep the `jsonResponse()` envelope and the two-DB no-cross-FK invariant unchanged.

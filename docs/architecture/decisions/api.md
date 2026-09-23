@@ -55,6 +55,7 @@ const user = extractUser(request); // { id, email, ... }
 **Constraints:**
 - Never return raw `NextResponse.json({ ... })` in API routes — always use `jsonResponse()` (exception: the page words route which predates this convention).
 - Validate inputs before DB writes; return `code: 422` with `message` on missing required fields.
+- `jsonResponse()` always answers HTTP 200 — errors arrive as a JSON envelope with `code >= 400` (and redirects, where the route issues them, as followed documents). Clients must branch on the envelope's `code`/`success` (or, for redirect-issuing routes, on the response content-type), never on `res.ok` — it cannot distinguish success from an envelope error. Found shipping the native auth return path (#659): both the mint reader and the exchange reader initially keyed on `res.ok`.
 
 ---
 

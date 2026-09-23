@@ -248,11 +248,7 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
 
   // Cadence
   const [cadenceType, setCadenceType] = useState<CustomCadenceType>(
-    existingDef?.cadence.type === "deadline"
-      ? "deadline"
-      : existingDef?.cadence.type === "weekly"
-        ? "weekly"
-        : "pace"
+    existingDef?.cadence.type ?? "pace"
   );
   const [pacePeriod, setPacePeriod] = useState<"day" | "week">(
     existingDef?.cadence.type === "pace" && !Number.isInteger(existingDef.cadence.unitsPerDay)
@@ -414,17 +410,17 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
 
     if (isEdit) {
       const patchBody = buildCustomPatchBody(state, hasProgress);
-      const success = await updateCustom.mutateAsync({
+      const result = await updateCustom.mutateAsync({
         planId: existingPlan.id,
         ...patchBody,
       });
-      if (success) onDone();
-      else setError(t("plans.enrollError", "Something went wrong. Try again."));
+      if (result.success) onDone();
+      else setError(result.errorMessage ?? t("plans.enrollError", "Something went wrong. Try again."));
     } else {
       const createBody = buildCustomCreateBody(state);
-      const res = await enrollCustom.mutateAsync(createBody);
-      if (res) onDone();
-      else setError(t("plans.enrollError", "Something went wrong. Try again."));
+      const result = await enrollCustom.mutateAsync(createBody);
+      if (result.plan) onDone();
+      else setError(result.errorMessage ?? t("plans.enrollError", "Something went wrong. Try again."));
     }
   };
 
@@ -713,7 +709,10 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
                 portalContainer={containerEl}
                 onChange={(s) => {
                   const nextSurah = Math.max(s, startVerse.surah);
-                  setEndVerse({ surah: nextSurah, ayah: 1 });
+                  setEndVerse({
+                    surah: nextSurah,
+                    ayah: nextSurah === startVerse.surah ? Math.max(1, startVerse.ayah) : 1,
+                  });
                 }}
               />
               <div className="w-24 flex-none">
@@ -780,51 +779,91 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
           <button
             type="button"
             role="radio"
-            aria-checked={cadenceType === "weekly"}
-            onClick={() => setCadenceType("weekly")}
+            aria-checked={cadenceType === "daily" || cadenceType === "weekly"}
+            onClick={() => setCadenceType((prev) => (prev === "weekly" ? "weekly" : "daily"))}
             className={cn(
               "flex-1 min-h-[44px] py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
-              cadenceType === "weekly"
+              cadenceType === "daily" || cadenceType === "weekly"
                 ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {t("plans.custom.cadenceType.weekly", "Weekly recurrence")}
+            {t("plans.custom.cadenceType.recurring", "Recurring")}
           </button>
         </div>
 
-        {/* Sub-form: Weekly recurrence */}
-        {cadenceType === "weekly" ? (
-          <div className="flex flex-col gap-2 pt-1">
-            <span className="text-xs text-muted-foreground text-center">
-              {t("plans.custom.weeklyHint", "Due on the same weekday every week")}
-            </span>
-            <div
-              role="radiogroup"
-              aria-label={t("plans.custom.weekdayLabel", "Due weekday")}
-              className="flex gap-1 p-1 rounded-xl bg-muted/60 border border-border overflow-x-auto fq-scroll-nice"
-            >
-              {weekdayNames.map((dayName, i) => {
-                const isSelected = weekday === i;
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    onClick={() => setWeekday(i)}
-                    className={cn(
-                      "flex-1 min-h-[44px] min-w-[40px] whitespace-nowrap px-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
-                      isSelected
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {dayName}
-                  </button>
-                );
-              })}
+        {/* Sub-form: Recurring (Daily vs Weekly) */}
+        {cadenceType === "daily" || cadenceType === "weekly" ? (
+          <div className="flex flex-col gap-3 pt-1">
+            {/* Period selector: Daily vs Weekly */}
+            <div className="flex justify-center gap-1 rounded-full bg-muted/60 p-1 max-w-[200px] mx-auto w-full">
+              <button
+                type="button"
+                aria-pressed={cadenceType === "daily"}
+                onClick={() => setCadenceType("daily")}
+                className={cn(
+                  "flex-1 min-h-[44px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors",
+                  cadenceType === "daily"
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t("plans.custom.recurrencePeriod.daily", "Daily")}
+              </button>
+              <button
+                type="button"
+                aria-pressed={cadenceType === "weekly"}
+                onClick={() => setCadenceType("weekly")}
+                className={cn(
+                  "flex-1 min-h-[44px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors",
+                  cadenceType === "weekly"
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t("plans.custom.recurrencePeriod.weekly", "Weekly")}
+              </button>
             </div>
+
+            {cadenceType === "daily" ? (
+              <span className="text-xs text-muted-foreground text-center">
+                {t("plans.custom.dailyHint", "The entire range repeats every day")}
+              </span>
+            ) : null}
+
+            {cadenceType === "weekly" ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-xs text-muted-foreground text-center">
+                  {t("plans.custom.weeklyHint", "Due on the same weekday every week")}
+                </span>
+                <div
+                  role="radiogroup"
+                  aria-label={t("plans.custom.weekdayLabel", "Due weekday")}
+                  className="flex gap-1 p-1 rounded-xl bg-muted/60 border border-border overflow-x-auto fq-scroll-nice"
+                >
+                  {weekdayNames.map((dayName, i) => {
+                    const isSelected = weekday === i;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => setWeekday(i)}
+                        className={cn(
+                          "flex-1 min-h-[44px] min-w-[40px] whitespace-nowrap px-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
+                          isSelected
+                            ? "bg-primary text-primary-foreground font-semibold"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {dayName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -960,6 +999,8 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
               ? tIntl(estimate.textKey, {
                   weekday: weekdayNames[estimate.weekday ?? weekday] ?? "",
                 })
+              : estimate.type === "daily"
+              ? t(estimate.textKey, "The entire range repeats every day")
               : estimate.type === "days"
               ? tIntl(estimate.textKey, {
                   count: estimate.numericValue,

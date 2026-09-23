@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-95 active plans.
+103 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -11,6 +11,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | a11y | [Fix Dialog Missing Title/Description A11y Warnings](fix-dialog-missing-description.md) | implemented | bug |
 | api | [Fix ByteString Crash on Non-ASCII Usernames in Auth Middleware](fix-arabic-username-auth-header.md) | implemented | bug |
 | api | [Fix RSC Cache Poisoning on Hostinger](fix-rsc-cache-poisoning.md) | implemented | bug |
+| awrad | [Batch small fixes 630–635 (custom-wird range, husun label, endDate validation, e2e/docs alignment, dialog close label)](batch-630-635-small-fixes.md) | ready-to-implement | bug |
 | awrad | [Awrad Dashboard: Dedicated motivation & progress hub with per-activity streaks](599-awrad-progress-dashboard.md) | implemented | feature |
 | awrad | [Awrad Notifications: turn on the daily wird reminder — enqueue layer, content-aware dispatch & per-user time picker](600-daily-wird-reminder.md) | implemented | feature |
 | awrad | [Awrad Reader UX: Refine PlansWidget into an unobtrusive, page-scoped check-off shortcut](597-reader-wird-checkoff.md) | implemented | feature |
@@ -21,8 +22,10 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | awrad | [Daily Awrad & Learning Plans Engine (Foundation)](awrad-learning-plans.md) | implemented | feature |
 | awrad | [Daily Awrad UI](daily-awrad-ui.md) | implemented | feature |
 | awrad | [Daily wird presets: add memorize & review flavours, reframe as \"Daily wird — <activity>\" + optional start point](607-daily-wird-activity-flavours.md) | implemented | feature |
+| awrad | [Daily-Recurring Custom Wirds with Full-Range Wrap](daily-recurring-custom-wirds.md) | implemented | feature |
 | awrad | [Verse & Fractional-Page Granularity for Awrad](awrad-verse-granularity.md) | implemented | feature |
 | awrad | [Weekly-Recurring Custom Wirds with Matching Weekly Reminders](weekly-custom-wirds.md) | implemented | feature |
+| ci | [Cloud Android build — debug APK artifact on demand](android-debug-apk.md) | ready-to-implement | feature |
 | ci | [CI Quality Gate: PR Lint, Typecheck & Vitest Workflow](ci-quality-gate.md) | implemented | feature |
 | ci | [Dev Ergonomics: Local Dev Server for Playwright & Build Worker CPU Limit](local-build-and-test-ergonomics.md) | implemented | feature |
 | ci | [Local E2E runs against a production build, like CI](local-e2e-build-path.md) | implemented | chore |
@@ -54,15 +57,19 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Restructure Navigation for Clean UX](restructure-navigation.md) | implemented | feature |
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
+| notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
+| pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | ready-to-implement | feature |
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
+| pwa | [Slim the native shell — stop bundling public/ web assets into the APK](slim-native-shell-assets.md) | implemented | chore |
 | reader | [Arrow Controls on Desktop](arrow-controls-desktop.md) | implemented | feature |
 | reader | [Complex E2E & Fix: Boundary Wrap-Arounds & Error Route Recovery Navigation](e2e-boundary-wraparound-recovery.md) | implemented | feature |
 | reader | [Fix QuranSafha Swipe Flicker (font-ready flash + mark re-renders)](fix-safha-swipe-flicker.md) | implemented | bug |
 | reader | [Fix Reversed Mobile Swipe Navigation Direction](fix-mobile-swipe-direction.md) | implemented | bug |
+| reader | [Fix tablet-band reader for non-touch laptops via input-capability gating](fix-tablet-band-fine-pointer.md) | implemented | bug |
 | reader | [Fix Tajweed Mushaf Swipe Flicker](fix-tajweed-swipe-flicker.md) | implemented | bug |
 | reader | [Loading Placeholder Toggles the Scrollbar, Reflowing the Whole Document](fix-panel-placeholder-reflow.md) | implemented | bug |
 | reader | [Mushaf Double-Page Spread Toggle](mushaf-double-page-view.md) | implemented | feature |
@@ -92,6 +99,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | theming | [Design Migration — reader-lab language, app-wide](design-migration/INDEX.md) | in-progress | feature |
 | theming | [Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette](dark-theme-mushaf-unification.md) | implemented | feature |
 | theming | [Home Page Design Fixes](home-page-design-fixes.md) | implemented | feature |
+| theming | [Native brand icons and splash from the Furqan mark](app-brand-icons.md) | implemented | feature |
 | theming | [Reading-desk depth for light & gold — and de-duplicating the reader CSS](theme-depth-unification.md) | implemented | feature |
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |

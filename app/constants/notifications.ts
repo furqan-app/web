@@ -9,11 +9,12 @@
 import { escapeHtml } from "@/app/lib/notifications/html";
 import { toLocaleNumeral } from "@/app/utils/i18n";
 import { formatRawVerseKey } from "@/app/lib/plans/ui-helpers";
+import { PLAN_TEMPLATE_UI } from "@/app/constants/plan-ui";
 
 // The channel registry (app/lib/notifications/channels/registry.ts) is the
 // single source of truth for which channels actually exist at runtime; this
 // is a type-only enumeration of the possible keys, not a second list.
-export type NotificationChannelKey = "push" | "email";
+export type NotificationChannelKey = "push" | "email" | "native_push";
 
 export const MAX_GENERAL_WIRD_REMINDERS = 3;
 
@@ -64,6 +65,7 @@ export type PlanDailyReminderPayload = {
   targetPage: number | null; // mushaf page (1–604) for single-assignment deep link, null if multiple/ambiguous
   targetUrlKind: "page" | "plans";
   planName?: string | null;
+  templateKey?: string | null;
 };
 
 export type SystemTestPayload = {
@@ -76,11 +78,17 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeDef> = {
     defaultChannels: ["push"],
     render: (payload: PlanDailyReminderPayload, ctx: RenderContext) => {
       const { t, tPlural, locale } = ctx;
-      const title = payload.planName
+      let displayName = payload.planName;
+      if (!displayName && payload.templateKey && PLAN_TEMPLATE_UI[payload.templateKey]) {
+        const templateUI = PLAN_TEMPLATE_UI[payload.templateKey];
+        displayName = t(templateUI.labelKey, templateUI.defaultLabel);
+      }
+
+      const title = displayName
         ? t(
             "notifications.types.plansDailyReminder.dedicatedTitle",
             "Reminder: {{name}}",
-            { name: payload.planName }
+            { name: displayName }
           )
         : t("notifications.types.plansDailyReminder.title", "Daily Wird");
       const url =

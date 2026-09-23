@@ -1350,15 +1350,14 @@ Located in `e2e/tests/` (following the repo convention).
 #### Strict Assertion Discipline:
 All spec assertions target explicit `data-testid` attributes, **never** localized `aria-label` substrings or localized button texts:
 - `data-testid="wird-reminder-toggle"`: Master switch toggle button in `DailyWirdReminderSection`.
-- `data-testid="wird-reminder-time-trigger-<slot>"`: Combobox button triggering the time popover for a slot.
+- `data-testid="wird-reminder-time-trigger"`: Combobox button triggering the time popover for slot 1 (bare); `data-testid="wird-reminder-time-trigger-slot-N"` for slots 2–3.
 - `data-testid="wird-reminder-time-popover"`: Popover container holding the time options list.
 - `data-testid="wird-reminder-time-search"`: Search input inside the time combobox.
 - `data-testid="wird-reminder-time-option-<HHMM>"`: Selectable time item (e.g. `data-testid="wird-reminder-time-option-0830"`).
-- `data-testid="wird-reminder-add-slot"`: Button to add another reminder time (slots 2 and 3).
+- `data-testid="wird-reminder-add-slot"`: Button to add another reminder time.
 - `data-testid="wird-reminder-remove-slot-<slot>"`: Button to remove a specific general reminder slot.
-- `data-testid="plan-card-dedicated-toggle"` / `data-testid="plan-card-dedicated-set"`: Button on `PlanCard` to set dedicated reminder time.
-- `data-testid="plan-card-dedicated-badge"`: Badge indicating dedicated reminder is active.
-- `data-testid="plan-card-dedicated-notice"`: Notice confirming exclusion from general reminders.
+- `data-testid="plan-card-dedicated-set-<planId>"` / `data-testid="plan-card-dedicated-remove-<planId>"`: Buttons on `PlanCard` to set/remove a dedicated reminder for a specific plan.
+- `data-testid="dedicated-reminder-time-trigger-<planId>"`: Time combobox trigger for a plan's dedicated reminder.
 - `data-testid="plans-hero-reminder-row"`: The quiet reminder affordance row on the `/plans` hero card.
 - `data-testid="settings-section-wird-reminder"`: The section container in `SettingsSidebar`.
 
@@ -1369,11 +1368,11 @@ All spec assertions target explicit `data-testid` attributes, **never** localize
 2. Navigate to `/plans`, assert `[data-testid="plans-hero-reminder-row"]` is visible, and click it.
 3. Assert `SettingsSidebar` opens and `[data-testid="settings-section-wird-reminder"]` is visible and revealed into view.
 4. Toggle switch `[data-testid="wird-reminder-toggle"]` ON (enabling slot 1).
-5. Click time trigger for slot 1, search for `08:30`, and select `[data-testid="wird-reminder-time-option-0830"]`.
-6. Click `[data-testid="wird-reminder-add-slot"]` to add slot 2, select `14:00`.
+5. Click time trigger `[data-testid="wird-reminder-time-trigger"]` for slot 1, search for `08:30`, and select `[data-testid="wird-reminder-time-option-0830"]`.
+6. Click `[data-testid="wird-reminder-add-slot"]` to add slot 2, set slot 2 time via `[data-testid="wird-reminder-time-trigger-slot-2"]`, and select `14:00`.
 7. Reload page, navigate back, and verify both 08:30 and 14:00 persist.
 8. Click `[data-testid="wird-reminder-remove-slot-2"]`, reload and verify only 08:30 remains.
-9. Navigate to `/plans` (My Plans tab), assert dedicated reminder row is visible on the active plan card, click to set dedicated time (`21:00`), reload and verify dedicated badge and "Excluded from general reminders" notice persist.
+9. Navigate to `/plans` (My Plans tab), assert the active plan card has `[data-testid="plan-card-dedicated-set-<planId>"]`, click it to enable the dedicated reminder, then set time to `21:00` via `[data-testid="dedicated-reminder-time-trigger-<planId>"]` and `[data-testid="wird-reminder-time-option-2100"]`. Reload and verify the dedicated trigger persists and `[data-testid="plan-card-dedicated-remove-<planId>"]` is visible.
 
 ---
 
