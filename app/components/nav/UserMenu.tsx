@@ -25,7 +25,8 @@ import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@/app/utils/i18n";
 import { getPendingCount, syncMarks } from "@/app/lib/marks/sync";
 import { menuRowClassName } from "./NavPillLink";
-import { hardNavigateIfOffline } from "@/app/utils/platform";
+import { hardNavigateIfOffline, isNativePlatform } from "@/app/utils/platform";
+import { openSystemBrowserSignin } from "@/app/lib/shell/auth-return";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -190,6 +191,17 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
   const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
 
+  // Shell return path (plan mobile-app-capacitor): inside the native shell
+  // sign-in opens in the system browser with the current location as the
+  // return target; everywhere else the existing next-auth signIn runs.
+  const startSignIn = () => {
+    if (isNativePlatform()) {
+      void openSystemBrowserSignin();
+    } else {
+      signIn();
+    }
+  };
+
   if (menuRow) {
     return (
       <div>
@@ -245,7 +257,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
                 className={menuRowClassName}
                 onClick={() => {
                   onNavigate?.();
-                  signIn();
+                  startSignIn();
                 }}
               >
                 {t("signIn", "Sign in")}
@@ -308,7 +320,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
         {session ? (
           <SignOutControl onNavigate={onNavigate} />
         ) : (
-          <DropdownMenuItem className="cursor-pointer" onClick={() => signIn()}>
+          <DropdownMenuItem className="cursor-pointer" onClick={startSignIn}>
             {t("signIn", "Sign in")}
           </DropdownMenuItem>
         )}

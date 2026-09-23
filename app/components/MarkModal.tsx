@@ -29,6 +29,8 @@ import { getWordAudioUrl } from "../constants/word-audio";
 import { addPageMark } from "../server/actions/addPageMark";
 import { deletePageMark } from "../server/actions/deletePageMark";
 import useTranslations from "../hooks/use-translations";
+import { isNativePlatform } from "@/app/utils/platform";
+import { openSystemBrowserSignin } from "@/app/lib/shell/auth-return";
 import { getLanguageDirection, toLocaleNumeral } from "@/app/utils/i18n";
 import { getSurahMeta, normalizeVerseKey } from "@/app/utils/quran-navigation";
 import {
@@ -267,6 +269,18 @@ export function MarkModal({
   // Drop any verse text cached for a different verse/word — keyed on the mark
   // identity, not the modal-open effect, so a comment edit doesn't reset it.
   const markKey = "location" in markFor ? markFor.location : markFor.verse_key;
+  // Shell return path (plan mobile-app-capacitor): inside the native shell
+  // Google OAuth must open in the system browser (WebView OAuth is a hard
+  // platform rejection) carrying this modal's reopen target; everywhere else
+  // the existing next-auth signIn with the same callbackUrl runs unchanged.
+  const startSignIn = () => {
+    const target = `${pathname}?markWord=${encodeURIComponent(markKey)}`;
+    if (isNativePlatform()) {
+      void openSystemBrowserSignin(target);
+    } else {
+      signIn("google", { callbackUrl: target });
+    }
+  };
   useEffect(() => {
     shareTextPromiseRef.current = null;
     setResolvedShareText(null);
@@ -795,11 +809,7 @@ export function MarkModal({
                     </span>
                     <button
                       type="button"
-                      onClick={() =>
-                        signIn("google", {
-                          callbackUrl: `${pathname}?markWord=${encodeURIComponent(markKey)}`,
-                        })
-                      }
+                      onClick={startSignIn}
                       className="shrink-0 font-medium text-primary hover:underline"
                     >
                       {t("signIn", "Sign in")}
@@ -848,11 +858,7 @@ export function MarkModal({
               </p>
               <Button
                 className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6"
-                onClick={() =>
-                  signIn("google", {
-                    callbackUrl: `${pathname}?markWord=${encodeURIComponent(markKey)}`,
-                  })
-                }
+                onClick={startSignIn}
               >
                 {t("signIn", "Sign in")}
               </Button>

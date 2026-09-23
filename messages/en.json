@@ -781,5 +781,17 @@
     "s8t": "Changes and contact",
     "s8b": "We will update this page if our practices change. Questions or deletion requests: {email}."
   },
+  "nativeCallback": {
+    "status": "Finishing sign-in — returning you to the app…",
+    "error": "Couldn't finish sign-in. Check your connection and try again.",
+    "retry": "Try again",
+    "home": "Home"
+  },
+  "nativeBootstrap": {
+    "status": "Finishing sign-in — opening your page…",
+    "error": "This sign-in link expired. Start again from the app.",
+    "retry": "Try again",
+    "home": "Home"
+  },
   "close": "Close"
 }

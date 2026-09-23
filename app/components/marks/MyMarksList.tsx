@@ -34,7 +34,8 @@ import {
   COMMENT_PREVIEW_CHAR_LIMIT,
   markKey,
 } from "@constants/marks";
-import { isStandaloneDisplayMode } from "@/app/utils/platform";
+import { isStandaloneDisplayMode, isNativePlatform } from "@/app/utils/platform";
+import { openSystemBrowserSignin } from "@/app/lib/shell/auth-return";
 import { useOnlineStatus } from "@/app/hooks/use-online-status";
 import { evaluateMarkModalGates } from "@/app/lib/marks/gates";
 import { MarksSignedOutPrompt } from "./MarksSignedOutPrompt";
@@ -251,7 +252,15 @@ export const MyMarksList = () => {
             </p>
           </div>
           <button
-            onClick={() => signIn()}
+            onClick={() => {
+              // Shell return path (plan mobile-app-capacitor): the expired
+              // session re-signs in the system browser; plain signIn outside.
+              if (isNativePlatform()) {
+                void openSystemBrowserSignin();
+              } else {
+                signIn();
+              }
+            }}
             className="fq-focus-ring flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform duration-150 active:scale-95 flex-none"
           >
             <LogIn className="size-3.5" strokeWidth={1.8} />
