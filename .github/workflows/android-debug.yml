@@ -2,8 +2,9 @@ name: Android debug APK
 
 # First installable app: compiles the Capacitor Android shell into a
 # downloadable debug APK. Debug builds self-sign — no keystore, no secrets.
-# The shell is hosted-only (ADR 0072), so no `cap sync` runs here: bundled
-# web assets would only copy ~263MB for nothing.
+# The shell is hosted-only (ADR 0072) and `webDir` points at the near-empty
+# native-shell-web placeholder (plan slim-native-shell-assets), so the
+# `cap sync` below copies ~KB of web assets instead of ~263MB for nothing.
 
 on:
   workflow_dispatch:
@@ -11,6 +12,7 @@ on:
     paths:
       - "android/**"
       - "capacitor.config.ts"
+      - "native-shell-web/**"
       - ".github/workflows/android-debug.yml"
 
 concurrency:

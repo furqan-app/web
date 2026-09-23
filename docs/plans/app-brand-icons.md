@@ -30,7 +30,7 @@ Replace every Capacitor-default launcher icon and splash image on `android/` and
 - Every overwritten PNG matches its predecessor's dimensions exactly (script asserts per-file).
 - `AppIcon.appiconset/Contents.json` validates as JSON and names only files present; iOS set expanded to the full standard size list.
 - No XML/storyboard/manifest diff except the two background-color values (adaptive color token + vector fill).
-- `npx cap sync` still passes (webDir `public` exists).
+- `npx cap sync` still passes (webDir placeholder dir exists).
 
 ## Files to Change
 

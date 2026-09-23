@@ -27,10 +27,12 @@ const config: CapacitorConfig = {
   appId: "app.furqan",
   appName: "Furqan",
   // Unused while hosted (no static export per ADR 0072) but required by the
-  // CLI — points at the always-present public dir so `cap sync`/`copy` never
-  // fail on a missing folder. Never bake Quran/font assets here — bulk
+  // CLI — points at the near-empty native-shell-web placeholder dir so
+  // `cap sync`/`copy` never fail on a missing folder and never bundle the
+  // ~260 MB of public/ web assets into native builds (plan
+  // slim-native-shell-assets). Never bake Quran/font assets here — bulk
   // content downloads post-install per edition with sentinel + verify-and-heal.
-  webDir: "public",
+  webDir: "native-shell-web",
   server: {
     url: serverUrl,
     allowNavigation: Array.from(new Set([PROD_HOST, serverHost])),
