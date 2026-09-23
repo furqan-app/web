@@ -5,7 +5,7 @@ Lightweight inventory of all app components. One line per component. Not a props
 **Before modifying a shared component, check this file to understand all callers.**  
 **After adding, removing, or reorganising components in any task, update this file.**
 
-Last updated: 2026-08-31
+Last updated: 2026-09-23
 
 ---
 
@@ -168,6 +168,8 @@ app/components/tafsir/        — responsive Quranic commentary presentation lay
   TafsirReaderSync           — client null leaf: mounted in app/[locale]/layout.tsx inside ReaderNavigationProvider; consumes useTafsirModal, useReaderPage, useReaderNavigation, and useVersePages; synchronizes open Tafsir verse key with reader pager jumpTo when manual stepping crosses a page boundary not currently visible
 LastReadPageSync              — "use client" null leaf: mounted app-wide (app/[locale]/layout.tsx), not inside ReaderPager — needs to keep the navbar link current everywhere, not just while the reader is mounted. Consumes ReaderPageContext.visiblePages; on change, calls LastReadPageContext's setLastReadPage(visiblePages[0]) — skipped when visiblePages is null or the route is the grant reader (pathname includes /mushaf/)
 MarksSync                     — "use client" null leaf: mounted app-wide (app/[locale]/layout.tsx) beside LastReadPageSync. Two jobs, both prerequisites for the local marks store being live at all (ADR 0061): it calls useMarksSync(), whose subscription is what ARMS the sync engine (app/lib/marks/sync.ts attaches its online / visibilitychange / cross-tab storage / store-mutation triggers on the first listener, and merely importing the module is what evaluates its deferred idle-after-first-paint launch trigger); and it stamps the store owner from an OBSERVED authenticated session. Never stamps on an `unauthenticated` reading — app/sw.ts aborts /api/auth/session at 3s (ADR 0049) so every offline launch reads that way, and re-stamping "guest" there would trip the different-owner reset on reconnect and discard offline marks. Fires no network of its own; SessionProvider is already mounted above, so useSession() adds no request (ADR 0049 Root-Layout Network Budget). #546/#547 shipped without this leaf and the whole feature was inert (#560)
+NativeAuthReturnListener      — "use client" null leaf: mounted app-wide (app/[locale]/layout.tsx) beside MarksSync. Subscribes to Capacitor `appUrlOpen` only inside the native shell (returns before touching the bridge on web/PWA) and routes each URL through `app/lib/shell/auth-return.ts` `handleAppUrl`, which spends the one-time code at POST /api/auth/native-bootstrap and lands the WebView on the deep target (plan mobile-app-capacitor, Addendum 2026-09-23, #659). Fires no network on mount — listener only.
+app/components/shell/         — native auth return UI (plan mobile-app-capacitor, Addendum 2026-09-23, #659): NativeCallbackHandler (system-browser leg — mints the code when the `native` param is present, redirects unauthenticated visits through web sign-in, never mints on stray visits) + NativeBootstrapHandler (App Link landing — exchanges in-shell, replaces onto the target in browser/PWA); thin locale pages at app/[locale]/native-callback + app/[locale]/native-bootstrap own setRequestLocale + the Suspense boundary (useSearchParams bail-out, same shape as search)
 ```
 
 ## Contexts
