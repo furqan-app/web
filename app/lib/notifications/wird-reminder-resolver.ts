@@ -34,7 +34,8 @@ export const toLocalDateString = (date: Date, timeZone: string): string => {
 
 function buildReminderPayload(
   pending: TrackAssignment[],
-  planName?: string | null
+  planName?: string | null,
+  templateKey?: string | null
 ): PlanDailyReminderPayload {
   let primary: PlanDailyReminderPayload["primary"] = null;
   let targetPage: number | null = null;
@@ -76,6 +77,7 @@ function buildReminderPayload(
     targetPage,
     targetUrlKind,
     ...(planName ? { planName } : {}),
+    ...(templateKey ? { templateKey } : {}),
   };
 }
 
@@ -210,6 +212,6 @@ export async function resolveDedicatedWirdDispatch(
 
   return {
     shouldSend: true,
-    payload: buildReminderPayload(pending, planName),
+    payload: buildReminderPayload(pending, planName, plan.template_key),
   };
 }
