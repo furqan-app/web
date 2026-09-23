@@ -58,7 +58,11 @@ export const buildCustomCreateBody = (
   const range = buildRangeInput(state);
 
   let cadence: CustomWirdCadenceInput;
-  if (state.cadenceType === "weekly") {
+  if (state.cadenceType === "daily") {
+    cadence = {
+      type: "daily",
+    };
+  } else if (state.cadenceType === "weekly") {
     cadence = {
       type: "weekly",
       weekday: state.weekday,
@@ -100,7 +104,11 @@ export const buildCustomPatchBody = (
     body.range = buildRangeInput(state);
   }
 
-  if (state.cadenceType === "weekly") {
+  if (state.cadenceType === "daily") {
+    body.cadence = {
+      type: "daily",
+    };
+  } else if (state.cadenceType === "weekly") {
     body.cadence = {
       type: "weekly",
       weekday: state.weekday,

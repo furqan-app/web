@@ -54,6 +54,9 @@ export type CustomWirdCadenceInput =
   | {
       type: "weekly";
       weekday: number;
+    }
+  | {
+      type: "daily";
     };
 
 export type CreateCustomPlanBody = {
@@ -116,6 +119,7 @@ const ALLOWED_CADENCE_KEYS_BY_TYPE: Record<string, string[]> = {
   pace: ["type", "period", "amount"],
   deadline: ["type", "endDate", "repetitions"],
   weekly: ["type", "weekday"],
+  daily: ["type"],
 };
 
 export const resolveCustomRange = async (
@@ -358,6 +362,14 @@ export const resolveCustomCadence = (
       cadence: {
         type: "weekly",
         weekday,
+      },
+    };
+  }
+
+  if (type === "daily") {
+    return {
+      cadence: {
+        type: "daily",
       },
     };
   }

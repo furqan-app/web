@@ -437,10 +437,16 @@
       "cadenceType": {
         "pace": "بمعدل ثابت",
         "deadline": "بتاريخ إتمام",
-        "weekly": "تكرار أسبوعي"
+        "weekly": "تكرار أسبوعي",
+        "recurring": "تكرار دوري"
+      },
+      "recurrencePeriod": {
+        "daily": "يومي",
+        "weekly": "أسبوعي"
       },
       "weekdayLabel": "يوم الاستحقاق",
       "weeklyHint": "يُستحق في نفس اليوم من كل أسبوع",
+      "dailyHint": "يتكرر كامل النطاق كل يوم تلقائيًا",
       "period": {
         "day": "يوميًا",
         "week": "أسبوعيًا"
@@ -459,7 +465,8 @@
         "days": "≈ {count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}} للإتمام",
         "pace": "≈ {pace} (يُعاد حسابه تلقائيًا)",
         "paceWithDays": "≈ {pace} (يُنجز في {daysCount, plural, zero {{daysN} يوم} one {يوم واحد} two {يومين} few {{daysN} أيام} many {{daysN} يومًا} other {{daysN} يوم}})",
-        "weekly": "كل {weekday}"
+        "weekly": "كل {weekday}",
+        "daily": "يتكرر كامل النطاق كل يوم"
       },
       "rangeFrozen": "تم تثبيت المقدار لتسجيل قراءات سابقة",
       "verseWeeklyUnavailable": "المعدل الأسبوعي غير متاح للآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء",

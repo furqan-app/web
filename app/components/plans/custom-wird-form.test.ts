@@ -152,6 +152,17 @@ describe("Custom Wird Form State Mapping & Invariants (CustomWirdForm)", () => {
         weekday: 5,
       });
     });
+
+    it("serializes daily cadence into { type: 'daily' }", () => {
+      const body = buildCustomCreateBody({
+        ...baseState,
+        cadenceType: "daily",
+      });
+
+      expect(body.cadence).toEqual({
+        type: "daily",
+      });
+    });
   });
 
   describe("Patch Request Body Serialization & Range Freeze Invariants", () => {
@@ -229,6 +240,20 @@ describe("Custom Wird Form State Mapping & Invariants (CustomWirdForm)", () => {
       expect(patchBody.cadence).toEqual({
         type: "weekly",
         weekday: 0,
+      });
+    });
+
+    it("serializes daily cadence in PATCH body", () => {
+      const patchBody = buildCustomPatchBody(
+        {
+          ...baseState,
+          cadenceType: "daily",
+        },
+        false
+      );
+
+      expect(patchBody.cadence).toEqual({
+        type: "daily",
       });
     });
   });

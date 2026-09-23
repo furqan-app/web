@@ -42,6 +42,9 @@ export type CustomWirdCadence =
       type: "weekly";
       /** Due weekday: 0 = Sunday … 6 = Saturday (Date.getUTCDay() convention, ADR 0070). */
       weekday: number;
+    }
+  | {
+      type: "daily";
     };
 
 export type CustomWirdDefinition = {
@@ -325,18 +328,18 @@ export const getPlanTemplate = (key: string): PlanTemplate | null =>
  * Purely constructs a PlanTemplate from a stored CustomWirdDefinition (ADR 0067).
  * Single track with key "custom", deriving cursor_advance for memorize and
  * fixed_cycle (with onComplete: "stop") for read/listen/review — except the
- * "weekly" cadence, which is a weekday-gated fixed_cycle with onComplete:
- * "wrap" and defaultUnitsPerDay set to the full range span, regardless of
- * activity (ADR 0070): the due day's assignment is the entire range in one
- * shot, recurring indefinitely.
+ * "weekly" (ADR 0070) and "daily" (ADR 0073) cadences, which are full-range
+ * fixed_cycles with onComplete: "wrap" and defaultUnitsPerDay set to the full
+ * range span, recurring indefinitely.
  */
 export const planTemplateFromDefinition = (
   definition: CustomWirdDefinition
 ): PlanTemplate => {
-  if (definition.cadence.type === "weekly") {
+  if (definition.cadence.type === "weekly" || definition.cadence.type === "daily") {
+    const isWeekly = definition.cadence.type === "weekly";
     return {
       key: "custom",
-      missedDayPolicy: "weekly",
+      missedDayPolicy: isWeekly ? "weekly" : "cursor",
       tracks: [
         {
           key: "custom",
@@ -349,7 +352,7 @@ export const planTemplateFromDefinition = (
             boundsUnit: definition.unit,
             defaultUnitsPerDay: definition.rangeEnd - definition.rangeStart + 1,
             onComplete: "wrap",
-            weekday: definition.cadence.weekday,
+            ...(definition.cadence.type === "weekly" ? { weekday: definition.cadence.weekday } : {}),
           },
         },
       ],

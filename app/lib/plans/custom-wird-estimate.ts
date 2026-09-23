@@ -9,10 +9,10 @@ import type { SurahResult } from "@/app/types";
 import juzStarts from "@/public/quran/juz-starts.json";
 
 export type CustomWirdFormMode = "mushaf" | "surah" | "juz" | "page" | "verse";
-export type CustomCadenceType = "pace" | "deadline" | "weekly";
+export type CustomCadenceType = "pace" | "deadline" | "weekly" | "daily";
 
 export type EstimateResult = {
-  type: "days" | "pace" | "weekly";
+  type: "days" | "pace" | "weekly" | "daily";
   numericValue: number;
   estimatedDays?: number;
   unit: "page" | "verse";
@@ -148,7 +148,7 @@ export const computeCadenceEstimate = ({
 }: {
   totalUnits: number;
   unit: "page" | "verse";
-  cadenceType: "pace" | "deadline" | "weekly";
+  cadenceType: CustomCadenceType;
   pacePeriod?: "day" | "week";
   paceAmount?: number;
   startDate: string;
@@ -156,6 +156,15 @@ export const computeCadenceEstimate = ({
   repetitions?: number;
   weekday?: number;
 }): EstimateResult => {
+  if (cadenceType === "daily") {
+    return {
+      type: "daily",
+      numericValue: totalUnits,
+      unit,
+      textKey: "plans.custom.estimate.daily",
+    };
+  }
+
   if (cadenceType === "weekly") {
     return {
       type: "weekly",
