@@ -6,12 +6,16 @@ import { recitedVerseLabelParts } from "@/app/utils/recitation";
 import { REPEAT_COUNT_MAX } from "@/app/constants/recitation";
 import { RepeatCount } from "@/app/types/recitation";
 import {
+  ChevronLeft,
+  ChevronRight,
   ChevronsUpDown,
   CircleUserRound,
   Pause,
   Play,
   Repeat,
   Settings as SettingsIcon,
+  SkipBack,
+  SkipForward,
   Square,
 } from "lucide-react";
 import { useRecitation } from "@/app/contexts/RecitationContext";
@@ -47,6 +51,14 @@ export const RecitationPlayerBar = () => {
     play,
     togglePlayPause,
     stop,
+    skipToNextVerse,
+    skipToPreviousVerse,
+    canSkipNext,
+    canSkipPrevious,
+    skipToNextWord,
+    skipToPreviousWord,
+    canSkipNextWord,
+    canSkipPreviousWord,
     resetPerAyahRepeat,
     openSettings,
     playbackError,
@@ -131,35 +143,153 @@ export const RecitationPlayerBar = () => {
         transitionTimingFunction: isOverlayMode ? "cubic-bezier(0.23, 1, 0.32, 1)" : undefined,
       }}
     >
-      {/* Three zones, mirroring the lab's rail: who is reciting, the transport,
-          and the tertiary utilities. In bar form the wrappers are
-          `display: contents`, so the flex row lays out exactly as it always
-          did; in rail form globals.css turns them into absolutely-positioned
-          zones pinned to the rail's top, true midpoint and foot. */}
-      <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5">
-        <div className="fq-rail-zone fq-rail-lead">
-          <ReciterCombobox
-            reciters={reciters}
-            value={settings.reciterId}
-            onChange={(id) => updateSettings({ reciterId: id })}
-            portalContainer={null}
-            contentClassName="w-64 p-0"
-            side="left"
-            trigger={({ open }) => (
+      {/* Three zones: lead reciter identity, transport, and utilities.
+          In bar form, fq-rail-lead is display: contents while transport and utils
+          form real flex containers in the 3-section layout; in rail form
+          globals.css turns them into absolutely-positioned vertical zones
+          pinned to the rail's top, true midpoint and foot. */}
+      {/* Two rows in horizontal bar mode; three vertical zones in rail mode.
+          In bar form, Row 1 contains lead identity, info, and utilities,
+          while Row 2 houses the centered 5-button transport cluster.
+          In rail form, fq-recitation-row-lead has display: contents, so
+          fq-rail-lead, fq-rail-transport, and fq-rail-utils position absolutely
+          at top, center, and bottom of the rail column. */}
+      <div className="mx-auto flex max-w-3xl flex-col px-3 py-1.5 md:px-4 md:py-2">
+        {/* Row 1: Context (Identity & Verse) + Utilities */}
+        <div className="fq-recitation-row-lead flex items-center justify-between border-b border-border/30 pb-1">
+          {/* Identity for rail (hidden on horizontal bar) */}
+          <div className="fq-rail-zone fq-rail-lead">
+            <ReciterCombobox
+              reciters={reciters}
+              value={settings.reciterId}
+              onChange={(id) => updateSettings({ reciterId: id })}
+              portalContainer={null}
+              contentClassName="w-64 p-0"
+              side="left"
+              trigger={({ open }) => (
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                  title={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                  className="fq-recitation-rail-reciter fq-recitation-lead-btn fq-focus-ring relative hidden items-center justify-center rounded-full"
+                >
+                  <CircleUserRound className="size-[18px]" strokeWidth={1.6} />
+                </button>
+              )}
+            />
+          </div>
+
+          {/* Section 1: Info & Metadata (Start flank) */}
+          <div className="fq-recitation-info flex min-w-0 flex-1 items-center gap-1.5">
+            <ReciterCombobox
+              reciters={reciters}
+              value={settings.reciterId}
+              onChange={(id) => updateSettings({ reciterId: id })}
+              portalContainer={null}
+              contentClassName="w-64 p-0"
+              side="top"
+              trigger={({ open }) => (
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  className="fq-recitation-reciter-name fq-focus-ring flex min-w-0 items-center gap-1 truncate rounded-md text-xs font-normal text-foreground md:text-sm md:font-medium"
+                >
+                  <span className="truncate">
+                    {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
+                  </span>
+                  <ChevronsUpDown className="size-3 shrink-0 opacity-50" />
+                </button>
+              )}
+            />
+            {isIdle && playbackError === "offline-unavailable" ? (
+              <p className="truncate text-xs text-destructive">
+                {t("recitation.offlineUnavailable", "Not available offline")}
+              </p>
+            ) : isIdle && playbackError === "playback-failed" ? (
+              <p className="truncate text-xs text-destructive">
+                {t("recitation.playbackFailed", "Playback failed")}
+              </p>
+            ) : (
+              <>
+                <span className="text-[10px] text-muted-foreground/60 select-none">·</span>
+                <p className="fq-recitation-verse-key truncate text-[10px] leading-tight text-muted-foreground">
+                  {verseLabelParts
+                    ? tRich("recitedVerseLabel", verseLabelParts)
+                    : (currentVerseKey ?? "")}
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Section 2: Utilities (End flank) */}
+          <div className="fq-rail-zone fq-rail-utils flex shrink-0 items-center gap-1 ps-2">
+            <button
+              type="button"
+              aria-label={repeatLabel}
+              title={repeatLabel}
+              onClick={handleRepeatCycle}
+              className="fq-chrome-btn fq-focus-ring relative size-7 md:size-8"
+            >
+              <Repeat className="size-3.5 md:size-4" strokeWidth={1.8} />
+              {repeatActive ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-0.5 -end-0.5 grid h-3 min-w-3 place-items-center rounded-full bg-primary px-0.5 text-[7px] font-semibold leading-none text-primary-foreground tabular-nums md:h-3.5 md:min-w-3.5 md:text-[8px]"
+                >
+                  {repeatValue === "infinite" ? "∞" : repeatValue}
+                </span>
+              ) : null}
+            </button>
+
+            <button
+              type="button"
+              aria-label={t("recitation.settingsTitle", "Recitation settings")}
+              title={t("recitation.settingsTitle", "Recitation settings")}
+              onClick={() => openSettings()}
+              className="fq-chrome-btn fq-focus-ring size-7 md:size-8"
+            >
+              <SettingsIcon className="size-3.5 md:size-4" strokeWidth={1.8} />
+            </button>
+
+            {!isIdle ? (
               <button
                 type="button"
-                aria-expanded={open}
-                aria-label={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                title={reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                className="fq-recitation-rail-reciter fq-recitation-lead-btn fq-focus-ring relative hidden items-center justify-center rounded-full"
+                aria-label={t("recitation.stop", "Stop")}
+                title={t("recitation.stop", "Stop")}
+                onClick={stop}
+                className="fq-chrome-btn fq-focus-ring size-7 md:size-8"
               >
-                <CircleUserRound className="size-[18px]" strokeWidth={1.6} />
+                <Square className="size-3.5 md:size-4" strokeWidth={1.8} />
               </button>
-            )}
-          />
+            ) : null}
+          </div>
         </div>
 
-        <div className="fq-rail-zone fq-rail-transport">
+        {/* Row 2: 5-Button Centered Transport Cluster */}
+        <div className="fq-rail-zone fq-rail-transport flex shrink-0 items-center justify-center gap-2 py-1 md:gap-3">
+          <button
+            type="button"
+            aria-label={t("recitation.previousAyah", "Previous ayah")}
+            title={t("recitation.previousAyah", "Previous ayah")}
+            onClick={skipToPreviousVerse}
+            disabled={!canSkipPrevious}
+            className="fq-chrome-btn fq-focus-ring size-7 rtl:rotate-180 disabled:pointer-events-none disabled:opacity-30 md:size-8"
+          >
+            <SkipBack className="size-3.5 md:size-4" strokeWidth={1.8} />
+          </button>
+
+          <button
+            type="button"
+            aria-label={t("recitation.previousWord", "Previous word")}
+            title={t("recitation.previousWord", "Previous word")}
+            onClick={skipToPreviousWord}
+            disabled={!canSkipPreviousWord}
+            className="fq-chrome-btn fq-focus-ring size-7 rtl:rotate-180 disabled:pointer-events-none disabled:opacity-30 md:size-8"
+          >
+            <ChevronLeft className="size-3.5 md:size-4" strokeWidth={2} />
+          </button>
+
           <button
             type="button"
             data-state={
@@ -181,95 +311,37 @@ export const RecitationPlayerBar = () => {
             aria-pressed={isPlaying}
             onClick={handlePlayPause}
             disabled={isLoading}
-            className="fq-recitation-play fq-focus-ring relative flex items-center justify-center rounded-full shrink-0 disabled:opacity-60"
+            className="fq-recitation-play fq-focus-ring relative flex size-9 shrink-0 items-center justify-center rounded-full disabled:opacity-60 md:size-10"
           >
             <span className="fq-recitation-play-ring" aria-hidden="true" />
             {isPlaying ? (
-              <Pause className="size-4 md:size-[18px] fill-current" strokeWidth={1} />
+              <Pause className="size-3.5 fill-current md:size-[18px]" strokeWidth={1} />
             ) : (
-              <Play className="size-4 md:size-[18px] fill-current translate-x-px" strokeWidth={1} />
+              <Play className="size-3.5 translate-x-px fill-current md:size-[18px]" strokeWidth={1} />
             )}
-          </button>
-        </div>
-
-        <div className="fq-recitation-info min-w-0 flex-1">
-          <ReciterCombobox
-            reciters={reciters}
-            value={settings.reciterId}
-            onChange={(id) => updateSettings({ reciterId: id })}
-            portalContainer={null}
-            contentClassName="w-64 p-0"
-            side="top"
-            trigger={({ open }) => (
-              <button
-                type="button"
-                aria-expanded={open}
-                className="fq-recitation-reciter-name fq-focus-ring flex min-w-0 items-center gap-1 truncate rounded-md text-xs font-normal md:text-sm md:font-medium text-foreground"
-              >
-                <span className="truncate">
-                  {reciter?.translatedName ?? t("recitation.nowPlaying", "Recitation")}
-                </span>
-                <ChevronsUpDown className="size-3 shrink-0 opacity-50" />
-              </button>
-            )}
-          />
-          {isIdle && playbackError === "offline-unavailable" ? (
-            <p className="truncate text-xs text-destructive">
-              {t("recitation.offlineUnavailable", "Not available offline")}
-            </p>
-          ) : isIdle && playbackError === "playback-failed" ? (
-            <p className="truncate text-xs text-destructive">
-              {t("recitation.playbackFailed", "Playback failed")}
-            </p>
-          ) : (
-            <p className="fq-recitation-verse-key truncate text-[10px] leading-tight text-muted-foreground">
-              {verseLabelParts
-                ? tRich("recitedVerseLabel", verseLabelParts)
-                : (currentVerseKey ?? "")}
-            </p>
-          )}
-        </div>
-
-        <div className="fq-rail-zone fq-rail-utils">
-          <button
-            type="button"
-            aria-label={repeatLabel}
-            title={repeatLabel}
-            onClick={handleRepeatCycle}
-            className="fq-chrome-btn fq-focus-ring relative size-8"
-          >
-            <Repeat className="size-4" strokeWidth={1.8} />
-            {repeatActive ? (
-              <span
-                aria-hidden="true"
-                className="absolute -top-0.5 -end-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-primary px-0.5 text-[8px] font-semibold leading-none text-primary-foreground tabular-nums"
-              >
-                {repeatValue === "infinite" ? "∞" : repeatValue}
-              </span>
-            ) : null}
           </button>
 
           <button
             type="button"
-            aria-label={t("recitation.settingsTitle", "Recitation settings")}
-            title={t("recitation.settingsTitle", "Recitation settings")}
-            onClick={() => openSettings()}
-            className="fq-chrome-btn fq-focus-ring size-8"
+            aria-label={t("recitation.nextWord", "Next word")}
+            title={t("recitation.nextWord", "Next word")}
+            onClick={skipToNextWord}
+            disabled={!canSkipNextWord}
+            className="fq-chrome-btn fq-focus-ring size-7 rtl:rotate-180 disabled:pointer-events-none disabled:opacity-30 md:size-8"
           >
-            <SettingsIcon className="size-4" strokeWidth={1.8} />
+            <ChevronRight className="size-3.5 md:size-4" strokeWidth={2} />
           </button>
 
-          {!isIdle ? (
-            <button
-              type="button"
-              aria-label={t("recitation.stop", "Stop")}
-              title={t("recitation.stop", "Stop")}
-              onClick={stop}
-              className="fq-chrome-btn fq-focus-ring size-8"
-            >
-              <Square className="size-4" strokeWidth={1.8} />
-            </button>
-          ) : null}
+          <button
+            type="button"
+            aria-label={t("recitation.nextAyah", "Next ayah")}
+            title={t("recitation.nextAyah", "Next ayah")}
+            onClick={skipToNextVerse}
+            disabled={!canSkipNext}
+            className="fq-chrome-btn fq-focus-ring size-7 rtl:rotate-180 disabled:pointer-events-none disabled:opacity-30 md:size-8"
+          >
+            <SkipForward className="size-3.5 md:size-4" strokeWidth={1.8} />
+          </button>
         </div>
       </div>
     </div>
