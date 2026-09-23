@@ -1,0 +1,74 @@
+name: Android debug APK
+
+# First installable app: compiles the Capacitor Android shell into a
+# downloadable debug APK. Debug builds self-sign — no keystore, no secrets.
+# The shell is hosted-only (ADR 0072), so no `cap sync` runs here: bundled
+# web assets would only copy ~263MB for nothing.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "android/**"
+      - "capacitor.config.ts"
+      - ".github/workflows/android-debug.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          # Deliberately NOT the repo-standard Node 20: Capacitor CLI 8
+          # refuses to run below Node 22.
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Required, not optional: sync generates the cordova-plugins gradle
+      # include (missing it fails the build) and the runtime
+      # capacitor.config.json carrying server.url into the APK.
+      - name: Sync Capacitor shell
+        run: npx cap sync android
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          # Capacitor's android library targets Java 21 — JDK 17 fails with
+          # "invalid source release: 21".
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
