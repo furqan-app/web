@@ -33,7 +33,9 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          # Deliberately NOT the repo-standard Node 20: Capacitor CLI 8
+          # refuses to run below Node 22.
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
