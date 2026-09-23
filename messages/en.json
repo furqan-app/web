@@ -436,10 +436,16 @@
       "cadenceType": {
         "pace": "By pace",
         "deadline": "By deadline",
-        "weekly": "Weekly recurrence"
+        "weekly": "Weekly recurrence",
+        "recurring": "Recurring"
+      },
+      "recurrencePeriod": {
+        "daily": "Daily",
+        "weekly": "Weekly"
       },
       "weekdayLabel": "Due weekday",
       "weeklyHint": "Due on the same weekday every week",
+      "dailyHint": "The entire range repeats every day",
       "period": {
         "day": "Daily",
         "week": "Weekly"
@@ -458,7 +464,8 @@
         "days": "≈ {count, plural, one {{n} day} other {{n} days}} to complete",
         "pace": "≈ {pace} (re-adjusts on missed days)",
         "paceWithDays": "≈ {pace} (finishes in {daysCount, plural, one {1 day} other {{daysN} days}})",
-        "weekly": "Every {weekday}"
+        "weekly": "Every {weekday}",
+        "daily": "Repeats every day"
       },
       "rangeFrozen": "Target range is locked because progress has been logged",
       "verseWeeklyUnavailable": "Weekly pace is not available for verses; specify daily verses or set a deadline",

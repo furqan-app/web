@@ -296,5 +296,20 @@ describe("Custom Wird Estimate Helper (custom-wird-estimate.ts)", () => {
         weekday: 5,
       });
     });
+
+    it("returns a daily recurring result with total units and daily textKey", () => {
+      const estimate = computeCadenceEstimate({
+        totalUnits: 30,
+        unit: "verse",
+        cadenceType: "daily",
+        startDate: "2026-09-08",
+      });
+      expect(estimate).toEqual({
+        type: "daily",
+        numericValue: 30,
+        unit: "verse",
+        textKey: "plans.custom.estimate.daily",
+      });
+    });
   });
 });

@@ -337,6 +337,38 @@ describe("validate-custom-definition", () => {
     });
   });
 
+  describe("daily cadence (ADR 0073, #661)", () => {
+    it("resolves a daily cadence to { type: 'daily' } with no endDate or weekday", async () => {
+      const body: CreateCustomPlanBody = {
+        template_key: "custom",
+        name: "Surah Al-Mulk Daily",
+        activity: "read",
+        range: { mode: "page", startPage: 562, endPage: 564 },
+        cadence: { type: "daily" },
+      };
+
+      const res = await resolveCustomPlanEnrollment(body);
+      expect("error" in res).toBe(false);
+      if ("error" in res) return;
+
+      expect(res.definition.cadence).toEqual({ type: "daily" });
+      expect(res.params.endDate).toBeUndefined();
+    });
+
+    it("rejects unexpected fields in a daily cadence", () => {
+      const res = resolveCustomCadence(
+        { type: "daily", extra: 123 },
+        "page",
+        "read",
+        "2026-09-08"
+      );
+      expect("error" in res).toBe(true);
+      if ("error" in res) {
+        expect(res.error).toBe("Unexpected field in cadence");
+      }
+    });
+  });
+
   describe("resolveCustomPlanEnrollment - Rejection Cases", () => {
     it("10. rejects memorize with repetitions > 1 (C2 Contract #3)", async () => {
       const body: CreateCustomPlanBody = {
