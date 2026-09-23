@@ -16,7 +16,7 @@ Add a GitHub Actions workflow that compiles the Capacitor Android shell into a d
 
 ## Root Cause / Approach
 
-Follow repo CI conventions (`ci.yml`: concurrency cancel, `contents: read`, pinned actions). Runner-provided Android SDK + Temurin JDK 17 + Gradle wrapper from the scaffold. Deliberately no `cap sync`: the shell is hosted-only (ADR 0072), so bundled web assets are unused and sync would only copy ~263MB for nothing.
+Follow repo CI conventions (`ci.yml`: concurrency cancel, `contents: read`, pinned actions). Runner-provided Android SDK + Temurin JDK 17 + Gradle wrapper from the scaffold, plus `npx cap sync android` — required, not optional: sync generates the cordova-plugins gradle include (the build fails without it) and the runtime `capacitor.config.json` carrying `server.url` into the APK.
 
 ## Decision Tree / Algorithm
 
@@ -42,7 +42,7 @@ Follow repo CI conventions (`ci.yml`: concurrency cancel, `contents: read`, pinn
 ## What NOT to Do
 
 - Do not add release signing here — that is a separate task with Play Console keys.
-- Do not run `cap sync` in this workflow (see Approach).
+- Do not drop the `cap sync` step: the cordova-plugins include and runtime config are build inputs (first green run failed exactly for skipping it).
 - Do not cache-bust or pin to a self-hosted runner.
 
 ## Decisions Made
