@@ -10,6 +10,7 @@ import { QuranSafhaViewProvider } from "@/app/contexts/QuranSafhaViewContext";
 import { QuranMushafProvider } from "@/app/contexts/QuranMushafContext";
 import { RecitationProvider } from "@/app/contexts/RecitationContext";
 import { SidebarProvider } from "@/app/contexts/SidebarContext";
+import { SettingsSidebarProvider } from "@/app/contexts/SettingsSidebarContext";
 import { NavOverlayProvider } from "@/app/contexts/NavOverlayContext";
 import { ReaderPageProvider } from "@/app/contexts/ReaderPageContext";
 import { ReaderNavigationProvider } from "@/app/contexts/ReaderNavigationContext";
@@ -20,11 +21,13 @@ import { RecitationPlayerBar } from "@components/RecitationPlayerBar";
 import { RecitationSettingsSheet } from "@components/RecitationSettingsSheet";
 import { PlansWidget } from "@components/plans/PlansWidget";
 import { LastReadPageSync } from "@components/reader/LastReadPageSync";
+import { MarksSync } from "@components/marks/MarksSync";
 import { TafsirReaderSync } from "@components/tafsir/TafsirReaderSync";
 import { KeepScreenAwakeSync } from "@components/KeepScreenAwakeSync";
 import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
 import { OfflineInstallPrompt } from "@components/offline/OfflineInstallPrompt";
 import { SwUpdateBanner } from "@components/offline/SwUpdateBanner";
+import { NativeAuthReturnListener } from "@components/shell/NativeAuthReturnListener";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -63,27 +66,31 @@ export default async function LocaleLayout({
                   <QueryProvider>
                     <TafsirProvider>
                       <SidebarProvider>
-                        <NavOverlayProvider>
-                          <ReaderPageProvider>
-                            <ReaderNavigationProvider>
-                              <LastReadPageProvider>
-                                <KeepScreenAwakeProvider>
-                                  <SwUpdateBanner />
-                                  <Nav />
-                                  {children}
-                                  <RecitationPlayerBar />
-                                  <RecitationSettingsSheet />
-                                  <PlansWidget />
-                                  <LastReadPageSync />
-                                  <TafsirReaderSync />
-                                  <KeepScreenAwakeSync />
-                                  <OfflineInstallPrompt />
-                                  <OfflineSetupGate />
-                                </KeepScreenAwakeProvider>
-                              </LastReadPageProvider>
-                            </ReaderNavigationProvider>
-                          </ReaderPageProvider>
-                        </NavOverlayProvider>
+                        <SettingsSidebarProvider>
+                          <NavOverlayProvider>
+                            <ReaderPageProvider>
+                              <ReaderNavigationProvider>
+                                <LastReadPageProvider>
+                                  <KeepScreenAwakeProvider>
+                                    <SwUpdateBanner />
+                                    <Nav />
+                                    {children}
+                                    <RecitationPlayerBar />
+                                    <RecitationSettingsSheet />
+                                    <PlansWidget />
+                                    <LastReadPageSync />
+                                    <MarksSync />
+                                    <NativeAuthReturnListener />
+                                    <TafsirReaderSync />
+                                    <KeepScreenAwakeSync />
+                                    <OfflineInstallPrompt />
+                                    <OfflineSetupGate />
+                                  </KeepScreenAwakeProvider>
+                                </LastReadPageProvider>
+                              </ReaderNavigationProvider>
+                            </ReaderPageProvider>
+                          </NavOverlayProvider>
+                        </SettingsSidebarProvider>
                       </SidebarProvider>
                     </TafsirProvider>
                   </QueryProvider>

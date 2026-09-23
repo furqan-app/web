@@ -2,8 +2,9 @@
  * Verse-ordinal ↔ page-number resolution for verse-unit plan enrollments
  * (ADR 0038). Pure, synchronous, zero DB calls — built entirely from the
  * already-committed static Quran assets (public/quran/chapters.json,
- * public/quran/verse-pages/2.json — mushaf 2, DEFAULT_MUSHAF_ID), read once
- * and cached at module scope, same convention as app/hooks/get-surahs.ts.
+ * public/quran/verse-pages/2.json — mushaf 2, CANONICAL_PAGE_MUSHAF_ID; this is
+ * deliberately NOT DEFAULT_MUSHAF_ID, which moved to QCF V2, see ADR 0066),
+ * read once and cached at module scope, same convention as app/hooks/get-surahs.ts.
  *
  * A "verse ordinal" is a global 1-based position across the whole Quran in
  * reading order (surah 1 verse 1 = 1, …, surah 114 verse 6 = 6236). It has no
@@ -28,6 +29,7 @@ type VerseIndex = {
   ordinalToVerseKey: string[];
   pageFirstOrdinal: Map<number, number>;
   pageLastOrdinal: Map<number, number>;
+  verseKeyToOrdinal: Map<string, number>;
 };
 
 let cached: VerseIndex | null = null;
@@ -43,6 +45,7 @@ const buildIndex = (): VerseIndex => {
   const ordinalToVerseKey: string[] = new Array(MUSHAF_LAST_VERSE + 1);
   const pageFirstOrdinal = new Map<number, number>();
   const pageLastOrdinal = new Map<number, number>();
+  const verseKeyToOrdinal = new Map<string, number>();
 
   let ordinal = 0;
   for (const chapter of chapters) {
@@ -55,6 +58,7 @@ const buildIndex = (): VerseIndex => {
       }
       ordinalToPage[ordinal] = page;
       ordinalToVerseKey[ordinal] = verseKey;
+      verseKeyToOrdinal.set(verseKey, ordinal);
       if (!pageFirstOrdinal.has(page)) pageFirstOrdinal.set(page, ordinal);
       pageLastOrdinal.set(page, ordinal); // ordinals ascend, so last write is the max
     }
@@ -66,7 +70,13 @@ const buildIndex = (): VerseIndex => {
     );
   }
 
-  return { ordinalToPage, ordinalToVerseKey, pageFirstOrdinal, pageLastOrdinal };
+  return {
+    ordinalToPage,
+    ordinalToVerseKey,
+    pageFirstOrdinal,
+    pageLastOrdinal,
+    verseKeyToOrdinal,
+  };
 };
 
 const index = (): VerseIndex => {
@@ -109,3 +119,34 @@ export const pageLastVerseOrdinal = (page: number): number => {
 /** How many verses are on a given page. */
 export const pageVerseCount = (page: number): number =>
   pageLastVerseOrdinal(page) - pageFirstVerseOrdinal(page) + 1;
+
+/** Global verse ordinal (1..6236) for a "surah:ayah" verse key, or null if unknown. */
+export const verseOrdinalOfKey = (verseKey: string): number | null => {
+  return index().verseKeyToOrdinal.get(verseKey) ?? null;
+};
+
+/**
+ * Parses an input that is either a 1-based verse ordinal (1..6236) or a
+ * "surah:ayah" verse key string into a global verse ordinal. Returns null if invalid.
+ */
+export const parseVerseOrdinal = (input: unknown): number | null => {
+  if (typeof input === "number") {
+    if (Number.isInteger(input) && input >= MUSHAF_FIRST_VERSE && input <= MUSHAF_LAST_VERSE) {
+      return input;
+    }
+    return null;
+  }
+  if (typeof input === "string") {
+    const trimmed = input.trim();
+    if (/^\d+$/.test(trimmed)) {
+      const num = Number(trimmed);
+      if (Number.isInteger(num) && num >= MUSHAF_FIRST_VERSE && num <= MUSHAF_LAST_VERSE) {
+        return num;
+      }
+      return null;
+    }
+    return verseOrdinalOfKey(trimmed);
+  }
+  return null;
+};
+

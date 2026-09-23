@@ -143,6 +143,9 @@ payload; windowing removes the mass mount.
   all use it; do not reintroduce `router.push` for in-reader page changes, and do not read
   `usePathname()` for the current page (`replaceState` never updates it — that is exactly what broke
   recitation-follow before it was moved into the pager).
+- **Status:** active (2026-09-06, #474) — keyboard and click arrows are locale-independent: physical-left
+  always steps forward in Quran order and physical-right backward, in both `ar` and `en`. The Quran's
+  page order is fixed regardless of UI language, so never branch arrow direction on `isRTL`.
 - Recitation-follow: `RecitationContext` exposes `recitedPage` **and `isFollowing`** (a two-state
   attach/detach flag — ADR 0056); a dedicated null-rendering `RecitationFollow` leaf owns every
   transition via the pure `decideRecitationFollow` and calls the pager's `followTo` only while
@@ -191,7 +194,7 @@ payload; windowing removes the mass mount.
   input and needed a latch, a microtask and a drain to avoid dropping gestures of its own.
 - Preserve recitation highlight, tajweed re-grouping, grant reader (ADR 0012), and the double-page
   spread (ADR 0013) against the pager/window model.
-- **Immutable content queries (`usePage`, `useVersePages`) run with `networkMode: "always"`** — their `fetch()` resolves from the service worker's `CacheFirst` rules even when `navigator.onLine === false`, so a downloaded-but-unvisited page renders offline instead of pausing forever (the default `"online"` mode skips `queryFn` entirely while offline). Do not extend this to dynamic hooks (marks/plans stay online-aware), and do not disable `refetchOnReconnect` on these queries — loaded pages are immune via `staleTime: Infinity`, while errored ones self-heal on reconnect. See `docs/plans/pwa-offline-support.md` Addendum 6.
+- **Immutable content queries (`usePage`, `useVersePages`, offline search in `useSearch`) run with `networkMode: "always"`** — their `fetch()` resolves from the service worker's `CacheFirst`/precache rules even when `navigator.onLine === false`, so a downloaded-but-unvisited page (or a precached search index) serves offline instead of pausing forever (the default `"online"` mode skips `queryFn` entirely while offline — found again in `useSearch`, 2026-09-06: offline queries never executed and only stale-cached keys displayed). Do not extend this to dynamic hooks (marks/plans stay online-aware), and do not disable `refetchOnReconnect` on these queries — loaded pages are immune via `staleTime: Infinity`, while errored ones self-heal on reconnect. See `docs/plans/pwa-offline-support.md` Addendum 6.
 - **A page turn commits immediately and is never gated on the target's readiness** ([ADR
   0034](../adr/0034-page-turn-readiness-on-slow-networks.md)). The two assets a turn needs — the page's
   content JSON and its WOFF2 font — cost real network time (a double-view turn moves ~167 KB of font,
@@ -250,3 +253,25 @@ payload; windowing removes the mass mount.
 - Do not add `startTransition` — Next.js App Router already wraps its router dispatch in `startTransition` internally; double-wrapping is a no-op (confirmed in Addendum 8/9).
 - Do not use `sessionStorage` or `document.documentElement` attributes as fade-signal carriers — these mechanisms are superseded.
 - **Exception (tablet double-view only):** the tablet spread uses a real 3-panel carousel that *does* render adjacent spreads — see [ADR 0027](../adr/0027-tablet-swipe-carousel.md). This is a scoped divergence justified by static generation (adjacent fetch cost is build-time) and the reveal being a wanted feature, not a flicker fix. It does **not** relax the above constraints for mobile/single-view, which stay single-slot. The "no entry animation on mount" rule still holds even for the carousel — the incoming route renders statically centered.
+
+---
+
+## Ephemeral Reader Chrome Mount Predicates Must Use Layout Effects
+
+**Status:** active
+
+**Decision:** Any conditionally-mounted reader chrome whose render-time mount predicate depends on state transitioned by an effect must use `useIsomorphicLayoutEffect` (not `useEffect`) for that transition. With a standard `useEffect`, the render where the triggering condition drops to zero (e.g. `pendingCount === 0`) evaluates the mount guard as unmounted (`null`) and the browser paints a "chrome gone" frame before the effect can transition lifecycle state (e.g. to a completing flourish) — producing a visible one-frame blink. `useIsomorphicLayoutEffect` commits the transition before paint, preventing the unmount flicker.
+
+---
+
+## Reader Interaction Gates on Input Capability, Layout Stays Width-Gated
+
+**Status:** active
+
+**Decision:** Reader *interaction* branches on primary-input capability (`useIsCoarsePointer()`, `(pointer: coarse)`, SSR default `false`); reader *layout* stays on the width hooks (`useIsTablet()` / `useIsLgUp()`) with their CSS `@media` twins unchanged. `NavOverlayContext` therefore exposes two flags: `isOverlayMode` (layout — width + pages-route, drives chrome positioning/auto-hide transforms) and the capability-gated interaction flag (drives `QuranWord` click-vs-long-press and the `ReaderPager` strip tap-toggle). Forced double-page (`isDouble`), pair-step nav, and the 1024–1366px band itself are untouched. See [ADR 0071](../adr/0071-reader-interaction-capability-gating.md).
+
+**Constraints:**
+- Capability must never drive `position`/`display` — interaction-only, which is what makes the hook's one-frame SSR-`false` staleness acceptable under ADR 0043.
+- Keep the width queries numerically identical to their CSS twins; the capability query is additive, never a replacement.
+- True-coarse-primary hybrids with a mouse keep touch interaction — accepted tradeoff, do not special-case per-device.
+

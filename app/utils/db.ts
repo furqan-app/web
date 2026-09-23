@@ -13,3 +13,5 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.quranPrisma = quranPrisma;
   globalForPrisma.appPrisma = appPrisma;
 }
+
+export type { QuranPrismaClient, AppPrismaClient };

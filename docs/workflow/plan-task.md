@@ -41,6 +41,7 @@ This check is a literal, mandatory action every time — it has been skipped bef
 - Ask one adversarial question at a time — wait for the answer before asking the next
 - Questions should surface: scope ambiguity, edge cases, mobile/RTL behavior, interaction with existing systems, timing concerns
 - If the task removes or relocates an existing UI trigger/control, explicitly verify every breakpoint and route that used it still has equivalent access before writing "unchanged" anywhere in the plan — check what else depends on it, don't assume.
+- If the task integrates with or wraps a third-party package, check its **full** catalog before scoping around it — not just whatever subset is already installed locally. What's installed reflects one machine's history, not what the package actually offers; scoping from it risks reinventing something the package already ships. Use the package's own listing command (e.g. `npx skills add <source> -l` for a skills.sh-sourced package) or read its upstream repo directly. #571 initially scoped `detect-fleet`/`setup-fq-fleet` around 4 already-installed delegate skills before discovering the source package shipped 18, including one (`delegate-setup`) that already solved most of the task — see [ADR 0063](../architecture/adr/0063-fleet-detection-wraps-delegate-setup.md).
 
 **UI tasks.** If the task involves components, pages, layout, or styling, consult `docs/design/design-principles.md` and `docs/standards/styling.md` (including its Motion section) during investigation, and list any UI/UX concerns — contrast, hierarchy, spacing scale, RTL/LTR parity, touch targets, reduced motion — directly in the plan.
 
@@ -62,6 +63,28 @@ Examples of simple tasks: fix a typo, swap a color token, change a CSS value, ad
 - **Walk through every example together.** For each case the user provides, show what your algorithm/approach would produce for that specific input. Explain the reasoning step by step.
 - **Ask one verification question at a time.** If a case is ambiguous, resolve it before moving to the next. If an example breaks the proposed approach, revise the approach and re-verify — do not proceed to the plan with an unresolved case.
 - **Do not write the plan until the user confirms all cases are handled correctly.** The signal is explicit agreement: "yes", "that's right", "looks good" — not silence or the absence of objection.
+
+### 3b. Sweep the plan before marking it ready
+
+A single self-review over a large plan is not sufficient — in practice successive passes keep
+finding real defects after the plan has already been declared correct. Before setting
+`status: ready-to-implement`, re-read the finished plan against these questions specifically,
+rather than reading it for general correctness:
+
+- **Does an existing test assert the behaviour this plan changes?** `grep` the e2e and unit specs
+  for the components and routes named in `Files to Change`. A plan that silently invalidates a
+  passing test is incomplete, not "cleanup later".
+- **Does anything here read or write through the service worker?** Any same-origin `GET /api/*` is
+  cached 24h by `defaultCache` — see the Non-negotiable Invariants block in `DECISIONS.md`.
+- **Does any state derive from a signal that behaves differently offline?** `useSession()`,
+  `navigator.onLine`, and anything with a network timeout.
+- **Every claim of "unchanged", "untouched", "no migration", "reuses the existing X" is a
+  hypothesis** — open the file and confirm it. This is where a plan is most confidently wrong.
+- **Does a removed or relocated UI affordance leave any breakpoint or route without access?**
+  (the rule already stated in step 2).
+
+Record what the sweep found in the plan's `Decisions Made`, including corrections to the plan's
+own earlier claims — a plan that quietly fixes itself teaches the next reader nothing.
 
 ### 4. ADR check — do this before writing the plan
 
@@ -133,6 +156,8 @@ The concrete examples walked through in step 3 and what the algorithm produces f
 ```
 
 `## What NOT to Do` is a required section — the implement workflow reads it to avoid re-implementing a superseded approach. If nothing is ruled out yet, keep the heading with a single "None known" bullet rather than omitting it.
+
+If step 4 produced an ADR that already spells out a decision table or if/then logic in full, `## Decision Tree / Algorithm` should **link to that ADR section** rather than reproduce the table verbatim — two copies of the same table drift the moment one is edited and the other isn't (caught by `/review-fq-work` on #571, where the plan's copy of an ADR's `cost_tier` table had already gone stale relative to the ADR's).
 
 ---
 

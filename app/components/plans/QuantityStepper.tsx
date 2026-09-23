@@ -7,6 +7,7 @@ type Props = {
   value: number;
   onChange: (value: number) => void;
   min?: number;
+  max?: number;
   /** 1 (default) = whole-number stepper; 0.5 = fractional-page mode (ADR 0038). */
   step?: number;
 };
@@ -19,7 +20,7 @@ const roundToStep = (n: number, step: number) => Math.round(n / step) * step;
 // -/+ circular stepper flanking a directly-editable centered number, matching
 // the Claude Design reference's pages/day controls (listening wird, husun's
 // hifz qty) with typing added — clicking +/- 20 times to go 40 -> 20 is bad UX.
-export const QuantityStepper = ({ value, onChange, min = 1, step = 1 }: Props) => {
+export const QuantityStepper = ({ value, onChange, min = 1, max, step = 1 }: Props) => {
   const isFractional = step < 1;
   // Local draft so a mid-edit empty/partial field doesn't clamp on every
   // keystroke — only committed (clamped/rounded to a step multiple >= min) on blur.
@@ -27,7 +28,13 @@ export const QuantityStepper = ({ value, onChange, min = 1, step = 1 }: Props) =
 
   const commit = (raw: string) => {
     const n = Number(raw);
-    onChange(Number.isFinite(n) ? Math.max(min, roundToStep(n, step)) : value);
+    if (Number.isFinite(n)) {
+      let clamped = Math.max(min, roundToStep(n, step));
+      if (max !== undefined) clamped = Math.min(clamped, roundToStep(max, step));
+      onChange(clamped);
+    } else {
+      onChange(value);
+    }
     setDraft(null);
   };
 
@@ -35,7 +42,11 @@ export const QuantityStepper = ({ value, onChange, min = 1, step = 1 }: Props) =
     <div className="flex items-center justify-center gap-4">
       <button
         type="button"
-        onClick={() => onChange(Math.max(min, roundToStep(value - step, step)))}
+        onClick={() => {
+          let nextValue = roundToStep(value - step, step);
+          if (max !== undefined && nextValue > max) nextValue = roundToStep(max, step);
+          onChange(Math.max(min, nextValue));
+        }}
         disabled={value <= min}
         aria-label="-"
         className={BUTTON_CLASS}
@@ -57,7 +68,12 @@ export const QuantityStepper = ({ value, onChange, min = 1, step = 1 }: Props) =
       />
       <button
         type="button"
-        onClick={() => onChange(roundToStep(value + step, step))}
+        onClick={() => {
+          let nextValue = roundToStep(value + step, step);
+          if (max !== undefined) nextValue = Math.min(nextValue, roundToStep(max, step));
+          onChange(nextValue);
+        }}
+        disabled={max !== undefined && value >= max}
         aria-label="+"
         className={BUTTON_CLASS}
       >

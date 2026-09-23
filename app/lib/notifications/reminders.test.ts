@@ -47,6 +47,45 @@ describe("nextOccurrence", () => {
   });
 });
 
+describe("nextOccurrence weekly (ADR 0070)", () => {
+  it("advances exactly 7 days, preserving the weekday", () => {
+    const friday = new Date("2026-09-11T07:00:00Z"); // Friday 10:00 Africa/Cairo
+    const next = nextOccurrence(friday, "weekly", "Africa/Cairo", friday);
+    expect(next.getTime() - friday.getTime()).toBe(7 * 24 * 60 * 60 * 1000);
+    expect(next.getUTCDay()).toBe(5);
+  });
+
+  it("preserves local wall-clock time across a US DST fall-back boundary", () => {
+    // A Friday 09:00 local weekly reminder crossing the 2026-11-01 fall-back:
+    // 7 single-day DST-corrected steps compose to the next Friday at 09:00.
+    const before = new Date("2026-10-30T13:00:00Z"); // Friday 09:00 EDT (UTC-4)
+    expect(before.getUTCDay()).toBe(5);
+    const next = nextOccurrence(before, "weekly", "America/New_York", before);
+
+    expect(next.getUTCDay()).toBe(5);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      hourCycle: "h23",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const parts = formatter.formatToParts(next).reduce<Record<string, string>>((acc, p) => {
+      acc[p.type] = p.value;
+      return acc;
+    }, {});
+    expect(`${parts.hour}:${parts.minute}`).toBe("09:00");
+  });
+
+  it("catches up whole weeks past a multi-week cron outage", () => {
+    const scheduledFor = new Date("2026-08-01T06:00:00Z"); // Saturday
+    const now = new Date("2026-08-20T10:00:00Z"); // ~3 weeks later
+    const next = nextOccurrence(scheduledFor, "weekly", "UTC", now);
+    expect(next.getTime()).toBeGreaterThan(now.getTime());
+    expect(next.getUTCDay()).toBe(6);
+    expect(next.getUTCHours()).toBe(6);
+  });
+});
+
 describe("isDue", () => {
   it("is due when scheduledFor is exactly now", () => {
     const now = new Date("2026-08-03T06:00:00Z");

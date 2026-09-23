@@ -14,12 +14,22 @@ const RETRIES = 3;
  * no base edition here; every entry is fetched and validated the same way. See
  * ADR 0033.
  *
- * `DEFAULT_MUSHAF_ID` is the edition the reader opens by default, and the one
- * `Word.page_number` / `Word.line_number` mirror for mark canonicalization.
+ * `DEFAULT_MUSHAF_ID` is only the edition the reader opens with (ADR 0066) — it
+ * does NOT drive the seed. `SEEDED_WORDS_MUSHAF_ID` does: `verses-words.js`
+ * fetches that one `mushaf` param, so its `page_number` / `line_number` (the
+ * `Word` mirror, used for mark canonicalization) are that edition's placement
+ * and the `layoutFromSeededWords` shortcut is valid for that id and no other.
+ * Every other layout edition is fetched fresh with `fetchMushafLayout`.
  */
-const DEFAULT_MUSHAF_ID = 2;
+const DEFAULT_MUSHAF_ID = 1; // QCF V2 (Madani) — reader default only
+const QCF_V2_MUSHAF_ID = 1;
 const TAJWEED_MUSHAF_ID = 19;
-const LAYOUT_MUSHAF_IDS = [DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID];
+const SEEDED_WORDS_MUSHAF_ID = 2; // MUST equal verses-words.js's `mushaf` param
+const LAYOUT_MUSHAF_IDS = [
+  SEEDED_WORDS_MUSHAF_ID,
+  QCF_V2_MUSHAF_ID,
+  TAJWEED_MUSHAF_ID,
+];
 
 /**
  * Which `Word` column holds each edition's glyph string.
@@ -32,8 +42,9 @@ const LAYOUT_MUSHAF_IDS = [DEFAULT_MUSHAF_ID, TAJWEED_MUSHAF_ID];
  * agree with it. See ADR 0033.
  */
 const GLYPH_FIELD_BY_MUSHAF = {
-  [DEFAULT_MUSHAF_ID]: "code_v1",
-  [TAJWEED_MUSHAF_ID]: "code_v2",
+  [SEEDED_WORDS_MUSHAF_ID]: "code_v1", // QCF V1
+  [QCF_V2_MUSHAF_ID]: "code_v2", // QCF V2 — same column as tajweed, different font
+  [TAJWEED_MUSHAF_ID]: "code_v2", // QCF V4 tajweed (COLRv1)
 };
 
 async function fetchPage(page, mushafId) {
@@ -210,6 +221,8 @@ module.exports = {
   LAYOUT_MUSHAF_IDS,
   GLYPH_FIELD_BY_MUSHAF,
   DEFAULT_MUSHAF_ID,
+  QCF_V2_MUSHAF_ID,
   TAJWEED_MUSHAF_ID,
+  SEEDED_WORDS_MUSHAF_ID,
   TOTAL_PAGES,
 };

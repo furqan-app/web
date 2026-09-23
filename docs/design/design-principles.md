@@ -134,6 +134,14 @@ See `design-language.md` §11 for the full per-rule table.
 
 ---
 
+## Standing UI & Interaction Rules
+
+- **No raw number inputs.** Never use raw `<input type="number">` (browser spinners, unlocalized numerals, poor mobile ergonomics). Always use purpose-built numeric controls: `QuantityStepper` for counts/quantities/paces, or a searchable `NumberCombobox` / `Command` dropdown for bounded discrete sets (pages 1–604, ayah bounds). Display values must always be localized via `toLocaleNumeral`.
+- **Nice scrollbars on all scrollable regions (`fq-scroll-nice`).** Every custom scroll container (`overflow-y-auto`, `overflow-x-auto`) must carry the `fq-scroll-nice` class utility to ensure clean, subtle scrollbars across all browsers, themes, and dialogs instead of raw OS scrollbars.
+- **i18n parameter interpolation via next-intl.** Never perform manual string manipulation (e.g. `.replace("{count}", ...)`). Always supply interpolation variables via `next-intl`'s parameter object `t("key", { count: ... })`. Note that the project wrapper `@hooks/use-translations` is strictly for simple string lookups without parameters; for ICU interpolation with parameters, import `useTranslations` directly from `next-intl` (see `docs/standards/i18n.md`).
+
+---
+
 ## Process
 
 When asked to enhance or polish UI beyond a spec, use `/frontend-design` — it makes opinionated choices grounded in this document rather than defaulting to generic patterns.

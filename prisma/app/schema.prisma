@@ -29,8 +29,9 @@ model Mark {
   category    String // memorization category key (see MARK_CATEGORIES)
   comment     String? @db.Text // optional free-text comment attached to the mark
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  client_updated_at DateTime?
 
   @@unique([marked_type, marked_id, to_user])
   @@map("marks")
@@ -129,8 +130,11 @@ model PushSubscription {
 // A reminder: the same notification concept (type + payload + channels),
 // triggered later by the cron-polled dispatcher instead of immediately.
 // timezone is captured from the client at enqueue time (no User.timezone
-// column exists) so `daily` recurrence can compute the next local-day
-// occurrence. dedupe_key makes enqueueing idempotent (e.g.
+// column exists) so `daily`/`weekly` recurrence can compute the next
+// local-day occurrence. weekday (0 = Sunday … 6 = Saturday) is scheduling
+// metadata for `weekly` recurrence — a first-class column like
+// timezone/locale, never payload JSON (ADR 0070). dedupe_key makes
+// enqueueing idempotent (e.g.
 // "plans.daily_reminder:<userId>:<date>"). claim_id/locked_at implement a
 // lease so the cron route can safely claim a batch under MySQL (no
 // UPDATE...RETURNING).
@@ -141,8 +145,10 @@ model ScheduledNotification {
   payload        Json
   channels       Json?
   scheduled_for  DateTime
-  recurrence     String? // null = one-shot, "daily"
+  recurrence     String? // null = one-shot, "daily" | "weekly"
+  weekday        Int? // 0–6, Date.getUTCDay() convention, for "weekly" recurrence
   timezone       String? // IANA, e.g. "Africa/Cairo"
+  locale         String? // e.g. "ar" | "en"
   status         String    @default("pending") // pending | dispatched | cancelled | failed
   dedupe_key     String?   @unique
   claim_id       String?
@@ -163,7 +169,9 @@ model ScheduledNotification {
 model UserPlan {
   id           Int      @id @default(autoincrement())
   user_id      Int
+  name         String?
   template_key String
+  definition   Json?
   params       Json
   start_date   DateTime @db.Date
   status       String   @default("active") // active | paused | completed | abandoned
@@ -192,4 +200,38 @@ model PlanProgressEntry {
 
   @@unique([user_plan_id, track_key, date])
   @@map("plan_progress_entries")
+}
+
+// One-time native-shell session bootstrap code (ADR 0071). Minted server-side
+// after a system-browser sign-in; the shell exchanges it once for a session
+// cookie via POST /api/auth/native-bootstrap, then it is spent. Scalar user
+// ref only (no relation — ADR 0008 pattern).
+model NativeBootstrapCode {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique
+  user_id    Int
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("native_bootstrap_codes")
+}
+
+// Native push-device registration (ADR 0071, Phase 2 push). Mirrors
+// PushSubscription's hash-as-unique-key pattern — raw APNs/FCM tokens exceed
+// MySQL's practical utf8mb4 index length. Scalar user ref only (ADR 0008).
+// No API touches it until the push slice lands.
+model DeviceToken {
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  provider     String // apns | fcm
+  token        String    @db.Text
+  token_hash   String    @unique @db.Char(64)
+  created_at   DateTime  @default(now())
+  last_used_at DateTime?
+  failed_at    DateTime?
+
+  @@index([user_id])
+  @@map("device_tokens")
 }

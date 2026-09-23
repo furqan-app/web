@@ -11,9 +11,11 @@ import {
 } from "@constants/plans";
 import { PLAN_TRACK_UI } from "@constants/plan-ui";
 import { usePlans } from "@hooks/use-plans";
+import { usePlanHistory } from "@hooks/use-plan-history";
 import type { UserPlanListItem } from "@/app/server/actions/plans";
 import { JuzRangeSlider } from "./JuzRangeSlider";
 import { QuantityStepper } from "./QuantityStepper";
+import { StartPointPicker } from "./StartPointPicker";
 
 /**
  * A group of quantity fields that share one unit choice (ADR 0038, widened):
@@ -28,6 +30,8 @@ type UnitGroup = { independentTrackKey: string; dependentTrackKeys: string[] };
 const UNIT_GROUPS: Record<string, UnitGroup[]> = {
   "daily-wird": [{ independentTrackKey: "reading", dependentTrackKeys: [] }],
   "listening-wird": [{ independentTrackKey: "listening", dependentTrackKeys: [] }],
+  "memorizing-wird": [{ independentTrackKey: "memorizing", dependentTrackKeys: [] }],
+  "reviewing-wird": [{ independentTrackKey: "reviewing", dependentTrackKeys: [] }],
   husun: [
     { independentTrackKey: "tilawa", dependentTrackKeys: [] },
     { independentTrackKey: "hifz", dependentTrackKeys: ["baeed", "tahdeer", "qareeb"] },
@@ -43,7 +47,15 @@ const isRepetitionsField = (trackKey: string) => trackKey === "tahdeer";
 // windowSize stays a plain integer (in the group's page-or-verse unit) even
 // when the group's mode is "fraction", since a review-window size isn't a
 // live-recomputed daily pace.
-const FRACTION_ELIGIBLE_TRACKS = new Set(["reading", "listening", "tilawa", "hifz", "baeed"]);
+const FRACTION_ELIGIBLE_TRACKS = new Set([
+  "reading",
+  "listening",
+  "memorizing",
+  "reviewing",
+  "tilawa",
+  "hifz",
+  "baeed",
+]);
 
 /**
  * How one unit-group's quantities are expressed (ADR 0038, widened): "pages"
@@ -131,6 +143,18 @@ export const PlanEnrollForm = ({ templateKey, existingPlan, onDone }: Props) => 
   const [juzTo, setJuzTo] = useState(existingPlan?.target_juz_end ?? 30);
   const [error, setError] = useState<string | null>(null);
 
+  const isDailyWird = [
+    "daily-wird",
+    "listening-wird",
+    "memorizing-wird",
+    "reviewing-wird",
+  ].includes(templateKey);
+  const [startPage, setStartPage] = useState<number>(existingPlan?.params.startPage ?? 1);
+  const { data: history } = usePlanHistory(existingPlan?.id ?? 0, { enabled: isEdit });
+  const historyLoaded = !isEdit || history !== undefined;
+  const hasProgress = isEdit && Boolean(history && history.length > 0);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
   const changeGroupMode = (group: UnitGroup, next: QuantityMode) => {
     setModes((prev) => ({ ...prev, [group.independentTrackKey]: next }));
     // Toggling resets every field in the group to that mode's own sensible
@@ -160,7 +184,7 @@ export const PlanEnrollForm = ({ templateKey, existingPlan, onDone }: Props) => 
 
   const handleSubmit = async () => {
     setError(null);
-    if (!isValid) return;
+    if (!isValid || !historyLoaded) return;
 
     const quantities: Record<string, PlanQuantity> = {};
     const trackUnits: Record<string, PlanUnit> = {};
@@ -174,7 +198,16 @@ export const PlanEnrollForm = ({ templateKey, existingPlan, onDone }: Props) => 
             : values[key];
       }
     }
-    const params: UserPlanParams = { quantities, trackUnits };
+    const effectiveStartPage = hasProgress
+      ? existingPlan?.params.startPage
+      : startPage;
+    const params: UserPlanParams = {
+      quantities,
+      trackUnits,
+      ...(isDailyWird && effectiveStartPage !== undefined && effectiveStartPage !== 1
+        ? { startPage: effectiveStartPage }
+        : {}),
+    };
     const success = isEdit
       ? await updateParams.mutateAsync({
           planId: existingPlan.id,
@@ -218,7 +251,7 @@ export const PlanEnrollForm = ({ templateKey, existingPlan, onDone }: Props) => 
     mode === "pages" ? t("plans.pages", "pages") : t("plans.verses", "verses");
 
   return (
-    <div className="flex flex-col gap-6">
+    <div ref={setContainerEl} className="flex flex-col gap-6">
       {groups.map((group) => {
         const mode = modes[group.independentTrackKey];
         const modeOptions = modeOptionsFor(group);
@@ -274,6 +307,15 @@ export const PlanEnrollForm = ({ templateKey, existingPlan, onDone }: Props) => 
         );
       })}
 
+      {isDailyWird ? (
+        <StartPointPicker
+          value={startPage}
+          onChange={setStartPage}
+          portalContainer={containerEl}
+          disabled={!historyLoaded || hasProgress}
+        />
+      ) : null}
+
       {needsTargetRange ? (
         <JuzRangeSlider from={juzFrom} to={juzTo} onChange={(f, tt) => { setJuzFrom(f); setJuzTo(tt); }} />
       ) : null}
@@ -283,7 +325,7 @@ export const PlanEnrollForm = ({ templateKey, existingPlan, onDone }: Props) => 
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={!isValid || isPending}
+        disabled={!isValid || isPending || !historyLoaded}
         className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50 active:scale-[0.98] transition-transform duration-150"
       >
         {isEdit ? t("plans.saveChanges", "Save changes") : t("plans.enroll", "Start plan")}

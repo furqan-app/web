@@ -6,9 +6,20 @@ import type { UserPlanListItem } from "@/app/api/plans/route";
 import type { TodayPlanAssignments } from "@/app/api/plans/today/route";
 import type { PlanProgressHistoryEntry } from "@/app/api/plans/[planId]/progress/route";
 import type { StreakResult } from "@/app/lib/plans/streak";
+import type { AwradDashboardData } from "@/app/lib/plans/dashboard";
 import type { UserPlanParams, UserPlanStatus } from "@/app/constants/plans";
+import type {
+  CreateCustomPlanBody,
+  PatchCustomPlanBody,
+} from "@/app/lib/plans/validate-custom-definition";
 
-export type { UserPlanListItem, TodayPlanAssignments, PlanProgressHistoryEntry, StreakResult };
+export type {
+  UserPlanListItem,
+  TodayPlanAssignments,
+  PlanProgressHistoryEntry,
+  StreakResult,
+  AwradDashboardData,
+};
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -110,6 +121,63 @@ export const updatePlanParams = async ({
   }
 };
 
+export type EnrollCustomPlanResult = {
+  plan: UserPlanListItem | null;
+  /** Server's `message` on failure (e.g. a 422 range error); null when the body carries none. */
+  errorMessage: string | null;
+};
+
+export type UpdateCustomPlanResult = {
+  success: boolean;
+  /** Server's `message` on failure (e.g. a 422 range error); null when the body carries none. */
+  errorMessage: string | null;
+};
+
+const readErrorMessage = (body: unknown): string | null => {
+  const message = (body as { message?: unknown } | null)?.message;
+  return typeof message === "string" && message.length > 0 ? message : null;
+};
+
+export const enrollCustomPlan = async (
+  body: CreateCustomPlanBody
+): Promise<EnrollCustomPlanResult> => {
+  try {
+    const json = await fetch("/api/plans", {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify(body),
+    }).then((r) => r.json());
+    const { data, success } = json;
+    return success
+      ? { plan: data, errorMessage: null }
+      : { plan: null, errorMessage: readErrorMessage(json) };
+  } catch (e) {
+    console.error(e);
+    return { plan: null, errorMessage: null };
+  }
+};
+
+export const updateCustomPlan = async ({
+  planId,
+  ...body
+}: { planId: number } & PatchCustomPlanBody): Promise<UpdateCustomPlanResult> => {
+  try {
+    const json = await fetch(`/api/plans/${planId}`, {
+      method: "PATCH",
+      headers: JSON_HEADERS,
+      body: JSON.stringify(body),
+    }).then((r) => r.json());
+    const ok = Boolean(json.success);
+    return {
+      success: ok,
+      errorMessage: ok ? null : readErrorMessage(json),
+    };
+  } catch (e) {
+    console.error(e);
+    return { success: false, errorMessage: null };
+  }
+};
+
 /** Local-midnight day boundary (ADR 0030): the browser's own date. */
 export const getLocalDateString = () => {
   const now = new Date();
@@ -158,6 +226,21 @@ export const getPlanStreak = async (date: string): Promise<StreakResult> => {
   } catch (e) {
     console.error(e);
     return { streakLength: 0, week: [] };
+  }
+};
+
+export const getPlanDashboard = async (
+  date: string
+): Promise<AwradDashboardData | null> => {
+  try {
+    const { data, success } = await fetch(
+      `/api/plans/dashboard?date=${encodeURIComponent(date)}`,
+      { headers: JSON_HEADERS }
+    ).then((r) => r.json());
+    return success && data ? data : null;
+  } catch (e) {
+    console.error(e);
+    return null;
   }
 };
 

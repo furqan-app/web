@@ -28,9 +28,17 @@ The PR body (step 5) must reference the issue as `Refs #<issue-number>` — **no
      ```bash
      lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
      lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+     # BOTH lsof forms can return nothing while the server is still listening
+     # (observed 3x). ss still reports it — kill the PID it names.
+     PID=$(ss -tlnp 2>/dev/null | grep :<port> | grep -oP 'pid=\K[0-9]+' | head -1)
+     [ -n "$PID" ] && kill -9 "$PID" 2>/dev/null || true
      sleep 1
      ss -tlnp | grep :<port> && echo "WARNING: port <port> still in use" || true
      ```
+     Do not stop at the two `lsof` attempts. A surviving `next-server` holds the port and answers
+     every request with a **500** from a deleted working directory — which reads as a broken app, not
+     a stale process — and it recreates `.next/` at the removed path, so a later `git worktree add`
+     there fails with "already exists".
      Use `-9` (SIGKILL), not `-TERM`. `xargs -r` skips the kill when nothing matched.
   2. Remove the worktree:
      ```bash
@@ -103,6 +111,9 @@ Closes out a finished task: sync, branch, commit, PR, ticket update.
         ```bash
         lsof -ti :<port> | xargs -r kill -9 2>/dev/null || true
         lsof -t +D <abs> 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+        # Both lsof forms can return nothing while the server still listens — use ss's PID.
+        PID=$(ss -tlnp 2>/dev/null | grep :<port> | grep -oP 'pid=\K[0-9]+' | head -1)
+        [ -n "$PID" ] && kill -9 "$PID" 2>/dev/null || true
         sleep 1
         ss -tlnp | grep :<port> && echo "WARNING: port <port> still in use" || true
         ```

@@ -12,6 +12,7 @@ import { getLanguageDirection } from "@/app/utils/i18n";
 import { getFirstVerseKeyOfPage } from "@/app/utils/recitation";
 import { QuranSpread } from "@/app/components/reader/QuranSpread";
 import { FontFaceInjector } from "@/app/components/reader/FontFaceInjector";
+import { LaunchSplashCover } from "@/app/components/reader/LaunchSplashCover";
 import { RecitationPageSync } from "@/app/components/reader/RecitationPageSync";
 import { RecitationFollow } from "@/app/components/reader/RecitationFollow";
 import { ReaderPageSync } from "@/app/components/reader/ReaderPageSync";
@@ -218,8 +219,9 @@ export function ReaderPager({
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
   const isTablet = useIsTablet();
-  const { toggleOverlay } = useNavOverlay();
-  const { mushafId, edition } = useQuranMushaf();
+  const { toggleOverlay, toggleFineChrome, isOverlayMode, isTouchOverlay } =
+    useNavOverlay();
+  const { mushafId, edition, hydrated: mushafHydrated } = useQuranMushaf();
   const { setJumpTo } = useReaderNavigation();
 
   // Seed the SSR pair once, before children (usePage) render, so the initial page
@@ -239,6 +241,14 @@ export function ReaderPager({
   const pageNumber = anchor;
   const { rightPage: curRightId, leftPage: curLeftId } = getPagePair(pageNumber);
 
+  // Fine-pointer devices in the overlay band (non-touch laptops at tablet
+  // widths, ADR 0071): desktop interaction inside the tablet shape. Click,
+  // arrows, and keyboard already work for them — the drag is the one input
+  // still missing — so the pointer handlers below exist exactly for this
+  // band and stay inert everywhere else (desktop keeps no-drag, touch keeps
+  // its own touch handlers).
+  const isFineOverlayBand = isOverlayMode && !isTouchOverlay;
+
   // Tablet is intentionally always a facing-page reader; desktop keeps the
   // stored single/double preference and mobile remains one page at a time.
   // When forceDouble is true (e.g. Reader Lab), force double mode.
@@ -256,6 +266,17 @@ export function ReaderPager({
   const isDragging = useRef(false);
   const snapClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCommitting = useRef(false);
+  // Mouse-drag state (fine-pointer overlay band only, ADR 0071). Tracked
+  // separately from the touch coords so a touch gesture and a mouse drag can
+  // never claim the same strip movement on hybrid devices.
+  const mouseDragPointerId = useRef<number | null>(null);
+  const mouseStartX = useRef<number | null>(null);
+  const mouseStartY = useRef<number | null>(null);
+  // Set when a mouse-drag commits a turn: the browser still fires a click on
+  // release, and without suppression it would open the mark modal on the word
+  // under the cursor — now a different page's word. Consumed once by the
+  // viewport's onClickCapture below.
+  const suppressNextClick = useRef(false);
   // Which way the reader is moving, so the Stage B lookahead warms the page they
   // are heading toward rather than the one behind them. Forward by default —
   // that is the reading direction, and it is what a fresh deep-link entry should
@@ -559,6 +580,23 @@ export function ReaderPager({
     // stepRef is a ref — stable, and always holds the latest impl.
   }, []);
 
+  // Shared drag-setup for the touch and mouse paths: cancel a pending
+  // snap-back (its completion callback owns `.fq-dragging` removal — ADR 0023
+  // Addendum 9 — so cancelling the timer alone would leave the class stuck)
+  // and freeze the strip's transition so the drag drives the transform live.
+  const cancelSnapAndFreeze = () => {
+    if (snapClearTimer.current) {
+      clearTimeout(snapClearTimer.current);
+      snapClearTimer.current = null;
+      // The cancelled snap-back's timer callback would have removed
+      // `.fq-dragging` on completion — cancelling the timer alone would leave
+      // it stuck if this new gesture never becomes a real drag (the move
+      // handler re-adds it, harmlessly, if it does).
+      if (stripRef.current) stripRef.current.classList.remove("fq-dragging");
+    }
+    if (stripRef.current) stripRef.current.style.transition = "none";
+  };
+
   const onTouchStart = (e: React.TouchEvent) => {
     // A gesture arriving mid-turn TAKES OVER: land the in-flight turn immediately,
     // then drag from the page it landed on. Settling (not aborting) keeps the turn
@@ -569,16 +607,7 @@ export function ReaderPager({
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isDragging.current = false;
-    if (snapClearTimer.current) {
-      clearTimeout(snapClearTimer.current);
-      snapClearTimer.current = null;
-      // The cancelled snap-back's timer callback would have removed
-      // `.fq-dragging` on completion (ADR 0023 Addendum 9) — cancelling the
-      // timer alone would leave it stuck if this new touch never becomes a
-      // real drag (onTouchMove re-adds it, harmlessly, if it does).
-      if (stripRef.current) stripRef.current.classList.remove("fq-dragging");
-    }
-    if (stripRef.current) stripRef.current.style.transition = "none";
+    cancelSnapAndFreeze();
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
@@ -652,10 +681,99 @@ export function ReaderPager({
     }
   };
 
+  // Mouse-drag page turns (fine-pointer overlay band only, ADR 0071). Mirrors
+  // the touch swipe above — same threshold, same Quran-RTL direction
+  // (drag right = next), same settle-takeover — and shares
+  // animateCommit(goNext, true): the drag holds a live transform, so the
+  // release slide continues it exactly like a swipe release. Touch/stylus
+  // pointers are ignored here (the touch handlers own them); desktop never
+  // reaches here (isFineOverlayBand is false off the overlay band).
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse" || e.button !== 0 || !isFineOverlayBand) return;
+    if (touchStartX.current !== null) return; // a touch gesture owns the strip
+    settleInFlight();
+    mouseDragPointerId.current = e.pointerId;
+    mouseStartX.current = e.clientX;
+    mouseStartY.current = e.clientY;
+    isDragging.current = false;
+    suppressNextClick.current = false;
+    cancelSnapAndFreeze();
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (e.pointerId !== mouseDragPointerId.current) return;
+    if (mouseStartX.current === null || mouseStartY.current === null) return;
+    const deltaX = e.clientX - mouseStartX.current;
+    const deltaY = e.clientY - mouseStartY.current;
+    if (!isDragging.current && Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    isDragging.current = true;
+    if (!stripRef.current) return;
+    stripRef.current.classList.add("fq-dragging");
+    stripRef.current.style.transition = "none";
+    stripRef.current.style.transform = `translateX(calc(-100% + ${deltaX}px))`;
+  };
+
+  const endMouseDrag = () => {
+    mouseDragPointerId.current = null;
+    mouseStartX.current = null;
+    mouseStartY.current = null;
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (e.pointerId !== mouseDragPointerId.current) return;
+    if (mouseStartX.current === null || mouseStartY.current === null) {
+      endMouseDrag();
+      return;
+    }
+    const deltaX = e.clientX - mouseStartX.current;
+    endMouseDrag();
+    if (!isDragging.current) return;
+    isDragging.current = false;
+
+    const strip = stripRef.current;
+    if (!strip) return;
+
+    if (Math.abs(deltaX) < COMMIT_THRESHOLD) {
+      startSnapBack(strip);
+      return;
+    }
+
+    // A committed turn swaps the page under the cursor: suppress the click
+    // the browser still fires on release, or it opens the mark modal on the
+    // newly arrived page's word. A snapped-back (sub-threshold) drag keeps
+    // its click — same tap still lands where it started, like touch.
+    suppressNextClick.current = true;
+    // Quran is always RTL: drag right = next page, drag left = previous.
+    animateCommit(deltaX > 0, true);
+  };
+
+  const onPointerCancel = (e: React.PointerEvent) => {
+    if (e.pointerId !== mouseDragPointerId.current) return;
+    endMouseDrag();
+    const wasDragging = isDragging.current;
+    isDragging.current = false;
+    const strip = stripRef.current;
+    if (wasDragging && !isCommitting.current && strip) {
+      startSnapBack(strip);
+    } else if (strip) {
+      strip.classList.remove("fq-dragging");
+    }
+  };
+
   const currentPageWords = pageNumber === curRightId ? rightData : leftData;
   const firstVerseKey = currentPageWords
     ? getFirstVerseKeyOfPage(currentPageWords.lines)
     : null;
+
+  // Splash-continuity cover inputs (issue #586, ADR 0065): the ids the user
+  // actually sees (single view: the anchor page only — same visibility scoping
+  // as baseFontIds, so no eager partner download is implied) plus whether
+  // their query data is present under the active mushafId. Font readiness is
+  // awaited inside the leaf via pageFontsReady (read-only).
+  const coverVisibleIds = isDouble ? [curRightId, curLeftId] : [pageNumber];
+  const coverDataReady = isDouble
+    ? Boolean(rightData && leftData)
+    : Boolean(currentPageWords);
 
   // @font-face for every page in the window so a revealed neighbor never flashes.
   // Pair-expanded — safe here because tajweed's keyed <style> elements are pure
@@ -760,6 +878,17 @@ export function ReaderPager({
   return (
     <>
       <FontFaceInjector pageIds={allPageIds} baseFontIds={baseFontIds} />
+      {/* Mounted directly after FontFaceInjector on purpose: sibling effects
+          run in order, so the cover's pageFontsReady check runs after the
+          registry faces for this window exist (it settles instantly for
+          unregistered ids — awaiting it earlier would lift the cover before
+          the font starts downloading). Null leaf, renders nothing. */}
+      <LaunchSplashCover
+        dataReady={coverDataReady}
+        visibleIds={coverVisibleIds}
+        edition={edition}
+        mushafHydrated={mushafHydrated}
+      />
       <RecitationPageSync firstVerseKey={firstVerseKey} pageNumber={pageNumber} />
       <RecitationFollow anchor={pageNumber} isDouble={isDouble} onFollow={followTo} />
       <ReaderPageSync anchor={pageNumber} isDouble={isDouble} />
@@ -787,9 +916,28 @@ export function ReaderPager({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onTouchCancel={onTouchCancel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onClickCapture={(e) => {
+          // Consumes the release click of a committed mouse-drag (ADR 0071):
+          // capture runs before the word/arrow bubble handlers, so one
+          // stopPropagation shields both. Snapped-back drags and plain clicks
+          // never set the flag and pass through untouched.
+          if (!suppressNextClick.current) return;
+          suppressNextClick.current = false;
+          e.stopPropagation();
+          e.preventDefault();
+        }}
         onClick={(e) => {
           if (!e.currentTarget.contains(e.target as Node)) return;
-          toggleOverlay();
+          // Touch overlay: tap toggles chrome. Fine-pointer band: background
+          // click toggles the pinned chrome (word clicks stopPropagation in
+          // QuranWord before reaching here, so the modal never fights the
+          // toggle). Desktop: clicks do nothing.
+          if (isTouchOverlay) toggleOverlay();
+          else if (isFineOverlayBand) toggleFineChrome();
         }}
       >
         {/* Neutral strip class (NOT fq-carousel-strip, whose tablet scope forces a

@@ -1,32 +1,120 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { getAllMarks } from "../server/actions/getAllMarks";
-import { getQueryClient } from "../utils/queryClient";
+"use client";
 
-export const useAllMarks = (category: string) => {
-  const queryClient = getQueryClient();
-  // Nested under the shared "/marks" prefix (see useMarks) so a reload from
-  // either hook invalidates both this list and any per-page cache. Category
-  // is part of the key so switching tabs is its own cached infinite query.
-  const queryKey = ["/marks", "all", category];
+import { useSyncExternalStore, useMemo, useState, useEffect } from "react";
+import {
+  subscribe,
+  getSnapshot,
+  getServerSnapshot,
+  type LocalMark,
+} from "@/app/lib/marks/store";
+import { getSortKey, MARKS_PAGE_LIMIT } from "@/app/constants/marks";
 
-  const query = useInfiniteQuery({
-    queryKey,
-    queryFn: ({ pageParam }) => getAllMarks({ category, cursor: pageParam }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    // See use-marks.ts for why staleTime: Infinity + default refetchOnMount
-    // (rather than refetchOnMount: false) is required for cross-hook
-    // invalidation to actually refetch on the next mount. For an infinite
-    // query, invalidation re-walks every already-loaded page in order,
-    // recomputing each page's cursor from the freshly-fetched previous page.
-    staleTime: Infinity,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchIntervalInBackground: false,
+export interface UseAllMarksOptions {
+  pageSize?: number;
+}
+
+export interface UseAllMarksResult {
+  marks: LocalMark[];
+  totalCount: number;
+  hasMore: boolean;
+  loadMore: () => void;
+  isLoading: boolean;
+}
+
+/**
+ * Pure function: filters out deleted marks, filters by category, and sorts
+ * in natural Quran order via getSortKey.
+ */
+export function filterAndSortMarks(
+  rawMarks: Record<string, LocalMark>,
+  category: string
+): LocalMark[] {
+  const list: LocalMark[] = [];
+  for (const key in rawMarks) {
+    const mark = rawMarks[key];
+    if (!mark || mark.deleted) continue;
+    if (category && category !== "all" && mark.category !== category) {
+      continue;
+    }
+    list.push(mark);
+  }
+
+  list.sort((a, b) => {
+    const [aSurah, aVerse, aWord] = getSortKey(a);
+    const [bSurah, bVerse, bWord] = getSortKey(b);
+    return aSurah - bSurah || aVerse - bVerse || (aWord - bWord || 0);
   });
 
-  const reload = () => queryClient.invalidateQueries({ queryKey: ["/marks"] });
+  return list;
+}
 
-  return { ...query, reload };
+/**
+ * Reads user marks from the local store (ADR 0061 / #551), applies client-side
+ * sorting in Quran reading order (via getSortKey), and provides progressive windowing
+ * for smooth rendering over large sets.
+ */
+export const useAllMarks = (
+  category: string,
+  options?: UseAllMarksOptions
+): UseAllMarksResult => {
+  const pageSize = options?.pageSize ?? MARKS_PAGE_LIMIT;
+  const [limit, setLimit] = useState(pageSize);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Reset window limit when category filter changes
+  useEffect(() => {
+    setLimit(pageSize);
+  }, [category, pageSize]);
+
+  const rawMarks = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
+
+  const sortedMarks = useMemo(
+    () => filterAndSortMarks(rawMarks, category),
+    [rawMarks, category]
+  );
+
+  const totalCount = sortedMarks.length;
+  const visibleMarks = useMemo(
+    () => sortedMarks.slice(0, limit),
+    [sortedMarks, limit]
+  );
+  const hasMore = limit < totalCount;
+
+  const loadMore = () => {
+    setLimit((prev) => Math.min(prev + pageSize, totalCount));
+  };
+
+  // Window scroll listener: expands the window when scrolling near the bottom
+  useEffect(() => {
+    if (!hasMore || typeof window === "undefined") return;
+
+    const onScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const clientHeight = window.innerHeight;
+
+      if (scrollTop + clientHeight >= scrollHeight - 400) {
+        setLimit((prev) => Math.min(prev + pageSize, totalCount));
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [hasMore, pageSize, totalCount]);
+
+  return {
+    marks: visibleMarks,
+    totalCount,
+    hasMore,
+    loadMore,
+    isLoading: !isMounted,
+  };
 };

@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { Check, Loader2, Pause, Play, RotateCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { toLocaleNumeral } from "@utils/i18n";
@@ -11,11 +13,17 @@ import { planPlaybackSessionId } from "@/app/lib/plans/assignment-range";
 import { useRecitation } from "@/app/contexts/RecitationContext";
 import { usePageVerseBounds } from "@hooks/use-page-verse-bounds";
 import { usePlanVerseIndex } from "@hooks/use-plan-verse-index";
+import { fetchChapters } from "@/app/utils/recitation-api";
+import { formatVerseRange } from "@/app/lib/plans/ui-helpers";
+import { useSession } from "next-auth/react";
+import { getLocalDateString } from "@/app/server/actions/plans";
+import { isAutoWritten, clearAutoWritten } from "@/app/lib/plans/auto-write-log";
 import { cn } from "@/lib/utils";
 
 type Props = {
   /** Owning plan — with trackKey, forms this row's playback session identity. */
   planId: number;
+  planName?: string | null;
   assignment: TrackAssignment;
   /** Check off when not yet completed, undo the check-off when it is. */
   onToggle: () => void;
@@ -28,17 +36,31 @@ const formatRange = (start: number, end: number, locale: string) =>
     ? toLocaleNumeral(start, locale)
     : `${toLocaleNumeral(start, locale)}–${toLocaleNumeral(end, locale)}`;
 
-// Verse-unit ranges (ADR 0038) display as surah:verse, not a raw ordinal.
-const formatVerseRange = (startKey: string, endKey: string) =>
-  startKey === endKey ? startKey : `${startKey}–${endKey}`;
-
 // One track's today-assignment: icon + label + page range + check-off. Shared
 // between the hub's MyPlansList and the reader's PlansWidget sheet so the two
 // surfaces never drift apart.
-export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, disabled }: Props) => {
+export const PlanAssignmentRow = ({
+  planId,
+  planName,
+  assignment,
+  onToggle,
+  isPending,
+  disabled,
+}: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const { activeOverride, status, play, togglePlayPause } = useRecitation();
+  const { data: session } = useSession();
+  const userId = (session?.user as { id?: number } | undefined)?.id;
+  const todayDate = getLocalDateString();
+  const isAuto = assignment.completed && isAutoWritten(userId, planId, assignment.trackKey, todayDate);
+
+  const handleToggle = () => {
+    if (assignment.completed && isAuto) {
+      clearAutoWritten(userId, planId, assignment.trackKey, todayDate);
+    }
+    onToggle();
+  };
 
   const trackUi = PLAN_TRACK_UI[assignment.trackKey];
   const activityUi = PLAN_ACTIVITY_UI[assignment.activity];
@@ -55,6 +77,12 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
   // assets the engine uses server-side (ADR 0038), not re-derived here.
   // Gated: page-unit rows (the majority) never fetch/build the index.
   const verseIndex = usePlanVerseIndex({ enabled: isVerseUnit });
+  const { data: chapters } = useQuery({
+    queryKey: ["quran-chapters"],
+    queryFn: fetchChapters,
+    staleTime: Infinity,
+    enabled: isVerseUnit,
+  });
   const linkPage = isVerseUnit ? verseIndex.data?.pageOf(rangeStart) : rangeStart;
   // While the verse index is still loading (or failed), a verse-unit row has
   // no reliable page to link to — never guess by treating the raw ordinal as
@@ -92,7 +120,14 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
       : null;
   // A failed /bounds fetch (or verse-index fetch) must not spin forever —
   // surface it as a retry affordance instead.
+  const [playFailed, setPlayFailed] = useState(false);
+
+  useEffect(() => {
+    setPlayFailed(false);
+  }, [assignment.rangeStart, assignment.rangeEnd, assignment.completed]);
+
   const boundsError = isListen && (isVerseUnit ? verseIndex.isError : startBounds.isError || endBoundsQuery.isError);
+  const hasError = boundsError || playFailed;
   const boundsLoading = isListen && !bounds && !boundsError;
 
   // Identity, not page overlap: an unrelated session (player bar, MarkModal)
@@ -102,18 +137,18 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
   const isRowPlaying = isActiveRow && status === "playing";
   const isRowLoading = boundsLoading || (isActiveRow && status === "loading");
 
-  // Verse-unit: "surah:verse–surah:verse" (falls back to the raw ordinal
-  // range while the client-side verse index is still loading). Page-unit:
-  // "Page N–M", unchanged.
+  // Verse-unit: "surah ayah–ayah" or "surah:verse–surah:verse" (falls back
+  // to localized raw keys while chapters load, or raw ordinal range while
+  // the verse index loads). Page-unit: "Page N–M", unchanged.
   const formatRangeText = (start: number, end: number) => {
     if (!isVerseUnit) return `${t("page", "Page")} ${formatRange(start, end, locale)}`;
     const s = verseIndex.data?.verseKeyOf(start);
     const e = verseIndex.data?.verseKeyOf(end);
-    return s && e ? formatVerseRange(s, e) : formatRange(start, end, locale);
+    return s && e ? formatVerseRange(s, e, locale, chapters) : formatRange(start, end, locale);
   };
   const rangeLabel = formatRangeText(assignment.rangeStart, assignment.rangeEnd);
 
-  const handlePlayTap = () => {
+  const handlePlayTap = async () => {
     if (isRowLoading) return;
     if (boundsError) {
       if (isVerseUnit) verseIndex.refetch();
@@ -128,14 +163,18 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
       togglePlayPause();
       return;
     }
-    const trackLabel = trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey;
-    play(bounds.firstVerseKey, {
+    setPlayFailed(false);
+    const trackLabel = planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey);
+    const success = await play(bounds.firstVerseKey, {
       stopVerseKey: bounds.lastVerseKey,
       stopChapterId: bounds.lastChapterId,
       rangeRepeatCount: assignment.repetitions ?? 1,
       id: sessionId,
       label: `${trackLabel} · ${rangeLabel}`,
     });
+    if (!success) {
+      setPlayFailed(true);
+    }
   };
 
   return (
@@ -151,17 +190,22 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
           aria-label={
             isRowLoading
               ? t("plans.playback.loading", "Loading")
-              : boundsError
+              : hasError
                 ? t("plans.playback.retry", "Retry loading")
                 : isRowPlaying
                   ? t("plans.playback.pause", "Pause")
                   : t("plans.playback.play", "Play")
           }
-          className="grid place-items-center size-8 rounded-lg bg-primary/10 text-primary flex-none disabled:cursor-default disabled:opacity-50"
+          className={cn(
+            "grid place-items-center size-8 rounded-lg flex-none disabled:cursor-default disabled:opacity-50 transition-colors",
+            hasError
+              ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+              : "bg-primary/10 text-primary hover:bg-primary/15"
+          )}
         >
           {isRowLoading ? (
             <Loader2 className="size-4 animate-spin" strokeWidth={1.7} />
-          ) : boundsError ? (
+          ) : hasError ? (
             <RotateCw className="size-4" strokeWidth={1.7} />
           ) : isRowPlaying ? (
             <Pause className="size-4" strokeWidth={1.7} />
@@ -181,14 +225,37 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
             ) : null}
 
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-foreground truncate">
-                {trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey}
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-medium text-foreground truncate">
+                  {planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey)}
+                </div>
+                {isAuto ? (
+                  <span
+                    data-testid="auto-recorded-badge"
+                    title={t(
+                      "plans.detection.autoRecordedHint",
+                      "This entry was automatically recorded based on your reading or listening.",
+                    )}
+                    className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 shrink-0"
+                  >
+                    <span>{t("plans.detection.autoRecordedBadge", "Auto-recorded")}</span>
+                  </span>
+                ) : null}
               </div>
               <div className="text-xs text-muted-foreground">
-                {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
-                {" · "}
+                {!planName && (
+                  <>
+                    {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
+                    {" · "}
+                  </>
+                )}
                 {rangeLabel}
                 {assignment.repetitions ? ` · ×${toLocaleNumeral(assignment.repetitions, locale)}` : ""}
+                {playFailed ? (
+                  <span className="text-destructive ms-1 font-medium">
+                    · {t("plans.playback.failed", "Playback failed")}
+                  </span>
+                ) : null}
               </div>
               {assignment.completed && assignment.next ? (
                 <div className="text-xs text-muted-foreground/70">
@@ -215,7 +282,8 @@ export const PlanAssignmentRow = ({ planId, assignment, onToggle, isPending, dis
 
       <button
         type="button"
-        onClick={onToggle}
+        data-testid="plan-assignment-toggle"
+        onClick={handleToggle}
         disabled={disabled || isPending}
         aria-label={
           assignment.completed

@@ -27,12 +27,21 @@
   },
   "search": {
     "placeholder": "Search surah by name or number",
+    "pagePlaceholder": "Search the Quran…",
     "description": "Search for a surah or verse by name or number.",
     "idleTitle": "Search the Quran",
     "idleHint": "Type a surah name, a verse number, or a phrase.",
     "loading": "Searching…",
     "noResults": "Nothing found",
-    "noResultsHint": "Try a different spelling, or search by surah number."
+    "noResultsHint": "Try a different spelling, or search by surah number.",
+    "pageTitle": "Search results",
+    "resultsCount": "{count} results",
+    "errorTitle": "Search failed",
+    "errorHint": "Check your connection and try again.",
+    "retry": "Retry",
+    "endOfResults": "No more results",
+    "viewAll": "View all results",
+    "viewAllCount": "View all {count} results"
   },
   "sidebar": {
     "title": "Quran navigation",
@@ -52,6 +61,9 @@
     "ayahCount": "{count, plural, one {{n} ayah} other {{n} ayahs}}",
     "ayahRangeHint": "Pick a number between 1 and {max}",
     "ayahChipLabel": "Ayah {n}"
+  },
+  "common": {
+    "close": "Close"
   },
   "signInModal": {
     "description": "Sign in to mark words and verses in the Quran."
@@ -89,7 +101,11 @@
     "switchAction": "Switch to this layout",
     "active": "Active",
     "downloaded": "Downloaded",
+    "activeNeedsDownload": "Your current layout — download it to read offline",
     "editions": {
+      "1": {
+        "name": "King Fahd Complex Mushaf (1421H print)"
+      },
       "2": {
         "name": "King Fahd Complex Mushaf (1405H print)"
       },
@@ -131,7 +147,8 @@
   "notFound": {
     "title": "404 - Page Not Found",
     "description": "Sorry, the page you are looking for does not exist.",
-    "homeLink": "Go back to Home"
+    "homeLink": "Go back to Home",
+    "returnToReading": "Return to Reading"
   },
   "error": {
     "title": "Something went wrong",
@@ -168,7 +185,10 @@
     "shareVerseOpenReader": "Open in reader",
     "saveMarkWithCategory": "Save: {category}",
     "updateMarkWithCategory": "Update: {category}",
-    "close": "Close mark panel"
+    "close": "Close mark panel",
+    "savedLocally": "Saved on this device",
+    "guestPrompt": "Sign in to keep your marks across devices",
+    "dismissGuestPrompt": "Dismiss"
   },
   "rubs": "Rubs",
   "rub": "Rub",
@@ -193,7 +213,14 @@
     "emptyHint": "Mark a word or a verse while reading and it will appear here.",
     "emptyCategory": "No marks in this category yet.",
     "allLabel": "All",
-    "filterLabel": "Filter marks"
+    "filterLabel": "Filter marks",
+    "sessionExpired": "Session expired — sign in to sync your marks.",
+    "syncFailedPermanently": "Some marks couldn't be saved due to invalid data and were removed.",
+    "loadMore": "Load more",
+    "signOutSyncing": "Syncing marks…",
+    "signOutPending": "{count, plural, one {{n} mark hasn’t synced yet} other {{n} marks haven’t synced yet}}",
+    "signOutAnyway": "Sign out anyway",
+    "signOutStay": "Stay and retry"
   },
   "mushaf": {
     "hubTitle": "Shared Mushaf",
@@ -243,6 +270,63 @@
     "empty": "No plans yet — enroll in one below.",
     "emptyHint": "A plan gives you a daily portion to read, listen to, or memorise.",
     "nothingToday": "Nothing due today.",
+    "noTasksToday": "No tasks due today.",
+    "noTasksHint": "Your plans may be paused or completed. You can view or resume them in plan management.",
+    "goToManage": "Go to Plan Management →",
+    "manageHint": "Want to edit your plans or view history? Go to Plan Management →",
+    "tabs": {
+      "today": "Today's Tasks",
+      "progress": "Progress",
+      "manage": "My Plans",
+      "reminders": "Reminders"
+    },
+    "dashboard": {
+      "title": "Progress & Milestones",
+      "subtitle": "Track your consistency across recitation, listening, memorization, and review",
+      "streaks": {
+        "read": "Reading",
+        "listen": "Listening",
+        "memorize": "Memorization",
+        "review": "Review",
+        "daysCount": "{count, plural, =0 {0 days} one {1 day} other {{n} days}}",
+        "activeDaysCount": "{count, plural, =0 {Start today} one {1 active day} other {{n} active days}}",
+        "completedToday": "Completed today",
+        "pendingToday": "Pending today",
+        "noActivePlan": "No active plan"
+      },
+      "totals": {
+        "title": "Cumulative Accomplishments",
+        "readPages": "Pages read",
+        "listenedPages": "Pages listened",
+        "memorizedVerses": "Verses memorized",
+        "reviewedPages": "Pages reviewed",
+        "pagesCount": "{count, plural, =0 {0 pages} one {1 page} other {{n} pages}}",
+        "versesCount": "{count, plural, =0 {0 verses} one {1 verse} other {{n} verses}}",
+        "khatmatCount": "{count, plural, =0 {0 khatmas} one {1 complete khatma} other {{n} khatmas}}"
+      },
+      "heatmap": {
+        "title": "Study & Habit Calendar",
+        "summary": "{activeDays, plural, =0 {No activity recorded yet} one {1 active day in the past year} other {{activeDaysFormatted} active days in the past year}}",
+        "directionHint": "Past weeks on left → Current week on right",
+        "viewInHistory": "View in Plan History →",
+        "currentMonthNow": "Now",
+        "legendCaption": "Each cell represents a day with completed wird tasks",
+        "legendLess": "Less",
+        "legendMore": "More",
+        "tooltipTasks": "{count, plural, =0 {No tasks} one {1 completed task} other {{n} completed tasks}}"
+      },
+      "empty": {
+        "title": "No plans enrolled yet",
+        "hint": "Enroll in a daily wird or custom plan to begin tracking your progress."
+      },
+      "sparse": {
+        "encouragement": "A blessed beginning — every single step in the study of the Qur'an brings reward."
+      }
+    },
+    "summary": {
+      "allQuran": "Whole Qur'an (30 Juz)",
+      "juzRange": "Juz {start} to {end}"
+    },
     "checkOff": "Check off",
     "undoCheckOff": "Undo check-off",
     "nextAssignment": "Next",
@@ -250,7 +334,8 @@
       "play": "Play",
       "pause": "Pause",
       "loading": "Loading",
-      "retry": "Retry loading"
+      "retry": "Retry loading",
+      "failed": "Playback failed"
     },
     "pagesPerDay": "pages/day",
     "versesPerDay": "verses/day",
@@ -276,7 +361,17 @@
       "streakDays": "day streak",
       "last7Days": "Last 7 days",
       "allDone": "Well done, you've completed today's wird",
-      "keepGoing": "Keep going — you're now on"
+      "keepGoing": "Keep going — you're now on",
+      "reminderLabel": "Daily reminder: {time}",
+      "remindersMultiple": "Daily reminders: {count}",
+      "reminderSet": "Set daily reminder"
+    },
+    "dedicatedReminder": {
+      "includedInGeneral": "Included in general reminders",
+      "badge": "Dedicated reminder: {time}",
+      "generalNotice": "Excluded from general reminders",
+      "set": "Set dedicated time",
+      "remove": "Remove dedicated reminder"
     },
     "browse": {
       "title": "New wird or plan",
@@ -286,25 +381,129 @@
       "back": "Back",
       "next": "Next",
       "previous": "Previous",
-      "husunOverview": "Five interlinked tracks: you memorize a new page daily, prepare it, and review it both soon and later — automatically, based on what you've memorized. You only choose the memorization rate and range."
+      "husunOverview": "Five interlinked tracks: you memorize a new page daily, prepare it, and review it both soon and later — automatically, based on what you've memorized. You only choose the memorization rate and range.",
+      "dailyWirdType": {
+        "title": "Daily wird",
+        "description": "A repeating full-mushaf khatma with your choice of activity and pace."
+      },
+      "customWirdType": {
+        "title": "Custom wird",
+        "description": "Pick a custom range and set its daily pace or an end date"
+      },
+      "comingSoon": "Soon"
+    },
+    "startPoint": {
+      "label": "Start point (optional)",
+      "fromBeginning": "From page 1",
+      "pagePrefix": "Page",
+      "lockedNotice": "Wird is already active — resumes from where you left off",
+      "byPage": "By page",
+      "bySurah": "By surah",
+      "pageNumber": "Page number",
+      "pageRangeHint": "(1–604)",
+      "choosePage": "Choose a page",
+      "searchPages": "Search pages…",
+      "noPageFound": "No page found.",
+      "chooseSurah": "Choose a surah",
+      "searchSurahs": "Search surahs…",
+      "noSurahFound": "No surah found."
+    },
+    "custom": {
+      "newTitle": "New custom wird",
+      "editTitle": "Edit custom wird",
+      "description": "Set a custom range and cadence",
+      "nameLabel": "Wird name",
+      "namePlaceholder": "e.g. Surah Al-Baqarah memorization",
+      "activityLabel": "Activity",
+      "rangeLabel": "Target range",
+      "rangeMode": {
+        "wholeMushaf": "Whole Quran",
+        "surah": "By surah",
+        "juz": "By juz",
+        "page": "By page",
+        "verse": "By verse"
+      },
+      "fromSurah": "From surah",
+      "toSurah": "To surah",
+      "fromJuz": "From juz",
+      "toJuz": "To juz",
+      "fromPage": "From page",
+      "toPage": "To page",
+      "fromVerse": "From verse",
+      "toVerse": "To verse",
+      "versePrefix": "Ayah",
+      "cadenceLabel": "Schedule",
+      "cadenceType": {
+        "pace": "By pace",
+        "deadline": "By deadline",
+        "weekly": "Weekly recurrence",
+        "recurring": "Recurring"
+      },
+      "recurrencePeriod": {
+        "daily": "Daily",
+        "weekly": "Weekly"
+      },
+      "weekdayLabel": "Due weekday",
+      "weeklyHint": "Due on the same weekday every week",
+      "dailyHint": "The entire range repeats every day",
+      "period": {
+        "day": "Daily",
+        "week": "Weekly"
+      },
+      "targetDate": "Target date",
+      "repetitions": "Repetitions",
+      "pagesRange": "Pages {start}–{end}",
+      "singlePage": "Page {page}",
+      "pagesCount": "{count, plural, one {{n} page} other {{n} pages}}",
+      "versesCount": "{count, plural, one {{n} verse} other {{n} verses}}",
+      "daysCount": "{count, plural, one {{n} day} other {{n} days}}",
+      "pagesPerDay": "{count, plural, one {{n} page/day} other {{n} pages/day}}",
+      "versesPerDay": "{count, plural, one {{n} verse/day} other {{n} verses/day}}",
+      "pagesPerWeek": "{count, plural, one {{n} page/week} other {{n} pages/week}}",
+      "estimate": {
+        "days": "≈ {count, plural, one {{n} day} other {{n} days}} to complete",
+        "pace": "≈ {pace} (re-adjusts on missed days)",
+        "paceWithDays": "≈ {pace} (finishes in {daysCount, plural, one {1 day} other {{daysN} days}})",
+        "weekly": "Every {weekday}",
+        "daily": "Repeats every day"
+      },
+      "rangeFrozen": "Target range is locked because progress has been logged",
+      "verseWeeklyUnavailable": "Weekly pace is not available for verses; specify daily verses or set a deadline",
+      "memorizeRepetitionsLocked": "Memorization plans track a single completion",
+      "submit": "Start wird",
+      "save": "Save changes"
     },
     "templates": {
       "dailyWird": {
-        "label": "Daily Wird",
+        "label": "Daily Wird — Reading",
         "description": "Read N pages a day, cycling the whole mushaf."
       },
       "listeningWird": {
-        "label": "Listening Wird",
+        "label": "Daily Wird — Listening",
         "description": "Listen to N pages a day, cycling the whole mushaf."
       },
+      "memorizingWird": {
+        "label": "Daily Wird — Memorization",
+        "description": "Memorize N pages a day, cycling the whole mushaf."
+      },
+      "reviewingWird": {
+        "label": "Daily Wird — Review",
+        "description": "Review N pages a day, cycling the whole mushaf."
+      },
       "husun": {
-        "label": "الحصون الخمسة",
+        "label": "Al-Husun Al-Khamsa",
         "description": "A structured 5-track memorization program."
+      },
+      "custom": {
+        "label": "Custom wird",
+        "description": "A personalized goal with custom range and cadence."
       }
     },
     "tracks": {
       "reading": "Reading",
       "listening": "Listening",
+      "memorizing": "Memorizing",
+      "reviewing": "Reviewing",
       "tilawa": "Continuous reading",
       "hifz": "New memorization",
       "tahdeer": "Preparation",
@@ -337,10 +536,33 @@
       "empty": "No history yet."
     },
     "widget": {
-      "open": "Today's plans",
-      "title": "Today's plans",
-      "description": "Your active plans' assignments for today."
-    }
+      "open": "Check off today's wird",
+      "dialLabel": "wird",
+      "title": "Today's wird",
+      "description": "Assignments due on this page for your active plans.",
+      "completed": "Today's wird on this page is done",
+      "viewAllPlans": "All plans & history"
+    },
+    "detection": {
+      "readingOfferTitle": "Finished today's reading?",
+      "listeningOfferTitle": "Finished today's recitation?",
+      "memorizeOfferTitle": "Finished today's memorization?",
+      "reviewOfferTitle": "Finished today's review?",
+      "confirm": "Confirm",
+      "dismiss": "Not now",
+      "autoWriteNoticeReading": "Reading wird auto-recorded",
+      "autoWriteNoticeListening": "Listening wird auto-recorded",
+      "autoWriteNoticeGeneric": "Wird completion automatically recorded",
+      "undo": "Undo",
+      "autoRecordedBadge": "Auto-recorded",
+      "autoRecordedHint": "This entry was automatically recorded based on your reading or listening.",
+      "pagesRemaining": "{count, plural, =0 {All pages completed} one {1 page remaining} other {{count} pages remaining}}"
+    },
+    "settings": {
+      "autoWriteTitle": "Automatic Wird Completion",
+      "autoWriteDescription": "Automatically record reading or listening progress once dwell or playback criteria are met, without prompting."
+    },
+    "verse": "verse"
   },
   "recitation": {
     "settingsTitle": "Recitation settings",
@@ -375,6 +597,7 @@
     "surahSearchPlaceholder": "Search surahs…",
     "surahEmpty": "No surah found.",
     "offlineUnavailable": "Not available offline",
+    "playbackFailed": "Playback failed",
     "repeatCycleOff": "No ayah repetition",
     "repeatCycleTimes": "Repeat current ayah {n} times",
     "repeatCycleInfinite": "Repeat current ayah endlessly",
@@ -405,23 +628,45 @@
     "offlineNotice": "Connect to the internet to download."
   },
   "notifications": {
-    "bellLabel": "Notifications",
-    "feed": {
-      "title": "Notifications",
-      "empty": "No notifications yet",
-      "loading": "Loading…",
-      "markAllRead": "Mark all read"
-    },
     "settings": {
       "title": "Notifications",
-      "enablePush": "Push notifications",
-      "enablePushDescription": "Get notified about reminders and updates on this device",
-      "enablePushDenied": "Blocked by your browser — allow notifications in site settings to turn this on."
+      "enablePush": "Reminders",
+      "enablePushDescription": "Receive your daily wird reminders on this device",
+      "enablePushDenied": "Blocked by your browser — allow notifications in site settings to turn this on.",
+      "wirdReminderTitle": "Daily Wird Reminders",
+      "wirdReminderDescription": "Daily reminders to keep up with your Quran reading at your preferred times (up to 3 times)",
+      "wirdReminderSlotLabel": "Reminder {n}",
+      "wirdReminderRecurrence": "Repeat",
+      "wirdReminderDaily": "Daily",
+      "wirdReminderWeekly": "Weekly",
+      "wirdReminderAdd": "Add another time",
+      "wirdReminderRemove": "Remove this reminder",
+      "wirdReminderMaxReached": "Maximum of 3 general reminders reached",
+      "allPlansBoundNotice": "All your active plans have dedicated reminders. General reminders will not send alerts until an unbound plan is active.",
+      "dedicatedNoticeOnDisable": "General reminders are turned off. Dedicated reminders for specific plans remain active and can be managed from each plan's card under My Plans.",
+      "wirdReminderTime": "Reminder Time",
+      "wirdReminderPushBlocked": "Push notifications are blocked in your browser. Enable them in browser settings to receive reminders.",
+      "wirdReminderEnablePush": "Enable push notifications on this device",
+      "wirdReminderLoadError": "Failed to load reminder settings",
+      "wirdReminderRetry": "Retry",
+      "searchTime": "Search time…",
+      "noTimeMatch": "No matching time."
     },
     "types": {
       "plansDailyReminder": {
-        "title": "Time for your daily wird",
-        "body": "Your {{template}} assignment for today is ready."
+        "title": "Daily Wird",
+        "dedicatedTitle": "Reminder: {{name}}",
+        "multipleTasks": {
+          "one": "You have {{n}} task remaining in today's wird",
+          "other": "You have {{n}} tasks remaining in today's wird"
+        },
+        "singlePage": {
+          "one": "Today's wird: 1 page (p. {{start}})",
+          "other": "Today's wird: {{n}} pages (p. {{start}} to p. {{end}})"
+        },
+        "singleVerseOne": "Today's wird: verse {{verse}}",
+        "singleVerseRange": "Today's wird: verses {{range}}",
+        "completedCaption": "Completed for today"
       },
       "systemTest": {
         "title": "Test notification",
@@ -497,9 +742,9 @@
     "close": "Close",
     "availableOffline": "Available offline"
   },
-  "light": "",
-  "gold": "",
-  "dark": "",
+  "light": "Light",
+  "gold": "Gold",
+  "dark": "Dark",
   "overline": "",
   "title": "",
   "tagline": "",
@@ -523,5 +768,37 @@
     "notEnoughSpace": "Not enough storage space for this edition.",
     "alsoMushafLabel": "Also download the mushaf pages",
     "alsoMushafHint": "The commentary sheet opens over the mushaf page — download it too (~{size} MB) so the page renders offline."
-  }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "updated": "Last updated: September 2026",
+    "intro": "Furqan is a word-focused Quran reading app. This policy explains what data we collect and why. We show no ads, sell no data, and use no third-party trackers.",
+    "s1t": "Account information",
+    "s1b": "When you sign in with Google, we receive your name and email address and store them to identify your account. Signing in is optional — reading, marking, and offline downloads work without an account.",
+    "s2t": "Reading data",
+    "s2b": "Marks (word- and verse-level, with optional comments), reading plans and progress, and notification preferences are stored on our servers so they sync across your devices. Mushaf sharing grants expose your progress only to the specific people you approve, and either side can revoke access at any time.",
+    "s3t": "Notifications",
+    "s3b": "If you enable reminders, we store push subscriptions and device tokens to deliver them. You can disable notifications at any time from Settings or your device.",
+    "s4t": "On-device data",
+    "s4b": "Downloaded mushaf pages, fonts, recitation audio, and tafsir stay on your device. Clearing the app storage or uninstalling removes them.",
+    "s5t": "Diagnostics",
+    "s5b": "Crash reports help us fix bugs. They contain no advertising identifiers and are never used for advertising.",
+    "s7t": "Deletion",
+    "s7b": "To delete your account and all associated data, contact us at the email below. Downloads on your device are removed by clearing storage or uninstalling.",
+    "s8t": "Changes and contact",
+    "s8b": "We will update this page if our practices change. Questions or deletion requests: {email}."
+  },
+  "nativeCallback": {
+    "status": "Finishing sign-in — returning you to the app…",
+    "error": "Couldn't finish sign-in. Check your connection and try again.",
+    "retry": "Try again",
+    "home": "Home"
+  },
+  "nativeBootstrap": {
+    "status": "Finishing sign-in — opening your page…",
+    "error": "This sign-in link expired. Start again from the app.",
+    "retry": "Try again",
+    "home": "Home"
+  },
+  "close": "Close"
 }

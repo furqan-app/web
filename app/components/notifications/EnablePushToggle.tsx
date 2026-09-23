@@ -22,7 +22,7 @@ export const EnablePushToggle = () => {
         className={denied ? "flex-1 min-w-0" : "cursor-pointer flex-1 min-w-0"}
       >
         <span className="text-[13px] font-medium text-foreground leading-tight">
-          {t("notifications.settings.enablePush", "Push notifications")}
+          {t("notifications.settings.enablePush", "Reminders")}
         </span>
         <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
           {denied
@@ -32,7 +32,7 @@ export const EnablePushToggle = () => {
               )
             : t(
                 "notifications.settings.enablePushDescription",
-                "Get notified about reminders and updates on this device",
+                "Receive your daily wird reminders on this device",
               )}
         </p>
       </label>

@@ -33,7 +33,7 @@ The legacy page words route (`/api/quran/pages/[pageId]`) returns raw `NextRespo
 
 ## Auth in API Routes
 
-`auth-middleware` in `middleware.ts` enforces auth and injects the user as a JSON-stringified `user` header. Read it with:
+`auth-middleware` in `middleware.ts` enforces auth and injects the user as a percent-encoded JSON `user` header (to comply with HTTP ByteString constraints for non-ASCII user profiles). Read it with:
 
 ```ts
 import { extractUser } from "@/app/api/request";

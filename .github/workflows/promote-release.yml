@@ -4,7 +4,10 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  # `contents: write` is required to merge a PR — with `read`, `gh pr merge`
+  # fails with "Resource not accessible by integration (mergePullRequest)"
+  # (issue #406). cut-release.yml already has `write` and its stg merge works.
+  contents: write
   pull-requests: write
   issues: write
   repository-projects: write
@@ -61,11 +64,16 @@ jobs:
         run: |
           printf 'Promoting %s to prod.\n\n%s\n' "$VERSION" "$ISSUES_BODY" > "$RUNNER_TEMP/prod-pr-body.md"
           pr_url=$(gh pr create --repo "$REPO" --base prod --head "$RELEASE_BRANCH" --title "Release $VERSION" --body-file "$RUNNER_TEMP/prod-pr-body.md")
-          # Merge directly instead of via --auto: GITHUB_TOKEN's enablePullRequestAutoMerge
-          # call fails with "Resource not accessible by integration" unless auto-merge is
-          # enabled repo-wide. Use a merge commit (not squash) so the release branch tip
-          # stays an ancestor of prod — this workflow's own "is it already promoted" check
-          # relies on that.
+          # Merge directly (not `--auto`): GITHUB_TOKEN's enablePullRequestAutoMerge
+          # call fails unless repo-wide auto-merge is on. A plain merge needs
+          # `contents: write` in the job permissions above (issue #406). Use a merge
+          # commit (not squash) so the release branch tip stays an ancestor of prod —
+          # this workflow's own "is it already promoted" check relies on that.
+          #
+          # If `release/x.y.z` carries changes to `.github/workflows/` that `prod`
+          # doesn't have yet, GitHub gates the PR's check runs as `action_required`
+          # and the merge is BLOCKED until a maintainer approves them in the Actions
+          # tab. Self-resolves once the workflow change reaches prod via a release.
           gh pr merge "$pr_url" --repo "$REPO" --merge
           echo "### Promoting $VERSION to prod" >> "$GITHUB_STEP_SUMMARY"
           echo "PR: $pr_url" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Furqan • Reader Wird Check-off Mockup Gallery (#597)</title>
+  <style>
+    /* ==========================================================================
+       THEME TOKENS & SYSTEM FOUNDATION
+       Directly transcribed from app/globals.css (lines 7, 146, 276)
+       ========================================================================== */
+    :root {
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --radius-full: 9999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Arabic", "Amiri", sans-serif;
+      --transition: all 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #0b1016;
+      color: #ebe8df;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 80px;
+      line-height: 1.5;
+    }
+
+    /* --------------------------------------------------------------------------
+       THEME CONTAINER SCOPES
+       -------------------------------------------------------------------------- */
+    .theme-light {
+      --background: 210 36% 95%;
+      --foreground: 209 36% 14%;
+      --card: 0 0% 100%;
+      --border: 210 31% 90%;
+      --primary: 169 88% 26%;
+      --muted-foreground: 208 18% 40%;
+      --desk-bg: hsl(210 36% 95%);
+      --paper-bg: hsl(0 0% 100%);
+      --text-line: hsl(209 36% 14% / 0.12);
+      --widget-bg: hsl(0 0% 100%);
+      --widget-border: hsl(210 31% 86%);
+      --widget-rim: inset 0 1px 0 hsl(0 0% 100%);
+      --stub-bg: hsl(0 0% 98%);
+      --stub-border: hsl(210 31% 88%);
+    }
+
+    .theme-gold {
+      --background: 43 48% 87%;
+      --foreground: 39 25% 13%;
+      --card: 46 52% 96%;
+      --border: 43 40% 81%;
+      --primary: 168 72% 24%;
+      --muted-foreground: 39 18% 31%;
+      --desk-bg: hsl(43 48% 87%);
+      --paper-bg: hsl(46 52% 96%);
+      --text-line: hsl(39 25% 13% / 0.13);
+      --widget-bg: hsl(46 52% 96%);
+      --widget-border: hsl(43 40% 77%);
+      --widget-rim: inset 0 1px 0 hsl(46 52% 100%);
+      --stub-bg: hsl(44 49% 93%);
+      --stub-border: hsl(43 40% 78%);
+    }
+
+    .theme-dark {
+      --background: 213 31% 7%;
+      --foreground: 45 18% 91%;
+      --card: 213 21% 10%;
+      --border: 210 26% 19%;
+      --primary: 169 88% 26%;
+      --muted-foreground: 206 9% 56%;
+      --desk-bg: hsl(213 31% 7%);
+      --paper-bg: hsl(210 30% 10%);
+      --text-line: hsl(45 18% 91% / 0.11);
+      --widget-bg: hsl(213 21% 10%);
+      --widget-border: hsl(210 26% 22%);
+      /* Warm catch-light rim along top edge, brightness step from 10% card to 28% catch-light — NO drop shadows, NO alpha */
+      --widget-rim: inset 0 1px 0 hsl(210 20% 28%);
+      --stub-bg: hsl(213 21% 9%);
+      --stub-border: hsl(210 26% 17%);
+    }
+
+    /* ==========================================================================
+       PAGE HEADER & SPECIFICATION LEGEND
+       ========================================================================== */
+    .header-box {
+      width: 100%;
+      max-width: 1180px;
+      background: #151a20;
+      border: 1px solid #242c38;
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .header-title .tag {
+      background: hsl(169 88% 26%);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .spec-legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #9ba3af;
+      border-top: 1px solid #242c38;
+      padding-top: 16px;
+    }
+    .spec-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .spec-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: hsl(169 88% 26%);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .jump-nav {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .jump-link {
+      color: #cbd5e1;
+      background: #1e2632;
+      border: 1px solid #2d3848;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .jump-link:hover {
+      background: hsl(169 88% 26%);
+      color: #fff;
+      border-color: hsl(169 88% 26%);
+    }
+
+    /* ==========================================================================
+       THEME SECTION & GALLERY GRID
+       ========================================================================== */
+    .theme-section {
+      width: 100%;
+      max-width: 1180px;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-xl);
+      padding: 28px 24px;
+      margin-bottom: 36px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+    .theme-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid hsl(var(--border));
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .theme-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .theme-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .swatches {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid hsl(var(--border));
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    /* ==========================================================================
+       CARD & SIMULATED READER BACKDROP
+       ========================================================================== */
+    .state-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .state-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .state-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .state-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--foreground) / 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .state-desc {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.4;
+    }
+
+    .dual-direction-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .view-frame {
+      position: relative;
+      height: 250px;
+      background: var(--paper-bg);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 14px 0;
+    }
+
+    /* Mock Quranic text lines on mushaf page */
+    .mock-text-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      user-select: none;
+      pointer-events: none;
+    }
+    .text-line {
+      height: 5px;
+      border-radius: 3px;
+      background: var(--text-line);
+    }
+    .text-line.w-full { width: 100%; }
+    .text-line.w-90   { width: 90%; }
+    .text-line.w-80   { width: 80%; }
+    .text-line.w-70   { width: 70%; }
+    .text-line.w-60   { width: 60%; }
+
+    /* Faint stub representing RecitationPlayerBar (76px) at viewport bottom */
+    .mock-recitation-stub {
+      position: absolute;
+      bottom: 0;
+      inset-inline: 0;
+      height: 76px;
+      background: var(--stub-bg);
+      border-top: 1px solid var(--stub-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .stub-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      letter-spacing: 0.02em;
+      opacity: 0.85;
+    }
+
+    /* Clearance ruler marker (demonstrating 20px clearance between 76px player bar and 96px widget bottom) */
+    .clearance-guide {
+      position: absolute;
+      bottom: 76px;
+      inset-inline-end: 28px;
+      height: 20px;
+      width: 1px;
+      background: hsl(var(--primary) / 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 25;
+      pointer-events: none;
+    }
+    .clearance-label {
+      position: absolute;
+      inset-inline-end: 6px;
+      font-size: 8px;
+      font-weight: 700;
+      color: hsl(var(--primary));
+      white-space: nowrap;
+    }
+
+    /* ==========================================================================
+       THE REFINED WIDGET SURFACE
+       Fully opaque hsl(var(--card)) — NO glass, NO backdrop-blur in ANY theme.
+       Light & gold: opaque + 1px border. Dark: opaque + warm catch-light rim.
+       Anchor: bottom: 6rem; inset-inline-end: 1rem; (bottom-24 end-4)
+       Centre has quiet ~7.5px label ("wird" / "ورد").
+       ========================================================================== */
+    .widget-anchor {
+      position: absolute;
+      bottom: 6rem; /* 96px */
+      inset-inline-end: 1rem; /* 16px */
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Hit target is >= 44x44px; visual core is 40x40px */
+    .widget-button {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      padding: 2px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      outline: none;
+    }
+
+    .widget-surface {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background-color: var(--widget-bg);
+      border: 1px solid var(--widget-border);
+      box-shadow: var(--widget-rim);
+      display: grid;
+      place-items: center;
+      transition: var(--transition);
+    }
+
+    .widget-ring-svg {
+      position: absolute;
+      inset: 0;
+      width: 42px;
+      height: 42px;
+      pointer-events: none;
+    }
+    .widget-ring-svg circle,
+    .widget-ring-svg path {
+      stroke-width: 3px;
+    }
+
+    /* Flourish frame state: ring seals solid, gentle scale-105 pulse, center label remains */
+    .flourish-active .widget-surface {
+      transform: scale(1.06);
+    }
+
+    /* ==========================================================================
+       BOTTOM SHEET MOCKUPS (States 7 & 8)
+       ========================================================================== */
+    .mock-sheet-container {
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      max-height: 225px;
+      background: hsl(var(--card));
+      border-top: 1px solid hsl(var(--border));
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+      padding: 12px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 40;
+    }
+    .sheet-pill {
+      width: 32px;
+      height: 3px;
+      border-radius: 2px;
+      background: hsl(var(--muted-foreground) / 0.3);
+      margin: 0 auto 4px;
+    }
+    .sheet-title-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .sheet-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+    .sheet-subtitle {
+      font-size: 10px;
+      color: hsl(var(--muted-foreground));
+    }
+    .sheet-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      overflow-y: auto;
+    }
+    .assignment-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: var(--radius-md);
+      background: hsl(var(--foreground) / 0.03);
+      border: 1px solid hsl(var(--border) / 0.6);
+    }
+    .assignment-lead {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .activity-icon-box {
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-sm);
+      background: hsl(var(--primary) / 0.1);
+      color: hsl(var(--primary));
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .assignment-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .assignment-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .assignment-range {
+      font-size: 9.5px;
+      color: hsl(var(--muted-foreground));
+    }
+    .assignment-check-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid hsl(var(--border));
+      background: transparent;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .assignment-check-btn.checked {
+      background: hsl(var(--primary));
+      border-color: hsl(var(--primary));
+    }
+    .sheet-hub-link {
+      font-size: 10px;
+      color: hsl(var(--muted-foreground));
+      text-align: center;
+      margin-top: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 150ms ease;
+    }
+    .sheet-hub-link:hover {
+      color: hsl(var(--primary));
+    }
+
+    /* Directional caption labels */
+    .col-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: hsl(var(--muted-foreground));
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    /* Bonus Entrance Animation Demo */
+    @keyframes widgetEntrance {
+      from { opacity: 0; transform: scale(0.88); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .demo-entrance {
+      animation: widgetEntrance 220ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .demo-entrance { animation: none !important; }
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       MOCKUP HEADER & SPECIFICATION LEGEND
+       ======================================================================== -->
+  <header class="header-box">
+    <div class="header-title">
+      <span>Furqan Awrad Reader UX • Visual Mockup Gallery</span>
+      <span class="tag">Issue #597</span>
+      <span class="tag" style="background:#1e293b; color:#94a3b8;">Quiet Center Label (~7.5px)</span>
+    </div>
+    <p style="font-size: 13px; color: #cbd5e1; max-width: 860px;">
+      معاينة بصرية كاملة للتصميم الجديد لويدجت الأوراد داخل واجهة القارئ. الويدجت عبارة عن <strong>طوق مجزأ بكلمة (ورد / wird) هادئة بالمركز</strong>:
+      يظهر <strong>فقط</strong> في الصفحات التابعة لورد لم يُكتمل، ويختفي تمامًا بمجرد إنجازه.
+    </p>
+
+    <div class="spec-legend">
+      <div class="spec-item">
+        <span class="spec-dot"></span>
+        <div><strong>شكل المركز (Centre Label):</strong> كلمة هادئة بحجم ~7.5px (<code>ورد</code> / <code>wird</code>) بوزن 500 ولون <code>muted-foreground</code> مع <code>aria-hidden="true"</code>، ثابتة عبر كل الحالات.</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-dot"></span>
+        <div><strong>قاعدة السطح (Surface):</strong> معتم تمامًا <code>hsl(var(--card))</code> في كل الثيمات. لا يوجد زجاج شفاف أو <code>backdrop-blur</code> على الإطلاق.</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-dot"></span>
+        <div><strong>العمق في الداكن (Dark Depth):</strong> حافة علوية دافئة من خطوة إضاءة صلبة (ADR 0032). بدون أي drop shadow أو alpha.</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-dot"></span>
+        <div><strong>اتجاه ملء الأقواس:</strong> مع اتجاه عقارب الساعة (Clockwise) من موضع الساعة 12 في العربي (RTL) والإنجليزي (LTR).</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-dot"></span>
+        <div><strong>الارتكاز والخلوص (Anchor):</strong> مثبت عند <code>bottom-24 end-4</code> (ارتفاع 96px) تاركًا خلوصًا صافيًا 20px فوق شريط التلاوة (76px).</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-dot"></span>
+        <div><strong>لحظة الإنجاز (Flourish):</strong> عند إغلاق الشيت بعد إنجاز الورد، يكتمل الطوق بزمرد مصمت مع نبضة تكبير هادئة (~1.05) لمدة 1.2 ثانية ثم التلاشي؛ مع بقاء كلمة ورد بالمركز.</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-dot"></span>
+        <div><strong>لون وسمك الطوق (Arc Stroke & Color):</strong> سمك الطوق 3px على قطر 42px. لون الأقواس عند الانتظار <code>hsl(var(--primary) / 0.6)</code> وعند الإنجاز <code>hsl(var(--primary))</code> كامل الوضوح.</div>
+      </div>
+    </div>
+
+    <div class="jump-nav">
+      <span style="font-size:12px; font-weight:700; align-self:center; color:#94a3b8;">الانتقال السريع للثيم:</span>
+      <a href="#theme-light" class="jump-link">الثيم الفاتح (Light)</a>
+      <a href="#theme-gold" class="jump-link">الثيم الذهبي (Gold)</a>
+      <a href="#theme-dark" class="jump-link">الثيم الداكن (Dark)</a>
+    </div>
+  </header>
+
+
+  <!-- ========================================================================
+       SECTION 1: LIGHT THEME (النهار / الفاتح)
+       ======================================================================== -->
+  <section class="theme-section theme-light" id="theme-light">
+    <div class="theme-header">
+      <div class="theme-title-group">
+        <h2 class="theme-title">1. الثيم الفاتح — Light Theme</h2>
+        <span class="state-badge">Clean Paper • Emerald Dial</span>
+      </div>
+      <div class="swatches">
+        <span class="swatch" style="background:hsl(210 36% 95%);" title="Background"></span>
+        <span class="swatch" style="background:hsl(0 0% 100%);" title="Card"></span>
+        <span class="swatch" style="background:hsl(169 88% 26%);" title="Primary"></span>
+        <span class="swatch" style="background:hsl(210 31% 90%);" title="Border"></span>
+      </div>
+    </div>
+
+    <div class="gallery-grid">
+
+      <!-- State 1: At rest, N=1 -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">1. حالة السكون (N=1)</span>
+          <span class="state-badge">قوس متصل غير ممتلئ • كلمة ورد</span>
+        </div>
+        <p class="state-desc">خطة واحدة نشطة للصفحة الحالية. مسار رفيع بسمك 3px بلون الزمرد 60% مع كلمة ورد هادئة بالمركز.</p>
+        <div class="dual-direction-container">
+          <!-- RTL -->
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines">
+                <div class="text-line w-full"></div>
+                <div class="text-line w-90"></div>
+                <div class="text-line w-80"></div>
+                <div class="text-line w-70"></div>
+              </div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar (76px)</span></div>
+              <div class="clearance-guide"><span class="clearance-label">20px</span></div>
+              <div class="widget-anchor">
+                <button class="widget-button" aria-label="أشّر ورد اليوم">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- LTR -->
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines">
+                <div class="text-line w-full"></div>
+                <div class="text-line w-90"></div>
+                <div class="text-line w-80"></div>
+                <div class="text-line w-70"></div>
+              </div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar (76px)</span></div>
+              <div class="widget-anchor">
+                <button class="widget-button" aria-label="Check off today's wird">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 2: At rest, N=2 -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">2. حالة السكون (N=2)</span>
+          <span class="state-badge">قوسان متساويان بفجوة</span>
+        </div>
+        <p class="state-desc">مهمتان لصفحة اليوم (مثلاً قراءة + استماع). ينقسم الطوق لقوسين بينهما فجوة 8° كلاهما بسمك 3px مع كلمة ورد بالمركز.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-70"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <!-- Arc 1 (6° to 174°) -->
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <!-- Arc 2 (186° to 354°) -->
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-70"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 3: At rest, N=3 -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">3. حالة السكون (N=3)</span>
+          <span class="state-badge">3 أقواس مقسمة</span>
+        </div>
+        <p class="state-desc">ثلاث مهام (مثل الحصون الخمسة). 3 أقواس واضحة بدون الحاجة لأي رقم أو أيقونة بالمركز.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-80"></div><div class="text-line w-60"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.48 3.07 A 17 17 0 0 1 35.41 27.18" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 33.93 29.75 A 17 17 0 0 1 6.07 29.75" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 4.59 27.18 A 17 17 0 0 1 18.52 3.07" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-80"></div><div class="text-line w-60"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.48 3.07 A 17 17 0 0 1 35.41 27.18" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 33.93 29.75 A 17 17 0 0 1 6.07 29.75" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 4.59 27.18 A 17 17 0 0 1 18.52 3.07" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 4: Partial, N=2, one done -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">4. إنجاز جزئي (N=2، أُنجز ١)</span>
+          <span class="state-badge">قوس مصمت + قوس خافت</span>
+        </div>
+        <p class="state-desc">أُنجزت مهمة وبقيت أخرى. يمتلئ القوس الأول بلون الزمرد الصلب في اتجاه عقارب الساعة من الظهر.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <!-- Arc 1: SOLID Emerald -->
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" stroke-linecap="round" />
+                      <!-- Arc 2: Low-alpha track -->
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 5: Completion flourish frame -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">5. لحظة الإنجاز (Flourish)</span>
+          <span class="state-badge">اكتمال الطوق + نبضة تكبير هادئة</span>
+        </div>
+        <p class="state-desc">لحظة الإنجاز — يكتمل الطوق بزمرد مصمت مع نبضة تكبير هادئة (~1.05) لمدة 1.2 ثانية ثم يختفي الويدجت تماماً (بدون أي علامة صح أو أيقونة بالمركز).</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor flourish-active">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <!-- Ring fully closed with solid primary -->
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor flourish-active">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 6: Absent (Out of range / Completed) -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">6. حالة الاختفاء (Absent)</span>
+          <span class="state-badge">سطح قراءة صافٍ تمامًا</span>
+        </div>
+        <p class="state-desc">في الصفحات غير المشمولة في الورد، أو بعد اكتمال أوراد الصفحة واختفاء الويدجت. المصحف هادئ بدون أي عناصر طافية.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines">
+                <div class="text-line w-full"></div>
+                <div class="text-line w-90"></div>
+                <div class="text-line w-80"></div>
+                <div class="text-line w-70"></div>
+                <div class="text-line w-80"></div>
+                <div class="text-line w-60"></div>
+              </div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <!-- Empty: Widget returns null -->
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines">
+                <div class="text-line w-full"></div>
+                <div class="text-line w-90"></div>
+                <div class="text-line w-80"></div>
+                <div class="text-line w-70"></div>
+                <div class="text-line w-80"></div>
+                <div class="text-line w-60"></div>
+              </div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <!-- Empty -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 7: Bottom sheet, scoped (1 row) -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">7. الشيت المخصص (مهمة واحدة)</span>
+          <span class="state-badge">مقتصر على الصفحة الحالية</span>
+        </div>
+        <p class="state-desc">يفتح الشيت عند النقر على الويدجت، ويعرض مهام الصفحة الحالية فقط مع رابط للمركز.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">ورد اليوم</span>
+                  <span class="sheet-subtitle">المهام الخاصة بالصفحة الحالية</span>
+                </div>
+                <div class="sheet-rows">
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">ورد القراءة اليومي</span>
+                        <span class="assignment-range">الصفحات ١٢–١٦</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn"></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">عرض كل خطط اليوم في المركز ←</a>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">Today's wird</span>
+                  <span class="sheet-subtitle">Assignments for current page</span>
+                </div>
+                <div class="sheet-rows">
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">Daily Reading Wird</span>
+                        <span class="assignment-range">Pages 12–16</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn"></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">View all today's plans in Hub →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 8: Bottom sheet, scoped (2 rows) -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">8. الشيت المخصص (مهمتان)</span>
+          <span class="state-badge">قراءة + استماع</span>
+        </div>
+        <p class="state-desc">يعرض مهمتين للصفحة الحالية (قراءة واستماع)، مع إمكانية التأشير والتشغيل الفوري.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">ورد اليوم</span>
+                  <span class="sheet-subtitle">المهام الخاصة بالصفحة الحالية</span>
+                </div>
+                <div class="sheet-rows">
+                  <!-- Row 1: Reading (Done) -->
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">ورد القراءة اليومي</span>
+                        <span class="assignment-range">الصفحات ١٢–١٦</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn checked">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                  </div>
+                  <!-- Row 2: Listening (Pending) -->
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">ورد السماع اليومي</span>
+                        <span class="assignment-range">الصفحة ١٥ · استماع</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn"></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">عرض كل خطط اليوم في المركز ←</a>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">Today's wird</span>
+                  <span class="sheet-subtitle">Assignments for current page</span>
+                </div>
+                <div class="sheet-rows">
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">Daily Reading Wird</span>
+                        <span class="assignment-range">Pages 12–16</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn checked">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                  </div>
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">Daily Listening Wird</span>
+                        <span class="assignment-range">Page 15 · Listen</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn"></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">View all today's plans in Hub →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ========================================================================
+       SECTION 2: GOLD THEME (العصر / الذهبي)
+       ======================================================================== -->
+  <section class="theme-section theme-gold" id="theme-gold">
+    <div class="theme-header">
+      <div class="theme-title-group">
+        <h2 class="theme-title">2. الثيم الذهبي — Gold Theme</h2>
+        <span class="state-badge">Warm Parchment • Deep Emerald Dial</span>
+      </div>
+      <div class="swatches">
+        <span class="swatch" style="background:hsl(43 48% 87%);" title="Background"></span>
+        <span class="swatch" style="background:hsl(46 52% 96%);" title="Card"></span>
+        <span class="swatch" style="background:hsl(168 72% 24%);" title="Primary"></span>
+        <span class="swatch" style="background:hsl(43 40% 81%);" title="Border"></span>
+      </div>
+    </div>
+
+    <div class="gallery-grid">
+      <!-- State 1: N=1 -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">1. حالة السكون (N=1)</span>
+          <span class="state-badge">ذهب عتيق + زمرد دافئ</span>
+        </div>
+        <p class="state-desc">طوق رفيع على خلفية كرت معتمة متناسقة مع لون ورق المصحف الذهبي الهادئ، مع كلمة ورد بالمركز.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-70"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar (76px)</span></div>
+              <div class="widget-anchor">
+                <button class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(168 72% 24% / 0.6)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-70"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar (76px)</span></div>
+              <div class="widget-anchor">
+                <button class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(168 72% 24% / 0.6)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 4: N=2 Partial -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">4. إنجاز جزئي (N=2)</span>
+          <span class="state-badge">قوس زمردي ممتلئ</span>
+        </div>
+        <p class="state-desc">وضوح فوري لحالة الإنجاز بلون الزمرد المعتمد في الثيم الذهبي بدون أي عناصر زائدة بالمركز.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(168 72% 24%)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(168 72% 24% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(168 72% 24%)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(168 72% 24% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 5: Flourish -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">5. لحظة الإنجاز (Flourish)</span>
+          <span class="state-badge">اكتمال الطوق</span>
+        </div>
+        <p class="state-desc">اكتمال الطوق بزمرد مصمت مع نبضة تكبير هادئة (~1.05) قبل التلاشي الهادئ.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor flourish-active">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(168 72% 24%)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor flourish-active">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(168 72% 24%)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 8: Scoped Bottom Sheet -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">8. الشيت المخصص (Gold)</span>
+          <span class="state-badge">أناقة الورق الدافئ</span>
+        </div>
+        <p class="state-desc">الشيت يعكس خلفية الكرت الذهبية مع حدود أنيقة خالية من أي توهجات.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">ورد اليوم</span>
+                  <span class="sheet-subtitle">المهام الخاصة بالصفحة الحالية</span>
+                </div>
+                <div class="sheet-rows">
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">ورد القراءة اليومي</span>
+                        <span class="assignment-range">الصفحات ١٢–١٦</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn checked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">عرض كل خطط اليوم في المركز ←</a>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">Today's wird</span>
+                  <span class="sheet-subtitle">Assignments for current page</span>
+                </div>
+                <div class="sheet-rows">
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">Daily Reading Wird</span>
+                        <span class="assignment-range">Pages 12–16</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn checked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">View all today's plans in Hub →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ========================================================================
+       SECTION 3: DARK THEME (الليل / الداكن)
+       ======================================================================== -->
+  <section class="theme-section theme-dark" id="theme-dark">
+    <div class="theme-header">
+      <div class="theme-title-group">
+        <h2 class="theme-title">3. الثيم الداكن — Dark Theme</h2>
+        <span class="state-badge">Opaque Card • Warm Inset Catch-Light Rim • NO Shadows</span>
+      </div>
+      <div class="swatches">
+        <span class="swatch" style="background:hsl(213 31% 7%);" title="Background (Desk)"></span>
+        <span class="swatch" style="background:hsl(213 21% 10%);" title="Card (#151a20)"></span>
+        <span class="swatch" style="background:hsl(169 88% 26%);" title="Primary"></span>
+        <span class="swatch" style="background:hsl(210 26% 19%);" title="Border"></span>
+      </div>
+    </div>
+
+    <div class="gallery-grid">
+
+      <!-- State 1: Dark N=1 -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">1. حالة السكون (N=1)</span>
+          <span class="state-badge">طوق نقي مصمت + حافة دافئة</span>
+        </div>
+        <p class="state-desc">سطح معتم تمامًا بنسبة 100% <code>hsl(213 21% 10%)</code> مع كلمة ورد هادئة بالمركز وحافة علوية دافئة بدرجة إضاءة 28% بدون أي ظلال خارجية أو شفافية.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-80"></div><div class="text-line w-60"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar (76px)</span></div>
+              <div class="clearance-guide"><span class="clearance-label">20px</span></div>
+              <div class="widget-anchor">
+                <button class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-80"></div><div class="text-line w-60"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar (76px)</span></div>
+              <div class="widget-anchor">
+                <button class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 2: Dark N=2 -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">2. حالة السكون (N=2)</span>
+          <span class="state-badge">قوسان خافتان • كلمة ورد</span>
+        </div>
+        <p class="state-desc">تناسق مريح للعين في القراءة الليلية على مكتب داكن <code>(7,15,23)</code> بدون أي تشويش.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-70"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div><div class="text-line w-70"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 4: Dark N=2 Partial -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">4. إنجاز جزئي (N=2)</span>
+          <span class="state-badge">زمرد ناصع بدون توهج ظل</span>
+        </div>
+        <p class="state-desc">تميز القوس المنجز بوضوح تام، وحُذف ظل box-shadow تماماً التزاماً بمعايير Furqan للداكن.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-80"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <path d="M 21.78 3.09 A 17 17 0 0 1 21.78 36.91" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" stroke-linecap="round" />
+                      <path d="M 18.22 36.91 A 17 17 0 0 1 18.22 3.09" fill="none" stroke="hsl(169 88% 26% / 0.6)" stroke-width="3" stroke-linecap="round" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 5: Dark Flourish -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">5. لحظة الإنجاز (Flourish)</span>
+          <span class="state-badge">لحظة الإنجاز — ثم تختفي</span>
+        </div>
+        <p class="state-desc">اكتمال الطوق بزمرد مصمت مع نبضة تكبير هادئة (~1.05) لمدة 1.2s قبل التلاشي والاختفاء.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor flourish-active demo-entrance">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">ورد</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div><div class="text-line w-90"></div></div>
+              <div class="mock-recitation-stub"><span class="stub-label">RecitationPlayerBar</span></div>
+              <div class="widget-anchor flourish-active demo-entrance">
+                <div class="widget-button">
+                  <div class="widget-surface">
+                    <svg class="widget-ring-svg" viewBox="0 0 40 40">
+                      <circle cx="20" cy="20" r="17" fill="none" stroke="hsl(169 88% 26%)" stroke-width="3" />
+                      <text x="20" y="20" text-anchor="middle" dominant-baseline="central" fill="hsl(var(--muted-foreground))" font-size="7.5" font-weight="500" letter-spacing="-0.02em" aria-hidden="true">wird</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 8: Dark Scoped Bottom Sheet -->
+      <div class="state-card">
+        <div class="state-header">
+          <span class="state-name">8. الشيت المخصص (Dark)</span>
+          <span class="state-badge">هيكل متناسق #151A20</span>
+        </div>
+        <p class="state-desc">واجهة داكنة مريحة للعين، متطابقة مع ألوان الـ Drawer وشريط التلاوة.</p>
+        <div class="dual-direction-container">
+          <div dir="rtl">
+            <div class="col-label">العربية (RTL)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">ورد اليوم</span>
+                  <span class="sheet-subtitle">المهام الخاصة بالصفحة الحالية</span>
+                </div>
+                <div class="sheet-rows">
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">ورد القراءة اليومي</span>
+                        <span class="assignment-range">الصفحات ١٢–١٦</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn checked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                  </div>
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">ورد السماع اليومي</span>
+                        <span class="assignment-range">الصفحة ١٥ · استماع</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn"></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">عرض كل خطط اليوم في المركز ←</a>
+              </div>
+            </div>
+          </div>
+          <div dir="ltr">
+            <div class="col-label">English (LTR)</div>
+            <div class="view-frame">
+              <div class="mock-text-lines"><div class="text-line w-full"></div></div>
+              <div class="mock-sheet-container">
+                <div class="sheet-pill"></div>
+                <div class="sheet-title-row">
+                  <span class="sheet-title">Today's wird</span>
+                  <span class="sheet-subtitle">Assignments for current page</span>
+                </div>
+                <div class="sheet-rows">
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">Daily Reading Wird</span>
+                        <span class="assignment-range">Pages 12–16</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn checked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                  </div>
+                  <div class="assignment-row">
+                    <div class="assignment-lead">
+                      <div class="activity-icon-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                      </div>
+                      <div class="assignment-meta">
+                        <span class="assignment-name">Daily Listening Wird</span>
+                        <span class="assignment-range">Page 15 · Listen</span>
+                      </div>
+                    </div>
+                    <div class="assignment-check-btn"></div>
+                  </div>
+                </div>
+                <a href="#hub" class="sheet-hub-link">View all today's plans in Hub →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+</html>

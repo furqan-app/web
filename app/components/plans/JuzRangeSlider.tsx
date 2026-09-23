@@ -9,6 +9,7 @@ type Props = {
   from: number;
   to: number;
   onChange: (from: number, to: number) => void;
+  disabled?: boolean;
 };
 
 const MIN_JUZ = 1;
@@ -17,7 +18,7 @@ const MAX_JUZ = 30;
 // Dual-handle juz-range picker (husun's target-memorization range). Radix's
 // own `dir` prop flips the track orientation for RTL — no hand-rolled
 // pointer/clientX math needed (unlike the design prototype this replaces).
-export const JuzRangeSlider = ({ from, to, onChange }: Props) => {
+export const JuzRangeSlider = ({ from, to, onChange, disabled = false }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
   const dir = locale === "ar" ? "rtl" : "ltr";
@@ -34,6 +35,7 @@ export const JuzRangeSlider = ({ from, to, onChange }: Props) => {
       </div>
       <Slider
         dir={dir}
+        disabled={disabled}
         min={MIN_JUZ}
         max={MAX_JUZ}
         step={1}

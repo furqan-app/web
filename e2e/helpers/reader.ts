@@ -54,6 +54,17 @@ export async function waitForActivePanelContent(page: Page) {
 }
 
 /**
+ * Ensures the Serwist service worker is registered and actively controlling the page.
+ */
+export async function waitForServiceWorker(page: Page): Promise<void> {
+  await page.waitForFunction(async () => {
+    if (!("serviceWorker" in navigator)) return false;
+    const reg = await navigator.serviceWorker.ready;
+    return Boolean(reg?.active && navigator.serviceWorker.controller);
+  }, undefined, { timeout: 15000 });
+}
+
+/**
  * Spoofs PWA standalone display mode before first paint and optionally dismisses
  * first-run offline setup gates for the provided editions (defaults to [1, 2]).
  */
@@ -302,3 +313,69 @@ export async function openSearch(page: Page, locale: "ar" | "en" = "ar") {
 
   return { searchDialog, searchInput };
 }
+
+/**
+ * Clears marks-related entries from window.localStorage (and prevents leak between tests).
+ */
+export async function clearLocalMarksStore(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    try {
+      if (!sessionStorage.getItem("fq_e2e_session_active")) {
+        sessionStorage.setItem("fq_e2e_session_active", "1");
+        window.localStorage.removeItem("localMarks");
+        window.localStorage.removeItem("localMarksOwner");
+        window.localStorage.removeItem("guestMarkPromptDismissed");
+      }
+    } catch {}
+  });
+  if (page.url() !== "about:blank") {
+    await page.evaluate(() => {
+      try {
+        window.localStorage.removeItem("localMarks");
+        window.localStorage.removeItem("localMarksOwner");
+        window.localStorage.removeItem("guestMarkPromptDismissed");
+      } catch {}
+    });
+  }
+}
+
+/**
+ * Opens the word mark modal by clicking on desktop or long-pressing on mobile.
+ */
+export async function openWordMarkModal(
+  page: Page,
+  wordLocator: Locator,
+  isMobile: boolean
+): Promise<void> {
+  if (isMobile) {
+    await longPressWord(page, wordLocator, 600);
+  } else {
+    await wordLocator.first().click();
+  }
+}
+
+/**
+ * Reads a single mark record from window.localStorage['localMarks'].
+ * Resilient to execution context destruction during polling.
+ */
+export async function getLocalMark(
+  page: Page,
+  markKey: string
+): Promise<{ sync?: string; deleted?: boolean; category?: string; [key: string]: any } | null> {
+  try {
+    return await page.evaluate((k) => {
+      try {
+        const raw = window.localStorage.getItem("localMarks");
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed[k] ?? null;
+      } catch {
+        return null;
+      }
+    }, markKey);
+  } catch {
+    return null;
+  }
+}
+
+

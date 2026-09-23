@@ -4,7 +4,13 @@ export const isJSONRequest = (req: Request) => {
 
 export const extractUser = (req: Request) => {
   try {
-    return JSON.parse(req.headers.get("user") as string);
+    const raw = req.headers.get("user");
+    if (!raw) return null;
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("{")) {
+      return JSON.parse(trimmed);
+    }
+    return JSON.parse(decodeURIComponent(trimmed));
   } catch {
     return null;
   }

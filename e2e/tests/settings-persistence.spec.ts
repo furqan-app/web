@@ -203,18 +203,20 @@ test.describe("Mushaf Layout Edition Selection", () => {
     await mushafTrigger.click();
     await expect(tajweedRow.locator('[data-state="checked"]')).toBeVisible();
 
-    // 2. Switch back to Default (ID 2)
-    const defaultRow = sheet
+    // 2. Switch to QCF V1 (ID 2). Its "1405H print" year disambiguates it from
+    // the QCF V2 (ID 1, the reader default) row, which shares the
+    // "مجمع الملك فهد" name prefix (ADR 0066).
+    const v1Row = sheet
       .locator(".fq-section-drawer .fq-section-drawer-row")
-      .filter({ hasText: /مجمع الملك فهد|Madinah|QCF V1/ });
-    await defaultRow.locator("button").first().click();
+      .filter({ hasText: /١٤٠٥|1405/ });
+    await v1Row.locator("button").first().click();
 
-    const storedDefault = await getStorageItem(page, "quranMushafId");
-    expect(storedDefault).toBe("2");
+    const storedV1 = await getStorageItem(page, "quranMushafId");
+    expect(storedV1).toBe("2");
 
     // Re-expand to verify checked radio indicator
     await mushafTrigger.click();
-    await expect(defaultRow.locator('[data-state="checked"]')).toBeVisible();
+    await expect(v1Row.locator('[data-state="checked"]')).toBeVisible();
   });
 
   test("persists Mushaf edition across page reload", async ({ page }) => {

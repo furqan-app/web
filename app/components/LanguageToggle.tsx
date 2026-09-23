@@ -24,7 +24,12 @@ export const LanguageToggle = () => {
   const switchTo = (lang: "ar" | "en") => {
     setExpanded(false);
     if (lang === currentLang) return;
-    router.push(pathname, { locale: lang });
+    // Preserve the query string across the locale switch (e.g. ?highlight=…
+    // deep links). Read from window at click time: next-intl's usePathname()
+    // strips the query, and a useSearchParams() hook would force a
+    // Suspense/CSR bailout on these statically generated pages.
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    router.push(`${pathname}${search}`, { locale: lang });
   };
 
   return (

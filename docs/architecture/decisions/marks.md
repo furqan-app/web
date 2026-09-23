@@ -109,3 +109,202 @@ amends ADR 0024).
   when present. The `dir="auto"` free-text rules (Verse/Word Comments section
   above) still govern the comment textarea and preview.
 - Schema reshape via `prisma db push` on disposable data — no migration script.
+
+---
+
+## Marks Are Local-First
+
+**Status:** active
+
+**Decision (2026-09-04):** Marking works offline and without an account. A client store
+(`localStorage`, via `app/utils/storage.ts`) is **the read source of truth for the UI**;
+the server stays the durable source of truth for the data. Sync is **state-based, not
+operation-based**: one local record per marked spot holds its desired current state, and
+that state is pushed — `upsertMark`/`deleteMark` are already idempotent and keyed by
+`[marked_type, marked_id, to_user]`, so replay is order-independent. Every record is
+either `synced` (a disposable mirror of a server row) or `pending` (an unacknowledged
+intent). A sync run pushes, then pulls. Writes to a **grant** mushaf remain online-only.
+Supersedes the marks clause of ADR 0014 for the self mushaf. See
+[ADR 0061](../adr/0061-offline-first-marks-sync.md).
+
+**Constraints:**
+- **A pull never overwrites a `pending` record**, and `synced` records are freely
+  overwritten. This one rule is what makes the design safe; inverting it either loses
+  unpushed work or freezes stale local state forever.
+- **`applyServerPull` treats its argument as the caller's *complete* mark set** — a spot held
+  `synced` locally but absent from the pull is dropped as a remote deletion. Safe only because
+  `GET /api/marks?all=true` is unpaginated (#545). If that endpoint ever paginates again,
+  `applyServerPull` needs a completeness signal first, or a partial page silently wipes the
+  marks it didn't return. Commented at both ends (`store.ts`, `api/marks/route.ts`).
+- **Deletes are tombstones** (`deleted: true`, `pending`) until the server acks, then the
+  row is dropped. Removing the local row instead lets the next pull resurrect the mark
+  from the server — the delete is silently undone.
+- **Push before pull in a run**, so the pull observes post-push state and the two cannot
+  disagree within a run.
+- **A push carries the record's client `updated_at`; `upsertMark` skips the write when the
+  existing row's `client_updated_at` is newer.** Compare client clock to client clock — a new
+  nullable `Mark.client_updated_at` column (Prisma migration, ADR 0051), *not* `Mark.updated_at`,
+  which `@updatedAt` writes from the server's clock. Comparing the two makes any device whose
+  clock runs slow permanently unable to sync: a silent, total failure, worse than the clobber
+  the guard prevents. `null` counts as older than anything, so a first push always beats a
+  legacy row. The losing device is corrected by the pull that follows its own push, so it
+  self-heals rather than needing an error path. Without the guard at all, a device offline for
+  a week silently clobbers a newer edit made meanwhile on another device. Cross-device clock
+  skew remains — that is inherent to last-write-wins and is accepted.
+- **Local records denormalize `snippet`, `chapter_name_simple`, `chapter_name_arabic` and
+  `verse_number`**, captured in `MarkModal` at creation time. `/api/marks` builds these
+  server-side from `quranPrisma`; a guest has no session and an offline user has no
+  server, so My Marks cannot render without them.
+- **The owner stamp is sticky and evidence-based — never derived from `useSession()`.**
+  next-auth reports **unauthenticated** whenever the `/api/auth/session` fetch fails or is
+  aborted (`app/sw.ts` bounds it at 3s, ADR 0049 — see the Auth section in
+  [`api.md`](api.md)), so every offline launch looks signed-out. Only an observed sign-in or
+  an explicit sign-out moves the stamp; an unauthenticated reading with a *failed* session
+  fetch means "unknown", and the last stamp stands. Deriving it from live session state
+  re-stamps the store to `"guest"` offline and then trips the different-owner reset on
+  reconnect, discarding exactly the offline marks this design exists to protect. Guest-facing
+  UI (the `MarkModal` prompt, the `/marks` line) gates on the stamp for the same reason.
+- **Sign-out flushes pending marks and confirms when any remain** ("N marks haven't synced
+  yet" — Sign out anyway / Stay and retry). This is online-only by construction: `UserMenu`
+  renders Sign out only when `session` is truthy, so offline it shows Sign in and the path is
+  unreachable. Both `signOut()` call sites in `UserMenu` route through the internal
+  `SignOutControl` (#561): it `await`s one `syncMarks()`, re-reads `getPendingCount()`, and
+  either signs out or shows the confirm. The confirm is an **inline row swap inside the open
+  menu**, not a `Dialog` — a Radix `Dialog` mounted inside `DropdownMenuContent` unmounts with
+  the menu, and "Stay and retry" needs the menu to stay put. The dropdown item calls
+  `e.preventDefault()` in `onSelect` so the flush and the confirm don't close the menu. It still
+  unmounts `SignOutControl` if the menu is dismissed another way (Escape, outside click)
+  mid-`await syncMarks()`, so every post-await branch checks a `mountedRef` first and bails — a
+  continuation that signs the user out (or drops the confirm) after a "never mind" gesture is a
+  surprise. Nothing here calls `setOwnerStamp`: `signOut()` alone leaves the store and its stamp intact,
+  which is what lets a re-sign-in as the same account recover the pending marks via the push
+  loop. Do not wipe the store here.
+- **The store is stamped with an owner** (`"guest"` or the user id). Signing in re-stamps a
+  guest store to that user (its records are all `pending`, so the ordinary push loop *is*
+  the guest→account migration — do not write a separate migration path). Signing in with
+  an id **different** from the stamp resets the store and pulls fresh: pushing the previous
+  account's pending marks would graft one person's annotations onto another's account.
+  Sign-out flushes pending while still online rather than wiping the store — the installed
+  PWA is a single-owner device.
+- **`useMarks` reads two different sources, and the split is `grantId`.** The self mushaf reads the
+  local store via `useSyncExternalStore` and issues **no** network request at all; `grantId` set keeps
+  the React Query server fetch. Both hooks are called unconditionally so hook order never depends on
+  `grantId` — the query is gated with `enabled: Boolean(grantId)`, not by branching around the call.
+  The `LocalMark` → `PageMark` adapter runs in a `useMemo`, never inside `getSnapshot`, which must keep
+  returning one stable reference. `is_own` is derived per mark, never hardcoded:
+  a grant holder writes with `to_user` = owner and `from_user` = viewer (ADR 0012), so a mark on your
+  OWN mushaf can be someone else's and must still render "Marked by X". That is why the self marks
+  endpoint always ran `withAuthorNames`. The local-first chain therefore carries the author end to
+  end — `/api/marks` returns `from_user` + `author_name`, `LocalMark` stores them (optional: records
+  predating this, and a guest's own marks, have no server author and read as the reader's own), and
+  the adapter compares `from_user` to the owner stamp. Hardcoding `is_own: true` silently drops a
+  teacher's attribution; `e2e/tests/shared-mushaf.spec.ts` catches it. Tombstoned records (`deleted: true`) are filtered
+  out so a delete looks immediate while the row stays for the sync engine to push.
+- **`reload()` survives for the grant reader only (#550).** On self mushaf (`grantId` unset),
+  `MarkModal` writes directly to `setLocalMark` / `tombstoneLocalMark` with `sync: "pending"`, fires
+  background `syncMarks()`, and closes immediately. On grant mushaf (`grantId` set),
+  `addPageMark` / `deletePageMark` are awaited and `reload()` refreshes the React Query cache.
+- **`MarkModal` offline and guest gating (#550).**
+  - Gating logic lives in `app/lib/marks/gates.ts` (`evaluateMarkModalGates`).
+  - Online (`!isOffline`), live session (`Boolean(sessionUser)`) is authoritative; after sign-out,
+    browser tabs enforce the sign-in wall even if `ownerStamp` remains sticky.
+  - Offline (`isOffline`), session fetch always fails; sticky `ownerStamp !== "guest"` indicates
+    the user was signed in prior to going offline.
+  - Guests (`ownerStamp === "guest"`) in installed PWA (`isStandalone`) can mark offline and online
+    without an account. In standard browser tabs, guests retain the sign-in wall.
+  - On grant mushaf, marking is online-only. Offline on grant mushaf disables inputs and displays
+    `markModal.offlineNotice` (test case 6).
+  - PWA guests see a one-line dismissible sign-in prompt; dismissal state is tracked in `localStorage`
+    under `guestMarkPromptDismissed`.
+  - Local marks preserve author attribution (`from_user`, `author_name`) when updating or tombstoning
+    existing marks.
+  - Local marks capture denormalized metadata (`snippet`, `chapter_name_simple`, `chapter_name_arabic`,
+    `verse_number`) at creation time for offline/guest My Marks (#551).
+  - Footer displays `markModal.savedLocally` only while a mark has `sync === "pending"`.
+- **`grantId` is the offline cut-off.** When `MarkModal` has a `grantId`, it keeps today's
+  offline-disabled behaviour and never touches the local store. ADR 0014's rejection of
+  offline mark writes was about concurrent viewers of a shared mushaf under
+  last-author-wins (ADR 0012); that hazard is real and is not superseded.
+- **RESOLVED (#548, 2026-09-06) — `useSyncExternalStore` is safe for the marks read path.** The Font
+  System decision in [`rendering.md`](rendering.md) lists it among the mechanisms *tried and abandoned*
+  for `QuranSafha`'s `fontReady` because "RSC navigation calls `getServerSnapshot` on the client",
+  which for marks would mean the empty server snapshot blanking highlights. Measured on the real
+  reader before wiring anything: `getServerSnapshot` is called **only during initial SSR hydration**
+  and **never** on a soft RSC navigation into the reader, on back/forward `popstate`, or on the pager
+  commits that mount new panels (0 calls in all three, against 114–228 `getSnapshot` calls). The
+  `fontReady` finding does not generalize to a store-backed subscription. Highlights therefore survive
+  every in-app navigation; do not re-litigate this without new measurements.
+- **One mark write re-renders every mounted panel exactly once, and does not touch the font path.**
+  Measured with all panels subscribed: a store mutation re-renders all 6 mounted `QuranSafha` panels
+  once each (no cascade, no loop) and triggers **0** `document.fonts.check` calls — `fontReady` is
+  `useState` and does not depend on marks, so a mark write cannot re-run the font-readiness gate or
+  flash a skeleton. Subscription granularity (a per-page selector, a `markPages`-keyed snapshot) was
+  therefore **not** needed and must not be added speculatively — it would be complexity with no
+  measured problem behind it.
+- **`localStorage`, not IndexedDB**, and deliberately so. Marks can never be in the SSR HTML
+  (user state on a statically-generated page; `useSyncExternalStore` uses `getServerSnapshot`
+  through hydration), so highlights land on the **first client commit after hydration** — a
+  synchronous store makes that one commit, IndexedDB adds an async hop that pushes them a
+  further frame out, the class of flash ADRs 0028/0034 exist to prevent. The store is bounded
+  (~150 bytes/mark; 5,000 marks ≈ 750 KB), the codebase has no IndexedDB or `idb`
+  dependency, and the `storage` event gives cross-tab coordination for free (the mechanism
+  `app/lib/tafsir/download-manager.ts` already uses). Serialize the map once per mutation,
+  never per render — `localStorage` writes block. Everything goes through one store module,
+  so moving its internals to IndexedDB later is contained.
+- **The sync run never fires from a mount `useEffect`.** The launch trigger is deferred off
+  the critical path (idle after first paint) and gated on a signed-in owner stamp — an
+  unconditional mount fetch in anything the root layout renders is exactly what ADR 0049's
+  Root-Layout Network Budget forbids (see [`pwa.md`](pwa.md)).
+- **The store's `getSnapshot` must return a stable object reference** until a mutation.
+  Re-parsing `localStorage` per call returns a fresh object every time and sends
+  `useSyncExternalStore` into an infinite re-render loop.
+- **Writes must handle `QuotaExceededError` explicitly with snapshot rollback.** `storage.set`
+  swallows failures with a `console.warn` by default to protect pre-existing callers, but accepts
+  `{ throwOnQuota: true }` so marks operations can surface quota exhaustion. When thrown, the
+  in-memory snapshot (`marksSnapshot` / `ownerSnapshot`) must roll back to the pre-mutation state
+  to prevent memory from diverging from disk.
+- **`/api/quran/pages/{id}/marks` and `/api/marks` must be `NetworkOnly` in `app/sw.ts`,
+  registered ahead of `...defaultCache`.** `defaultCache` caches every same-origin `GET /api/*`
+  for 24h (`NetworkFirst`, `cacheName: "apis"`, `maxEntries: 16`, `networkTimeoutSeconds: 10`),
+  so without this rule an offline or slow pull receives a stale cached `200`, writes a day-old
+  snapshot into the store as `synced`, and reports a successful reconciliation it never made —
+  rolling back synced marks and resurrecting ones deleted elsewhere. A pull must reach the
+  network or fail; failing is safe, because the store already holds the last known state. Same
+  pattern and same class of reason as the QDC tafsir `NetworkOnly` rule (ADR 0060).
+- **Guest marks are single-copy, so the store requests `navigator.storage.persist()`.** Every
+  other offline feature in this app can heal from the server; a guest's marks cannot. Two
+  WebKit mechanisms delete local data and only one exempts installed PWAs: ITP's 7-day
+  script-writable-storage cap exempts home-screen web apps (they keep their own counter of days
+  of use), but quota/storage-pressure eviction does not — that is the same LRU mechanism behind
+  ADR 0060's `verifyAndHeal`. `navigator.storage.persist()` is granted on heuristics "like
+  whether the website is opened as a Home Screen Web App" (Safari 17+), and a persistent-mode
+  origin is excluded from eviction. Request it before enabling guest marking. It is a request,
+  not a guarantee, so `verifyAndHeal` stays. A guest in a **plain Safari tab** is covered by
+  neither mechanism, which is why **guest marking is gated to `isStandaloneDisplayMode()`**
+  (2026-09-04) — the same gate offline recitation and offline tafsir use. Offline marking for
+  *signed-in* users is not gated this way; their marks have a server replica.
+- **A 401 is not a sign-out.** It stops the run and raises a "session expired, sign in to sync"
+  state in My Marks; it never moves the owner stamp and never drops records. Without it, a
+  session expiring mid-use leaves marks that look saved and silently never sync.
+- **A `422` push is dropped and logged, not retried forever**, and surfaces in My Marks —
+  never in the reader. Sync state is shown only when a mark is *not* synced; no per-mark
+  sync badges over scripture.
+- **The sync engine (`app/lib/marks/sync.ts`) coordinates push-then-pull sync as a module singleton.**
+  In-flight deduplication guarantees that concurrent triggers share the same run without double-pushing.
+  Exposed via `useSyncExternalStore`, coordinating across tabs via the native `storage` event.
+- **The engine is inert until something subscribes to it, and `MarksSync` is that something.**
+  `sync.ts` attaches every trigger it owns — `online`, `visibilitychange`, cross-tab `storage`, and
+  the store-mutation listener that raises the guest→account migration — inside `subscribe()`, on the
+  first listener; and its deferred launch trigger runs at module evaluation, so it needs the module
+  to be *imported* by something in the bundle. Nothing else calls `setOwnerStamp` either, and
+  `executeSync` returns early for a `"guest"` stamp. All three are wired by one null-rendering leaf,
+  `app/components/marks/MarksSync.tsx`, mounted in `app/[locale]/layout.tsx` beside `LastReadPageSync`.
+  This is recorded because it was missed: `#546` and `#547` both shipped as modules nothing imported,
+  so the store was never populated, no trigger ever attached, and every unit test passed
+  regardless — the failure is invisible from inside either module (`#560`).
+- **My Marks reads the local store with progressive windowing (#551).**
+  - Reads directly from `store.ts` via `useSyncExternalStore` in `useAllMarks`, filtering out tombstones (`deleted: true`) and applying client-side sorting in natural Quran reading order via `getSortKey`.
+  - Replaces cursor/infinite-query pagination with progressive client-side windowing (`MARKS_PAGE_LIMIT = 20`, scroll listener + load more button).
+  - Gated with `evaluateMarkModalGates`: installed PWA guests see their local marks; unauthenticated users in standard browser tabs see `MarksSignedOutPrompt`.
+  - Removes are local-first tombstones (`tombstoneLocalMark`) that trigger background `syncMarks()` without page reloads.
+  - Surfaces the two sync failure states exclusively on `/marks` (never in the reader): 401 session expired (with `signIn()`) and 422 permanently-failed dropped marks (with dismiss via `clearDroppedMarks()`).

@@ -1,9 +1,6 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/app/api/auth/options";
 import { MyMarksList } from "@/app/components/marks/MyMarksList";
-import { MarksSignedOutPrompt } from "@/app/components/marks/MarksSignedOutPrompt";
 import { Locale } from "@/app/types/config";
 
 export default async function MarksPage({
@@ -13,10 +10,7 @@ export default async function MarksPage({
 }) {
   setRequestLocale(locale);
 
-  const [session, t] = await Promise.all([
-    getServerSession(authOptions),
-    getTranslations(),
-  ]);
+  const t = await getTranslations();
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-10 max-w-2xl min-h-[calc(100dvh-3.5rem)]">
@@ -32,7 +26,10 @@ export default async function MarksPage({
         </div>
       </header>
 
-      {session?.user ? <MyMarksList /> : <MarksSignedOutPrompt />}
+      {/* No server session seed (ADR 0014 Addendum 10, #591): this route is a
+          static precached shell, so per-request session HTML must never bake
+          into it. MyMarksList resolves the live session client-side. */}
+      <MyMarksList />
     </main>
   );
 }

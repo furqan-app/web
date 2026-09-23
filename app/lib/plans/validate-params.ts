@@ -10,6 +10,7 @@
 import {
   MUSHAF_FIRST_PAGE,
   MUSHAF_LAST_PAGE,
+  PLAN_DATE_RE,
   independentTrackKeys,
   independentTrackUnit,
   type PlanTemplate,
@@ -37,7 +38,15 @@ export type ResolvePlanParamsResult =
  * unit is "verse" (ADR 0038 widening — see the plan doc's "Fraction
  * support" decision).
  */
-const FRACTIONAL_QUANTITY_TRACKS = new Set(["reading", "listening", "tilawa", "hifz", "baeed"]);
+const FRACTIONAL_QUANTITY_TRACKS = new Set([
+  "reading",
+  "listening",
+  "memorizing",
+  "reviewing",
+  "tilawa",
+  "hifz",
+  "baeed",
+]);
 
 /**
  * A quantities-bearing track's own resolved unit — an independent track
@@ -146,12 +155,15 @@ export const resolvePlanParams = async (
     return n >= min && n <= max;
   };
 
-  // startPage always seeds a fixed_cycle track — resolvePlanParams has no
-  // way to know which one when a template has more than one, but every
-  // current template has at most one, so the first independent track's unit
-  // is the right scale to validate against.
   const primaryUnit = independentTrackUnit(params, independentKeys[0] ?? "");
-  if (params.startPage !== undefined && !isInRange(params.startPage, primaryUnit)) {
+
+  // startPage is always a mushaf page number (1–604) regardless of track unit.
+  if (
+    params.startPage !== undefined &&
+    (!Number.isInteger(params.startPage) ||
+      params.startPage < MUSHAF_FIRST_PAGE ||
+      params.startPage > MUSHAF_LAST_PAGE)
+  ) {
     return { error: "Invalid params.startPage" };
   }
   const targetUnit = cursorAdvanceTrackKey
@@ -171,6 +183,13 @@ export const resolvePlanParams = async (
     params.targetStart > params.targetEnd
   ) {
     return { error: "params.targetStart must be <= params.targetEnd" };
+  }
+
+  if (
+    params.endDate !== undefined &&
+    !PLAN_DATE_RE.test(params.endDate)
+  ) {
+    return { error: "Invalid params.endDate" };
   }
 
   if (params.quantities) {

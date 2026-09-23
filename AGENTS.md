@@ -30,6 +30,18 @@ When in doubt, ask. Never act unilaterally. Don't make any changes until you hav
 
 **Scope — AI tooling files are exempt.** This workflow governs Furqan app code and content: anything under `app/`, `components/`, `lib/`, `prisma/`, `docs/` (excluding `docs/workflow/`), translation files, and config that affects the running app. Changes to AI agent tooling — `.claude/`, `.agents/`, `docs/workflow/`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules` — are meta/infra and do not require the plan → implement flow. Still confirm with the user before making tooling changes.
 
+The whole cycle can be driven for one issue by `/orchestrate-fq-task <issue>`
+([`docs/workflow/orchestrate.md`](docs/workflow/orchestrate.md)), which sequences these same
+phases and delegates the implementation to a fleet CLI instead of typing it. It does not
+replace or relax the two steps above.
+
+## Radical transparency
+
+Never act unilaterally, assume intent, or silently compromise:
+- **No silent substitution**: If a requested model, tool, or command is unavailable or not working, say so immediately. Never silently substitute an alternative.
+- **Admit when unclear**: If you don't understand an instruction or requirements are ambiguous, stop and ask.
+- **Report failures openly**: If a step, check, or tool fails, report it directly instead of papering over it.
+
 ## Response style
 
 Keep responses concise and direct — no filler, no preamble, no tool-call narration.
@@ -119,3 +131,14 @@ Rules:
 ## Design & UX
 
 Nobody on the team is a designer. For UI work, consult `docs/design/design-principles.md` (aesthetic direction) and `docs/standards/styling.md` (tokens, RTL/LTR, the Motion section) before making layout or visual decisions, and list any UI/UX concerns in the plan. `/review-fq-work` and `check-fq-standards` carry a Design & UX checklist (contrast, hierarchy, spacing scale, RTL parity, touch-target size, reduced-motion).
+
+## ِArabic Response
+عند الرد بالعربية، استخدم العربية المصرية عند طلبها، واجعل اتجاه كل سطر عربي من اليمين إلى اليسار.
+ابدأ كل فقرة وكل عنصر في القائمة بكلمة عربية فعلية. لا تبدأ الفقرة بمصطلح إنجليزي أو code أو رقم أو رمز Markdown.
+لا تضع كلامًا إنجليزيًا في نفس السطر مع العربي. ضع كل مصطلح إنجليزي أو اسم ملف أو مسار أو رقم issue أو code على سطر مستقل يبدأ من الشمال.
+يُستثنى من ذلك الرمز القصير جدًا داخل inline backticks وسط الجملة، مثل اسم حقل واحد أو كود خطأ؛ أي شيء أطول من ذلك ينزل سطرًا لوحده.
+لا تضع جملة عربية أو شرحًا مختلطًا بالعربي والإنجليزي داخل code block أو plain text block.
+استخدم code block فقط لعرض كود حقيقي أو أوامر طرفية أو JSON كامل، وابدأ شرحه في فقرة عربية منفصلة.
+عند شرح أكثر من مصطلح إنجليزي، استخدم سطورًا قصيرة يبدأ كل منها بشرح عربي ثم المصطلح على سطر تحته.
+الجداول مسموحة عندما تكون الخلايا قصيرة (رقم issue، عنوان، تبعية)؛ تجنّبها لو الخلايا فيها خليط طويل من العربي والإنجليزي واستخدم فقرات قصيرة منفصلة.
+راجع التنسيق قبل الإرسال للتأكد من أن العربي والإنجليزي لا يتداخلان في نفس السطر.

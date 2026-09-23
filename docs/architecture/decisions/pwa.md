@@ -23,7 +23,7 @@ Active decisions for PWA & offline — page caching, Android launch/back nav, ro
 
 **Status:** active
 
-**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches, in the background, the **slim per-page content JSON** (`public/quran/pages/{n}.json`) + each page's **base WOFF2 font** for all 604 pages — NOT the SSR HTML (ADR 0028): the persistent pager renders any page client-side from that JSON + font once the app shell is loaded, so caching ~2.6 MB HTML ×604 (~1.5 GB) is unnecessary. The pre-cache set is locale-independent (Quran content + fonts; the localized app shell is precached via the Serwist build manifest). Resumes on later launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. The reader-page HTML route itself (visited pages, any visitor) is cached `NetworkFirst`, not `CacheFirst` (Trello #122, ADR 0014 Addendum 1) — see Constraints below. Trade-off: an offline *cold* load of a page URL never visited this session lacks its SSR HTML; in-app swiping to any page works offline from the JSON + fonts regardless. Marks stay **online-only**: the mark UI is disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](../adr/0014-pwa-offline-architecture.md) and [ADR 0028](../adr/0028-reader-persistent-pager.md).
+**Decision:** The app is installable (web app manifest + icons, generated via Next's `app/manifest.ts` convention) via Serwist. When running as the **installed PWA** (`display-mode: standalone`), a service worker pre-caches, in the background, the **slim per-page content JSON** (`public/quran/pages/{n}.json`) + each page's **base WOFF2 font** for all 604 pages — NOT the SSR HTML (ADR 0028): the persistent pager renders any page client-side from that JSON + font once the app shell is loaded, so caching ~2.6 MB HTML ×604 (~1.5 GB) is unnecessary. The pre-cache set is locale-independent (Quran content + fonts; the localized app shell is precached via the Serwist build manifest). Resumes on later launches if a previous attempt was interrupted. Regular (non-installed) browser visits never trigger this pre-cache. The reader-page HTML route itself (visited pages, any visitor) is cached `NetworkFirst`, not `CacheFirst` (Trello #122, ADR 0014 Addendum 1) — see Constraints below. Trade-off: an offline *cold* load of a page URL never visited this session lacks its SSR HTML; in-app swiping to any page works offline from the JSON + fonts regardless. Marks stay **online-only** *for the shared-mushaf grant reader only* — superseded for the user's own mushaf by [ADR 0061](../adr/0061-offline-first-marks-sync.md) (see "Marks Are Local-First" in [`marks.md`](marks.md)), which makes self marks local-first and syncs them by state. When `grantId` is set the mark UI is still disabled with an inline notice when offline, rather than queuing writes. See [ADR 0014](../adr/0014-pwa-offline-architecture.md) and [ADR 0028](../adr/0028-reader-persistent-pager.md).
 
 **Amended (Addendum 2, Trello #187):** the pre-cache is no longer silent or background. It is **user-initiated on an explicit tap**, offered on three surfaces — an in-tab prompt on `appinstalled` (Chromium only; iOS fires no install event at all), a blocking full-screen gate on first standalone launch, and a permanent Settings button. Base (madani) mushaf only: **≈48 MB over the wire** (45.7 MiB WOFF2 + ~2.0 MiB gzipped JSON), **≈67 MiB stored**. Completion is a sentinel entry in the versioned cache, which also stops the 604-iteration loop re-running on every launch (Trello #129). The 200 ms inter-page throttle is removed for concurrency-6 batches, since nothing competes with a foreground download. Tajweed stays excluded (ADR 0023); a separate opt-in download is future scope.
 
@@ -43,7 +43,10 @@ Active decisions for PWA & offline — page caching, Android launch/back nav, ro
 
 **Amended (Addendum 10, Issue #440):** the launch path no longer enumerates `pages-v{N}` on the service-worker thread. Row 2's completeness probe reads sentinel + verse-pages via two `cache.match` calls (no `cache.keys()` walk); the real `countCachedPages` validation is **deferred** — scheduled with `event.waitUntil` after the shell is served, delayed a few seconds past the launch burst, once per edition per worker lifetime — and on a short count performs the same healing as `reportStatus` (delete the stale sentinel, drop the row-2 memo). `isCacheComplete`'s full walk keeps its exact semantics for `reportStatus` and `precacheAllPages`' start-of-run short-circuit. Client side, `usePwaPrecache`'s launch surfaces (`OfflineSetupGate`, `OfflineInstallPrompt`) no longer fire `REQUEST_PRECACHE_STATUS` while dismissed with nothing to render; the Settings `MushafLayoutRow`s keep always-on requests. Accepted trade-off (decision delegated 2026-08-29): after an iOS eviction, the first cold launch may still serve the instant shell, corrected seconds later in the same session by the deferred walk — vs the old design catching it on the next launch's pre-serve probe. See [ADR 0014 Addendum 9](../adr/0014-pwa-offline-architecture.md) and `docs/plans/pwa-offline-support.md` Addendum 10.
 
+**Amended (Addendum 11, Issue #601):** the first-run gate, the post-install prompt, and `OFFLINE_DOWNLOAD_MB` bind to a dedicated `PRECACHE_MUSHAF_ID` constant (`app/constants/offline.ts`), **not** `DEFAULT_MUSHAF_ID`. QCF V2 (mushaf 1) became the reader default while its font set is ~95 MB vs QCF V1's ~47 MB; forcing that onto every installed user's mandatory first-run download would blow the iOS Cache Storage headroom this whole decision is built around. `PRECACHE_MUSHAF_ID` stays `2` (QCF V1) — a new PWA user's first-run download is byte-for-byte unchanged — and reading V2 offline is an explicit opt-in from the Settings "Mushaf Layout" list (Addendum 5). The reader-HTML-miss probe's fallback edition (Addendum 9) also reads `PRECACHE_MUSHAF_ID` rather than `DEFAULT_MUSHAF_ID`. Consequence: "reader default" and "offline default" diverge — accepted, and surfaced in the gate/Settings copy. See [ADR 0066](../adr/0066-default-edition-independent-of-canonical-precache-seed.md).
+
 **Constraints:**
+- `PRECACHE_MUSHAF_ID` is independent of `DEFAULT_MUSHAF_ID` (ADR 0066) — the edition the reader opens with and the edition the consent-gated first-run download caches are separate choices. Do not collapse them, and do not point the first-run gate / post-install prompt / `OFFLINE_DOWNLOAD_MB` at `DEFAULT_MUSHAF_ID`.
 - Never satisfy one edition's instant-shell path from another edition's cached data (ADR 0033) — "any complete edition qualifies" was considered and rejected for #439. The active-edition marker must stay in its own cache: `pages-v{N}` is discarded by a deliberate `PAGES_CACHE_VERSION` bump and `reader-html-{hash}` is deleted on every deploy, and losing the marker silently reverts row 2 to default-edition-only with no error anywhere. Do not memoize the marker read — a mid-session edition switch must take effect on the next navigation. `QuranMushafProvider` renders for every visitor, so the marker is written in plain browser tabs too (per the "Serwist registers for every visitor" constraint below); that is fine and needs no consent gate, because it writes a couple of bytes and fetches nothing, and row 2 still requires a completed tap-initiated download before it changes any behavior.
 - The reader fallback shell must reach the precache via `manifestTransforms`, never via `globPublicPatterns` (globbed in the `webpack()` config phase, before Next has generated any HTML — a `public/` copy is always one build stale, and stale chunk URLs 404 after deploy) and never via `additionalPrecacheEntries` (in `@serwist/next` it *replaces* the public glob, silently dropping `launch.html`, the offline documents and the icons). Do not re-add the `install`-handler seed alongside it.
 - `isStandaloneDisplayMode()` lives in `app/utils/platform.ts` (moved from `use-pwa-precache.ts` when the app-launch-redirect and Android back-exit-guard features needed the same check — see "App Launch & Back Navigation (Android PWA)" below) and must check every `display-mode` value the manifest can produce — currently `standalone` and `fullscreen` — plus iOS's `navigator.standalone`. A manifest `display` change that isn't mirrored here silently disables the Settings row, the first-run gate, the app-launch redirect, the back-exit guard, and (Chromium in-tab prompt aside) the entire consent flow, with no error surfaced anywhere. Every consumer must import this one function — do not re-derive display-mode detection locally.
@@ -61,12 +64,41 @@ Active decisions for PWA & offline — page caching, Android launch/back nav, ro
 - Completion is recorded as a sentinel `Response` at `/__fq-precache-complete` inside `pages-v{N}`, written **only** after a fully successful run. Never write it on a partial run — a 603/604 cache cannot serve offline and must not report "Ready". The `localStorage` dismissed flag is scoped to the same cache version and set on dismissal only, never on download start (an interrupted run must be re-offered, not silently abandoned).
 - The sentinel's presence is **not** sufficient proof of a servable cache — iOS evicts entries out from under a completed run, so a `cache.keys()`-derived page count must still validate it. Since Addendum 10 (#440) that validation is split by call site: `reportStatus` and `precacheAllPages` keep the count on their critical path (they need exact numbers and must never false-complete a resumable run), while row 2's launch probe trusts sentinel + verse-pages and runs the count as a deferred verification off the critical path (once per edition per worker lifetime, healing exactly as `reportStatus` does). Do not remove the deferred walk — that reduces to a bare sentinel `match()` and makes an evicted cache report ready forever; do not put the walk back on the launch path either (the stall of #440); and do not let the two paths' healing actions drift apart (both must delete the stale sentinel and drop the row-2 memo).
 - Progress belongs on the surface that started the download. Settings shows a status row plus a Download button, and renders a progress bar **only while a download is actually in flight** — never the old ambient bar that sat there counting up on every launch regardless of whether the user had asked for anything.
-- Do not add offline write-queueing for marks without re-opening ADR 0014 — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers.
+- Do not add offline write-queueing for **grant-scoped** marks — the shared-mushaf last-author-wins model (ADR 0012) makes queued offline writes a silent data-loss risk against concurrent viewers, and ADR 0061 deliberately left that hazard in place. Self marks are local-first per ADR 0061; `grantId` is the cut-off between the two.
 - The pre-cached JSON/font cache is versioned independently of Serwist's per-deploy build-asset revisioning. Only bump the page-cache version manually when a change actually affects cached page output (content JSON shape, font logic) — bumping it on every deploy would force a full re-download of the page cache for every installed user on every deploy.
 - The pre-cache set is fully locale-independent (slim JSON + base fonts) — do not reintroduce per-locale HTML precaching; the localized app shell comes from the Serwist build manifest.
 - iOS Safari's Cache Storage quota/eviction behavior for installed web apps is stricter and less predictable than Chrome/Android; the page cache may be partially evicted there. This is an accepted platform limitation — the only mitigation is the existing "resume incomplete cache on next launch" behavior, not a guarantee of full offline coverage on iOS. (The JSON+font set is far smaller than the old full-HTML precache, easing this.)
 - The manual `pages-v{N}` version constant lives in `app/constants/offline.ts` (`PAGES_CACHE_VERSION`) — bump it there when reader markup/font logic changes. It must stay in that one module: `app/sw.ts` and `app/hooks/use-pwa-precache.ts` both import it, and the client's dismissed-flag key is derived from it, so a duplicated literal would let the cache and the flag drift onto different versions.
 - Serwist is disabled in development (`disable: process.env.NODE_ENV === "development"` in `next.config.mjs`) — `npm run dev` never registers a service worker. To test install/offline behavior, use `npm run build:local && npm start`. Use **`build:local`**, not `build`: the latter is the CI/production script and runs `prisma migrate deploy` with no env file, so it fails locally on a missing `APP_DATABASE_URL` before Next even starts. Also stop any dev server first — a dev server and a production build sharing `.next` corrupts the output, which surfaces as prerendered routes 500ing with nothing logged.
+- `disable: …development` only stops *new* registration. A service worker still registered from an earlier `build:local && start` on the same port keeps intercepting requests in the `next dev` session and serves stale cached chunks/assets — which presents as a broken or garbled reader, not a stale-process error (cost real debugging time on #601). If a `next dev` session on a port that previously ran a production build renders wrong, unregister the SW / clear site data (or use an incognito window) before suspecting the code.
+
+---
+
+## `defaultCache` Caches Every Same-Origin API GET
+
+**Status:** active
+
+**Decision (2026-09-04):** `defaultCache` (from `@serwist/next/worker`) contains a catch-all rule
+`matcher: sameOrigin && pathname.startsWith("/api/"), method: "GET"` handled by
+`NetworkFirst({ cacheName: "apis", maxEntries: 16, maxAgeSeconds: 86400, networkTimeoutSeconds: 10 })`.
+**Every same-origin API GET is therefore cached for 24 hours** unless a rule registered ahead of
+`...defaultCache` says otherwise.
+
+**Constraints:**
+- Any feature that reads its own API while offline — or on a network slower than the 10s timeout —
+  receives a stale cached `200` that is indistinguishable from a live response. For a read that only
+  *displays* data this is a staleness bug. For a **sync or reconciliation** read it is a correctness
+  bug: the client treats a day-old snapshot as server truth, and reports a successful reconciliation
+  it never performed.
+- Such endpoints need an explicit `NetworkOnly` rule in `app/sw.ts` ahead of `...defaultCache` — the
+  same-origin counterpart of ADR 0060's QDC tafsir rule (`decisions/pwa.md`, "Offline Tafsir"), which
+  covers the cross-origin case only. Failing is the safe outcome for such a read; a local store that
+  already holds last-known state loses nothing when a pull fails, and loses correctness when a pull
+  lies.
+- `maxEntries: 16` means per-resource responses (one per page, per verse, …) churn through an LRU, so
+  the symptom is intermittent rather than reproducibly wrong — budget for that when diagnosing.
+- Found while planning offline-first marks (#236): the pull for `/api/quran/pages/{id}/marks` and
+  `/api/marks` would have reconciled the local store against this cache. See #549.
 
 ---
 
@@ -93,11 +125,29 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 - `public/launch.html` must stay in the root `middleware.ts` `config.matcher` exclusion list and in `globPublicPatterns` in `next.config.mjs`. Dropping the first makes `intl-middleware` redirect it into a locale prefix and 404 it (the trap that broke the PWA icons); dropping the second un-precaches it and breaks offline cold launch.
 - The launch script must validate `lastReadPath` against `^/(ar|en)/pages/(\d{1,3})$` with the page bounded to 1–604 before navigating. It navigates to a string read from `localStorage` — an unvalidated read is an open redirect, not a cosmetic concern.
 - The launch script must keep reading the legacy numeric `lastReadPage` when `lastReadPath` is absent, resolving it to an unprefixed `/pages/{n}`. Every install predating ADR 0042 has only the numeric key, so dropping this fallback sends the whole existing user base to page 1 on the one launch the feature exists to make seamless. There is no safe deadline to remove it — a dormant install can surface at any time.
-- The launch script duplicates **two** literals that cannot be imported into a pre-React file: the `display-mode` list from `app/utils/platform.ts` and the `1367px` breakpoint from `DESKTOP_UP_QUERY` (`app/hooks/use-is-desktop-up.ts`). Changing either at its source means editing `public/launch.html` too.
+- The launch script duplicates **two** literals that cannot be imported into a pre-React file: the `display-mode` list from `app/utils/platform.ts` and the `1367px` breakpoint from `DESKTOP_UP_QUERY` (`app/hooks/use-is-desktop-up.ts`). Changing either at its source means editing `public/launch.html` AND the cover reveal script in `app/components/reader/ReaderPage.tsx` (ADR 0065) too — both are pre-React files with the same limitation.
 - The manifest's `launch_handler.client_mode` must stay `"focus-existing"`. `"navigate-existing"` focuses the running app **and** navigates it to the launch URL, which drags a user sitting on Settings or Marks back into the reader on every icon tap.
 - The manifest's `id` must stay `"/"` and must never be derived from `start_url` again. With no `id`, app identity comes from `start_url`, so changing that field orphans every existing install and duplicates the icon on reinstall.
 - `lastReadPath` and `lastReadPage` must keep being written together from `LastReadPageContext.setLastReadPage`. Two write sites would let the launch script and `ContinueReadingLink` disagree about where the user left off.
 - `ReaderPager`'s offline fallback self-correction must stay an isomorphic **layout** effect (the `useIsomorphicLayoutEffect` pattern in `app/hooks/use-is-desktop-up.ts`, which exists to suppress React's server-side `useLayoutEffect` warning). Reverting it to `useEffect` reintroduces the page-1 flash ADR 0014 Addendum 3 had accepted.
+
+**Amended (ADR 0065, #586):** reader documents paint a splash-continuity cover
+as part of first paint on standalone mobile/tablet and lift it when the visible
+pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
+
+**Constraints:**
+- The cover is static SSR markup (identical bytes for every user — no per-user
+  content, no dynamic rendering) revealed pre-paint only on
+  standalone-mobile/tablet by a parse-time inline script; browser tabs and
+  desktop never reveal it.
+- Removal keys on the *active* edition's readiness (query data +
+  `pageFontsReady` for the visible ids) and composes with the `fq-pending-jump`
+  trio — never replaces any leg of it, never reads readiness from another
+  edition's cache.
+- Bounded reveal always: a mount-side safety timer lifts the cover even if
+  readiness never signals. A plain `aria-hidden` `<div>` at `z-40` — never a
+  focus-trapping dialog, never above the Radix ceiling, never a download
+  trigger.
 
 **Overlay close-on-back-gesture (2026-08-15, [ADR 0055](../adr/0055-overlay-close-on-back-gesture.md)):** on mobile/tablet installed PWA (Android **and** iOS, not desktop — `useIsStandaloneMobileOrTablet()`, no `isAndroid()` gate), every modal overlay (`MarkModal`, `SettingsSidebar`, the surah `Sidebar`, `NavOverflowMenu`, `RecitationSettingsSheet`) closes on the first back-gesture instead of letting it navigate the underlying page. All five use one shared hook, `useCloseOnBackGesture(open, onClose)` (`app/hooks/use-close-on-back-gesture.ts`), which pushes a fresh, uniquely-id'd guard history entry on open and closes the overlay on the next real back press. A shared module-level flag (`app/utils/overlay-back-guard.ts`) marks whether an overlay guard is currently armed; `AndroidBackExitGuard`'s `popstate` handler checks it first and defers entirely when set, relying on mount order (the reader's exit-guard always mounts before a user can open anything on top of it) rather than event-timing tricks. At most one overlay is ever open at a time — every one of the five is a modal Radix `Dialog`/`Sheet` that blocks interaction with whatever is behind it, so no stack is needed, just the one flag. `useIsStandaloneMobileOrTablet()` (`app/hooks/use-is-standalone-mobile-or-tablet.ts`) factors out the `!isDesktopUp && isStandaloneDisplayMode()` half shared with `AndroidBackExitGuard`'s own gate.
 
@@ -154,3 +204,33 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 - Deleting an edition drops every `/__fq-tafsir/{editionId}/` entry, then the registry entry (registry last, mirroring `use-recitation-download`). No cross-edition or cross-feature reference-counting — nothing is shared.
 - `per_page=300` is a fixed upper bound (> 286, the largest surah) so every `by_chapter` call returns a single page. Concurrency 4 with a 3-attempt per-chapter retry (400 ms / 1.5 s backoff) — QDC is a rate-limiting third-party API, not same-origin static assets, so `PRECACHE_CONCURRENCY` (6) does not apply.
 - No Next.js proxy routes for QDC tafsir endpoints (carried over from the Tafsir provider decision in [`tafsir.md`](tafsir.md)).
+
+---
+
+## Offline App-Shell Pages (`/marks`, `/search`)
+
+**Status:** active
+
+**Decision (2026-09-07, #591):** The self `/marks` and `/search` pages are offline-capable documents. Their four shells (`/{ar,en}/marks`, `/{ar,en}/search`) ride the build-time precache manifest via the same `manifestTransforms` entry as the reader shells (same revision, same atomic install), and a navigate-only runtime rule ahead of `...defaultCache` serves `matchPrecache(url.pathname)` so query-bearing navigations (`/search?q=…`) resolve to the same shell bytes. `/marks` renders statically (no server session; the live session is client-seeded — online loads hold the skeleton until it resolves, offline the sticky owner stamp decides immediately). The self links hard-navigate when tapped offline; online taps and grant links keep soft nav. See [ADR 0014 Addendum 10](../adr/0014-pwa-offline-architecture.md).
+
+**Constraints:**
+- A precached document MUST be user-agnostic static HTML — per-request HTML in the install precache is a cross-user session leak on shared browsers, not a staleness quirk. New shells must prove static-ness; dynamic routes (the grant reader) are permanently excluded from this mechanism.
+- The precache manifest is the single source of truth for these shells: no second versioned cache, no populate-on-miss, no manual version string.
+- The matcher stays exact (`/^\/(ar|en)\/(marks|search)$/`) with the `navigate`-mode guard — it must never meet `/api/*` (the marks `NetworkOnly` rule owns those), grant paths, or RSC flight data.
+- A `matchPrecache` miss falls through to the network; only `setCatchHandler` decides the terminal document. All other non-reader routes keep terminal-doc behavior unchanged.
+
+---
+
+## Mobile App Packaging (Capacitor Hosted Shell)
+
+**Status:** active
+
+**Decision (2026-09-16, #644):** Phone + tablet apps (iOS + Android) ship as a minimal-binary Capacitor **HTTPS-hosted hybrid shell** around the existing Next.js app — never a local static export, never `capacitor://`. First launch requires connectivity, then offers the base mushaf edition download or continue-online (same consent model as the bulk precache gate). A later native track must not be blocked by this work. See [ADR 0072](../adr/0072-mobile-app-capacitor-hosted-shell.md).
+
+**Constraints:**
+- Never attempt a full-app static export (26 API route handlers plus cookie-session NextAuth cannot export — no true Server Actions exist) or service workers on `capacitor://` (broken on iOS WebKit) — both are permanent rejections, not fallbacks.
+- Never run Google OAuth inside the WebView (Google rejects embedded user agents) and never rely on Web Push for native notifications (excluded from WKWebView) — use a system-browser session + bootstrap and native APNs/FCM tokens instead.
+- iOS Tajweed is a physical-device screenshot-parity gate (ship vs omit-on-iOS in v1); no CSS fallback preserves the mushaf.
+- Never promise "offline from first launch" for the native shell; never bake the ~263 MiB font/Quran asset set into the binary.
+- Shell detection is a Phase 0 prerequisite: `isStandaloneDisplayMode()` is false inside a Capacitor WebView, so every PWA-gated surface (first-run gate, precache, recitation/tafsir downloads, back guards, guest marking) needs an `isNativePlatform()` branch before any POC — without it the whole downloader/offline UI renders `null` in the shell.
+- Backend additions for native (token/session bootstrap, Sign in with Apple + account linking, `DeviceToken` store) must keep the `jsonResponse()` envelope and the two-DB no-cross-FK invariant unchanged.

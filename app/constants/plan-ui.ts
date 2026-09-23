@@ -11,6 +11,7 @@ import {
   Headphones,
   RotateCcw,
   RefreshCw,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import type { PlanActivity } from "@/app/constants/plans";
@@ -21,35 +22,59 @@ export const PLAN_TEMPLATE_UI: Record<
 > = {
   "daily-wird": {
     labelKey: "plans.templates.dailyWird.label",
-    defaultLabel: "Daily Wird",
+    defaultLabel: "Daily Wird — Reading",
     descriptionKey: "plans.templates.dailyWird.description",
     defaultDescription: "Read N pages a day, cycling the whole mushaf.",
     icon: BookOpen,
   },
   "listening-wird": {
     labelKey: "plans.templates.listeningWird.label",
-    defaultLabel: "Listening Wird",
+    defaultLabel: "Daily Wird — Listening",
     descriptionKey: "plans.templates.listeningWird.description",
     defaultDescription: "Listen to N pages a day, cycling the whole mushaf.",
     icon: Headphones,
   },
+  "memorizing-wird": {
+    labelKey: "plans.templates.memorizingWird.label",
+    defaultLabel: "Daily Wird — Memorization",
+    descriptionKey: "plans.templates.memorizingWird.description",
+    defaultDescription: "Memorize N pages a day, cycling the whole mushaf.",
+    icon: Brain,
+  },
+  "reviewing-wird": {
+    labelKey: "plans.templates.reviewingWird.label",
+    defaultLabel: "Daily Wird — Review",
+    descriptionKey: "plans.templates.reviewingWird.description",
+    defaultDescription: "Review N pages a day, cycling the whole mushaf.",
+    icon: RotateCcw,
+  },
   husun: {
     labelKey: "plans.templates.husun.label",
-    defaultLabel: "الحصون الخمسة",
+    defaultLabel: "Al-Husun Al-Khamsa",
     descriptionKey: "plans.templates.husun.description",
     defaultDescription: "A structured 5-track memorization program.",
     icon: Castle,
+  },
+  custom: {
+    labelKey: "plans.templates.custom.label",
+    defaultLabel: "Custom wird",
+    descriptionKey: "plans.templates.custom.description",
+    defaultDescription: "A personalized goal with custom range and cadence.",
+    icon: Sparkles,
   },
 };
 
 export const PLAN_TRACK_UI: Record<string, { labelKey: string; defaultLabel: string; icon: LucideIcon }> = {
   reading: { labelKey: "plans.tracks.reading", defaultLabel: "Reading", icon: BookOpen },
   listening: { labelKey: "plans.tracks.listening", defaultLabel: "Listening", icon: Headphones },
+  memorizing: { labelKey: "plans.tracks.memorizing", defaultLabel: "Memorizing", icon: Brain },
+  reviewing: { labelKey: "plans.tracks.reviewing", defaultLabel: "Reviewing", icon: RotateCcw },
   tilawa: { labelKey: "plans.tracks.tilawa", defaultLabel: "القراءة المستمرة", icon: BookOpen },
   hifz: { labelKey: "plans.tracks.hifz", defaultLabel: "الحفظ الجديد", icon: Brain },
   tahdeer: { labelKey: "plans.tracks.tahdeer", defaultLabel: "التحضير", icon: Headphones },
   qareeb: { labelKey: "plans.tracks.qareeb", defaultLabel: "مراجعة القريب", icon: RotateCcw },
   baeed: { labelKey: "plans.tracks.baeed", defaultLabel: "مراجعة البعيد", icon: RefreshCw },
+  custom: { labelKey: "plans.templates.custom.label", defaultLabel: "Custom wird", icon: Sparkles },
 };
 
 export const PLAN_ACTIVITY_UI: Record<PlanActivity, { labelKey: string; defaultLabel: string }> = {

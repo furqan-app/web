@@ -1,3 +1,4 @@
+import { ReturnToReadingLink } from "@components/nav/ReturnToReadingLink";
 import useTranslations from "./hooks/use-translations";
 
 /**
@@ -51,6 +52,11 @@ export default function Custom404() {
         >
           {t("mushaf.navLink", "Shared mushaf")}
         </a>
+        {/* Recovery back to the last-read page. The label resolves server-side
+            (no intl provider this far outside the locale tree); the href
+            resolves client-side from lastReadPath, falling back to page 1.
+            Plain <a> like its siblings — see the file header. */}
+        <ReturnToReadingLink label={t("notFound.returnToReading", "Return to Reading")} />
       </div>
     </div>
   );

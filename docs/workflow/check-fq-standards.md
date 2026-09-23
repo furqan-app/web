@@ -13,7 +13,13 @@ This is not a replacement for `docs/architecture/decisions/*.md` or the standard
 
 ## Post-check (after implementing, before reporting done)
 
-1. `git diff` against the base branch for everything changed.
+1. Get the diff. **Default to the uncommitted working tree** (`git diff` + `git diff --cached` +
+   untracked), not `main...HEAD`. `ship-task.md` owns the only sanctioned `git commit`, so every
+   pre-ship caller — `/start-fq-task`, and the orchestrator re-verifying a delegated diff
+   ([`orchestrate.md`](orchestrate.md)) — runs on a branch with no commits, where a base-branch
+   diff is empty and this gate silently reports clean. Fall back to the base-branch diff only
+   when the working tree is clean and the branch already carries commits. (Same rule, and the
+   same bug, as `/review-fq-work` in #564 — see `docs/workflow/INDEX.md`.)
 2. For every changed file, re-grep the `decisions/*.md` file(s) for its domain the same way as the pre-check — catches anything the plan didn't originally anticipate touching.
 3. Walk "Regression Classes" below against the diff — each item is a concrete thing that must still hold.
 4. Walk "General Engineering Bar" below against the diff.
@@ -23,6 +29,21 @@ This is not a replacement for `docs/architecture/decisions/*.md` or the standard
 ## Regression Classes
 
 A static, highest-risk-first list (last reconciled against the decisions 2026-08-13; split into `decisions/*.md` 2026-09-02). It is **not exhaustive** — the live grep in the pre/post-check steps above is the actual source of truth; this list exists so common regressions get caught even on a skim. Bracket tags name the source section (findable in its `decisions/*.md` file) and ADR.
+
+### Reachability (new code must be called)
+- **Every new module in the diff has at least one non-test importer.** A module only `*.test.ts`
+  imports is dead code that ships green: unit tests pass, lint passes, type-check passes, and the
+  failure is invisible from inside the module. `#546`/`#547` both merged to `main` this way and the
+  whole offline-marks feature was inert until `#560` wired it up — grep the diff's new files for
+  importers before reporting done.
+- **Behaviour the plan promises is traceable to a real call site.** A module-scope listener,
+  singleton or lifecycle trigger does nothing until something imports the module; a `subscribe()`
+  that attaches event listeners on its first listener does nothing until something subscribes. If the
+  plan says "on launch" or "when the session becomes authenticated", name the mounted component that
+  makes that happen. `#547`'s plan listed both triggers and its Files to Change named no component to
+  host either.
+- **A plan whose Files to Change are all new files is the warning sign.** Working code almost always
+  edits something that already exists. If nothing existing changed, ask what is supposed to call this.
 
 ### Swipe / reader flicker
 - Never mutate the text/content of a live `<style>` element carrying `@font-face` rules (rewrite or `appendChild`). Add fonts only as new immutable units — a registry `FontFace`, or a new keyed `<style>`. [Font System, ADR 0029]
@@ -61,7 +82,7 @@ A static, highest-risk-first list (last reconciled against the decisions 2026-08
 ### PWA / offline
 - The bulk 604-page pre-cache is explicit-tap-only on every surface — never silent or auto-started.
 - `globPublicPatterns` in `next.config.mjs` stays pinned to the app shell, never `["**/*"]`.
-- Reader HTML is `NetworkFirst`; only page fonts/JSON are `CacheFirst`.
+- Reader HTML is `CacheFirst` under a per-deploy auto-versioned cache name with a `navigate`-mode matcher guard — never a static or manually-bumped name, never without the guard, and never reverted to `NetworkFirst` (ADR 0014 Addenda 4–6); only page fonts/JSON are plain long-lived `CacheFirst`.
 - Page fonts are never pre-cached for a regular (non-installed) browser tab.
 
 ### Theming
@@ -71,6 +92,7 @@ A static, highest-risk-first list (last reconciled against the decisions 2026-08
 
 ### API / auth / i18n
 - API routes return `jsonResponse()`, never a raw `NextResponse.json()`.
+- Route files (`route.ts`) export only route handlers and route config — never shared constants or helpers (Next.js rejects non-route exports at build time, and neither `tsc` nor `lint` catches it; put shared values in `app/constants/`).
 - Read the authenticated user via `extractUser(request)` in API routes, never `getServerSession` there (layouts/pages are the documented exception).
 - `dir="auto"` is reserved for genuine free-text user content (notes, comments) — UI chrome and Quran text keep their locale-locked or Quran-locked `dir`.
 

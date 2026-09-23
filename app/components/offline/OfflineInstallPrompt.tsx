@@ -4,7 +4,7 @@ import useTranslations from "@hooks/use-translations";
 import { useAppInstalled } from "@hooks/use-app-installed";
 import { usePwaPrecache } from "@hooks/use-pwa-precache";
 import { OfflineDownloadPanel } from "@components/offline/OfflineDownloadPanel";
-import { DEFAULT_MUSHAF_ID } from "@utils/mushaf-editions";
+import { PRECACHE_MUSHAF_ID } from "@constants/offline";
 
 /**
  * In-tab offer to download the Quran immediately after install, so the transfer
@@ -22,7 +22,7 @@ import { DEFAULT_MUSHAF_ID } from "@utils/mushaf-editions";
  * dismissible card at `z-50` (the app's Radix ceiling; a higher value floated it
  * above an open Settings sheet). Anchored clear of the two other fixed
  * bottom-corner elements: `RecitationPlayerBar` (full-width, ~76px tall) and
- * `PlansWidget` (`bottom-20 end-4`), hence bottom-24 on the start side.
+ * the ephemeral, page-gated `PlansWidget` (`bottom-24 end-4`), hence bottom-24 on the start side.
  */
 export const OfflineInstallPrompt = () => {
   const t = useTranslations();
@@ -40,7 +40,7 @@ export const OfflineInstallPrompt = () => {
     // Renders nothing while dismissed, yet mounts app-wide on every launch —
     // deferring keeps a long-ago-finished user's cold launch from waking the
     // worker for status nobody displays (ADR 0014 Addendum 9, #440).
-  } = usePwaPrecache(DEFAULT_MUSHAF_ID, { deferStatusWhileDismissed: true });
+  } = usePwaPrecache(PRECACHE_MUSHAF_ID, { deferStatusWhileDismissed: true });
 
   // The installed app has the gate; this surface is for the browser tab only.
   if (isStandalone) return null;

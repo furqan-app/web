@@ -4,21 +4,27 @@ import { extractUser } from "@/app/api/request";
 import { appPrisma } from "@/app/utils/db";
 import {
   PLAN_DATE_RE,
+  getEnrollmentTemplate,
   getPlanTemplate,
-  independentTrackUnit,
+  resolveTrackUnit,
+  type CustomWirdDefinition,
   type UserPlanParams,
   type UserPlanStatus,
 } from "@/app/constants/plans";
 import { resolvePlanParams } from "@/app/lib/plans/validate-params";
+import { resolveCustomPlanEnrollment } from "@/app/lib/plans/validate-custom-definition";
 import { getPageJuzNumber } from "@/app/lib/plans/resolve-units";
 import { pageOfVerse } from "@/app/lib/plans/verse-index";
 
 export type UserPlanListItem = {
   id: number;
+  name?: string | null;
   template_key: string;
+  definition?: CustomWirdDefinition | null;
   params: UserPlanParams;
   start_date: string;
   status: UserPlanStatus;
+  has_progress: boolean;
   /**
    * Derived-on-read juz numbers for params.targetStart/targetEnd, for
    * prefilling the params-edit UI — juz is never stored (D3), only computed
@@ -32,16 +38,24 @@ const toDateString = (d: Date) => d.toISOString().slice(0, 10);
 
 const serializePlan = (plan: {
   id: number;
+  name?: string | null;
   template_key: string;
+  definition?: unknown;
   params: unknown;
   start_date: Date;
   status: string;
+  _count?: {
+    progress?: number;
+  };
 }): UserPlanListItem => ({
   id: plan.id,
+  name: plan.name ?? null,
   template_key: plan.template_key,
+  definition: (plan.definition as CustomWirdDefinition | null) ?? null,
   params: (plan.params ?? {}) as UserPlanParams,
   start_date: toDateString(plan.start_date),
   status: plan.status as UserPlanStatus,
+  has_progress: (plan._count?.progress ?? 0) > 0,
 });
 
 const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> => {
@@ -51,11 +65,12 @@ const withTargetJuz = async (item: UserPlanListItem): Promise<UserPlanListItem> 
   // they belong to is verse-unit (ADR 0038, per-track) — convert to the page
   // they fall on before the page-based juz lookup, same as resolvePlanParams
   // does in reverse at enroll/edit time.
-  const template = getPlanTemplate(item.template_key);
+  const template = getEnrollmentTemplate(item);
   const cursorAdvanceTrackKey = template?.tracks.find((t) => t.rule.kind === "cursor_advance")?.key;
   const isVerseUnit =
+    template !== null &&
     cursorAdvanceTrackKey !== undefined &&
-    independentTrackUnit(item.params, cursorAdvanceTrackKey) === "verse";
+    resolveTrackUnit(template, item.params, cursorAdvanceTrackKey) === "verse";
   const startPage = isVerseUnit ? pageOfVerse(targetStart) : targetStart;
   const endPage = isVerseUnit ? pageOfVerse(targetEnd) : targetEnd;
   const [juzStart, juzEnd] = await Promise.all([
@@ -73,6 +88,7 @@ export async function GET(request: NextRequest) {
 
   const plans = await appPrisma.userPlan.findMany({
     where: { user_id: user.id },
+    include: { _count: { select: { progress: true } } },
     orderBy: { created_at: "desc" },
   });
 
@@ -91,6 +107,24 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   if (!body?.template_key) {
     return jsonResponse({ code: 422, message: "Missing template_key" });
+  }
+
+  if (body.template_key === "custom") {
+    const resolved = await resolveCustomPlanEnrollment(body);
+    if ("error" in resolved) {
+      return jsonResponse({ code: 422, message: resolved.error });
+    }
+    const plan = await appPrisma.userPlan.create({
+      data: {
+        user_id: user.id,
+        name: resolved.name,
+        template_key: "custom",
+        definition: resolved.definition as object,
+        params: resolved.params as object,
+        start_date: new Date(`${resolved.startDate}T00:00:00Z`),
+      },
+    });
+    return jsonResponse({ data: serializePlan(plan) });
   }
 
   const template = getPlanTemplate(body.template_key);
