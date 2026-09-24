@@ -7,6 +7,7 @@ import {
   decideRecitationFollow,
   decideSkipVerse,
   decideSkipWord,
+  getNextPlaybackSpeed,
 } from "@/app/utils/recitation";
 
 // Attach/detach follow decision (ADR 0050 / recitation-playback.md Addendum 13).
@@ -453,5 +454,24 @@ describe("decideSkipWord", () => {
     });
   });
 });
+
+describe("getNextPlaybackSpeed", () => {
+  it("cycles through presets in order and wraps back to min after max", () => {
+    expect(getNextPlaybackSpeed(0.5)).toBe(0.75);
+    expect(getNextPlaybackSpeed(0.75)).toBe(1);
+    expect(getNextPlaybackSpeed(1)).toBe(1.25);
+    expect(getNextPlaybackSpeed(1.25)).toBe(1.5);
+    expect(getNextPlaybackSpeed(1.5)).toBe(1.75);
+    expect(getNextPlaybackSpeed(1.75)).toBe(2);
+    expect(getNextPlaybackSpeed(2)).toBe(0.5);
+  });
+
+  it("resets to 1 when current speed is not a standard preset", () => {
+    expect(getNextPlaybackSpeed(0.9)).toBe(1);
+    expect(getNextPlaybackSpeed(1.15)).toBe(1);
+    expect(getNextPlaybackSpeed(3)).toBe(1);
+  });
+});
+
 
 
