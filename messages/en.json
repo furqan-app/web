@@ -575,6 +575,7 @@
     "repeatEachAyah": "Repeat each ayah",
     "repeatRange": "Repeat whole range",
     "playbackSpeed": "Playback speed",
+    "playbackSpeedWithVal": "Playback speed: {speed}",
     "pauseBetweenRepeats": "Pause between repeats",
     "listen": "Listen",
     "pause": "Pause",
