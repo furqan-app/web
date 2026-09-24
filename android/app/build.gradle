@@ -9,8 +9,11 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Monotonic without hand-edits: the release workflow passes its run
         // number (Play requires strictly-increasing versionCodes per upload).
-        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
-        versionName System.getenv("ANDROID_VERSION_NAME") ?: "1.0"
+        // Assigned via = so Groovy binds the whole Elvis expression (a bare
+        // `versionCode (...)` call would apply .toInteger() to the setter's
+        // null return instead).
+        versionCode = (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
+        versionName = System.getenv("ANDROID_VERSION_NAME") ?: "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
