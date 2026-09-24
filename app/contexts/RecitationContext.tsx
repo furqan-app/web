@@ -24,7 +24,13 @@ import { fetchVersePages } from "@/app/hooks/use-verse-pages";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { SurahResult } from "@/app/types";
 import {
+  canSkipToNext,
+  canSkipToNextWord,
+  canSkipToPrevious,
+  canSkipToPreviousWord,
   decideChapterEnd,
+  decideSkipVerse,
+  decideSkipWord,
   findActiveVerseTiming,
   findActiveWordLocation,
   parseChapterIdFromVerseKey,
@@ -172,6 +178,14 @@ type RecitationContextType = {
   play: (startVerseKey: string, overrides?: PlaybackOverride, effectiveSettings?: RecitationSettings) => Promise<boolean>;
   togglePlayPause: () => void;
   stop: () => void;
+  skipToNextVerse: () => Promise<void>;
+  skipToPreviousVerse: () => Promise<void>;
+  canSkipNext: boolean;
+  canSkipPrevious: boolean;
+  skipToNextWord: () => Promise<void>;
+  skipToPreviousWord: () => Promise<void>;
+  canSkipNextWord: boolean;
+  canSkipPreviousWord: boolean;
   // Repeat-cycle button (#391): zeroes the per-ayah repeat counter so the
   // in-flight pass counts as repetition 1 of a fresh cycle. No seek — the
   // audio keeps playing where it is. No-op when idle.
@@ -552,7 +566,12 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   // audio element is gone or seekVerseKey isn't actually in the fetched
   // chapter (a stale/incorrect stop target).
   const loadChapter = useCallback(
-    async (reciterId: number, chapterId: number, seekVerseKey?: string): Promise<boolean> => {
+    async (
+      reciterId: number,
+      chapterId: number,
+      seekVerseKey?: string | "last" | "first-word" | "last-word",
+      autoPlay: boolean = true,
+    ): Promise<boolean> => {
       const audio = audioRef.current;
       if (!audio) return false;
 
@@ -560,11 +579,47 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         fetchChapterAudio(reciterId, chapterId),
         getVersePages(),
       ]);
-      const targetVerseKey = seekVerseKey ?? chapterAudio.verseTimings[0]?.verseKey ?? null;
-      const targetTiming = targetVerseKey
-        ? chapterAudio.verseTimings.find((vt) => vt.verseKey === targetVerseKey)
-        : undefined;
-      if (seekVerseKey && !targetTiming) return false;
+
+      let targetVerseKey: string | null = null;
+      let targetTimestampMs = 0;
+      let targetWordLocation: string | null = null;
+
+      if (seekVerseKey === "last" || seekVerseKey === "last-word") {
+        const lastTiming =
+          chapterAudio.verseTimings[chapterAudio.verseTimings.length - 1];
+        targetVerseKey = lastTiming?.verseKey ?? null;
+        if (seekVerseKey === "last-word" && lastTiming && lastTiming.segments.length > 0) {
+          const lastSeg = lastTiming.segments[lastTiming.segments.length - 1];
+          targetTimestampMs = lastSeg[1];
+          targetWordLocation = `${lastTiming.verseKey}:${lastSeg[0]}`;
+        } else {
+          targetTimestampMs = lastTiming?.timestampFrom ?? 0;
+          if (lastTiming && lastTiming.segments.length > 0) {
+            targetWordLocation = `${lastTiming.verseKey}:${lastTiming.segments[0][0]}`;
+          }
+        }
+      } else if (seekVerseKey === "first-word") {
+        const firstTiming = chapterAudio.verseTimings[0];
+        targetVerseKey = firstTiming?.verseKey ?? null;
+        if (firstTiming && firstTiming.segments.length > 0) {
+          const firstSeg = firstTiming.segments[0];
+          targetTimestampMs = firstSeg[1];
+          targetWordLocation = `${firstTiming.verseKey}:${firstSeg[0]}`;
+        } else {
+          targetTimestampMs = firstTiming?.timestampFrom ?? 0;
+        }
+      } else {
+        targetVerseKey = seekVerseKey ?? chapterAudio.verseTimings[0]?.verseKey ?? null;
+        const targetTiming = targetVerseKey
+          ? chapterAudio.verseTimings.find((vt) => vt.verseKey === targetVerseKey)
+          : undefined;
+        targetTimestampMs = targetTiming?.timestampFrom ?? 0;
+        if (targetTiming && targetTiming.segments.length > 0) {
+          targetWordLocation = `${targetTiming.verseKey}:${targetTiming.segments[0][0]}`;
+        }
+      }
+
+      if (seekVerseKey && !targetVerseKey) return false;
 
       verseTimingsRef.current = chapterAudio.verseTimings;
       versePagesRef.current = versePages;
@@ -576,11 +631,17 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       audio.src = chapterAudio.audioUrl;
       audio.playbackRate = settings.playbackSpeed;
-      audio.currentTime = (targetTiming?.timestampFrom ?? 0) / 1000;
-      await audio.play();
+      audio.currentTime = targetTimestampMs / 1000;
+      if (targetWordLocation) {
+        applyWordHighlight(targetWordLocation);
+      }
+      if (autoPlay) {
+        await audio.play();
+        setStatus("playing");
+      }
       return true;
     },
-    [settings.playbackSpeed, getVersePages, updateRecitedPage],
+    [settings.playbackSpeed, getVersePages, updateRecitedPage, applyWordHighlight],
   );
 
   // Loads chapterId + 1's audio and keeps playing from its start — the
@@ -731,6 +792,253 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       }
     },
     [status, settings, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
+  );
+
+  const skipToNextVerse = useCallback(async () => {
+    if (status === "idle" || !currentVerseKeyRef.current) return;
+    const currentKey = currentVerseKeyRef.current;
+    const currentChapterId = currentChapterIdRef.current ?? parseChapterIdFromVerseKey(currentKey);
+
+    const decision = decideSkipVerse(
+      "next",
+      currentKey,
+      verseTimingsRef.current,
+      currentChapterId,
+      stopVerseKeyRef.current,
+      stopChapterIdRef.current,
+    );
+
+    if (decision.action === "none") return;
+
+    clearHighlight();
+    if (pendingSeekTimeoutRef.current) {
+      clearTimeout(pendingSeekTimeoutRef.current);
+      pendingSeekTimeoutRef.current = null;
+    }
+
+    if (decision.action === "seek-timing") {
+      perAyahRepeatsDoneRef.current = 0;
+      currentVerseKeyRef.current = decision.targetVerseKey;
+      setCurrentVerseKey(decision.targetVerseKey);
+      updateRecitedPage(decision.targetVerseKey);
+
+      const targetTiming = verseTimingsRef.current.find(
+        (vt) => vt.verseKey === decision.targetVerseKey,
+      );
+      if (targetTiming && targetTiming.segments.length > 0) {
+        applyWordHighlight(`${targetTiming.verseKey}:${targetTiming.segments[0][0]}`);
+      }
+
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = decision.timestampFrom / 1000;
+        if (status === "playing") {
+          await audio.play();
+        }
+      }
+      return;
+    }
+
+    if (decision.action === "load-chapter") {
+      const reciterId = settings.reciterId ?? reciters[0]?.id;
+      if (!reciterId) return;
+      try {
+        const ok = await loadChapter(reciterId, decision.chapterId, undefined, status === "playing");
+        if (!ok) stop();
+      } catch {
+        stop();
+      }
+    }
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, clearHighlight, applyWordHighlight]);
+
+  const skipToPreviousVerse = useCallback(async () => {
+    if (status === "idle" || !currentVerseKeyRef.current) return;
+    const currentKey = currentVerseKeyRef.current;
+    const currentChapterId = currentChapterIdRef.current ?? parseChapterIdFromVerseKey(currentKey);
+
+    const decision = decideSkipVerse(
+      "prev",
+      currentKey,
+      verseTimingsRef.current,
+      currentChapterId,
+      stopVerseKeyRef.current,
+      stopChapterIdRef.current,
+    );
+
+    if (decision.action === "none") return;
+
+    clearHighlight();
+    if (pendingSeekTimeoutRef.current) {
+      clearTimeout(pendingSeekTimeoutRef.current);
+      pendingSeekTimeoutRef.current = null;
+    }
+
+    if (decision.action === "seek-timing") {
+      perAyahRepeatsDoneRef.current = 0;
+      currentVerseKeyRef.current = decision.targetVerseKey;
+      setCurrentVerseKey(decision.targetVerseKey);
+      updateRecitedPage(decision.targetVerseKey);
+
+      const targetTiming = verseTimingsRef.current.find(
+        (vt) => vt.verseKey === decision.targetVerseKey,
+      );
+      if (targetTiming && targetTiming.segments.length > 0) {
+        applyWordHighlight(`${targetTiming.verseKey}:${targetTiming.segments[0][0]}`);
+      }
+
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = decision.timestampFrom / 1000;
+        if (status === "playing") {
+          await audio.play();
+        }
+      }
+      return;
+    }
+
+    if (decision.action === "load-chapter") {
+      const reciterId = settings.reciterId ?? reciters[0]?.id;
+      if (!reciterId) return;
+      try {
+        const ok = await loadChapter(reciterId, decision.chapterId, "last", status === "playing");
+        if (!ok) stop();
+      } catch {
+        stop();
+      }
+    }
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, clearHighlight, applyWordHighlight]);
+
+  const skipToNextWord = useCallback(async () => {
+    if (status === "idle" || !currentVerseKeyRef.current) return;
+    const currentKey = currentVerseKeyRef.current;
+    const currentChapterId = currentChapterIdRef.current ?? parseChapterIdFromVerseKey(currentKey);
+    const audio = audioRef.current;
+    const currentTimeMs = Math.round((audio?.currentTime ?? 0) * 1000);
+
+    const decision = decideSkipWord(
+      "next",
+      currentTimeMs,
+      currentKey,
+      verseTimingsRef.current,
+      currentChapterId,
+      stopVerseKeyRef.current,
+      stopChapterIdRef.current,
+    );
+
+    if (decision.action === "none") return;
+
+    if (pendingSeekTimeoutRef.current) {
+      clearTimeout(pendingSeekTimeoutRef.current);
+      pendingSeekTimeoutRef.current = null;
+    }
+
+    if (decision.action === "seek") {
+      if (decision.targetVerseKey !== currentVerseKeyRef.current) {
+        perAyahRepeatsDoneRef.current = 0;
+        currentVerseKeyRef.current = decision.targetVerseKey;
+        setCurrentVerseKey(decision.targetVerseKey);
+        updateRecitedPage(decision.targetVerseKey);
+      }
+      applyWordHighlight(`${decision.targetVerseKey}:${decision.wordIndex}`);
+      if (audio) {
+        audio.currentTime = decision.timestampMs / 1000;
+        if (status === "playing") {
+          await audio.play();
+        }
+      }
+      return;
+    }
+
+    if (decision.action === "load-chapter") {
+      const reciterId = settings.reciterId ?? reciters[0]?.id;
+      if (!reciterId) return;
+      try {
+        const ok = await loadChapter(
+          reciterId,
+          decision.chapterId,
+          decision.target,
+          status === "playing",
+        );
+        if (!ok) stop();
+      } catch {
+        stop();
+      }
+    }
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, applyWordHighlight]);
+
+  const skipToPreviousWord = useCallback(async () => {
+    if (status === "idle" || !currentVerseKeyRef.current) return;
+    const currentKey = currentVerseKeyRef.current;
+    const currentChapterId = currentChapterIdRef.current ?? parseChapterIdFromVerseKey(currentKey);
+    const audio = audioRef.current;
+    const currentTimeMs = Math.round((audio?.currentTime ?? 0) * 1000);
+
+    const decision = decideSkipWord(
+      "prev",
+      currentTimeMs,
+      currentKey,
+      verseTimingsRef.current,
+      currentChapterId,
+      stopVerseKeyRef.current,
+      stopChapterIdRef.current,
+    );
+
+    if (decision.action === "none") return;
+
+    if (pendingSeekTimeoutRef.current) {
+      clearTimeout(pendingSeekTimeoutRef.current);
+      pendingSeekTimeoutRef.current = null;
+    }
+
+    if (decision.action === "seek") {
+      if (decision.targetVerseKey !== currentVerseKeyRef.current) {
+        perAyahRepeatsDoneRef.current = 0;
+        currentVerseKeyRef.current = decision.targetVerseKey;
+        setCurrentVerseKey(decision.targetVerseKey);
+        updateRecitedPage(decision.targetVerseKey);
+      }
+      applyWordHighlight(`${decision.targetVerseKey}:${decision.wordIndex}`);
+      if (audio) {
+        audio.currentTime = decision.timestampMs / 1000;
+        if (status === "playing") {
+          await audio.play();
+        }
+      }
+      return;
+    }
+
+    if (decision.action === "load-chapter") {
+      const reciterId = settings.reciterId ?? reciters[0]?.id;
+      if (!reciterId) return;
+      try {
+        const ok = await loadChapter(
+          reciterId,
+          decision.chapterId,
+          decision.target,
+          status === "playing",
+        );
+        if (!ok) stop();
+      } catch {
+        stop();
+      }
+    }
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, applyWordHighlight]);
+
+  const canSkipPrevious = canSkipToPrevious(currentVerseKey, status);
+  const canSkipNext = canSkipToNext(
+    currentVerseKey,
+    status,
+    stopVerseKeyRef.current,
+    stopChapterIdRef.current,
+  );
+  const canSkipPreviousWord = canSkipToPreviousWord(currentVerseKey, status);
+  const canSkipNextWord = canSkipToNextWord(
+    currentVerseKey,
+    status,
+    undefined,
+    undefined,
+    stopVerseKeyRef.current,
+    stopChapterIdRef.current,
   );
 
   const handleTimeUpdate = useCallback(() => {
@@ -984,6 +1292,14 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         play,
         togglePlayPause,
         stop,
+        skipToNextVerse,
+        skipToPreviousVerse,
+        canSkipNext,
+        canSkipPrevious,
+        skipToNextWord,
+        skipToPreviousWord,
+        canSkipNextWord,
+        canSkipPreviousWord,
         resetPerAyahRepeat,
         resolveStartPoint,
         applyStartSeek,
