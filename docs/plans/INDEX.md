@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-105 active plans.
+106 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -61,6 +61,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
 | pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | ready-to-implement | feature |
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
+| pwa | [Fix mobile shell status bar and navigation bar overlap in Capacitor](fix-mobile-shell-status-bar-overlap.md) | implemented | bug |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
