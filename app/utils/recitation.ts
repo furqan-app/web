@@ -1,4 +1,4 @@
-import { QURAN_LAST_CHAPTER_ID, QURAN_LAST_VERSE_KEY } from "@/app/constants/recitation";
+import { PLAYBACK_SPEED_PRESETS, QURAN_LAST_CHAPTER_ID, QURAN_LAST_VERSE_KEY } from "@/app/constants/recitation";
 import { RecitationStatus, RepeatCount, VerseTiming } from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
 import type { SurahResult } from "@/app/types";
@@ -575,3 +575,14 @@ export const decideSkipWord = (
     return { action: "none" };
   }
 };
+
+// ── Playback speed cycling (#387) ──────────────────────────────────────────
+export const getNextPlaybackSpeed = (currentSpeed: number): number => {
+  const idx = PLAYBACK_SPEED_PRESETS.indexOf(
+    currentSpeed as (typeof PLAYBACK_SPEED_PRESETS)[number],
+  );
+  return idx === -1
+    ? 1
+    : PLAYBACK_SPEED_PRESETS[(idx + 1) % PLAYBACK_SPEED_PRESETS.length];
+};
+

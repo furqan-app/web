@@ -576,6 +576,7 @@
     "repeatEachAyah": "تكرار كل آية",
     "repeatRange": "تكرار النطاق بالكامل",
     "playbackSpeed": "سرعة التشغيل",
+    "playbackSpeedWithVal": "سرعة التشغيل: {speed}",
     "pauseBetweenRepeats": "توقف بين التكرارات",
     "listen": "استماع",
     "pause": "إيقاف مؤقت",

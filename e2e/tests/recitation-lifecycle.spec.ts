@@ -205,4 +205,36 @@ test.describe("Recitation lifecycle vs. navigation", () => {
     await returnStrip(page).getByRole("button", { name: "متابعة" }).click();
     await page.waitForFunction(audioIsPlaying);
   });
+
+  test("quick playback speed button cycles through presets and updates live playback rate", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo, "Audio interactions & speed selector");
+    await startRecitationOnPage1(page, context);
+
+    const speedBtn = page.getByTestId("recitation-speed-button");
+    await expect(speedBtn).toBeVisible();
+    await expect(speedBtn).toHaveText("1x");
+
+    // Click: 1x -> 1.25x
+    await speedBtn.click();
+    await expect(speedBtn).toHaveText("1.25x");
+
+    // Live audio playbackRate matches
+    const rate = await page.evaluate(() => {
+      const a = document.querySelector("audio");
+      return a ? a.playbackRate : null;
+    });
+    expect(rate).toBe(1.25);
+
+    // Stored in localStorage (key managed via app/utils/storage.ts)
+    const rawSettings = await page.evaluate(() =>
+      localStorage.getItem("recitationSettings"),
+    );
+    expect(rawSettings).toBeTruthy();
+    const parsed = JSON.parse(rawSettings!);
+    expect(parsed.playbackSpeed).toBe(1.25);
+  });
 });
+
