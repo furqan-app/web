@@ -152,3 +152,8 @@ This does not reopen the core decision (launch-time navigation resolves before p
 the one consequence that `ContinueReadingLink` must stay hidden on standalone mobile/tablet. The link
 now renders unconditionally on every breakpoint and display mode, matching desktop/browser-tab
 behavior. See `docs/plans/restore-continue-reading-pwa-icon.md`.
+
+## Addendum — 2026-09-24: Capacitor mobile shell cold launch (#683)
+
+The launch script now carries a third hand-synced check: `(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() === true)` duplicated from `app/utils/platform.ts`. Capacitor's hosted mobile shell sets `server.appStartPath: "/launch.html"` in `capacitor.config.ts` so native cold launches also route through `launch.html` before first paint, resuming `lastReadPath`. Capacitor iOS requires `launch.html` to also exist as a local sentinel in `native-shell-web/` to pass `CAPBridgeViewController`'s local file existence check before loading the remote URL. See `docs/plans/capacitor-cold-launch-resume.md`.
+
