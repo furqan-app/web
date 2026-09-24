@@ -16,7 +16,7 @@ Add a quick playback speed control directly to `RecitationPlayerBar` (both the m
 ## Approach
 
 ### Data & State Management
-- `RecitationContext` already manages `settings.playbackSpeed`, persists it to `localStorage` under `furqan_recitation_settings`, and syncs `audioRef.current.playbackRate = settings.playbackSpeed` in a `useEffect`.
+- `RecitationContext` already manages `settings.playbackSpeed`, persists it to `localStorage` under `recitationSettings` (via `app/utils/storage.ts`), and syncs `audioRef.current.playbackRate = settings.playbackSpeed` in a `useEffect`.
 - `updateSettings({ playbackSpeed: nextSpeed })` is called directly on click. It commits immediately to state and storage, adjusting playback rate instantaneously mid-playback with no reload, re-render churn, or popover delay.
 - `RecitationSettingsSheet` seeds its draft from `settings.playbackSpeed` on open and commits changes via `updateSettings` on Apply, ensuring bidirectional consistency between the bar/rail quick selector and the settings sheet.
 

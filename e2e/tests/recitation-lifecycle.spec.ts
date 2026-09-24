@@ -228,9 +228,9 @@ test.describe("Recitation lifecycle vs. navigation", () => {
     });
     expect(rate).toBe(1.25);
 
-    // Stored in localStorage
+    // Stored in localStorage (key managed via app/utils/storage.ts)
     const rawSettings = await page.evaluate(() =>
-      localStorage.getItem("furqan_recitation_settings"),
+      localStorage.getItem("recitationSettings"),
     );
     expect(rawSettings).toBeTruthy();
     const parsed = JSON.parse(rawSettings!);
