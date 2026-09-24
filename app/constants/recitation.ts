@@ -18,6 +18,7 @@ export const REPEAT_COUNT_MAX = 5;
 export const PLAYBACK_SPEED_MIN = 0.5;
 export const PLAYBACK_SPEED_MAX = 2;
 export const PLAYBACK_SPEED_STEP = 0.25;
+export const PLAYBACK_SPEED_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 export const PAUSE_BETWEEN_REPEATS_MAX_MS = 5000;
 export const PAUSE_BETWEEN_REPEATS_STEP_MS = 500;
 

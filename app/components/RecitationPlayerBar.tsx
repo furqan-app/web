@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 import { toLocaleNumeral } from "@/app/utils/i18n";
-import { recitedVerseLabelParts } from "@/app/utils/recitation";
+import { getNextPlaybackSpeed, recitedVerseLabelParts } from "@/app/utils/recitation";
 import { REPEAT_COUNT_MAX } from "@/app/constants/recitation";
 import { RepeatCount } from "@/app/types/recitation";
 import {
@@ -120,6 +120,10 @@ export const RecitationPlayerBar = () => {
     resetPerAyahRepeat();
   };
 
+  const handleSpeedCycle = () => {
+    updateSettings({ playbackSpeed: getNextPlaybackSpeed(settings.playbackSpeed) });
+  };
+
   return (
     <div
       className={cn(
@@ -226,24 +230,6 @@ export const RecitationPlayerBar = () => {
           <div className="fq-rail-zone fq-rail-utils flex shrink-0 items-center gap-1 ps-2">
             <button
               type="button"
-              aria-label={repeatLabel}
-              title={repeatLabel}
-              onClick={handleRepeatCycle}
-              className="fq-chrome-btn fq-focus-ring relative size-7 md:size-8"
-            >
-              <Repeat className="size-3.5 md:size-4" strokeWidth={1.8} />
-              {repeatActive ? (
-                <span
-                  aria-hidden="true"
-                  className="absolute -top-0.5 -end-0.5 grid h-3 min-w-3 place-items-center rounded-full bg-primary px-0.5 text-[7px] font-semibold leading-none text-primary-foreground tabular-nums md:h-3.5 md:min-w-3.5 md:text-[8px]"
-                >
-                  {repeatValue === "infinite" ? "∞" : repeatValue}
-                </span>
-              ) : null}
-            </button>
-
-            <button
-              type="button"
               aria-label={t("recitation.settingsTitle", "Recitation settings")}
               title={t("recitation.settingsTitle", "Recitation settings")}
               onClick={() => openSettings()}
@@ -266,8 +252,26 @@ export const RecitationPlayerBar = () => {
           </div>
         </div>
 
-        {/* Row 2: 5-Button Centered Transport Cluster */}
-        <div className="fq-rail-zone fq-rail-transport flex shrink-0 items-center justify-center gap-2 py-1 md:gap-3">
+        {/* Row 2: 7-Button Centered Transport & Quick-Control Cluster */}
+        <div className="fq-rail-zone fq-rail-transport flex shrink-0 items-center justify-center gap-1.5 py-1 md:gap-2.5">
+          <button
+            type="button"
+            aria-label={repeatLabel}
+            title={repeatLabel}
+            onClick={handleRepeatCycle}
+            className="fq-chrome-btn fq-focus-ring relative size-7 md:size-8"
+          >
+            <Repeat className="size-3.5 md:size-4" strokeWidth={1.8} />
+            {repeatActive ? (
+              <span
+                aria-hidden="true"
+                className="absolute -top-0.5 -end-0.5 grid h-3 min-w-3 place-items-center rounded-full bg-primary px-0.5 text-[7px] font-semibold leading-none text-primary-foreground tabular-nums md:h-3.5 md:min-w-3.5 md:text-[8px]"
+              >
+                {repeatValue === "infinite" ? "∞" : repeatValue}
+              </span>
+            ) : null}
+          </button>
+
           <button
             type="button"
             aria-label={t("recitation.previousAyah", "Previous ayah")}
@@ -341,6 +345,22 @@ export const RecitationPlayerBar = () => {
             className="fq-chrome-btn fq-focus-ring size-7 rtl:rotate-180 disabled:pointer-events-none disabled:opacity-30 md:size-8"
           >
             <SkipForward className="size-3.5 md:size-4" strokeWidth={1.8} />
+          </button>
+
+          <button
+            type="button"
+            data-testid="recitation-speed-button"
+            aria-label={tRich("playbackSpeedWithVal", { speed: `${settings.playbackSpeed}x` })}
+            title={tRich("playbackSpeedWithVal", { speed: `${settings.playbackSpeed}x` })}
+            onClick={handleSpeedCycle}
+            className={cn(
+              "fq-focus-ring relative flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-[11px] font-medium tabular-nums transition-colors md:h-8 md:min-w-8 md:px-1.5 md:text-xs",
+              settings.playbackSpeed !== 1
+                ? "fq-chrome-btn-live font-semibold text-primary"
+                : "fq-chrome-btn text-muted-foreground",
+            )}
+          >
+            <span>{settings.playbackSpeed}x</span>
           </button>
         </div>
       </div>
