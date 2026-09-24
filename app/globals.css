@@ -1393,6 +1393,9 @@ body,
       padding: 0;
       height: 100%;
     }
+    .fq-recitation-bar-rail .fq-recitation-row-lead {
+      display: contents;
+    }
     .fq-recitation-bar-rail .fq-rail-zone {
       position: absolute;
       inset-inline: 0;
@@ -2239,13 +2242,10 @@ body,
     min-height: calc(100dvh - 3.5rem - var(--fq-nav-extra, 0px)) !important;
   }
 
-  /* The recitation transport's three zones — identity, transport, utilities.
-     `display: contents` in bar form, so the wrappers add no box and the
-     full-width bar lays out exactly as it did before they existed; the desk
-     band turns them into real, absolutely-positioned zones of the rail. One
-     markup, two compositions, and the zone a control belongs to is stated in
-     the JSX rather than inferred from source order. */
-  .fq-rail-zone {
+  /* The recitation transport's rail identity zone: `display: contents` in
+     bar form so the hidden rail trigger wrapper adds no box; the desk
+     band turns the zones into real, absolutely-positioned zones of the rail. */
+  .fq-rail-lead {
     display: contents;
   }
 
@@ -2415,13 +2415,19 @@ body,
   /* Recitation play button */
   .fq-recitation-play {
     position: relative;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 9999px;
     border: 1px solid hsl(var(--primary) / 0.85);
     background: hsl(var(--accent) / 0.35);
     color: hsl(var(--primary));
     transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  }
+  @media (min-width: 768px) {
+    .fq-recitation-play {
+      width: 36px;
+      height: 36px;
+    }
   }
   .fq-recitation-play:hover {
     background: hsl(var(--accent) / 0.65);
@@ -2429,10 +2435,15 @@ body,
   }
   .fq-recitation-play-ring {
     position: absolute;
-    inset: -4px;
+    inset: -3px;
     border-radius: 9999px;
     pointer-events: none;
     transition: opacity 160ms ease;
+  }
+  @media (min-width: 768px) {
+    .fq-recitation-play-ring {
+      inset: -4px;
+    }
   }
   .fq-recitation-play[data-state="playing"] {
     box-shadow: 0 0 0 1px hsl(var(--primary) / 0.28), 0 0 22px -4px hsl(var(--primary) / 0.45);

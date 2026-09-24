@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "app.furqan",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_PLAY_CONSOLE_SHA256"]
+      "sha256_cert_fingerprints": ["38:0B:9B:67:51:62:E0:30:3E:E9:39:4B:2D:38:DF:B1:62:D2:A3:7E:B9:E4:71:D9:E0:EA:D1:30:D3:E9:5F:83"]
     }
   }
 ]
