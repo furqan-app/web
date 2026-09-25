@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 
 import { isNativePlatform } from "@/app/utils/platform";
-import { handleAppUrl } from "@/app/lib/shell/auth-return";
+import {
+  handleAppUrl,
+  parseNativeBootstrapUrl,
+} from "@/app/lib/shell/auth-return";
 
 // Mounted app-wide in app/[locale]/layout.tsx alongside the other null-leaf
 // syncs. Subscribes to App Link opens only inside the Capacitor shell —
@@ -16,6 +19,18 @@ export function NativeAuthReturnListener() {
     }
     let cancelled = false;
     let remove: (() => void) | undefined;
+    // Audible failures (#702): this listener owns no UI, so a failed
+    // exchange here must hand the URL to the bootstrap page (which owns the
+    // retry UI) instead of stranding the user on a silent unsigned-in home.
+    // URLs without a code stay silent — a plain deep link made no promise.
+    const consumeReturnUrl = (href: string) => {
+      const { code } = parseNativeBootstrapUrl(href);
+      void handleAppUrl(href).then((ok) => {
+        if (!ok && code && !cancelled) {
+          window.location.assign(href);
+        }
+      });
+    };
     void (async () => {
       const { App } = await import("@capacitor/app");
       if (cancelled) {
@@ -27,7 +42,7 @@ export function NativeAuthReturnListener() {
       try {
         const launch = await App.getLaunchUrl();
         if (!cancelled && launch?.url) {
-          void handleAppUrl(launch.url);
+          consumeReturnUrl(launch.url);
         }
       } catch {
         // Bridge without launch-URL support: the live subscription below
@@ -37,7 +52,7 @@ export function NativeAuthReturnListener() {
         return;
       }
       void App.addListener("appUrlOpen", (event) => {
-        void handleAppUrl(event.url);
+        consumeReturnUrl(event.url);
       }).then((handle) => {
         if (cancelled) {
           void handle.remove();
