@@ -15,8 +15,8 @@
 
       Hand-written and outside the TypeScript build: no types, no bundler, no imports.
       Keep it small enough to verify by reading, and keep its scope at "decide a URL
-      and navigate". The display-mode list is the one thing duplicated from
-      app/utils/platform.ts — re-check it whenever the manifest's `display` changes.
+      and navigate". The display-mode list and Capacitor bridge check are duplicated from
+      app/utils/platform.ts — re-check whenever platform detection changes.
     -->
     <script>
       (function () {
@@ -37,7 +37,8 @@
           var standalone =
             window.matchMedia("(display-mode: standalone)").matches ||
             window.matchMedia("(display-mode: fullscreen)").matches ||
-            navigator.standalone === true;
+            navigator.standalone === true ||
+            (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() === true);
           // Mirrors useIsDesktopUp's breakpoint — desktop standalone keeps
           // opening the surah list, same as before this change.
           var isDesktopUp = window.matchMedia("(min-width: 1367px)").matches;

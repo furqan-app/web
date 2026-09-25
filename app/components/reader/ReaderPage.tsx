@@ -68,7 +68,7 @@ export const ReaderPage = async ({
   // shell matches no display-mode query, and without it shell launches never
   // receive the cover. Guarded: the bridge may not exist (web) or may arrive
   // after parse (degrades to no cover, today's behavior — never a throw).
-  // launch.html needs no such branch: the shell never loads it.
+  // launch.html carries the same isNativePlatform() check for shell cold launch (#683).
   const coverRevealScript = `(function(){try{var s=window.matchMedia("(display-mode: standalone)").matches||window.matchMedia("(display-mode: fullscreen)").matches||navigator.standalone===true||(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()===true);var d=window.matchMedia("(min-width: 1367px)").matches;if(s&&!d){document.documentElement.classList.add("fq-launch-cover")}}catch(e){}})();`;
 
   return (
