@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { isAndroid } from "@/app/utils/platform";
+import { isAndroid, isNativePlatform } from "@/app/utils/platform";
 import { useIsStandaloneMobileOrTablet } from "@/app/hooks/use-is-standalone-mobile-or-tablet";
 import { isOverlayBackGuardArmed } from "@/app/utils/overlay-back-guard";
+import { exitNativeApp } from "@/app/lib/shell/back-button";
 import { ExitToast } from "./ExitToast";
 
 const ARM_WINDOW_MS = 2000;
@@ -74,11 +75,15 @@ export const AndroidBackExitGuard = ({ active }: Props) => {
         timerRef.current = setTimeout(disarm, ARM_WINDOW_MS);
         return;
       }
-      // Second press within the window: best-effort exit, no re-push — see
-      // ADR 0040 for why `window.close()` is the only viable mechanism and
-      // why it's a no-op outside installed standalone/fullscreen Android.
+      // Second press within the window: best-effort exit, no re-push.
+      // On native Android shell (ADR 0072, #682), exitNativeApp() terminates the Activity via App.exitApp().
+      // In standalone PWA, window.close() is the only viable mechanism (ADR 0040).
       disarm();
-      window.close();
+      if (isNativePlatform() && isAndroid()) {
+        void exitNativeApp();
+      } else {
+        window.close();
+      }
     };
 
     window.addEventListener("popstate", onPopState);
