@@ -9,6 +9,7 @@ import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl
 import { Link } from "@/i18n/routing";
 import { toLocaleNumeral } from "@utils/i18n";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
+import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 import { hardNavigateIfOffline } from "@/app/utils/platform";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, SearchX, ArrowLeft } from "lucide-react";
@@ -66,6 +67,10 @@ export const SearchBar = () => {
     const { verses, chapters, isLoading } = useSearch(debouncedQuery);
     const [open, setOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    // Mobile/tablet installed-PWA + Capacitor shell close-on-back guard
+    // (ADR 0055): first back press closes the overlay instead of navigating
+    // the underlying page. Inactive on desktop / browser tabs.
+    const { notifyNavigating } = useCloseOnBackGesture(open, () => setOpen(false));
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -171,6 +176,7 @@ export const SearchBar = () => {
                         ) : hasResults ? (
                             <SearchQueryResults
                                 setIsOpen={setOpen}
+                                notifyNavigating={notifyNavigating}
                                 chapters={chapters.data?.results || []}
                                 verses={verses.data?.results || []}
                                 className="relative w-full mt-0 rounded-none shadow-none border-0 max-h-none"
@@ -205,6 +211,16 @@ export const SearchBar = () => {
                                     // precached shell instead of error.tsx + a Sentry
                                     // report. Grant links stay soft-nav (online-only
                                     // scope); online keeps soft nav.
+                                    //
+                                    // notifyNavigating() first (ADR 0055's
+                                    // 2026-08-16 addendum): Next's own pushState
+                                    // for the target route can land after the
+                                    // guard cleanup's microtask check, which
+                                    // would otherwise history.back() over the
+                                    // in-flight navigation. Must stay
+                                    // synchronous with setOpen(false) — no
+                                    // setTimeout/rAF defer.
+                                    notifyNavigating();
                                     if (searchPath !== "/search") {
                                         setOpen(false);
                                         return;

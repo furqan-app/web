@@ -48,13 +48,17 @@ export const resolveRepeatTarget = (count: RepeatCount): number =>
   count === "infinite" ? Infinity : count;
 
 // Finds the verse whose [timestampFrom, timestampTo) window contains
-// currentTimeMs. Falls back to the last verse once playback has moved past
-// the final timestamp_to (e.g. the last few ms of the audio file).
+// currentTimeMs. Uses findLast (reverse search) so if adjacent verse windows
+// overlap in legacy cached data (e.g. QDC reciter 10's ~10ms overlaps), the
+// newer verse starting at currentTimeMs takes precedence over the preceding
+// verse whose trailing window leaked across (#695). Falls back to the last verse
+// once playback has moved past the final timestamp_to (e.g. the last few ms of
+// the audio file).
 export const findActiveVerseTiming = (
   verseTimings: VerseTiming[],
   currentTimeMs: number,
 ): VerseTiming | undefined => {
-  const active = verseTimings.find(
+  const active = verseTimings.findLast(
     (vt) => currentTimeMs >= vt.timestampFrom && currentTimeMs < vt.timestampTo,
   );
   if (active) return active;
