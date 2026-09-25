@@ -7,6 +7,7 @@ import {
   decideRecitationFollow,
   decideSkipVerse,
   decideSkipWord,
+  findActiveVerseTiming,
   getNextPlaybackSpeed,
 } from "@/app/utils/recitation";
 
@@ -473,5 +474,72 @@ describe("getNextPlaybackSpeed", () => {
   });
 });
 
+describe("findActiveVerseTiming", () => {
+  const normalTimings = [
+    {
+      verseKey: "2:1",
+      timestampFrom: 0,
+      timestampTo: 5000,
+      segments: [],
+    },
+    {
+      verseKey: "2:2",
+      timestampFrom: 5000,
+      timestampTo: 10000,
+      segments: [],
+    },
+  ];
 
+  it("resolves active verse within normal non-overlapping windows", () => {
+    expect(findActiveVerseTiming(normalTimings, 2500)?.verseKey).toBe("2:1");
+    expect(findActiveVerseTiming(normalTimings, 5000)?.verseKey).toBe("2:2");
+    expect(findActiveVerseTiming(normalTimings, 7500)?.verseKey).toBe("2:2");
+  });
 
+  it("resolves to the newer verse when adjacent timings overlap (#695)", () => {
+    // Overlapping timings simulating QDC data for reciter 10 (Sa'ud Ash-Shuraim),
+    // where verse 2:5 ends at 40613ms while verse 2:6 starts at 40604ms (~9ms overlap).
+    const overlappingTimings = [
+      {
+        verseKey: "2:5",
+        timestampFrom: 30000,
+        timestampTo: 40613,
+        segments: [],
+      },
+      {
+        verseKey: "2:6",
+        timestampFrom: 40604,
+        timestampTo: 55000,
+        segments: [],
+      },
+    ];
+
+    // Before verse 2:6 starts: resolves to 2:5
+    expect(findActiveVerseTiming(overlappingTimings, 40600)?.verseKey).toBe("2:5");
+
+    // At exact start of verse 2:6 (40604ms): must resolve to 2:6, not 2:5
+    expect(findActiveVerseTiming(overlappingTimings, 40604)?.verseKey).toBe("2:6");
+
+    // Inside the overlap window (40610ms): must resolve to 2:6, not 2:5
+    expect(findActiveVerseTiming(overlappingTimings, 40610)?.verseKey).toBe("2:6");
+
+    // After verse 2:5's timestampTo (40620ms): resolves to 2:6
+    expect(findActiveVerseTiming(overlappingTimings, 40620)?.verseKey).toBe("2:6");
+  });
+
+  it("falls back to the last verse when currentTimeMs exceeds the last timestampTo", () => {
+    expect(findActiveVerseTiming(normalTimings, 12000)?.verseKey).toBe("2:2");
+  });
+
+  it("returns undefined when currentTimeMs is before the first verse timestampFrom", () => {
+    const delayedTimings = [
+      {
+        verseKey: "2:1",
+        timestampFrom: 1000,
+        timestampTo: 5000,
+        segments: [],
+      },
+    ];
+    expect(findActiveVerseTiming(delayedTimings, 500)).toBeUndefined();
+  });
+});
