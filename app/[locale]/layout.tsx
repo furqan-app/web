@@ -74,6 +74,13 @@ export default async function LocaleLayout({
                                 <LastReadPageProvider>
                                   <KeepScreenAwakeProvider>
                                     <SwUpdateBanner />
+                                    {/* Status bar scrim: on edge-to-edge shells (Capacitor/iOS), renders an opaque
+                                        background behind the transparent status bar so scrolling content on non-reader
+                                        routes stays behind it. Evaluates to 0px height on standard browsers and Android PWA. */}
+                                    <div
+                                      className="fixed top-0 inset-x-0 h-[env(safe-area-inset-top,0px)] bg-background z-40 pointer-events-none"
+                                      aria-hidden="true"
+                                    />
                                     <Nav />
                                     {children}
                                     <RecitationPlayerBar />
