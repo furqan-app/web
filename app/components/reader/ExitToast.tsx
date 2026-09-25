@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { cn } from "@/lib/utils";
 
@@ -31,12 +32,13 @@ export const ExitToast = ({ show }: Props) => {
       role="status"
       aria-live="polite"
       className={cn(
-        "fixed bottom-24 inset-x-4 z-50 mx-auto w-fit max-w-xs rounded-xl border bg-card px-4 py-2.5 text-center text-sm font-medium text-card-foreground shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] transition-all duration-200 motion-reduce:translate-y-0",
+        "fixed bottom-24 inset-x-4 z-50 mx-auto flex w-fit max-w-sm items-center gap-2.5 rounded-xl border border-warning/40 bg-warning/15 px-4 py-2.5 text-sm font-medium text-foreground shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_48px_-16px_rgba(0,0,0,0.14)] backdrop-blur-md transition-all duration-200 motion-reduce:translate-y-0",
         mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
       )}
       style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
     >
-      {t("exitApp.pressBackAgain", "Press back again to exit")}
+      <AlertTriangle className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+      <span>{t("exitApp.pressBackAgain", "Press back again to exit the app")}</span>
     </div>
   );
 };
