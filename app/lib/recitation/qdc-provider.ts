@@ -41,14 +41,26 @@ async function getChapterAudio(
 
   if (!audioFile) return null;
 
-  const verseTimings: VerseTiming[] = audioFile.verse_timings.map((vt) => ({
-    verseKey: vt.verse_key,
-    timestampFrom: vt.timestamp_from,
-    timestampTo: vt.timestamp_to,
-    segments: (vt.segments ?? []).filter(
-      (segment): segment is VerseSegment => segment.length === 3,
-    ),
-  }));
+  const verseTimings: VerseTiming[] = audioFile.verse_timings.map((vt, i, arr) => {
+    const nextVt = arr[i + 1];
+    // QDC data for some reciters (notably Reciter 10 Sa'ud ash-Shuraim) contains
+    // slight overlaps where the previous verse's timestamp_to exceeds the next
+    // verse's timestamp_from (by ~10ms). Clamp timestampTo to nextVt.timestamp_from
+    // so adjacent verse windows are strictly contiguous without overlap (#695).
+    const timestampTo =
+      nextVt && nextVt.timestamp_from < vt.timestamp_to
+        ? Math.max(vt.timestamp_from, nextVt.timestamp_from)
+        : vt.timestamp_to;
+
+    return {
+      verseKey: vt.verse_key,
+      timestampFrom: vt.timestamp_from,
+      timestampTo,
+      segments: (vt.segments ?? []).filter(
+        (segment): segment is VerseSegment => segment.length === 3,
+      ),
+    };
+  });
 
   return {
     audioUrl: audioFile.audio_url,
