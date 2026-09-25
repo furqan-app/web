@@ -16,7 +16,23 @@ export function NativeAuthReturnListener() {
     }
     let cancelled = false;
     let remove: (() => void) | undefined;
-    void import("@capacitor/app").then(({ App }) => {
+    void (async () => {
+      const { App } = await import("@capacitor/app");
+      if (cancelled) {
+        return;
+      }
+      // Cold start (#687): the VIEW intent arrived before this subscription
+      // existed, so no appUrlOpen will ever fire for it — consume the
+      // launch URL the plugin holds for exactly this case first.
+      try {
+        const launch = await App.getLaunchUrl();
+        if (!cancelled && launch?.url) {
+          void handleAppUrl(launch.url);
+        }
+      } catch {
+        // Bridge without launch-URL support: the live subscription below
+        // still covers warm returns, so never fail the mount over this.
+      }
       if (cancelled) {
         return;
       }
@@ -31,7 +47,7 @@ export function NativeAuthReturnListener() {
           };
         }
       });
-    });
+    })();
     return () => {
       cancelled = true;
       remove?.();

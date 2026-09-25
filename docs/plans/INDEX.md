@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-105 active plans.
+109 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -60,7 +60,11 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
 | pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | ready-to-implement | feature |
+| pwa | [Auth return lost on cold start — consume the launch URL on listener mount](auth-coldstart-launch-url.md) | implemented | bug |
+| pwa | [Capacitor Android: Close overlays on back and exit app via App.exitApp() on double-back in reader](capacitor-android-back-exit.md) | implemented | bug |
+| pwa | [Capacitor Cold Launch — Route Entry Through launch.html to Resume Last-Read Page](capacitor-cold-launch-resume.md) | implemented | bug |
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
+| pwa | [Fix mobile shell status bar and navigation bar overlap in Capacitor](fix-mobile-shell-status-bar-overlap.md) | implemented | bug |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
@@ -98,10 +102,10 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
 | tafsir | [Tafsir: Offline Download & Cache Management for PWA](tafsir-offline-download.md) | implemented | feature |
+| theming | [Native brand icons and splash from the Furqan mark](app-brand-icons.md) | ready-to-implement | feature |
 | theming | [Design Migration — reader-lab language, app-wide](design-migration/INDEX.md) | in-progress | feature |
 | theming | [Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette](dark-theme-mushaf-unification.md) | implemented | feature |
 | theming | [Home Page Design Fixes](home-page-design-fixes.md) | implemented | feature |
-| theming | [Native brand icons and splash from the Furqan mark](app-brand-icons.md) | implemented | feature |
 | theming | [Reading-desk depth for light & gold — and de-duplicating the reader CSS](theme-depth-unification.md) | implemented | feature |
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |

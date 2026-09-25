@@ -28,6 +28,7 @@ import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
 import { OfflineInstallPrompt } from "@components/offline/OfflineInstallPrompt";
 import { SwUpdateBanner } from "@components/offline/SwUpdateBanner";
 import { NativeAuthReturnListener } from "@components/shell/NativeAuthReturnListener";
+import { NativeBackButtonListener } from "@components/shell/NativeBackButtonListener";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
 import { Locale } from "../types/config";
@@ -81,6 +82,7 @@ export default async function LocaleLayout({
                                     <LastReadPageSync />
                                     <MarksSync />
                                     <NativeAuthReturnListener />
+                                    <NativeBackButtonListener />
                                     <TafsirReaderSync />
                                     <KeepScreenAwakeSync />
                                     <OfflineInstallPrompt />
