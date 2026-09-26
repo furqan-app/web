@@ -111,13 +111,20 @@ export const SearchBar = () => {
                 <Search className="size-4" strokeWidth={1.8} />
             </button>
 
-            {/* Full-screen search overlay */}
+            {/* Full-screen search overlay. ICB-anchored sizing
+                (decisions/reader.md: no viewport unit for full-viewport
+                heights; decisions/nav.md: top + bottom size the box with
+                height auto): h-screen (100vh) goes stale when the shell's
+                soft keyboard resizes the window without re-resolving
+                viewport units, blanking the results in the native shell
+                while the PWA stays fine. Root scrolling is neutralized
+                below so the results container is the single scroller. */}
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetContent
                     side="top"
                     hideDefaultClose
                     overlayClassName="!z-[52]"
-                    className="!z-[52] h-screen p-0 flex flex-col"
+                    className="!z-[52] bottom-0 h-auto overflow-visible p-0 flex flex-col"
                     onOpenAutoFocus={(e) => {
                         e.preventDefault();
                         inputRef.current?.focus();
@@ -158,7 +165,7 @@ export const SearchBar = () => {
                         results and otherwise rendered literally nothing — a
                         typed query with no matches looked identical to an
                         empty box, and a slow query looked like a broken one. */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="min-h-0 flex-1 overflow-y-auto fq-scroll-nice">
                         {!isSearchQueryValid(query) ? (
                             <SearchState
                                 icon={<Search className="size-6" strokeWidth={1.6} />}
