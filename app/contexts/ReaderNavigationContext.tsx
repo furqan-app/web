@@ -46,3 +46,21 @@ export function useReaderNavigation() {
   }
   return context;
 }
+
+/**
+ * Intercepts a Link click to jump client-side when the reader pager is mounted,
+ * bypassing full route navigation and preserving browser history.
+ */
+export function handleReaderJump(
+  e: React.MouseEvent,
+  jumpTo: JumpTo | null,
+  targetPage: number,
+): boolean {
+  if (!jumpTo || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+    return false;
+  }
+  e.preventDefault();
+  jumpTo(targetPage);
+  return true;
+}
+

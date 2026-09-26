@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import useTranslations from "@hooks/use-translations";
 import { useLastReadPage } from "@/app/contexts/LastReadPageContext";
-import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { useReaderNavigation, handleReaderJump } from "@/app/contexts/ReaderNavigationContext";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -35,10 +35,7 @@ export const ContinueReadingLink = ({ className }: Props = {}) => {
       href={`/pages/${lastReadPage}`}
       locale={locale}
       onClick={(e) => {
-        // Same client-side handoff as SurahListItem — see there.
-        if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        e.preventDefault();
-        jumpTo(lastReadPage);
+        handleReaderJump(e, jumpTo, lastReadPage);
       }}
       // Bespoke (not NavPillLink's shared navPillClassName) so mobile can be
       // a true size-10 square icon button matching the other mobile-visible
