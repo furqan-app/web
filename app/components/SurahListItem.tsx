@@ -7,7 +7,7 @@ import { toLocaleNumeral, getLanguageDirection } from "@utils/i18n";
 import { Link } from "@/i18n/routing";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
 import { useSidebar } from "@/app/contexts/SidebarContext";
-import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { useReaderNavigation, handleReaderJump } from "@/app/contexts/ReaderNavigationContext";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -45,10 +45,9 @@ export const SurahListItem = ({ surah, isActive }: Props) => {
       onClick={(e) => {
         notifyNavigating?.();
         setOpen(false);
-        if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        e.preventDefault();
-        setPinnedSurahId(surah.id);
-        jumpTo(surahStartingPage);
+        if (handleReaderJump(e, jumpTo, surahStartingPage)) {
+          setPinnedSurahId(surah.id);
+        }
       }}
       data-surah-id={surah.id}
       className={cn(

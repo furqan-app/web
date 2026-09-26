@@ -5,6 +5,11 @@ import { isAndroid, isNativePlatform } from "@/app/utils/platform";
 import { useIsStandaloneMobileOrTablet } from "@/app/hooks/use-is-standalone-mobile-or-tablet";
 import { isOverlayBackGuardArmed } from "@/app/utils/overlay-back-guard";
 import { exitNativeApp } from "@/app/lib/shell/back-button";
+import {
+  type FQNavigateEvent,
+  getNavigation,
+  supportsNavigationApi,
+} from "@/app/utils/navigation-api";
 import { ExitToast } from "./ExitToast";
 
 const ARM_WINDOW_MS = 2000;
@@ -25,18 +30,22 @@ type Props = {
 };
 
 /**
- * Android-only, installed-app-only "press back again to exit" guard (ADR
- * 0040). Pushes one history entry and, on every intercepted back press while
- * unarmed, re-pushes it — the guard never lets a real back navigation reach
- * whatever is genuinely behind it (e.g. Home) while mounted. Only a second
- * press within ARM_WINDOW_MS skips the re-push and attempts `window.close()`.
- * See the ADR for why a single pushed entry isn't sufficient.
+ * Android-only, installed-app-only "press back again to exit" guard (ADR 0040, ADR 0074).
+ * Uses the modern Navigation API (`navigate` + `event.intercept()`) where supported
+ * to preempt back traversal before URL or router state can change, falling back to
+ * the double-push popstate guard elsewhere.
+ *
+ * Intercepted back press while unarmed shows ExitToast and arms for 2s.
+ * Second press within ARM_WINDOW_MS exits the app:
+ * - Capacitor: calls exitNativeApp() (App.exitApp())
+ * - PWA: calls window.close()
  */
 export const AndroidBackExitGuard = ({ active }: Props) => {
   const isStandaloneMobileOrTablet = useIsStandaloneMobileOrTablet();
   const [armed, setArmed] = useState(false);
   const armedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastHandledTimeRef = useRef(0);
 
   const enabled =
     active &&
@@ -61,33 +70,66 @@ export const AndroidBackExitGuard = ({ active }: Props) => {
       }
     };
 
-    const onPopState = () => {
-      // An overlay's own close-on-back guard (ADR 0043) is currently armed —
-      // defer to it entirely. Its listener was registered after this one
-      // (it only mounts once the user opens something on top of the already-
-      // mounted reader), so it runs next for this same event.
+    const handleBackAction = (interceptFn?: () => void) => {
+      // An overlay's own close-on-back guard (ADR 0043, ADR 0055) is currently armed —
+      // defer to it entirely.
       if (isOverlayBackGuardArmed()) return;
 
+      const now = Date.now();
+      if (now - lastHandledTimeRef.current < 50) {
+        return;
+      }
+      lastHandledTimeRef.current = now;
+
+      // Preempt traversal synchronously via Navigation API where available
+      interceptFn?.();
+
       if (!armedRef.current) {
+        // Re-arm the guard state. In both Navigation API and popstate, the back action
+        // has traversed back to the preceding entry (the Quran page itself); pushing a
+        // new guardState here replaces any forward history and restores the guard on top
+        // without accumulating orphan entries.
         history.pushState(guardState(), "");
         armedRef.current = true;
         setArmed(true);
         timerRef.current = setTimeout(disarm, ARM_WINDOW_MS);
         return;
       }
-      // Second press within the window: best-effort exit, no re-push.
-      // On native Android shell (ADR 0072, #682), exitNativeApp() terminates the Activity via App.exitApp().
-      // In standalone PWA, window.close() is the only viable mechanism (ADR 0040).
+
+      // Second press within ARM_WINDOW_MS: exit app
       disarm();
       if (isNativePlatform() && isAndroid()) {
-        void exitNativeApp();
+        exitNativeApp().catch(() => {
+          window.close();
+        });
       } else {
         window.close();
       }
     };
 
+    const onPopState = () => {
+      handleBackAction();
+    };
+
+    const nav = getNavigation();
+    const hasNavApi = supportsNavigationApi();
+
+    let onNavigate: ((e: FQNavigateEvent) => void) | undefined;
+    if (nav && hasNavApi) {
+      onNavigate = (e: FQNavigateEvent) => {
+        if (e.navigationType === "traverse") {
+          handleBackAction(() => e.intercept());
+        }
+      };
+      nav.addEventListener("navigate", onNavigate);
+    }
+
     window.addEventListener("popstate", onPopState);
+
     return () => {
+      if (nav && onNavigate) {
+        nav.removeEventListener("navigate", onNavigate);
+      }
       window.removeEventListener("popstate", onPopState);
       disarm();
     };

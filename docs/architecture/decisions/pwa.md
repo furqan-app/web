@@ -135,6 +135,8 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 as part of first paint on standalone mobile/tablet and lift it when the visible
 pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 
+**Amended (ADR 0074, #710, 2026-09-26):** `AndroidBackExitGuard` feature-detects the Navigation API (`window.navigation`) and intercepts `traverse` events via `event.intercept()` before browser URL or router state can change, eliminating the traversal lag and predictive-back flicker (#296) that raw `popstate` exhibited. Where unsupported, it retains ADR 0040's double-push `popstate` guard. The guard shares full parity with the Capacitor Android shell via `App.exitApp()` on double-back (#682). See [ADR 0074](../adr/0074-navigation-api-for-reader-back-exit-guard.md).
+
 **Constraints:**
 - The cover is static SSR markup (identical bytes for every user — no per-user
   content, no dynamic rendering) revealed pre-paint only on
