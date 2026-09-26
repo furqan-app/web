@@ -1,5 +1,5 @@
 ---
-title: Add QCF V2 (Madani, 1421H) mushaf edition and make it the default
+title: Add QCF V2 (Madani, 1421H) mushaf edition and keep QCF V1 as default
 type: feature
 date: 2026-09-07
 status: implemented
@@ -8,13 +8,13 @@ issue: 601
 adr: [0066]
 ---
 
-# Add QCF V2 (Madani, 1421H) mushaf edition and make it the default
+# Add QCF V2 (Madani, 1421H) mushaf edition
 
 ## Summary
 
-Add **QCF V2** (KFGQPC "Madani" layout, 1421 H print) as a third mushaf edition under the [ADR 0033](../architecture/adr/0033-mushaf-edition-owns-word-placement.md) registry — QDC `mushaf=1`, glyph column `code_v2` (already seeded, shared with the Tajweed edition), plain non-COLRv1 per-page fonts — and promote it to the reader default (`DEFAULT_MUSHAF_ID`, from `2`).
+Add **QCF V2** (KFGQPC "Madani" layout, 1421 H print) as a third mushaf edition under the [ADR 0033](../architecture/adr/0033-mushaf-edition-owns-word-placement.md) registry — QDC `mushaf=1`, glyph column `code_v2` (already seeded, shared with the Tajweed edition), plain non-COLRv1 per-page fonts.
 
-Shipped as **one PR**. No `furqan_quran` schema change. The one non-additive change is decoupling three constants from `DEFAULT_MUSHAF_ID` so the default can move without a destructive `Word` reseed, a `Mark` migration, or a bigger first-run offline download — see [ADR 0066](../architecture/adr/0066-default-edition-independent-of-canonical-precache-seed.md).
+Shipped initially in #601 with QCF V2 promoted to default; following Issue #709, `DEFAULT_MUSHAF_ID` was reverted to QCF V1 (mushaf 2, 1405 H) to align the reader default with `PRECACHE_MUSHAF_ID` (2) so that first-run offline precache and initial view match without offline errors. QCF V2 remains available as an opt-in edition in Settings. No `furqan_quran` schema change. Four constants remain decoupled per [ADR 0066](../architecture/adr/0066-default-edition-independent-of-canonical-precache-seed.md).
 
 ## Approach
 
@@ -34,7 +34,7 @@ Today one id (`2`) plays four roles. Promoting QCF V2 to default without breakin
 
 | Role | Constant | Value after this PR | Why it does *not* follow the default |
 |---|---|---|---|
-| Reader opens with | `DEFAULT_MUSHAF_ID` | **1** | — |
+| Reader opens with | `DEFAULT_MUSHAF_ID` | **2** (reverted in #709 from 1) | Reverted to 2 to align with `PRECACHE_MUSHAF_ID` (ADR 0066 keeps it decoupled) |
 | `verses-words.js` fetch param → the only edition `layoutFromSeededWords` is valid for | `SEEDED_WORDS_MUSHAF_ID` (new) | 2 | `verses-words.js` fetches `mushaf: "2"`; its `page_number`/`line_number` are mushaf 2's. Using the shortcut for mushaf 1 would seed mushaf 2's lines under `mushaf_id = 1`. |
 | `Mark.page_number` canonical edition | (no code constant — rides on `Word.page_number` in the JSON) | 2 | Canonicalization reads each word's `Word.page_number` (the mushaf-2 mirror) from the static JSON, never the displayed page — the tajweed edition already relies on this with the same 361-word divergence. Moving it would need a `Mark` migration; leaving it does not. |
 | Stored **page numbers** — plan verse-unit ranges (ADR 0038), `usePageVerseBounds` | `CANONICAL_PAGE_MUSHAF_ID` (new) | 2 | A saved "page 250" range must keep meaning the same verses. On the ~36 divergent pages, resolving it against QCF V2 instead of V1 would shift the covered verses. |
@@ -179,6 +179,7 @@ Add mushaf 1 to `EDITIONS`; generate `public/mushaf-previews/1.png` (committed).
 - Non-COLRv1 edition → normal `FontFace` registry path only. Do not route mushaf 1 through `FontFaceInjector`'s keyed-`<style>` / `@font-palette-values` path.
 - Do not add `v2/woff2` to `globPublicPatterns` in `next.config.mjs` (ADR 0014 — every visitor would download it ungated). It is reached only by the runtime `CacheFirst` `isPageFont` rule and the consent-gated Settings download.
 - `PRECACHE_MUSHAF_ID` and `CANONICAL_PAGE_MUSHAF_ID` stay `2`. Do not point any first-run/offline surface, plan-range resolver, or `Word` mirror at `DEFAULT_MUSHAF_ID`.
+- All four constants (`DEFAULT_MUSHAF_ID`, `PRECACHE_MUSHAF_ID`, `CANONICAL_PAGE_MUSHAF_ID`, `SEEDED_WORDS_MUSHAF_ID`) remain explicitly separate per ADR 0066 even though all four are currently 2.
 - `useMarks` already span-reads (`Mark.page_number` is the canonical mushaf-2 page, carried per-word in the JSON) — no change needed there.
 - Verify locally with a production build (`npm run e2e:serve` / `build:local && start`), never `next dev` — Serwist and the offline paths are dev-disabled.
 
@@ -192,15 +193,23 @@ Add mushaf 1 to `EDITIONS`; generate `public/mushaf-previews/1.png` (committed).
 - Do not reuse mushaf 19's `pages/19/*.json` or layout rows for mushaf 1 — line grouping genuinely differs (pages 77/342/555).
 - Do not add a new `code_v3` glyph column or any `MushafWordLayout` schema field.
 - Do not change `MUSHAF_EDITION_IDS` order without checking the Settings list and any thumbnail/preview ordering.
+- Do not collapse `DEFAULT_MUSHAF_ID`, `PRECACHE_MUSHAF_ID`, `CANONICAL_PAGE_MUSHAF_ID`, and `SEEDED_WORDS_MUSHAF_ID` into one constant.
+- Do not remove QCF V2 (1421H) from `MUSHAF_EDITIONS` or `MUSHAF_EDITION_IDS`.
+- Do not bump `PAGES_CACHE_VERSION`.
 
 ## Decisions Made
 
 - **One PR, one destructive reseed.** (User, planning.)
 - **Fonts sourced from the local `quran.com-frontend-next-testing` V2 WOFF2 set** — pre-converted, verified same provenance as our V1 set. No TTF→WOFF2 step needed.
-- **QCF V2 is the reader default, but not the offline/precache default.** `PRECACHE_MUSHAF_ID = 2`. New PWA users' mandatory download is unchanged; V2 offline is opt-in. (User, planning — "Default edition V2, precache stays V1".)
+- **Reader default reverted to QCF V1 (Issue #709)**: Following initial rollout, `DEFAULT_MUSHAF_ID` reverted from 1 back to 2 (QCF V1) to match `PRECACHE_MUSHAF_ID` (2) and fix first-run offline mismatch. QCF V2 remains available as an opt-in edition in Settings.
 - **Add a Settings/gate nudge** for V2 users about the separate offline download. (User, planning.)
 - **New ADR (0066)** rather than amending 0033 + 0014. (User, planning.)
 - **`Word` mirror + canonical mark edition + `CANONICAL_PAGE_MUSHAF_ID` stay mushaf 2** — marks canonicalize via the per-word `Word.page_number` in the JSON (works today for tajweed's identical divergence); plan page-ranges pin to `CANONICAL_PAGE_MUSHAF_ID` so a saved "page N" keeps its verses.
 - **QCF V2 page boundaries ≠ QCF V1** — QCF V2 diverges from V1 on the same 56 verses / 361 words as the tajweed edition (my spike's "0 diffs" was a buggy comparison). Correction folded into ADR 0066 / rendering.md before implementation.
 - **Line grouping is mushaf 1's own** (pages 77/342/555 ≈ 50% one-line shift vs tajweed; most pages 0–3%) — mushaf 1 fetches its own layout with `mushaf=1`.
 - **QCF V2 = the tajweed glyph family minus colour** (user, 2026-09-08) — so it takes the Tajweed compact font-size treatment (`.fq-mushaf-v2`), not V1's sizing. Measured V2 lines are ~10% wider per em than V1; shipping V2 with `usesColorGlyphs:false` and nothing else clipped every line. The colour-palette CSS stays tajweed-only.
+
+## Revision History
+
+- 2026-09-26 (#709): Folded Addendum 1 — Reverted `DEFAULT_MUSHAF_ID` to QCF V1 (2) to align with `PRECACHE_MUSHAF_ID` (2) and fix first-run offline mismatch (**supersedes #601's decision to promote QCF V2 to reader default**).
+

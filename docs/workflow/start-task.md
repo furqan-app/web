@@ -41,9 +41,11 @@ Context-aware implementation of a planned task. Loads the right context (decisio
 - Follow the relevant standards strictly, and honor every ADR and every `Constraints` / `What NOT to Do` item you loaded — do not undo a documented decision as a side effect of the change.
 - Apply the decisions you loaded from `docs/architecture/decisions/` — do not re-litigate them.
 - Run lint and type check after making changes: `npm run lint` and check for TypeScript errors (`npx tsc --noEmit`).
-- **Do NOT run full test suites or local E2E by default** — running tests locally consumes significant time and system resources, and GitHub Actions CI already enforces `lint`, `type-check`, `npm test` (Vitest), and Playwright E2E on PRs. Only run tests locally when there is a specific need:
-  - **Targeted Unit Tests:** Only run targeted tests (`npx vitest run <path/to/test>`) when authoring or modifying pure business logic, calculations, or utilities that have corresponding unit tests. Never run unit tests for UI/CSS, layout, copy, translation, config, or docs changes.
-  - **Local E2E:** Never run locally unless explicitly requested by the user or when authoring/updating an E2E spec itself (`npx playwright test e2e/tests/<spec>.spec.ts --project=desktop` against `npm run e2e:serve`).
+- **Author automated tests for every functional change or bug fix:** Never consider an implementation complete without tests that prove the change works and guard against regressions.
+  - **Unit / Functional Tests (`Vitest`):** For business logic, utilities, calculations, data transformations, hooks, or components. Write tests in `<module>.test.ts(x)` asserting expected behaviors and edge cases. Run targeted tests locally to verify: `npx vitest run <path/to/test>`.
+  - **E2E Tests (`Playwright`):** For user-facing flows, routes, persistent settings, reader layout invariants, and browser integrations. Add or update specs under `e2e/tests/<spec>.spec.ts` and run targeted locally against `npm run e2e:serve`: `npx playwright test e2e/tests/<spec>.spec.ts --project=desktop`.
+  - **Zero new tests is an exception:** Omitting tests is allowed only when changes are strictly limited to documentation, translation strings, styling token swaps, or static config without logic. If no tests are added, explicitly justify why in the completion report.
+- **Do NOT run full test suites or local E2E by default** — running full test suites locally consumes significant time and system resources, and GitHub Actions CI already enforces `lint`, `type-check`, `npm test` (Vitest), and Playwright E2E on PRs. Only run the newly-authored or relevant targeted test locally (`npx vitest run <path>` or targeted Playwright spec against `npm run e2e:serve`).
 
 ### 5. Post-implementation guardrail check
 
@@ -96,4 +98,5 @@ prerequisite issue. `/ship-fq-task` never runs in that case, so its cleanup neve
 - Do not add features beyond what the plan specifies.
 - Do not add an addendum while the branch is still open — edit the plan in place instead. Addenda are for corrections made when returning to a merged task on a new branch; mid-task they just create reconciliation noise.
 - Do not write documentation with illustrative code blocks when a prose rule captures the constraint fully — one tight sentence beats a code block. Keep a code example only when the exact syntax or shape is the constraint (e.g. an API envelope, a Prisma field name, a non-obvious import path).
+- Do not consider implementation complete without authoring automated tests (unit/functional or e2e) that prove the fix or feature works as intended, unless explicitly exempt (docs/translations/styling tokens).
 - Do not run test suites or local E2E by default — do not run full `npm test` on non-logic changes (UI, styles, copy, config), and never spin up local E2E (`e2e:serve` / Playwright) unless specifically working on an E2E spec or requested by the user. Rely on CI for PR regression testing.
