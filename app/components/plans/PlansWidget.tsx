@@ -547,6 +547,7 @@ export const PlansWidget = () => {
                       planId={plan.planId}
                       planName={plan.name}
                       assignment={assignment}
+                      onNavigate={() => setSheetOpen(false)}
                       onToggle={() =>
                         assignment.completed
                           ? uncheckOff.mutate({

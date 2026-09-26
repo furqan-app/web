@@ -18,6 +18,7 @@ import { formatVerseRange } from "@/app/lib/plans/ui-helpers";
 import { useSession } from "next-auth/react";
 import { getLocalDateString } from "@/app/server/actions/plans";
 import { isAutoWritten, clearAutoWritten } from "@/app/lib/plans/auto-write-log";
+import { useReaderNavigation, handleReaderJump } from "@/app/contexts/ReaderNavigationContext";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -29,6 +30,8 @@ type Props = {
   onToggle: () => void;
   isPending: boolean;
   disabled: boolean;
+  /** Optional callback fired when navigating to an assignment's page (e.g. to close a parent sheet). */
+  onNavigate?: () => void;
 };
 
 const formatRange = (start: number, end: number, locale: string) =>
@@ -46,9 +49,11 @@ export const PlanAssignmentRow = ({
   onToggle,
   isPending,
   disabled,
+  onNavigate,
 }: Props) => {
   const t = useTranslations();
   const locale = useLocale();
+  const { jumpTo } = useReaderNavigation();
   const { activeOverride, status, play, togglePlayPause } = useRecitation();
   const { data: session } = useSession();
   const userId = (session?.user as { id?: number } | undefined)?.id;
@@ -272,7 +277,17 @@ export const PlanAssignmentRow = ({
         // Not yet resolvable to a real page (verse index still loading/
         // errored) — render inert rather than link to a guessed page.
         return linkReady ? (
-          <Link href={`/pages/${linkPage}`} locale={locale} className="flex items-center gap-3 flex-1 min-w-0">
+          <Link
+            href={`/pages/${linkPage}`}
+            locale={locale}
+            onClick={(e) => {
+              if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                onNavigate?.();
+              }
+              handleReaderJump(e, jumpTo, linkPage!);
+            }}
+            className="flex items-center gap-3 flex-1 min-w-0"
+          >
             {content}
           </Link>
         ) : (

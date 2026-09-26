@@ -8,27 +8,11 @@ import {
   getTopOverlayGuard,
   removeOverlayGuard,
 } from "@/app/utils/overlay-back-guard";
-
-interface FQNavigateEvent extends Event {
-  navigationType: "push" | "replace" | "reload" | "traverse";
-  userInitiated: boolean;
-  intercept: () => void;
-}
-
-// Minimal structural type for the Navigation API surface this hook uses.
-// TypeScript's DOM lib does not ship one yet, and `window.navigation` is
-// absent on the browsers the popstate fallback below exists for — so the
-// property is optional and every read is guarded.
-interface FQNavigation {
-  currentEntry?: { key?: string };
-  addEventListener: (type: "navigate", listener: (e: FQNavigateEvent) => void) => void;
-  removeEventListener: (type: "navigate", listener: (e: FQNavigateEvent) => void) => void;
-}
-
-const getNavigation = (): FQNavigation | undefined =>
-  typeof window === "undefined"
-    ? undefined
-    : (window as Window & { navigation?: FQNavigation }).navigation;
+import {
+  type FQNavigateEvent,
+  getNavigation,
+  supportsNavigationApi,
+} from "@/app/utils/navigation-api";
 
 // A FRESH object per push, never a shared constant — same reasoning as
 // AndroidBackExitGuard's guardState() (ADR 0040's 2026-08-14 addendum). Also
@@ -40,12 +24,6 @@ const overlayGuardState = () => ({
   fqOverlayGuard: true,
   fqOverlayGuardId: ++nextOverlayGuardId,
 });
-
-// True on browsers where the Navigation API's `navigate` event + `intercept()`
-// can be used to preempt the browser's default navigation instead of only
-// reacting to it after the fact via `popstate` — see ADR 0045.
-const supportsNavigationApi = () =>
-  typeof getNavigation()?.addEventListener === "function";
 
 // How long to keep listening, after intercepting the closing `traverse`, for
 // a follow-up `reload` navigation the same gesture can trigger (observed
