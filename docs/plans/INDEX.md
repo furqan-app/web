@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-112 active plans.
+113 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -101,6 +101,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | rendering | [Safha Ribbon Indicator](safha-ribbon-indicator.md) | implemented | feature |
 | search | [Dedicated Search Results Page with Infinite Scroll](search-results-page.md) | implemented | feature |
 | search | [Fix Search Debounce Lag](fix-search-debounce-lag.md) | implemented | bug |
+| search | [Fix search sheet blank space with soft keyboard in the native shell](fix-search-sheet-keyboard-geometry.md) | implemented | bug |
 | search | [Offline Quran Search Foundation (Index, Offline Engine, Paginated API)](search-foundation.md) | implemented | feature |
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
