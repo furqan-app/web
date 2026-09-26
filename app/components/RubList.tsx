@@ -9,7 +9,7 @@ import { toLocaleNumeral } from "@/app/utils/i18n";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
 import { useVersePages } from "@hooks/use-verse-pages";
 import { useSidebar } from "@/app/contexts/SidebarContext";
-import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { useReaderNavigation, handleReaderJump } from "@/app/contexts/ReaderNavigationContext";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -106,10 +106,7 @@ const RubList = ({ rubs, surahs, currentRubId, filteredRubs }: Props) => {
                 data-rub-id={rub.id}
                 onClick={(e) => {
                   setOpen(false);
-                  // Same client-side handoff as SurahListItem — see there.
-                  if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                  e.preventDefault();
-                  jumpTo(pageOfVerse(rub.startVerse));
+                  handleReaderJump(e, jumpTo, pageOfVerse(rub.startVerse));
                 }}
                 className={cn(
                   "flex items-center gap-3 px-4 py-[13px] border-b border-border transition-colors",

@@ -6,7 +6,7 @@ import { BookOpen, FileText, Search, SearchX, X } from "lucide-react";
 import { Link, useRouter } from "@/i18n/routing";
 import { SurahResult } from "@types";
 import { useReaderBasePath } from "@hooks/use-reader-base-path";
-import { useReaderNavigation } from "@contexts/ReaderNavigationContext";
+import { useReaderNavigation, handleReaderJump } from "@contexts/ReaderNavigationContext";
 import { useVersePages } from "@hooks/use-verse-pages";
 import { useJuzStarts } from "@hooks/use-juz-starts";
 import {
@@ -171,15 +171,12 @@ export const HomeSearch = ({ surahs, query, onQueryChange }: Props) => {
                     locale={locale}
                     aria-disabled={page === null}
                     onClick={(e) => {
-                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
                       // Juz data still loading — inert rather than wrong.
                       if (page === null) {
                         e.preventDefault();
                         return;
                       }
-                      if (!jumpTo) return;
-                      e.preventDefault();
-                      jumpTo(page);
+                      handleReaderJump(e, jumpTo, page);
                     }}
                     className="fq-focus-ring flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-card hover:border-primary/50 transition-colors duration-150 text-sm text-foreground"
                   >
