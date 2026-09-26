@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-110 active plans.
+111 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -60,8 +60,8 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
 | pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | ready-to-implement | feature |
- | pwa | [Auth return fails silently in shell — route failed exchanges to the retry UI](auth-audible-failure.md) | implemented | bug |
- | pwa | [Auth return lands before the session cookie commits — verify session before landing](auth-session-race.md) | implemented | bug |
+| pwa | [Auth return fails silently in shell — route failed exchanges to the retry UI](auth-audible-failure.md) | implemented | bug |
+| pwa | [Auth return lands before the session cookie commits — verify session before landing](auth-session-race.md) | implemented | bug |
 | pwa | [Auth return lost on cold start — consume the launch URL on listener mount](auth-coldstart-launch-url.md) | implemented | bug |
 | pwa | [Capacitor Android: Close overlays on back and exit app via App.exitApp() on double-back in reader](capacitor-android-back-exit.md) | implemented | bug |
 | pwa | [Capacitor Cold Launch — Route Entry Through launch.html to Resume Last-Read Page](capacitor-cold-launch-resume.md) | implemented | bug |
@@ -92,7 +92,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | recitation | [Recitation: Quick Playback Speed Selector on Player Bar & Vertical Rail](387-recitation-quick-playback-speed.md) | implemented | feature |
 | release | [Protect prod Branch: Enforce Merges from release/* Only](protect-prod-branch.md) | implemented | feature |
 | release | [Release-Branch Deployment Workflow](release-branch-workflow.md) | implemented | feature |
-| rendering | [Add QCF V2 (Madani, 1421H) mushaf edition and make it the default](qcf-v2-mushaf-edition.md) | implemented | feature |
+| rendering | [Add QCF V2 (Madani, 1421H) mushaf edition and keep QCF V1 as default](qcf-v2-mushaf-edition.md) | implemented | feature |
 | rendering | [Add Tajweed color-coded mushaf mode](tajweed-mushaf-mode.md) | implemented | feature |
 | rendering | [Fix Tajweed Mushaf Font Size to Match Regular Mushaf](fix-tajweed-font-size.md) | implemented | bug |
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |

@@ -135,6 +135,6 @@ Apply on every task, scoped to the domains actually touched.
 - Don't add error handling for states that can't occur here (e.g. re-validating what middleware already guarantees) — validate only at real boundaries.
 
 **Testing & verification**
-- Do not run full test suites or local E2E by default (CI runs lint, type-check, unit tests, and Playwright automatically on PRs).
-- Run targeted unit tests (`npx vitest run <file>`) only when adding or modifying pure business logic, calculations, or utilities that have unit tests.
-- Never run uncapped full-suite Playwright commands locally; local E2E is reserved for when specifically working on E2E specs or requested by the user, run targeted against `npm run e2e:serve` (never `next dev`).
+- Every functional change or bug fix must author automated tests (Vitest unit/functional or Playwright E2E) that cover the change and prevent regressions. Zero new tests is acceptable only for changes strictly limited to docs, translations, styling tokens, or config without logic.
+- Run targeted tests locally to verify the new test passes (`npx vitest run <file>` or `npx playwright test e2e/tests/<spec>.spec.ts --project=desktop` against `npm run e2e:serve`).
+- Do not run full test suites or uncapped full-suite Playwright commands locally by default — CI runs full lint, type-check, unit tests, and Playwright automatically on PRs.

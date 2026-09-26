@@ -1,7 +1,7 @@
 ---
 name: review-fq-work
 description: >-
-  Quality gate for the current branch. Spawns a review subagent (model of your choice — Opus by default) to review the branch diff vs main across three dimensions: bugs and correctness, code quality and duplication, and plan consistency (stale docs/plans).
+  Quality gate for the current branch. Spawns a review subagent (model of your choice — Opus by default) to review the branch diff vs main across four dimensions: bugs and correctness, code quality and duplication, plan consistency (stale docs/plans), and test coverage.
 ---
 
 # /review-fq-work
@@ -87,7 +87,7 @@ Spawn an Agent with `model` set to the chosen model (see "Choosing the review mo
 
 **Subagent prompt:**
 
-You are a senior code reviewer. Review the following branch diff across three dimensions and report findings grouped by dimension, numbered sequentially across all dimensions (1, 2, 3, ... — do not restart the count per dimension). For each finding include: file + line, severity (critical / warning / note), and a one-sentence explanation. Be specific — no generic advice.
+You are a senior code reviewer. Review the following branch diff across four dimensions and report findings grouped by dimension, numbered sequentially across all dimensions (1, 2, 3, ... — do not restart the count per dimension). For each finding include: file + line, severity (critical / warning / note), and a one-sentence explanation. Be specific — no generic advice.
 
 **Dimension 1 — Bugs & Correctness**
 - Logic errors, off-by-one errors, null/undefined risks
@@ -107,6 +107,12 @@ You are a senior code reviewer. Review the following branch diff across three di
 - Are there any `docs/plans/` files that should now be marked `implemented` but aren't?
 - Does anything contradict `docs/architecture/DECISIONS.md`'s invariants or a `docs/architecture/decisions/*.md` entry for a touched domain?
 
+**Dimension 4 — Test Coverage & Verification**
+- Does the diff include automated tests (Vitest unit/functional tests or Playwright E2E tests) covering the new behavior, bug fix, or edge cases?
+- If the change modifies logic, calculations, state, or user-facing behavior and has no accompanying test, flag it as a finding (severity: warning or critical).
+- Are the new tests genuine assertions of the expected behavior, or are they superficial/tautological?
+- Do existing tests still pass, or were any assertions relaxed or deleted without justification?
+
 If a dimension has no findings, say "No issues found." Do not pad with filler observations. Number findings within each dimension (1., 2., 3., ...), continuing the count across dimensions rather than restarting at 1 for each one, so every finding has a stable reference number for follow-up discussion.
 
 ---
@@ -125,9 +131,12 @@ Output the subagent's findings directly to the terminal, structured as:
 
 ── Plan Consistency ────────────────────────────
 4. [finding] (or "No issues found.")
+
+── Test Coverage & Verification ────────────────
+5. [finding] (or "No issues found.")
 ```
 
-Numbering continues across all three dimensions (do not restart at 1 per section). Do not summarize or editorialize beyond the subagent's report.
+Numbering continues across all four dimensions (do not restart at 1 per section). Do not summarize or editorialize beyond the subagent's report.
 
 ## Anti-patterns to avoid
 

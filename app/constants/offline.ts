@@ -10,9 +10,9 @@ import { QCF_V1_MUSHAF_ID, getMushafEdition } from "@utils/mushaf-editions";
 
 // The edition the consent-gated first-run gate / post-install prompt download,
 // and the one the SW's reader-HTML-miss probe falls back to. Independent of
-// DEFAULT_MUSHAF_ID (ADR 0066): QCF V2 became the reader default while its font
-// set is ~2x QCF V1's, and doubling every installed user's mandatory first-run
-// transfer would blow the iOS Cache Storage headroom ADR 0014 is built around.
+// DEFAULT_MUSHAF_ID (ADR 0066): both are QCF V1 (mushaf 2) following Issue #709,
+// but they remain decoupled so a future default change does not blow the iOS
+// Cache Storage headroom ADR 0014 is built around (QCF V2's font set is ~2x QCF V1's).
 // A user who wants QCF V2 offline downloads it explicitly from the Settings
 // "Mushaf Layout" list (ADR 0014 Addendum 5). Do not point any first-run /
 // install-prompt surface at DEFAULT_MUSHAF_ID.

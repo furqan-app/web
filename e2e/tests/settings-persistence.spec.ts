@@ -204,8 +204,7 @@ test.describe("Mushaf Layout Edition Selection", () => {
     await expect(tajweedRow.locator('[data-state="checked"]')).toBeVisible();
 
     // 2. Switch to QCF V1 (ID 2). Its "1405H print" year disambiguates it from
-    // the QCF V2 (ID 1, the reader default) row, which shares the
-    // "مجمع الملك فهد" name prefix (ADR 0066).
+    // the QCF V2 (ID 1) row, which shares the "مجمع الملك فهد" name prefix.
     const v1Row = sheet
       .locator(".fq-section-drawer .fq-section-drawer-row")
       .filter({ hasText: /١٤٠٥|1405/ });
@@ -217,6 +216,26 @@ test.describe("Mushaf Layout Edition Selection", () => {
     // Re-expand to verify checked radio indicator
     await mushafTrigger.click();
     await expect(v1Row.locator('[data-state="checked"]')).toBeVisible();
+  });
+
+  test("renders QCF V1 (1405H) by default on clean launch and shows it as active in settings", async ({
+    page,
+  }) => {
+    const sheet = await openSettings(page);
+    const mushafTrigger = sheet.locator("button").filter({ hasText: /تخطيط المصحف|Mushaf Layout/ });
+    await mushafTrigger.click();
+
+    // QCF V1 (1405H) row must be active by default (ADR 0066, Issue #709)
+    const v1Row = sheet
+      .locator(".fq-section-drawer .fq-section-drawer-row")
+      .filter({ hasText: /١٤٠٥|1405/ });
+    await expect(v1Row.locator('[data-state="checked"]')).toBeVisible();
+
+    // QCF V2 (1421H) row must NOT be checked
+    const v2Row = sheet
+      .locator(".fq-section-drawer .fq-section-drawer-row")
+      .filter({ hasText: /١٤٢١|1421/ });
+    await expect(v2Row.locator('[data-state="checked"]')).not.toBeVisible();
   });
 
   test("persists Mushaf edition across page reload", async ({ page }) => {

@@ -68,14 +68,12 @@ export const CANONICAL_PAGE_MUSHAF_ID = QCF_V1_MUSHAF_ID;
  * precache (`PRECACHE_MUSHAF_ID` in `app/constants/offline.ts`), each of which
  * stays on QCF V1.
  *
- * QCF V2 does NOT share QCF V1's page boundaries — it diverges on the same 56
- * verses / 361 words as the tajweed edition. Marks and plan ranges survive the
- * move anyway because they resolve against `CANONICAL_PAGE_MUSHAF_ID` (marks via
- * the per-word `Word.page_number` mirror carried in the static JSON), never the
- * displayed page. Collapsing any of the four constants back into this one would
- * silently shift stored marks and plan ranges — do not.
+ * Reverted to QCF V1 (Issue #709) to align with `PRECACHE_MUSHAF_ID` so new
+ * users do not experience font mismatches or offline load failures.
+ * Collapsing any of the four constants back into this one would silently shift
+ * stored marks and plan ranges — do not.
  */
-export const DEFAULT_MUSHAF_ID = QCF_V2_MUSHAF_ID;
+export const DEFAULT_MUSHAF_ID = QCF_V1_MUSHAF_ID;
 
 export const MUSHAF_EDITIONS: Record<number, MushafEdition> = {
   [QCF_V1_MUSHAF_ID]: {
