@@ -70,7 +70,17 @@ describe("NativeAuthReturnListener", () => {
       url: hrefFor("coldstart-code"),
     });
     mockApp.addListener.mockResolvedValueOnce({ remove: vi.fn() });
-    const fetchSpy = vi.fn().mockResolvedValue(htmlOk());
+    const fetchSpy = vi.fn((url: unknown) => {
+      if (typeof url === "string" && url.includes("/api/auth/session")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ user: { id: 7 } }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(htmlOk());
+    });
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
 
     let renderer: ReturnType<typeof create> | undefined;
@@ -78,8 +88,9 @@ describe("NativeAuthReturnListener", () => {
       renderer = create(<NativeAuthReturnListener />);
     });
 
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
     expect(fetchSpy.mock.calls[0]?.[0]).toBe("/api/auth/native-bootstrap");
+    expect(fetchSpy.mock.calls[1]?.[0]).toBe("/api/auth/session");
     expect(assign).toHaveBeenCalledWith("/ar/pages/300");
     renderer?.unmount();
   });
