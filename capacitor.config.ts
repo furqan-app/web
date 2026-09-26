@@ -57,14 +57,6 @@ const config: CapacitorConfig = {
     cleartext: !serverOrigin.startsWith("https://"),
     androidScheme: "https",
   },
-  plugins: {
-    SystemBars: {
-      // Style "DARK" ensures light system bar content (white text/icons) on Furqan's
-      // dark navy background (#16232F). insetsHandling "native" aligns with native shell padding.
-      style: "DARK",
-      insetsHandling: "native",
-    },
-  },
 };
 
 export default config;

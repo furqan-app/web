@@ -70,7 +70,17 @@ describe("NativeAuthReturnListener", () => {
       url: hrefFor("coldstart-code"),
     });
     mockApp.addListener.mockResolvedValueOnce({ remove: vi.fn() });
-    const fetchSpy = vi.fn().mockResolvedValue(htmlOk());
+    const fetchSpy = vi.fn((url: unknown) => {
+      if (typeof url === "string" && url.includes("/api/auth/session")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ user: { id: 7 } }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(htmlOk());
+    });
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
 
     let renderer: ReturnType<typeof create> | undefined;
@@ -78,8 +88,9 @@ describe("NativeAuthReturnListener", () => {
       renderer = create(<NativeAuthReturnListener />);
     });
 
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
     expect(fetchSpy.mock.calls[0]?.[0]).toBe("/api/auth/native-bootstrap");
+    expect(fetchSpy.mock.calls[1]?.[0]).toBe("/api/auth/session");
     expect(assign).toHaveBeenCalledWith("/ar/pages/300");
     renderer?.unmount();
   });
@@ -103,5 +114,49 @@ describe("NativeAuthReturnListener", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
     renderer?.unmount();
     expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("routes a failed exchange with a code to the retry-owning page", async () => {
+    stubShellWindow();
+    const href = hrefFor("spent-code");
+    mockApp.getLaunchUrl.mockResolvedValueOnce({ url: href });
+    mockApp.addListener.mockResolvedValueOnce({ remove: vi.fn() });
+    // Envelope error (HTTP 200 per jsonResponse): spend fails.
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ code: 401 }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    ) as unknown as typeof fetch;
+
+    let renderer: ReturnType<typeof create> | undefined;
+    await act(async () => {
+      renderer = create(<NativeAuthReturnListener />);
+    });
+
+    // The bootstrap page at this URL owns the retry UI — the listener must
+    // not strand the user on a silent unsigned-in home (#702).
+    expect(assign).toHaveBeenCalledWith(href);
+    renderer?.unmount();
+  });
+
+  it("stays silent when the failing URL carries no code", async () => {
+    stubShellWindow();
+    mockApp.getLaunchUrl.mockResolvedValueOnce({
+      url: "https://furqan.taha7.com/ar/pages/300",
+    });
+    mockApp.addListener.mockResolvedValueOnce({ remove: vi.fn() });
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+
+    let renderer: ReturnType<typeof create> | undefined;
+    await act(async () => {
+      renderer = create(<NativeAuthReturnListener />);
+    });
+
+    // Plain deep link: nothing promised, nothing to say.
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
+    renderer?.unmount();
   });
 });

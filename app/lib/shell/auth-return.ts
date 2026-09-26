@@ -170,8 +170,46 @@ async function spendCode(code: string, clean: string): Promise<boolean> {
     return false;
   }
   spentCodes.set(code, clean);
+  // Cookie-commit race (#705): Set-Cookie from the fetch commits
+  // asynchronously, and an immediate navigation can outrun it — the landing
+  // page then reads signed-out despite a set cookie. Prove the session is
+  // visible before landing; fall back to immediate landing on exhaustion
+  // (never worse than today — a later refetch still heals).
+  await waitForSession();
   window.location.assign(clean);
   return true;
+}
+
+type SessionBody = { user?: unknown } | null;
+
+async function readSessionUser(): Promise<boolean> {
+  try {
+    const response = await fetch("/api/auth/session");
+    if (!response.ok) {
+      return false;
+    }
+    const body = (await response.json().catch(() => null)) as SessionBody;
+    return body?.user !== undefined && body?.user !== null;
+  } catch {
+    return false;
+  }
+}
+
+const SESSION_POLL_TRIES = 6;
+const SESSION_POLL_GAP_MS = 800;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+async function waitForSession(): Promise<void> {
+  for (let attempt = 0; attempt < SESSION_POLL_TRIES; attempt += 1) {
+    if (await readSessionUser()) {
+      return;
+    }
+    await sleep(SESSION_POLL_GAP_MS);
+  }
 }
 
 export function readMintCode(body: unknown): string | null {

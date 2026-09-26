@@ -14,10 +14,14 @@ adr: [0055, 0045]
 
 In the installed mobile/tablet PWA (Android and iOS), swiping back while an overlay is open — the
 nav menu (`NavOverflowMenu`), settings sidebar (`SettingsSidebar`), surah sidebar
-(`app/components/nav/Sidebar.tsx`), mark modal (`MarkModal`), or recitation settings sheet
-(`RecitationSettingsSheet`) — navigates the underlying page instead of closing the overlay. A second
+(`app/components/nav/Sidebar.tsx`), mark modal (`MarkModal`), recitation settings sheet
+(`RecitationSettingsSheet`), or search overlay (`SearchBar`, added 2026-09-25 — it postdated the
+original list via `desktop-navbar-font-bg.md` and was the only modal `Sheet` never wired to the
+guard) — navigates the underlying page instead of closing the overlay. A second
 back-swipe is needed to actually get rid of it. Fix: the first back-swipe closes the overlay; the
 next one behaves normally (real navigation, or the reader's existing exit-toast on Android).
+In the Capacitor shell the same guard covers the native back press: `NativeBackButtonListener`
+delegates armed overlays via `window.history.back()` (#682), so no separate native bridge was needed.
 
 Desktop installed PWA is explicitly out of scope (user-confirmed) — matches
 `AndroidBackExitGuard`'s existing `!isDesktopUp` gate.
@@ -39,7 +43,12 @@ Four of the five overlays (`MarkModal`, the surah `Sidebar`, `NavOverflowMenu`,
 `RecitationSettingsSheet`) can be open on a reader page (`/pages/...`) at the same time
 `AndroidBackExitGuard` (ADR 0040) is mounted there, already pushing its own history guard entry and
 listening globally for `popstate` to drive the Android "press back again to exit" flow. Any
-independent per-overlay history push/listener would race with it on the same event.
+independent per-overlay history push/listener would race with it on the same event. The same held
+for `SearchBar` when it was wired later (#698): with no guard entry of its own, a back press popped
+`AndroidBackExitGuard`'s entry instead, which saw `isOverlayBackGuardArmed() === false`, re-pushed +
+showed the exit toast, leaving search open with no navigation — fixed with the identical one-line
+hook contract plus `notifyNavigating()` on its three `<Link>` exits (result rows + "View all"
+footer), the same `#313`/`#321` race the surah Sidebar needed.
 
 Investigation also confirmed every one of the five overlays is a **modal** Radix `Dialog`/`Sheet` —
 it blocks interaction with anything behind it — and `NavOverflowMenu` explicitly closes itself before
@@ -65,7 +74,8 @@ on top" from "a sibling's entry, which has the identical shape, is on top instea
 
 ## Decision Tree / Algorithm
 
-**Platform gate** (shared by all five overlays, via the new `useCloseOnBackGesture` hook):
+**Platform gate** (shared by all guarded overlays — the original five plus `SearchBar`, `TafsirSheet`,
+`OfflineTafsirSheet`, `OfflineRecitationSheet`, and the `AyahPicker` inline sub-layer — via the new `useCloseOnBackGesture` hook):
 
 | Condition | Guard active? |
 |---|---|
@@ -143,6 +153,25 @@ Walked through with the user (2026-08-15):
     before the fix (reproduced: opened then instantly closed) and after (stays open, confirmed stable,
     and a following back-swipe closes it correctly).
 
+Walked through by code trace + user confirmation (2026-09-25, #698 — search overlay; device pass is
+an implement-time gate, the Navigation-API branch can't be exercised from a local dev server):
+
+11. Android standalone reader, open search → back → search closes, no exit toast; back again →
+    exit toast appears.
+12. iOS standalone, open search → back → search closes (no exit guard on iOS — overlay listener is
+    the only one).
+13. Home (no exit guard mounted), open search → back → search closes; next back does real navigation.
+14. Search open → tap X / backdrop / Escape → closes cleanly; following back does the real prior
+    navigation, not a no-op (echo `history.back()` + swallow).
+15. Search open → tap a verse result → navigates to `/{locale}/pages/{n}?highlight=…`, search
+    closes, navigation not cancelled (orphan-guard outcome from case 5).
+16. Search open → tap "View all results" → navigates to `/{locale}/search?q=…` (offline:
+    `hardNavigateIfOffline` hard-nav path preserved), search closes, same orphan outcome.
+17. Capacitor shell (Android WebView, `androidScheme: https` hosted URL): same as 11 —
+    `NativeBackButtonListener` sees the armed guard and calls `history.back()`; no separate native
+    bridge needed for this fix.
+18. Desktop / browser tab: guard inactive, unchanged.
+
 ## Files to Change
 
 - `app/utils/overlay-back-guard.ts` — **new**. Module-level armed counter:
@@ -174,6 +203,15 @@ Walked through with the user (2026-08-15):
   guard independently via its own component.
 - `app/components/RecitationSettingsSheet.tsx` — `useCloseOnBackGesture(isSettingsOpen,
   closeSettings)`, both from `useRecitation()` (`RecitationContext.tsx`).
+- `app/components/search/SearchBar.tsx` (#698) — `useCloseOnBackGesture(open, () => setOpen(false))`;
+  capture `{ notifyNavigating }` and wire it synchronously before every `setOpen(false)` that
+  accompanies a `<Link>` navigation (result rows via `SearchQueryResults` `onNavigate`, "View all"
+  footer `onClick`). X/backdrop/Escape paths keep plain `setOpen(false)` with no `notifyNavigating`.
+- `app/components/search/SearchQueryResults.tsx` (#698) — optional `notifyNavigating?: () => void`
+  prop plus a `closeForNavigation()` wrapper calling it synchronously before `setIsOpen(false)` for
+  both row types (same shape as `SurahListItem`); the full-results page's direct row usage passes
+  nothing and stays untouched. `SearchResultRows.tsx` needed no change — rows already forward
+  `onNavigate` with the click event.
 - `docs/architecture/adr/0055-overlay-close-on-back-gesture.md` — new; `docs/architecture/adr/0045-navigation-api-for-overlay-close-guard.md` — new (+ its own Addendum for #418).
 - `docs/architecture/DECISIONS.md` — new "Overlay close-on-back-gesture" entry under "App Launch & Back Navigation (Android PWA)".
 
@@ -197,7 +235,9 @@ Walked through with the user (2026-08-15):
   Checking synchronously, or checking shape only, both reintroduce the same-commit race where one
   overlay's cleanup pops a sibling overlay's freshly-pushed entry instead of its own.
 - **Navigation API branch:** use `event.intercept()`, never `event.preventDefault()` (the latter leaves the guard entry in place, so the microtask cleanup's `history.back()` pops it a second time). Keep the `popstate` fallback — Navigation API support is not universal (iOS < 26.2). The `navigate` listener fires for *every* navigation including this hook's own `pushState` — filter to `traverse` + matching `currentEntry.key`, or `reload` within `RELOAD_WATCH_MS`, or the overlay closes itself the instant it opens. Disarm must be idempotent and deferred past the current event dispatch (not inside the synchronous `navigate` handler) so `AndroidBackExitGuard` reliably sees the guard as armed whether or not `popstate` also fires. The echo-path reload-watch listener must survive the effect's own cleanup (an `awaitingReload` first-line check), and only ever match `navigationType === "reload"` with `!userInitiated`. Do not arm the watch on the "entry no longer on top" branch.
-- **`notifyNavigating()` must be called synchronously, before `setOpen(false)`** — its ref must read `true` by the time the cleanup effect's check runs. Do not modify `use-close-on-back-gesture.ts`'s `notifyNavigating` (shipped for #313, correct as-is). Do not reintroduce a `setTimeout`/`rAF` defer in `SurahListItem`.
+- **`notifyNavigating()` must be called synchronously, before `setOpen(false)`** — its ref must read `true` by the time the cleanup effect's check runs. Do not modify `use-close-on-back-gesture.ts`'s `notifyNavigating` (shipped for #313, correct as-is). Do not reintroduce a `setTimeout`/`rAF` defer in `SurahListItem`. Applies equally to search's three link exits (result rows + "View all" footer, #698).
+- Preserve the search footer contract (#698): the offline `hardNavigateIfOffline` branch and the grant-aware `toSearchPath` derivation (ADR 0012) — the back-guard wiring must not reorder or swallow them.
+- Capacitor presses already delegate through `handleNativeBackButton` (#682) — do not add a second native bridge; dynamically import `@capacitor/app` only, never in the static web bundle path (this change adds no Capacitor import at all).
 
 ## What NOT to Do
 
@@ -216,9 +256,10 @@ Walked through with the user (2026-08-15):
   exercised by any current call site, out of scope.
 - Do not attempt to fix the reload flash by changing timing/ordering within the `popstate` handler (running it earlier, `stopImmediatePropagation`) — the browser's default navigation is already underway before any `popstate` listener runs.
 - Do not switch to the Navigation API unconditionally without the `popstate` fallback — regresses overlay-close-on-back for iOS < 26.2.
-- Do not touch `AndroidBackExitGuard.tsx` / `overlay-back-guard.ts` for any of the Navigation-API / reload / #321 / #418 work — isolated on-device testing confirmed the exit guard doesn't exhibit these bugs.
+- Do not touch `AndroidBackExitGuard.tsx` / `overlay-back-guard.ts` for any of the Navigation-API / reload / #321 / #418 work — isolated on-device testing confirmed the exit guard doesn't exhibit these bugs. Same for #698: `use-close-on-back-gesture.ts`, `back-button.ts`, and `NativeBackButtonListener.tsx` stay untouched — the hook + native delegator are correct as-is.
 - Do not "fix" #418 by skipping the echo `history.back()` — that trades a reload for a permanently growing back-stack.
-- Do not extend the `notifyNavigating` wiring to `RubList`/`ContinueReadingLink` without a matching reported symptom.
+- Do not extend the `notifyNavigating` wiring to `RubList`/`ContinueReadingLink` — or beyond search's three link exits (#698) — without a matching reported symptom.
+- Do not build a parallel Capacitor-native back system (#698) — presses already delegate via the LIFO stack (`getTopOverlayGuard` / `isOverlayBackGuardArmed`); a second system would bypass it with undefined precedence (rejected in `mobile-app-capacitor.md` follow-ups and #682 constraints).
 
 ## Decisions Made
 
@@ -228,10 +269,12 @@ Walked through with the user (2026-08-15):
 - Where the Navigation API exists, intercept the closing `traverse` and the spurious follow-up `reload`; keep the `popstate` guard as the iOS < 26.2 / older-WebView fallback and accept its inability to intercept the reload there (ADR 0045, user-confirmed 2026-08-15).
 - The `#418` echo-path reload arms the *identical* watch as the gesture path — one interception contract for both close paths, minimal diff (user-confirmed 2026-08-24).
 - `#321` is fixed by wiring the already-shipped `notifyNavigating()` from `Sidebar` → `SidebarContext` → `SurahListItem`, superseding this addendum's own first-draft `setTimeout(fn, 0)` defer (written before `#313`'s mechanism was found on main).
+- Scope of the search fix (#698) is the search overlay's back-guard only; the shipped `capacitor-android-back-exit.md` (#682) native bridge stays untouched — this fix rides it. No e2e spec change: no existing harness drives mobile-standalone system-back for search, so cases 11–18 stay a device-gate checklist rather than a new spec. Sweep (2026-09-25, re-verified on `origin/main` @ `1bbb60c8`): `SearchBar.tsx` had no `useCloseOnBackGesture`; `back-button.ts:37` delegates armed overlays via `history.back()` so the guard covers Capacitor once added. No e2e spec asserts search + system-back — no existing test invalidated. No new `GET /api/*` reads (no SW `NetworkOnly` concern). No `useSession()`/`navigator.onLine` derivation beyond the preserved `hardNavigateIfOffline` footer branch.
 
 ## Revision History
 
 - 2026-08-15 — folded Addendum "`popstate` can't stop the browser's own hard reload" (#309, [ADR 0045](../architecture/adr/0045-navigation-api-for-overlay-close-guard.md)). On-device capture showed a real back-swipe closing an overlay fires a clean `traverse` and then a *separate* spurious hard `reload` navigate event (the "loading app logo" flash). `popstate` runs too late to stop either. **Adds a Navigation API branch** (`navigate` + `event.intercept()`) that intercepts the `traverse` (matched by `NavigationHistoryEntry.key`, not custom state) and any follow-up `reload` within 200ms; `popstate`/`pushState` stays as the iOS < 26.2 / older-WebView fallback. `AndroidBackExitGuard` untouched (doesn't reproduce it).
 - 2026-08-16 — folded Addendum "surah Sidebar was missed by the notifyNavigating fix" (#321). `SurahListItem`'s tap (`setOpen(false)` + `jumpTo` → `replaceState` in one handler) raced the microtask cleanup — the same shape #313 fixed for `NavOverflowMenu`'s links, at a call site that fix didn't cover. Fix: wire the already-shipped `notifyNavigating()` from `Sidebar` through `SidebarContext` to `SurahListItem`, called synchronously before `setOpen(false)`. **Supersedes this addendum's own first-draft `setTimeout(fn, 0)` defer.**
 - 2026-08-24 — folded Addendum 3 "the self-close echo path must arm the same reload-watch" (#418). After the browser has hard-reloaded once, every subsequent X/backdrop/Escape close of a guarded overlay triggers the spurious reload — the echo path swallowed its traverse but removed the listener immediately without arming the `awaitingReload` watch. Fix: the echo path arms the identical `awaitingReload` + `RELOAD_WATCH_MS` watch as the gesture path. Popstate fallback still can't intercept a reload (accepted, ADR 0045).
+- 2026-09-25 — folded Addendum 4 "SearchBar overlay missed by the guard" (#698). `SearchBar` postdated the original five-overlay list and never called `useCloseOnBackGesture`, so a back press with search open popped `AndroidBackExitGuard`'s entry instead — re-push + exit toast, search left open, no navigation. Fix: the identical one-line hook contract plus `notifyNavigating()` on its three `<Link>` exits (result rows via a new optional `SearchQueryResults` prop, "View all" footer), preserving the offline `hardNavigateIfOffline` branch and grant-aware `toSearchPath` (ADR 0012). Capacitor needs no separate bridge — `NativeBackButtonListener` (#682) delegates armed overlays via `history.back()`.
 

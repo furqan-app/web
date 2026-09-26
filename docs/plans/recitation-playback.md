@@ -4,7 +4,7 @@ type: feature
 date: 2026-09-23
 status: implemented
 area: recitation
-issue: 379
+issue: 695
 adr: [0021, 0056]
 ---
 
@@ -20,7 +20,7 @@ Playback has **one app-wide lifecycle** ([ADR 0056](../architecture/adr/0056-rec
 
 ### Data + context
 
-QDC (`api.qurancdn.com`) serves one audio file per chapter with per-verse and per-word (`segments`, millisecond) timing. It is **proxied** through internal API routes (our `jsonResponse()` envelope) — never called from the client. The provider layer (`app/lib/recitation/qdc-provider.ts`) is the single place QDC's wire shape is normalized (`Addendum 2` — no registry/factory, one provider). `RecitationContext`, mounted once in `app/[locale]/layout.tsx`, owns the `<audio>` element, the selected reciter (persisted to `localStorage`), play/pause state, the loaded chapter's verse timings, and the practice settings. It survives all client-side navigation because it is mounted above the reader route tree.
+QDC (`api.qurancdn.com`) serves one audio file per chapter with per-verse and per-word (`segments`, millisecond) timing. It is **proxied** through internal API routes (our `jsonResponse()` envelope) — never called from the client. The provider layer (`app/lib/recitation/qdc-provider.ts`) is the single place QDC's wire shape is normalized (`Addendum 2` — no registry/factory, one provider). When mapping `verse_timings`, `qdc-provider.ts` clamps each verse's `timestampTo` to `nextVt.timestamp_from` if `nextVt.timestamp_from < vt.timestamp_to` to eliminate inter-verse overlaps (~10ms in certain reciters like Reciter 10 Sa'ud ash-Shuraim, #695). Defensively, `findActiveVerseTiming` (`app/utils/recitation.ts`) uses `.findLast(...)` so any legacy client/SW cached overlaps resolve to the newer verse starting at `currentTimeMs` rather than preceding verses whose trailing window leaked across. `RecitationContext`, mounted once in `app/[locale]/layout.tsx`, owns the `<audio>` element, the selected reciter (persisted to `localStorage`), play/pause state, the loaded chapter's verse timings, and the practice settings. It survives all client-side navigation because it is mounted above the reader route tree.
 
 ### Word highlight — by attribute, no registry
 
@@ -219,4 +219,4 @@ For `skipToPreviousWord()`:
 - 2026-08-25 — folded Addendum 12 (Issues #390–#394): the settings sheet draft model + explicit Apply/Start footer (#392); a per-session Start From picker above "Stop at", never persisted, `start ≤ end` by mutual push-apart (#393); a per-ayah repeat cycle button on the bar/rail (#391). Explicitly superseded Addendum 9's "no independent from picker" (sheet only) and its "displayed==committed" invariant (broken inside the open sheet by the draft). #394's progress badge was added and then **removed** on 2026-09-01.
 - 2026-09-01 — folded Addendum 13 (Issue #467, [ADR 0056](../architecture/adr/0056-recitation-global-playback-and-detachable-follow.md)). **Supersedes Addendum 10** (hard stop on route leave) **and** the "swiping away while playing snaps back" forced follow. Playback is now one app-wide lifecycle; follow is a two-state `isFollowing` attach/detach machine in the `RecitationFollow` leaf (`ReaderPager` still gains no `useRecitation()`); the way back to a detached session is `RecitationReturnStrip`, a second nav row that reserves space (`--fq-nav-extra`) and toggles with the nav overlay. Deleted Addendum 12 #394's `rangeProgress`/`perAyahProgress` state and badge; `RecitationPlayerBar` is reader-route-only and its verse-key line became `recitedVerseLabel`. **Known follow-up:** `followTo` still silently drops a follow issued mid drag/commit — the stale-`prevRecitedPage` retry covers the common case but not a follow lost right before a sub-threshold drag-return.
 - 2026-09-23 — folded Addendum 14 (Issue #379): Next/Previous verse navigation (SkipBack/SkipForward) and word stepping (ChevronLeft/ChevronRight) added to RecitationContext and RecitationPlayerBar. Reorganized mobile/tablet player bar into a 2-row tiered layout (Row 1 context & utilities, Row 2 centered 5-button transport cluster) with vertical stacking on desktop rail. Pure decision functions decideSkipVerse, decideSkipWord, canSkipToPreviousWord, and canSkipToNextWord with full unit test coverage.
-
+- 2026-09-25 — folded Addendum 15 (Issue #695): clamped QDC inter-verse timing overlaps (~10ms in Reciter 10 Sa'ud ash-Shuraim) in `qdc-provider.ts` and switched `findActiveVerseTiming` to `findLast` to prevent reader page flipping to anchor - 1 at playback start.

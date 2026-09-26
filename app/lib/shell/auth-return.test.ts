@@ -141,6 +141,38 @@ describe("handleAppUrl", () => {
   const hrefFor = (code: string) =>
     `https://furqan.taha7.com/ar/native-bootstrap?code=${code}&target=%2Far%2Fpages%2F300`;
 
+  const htmlOk = () =>
+    new Response("<html></html>", {
+      status: 200,
+      headers: { "content-type": "text/html" },
+    });
+
+  const sessionWithUser = () =>
+    new Response(JSON.stringify({ user: { id: 7 } }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+
+  const sessionEmpty = () =>
+    new Response(JSON.stringify({}), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+
+  // The exchange and the session proof travel different URLs — route the
+  // mock by URL like the network would.
+  const fetchForExchange = (
+    sessionResponder: () => Response,
+    onExchange?: () => void,
+  ) =>
+    vi.fn((url: unknown) => {
+      if (typeof url === "string" && url.includes("/api/auth/session")) {
+        return Promise.resolve(sessionResponder());
+      }
+      onExchange?.();
+      return Promise.resolve(htmlOk());
+    });
+
   beforeEach(() => {
     assign.mockClear();
   });
@@ -165,12 +197,10 @@ describe("handleAppUrl", () => {
 
   it("spends once for concurrent calls and lands on the target", async () => {
     stubShell();
-    const spy = vi.fn().mockResolvedValue(
-      new Response("<html></html>", {
-        status: 200,
-        headers: { "content-type": "text/html" },
-      }),
-    );
+    let exchanges = 0;
+    const spy = fetchForExchange(sessionWithUser, () => {
+      exchanges += 1;
+    });
     globalThis.fetch = spy as unknown as typeof fetch;
     const href = hrefFor("race-code");
     const [first, second] = await Promise.all([
@@ -179,7 +209,39 @@ describe("handleAppUrl", () => {
     ]);
     expect(first).toBe(true);
     expect(second).toBe(true);
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(exchanges).toBe(1);
+    expect(assign).toHaveBeenCalledWith("/ar/pages/300");
+  });
+
+  it("lands immediately when the session is already visible", async () => {
+    stubShell();
+    const spy = fetchForExchange(sessionWithUser);
+    globalThis.fetch = spy as unknown as typeof fetch;
+    await expect(handleAppUrl(hrefFor("fast-session"))).resolves.toBe(true);
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(assign).toHaveBeenCalledWith("/ar/pages/300");
+  });
+
+  it("waits for a late-committing session before landing", async () => {
+    stubShell();
+    let sessionCalls = 0;
+    const spy = fetchForExchange(() => {
+      sessionCalls += 1;
+      return sessionCalls < 3 ? sessionEmpty() : sessionWithUser();
+    });
+    globalThis.fetch = spy as unknown as typeof fetch;
+    await expect(handleAppUrl(hrefFor("slow-session"))).resolves.toBe(true);
+    expect(spy).toHaveBeenCalledTimes(4);
+    expect(assign).toHaveBeenCalledWith("/ar/pages/300");
+  });
+
+  it("lands anyway when the session never appears", async () => {
+    stubShell();
+    const spy = fetchForExchange(sessionEmpty);
+    globalThis.fetch = spy as unknown as typeof fetch;
+    await expect(handleAppUrl(hrefFor("ghost-session"))).resolves.toBe(true);
+    // One exchange plus the bounded six-poll wait — never worse than today.
+    expect(spy).toHaveBeenCalledTimes(7);
     expect(assign).toHaveBeenCalledWith("/ar/pages/300");
   });
 

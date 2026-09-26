@@ -11,16 +11,30 @@ export default function SearchQueryResults({
   chapters,
   verses,
   setIsOpen,
+  notifyNavigating,
   className,
 }: {
   chapters: SurahResult[];
   verses: VerseResult[];
   setIsOpen: (isOpen: boolean) => void;
+  // Back-guard navigation signal (ADR 0055's 2026-08-16 addendum): the
+  // overlay's useCloseOnBackGesture cleanup races Next's own pushState for a
+  // tapped result link, so the tap must call this synchronously before
+  // closing — otherwise the cleanup history.back()s over the in-flight
+  // navigation. Optional so the full-results page's direct row usage (no
+  // guard there) stays untouched.
+  notifyNavigating?: () => void;
   className?: string;
 }) {
   const t = useTranslations();
   const locale = useLocale();
   const basePath = useReaderBasePath();
+  // Synchronous with setIsOpen(false) — no setTimeout/rAF defer (same rule
+  // as SurahListItem's notifyNavigating call).
+  const closeForNavigation = () => {
+    notifyNavigating?.();
+    setIsOpen(false);
+  };
 
   return (
     <div
@@ -45,7 +59,7 @@ export default function SearchQueryResults({
               key={chapter.id}
               chapter={chapter}
               href={`${basePath}/${chapter.pages.split("-")[0]}`}
-              onNavigate={() => setIsOpen(false)}
+              onNavigate={() => closeForNavigation()}
             />
           ))}
         </div>
@@ -70,7 +84,7 @@ export default function SearchQueryResults({
                 pageNumber: verse.page_number,
                 basePath,
               })}
-              onNavigate={() => setIsOpen(false)}
+              onNavigate={() => closeForNavigation()}
             />
           ))}
         </div>
