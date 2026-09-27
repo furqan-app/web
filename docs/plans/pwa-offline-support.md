@@ -4,6 +4,7 @@ type: feature
 date: 2026-07-06
 status: implemented
 area: pwa
+issue: 720
 ---
 
 # PWA Conversion + Offline Quran Page Reading
@@ -1803,3 +1804,186 @@ Not verified locally (needs a served production build + real offline toggle — 
 dev): offline cold loads of both pages + `?q=`, offline in-app taps, and soft-nav-to-`/ar/search`
 still returning RSC flight data. That pass belongs to the stg device run and siblings #592/#593,
 consistent with every prior addendum's deferral.
+
+# Addendum 12 (2026-09-27): Serve home (`/{locale}`) HTML offline (third app-shell page)
+
+## Summary
+
+Play internal-test repro (user-confirmed 2026-09-27): install → download the first mushaf → browse
+the reader without ever visiting home → close → reopen offline. The cold launch itself is correct
+(`launch.html` lands on the last-read reader page), but any self-initiated navigation to home (nav
+logo tap) serves the terminal `offline-{ar,en}.html` ("Try again") document. The home route
+(`/{locale}`) has no precache entry and no runtime HTML rule — `isSelfReaderPage` and
+`isAppShellPage` both miss it, so `setCatchHandler` answers. Fix, following Addendum 11's mechanism
+exactly: home becomes the third app-shell page — append the two home shells (`/ar`, `/en`) to the
+build-time precache manifest (same `manifestTransforms` entry, same revision, same atomic install),
+extend `isAppShellPage` to the bare locale roots, and give `FurqanLogo` the same offline hard-nav
+fallback `UserMenu`/`SearchBar` got. This explicitly supersedes the "home" item of Addendum 11's
+"Do not widen this to `/plans`, `/settings`, home, or the grant reader" exclusion (see Decisions
+Made); the other three routes keep terminal-doc behavior.
+
+## Root Cause / Approach
+
+Three gaps, same shape as Addendum 11's:
+
+1. **No document source offline.** Home HTML is neither precached nor runtime-cached. Fix: two more
+   entries in `APP_SHELL_PAGE_PATHS` (`/${locale}` per `READER_FALLBACK_SHELL_LOCALES`), served for
+   exact-path navigations by the existing `PrecacheRoute` ordering — no new cache, no new rule, only
+   a wider matcher for the query-normalizing rule (home carries no query state; its filter is client
+   `useState`, verified in `HomeSearchSection.tsx`).
+2. **Home qualifies under Addendum 10's static-HTML invariant.** `app/[locale]/page.tsx` is ISR
+   (`revalidate = 300`) with no `getServerSession`/cookies/headers (verified by grep — empty), and
+   every interactive band (`HomeContinueReadingCard`, `HomeRecommendedSurahs`, `HomeSearch`) resolves
+   client-side from the SSR `surahs` prop + `localStorage`. The precached copy is deploy-vintage, but
+   the surah payload changes only on a full Quran reseed (Static Generation Strategy decision), so
+   the staleness window is negligible — recorded as the ISR-vintage paragraph in ADR 0014
+   Addendum 11.
+3. **In-app taps are RSC, not documents (Addendum 11, gap 4, same mechanism).** `FurqanLogo`
+   (`href="/"`, locale-prefixed at runtime) tapped offline with home never visited fails the RSC
+   fetch through `defaultCache` into `error.tsx` + a Sentry report. Fix: the identical offline-only
+   hard-nav fallback (`preventDefault` + `location.assign` when `navigator.onLine === false` at click
+   time). `error.tsx`'s own home link (recovery UI) and the native auth handlers
+   (`NativeBootstrapHandler`, `NativeCallbackHandler` — online flows) are excluded.
+
+## Decision Tree / Algorithm
+
+SW request routing delta over Addendum 11's table — one row widened, one row added:
+
+| # | Request | Handler | Result |
+|---|---|---|---|
+| 2a' | `navigate` to exact `/ar`, `/en` (widened) | `PrecacheRoute` | precached home shell, no network |
+| 2b' | `navigate` to home with a query (unreachable in-app; defensive parity) | `isAppShellPage` rule → `matchPrecache(url.pathname)` | same shell bytes |
+| 5' | logo tap offline, home never visited | `preventDefault` + hard navigate | lands on 2a' instead of `error.tsx` + Sentry |
+| 5'' | logo tap online | `<Link>` soft nav | unchanged |
+| 4' | `navigate` to bare `/` | `setCatchHandler` | terminal doc, unchanged (`/` is a middleware redirect, not a document — no shell to precache, no offline locale to resolve it to) |
+
+New matcher: `/^\/(ar|en)(\/(marks|search))?$/` — exact by construction: matches `/ar`,
+`/ar/marks`, `/ar/search` and nothing else (never `/api/*`, grant paths, `/pages/*`,
+`/mushaf/*`, or bare `/`).
+
+## Verified Test Cases
+
+Case 1 is the user's confirmed repro; the rest follow from Addendum 11's verified mechanism:
+
+1. Online: fresh install → download mushaf → browse reader (never visit home) → go offline →
+   relaunch (lands last-read page) → logo tap → home shell renders (hero, surah list,
+   continue-reading card, search filter) — no terminal doc.
+2. Cold offline → `/ar` and `/en` → shell + full interactivity (filter, `localStorage`
+   continue-reading, surah links into downloaded pages; links into non-downloaded pages take the
+   reader tree's existing rows).
+3. Online → `/ar` → precache-vintage shell; RSC soft-nav to `/ar` still returns flight data
+   (the `navigate`-mode guard is untouched).
+4. Offline logo tap with home never visited → hard nav → case 1 (no `error.tsx`, no Sentry).
+5. Online logo tap → soft nav, unchanged.
+6. Fresh deploy → revision bump → all eight shells (2 reader + 4 marks/search + 2 home) refetched
+   at install; `SwUpdateBanner` and `activate` cleanup unchanged.
+7. Bare `/` offline → terminal doc, unchanged.
+8. Signed-in, signed-out, and guest users receive byte-identical shells (the static-ify guarantee
+   holds trivially — there is no session to strip).
+
+## Files to Change
+
+- `next.config.mjs` — extend `APP_SHELL_PAGE_PATHS` with `/${locale}` per locale (built from
+  `READER_FALLBACK_SHELL_LOCALES`, same revision hash, `size: 0`). Name stays — home is an
+  app-shell page now. `globPublicPatterns` untouched.
+- `app/sw.ts` — widen `isAppShellPage(url)` to `/^\/(ar|en)(\/(marks|search))?$/` and rewrite its
+  comment block (the current "the bare `/{locale}` home matches neither alternative" line goes
+  stale with this change). No new rule, no new cache, no `activate`/`setCatchHandler`/message
+  change.
+- `app/constants/offline.ts` — comment-only: the "fifth shell" note becomes real (two home
+  shells); keep the three-site cross-link (`next.config.mjs` ↔ `app/sw.ts` ↔ this module).
+- `app/components/nav/FurqanLogo.tsx` — offline-only hard-nav fallback on click (Addendum 11's
+  `UserMenu`/`SearchBar` pattern verbatim).
+- `e2e/tests/offline-pwa.spec.ts` — new test: cold offline `/ar` (+ `/en`) renders the home shell
+  (surah list visible); offline logo tap from a reader page lands home without `error.tsx`.
+- `docs/architecture/adr/0014-pwa-offline-architecture.md` — Addendum 11 (ISR-vintage paragraph,
+  written with this plan).
+- `docs/architecture/decisions/pwa.md` — extend the "Offline App-Shell Pages" section by one line
+  (home shells; exclusion narrowed to `/plans`, `/settings`, grant reader).
+
+No changes to: the reader tree/rows, `setCatchHandler`, `activate` cleanup, `globPublicPatterns`,
+the SW message contract, the marks/search rules or shells, `error.tsx`, the middleware matcher,
+bare-`/` handling, or any Settings/offline surface.
+
+## Constraints
+
+- Addendum 10's static-HTML invariant holds and was re-verified for this route: no
+  `getServerSession`/cookies/headers in `app/[locale]/page.tsx` or `app/components/home/*`
+  (grep-verified during planning).
+- The precache manifest stays the single source of truth: no second versioned cache, no
+  populate-on-miss, no manual version string.
+- The `request.mode === "navigate"` guard stays; the miss path falls through to the network, never
+  synthesizes (only `setCatchHandler` decides the terminal document).
+- The matcher stays exact per the regex above; a sixth shell updates all three sites
+  (`next.config.mjs`, `app/sw.ts`, `app/constants/offline.ts` comment).
+- No trailing-slash normalization — parity with the existing shells (`/ar/marks/` misses today
+  too; in-app links never emit trailing slashes).
+- The logo fallback reads connectivity at click time and applies offline-only; online keeps soft
+  nav byte-for-byte. No new copy, no new translation keys — home renders its own content.
+- ISR note: precached home is deploy-vintage; `revalidate = 300` bounds online staleness, the
+  manifest revision bounds offline staleness, and the payload is reseed-immutable — no freshness
+  regression vs today (today offline home does not exist at all).
+- Verify per `docs/standards/pwa-testing.md` (`npm run build:local && npm start`; Serwist is
+  disabled in dev): the built `public/sw.js` manifest lists all eight shells under one revision;
+  offline cold `/ar`, `/en`; offline logo tap from a reader page; soft-nav to `/ar` still returns
+  RSC flight data.
+- Targeted specs that assert the touched behavior must keep passing: `home-nav-search.spec.ts`
+  (online home render), `settings-persistence.spec.ts` + `recitation-lifecycle.spec.ts` (online
+  logo taps), `search-results-page.spec.ts`, `word-marking.spec.ts`, `offline-pwa.spec.ts`
+  (existing seven tests).
+
+## What NOT to Do
+
+- Do not add a `CacheFirst` + versioned-cache rule for the home document (Addendum 11's rejection
+  applies unchanged — the precache already versions per deploy).
+- Do not pass the shells via `additionalPrecacheEntries` (replaces the public glob) and do not
+  copy built HTML into `public/` + glob it (one build stale — Addendum 8).
+- Do not intercept RSC/soft-nav in the SW; do not touch `error.tsx` for this (the uncovered corner
+  is handled client-side by the logo fallback, as in Addendum 11).
+- Do not apply the logo fallback online, to `error.tsx`'s home link, or to the native auth
+  handlers.
+- Do not precache bare `/` or redirect it offline to a locale shell (it is a middleware redirect,
+  not a document; resolving a locale offline is new behavior, not a cache fix).
+- Do not widen this to `/plans`, `/settings`, or the grant reader — terminal-doc stays for those
+  (this narrows, not removes, Addendum 11's exclusion, whose "home" item is superseded here).
+- Do not re-derive display-mode or add standalone gating anywhere in this task — nothing here
+  needs it.
+
+## Decisions Made
+
+- **User, 2026-09-27:** cold launch correctly lands on the last-read page; only self-initiated
+  home navigation fails → precache-home-shells direction confirmed as specified above.
+- **Supersession recorded (explicit, user-confirmed):** Addendum 11's "Do not widen this to
+  `/plans`, `/settings`, home, or the grant reader" loses its "home" item to this addendum
+  (Play-tester repro); `/plans`, `/settings`, and the grant reader stay terminal-doc.
+- **Precache + widened matcher, over runtime-cache-as-visited:** runtime-only leaves the exact
+  reported flow broken (home never visited online serves the terminal doc). Two tiny static shells
+  buy works-before-first-visit with zero new protocol — the same trade Addendum 11 made.
+- **No new ADR file:** the mechanism is byte-for-byte Addendum 10/11's; only ADR 0014 gets an
+  Addendum 11 (ISR-vintage paragraph) plus a one-line `decisions/pwa.md` extension.
+- **Step 3b sweep findings folded in:** `offline-pwa.spec.ts` pins no home-as-terminal behavior
+  (seven tests listed during planning — none touches `/ar` home), so no existing test is
+  invalidated; `home-nav-search` / `settings-persistence` / `recitation-lifecycle` pin online
+  home+logo behavior (offline-only fallback keeps them green); `app/sw.ts`'s "bare home matches
+  neither" comment goes stale with the regex widening and is rewritten in Files to Change rather
+  than left to drift.
+
+## Implementation Outcome (2026-09-27, #720)
+
+Shipped as planned on branch `fix/720-home-offline-shell` (worktree `../furqan-home-offline-shell`).
+One user-confirmed scope call during implementation: ADR 0014 Addendum 10's "must never meet …
+`/ar` itself" line is explicitly amended by ADR Addendum 11 (scope language, not a technical
+hazard — the widened regex stays exact).
+
+| Check | Result |
+|---|---|
+| `npm run lint` | clean |
+| `npx tsc --noEmit` | clean |
+| `npm run build:local` | succeeds; `.next/server/app/{ar,en}.html` prerendered (305/288 KB raw, ~54 KB gzip for the pair — the plan's ~100 KB estimate corrected in ADR Addendum 11) |
+| Manifest in built `public/sw.js` | all eight shells (`pages/1` × 2 + marks/search × 4 + home × 2) under one revision `5fefd1f2c28b4100`; widened `marks\|search` matcher compiled in |
+| New e2e test 8 (`offline-pwa.spec.ts`) | passes against `e2e:serve` (cold offline `/ar` + `/en` render 114 surah cards; offline logo tap from `/ar/pages/1` lands `/ar` shell) |
+| Neighbors | `offline-pwa` full file + `home-nav-search` (26 passed, 1 pre-existing skip); `settings-persistence` + `recitation-lifecycle` + `word-marking` (41 passed, 3 skipped); `search-results-page` (15 passed) |
+| `COMPONENTS.md` | `FurqanLogo` line notes the client conversion + offline hard-nav |
+
+Not run locally: full unit/E2E suites (CI-owned per workflow). E2E infra (`e2e:db`) torn down;
+no dev server left running. Plan status → `implemented`; `INDEX.md` regenerated.

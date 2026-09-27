@@ -539,3 +539,48 @@ these shells alongside the precache (same bytes, second staleness profile). Do n
 regex beyond the two static paths (it must never meet `/api/*`, grant paths, or `/ar` itself). Do not
 drop the `navigate`-mode guard (RSC flight data for the same paths). Do not synthesize a response on
 a `matchPrecache` miss — fall through to the network and let the catch handler decide.
+
+## Addendum 11 (2026-09-27): Home (`/{locale}`) joins the app-shell set
+
+**Issue:** [#720](https://github.com/furqan-app/web/issues/720)
+
+**Amends:** Addendum 10's shell set (six documents → eight: plus `/ar` and `/en`) and its closing
+"it must never meet … `/ar` itself" exclusion, which was scope language for "home is out of scope",
+not a technical hazard — a Play internal-test repro proved home in scope (a user who never visits
+home online gets the terminal document for every offline home navigation).
+
+**Context.** The cold launch itself is innocent: `launch.html` lands on the last-read reader page.
+Only self-initiated home navigation fails — the home route has no precache entry and no runtime
+HTML rule, so the catch handler answers. Home satisfies Addendum 10's static-HTML invariant without
+any static-ification work: `app/[locale]/page.tsx` is ISR (`revalidate = 300`) with no server
+session, cookies, or headers, and every interactive band resolves client-side (SSR surah list from
+the precached `chapters.json`, `localStorage` continue-reading, `useState` filter). The precached
+copy is deploy-vintage, but the surah payload changes only on a full Quran reseed, so the staleness
+window is negligible — and strictly better than today, where offline home does not exist at all.
+
+**Decision.** `APP_SHELL_PAGE_PATHS` gains `/${locale}` per locale (same revision, same atomic
+install — eight shells total); `isAppShellPage` widens to `/^\/(ar|en)(\/(marks|search))?$/`, which
+stays exact by construction (never `/api/*`, grant paths, `/pages/*`, or bare `/` — the last is a
+middleware redirect, not a document, and keeps terminal-doc behavior); `FurqanLogo` gets Addendum
+10's offline hard-nav fallback (`hardNavigateIfOffline(e, `/${locale}`)`, offline-only, online keeps
+soft nav). Exact-path `/ar` navigations are served by `PrecacheRoute` without ever reaching the
+rule; the widened alternative exists for defensive parity with the marks/search query normalization
+(home carries no query state today). No second cache, no `activate` change, no message-contract
+change, no new copy or translation keys.
+
+**Consequences**
+
+- **+** The reported repro is closed: offline logo taps land on a fully interactive home (surah
+  grid, continue-reading, filter) with zero new protocol.
+- **+** Two more static documents in the install precache (measured at build time:
+  305 + 288 KB raw / ~54 KB gzip for the pair — larger than the marks/search shells because the
+  home HTML carries the full 114-surah grid) — same bounded, once-per-deploy profile as the
+  existing six.
+- **−** The matcher now names home explicitly: a future dynamic route directly under `/{locale}`
+  must not be added without re-checking this regex — the exactness is load-bearing, not incidental.
+
+**What NOT to do:** the amended exclusion still holds for everything it originally protected —
+never let this matcher meet `/api/*`, grant paths, `/pages/*`, or RSC flight data (the
+`navigate`-mode guard stays). Do not precache bare `/` or redirect it offline (unresolvable locale,
+new behavior — not a cache fix). `/plans`, `/settings`, and the grant reader keep terminal-doc
+behavior.
