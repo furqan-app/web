@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-113 active plans.
+114 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -59,6 +59,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
+| pwa | [Fix native auth return hijack — scope App Links, log auth errors, refresh session after landing](fix-native-auth-link-scope.md) | ready-to-implement | bug |
 | pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | ready-to-implement | feature |
 | pwa | [Auth return fails silently in shell — route failed exchanges to the retry UI](auth-audible-failure.md) | implemented | bug |
 | pwa | [Auth return lands before the session cookie commits — verify session before landing](auth-session-race.md) | implemented | bug |

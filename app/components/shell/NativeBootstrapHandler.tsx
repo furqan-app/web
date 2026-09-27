@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 import useTranslations from "@hooks/use-translations";
 import { Link } from "@/i18n/routing";
@@ -24,6 +25,7 @@ type Props = {
 // current behavior, preserved (platform fidelity: web→web, PWA→PWA).
 export function NativeBootstrapHandler({ locale }: Props) {
   const t = useTranslations();
+  const { update } = useSession();
   const [failed, setFailed] = useState(false);
   const [target, setTarget] = useState<string | null>(null);
 
@@ -42,14 +44,27 @@ export function NativeBootstrapHandler({ locale }: Props) {
     let cancelled = false;
     void (async () => {
       const ok = await handleAppUrl(href);
-      if (!cancelled && !ok) {
+      if (cancelled) {
+        return;
+      }
+      if (!ok) {
         setFailed(true);
+        return;
+      }
+      // The exchange committed the session cookie, but the shared provider
+      // does not refetch on the programmatic landing — force one so the UI
+      // converges without a manual reload (#715). Best-effort: a failed
+      // refetch heals via the provider's focus refetch.
+      try {
+        await update();
+      } catch {
+        /* best-effort session refresh after a successful landing */
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [failed, locale]);
+  }, [failed, locale, update]);
 
   if (!failed) {
     return (
