@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
 import { appPrisma } from "@/app/utils/db";
 import { jsonResponse } from "@/app/api/response";
@@ -7,10 +7,10 @@ import { getLogger } from "@/lib/fq-logger";
 // Native-shell session bootstrap (ADR 0072, plan mobile-app-capacitor).
 // The shell completes sign-in in the system browser, receives a short-lived
 // single-use code out of band, and POSTs it here. This endpoint spends the
-// code atomically and answers with a 302 into the app while setting the
-// NextAuth session cookie — no token ever enters JS, so `extractUser` keeps
-// working unchanged on every subsequent request (the auth middleware reads
-// the cookie via `getToken` exactly as on web).
+// code atomically and answers with a 200 JSON envelope ({ data: { target } })
+// while setting the NextAuth session cookie — returning 200 JSON directly
+// ensures Android WebView commits Set-Cookie to CookieManager without losing
+// cookies across 302 fetch redirects.
 //
 // POST-only on purpose: the service worker's `defaultCache` only ever caches
 // GET, so no `NetworkOnly` rule is needed for this route (same reason the
@@ -53,9 +53,14 @@ export async function POST(request: NextRequest) {
   // Cookie flags follow the same condition: plain-HTTP LAN dev (e.g. a phone
   // on http://192.168.x.x) cannot store `Secure` cookies, so secure context
   // gates all three — name prefix, `Secure`, and `SameSite=None` together.
-  const useSecureCookies =
+  const proto =
+    request.headers.get("x-forwarded-proto") ??
+    request.nextUrl.protocol.replace(":", "");
+  const isHttps =
+    proto === "https" ||
     (process.env.NEXTAUTH_URL ?? "").startsWith("https://") ||
     Boolean(process.env.VERCEL);
+  const useSecureCookies = proto === "http" ? false : isHttps;
   const cookieName = useSecureCookies
     ? "__Secure-next-auth.session-token"
     : "next-auth.session-token";
@@ -83,11 +88,14 @@ export async function POST(request: NextRequest) {
       target = `${resolved.pathname}${resolved.search}`;
     }
   }
-  // Shell contract: the caller POSTs with fetch, then navigates the WebView
-  // itself (`window.location.assign(target)`) — fetch follows the 302 to an
-  // HTML document the caller never reads; the session travels via Set-Cookie,
-  // never via JS.
-  const response = NextResponse.redirect(new URL(target, request.url), 302);
+  // Shell contract: caller POSTs with fetch (credentials: include).
+  // Returning 200 JSON ensures Android WebView commits Set-Cookie to CookieManager
+  // without losing cookies across 302 fetch redirects.
+  const response = jsonResponse({
+    code: 200,
+    message: "OK",
+    data: { target },
+  });
   response.cookies.set(cookieName, sessionToken, {
     httpOnly: true,
     sameSite: useSecureCookies ? "none" : "lax",

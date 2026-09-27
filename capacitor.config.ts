@@ -1,16 +1,24 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 
 // Furqan native shell (ADR 0072, plan mobile-app-capacitor): HTTPS-hosted
 // hybrid — the shell loads the live web app, never a bundled static export
 // and never `capacitor://`. `server.url` is per environment via
-// CAP_SERVER_URL so dev / TestFlight / prod each point at their own host;
+// CAP_SERVER_URL or LOCAL_DEV_SERVER so dev / TestFlight / prod each point at their own host;
 // allowNavigation always covers the active host plus production.
 const PROD_HOST = "furqan.taha7.com";
 
 // Normalize server URL to a clean origin: trailing slashes, paths, or query
 // parameters break Android's addWebMessageListener origin rules and root-relative redirects.
 const serverOrigin = (() => {
-  const raw = process.env.CAP_SERVER_URL?.trim();
+  const devFlag = process.env.LOCAL_DEV_SERVER?.trim();
+  const raw =
+    devFlag === "true" || devFlag === "1"
+      ? "http://10.0.2.2:3000"
+      : devFlag || process.env.CAP_SERVER_URL?.trim();
   if (!raw) return `https://${PROD_HOST}`;
   try {
     const parsed = new URL(raw);
@@ -53,7 +61,15 @@ const config: CapacitorConfig = {
     // locally in webDir (native-shell-web/) before loading the remote URL, calling
     // fatalLoadError() if absent. native-shell-web/launch.html satisfies this check.
     appStartPath: "/launch.html",
-    allowNavigation: Array.from(new Set([PROD_HOST, serverHost])),
+    allowNavigation: Array.from(
+      new Set([
+        PROD_HOST,
+        serverHost,
+        ...(serverOrigin !== `https://${PROD_HOST}`
+          ? ["localhost", "127.0.0.1", "10.0.2.2"]
+          : []),
+      ]),
+    ),
     cleartext: !serverOrigin.startsWith("https://"),
     androidScheme: "https",
   },

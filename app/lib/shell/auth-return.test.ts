@@ -88,6 +88,18 @@ describe("buildAppLinkUrl", () => {
       "https://furqan.taha7.com/ar/native-bootstrap?code=abc&target=%2Far%2Fpages%2F300",
     );
   });
+
+  it("falls back to PROD_HOST when given an http:// origin in local dev", () => {
+    const url = buildAppLinkUrl(
+      "http://10.0.2.2:7000",
+      "ar",
+      "abc",
+      "/ar/pages/300",
+    );
+    expect(url).toBe(
+      "https://furqan.taha7.com/ar/native-bootstrap?code=abc&target=%2Far%2Fpages%2F300",
+    );
+  });
 });
 
 describe("readMintCode", () => {
@@ -141,11 +153,14 @@ describe("handleAppUrl", () => {
   const hrefFor = (code: string) =>
     `https://furqan.taha7.com/ar/native-bootstrap?code=${code}&target=%2Far%2Fpages%2F300`;
 
-  const htmlOk = () =>
-    new Response("<html></html>", {
-      status: 200,
-      headers: { "content-type": "text/html" },
-    });
+  const exchangeOk = (target = "/ar/pages/300") =>
+    new Response(
+      JSON.stringify({ code: 200, success: true, data: { target } }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
 
   const sessionWithUser = () =>
     new Response(JSON.stringify({ user: { id: 7 } }), {
@@ -165,12 +180,13 @@ describe("handleAppUrl", () => {
     sessionResponder: () => Response,
     onExchange?: () => void,
   ) =>
-    vi.fn((url: unknown) => {
+    vi.fn((url: unknown, init?: RequestInit) => {
+      expect(init?.credentials).toBe("include");
       if (typeof url === "string" && url.includes("/api/auth/session")) {
         return Promise.resolve(sessionResponder());
       }
       onExchange?.();
-      return Promise.resolve(htmlOk());
+      return Promise.resolve(exchangeOk());
     });
 
   beforeEach(() => {

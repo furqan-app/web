@@ -76,8 +76,11 @@ export function buildShellSignInUrl(target: string): string {
   return `/api/auth/signin?callbackUrl=${encodeURIComponent(callback)}`;
 }
 
+export const PROD_HOST = "furqan.taha7.com";
+
 // Pure: App Link return URL the shell intercepts (verification is prod-host
-// only per plan — the caller passes its own origin, the prod shell's origin).
+// only per plan — the caller passes its own origin, falling back to prod host
+// in local HTTP dev so Android App Links still intercepts the return).
 export function buildAppLinkUrl(
   origin: string,
   locale: string,
@@ -85,8 +88,10 @@ export function buildAppLinkUrl(
   target: string,
 ): string {
   const clean = sanitizeNativeTarget(target, locale);
+  const isHttp = /^http:\/\//i.test(origin);
+  const appOrigin = isHttp ? `https://${PROD_HOST}` : origin;
   return (
-    `${origin}/${locale}/native-bootstrap` +
+    `${appOrigin}/${locale}/native-bootstrap` +
     `?${CODE_PARAM}=${encodeURIComponent(code)}` +
     `&${TARGET_PARAM}=${encodeURIComponent(clean)}`
   );
@@ -123,10 +128,8 @@ const spentCodes = new Map<string, string>();
 // expired code can never be retried in place).
 //
 // NOTE on response shape: jsonResponse() always answers HTTP 200 — errors
-// arrive as a JSON envelope with code >= 400, while success is the followed
-// 302 landing on an HTML document. res.ok therefore cannot distinguish them;
-// the branch below requires an actually-OK non-JSON document (an HTML error
-// page from a proxy/CDN failure must never read as a login).
+// arrive as a JSON envelope with code >= 400, while success answers with
+// code === 200 and sets the session cookie with credentials: "include".
 export async function handleAppUrl(href: string): Promise<boolean> {
   if (!isNativePlatform()) {
     return false;
@@ -156,27 +159,34 @@ export async function handleAppUrl(href: string): Promise<boolean> {
 
 async function spendCode(code: string, clean: string): Promise<boolean> {
   let response: Response;
+  let body: { code?: unknown; data?: { target?: unknown } } | null = null;
   try {
     response = await fetch("/api/auth/native-bootstrap", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, callbackUrl: clean }),
     });
+    body = (await response.json().catch(() => null)) as {
+      code?: unknown;
+      data?: { target?: unknown };
+    } | null;
   } catch {
     return false;
   }
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!response.ok || contentType.includes("application/json")) {
+  if (!response.ok || body?.code !== 200) {
     return false;
   }
-  spentCodes.set(code, clean);
+  const destination =
+    typeof body?.data?.target === "string" ? body.data.target : clean;
+  spentCodes.set(code, destination);
   // Cookie-commit race (#705): Set-Cookie from the fetch commits
   // asynchronously, and an immediate navigation can outrun it — the landing
   // page then reads signed-out despite a set cookie. Prove the session is
   // visible before landing; fall back to immediate landing on exhaustion
   // (never worse than today — a later refetch still heals).
   await waitForSession();
-  window.location.assign(clean);
+  window.location.assign(destination);
   return true;
 }
 
@@ -184,7 +194,9 @@ type SessionBody = { user?: unknown } | null;
 
 async function readSessionUser(): Promise<boolean> {
   try {
-    const response = await fetch("/api/auth/session");
+    const response = await fetch("/api/auth/session", {
+      credentials: "include",
+    });
     if (!response.ok) {
       return false;
     }

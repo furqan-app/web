@@ -46,11 +46,18 @@ const stubShellWindow = () => {
 const hrefFor = (code: string) =>
   `https://furqan.taha7.com/ar/native-bootstrap?code=${code}&target=%2Far%2Fpages%2F300`;
 
-const htmlOk = () =>
-  new Response("<html></html>", {
-    status: 200,
-    headers: { "content-type": "text/html" },
-  });
+const exchangeOk = () =>
+  new Response(
+    JSON.stringify({
+      code: 200,
+      success: true,
+      data: { target: "/ar/pages/300" },
+    }),
+    {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    },
+  );
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -70,7 +77,8 @@ describe("NativeAuthReturnListener", () => {
       url: hrefFor("coldstart-code"),
     });
     mockApp.addListener.mockResolvedValueOnce({ remove: vi.fn() });
-    const fetchSpy = vi.fn((url: unknown) => {
+    const fetchSpy = vi.fn((url: unknown, init?: RequestInit) => {
+      expect(init?.credentials).toBe("include");
       if (typeof url === "string" && url.includes("/api/auth/session")) {
         return Promise.resolve(
           new Response(JSON.stringify({ user: { id: 7 } }), {
@@ -79,7 +87,7 @@ describe("NativeAuthReturnListener", () => {
           }),
         );
       }
-      return Promise.resolve(htmlOk());
+      return Promise.resolve(exchangeOk());
     });
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
 
