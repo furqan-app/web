@@ -77,13 +77,15 @@ const READER_HTML_CACHE_NAME = `${READER_HTML_CACHE_PREFIX}${hashString(JSON.str
 const isSelfReaderPage = (url: URL) =>
   /^\/(ar|en)\/pages\/[0-9]+$/.test(url.pathname);
 
-// Offline app-shell pages (ADR 0014 Addendum 10, #591). Self /marks and
-// /search are static shells whose content resolves client-side, so any query
-// string (?q=…, seeded client-side) maps to the same precached bytes. Exact
-// by construction: /api/* starts with /api, grant paths live under
-// /{locale}/mushaf/, and the bare /{locale} home matches neither alternative.
+// Offline app-shell pages (ADR 0014 Addendum 10, #591; home roots added by
+// Addendum 11, #720). Self /marks, /search, and the bare /{locale} home are
+// static shells whose content resolves client-side, so any query string (?q=…,
+// seeded client-side) maps to the same precached bytes. Exact by
+// construction: /api/* starts with /api, grant paths live under
+// /{locale}/mushaf/, reader pages live under /{locale}/pages/, and bare "/"
+// (a middleware redirect, not a document) matches neither alternative.
 const isAppShellPage = (url: URL) =>
-  /^\/(ar|en)\/(marks|search)$/.test(url.pathname);
+  /^\/(ar|en)(\/(marks|search))?$/.test(url.pathname);
 
 // ADR 0014 Addendum 6: a cache miss on a slow-but-alive connection must not
 // stall a cold launch for the full SSR document fetch — the catch handler only
