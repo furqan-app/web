@@ -1,6 +1,6 @@
 # Review Work
 
-Spawns a reviewer to check code changes across three dimensions. Accepts an optional scope argument:
+Spawns a reviewer to check code changes across four dimensions. Accepts an optional scope argument:
 
 - _(no arg)_ — **everything not yet committed**: staged + unstaged working-tree changes (default)
 - `--staged` — staged changes only
@@ -74,7 +74,7 @@ Run the following review prompt against the full diff using the chosen model. Re
 
 **Review prompt:**
 
-You are a senior code reviewer. Review the following branch diff across three dimensions and report findings grouped by dimension, numbered sequentially across all dimensions (1, 2, 3, ... — do not restart the count per dimension). For each finding include: file + line, severity (critical / warning / note), and a one-sentence explanation. Be specific — no generic advice.
+You are a senior code reviewer. Review the following branch diff across four dimensions and report findings grouped by dimension, numbered sequentially across all dimensions (1, 2, 3, ... — do not restart the count per dimension). For each finding include: file + line, severity (critical / warning / note), and a one-sentence explanation. Be specific — no generic advice.
 
 **Dimension 1 — Bugs & Correctness**
 - Logic errors, off-by-one errors, null/undefined risks
@@ -101,6 +101,12 @@ You are a senior code reviewer. Review the following branch diff across three di
 - Are there TODOs or placeholders left in the code?
 - Are there any `docs/plans/` files that should now be marked `implemented` but aren't?
 - Does anything contradict `docs/architecture/DECISIONS.md`'s invariants or a `docs/architecture/decisions/*.md` entry for a touched domain?
+
+**Dimension 4 — Test Coverage & Verification**
+- Does the diff include automated tests (Vitest unit/functional tests or Playwright E2E tests) covering the new behavior, bug fix, or edge cases?
+- If the change modifies logic, calculations, state, or user-facing behavior and has no accompanying test, flag it as a finding (severity: warning or critical).
+- Are the new tests genuine assertions of the expected behavior, or are they superficial/tautological?
+- Do existing tests still pass, or were any assertions relaxed or deleted without justification?
 
 If a dimension has no findings, say "No issues found." Do not pad with filler observations. Number findings within each dimension (1., 2., 3., ...), continuing the count across dimensions rather than restarting at 1 for each one, so every finding has a stable reference number for follow-up discussion.
 

@@ -1,4 +1,5 @@
 import { appPrisma } from "@/app/utils/db";
+import { toLogDetail } from "@/app/lib/auth-log";
 import { NextAuthOptions } from "next-auth";
 import Google from "next-auth/providers/google";
 import { getLogger } from "@/lib/fq-logger";
@@ -11,6 +12,22 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     }),
   ],
+  logger: {
+    // Every OAuth/sign-in failure becomes a redirect, never a throw, so the
+    // instrumentation onRequestError hook never sees these — this logger is
+    // the sole Sentry capture path (verified payload shapes against
+    // next-auth@4.24.10 core/routes/*: Error objects + provider ids only).
+    error: (code: string, ...message: unknown[]) => {
+      getLogger().error(`auth.nextauth.${code}`, {
+        detail: toLogDetail(message),
+      });
+    },
+    warn: (code: string, ...message: unknown[]) => {
+      getLogger().warn(`auth.nextauth.${code}`, {
+        detail: toLogDetail(message),
+      });
+    },
+  },
   callbacks: {
     async signIn({ user, profile }) {
       try {
