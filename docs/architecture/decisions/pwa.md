@@ -209,17 +209,19 @@ pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 
 ---
 
-## Offline App-Shell Pages (`/marks`, `/search`)
+## Offline App-Shell Pages (`/marks`, `/search`, home)
 
 **Status:** active
 
 **Decision (2026-09-07, #591):** The self `/marks` and `/search` pages are offline-capable documents. Their four shells (`/{ar,en}/marks`, `/{ar,en}/search`) ride the build-time precache manifest via the same `manifestTransforms` entry as the reader shells (same revision, same atomic install), and a navigate-only runtime rule ahead of `...defaultCache` serves `matchPrecache(url.pathname)` so query-bearing navigations (`/search?q=…`) resolve to the same shell bytes. `/marks` renders statically (no server session; the live session is client-seeded — online loads hold the skeleton until it resolves, offline the sticky owner stamp decides immediately). The self links hard-navigate when tapped offline; online taps and grant links keep soft nav. See [ADR 0014 Addendum 10](../adr/0014-pwa-offline-architecture.md).
 
+**Amended (2026-09-27, #720):** the bare locale home roots (`/ar`, `/en`) join the set as the fifth and sixth shells — ISR (`revalidate = 300`), session-free, content resolves client-side — and `FurqanLogo` hard-navigates when tapped offline; online taps keep soft nav. See [ADR 0014 Addendum 11](../adr/0014-pwa-offline-architecture.md).
+
 **Constraints:**
 - A precached document MUST be user-agnostic static HTML — per-request HTML in the install precache is a cross-user session leak on shared browsers, not a staleness quirk. New shells must prove static-ness; dynamic routes (the grant reader) are permanently excluded from this mechanism.
 - The precache manifest is the single source of truth for these shells: no second versioned cache, no populate-on-miss, no manual version string.
-- The matcher stays exact (`/^\/(ar|en)\/(marks|search)$/`) with the `navigate`-mode guard — it must never meet `/api/*` (the marks `NetworkOnly` rule owns those), grant paths, or RSC flight data.
-- A `matchPrecache` miss falls through to the network; only `setCatchHandler` decides the terminal document. All other non-reader routes keep terminal-doc behavior unchanged.
+- The matcher stays exact (`/^\/(ar|en)(\/(marks|search))?$/`) with the `navigate`-mode guard — it must never meet `/api/*` (the marks `NetworkOnly` rule owns those), grant paths, `/pages/*`, bare `/` (a middleware redirect, not a document), or RSC flight data.
+- A `matchPrecache` miss falls through to the network; only `setCatchHandler` decides the terminal document. Every other non-reader route (`/plans`, `/settings`, grant routes, bare `/`) keeps terminal-doc behavior unchanged.
 
 ---
 

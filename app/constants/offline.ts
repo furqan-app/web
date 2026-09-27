@@ -70,14 +70,15 @@ export const fallbackDocumentUrl = (locale: (typeof FALLBACK_LOCALES)[number]) =
 export const offlineFallbackUrl = (locale: (typeof FALLBACK_LOCALES)[number]) =>
   `/offline-${locale}.html`;
 
-// Offline app-shell pages (ADR 0014 Addendum 10, #591): /{ar,en}/marks and
-// /{ar,en}/search are precached shells like fallbackDocumentUrl above — the
-// two exceptions to the terminal-doc rule, because both pages resolve their
-// content client-side. The same four paths are appended to the precache
+// Offline app-shell pages (ADR 0014 Addendum 10, #591; home roots added by
+// Addendum 11, #720): /{ar,en}/marks, /{ar,en}/search, and the bare /{ar,en}
+// home roots are precached shells like fallbackDocumentUrl above — the three
+// exceptions to the terminal-doc rule, because all three pages resolve their
+// content client-side. The same six paths are appended to the precache
 // manifest in next.config.mjs's manifestTransforms (plain ESM there cannot
 // import this TS module — the same duplication constraint as FALLBACK_LOCALES
 // above), and app/sw.ts's isAppShellPage rule serves query-bearing
-// navigations from them. A fifth shell updates all three sites.
+// navigations from them. A seventh shell updates all three sites.
 
 // Synthetic cache entry written only after a fully successful precache run.
 // Per-edition (ADR 0014 Addendum 5) — a shared sentinel would report an

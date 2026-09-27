@@ -13,7 +13,7 @@ Last updated: 2026-09-25
 
 ```
 Nav                          — top bar, always visible; single flat flex row, every item a direct child positioned via `order`. On desktop, provides direct 1-click access to most utilities. `SharedMushaf` is permanently placed inside the `UserMenu` across all devices. On mobile, condenses further secondary actions (`Settings`, `NotificationBell`) into the `UserMenu` to prevent overcrowding (docs/plans/restructure-navigation.md). `NavOverflowMenu` is completely removed in favor of the User Portal pattern.
-  FurqanLogo                 — brand mark (CSS mask with emerald primary, links to home); balanced 38px mark in a 40px footprint across themes (#411)
+  FurqanLogo                 — brand mark (CSS mask with emerald primary, links to home); balanced 38px mark in a 40px footprint across themes (#411); client component for the offline logo-tap hard-nav to the precached home shell (#720), online keeps soft nav
   SearchBar                  — icon button opening full-screen top Sheet overlay with auto-focused input; supports global Cmd+K / Ctrl+K keyboard shortcut toggle; closes on system back via useCloseOnBackGesture (ADR 0055), with notifyNavigating wired on result + view-all links
     SearchQueryResults       — results dropdown (desktop) / full-height list (mobile Sheet); links use useReaderBasePath (grant-aware); surah/verse rows are the shared SearchSurahRow/SearchVerseRow (see search zone)
   NavPillLink                — shared pill-style nav <Link> wrapper (icon+label); exports `navPillClassName` so non-Link consumers (UserMenu's dropdown-pill trigger <button>) can compose the same style via cn(); used directly by SharedMushafLink
