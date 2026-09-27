@@ -132,9 +132,9 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
 
     // Hold the base-edition page fonts briefly so the cover is observably up
     // before readiness lifts it (otherwise local fonts settle too fast to
-    // assert the reveal leg deterministically). The default edition is QCF V2
-    // (mushaf 1) since #601, so its fonts live under /fonts/v2/woff2/.
-    await page.route("**/fonts/v2/woff2/*.woff2", async (route) => {
+    // assert the reveal leg deterministically). The default edition is QCF V1
+    // (mushaf 2) following #709, so its fonts live under /fonts/v1/woff2/.
+    await page.route("**/fonts/v1/woff2/*.woff2", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 1200));
       await route.continue();
     });
@@ -219,8 +219,8 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
       async (cacheName) => {
         const cache = await window.caches.open(cacheName);
         // use-recitation-download caches pages for DEFAULT_MUSHAF_ID, which is
-        // QCF V2 (mushaf 1) since #601.
-        const match = await cache.match("/quran/pages/1/293.json");
+        // QCF V1 (mushaf 2) following #709.
+        const match = await cache.match("/quran/pages/2/293.json");
         return !!match;
       },
       PAGES_CACHE_NAME

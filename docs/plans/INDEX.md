@@ -93,7 +93,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | recitation | [Recitation: Quick Playback Speed Selector on Player Bar & Vertical Rail](387-recitation-quick-playback-speed.md) | implemented | feature |
 | release | [Protect prod Branch: Enforce Merges from release/* Only](protect-prod-branch.md) | implemented | feature |
 | release | [Release-Branch Deployment Workflow](release-branch-workflow.md) | implemented | feature |
-| rendering | [Add QCF V2 (Madani, 1421H) mushaf edition and make it the default](qcf-v2-mushaf-edition.md) | implemented | feature |
+| rendering | [Add QCF V2 (Madani, 1421H) mushaf edition and keep QCF V1 as default](qcf-v2-mushaf-edition.md) | implemented | feature |
 | rendering | [Add Tajweed color-coded mushaf mode](tajweed-mushaf-mode.md) | implemented | feature |
 | rendering | [Fix Tajweed Mushaf Font Size to Match Regular Mushaf](fix-tajweed-font-size.md) | implemented | bug |
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |
