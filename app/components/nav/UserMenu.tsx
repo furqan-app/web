@@ -75,7 +75,18 @@ const SignOutControl = ({
 
   const doSignOut = () => {
     onNavigate?.();
-    signOut();
+    if (isNativePlatform()) {
+      void (async () => {
+        try {
+          await signOut({ redirect: false });
+        } catch {
+          // Network failure during sign-out should not leave stale session visible
+        }
+        window.location.reload();
+      })();
+    } else {
+      signOut();
+    }
   };
 
   // One flush of the pending queue. `syncMarks()` is a module singleton, so a
