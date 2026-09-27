@@ -23,16 +23,26 @@
             </intent-filter>
 
             <!-- Auth return path (plan mobile-app-capacitor, Addendum
-                 2026-09-23): verified App Links for the production host route
-                 the system-browser sign-in back into the shell, where
-                 appUrlOpen spends the one-time code. Android-first — no iOS
-                 associated-domains entitlement this slice. Verification is
-                 prod-host only (see public/.well-known/assetlinks.json). -->
+                 2026-09-23; scoped 2026-09-27, #715): verified App Links
+                 cover locale content paths ONLY. /api/* (OAuth sign-in,
+                 Google callback, mint) must stay in the system browser — a
+                 verified sign-in URL opened in the shell WebView traps
+                 embedded OAuth, which Google rejects. appUrlOpen spends the
+                 one-time code. Android-first — no iOS associated-domains
+                 entitlement this slice. Verification is prod-host only (see
+                 public/.well-known/assetlinks.json). -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="furqan.taha7.com" />
+                <data
+                    android:scheme="https"
+                    android:host="furqan.taha7.com"
+                    android:pathPrefix="/ar" />
+                <data
+                    android:scheme="https"
+                    android:host="furqan.taha7.com"
+                    android:pathPrefix="/en" />
             </intent-filter>
 
         </activity>

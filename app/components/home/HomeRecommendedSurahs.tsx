@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { SurahResult } from "@types";
 import { Link } from "@/i18n/routing";
 import { useReaderBasePath } from "@/app/hooks/use-reader-base-path";
-import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { useReaderNavigation, handleReaderJump } from "@/app/contexts/ReaderNavigationContext";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import { cn } from "@/lib/utils";
 
@@ -58,9 +58,7 @@ export const HomeRecommendedSurahs = ({ surahs, className }: Props) => {
                   : `Surah ${surah.name_simple}`
               }
               onClick={(e) => {
-                if (!jumpTo || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                e.preventDefault();
-                jumpTo(startingPage);
+                handleReaderJump(e, jumpTo, startingPage);
               }}
               className="fq-focus-ring flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-card hover:bg-[hsl(var(--well)/var(--well-alpha))] hover:border-primary/40 transition-colors duration-150 shrink-0 text-foreground"
             >

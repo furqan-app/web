@@ -135,6 +135,8 @@ Because reader page-swipes use `history.replaceState`, not `pushState` (Reader N
 as part of first paint on standalone mobile/tablet and lift it when the visible
 pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 
+**Amended (ADR 0074, #710, 2026-09-26):** `AndroidBackExitGuard` feature-detects the Navigation API (`window.navigation`) and intercepts `traverse` events via `event.intercept()` before browser URL or router state can change, eliminating the traversal lag and predictive-back flicker (#296) that raw `popstate` exhibited. Where unsupported, it retains ADR 0040's double-push `popstate` guard. The guard shares full parity with the Capacitor Android shell via `App.exitApp()` on double-back (#682). See [ADR 0074](../adr/0074-navigation-api-for-reader-back-exit-guard.md).
+
 **Constraints:**
 - The cover is static SSR markup (identical bytes for every user — no per-user
   content, no dynamic rendering) revealed pre-paint only on
@@ -237,4 +239,15 @@ pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 - In the Android Capacitor shell, system bar insets (status bar + display cutout) are applied as padding on the native root content view with brand navy (`#16232F`) background and consumed (`Insets.NONE`) before reaching the WebView. This bounds the WebView inside the safe area (preventing status/navigation bar overlap on the mushaf and home pages) while ensuring CSS `env(safe-area-inset-*)` evaluates to `0px` inside the web app, completely eliminating double-padding in `Nav` and `RecitationPlayerBar` without any web/PWA code changes (ADR 0072, #678, #700).
 - Capacitor cold launch routes entry through `server.appStartPath: "/launch.html"` in `capacitor.config.ts`, loading the precached `/launch.html` rather than root `/`. `public/launch.html` inlines the `(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() === true)` check, ensuring pre-paint instant redirect to `lastReadPath` (or `/pages/1`) identical to the installed PWA (ADR 0042, #683). `server.url` must stay an origin URL without trailing slash or path segments so Android `MessageHandler` origin rules do not fail `WebViewCompat.addWebMessageListener` validation. Capacitor iOS (`CAPBridgeViewController`) requires any `server.appStartPath` to exist locally in `webDir` (`native-shell-web/launch.html`) before loading the remote URL, calling `fatalLoadError()` if absent; a minimal sentinel file exists in `native-shell-web/` to satisfy this check without bundling bulk assets.
 - In the Android Capacitor shell, the native hardware/gesture back button is intercepted via `@capacitor/app`'s `backButton` listener (`NativeBackButtonListener`) and delegates to `window.history.back()` when an overlay back guard is armed (`isOverlayBackGuardArmed()`) or `canGoBack` is true. Inside the reader, `AndroidBackExitGuard` handles double-back by calling `exitNativeApp()` (`App.exitApp()`) on the second press within 2s; outside the reader, history-root back presses exit via `App.exitApp()`. Existing web guards are never bypassed (ADR 0072, #682).
+
+## Native Shell App Links Scope
+
+**Status:** active
+
+**Decision (2026-09-27, #715):** The Android verified App Links filter covers locale content paths only (`pathPrefix /ar` + `/en` on the prod host). `/api/*` is never verified: OAuth sign-in, the Google callback, and the mint page must stay in the system browser — a verified sign-in URL opened in the shell WebView traps embedded OAuth, which Google rejects, stranding the shell on the NextAuth error page with no code ever minted. Only `/{locale}/native-bootstrap` spends a code in the shell.
+
+**Constraints:**
+- Never broaden the manifest filter back to the bare host, and never add paths outside `/ar` | `/en` without revisiting this decision. `native-callback` must keep resolving in the browser (mint needs that session).
+- Any new browser-only flow must live under `/api/*` (or handle the shell explicitly like the two native pages do) — never as a bare locale route that assumes a browser. Every locale route must render correctly in both the shell WebView and plain tabs.
+- `assetlinks.json` stays host-level and unchanged by path scoping.
 
