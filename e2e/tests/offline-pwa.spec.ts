@@ -563,4 +563,38 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     expect(offlineResult.r1Rejected).toBe(true);
     expect(offlineResult.r2Rejected).toBe(true);
   });
+
+  test("8. offline cold navigation to home serves the precached shell, and the offline logo tap lands on it", async ({
+    page,
+    context,
+  }, testInfo) => {
+    skipNonDesktop(testInfo);
+
+    // Online: visit home + a reader page so the SW installs (precaching the
+    // home shells at install time) and the reader page runtime-caches its HTML.
+    await page.goto("/ar");
+    await expect(page.locator("[data-surah-id]")).toHaveCount(114);
+    await waitForServiceWorker(page);
+    await page.goto("/ar/pages/1");
+    await waitForActivePanelContent(page);
+
+    // Go offline.
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+
+    // Cold offline loads of home in both locales serve the precached shell —
+    // the full 114-surah grid, not the terminal offline document.
+    await page.goto("/ar");
+    await expect(page.locator("[data-surah-id]")).toHaveCount(114);
+    await page.goto("/en");
+    await expect(page.locator("[data-surah-id]")).toHaveCount(114);
+
+    // Offline logo tap from a reader page hard-navigates to the shell instead
+    // of failing the RSC soft-nav into error.tsx + a Sentry report.
+    await page.goto("/ar/pages/1");
+    await waitForActivePanelContent(page);
+    await page.locator('nav a[aria-label="Home"]').first().click();
+    await expect(page).toHaveURL("/ar");
+    await expect(page.locator("[data-surah-id]")).toHaveCount(114);
+  });
 });

@@ -33,13 +33,16 @@ const withNextIntl = createNextIntlPlugin();
 // FALLBACK_LOCALES itself hardcodes the locales rather than importing routing.
 const READER_FALLBACK_SHELL_LOCALES = ['ar', 'en'];
 
-// Offline app-shell pages (ADR 0014 Addendum 10, #591): self /marks and /search
+// Offline app-shell pages (ADR 0014 Addendum 10, #591; home roots added by
+// Addendum 11, #720): self /marks, /search, and the bare /{locale} home roots
 // are static shells whose content resolves client-side (local marks store,
-// precached search index), so they get the same atomic-install treatment as
-// the reader shells above. Built from READER_FALLBACK_SHELL_LOCALES so no
-// second locale list can drift. Grant routes are dynamic per grant and are
-// permanently excluded.
+// precached search index, SSR surah list + localStorage continue-reading), so
+// they get the same atomic-install treatment as the reader shells above.
+// Built from READER_FALLBACK_SHELL_LOCALES so no second locale list can drift.
+// Grant routes are dynamic per grant and are permanently excluded. Bare "/"
+// is a middleware redirect, not a document — never a shell entry.
 const APP_SHELL_PAGE_PATHS = READER_FALLBACK_SHELL_LOCALES.flatMap((locale) => [
+  `/${locale}`,
   `/${locale}/marks`,
   `/${locale}/search`,
 ]);
