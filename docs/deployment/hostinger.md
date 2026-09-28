@@ -124,6 +124,7 @@ NEXTAUTH_SECRET=<run `openssl rand -base64 32` locally to generate>
 
 GOOGLE_CLIENT_ID=<your Google client ID>
 GOOGLE_CLIENT_SECRET=<your Google client secret>
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<same as GOOGLE_CLIENT_ID; build-time, public>
 
 QURAN_DATABASE_URL="mysql://u123456789_furqan_quran_user:<password>@localhost:3306/u123456789_furqan_quran"
 APP_DATABASE_URL="mysql://u123456789_furqan_app_user:<password>@localhost:3306/u123456789_furqan_app"

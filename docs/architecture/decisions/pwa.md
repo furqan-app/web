@@ -233,7 +233,7 @@ pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 
 **Constraints:**
 - Never attempt a full-app static export (26 API route handlers plus cookie-session NextAuth cannot export — no true Server Actions exist) or service workers on `capacitor://` (broken on iOS WebKit) — both are permanent rejections, not fallbacks.
-- Never run Google OAuth inside the WebView (Google rejects embedded user agents) and never rely on Web Push for native notifications (excluded from WKWebView) — use a system-browser session + bootstrap and native APNs/FCM tokens instead.
+- Never run Google OAuth inside the WebView (Google rejects embedded user agents) and never rely on Web Push for native notifications (excluded from WKWebView). Use native Google sign-in (see Native Shell Sign-In below; the earlier system-browser + bootstrap path is superseded by ADR 0075) and native APNs/FCM tokens instead.
 - iOS Tajweed is a physical-device screenshot-parity gate (ship vs omit-on-iOS in v1); no CSS fallback preserves the mushaf.
 - Never promise "offline from first launch" for the native shell; never bake the ~263 MiB font/Quran asset set into the binary.
 - Shell detection is a Phase 0 prerequisite: `isStandaloneDisplayMode()` is false inside a Capacitor WebView, so every PWA-gated surface (first-run gate, precache, recitation/tafsir downloads, back guards, guest marking) needs an `isNativePlatform()` branch before any POC — without it the whole downloader/offline UI renders `null` in the shell.
@@ -244,12 +244,28 @@ pair is ready — see [ADR 0065](../adr/0065-launch-splash-continuity-cover.md).
 
 ## Native Shell App Links Scope
 
-**Status:** active
+**Status:** active (auth rationale superseded by ADR 0075, 2026-09-28; the path scope still stands)
 
-**Decision (2026-09-27, #715):** The Android verified App Links filter covers locale content paths only (`pathPrefix /ar` + `/en` on the prod host). `/api/*` is never verified: OAuth sign-in, the Google callback, and the mint page must stay in the system browser — a verified sign-in URL opened in the shell WebView traps embedded OAuth, which Google rejects, stranding the shell on the NextAuth error page with no code ever minted. Only `/{locale}/native-bootstrap` spends a code in the shell.
+**Decision (2026-09-27, #715; revised 2026-09-28, #728):** The Android verified App Links filter covers locale content paths only (`pathPrefix /ar` + `/en` on the prod host). `/api/*` is never verified. App Links are a content feature only: they carry verse share URLs into the shell. They have no auth role since ADR 0075 removed the bootstrap.
 
 **Constraints:**
-- Never broaden the manifest filter back to the bare host, and never add paths outside `/ar` | `/en` without revisiting this decision. `native-callback` must keep resolving in the browser (mint needs that session).
-- Any new browser-only flow must live under `/api/*` (or handle the shell explicitly like the two native pages do) — never as a bare locale route that assumes a browser. Every locale route must render correctly in both the shell WebView and plain tabs.
+- Never broaden the manifest filter back to the bare host, and never add paths outside `/ar` | `/en` without revisiting this decision.
+- Every locale route must render correctly in both the shell WebView and plain tabs.
+- The shell navigates to an App Link's same-origin locale path on both cold start (`App.getLaunchUrl()`) and warm open (`appUrlOpen`). `getLaunchUrl()` keeps returning the same URL on every full reload for the activity's lifetime, so the cold-start URL is recorded in `sessionStorage` and never re-navigated, or it loops. Warm `appUrlOpen` events are never guarded, because each one is a fresh tap.
 - `assetlinks.json` stays host-level and unchanged by path scoping.
+
+## Native Shell Sign-In (Credential Manager + Credentials Provider)
+
+**Status:** active
+
+**Decision (2026-09-28, #728):** Inside the shell, every sign-in entry calls native Google Credential Manager (`@capgo/capacitor-social-login`). The shell passes the returned ID token to `signIn("google-native", { redirect: false })`. The NextAuth Credentials provider verifies the token server-side and returns the user, and NextAuth mints the session cookie itself. Web and PWA keep the Google OAuth provider unchanged. See [ADR 0075](../adr/0075-native-google-signin-credential-manager.md).
+
+**Constraints:**
+- No route other than NextAuth ever sets or names the session cookie. Never hand-encode a NextAuth JWT again.
+- ID token verification is server-side only (`google-auth-library` `verifyIdToken`, `audience` = `GOOGLE_CLIENT_ID`, require `email_verified`). The plugin's `decodeIdToken` does not check signatures and is never trusted.
+- `webClientId` passed to the plugin is the **web** OAuth client ID (`NEXT_PUBLIC_GOOGLE_CLIENT_ID`, same value as `GOOGLE_CLIENT_ID`), never the Android client ID. Android clients exist only in Google Cloud, one per signing SHA-1, all in the web client's project.
+- `capacitor.config.ts` enables only the Google provider in the plugin (`facebook: false` et al.). The Facebook SDK adds `AD_ID`, which Play rejects without a declaration.
+- `MainActivity` flushes `CookieManager` in `onPause()`. WebView keeps cookie writes in memory, so an app killed from Recents before a background flush loses a freshly set session.
+- The session and jwt callbacks expose only `id`, `name`, `email`, never the whole `User` row (it has a `password` column).
+- In `@capgo/capacitor-social-login` on Android, passing an explicit `scopes` array requires `MainActivity` to implement `ModifiedMainActivityForSocialLoginPlugin`. `SocialLogin.login({ provider: "google" })` omits explicit `scopes` (default scopes already request `email`, `profile`, `openid`), and `MainActivity` implements `ModifiedMainActivityForSocialLoginPlugin` as a belt-and-suspenders guard.
 
