@@ -2,7 +2,7 @@
 title: Fix native auth return hijack — scope App Links, log auth errors, refresh session after landing
 type: bug
 date: 2026-09-27
-status: ready-to-implement
+status: superseded
 area: pwa
 issue: 715
 ---

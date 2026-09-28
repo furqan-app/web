@@ -35,7 +35,7 @@ import {
   markKey,
 } from "@constants/marks";
 import { isStandaloneDisplayMode, isNativePlatform } from "@/app/utils/platform";
-import { openSystemBrowserSignin } from "@/app/lib/shell/auth-return";
+import { nativeGoogleSignIn } from "@/app/lib/shell/native-signin";
 import { useOnlineStatus } from "@/app/hooks/use-online-status";
 import { evaluateMarkModalGates } from "@/app/lib/marks/gates";
 import { MarksSignedOutPrompt } from "./MarksSignedOutPrompt";
@@ -253,10 +253,9 @@ export const MyMarksList = () => {
           </div>
           <button
             onClick={() => {
-              // Shell return path (plan mobile-app-capacitor): the expired
-              // session re-signs in the system browser; plain signIn outside.
+              // Inside the native shell sign-in uses native Google Credential Manager (ADR 0075); elsewhere next-auth signIn runs.
               if (isNativePlatform()) {
-                void openSystemBrowserSignin();
+                void nativeGoogleSignIn();
               } else {
                 signIn();
               }

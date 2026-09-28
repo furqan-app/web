@@ -2,14 +2,16 @@ package app.furqan;
 
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.CookieManager;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
+import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
 
-public class MainActivity extends BridgeActivity {
+public class MainActivity extends BridgeActivity implements ModifiedMainActivityForSocialLoginPlugin {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,5 +45,17 @@ public class MainActivity extends BridgeActivity {
             });
             ViewCompat.requestApplyInsets(contentView);
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // WebView keeps cookie writes in memory; persist the session before the process can be killed.
+        CookieManager.getInstance().flush();
+    }
+
+    @Override
+    public void IHaveModifiedTheMainActivityForTheUseWithSocialLoginPlugin() {
+        // Marker method required by @capgo/capacitor-social-login
     }
 }
