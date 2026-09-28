@@ -59,7 +59,6 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
-| pwa | [Fix native auth return hijack — scope App Links, log auth errors, refresh session after landing](fix-native-auth-link-scope.md) | ready-to-implement | bug |
 | pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | ready-to-implement | feature |
 | pwa | [Auth return fails silently in shell — route failed exchanges to the retry UI](auth-audible-failure.md) | implemented | bug |
 | pwa | [Auth return lands before the session cookie commits — verify session before landing](auth-session-race.md) | implemented | bug |
@@ -73,6 +72,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
 | pwa | [Slim the native shell — stop bundling public/ web assets into the APK](slim-native-shell-assets.md) | implemented | chore |
+| pwa | [Fix native auth return hijack — scope App Links, log auth errors, refresh session after landing](fix-native-auth-link-scope.md) | superseded | bug |
 | reader | [Arrow Controls on Desktop](arrow-controls-desktop.md) | implemented | feature |
 | reader | [Complex E2E & Fix: Boundary Wrap-Arounds & Error Route Recovery Navigation](e2e-boundary-wraparound-recovery.md) | implemented | feature |
 | reader | [Fix QuranSafha Swipe Flicker (font-ready flash + mark re-renders)](fix-safha-swipe-flicker.md) | implemented | bug |

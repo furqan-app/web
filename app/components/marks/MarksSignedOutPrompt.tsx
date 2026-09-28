@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { LogIn, Bookmark } from "lucide-react";
 import useTranslations from "@hooks/use-translations";
 import { isNativePlatform } from "@/app/utils/platform";
-import { openSystemBrowserSignin } from "@/app/lib/shell/auth-return";
+import { nativeGoogleSignIn } from "@/app/lib/shell/native-signin";
 
 export const MarksSignedOutPrompt = () => {
   const t = useTranslations();
@@ -13,7 +13,7 @@ export const MarksSignedOutPrompt = () => {
   // current location as return target inside the shell, plain signIn outside.
   const startSignIn = () => {
     if (isNativePlatform()) {
-      void openSystemBrowserSignin();
+      void nativeGoogleSignIn();
     } else {
       signIn();
     }

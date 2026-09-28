@@ -27,7 +27,8 @@ import { KeepScreenAwakeSync } from "@components/KeepScreenAwakeSync";
 import { OfflineSetupGate } from "@components/offline/OfflineSetupGate";
 import { OfflineInstallPrompt } from "@components/offline/OfflineInstallPrompt";
 import { SwUpdateBanner } from "@components/offline/SwUpdateBanner";
-import { NativeAuthReturnListener } from "@components/shell/NativeAuthReturnListener";
+import { NativeAppLinkListener } from "@components/shell/NativeAppLinkListener";
+import { NativeSignInErrorNotice } from "@components/shell/NativeSignInErrorNotice";
 import { NativeBackButtonListener } from "@components/shell/NativeBackButtonListener";
 import "../globals.css";
 import { getLanguageDirection } from "../utils/i18n";
@@ -81,7 +82,8 @@ export default async function LocaleLayout({
                                     <PlansWidget />
                                     <LastReadPageSync />
                                     <MarksSync />
-                                    <NativeAuthReturnListener />
+                                    <NativeAppLinkListener />
+                                    <NativeSignInErrorNotice />
                                     <NativeBackButtonListener />
                                     <TafsirReaderSync />
                                     <KeepScreenAwakeSync />
