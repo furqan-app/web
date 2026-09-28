@@ -200,7 +200,7 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
     if (isNativePlatform()) {
       void nativeGoogleSignIn();
     } else {
-      signIn();
+      signIn("google");
     }
   };
 

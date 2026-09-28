@@ -1,5 +1,6 @@
 package app.furqan;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -9,7 +10,9 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.PluginHandle;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
+import ee.forgr.capacitor.social.login.SocialLoginPlugin;
 
 public class MainActivity extends BridgeActivity implements ModifiedMainActivityForSocialLoginPlugin {
 
@@ -52,6 +55,15 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         super.onPause();
         // WebView keeps cookie writes in memory; persist the session before the process can be killed.
         CookieManager.getInstance().flush();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        PluginHandle handle = getBridge() != null ? getBridge().getPlugin("SocialLogin") : null;
+        if (handle != null && handle.getInstance() instanceof SocialLoginPlugin) {
+            ((SocialLoginPlugin) handle.getInstance()).handleGoogleLoginIntent(requestCode, data);
+        }
     }
 
     @Override

@@ -15,7 +15,7 @@ export const PlansSignedOutPrompt = () => {
     if (isNativePlatform()) {
       void nativeGoogleSignIn();
     } else {
-      signIn();
+      signIn("google");
     }
   };
 
