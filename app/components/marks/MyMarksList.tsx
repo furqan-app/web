@@ -257,7 +257,7 @@ export const MyMarksList = () => {
               if (isNativePlatform()) {
                 void nativeGoogleSignIn();
               } else {
-                signIn();
+                signIn("google");
               }
             }}
             className="fq-focus-ring flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-transform duration-150 active:scale-95 flex-none"

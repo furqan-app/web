@@ -15,7 +15,7 @@ export const MarksSignedOutPrompt = () => {
     if (isNativePlatform()) {
       void nativeGoogleSignIn();
     } else {
-      signIn();
+      signIn("google");
     }
   };
 
