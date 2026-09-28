@@ -26,7 +26,7 @@ import { toLocaleNumeral } from "@/app/utils/i18n";
 import { getPendingCount, syncMarks } from "@/app/lib/marks/sync";
 import { menuRowClassName } from "./NavPillLink";
 import { hardNavigateIfOffline, isNativePlatform } from "@/app/utils/platform";
-import { openSystemBrowserSignin } from "@/app/lib/shell/auth-return";
+import { nativeGoogleSignIn, nativeSignOut } from "@/app/lib/shell/native-signin";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -76,14 +76,7 @@ const SignOutControl = ({
   const doSignOut = () => {
     onNavigate?.();
     if (isNativePlatform()) {
-      void (async () => {
-        try {
-          await signOut({ redirect: false });
-        } catch {
-          // Network failure during sign-out should not leave stale session visible
-        }
-        window.location.reload();
-      })();
+      void nativeSignOut();
     } else {
       signOut();
     }
@@ -202,12 +195,10 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
   const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
 
-  // Shell return path (plan mobile-app-capacitor): inside the native shell
-  // sign-in opens in the system browser with the current location as the
-  // return target; everywhere else the existing next-auth signIn runs.
+  // Inside the native shell sign-in uses native Google Credential Manager (ADR 0075); elsewhere next-auth signIn runs.
   const startSignIn = () => {
     if (isNativePlatform()) {
-      void openSystemBrowserSignin();
+      void nativeGoogleSignIn();
     } else {
       signIn();
     }

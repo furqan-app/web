@@ -73,6 +73,13 @@ const config: CapacitorConfig = {
     cleartext: !serverOrigin.startsWith("https://"),
     androidScheme: "https",
   },
+  // Only Google is enabled; the Facebook SDK adds the AD_ID permission.
+  plugins: {
+    SocialLogin: {
+      providers: { google: true, facebook: false, apple: false, twitter: false },
+      logLevel: 1,
+    },
+  },
 };
 
 export default config;
