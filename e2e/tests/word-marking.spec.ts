@@ -59,12 +59,12 @@ test.describe("Unauthenticated Gating", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
-    // Verify word label in Arabic ("تحديد كلمة")
-    await expect(dialog.getByText("تحديد كلمة").first()).toBeVisible();
+    // Verify word label in Arabic ("تعليم كلمة")
+    await expect(dialog.getByText("تعليم كلمة").first()).toBeVisible();
 
     // Verify unauthenticated prompt and sign-in button
     await expect(
-      dialog.getByText("سجّل الدخول لتحديد الكلمات والآيات")
+      dialog.getByText("سجّل الدخول لوضع علامات على الكلمات والآيات")
     ).toBeVisible();
     const signInBtn = dialog.getByRole("button", { name: "تسجيل الدخول" });
     await expect(signInBtn).toBeVisible();
@@ -138,7 +138,7 @@ test.describe("Modal Lifecycle & Audio Actions", () => {
 
     // Word pronunciation button
     const pronunciationBtn = dialog.getByRole("button", {
-      name: "سماع النطق",
+      name: "استمع إلى النطق",
     });
     await expect(pronunciationBtn).toBeVisible();
     await pronunciationBtn.click();
@@ -352,7 +352,7 @@ test.describe("Concurrent Marks", () => {
     await word2.click();
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-linking"]').click();
-    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await dialog.getByRole("button", { name: "حفظ: الربط" }).click();
     await expect(dialog).toBeHidden();
 
     // Verify both words render independent classes concurrently
@@ -377,8 +377,8 @@ test.describe("Verse-Level Marking", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
-    // Header must indicate verse marking in Arabic ("تحديد آية")
-    await expect(dialog.getByText("تحديد آية").first()).toBeVisible();
+    // Header must indicate verse marking in Arabic ("تعليم آية")
+    await expect(dialog.getByText("تعليم آية").first()).toBeVisible();
 
     // Select tajweed-error and save
     await dialog.locator('label[for="mark-color-tajweed-error"]').click();
@@ -496,7 +496,7 @@ test.describe("Mobile Long-Press Interaction", () => {
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("تحديد كلمة").first()).toBeVisible();
+    await expect(dialog.getByText("تعليم كلمة").first()).toBeVisible();
     await expect(dialog).toHaveCSS("overflow-y", "visible");
     await expect(dialog.getByRole("button", { name: "حفظ العلامة" })).toBeVisible();
   });
@@ -606,7 +606,7 @@ test.describe("Auth Gate Redirect Restoration", () => {
     // 3. Verify modal automatically opens in authenticated state
     const restoredDialog = page.getByRole("dialog");
     await expect(restoredDialog).toBeVisible({ timeout: 10000 });
-    await expect(restoredDialog.getByText("تحديد كلمة").first()).toBeVisible();
+    await expect(restoredDialog.getByText("تعليم كلمة").first()).toBeVisible();
     await expect(restoredDialog.getByText(/الفاتحة/)).toBeVisible();
     await expect(restoredDialog.getByRole("button", { name: "حفظ العلامة" })).toBeVisible();
     await expect(restoredDialog.locator('label[for="mark-color-forgetting"]')).toBeVisible();
@@ -632,7 +632,7 @@ test.describe("Auth Gate Redirect Restoration", () => {
 
     const restoredDialog = page.getByRole("dialog");
     await expect(restoredDialog).toBeVisible({ timeout: 10000 });
-    await expect(restoredDialog.getByText("تحديد آية").first()).toBeVisible();
+    await expect(restoredDialog.getByText("تعليم آية").first()).toBeVisible();
     await expect(restoredDialog.locator('label[for="mark-color-tajweed-error"]')).toBeVisible();
     await expect(page).not.toHaveURL(/markWord=/);
 
@@ -667,7 +667,7 @@ test.describe("Reader to My Marks Round-Trip", () => {
     const dialog2 = page.getByRole("dialog");
     await expect(dialog2).toBeVisible();
     await dialog2.locator('label[for="mark-color-linking"]').click();
-    await dialog2.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await dialog2.getByRole("button", { name: "حفظ: الربط" }).click();
     await expect(dialog2).toBeHidden();
     await expect(wordP2).toHaveClass(/bg-blue-300/, { timeout: 10000 });
 
@@ -814,7 +814,7 @@ test.describe("Offline & Guest Marking (ADR 0061)", () => {
 
     // Select linking and save
     await dialog.locator('label[for="mark-color-linking"]').click();
-    const saveBtn = dialog.getByRole("button", { name: "حفظ: تربيط" });
+    const saveBtn = dialog.getByRole("button", { name: "حفظ: الربط" });
     await expect(saveBtn).toBeEnabled();
     await saveBtn.click();
     await expect(dialog).toBeHidden();
@@ -1012,7 +1012,7 @@ test.describe("Offline & Guest Marking (ADR 0061)", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-linking"]').click();
-    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await dialog.getByRole("button", { name: "حفظ: الربط" }).click();
     await expect(dialog).toBeHidden();
 
     await expect
@@ -1053,7 +1053,7 @@ test.describe("Offline & Guest Marking (ADR 0061)", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await dialog.locator('label[for="mark-color-linking"]').click();
-    await dialog.getByRole("button", { name: "حفظ: تربيط" }).click();
+    await dialog.getByRole("button", { name: "حفظ: الربط" }).click();
     await expect(dialog).toBeHidden();
     await expect
       .poll(async () => (await getLocalMark(page, "word:1:1:2"))?.sync, { timeout: 10000 })

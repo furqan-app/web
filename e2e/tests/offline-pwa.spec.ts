@@ -88,9 +88,9 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await page.goto("/ar/pages/1");
 
     // Blocking first-run dialog appears
-    const gate = page.getByRole("dialog", { name: "اقرأ القرآن بدون إنترنت" });
+    const gate = page.getByRole("dialog", { name: "اقرأ القرآن دون اتصال بالإنترنت" });
     await expect(gate).toBeVisible();
-    await expect(gate.getByRole("heading", { name: "اقرأ القرآن بدون إنترنت" })).toBeVisible();
+    await expect(gate.getByRole("heading", { name: "اقرأ القرآن دون اتصال بالإنترنت" })).toBeVisible();
 
     // Escape and outside clicking are suppressed (ADR 0014 Addendum 2)
     await page.keyboard.press("Escape");

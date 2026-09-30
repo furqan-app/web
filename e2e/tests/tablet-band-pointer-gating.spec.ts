@@ -45,7 +45,7 @@ test.describe("Tablet band without touch (1280px laptop): desktop interaction", 
     // Unauthenticated click opens the modal's sign-in prompt (no DB writes).
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("تحديد كلمة").first()).toBeVisible();
+    await expect(dialog.getByText("تعليم كلمة").first()).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
 
@@ -145,7 +145,7 @@ test.describe("Tablet band with touch (1280px tablet): touch behavior unchanged"
     await longPressWord(page, firstWord, 600);
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("تحديد كلمة").first()).toBeVisible();
+    await expect(dialog.getByText("تعليم كلمة").first()).toBeVisible();
   });
 
   test("touch swipe still turns the page inside the band", async ({ page }) => {

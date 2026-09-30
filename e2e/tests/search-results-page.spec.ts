@@ -45,7 +45,7 @@ test.describe("Search Results Page", () => {
     await expect(verseLinks(page).first()).toBeVisible({
       timeout: DEBOUNCE_TIMEOUT,
     });
-    await expect(page.getByText(/عدد النتائج/)).toBeVisible();
+    await expect(page.getByText(/نتيجة|نتيجتان|نتائج/)).toBeVisible();
   });
 
   test("renders Idle state for a query shorter than 2 characters", async ({
@@ -185,7 +185,7 @@ test.describe("Search Results Page", () => {
       // Offline total must equal the online/API total for this query (48 verses
       // in the full-dataset fixture — see the seed note at the top of this file).
       // A silently truncated index would show a smaller count here.
-      await expect(page.getByText("عدد النتائج: ٤٨")).toBeVisible({
+      await expect(page.getByText("٤٨ نتيجة")).toBeVisible({
         timeout: DEBOUNCE_TIMEOUT,
       });
       expect(searchApiCalls).toBe(0);
@@ -249,7 +249,7 @@ test.describe("Search Results Page", () => {
       });
       // Offline total must equal the online/API total for this query (48 verses
       // in the full-dataset fixture — see the seed note at the top of this file).
-      await expect(page.getByText("عدد النتائج: ٤٨")).toBeVisible({
+      await expect(page.getByText("٤٨ نتيجة")).toBeVisible({
         timeout: DEBOUNCE_TIMEOUT,
       });
       expect(searchApiCalls).toBe(0);
@@ -364,7 +364,7 @@ test.describe("Search Results Page", () => {
       await expect(verseLinks(page).first()).toBeVisible({
         timeout: DEBOUNCE_TIMEOUT,
       });
-      await expect(page.getByText("عدد النتائج: ٤٨")).toBeVisible({
+      await expect(page.getByText("٤٨ نتيجة")).toBeVisible({
         timeout: DEBOUNCE_TIMEOUT,
       });
       expect(searchApiCalls).toBe(0);

@@ -208,9 +208,9 @@ test.describe("Shared Mushaf Access & Mid-Session Revocation", () => {
       // Viewer observes owner's attribution on the existing mark
       await expect(dialog.getByText("E2E Test User")).toBeVisible();
 
-      // Change category to linking (تربيط)
+      // Change category to linking (الربط)
       await dialog.locator('label[for="mark-color-linking"]').click();
-      const updateBtn = dialog.getByRole("button", { name: "تحديث: تربيط" });
+      const updateBtn = dialog.getByRole("button", { name: "تحديث: الربط" });
       await updateBtn.click();
       await expect(dialog).toBeHidden();
 
@@ -417,7 +417,7 @@ test.describe("Shared Mushaf Access & Mid-Session Revocation", () => {
 
       const dialog = page.getByRole("dialog");
       await expect(dialog).toBeVisible();
-      await expect(dialog.getByText("تحديد كلمة").first()).toBeVisible();
+      await expect(dialog.getByText("تعليم كلمة").first()).toBeVisible();
     });
   });
 
