@@ -184,7 +184,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await expect(offlineRecitationTrigger).toBeVisible();
     await offlineRecitationTrigger.click();
 
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet).toBeVisible();
 
     // Wait for reciter to resolve
@@ -247,7 +247,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const offlineRecitationTrigger = settingsSheet.getByRole("button", { name: /التلاوة دون اتصال/ });
     await offlineRecitationTrigger.click();
 
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
     const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
@@ -311,7 +311,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // Download Al-Kahf online so pages 293-304 are cached
     const settingsSheet = await openSettings(page);
     await settingsSheet.getByRole("button", { name: /التلاوة دون اتصال/ }).click();
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
     const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
@@ -391,7 +391,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // Open Settings -> Offline Recitation
     const settingsSheet = await openSettings(page);
     await settingsSheet.getByRole("button", { name: /التلاوة دون اتصال/ }).click();
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
 
     // Download buttons are disabled
     const alKahfRow = sheet.locator("div.bg-muted").filter({ hasText: /^Al-Kahf$/ }).first();

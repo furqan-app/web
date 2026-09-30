@@ -45,7 +45,7 @@ test.describe("Search Results Page", () => {
     await expect(verseLinks(page).first()).toBeVisible({
       timeout: DEBOUNCE_TIMEOUT,
     });
-    await expect(page.getByText(/نتيجة|نتيجتان|نتائج/)).toBeVisible();
+    await expect(page.getByText("٤٨ نتيجة")).toBeVisible();
   });
 
   test("renders Idle state for a query shorter than 2 characters", async ({

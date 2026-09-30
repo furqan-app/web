@@ -289,3 +289,12 @@ before fixing. User approved the mechanical batch plus five wording decisions.
 - Sweep correction #2: `offline-pwa.spec.ts` asserted the old gate title —
   updated. Its one eslint unused-import error is pre-existing (verified via
   stash on unmodified tree).
+- CI follow-up (PR #745, e2e FAILURE): three failures were ours and fixed on
+  the branch — `search-results-page.spec.ts` header regex matched the `h1`
+  `نتائج البحث` (strict-mode violation; now exact `٤٨ نتيجة`),
+  `sidebar-navigation.spec.ts` expected old `١ نتيجة` (now `نتيجة واحدة`),
+  `offline-pwa.spec.ts` exact dialog names missed the longer standardized
+  title (now `التلاوة دون اتصال بالإنترنت`). Seven other failures
+  (recitation-lifecycle ×2, tafsir-sheet ×2, locale-switching, wird-reminder,
+  offline-pwa audio-download ×3) reference no changed string — audio/external
+  timing suspects, to be judged on the re-run.
