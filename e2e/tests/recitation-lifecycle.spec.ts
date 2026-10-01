@@ -77,7 +77,7 @@ async function startRecitationOnPage1(page: Page, context: BrowserContext) {
   await mockRecitationApis(page);
   await page.goto("/ar/pages/1");
   await waitForReaderContent(page);
-  await page.getByRole("button", { name: "استماع" }).click();
+  await page.getByRole("button", { name: "استمع" }).click();
   await page.waitForFunction(audioIsPlaying);
 }
 
@@ -149,7 +149,7 @@ test.describe("Recitation lifecycle vs. navigation", () => {
     await waitForReaderContent(page);
 
     await revealNavOverlay(page);
-    await page.getByRole("button", { name: "استماع" }).click();
+    await page.getByRole("button", { name: "استمع" }).click();
     await page.waitForFunction(audioIsPlaying);
 
     // Swipe forward (Quran RTL: drag right) off the recited page.

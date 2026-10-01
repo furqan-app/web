@@ -298,3 +298,12 @@ before fixing. User approved the mechanical batch plus five wording decisions.
   (recitation-lifecycle ×2, tafsir-sheet ×2, locale-switching, wird-reminder,
   offline-pwa audio-download ×3) reference no changed string — audio/external
   timing suspects, to be judged on the re-run.
+- CI re-run (e2e FAILURE again) root-caused locally: Playwright `name`
+  matching is exact/substring-sensitive and `استمع` ≠ `استماع` at codepoint
+  level (alef 0627 present/absent), so renaming `recitation.listen` to the
+  imperative orphaned every spec asserting the old label. All play-button
+  assertions updated (`recitation-lifecycle` ×2, `tafsir-sheet` ×2,
+  `locale-switching` ×1, `offline-pwa` ×6) plus `plans-custom-wird`
+  `المقدار`→`النطاق`; `plans-layout` tabs left alone (activities.* nouns
+  unchanged). Verified per-spec locally against prod build; `wird-reminder`
+  passes locally → CI-only flake.

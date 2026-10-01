@@ -200,7 +200,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const downloadedItem = sheet
       .locator("div.bg-muted")
       .filter({ hasText: "Al-Kahf" })
-      .filter({ has: page.getByRole("button", { name: "استماع" }) })
+      .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
 
@@ -258,7 +258,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const downloadedItem = sheet
       .locator("div.bg-muted")
       .filter({ hasText: "Al-Kahf" })
-      .filter({ has: page.getByRole("button", { name: "استماع" }) })
+      .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
 
@@ -270,7 +270,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await expect(sheet.getByText("اتصل بالإنترنت للتنزيل.")).toBeVisible();
 
     // Start playback from downloaded item
-    const listenBtn = downloadedItem.getByRole("button", { name: "استماع" });
+    const listenBtn = downloadedItem.getByRole("button", { name: "استمع" });
     await expect(listenBtn).toBeVisible();
     await listenBtn.click();
 
@@ -322,12 +322,12 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const downloadedItem = sheet
       .locator("div.bg-muted")
       .filter({ hasText: "Al-Kahf" })
-      .filter({ has: page.getByRole("button", { name: "استماع" }) })
+      .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
 
     // Start playback (starts at 18:1 on page 293)
-    await downloadedItem.getByRole("button", { name: "استماع" }).click();
+    await downloadedItem.getByRole("button", { name: "استمع" }).click();
     await page.keyboard.press("Escape");
 
     await page.waitForFunction(audioIsPlaying);
@@ -403,7 +403,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await page.waitForTimeout(200);
 
     // Attempting to trigger recitation from the navbar listen button
-    const listenNavBtn = page.getByRole("button", { name: "استماع" });
+    const listenNavBtn = page.getByRole("button", { name: "استمع" });
     if (await listenNavBtn.isVisible()) {
       await listenNavBtn.click();
       // Verifies offline playback guard does not throw unhandled exception
