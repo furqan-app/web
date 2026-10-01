@@ -198,7 +198,7 @@ test.describe("Sidebar Search Filters: Surahs & Rubs Tabs", () => {
     await filterInput.fill("الكهف");
     await expect(sheet.locator("[data-surah-id]")).toHaveCount(1);
     await expect(sheet.locator('[data-surah-id="18"]')).toBeVisible();
-    await expect(sheet.getByRole("status")).toContainText("١ نتيجة");
+    await expect(sheet.getByRole("status")).toContainText("نتيجة واحدة");
 
     // Press Enter to navigate to first result
     await filterInput.press("Enter");

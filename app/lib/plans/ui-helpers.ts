@@ -17,21 +17,20 @@ export const quantityAmount = (
 };
 
 /**
- * Derives pace summary string (e.g. "5 صفحة/يوم" or "10 آية/يوم") adhering to trackUnits.
+ * Derives pace summary string (e.g. "5 صفحات/يوم" or "10 آيات/يوم") adhering to trackUnits.
+ * Uses the ICU plural messages so Arabic singular/dual/plural agree with the
+ * pace number — never hand-concatenate a rate noun (decisions/i18n.md).
  */
 export const getPlanPaceSummary = (
   pace: number,
   unit: string | undefined,
   locale: string,
-  t: (key: string, defaultValue?: string) => string
-): string => {
-  const paceNum = toLocaleNumeral(pace, locale);
-  const unitLabel =
-    unit === "verse"
-      ? t("plans.versesPerDay", "verses/day")
-      : t("plans.pagesPerDay", "pages/day");
-  return `${paceNum} ${unitLabel}`;
-};
+  tIntl: (key: string, values?: Record<string, string | number>) => string
+): string =>
+  tIntl(unit === "verse" ? "plans.custom.versesPerDay" : "plans.custom.pagesPerDay", {
+    count: pace,
+    n: toLocaleNumeral(pace, locale),
+  });
 
 /**
  * Aggregates pending and total daily tasks across all active plans.

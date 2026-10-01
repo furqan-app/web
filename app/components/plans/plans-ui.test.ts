@@ -25,6 +25,7 @@ describe("Plans UI Redesign (#595)", () => {
       "manageHint",
       "summary.allQuran",
       "summary.juzRange",
+      "hero.streakDaysAcc",
       "pagesPerDay",
       "versesPerDay",
     ];
@@ -77,15 +78,16 @@ describe("Plans UI Redesign (#595)", () => {
     });
 
     it("formats pace summaries according to trackUnits (page vs verse)", () => {
-      const mockT = (k: string, def?: string) => {
-        if (k === "plans.versesPerDay") return "verses/day";
-        if (k === "plans.pagesPerDay") return "pages/day";
-        return def ?? k;
+      const mockTIntl = (k: string, values?: Record<string, string | number>) => {
+        const n = values?.n ?? "";
+        if (k === "plans.custom.versesPerDay") return `${n} verses/day`;
+        if (k === "plans.custom.pagesPerDay") return `${n} pages/day`;
+        return k;
       };
 
-      expect(getPlanPaceSummary(5, "page", "en", mockT)).toBe("5 pages/day");
-      expect(getPlanPaceSummary(10, "verse", "en", mockT)).toBe("10 verses/day");
-      expect(getPlanPaceSummary(5, undefined, "en", mockT)).toBe("5 pages/day");
+      expect(getPlanPaceSummary(5, "page", "en", mockTIntl)).toBe("5 pages/day");
+      expect(getPlanPaceSummary(10, "verse", "en", mockTIntl)).toBe("10 verses/day");
+      expect(getPlanPaceSummary(5, undefined, "en", mockTIntl)).toBe("5 pages/day");
     });
 
     it("derives Husun plan parameters summary correctly", () => {
@@ -508,27 +510,29 @@ describe("Custom Wird UI (#610)", () => {
   describe("ICU Plural Formatting for Custom Wird (#610 polish)", () => {
     it("formats Arabic pagesCount with correct plural categories", () => {
       const msg = new IntlMessageFormat(arMessages.plans.custom.pagesCount, "ar");
-      expect(msg.format({ count: 1, n: "١" })).toBe("١ صفحة");
-      expect(msg.format({ count: 2, n: "٢" })).toBe("٢ صفحتان");
+      expect(msg.format({ count: 1, n: "١" })).toBe("صفحة واحدة");
+      expect(msg.format({ count: 2, n: "٢" })).toBe("صفحتان");
       expect(msg.format({ count: 5, n: "٥" })).toBe("٥ صفحات");
       expect(msg.format({ count: 15, n: "١٥" })).toBe("١٥ صفحة");
     });
 
     it("formats Arabic pagesPerDay with correct plural categories (Nit 1)", () => {
       const msg = new IntlMessageFormat(arMessages.plans.custom.pagesPerDay, "ar");
-      expect(msg.format({ count: 1, n: "١" })).toBe("١ صفحة/يوم");
-      expect(msg.format({ count: 2, n: "٢" })).toBe("٢ صفحتان/يوم");
+      expect(msg.format({ count: 1, n: "١" })).toBe("صفحة واحدة/يوم");
+      expect(msg.format({ count: 2, n: "٢" })).toBe("صفحتان/يوم");
       expect(msg.format({ count: 5, n: "٥" })).toBe("٥ صفحات/يوم");
       expect(msg.format({ count: 15, n: "١٥" })).toBe("١٥ صفحة/يوم");
     });
 
     it("formats Arabic versesPerDay and pagesPerWeek correctly", () => {
       const vMsg = new IntlMessageFormat(arMessages.plans.custom.versesPerDay, "ar");
-      expect(vMsg.format({ count: 1, n: "١" })).toBe("١ آية/يوم");
+      expect(vMsg.format({ count: 1, n: "١" })).toBe("آية واحدة/يوم");
+      expect(vMsg.format({ count: 2, n: "٢" })).toBe("آيتان/يوم");
       expect(vMsg.format({ count: 10, n: "١٠" })).toBe("١٠ آيات/يوم");
 
       const wMsg = new IntlMessageFormat(arMessages.plans.custom.pagesPerWeek, "ar");
-      expect(wMsg.format({ count: 1, n: "١" })).toBe("١ صفحة/أسبوع");
+      expect(wMsg.format({ count: 1, n: "١" })).toBe("صفحة واحدة/أسبوع");
+      expect(wMsg.format({ count: 2, n: "٢" })).toBe("صفحتان/أسبوع");
       expect(wMsg.format({ count: 7, n: "٧" })).toBe("٧ صفحات/أسبوع");
     });
 
@@ -538,6 +542,79 @@ describe("Custom Wird UI (#610)", () => {
 
       const singleMsg = new IntlMessageFormat(arMessages.plans.custom.singlePage, "ar");
       expect(singleMsg.format({ page: "٧٧" })).toBe("صفحة ٧٧");
+    });
+  });
+
+  describe("Arabic translation quality (#739)", () => {
+    it("formats home.resultsCount with full plural categories", () => {
+      const msg = new IntlMessageFormat(arMessages.home.resultsCount, "ar");
+      expect(msg.format({ count: 0, n: "٠" })).toBe("لا توجد نتائج");
+      expect(msg.format({ count: 1, n: "١" })).toBe("نتيجة واحدة");
+      expect(msg.format({ count: 2, n: "٢" })).toBe("نتيجتان");
+      expect(msg.format({ count: 5, n: "٥" })).toBe("٥ نتائج");
+      expect(msg.format({ count: 11, n: "١١" })).toBe("١١ نتيجة");
+    });
+
+    it("formats search.resultsCount with full plural categories", () => {
+      const msg = new IntlMessageFormat(arMessages.search.resultsCount, "ar");
+      expect(msg.format({ count: 0, n: "٠" })).toBe("لا توجد نتائج");
+      expect(msg.format({ count: 1, n: "١" })).toBe("نتيجة واحدة");
+      expect(msg.format({ count: 2, n: "٢" })).toBe("نتيجتان");
+      expect(msg.format({ count: 3, n: "٣" })).toBe("٣ نتائج");
+      expect(msg.format({ count: 100, n: "١٠٠" })).toBe("١٠٠ نتيجة");
+    });
+
+    it("formats hero.streakDays as a self-contained phrase", () => {
+      const msg = new IntlMessageFormat(arMessages.plans.hero.streakDays, "ar");
+      expect(msg.format({ count: 1, n: "١" })).toBe("يوم واحد متتالٍ");
+      expect(msg.format({ count: 2, n: "٢" })).toBe("يومان متتاليان");
+      expect(msg.format({ count: 7, n: "٧" })).toBe("٧ أيام متتالية");
+      expect(msg.format({ count: 11, n: "١١" })).toBe("١١ يومًا متتاليًا");
+    });
+
+    it("renders لم تبدأ بعد for zero streaks and totals", () => {
+      const days = new IntlMessageFormat(arMessages.plans.dashboard.streaks.daysCount, "ar");
+      expect(days.format({ count: 0, n: "٠" })).toBe("لم تبدأ بعد");
+      expect(days.format({ count: 2, n: "٢" })).toBe("يومان");
+
+      const pages = new IntlMessageFormat(arMessages.plans.dashboard.totals.pagesCount, "ar");
+      expect(pages.format({ count: 0, n: "٠" })).toBe("لم تبدأ بعد");
+
+      const verses = new IntlMessageFormat(arMessages.plans.dashboard.totals.versesCount, "ar");
+      expect(verses.format({ count: 0, n: "٠" })).toBe("لم تبدأ بعد");
+
+      const khatmat = new IntlMessageFormat(arMessages.plans.dashboard.totals.khatmatCount, "ar");
+      expect(khatmat.format({ count: 0, n: "٠" })).toBe("لم تبدأ بعد");
+    });
+
+    it("formats hero.streakDaysAcc in the accusative after لقد حققت (agy follow-up)", () => {
+      const msg = new IntlMessageFormat(arMessages.plans.hero.streakDaysAcc, "ar");
+      expect(msg.format({ count: 1, n: "١" })).toBe("يومًا واحدًا متتاليًا");
+      expect(msg.format({ count: 2, n: "٢" })).toBe("يومين متتاليين");
+      expect(msg.format({ count: 5, n: "٥" })).toBe("٥ أيام متتالية");
+      expect(msg.format({ count: 11, n: "١١" })).toBe("١١ يومًا متتاليًا");
+
+      const enMsg = new IntlMessageFormat(enMessages.plans.hero.streakDaysAcc, "en");
+      expect(enMsg.format({ count: 1, n: 1 })).toBe("1 day streak");
+      expect(enMsg.format({ count: 4, n: 4 })).toBe("4 day streak");
+    });
+
+    it("keeps English streakDays carrying its number (agy follow-up)", () => {
+      const enMsg = new IntlMessageFormat(enMessages.plans.hero.streakDays, "en");
+      expect(enMsg.format({ count: 3, n: 3 })).toBe("3 day streak");
+    });
+
+    it("formats recitation repeat counts with مرة/مرات agreement (agy follow-up)", () => {
+      const msg = new IntlMessageFormat(arMessages.recitation.repeatCycleTimes, "ar");
+      expect(msg.format({ count: 1, n: "١" })).toBe("تكرار الآية مرة واحدة");
+      expect(msg.format({ count: 2, n: "٢" })).toBe("تكرار الآية مرتين");
+      expect(msg.format({ count: 5, n: "٥" })).toBe("تكرار الآية ٥ مرات");
+      expect(msg.format({ count: 11, n: "١١" })).toBe("تكرار الآية ١١ مرة");
+    });
+
+    it("uses نتيجة واحدة for a single sidebar result (agy follow-up)", () => {
+      const msg = new IntlMessageFormat(arMessages.sidebar.filterResultsCount, "ar");
+      expect(msg.format({ count: 1, n: "١" })).toBe("نتيجة واحدة");
     });
   });
 });

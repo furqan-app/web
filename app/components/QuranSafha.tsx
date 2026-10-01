@@ -517,7 +517,7 @@ export const QuranSafha = ({
     hizb: "الحزب",
     "hizb-quarter": "ربع الحزب",
     "hizb-half": "نصف الحزب",
-    "hizb-three-quarters": "ثلاث أرباع الحزب",
+    "hizb-three-quarters": "ثلاثة أرباع الحزب",
   };
   // juz and the surah glyph fall back to a reserved cell rather than empty text:
   // both are tall enough to drive the header row's height (the glyph at its CSS

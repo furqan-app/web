@@ -112,7 +112,10 @@ export const RecitationPlayerBar = () => {
       ? t("recitation.repeatCycleInfinite", "Repeat current ayah endlessly")
       : repeatValue === 1
         ? t("recitation.repeatCycleOff", "No ayah repetition")
-        : tRich("repeatCycleTimes", { n: toLocaleNumeral(repeatValue, locale) });
+        : tRich("repeatCycleTimes", {
+            count: repeatValue,
+            n: toLocaleNumeral(repeatValue, locale),
+          });
   const handleRepeatCycle = () => {
     const idx = PER_AYAH_CYCLE.indexOf(repeatValue);
     const next = PER_AYAH_CYCLE[(idx + 1) % PER_AYAH_CYCLE.length];

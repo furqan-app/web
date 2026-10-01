@@ -256,7 +256,7 @@ test.describe("Tafsir Sheet Integration & Page Boundary Interplay", () => {
     await page.goto("/ar/pages/2");
     await waitForReaderContent(page);
 
-    await page.getByRole("button", { name: "استماع" }).click();
+    await page.getByRole("button", { name: "استمع" }).click();
     await page.waitForFunction(() => {
       const a = document.querySelector("audio");
       return !!a && !a.paused;
@@ -340,7 +340,7 @@ test.describe("Tafsir Sheet Integration & Page Boundary Interplay", () => {
     await waitForReaderContent(page);
 
     // Start playback on Page 1
-    await page.getByRole("button", { name: "استماع" }).click();
+    await page.getByRole("button", { name: "استمع" }).click();
     await page.waitForFunction(() => {
       const a = document.querySelector("audio");
       return !!a && !a.paused;
