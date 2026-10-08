@@ -200,7 +200,7 @@ test.describe("Locale switching & bi-directional reader navigation", () => {
     await waitForReaderContent(page);
     // Mobile keeps the player bar in the nav overlay: reveal it first.
     await revealNavOverlay(page);
-    await page.getByRole("button", { name: "استماع" }).click();
+    await page.getByRole("button", { name: "استمع" }).click();
     await page.waitForFunction(audioIsPlaying);
 
     await switchLocaleViaSettings(page, "English");

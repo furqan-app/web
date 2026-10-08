@@ -215,23 +215,23 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
     }
     const hifzPace = quantityAmount(plan.params.quantities?.hifz, 1);
     const hifzUnit = plan.params.trackUnits?.hifz;
-    parts.push(getPlanPaceSummary(hifzPace, hifzUnit, locale, t));
+    parts.push(getPlanPaceSummary(hifzPace, hifzUnit, locale, tIntl));
   } else if (plan.template_key === "daily-wird") {
     const pace = quantityAmount(plan.params.quantities?.reading, 5);
     const unit = plan.params.trackUnits?.reading;
-    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+    parts.push(getPlanPaceSummary(pace, unit, locale, tIntl));
   } else if (plan.template_key === "listening-wird") {
     const pace = quantityAmount(plan.params.quantities?.listening, 5);
     const unit = plan.params.trackUnits?.listening;
-    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+    parts.push(getPlanPaceSummary(pace, unit, locale, tIntl));
   } else if (plan.template_key === "memorizing-wird") {
     const pace = quantityAmount(plan.params.quantities?.memorizing, 1);
     const unit = plan.params.trackUnits?.memorizing;
-    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+    parts.push(getPlanPaceSummary(pace, unit, locale, tIntl));
   } else if (plan.template_key === "reviewing-wird") {
     const pace = quantityAmount(plan.params.quantities?.reviewing, 1);
     const unit = plan.params.trackUnits?.reviewing;
-    parts.push(getPlanPaceSummary(pace, unit, locale, t));
+    parts.push(getPlanPaceSummary(pace, unit, locale, tIntl));
   } else if (plan.template_key === "custom" && plan.definition) {
     const def = plan.definition;
     if (def.unit === "page") {

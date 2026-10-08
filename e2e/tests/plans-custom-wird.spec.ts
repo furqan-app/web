@@ -5,7 +5,7 @@ test.describe.configure({ mode: "serial" });
 
 // TODO(#610-followup): this spec was authored alongside the feature but not run
 // before merge; it has real selector/strict-mode issues against the shipped DOM
-// (duplicate "تعديل" / "المقدار" matches once a plan card + its per-card
+// (duplicate "تعديل" / "النطاق" matches once a plan card + its per-card
 // PlansBrowseDialog are mounted, plus radiogroup vs tab semantics). The feature
 // itself is covered by app/**/custom-wird*.test.* unit tests and was manually
 // browser-verified (ar/en, dark/light). Re-enable after fixing locally against
@@ -85,7 +85,7 @@ test.describe.skip("Plans Page: Custom Wird Creation & Editing (#610)", () => {
     ).toBeVisible();
 
     // Range section is visible
-    await expect(page.getByRole("dialog").getByText("المقدار")).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("النطاق")).toBeVisible();
 
     // Save changes
     const saveBtn = page.getByRole("dialog").getByRole("button", { name: "حفظ التعديلات" });
