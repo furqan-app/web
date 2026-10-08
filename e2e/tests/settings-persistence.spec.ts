@@ -187,7 +187,7 @@ test.describe("Mushaf Layout Edition Selection", () => {
     page,
   }) => {
     const sheet = await openSettings(page);
-    const mushafTrigger = sheet.locator("button").filter({ hasText: /تخطيط المصحف|Mushaf Layout/ });
+    const mushafTrigger = sheet.locator("button").filter({ hasText: /طبعة المصحف|Mushaf Layout/ });
 
     // 1. Switch to Tajweed (ID 19)
     await mushafTrigger.click();
@@ -222,7 +222,7 @@ test.describe("Mushaf Layout Edition Selection", () => {
     page,
   }) => {
     const sheet = await openSettings(page);
-    const mushafTrigger = sheet.locator("button").filter({ hasText: /تخطيط المصحف|Mushaf Layout/ });
+    const mushafTrigger = sheet.locator("button").filter({ hasText: /طبعة المصحف|Mushaf Layout/ });
     await mushafTrigger.click();
 
     // QCF V1 (1405H) row must be active by default (ADR 0066, Issue #709)
@@ -240,7 +240,7 @@ test.describe("Mushaf Layout Edition Selection", () => {
 
   test("persists Mushaf edition across page reload", async ({ page }) => {
     const sheet = await openSettings(page);
-    const mushafTrigger = sheet.locator("button").filter({ hasText: /تخطيط المصحف|Mushaf Layout/ });
+    const mushafTrigger = sheet.locator("button").filter({ hasText: /طبعة المصحف|Mushaf Layout/ });
     await mushafTrigger.click();
     const tajweedRow = sheet
       .locator(".fq-section-drawer .fq-section-drawer-row")
@@ -254,7 +254,7 @@ test.describe("Mushaf Layout Edition Selection", () => {
     expect(stored).toBe("19");
 
     const sheetAfter = await openSettings(page);
-    await sheetAfter.locator("button").filter({ hasText: /تخطيط المصحف|Mushaf Layout/ }).click();
+    await sheetAfter.locator("button").filter({ hasText: /طبعة المصحف|Mushaf Layout/ }).click();
     const tajweedRowAfter = sheetAfter
       .locator(".fq-section-drawer .fq-section-drawer-row")
       .filter({ hasText: /مصحف التجويد|Tajweed/ });
