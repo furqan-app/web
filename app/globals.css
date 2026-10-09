@@ -2512,4 +2512,59 @@ body,
       height: 40px;
     }
   }
+
+  /* ---- SPIKE #766: content-sized compact safha (focus-mode retry) -----------
+     v2: card stays full height (paper full-bleed); the TEXT block is
+     content-sized with a fixed gap and centered between a top-pinned header
+     and a bottom-pinned footer, so viewport-height changes (status-bar
+     show/hide) move the text rigidly but never shift lines relative to each
+     other. Tuned 2026-10-09 from headless measurement at 390x844 (page 3):
+     0.85em. Re-tune if the font formula or line count changes. The off-spread
+     skeleton overlay keeps its own justify-between Tailwind layout (transient
+     font-wait only, absolute, contributes no height). Remove this whole block
+     if the spike fails. See docs/plans/feature-pwa-fullscreen-focus-mode.md
+     Addendum 2026-10-09. */
+  @media (max-width: 1023px) {
+    /* Header pinned top, footer pinned bottom, text centered between them with
+       two EQUAL middle gaps (space-between over 3 children). Inter-line gaps
+       stay fixed, so a viewport-height change moves the text block rigidly but
+       never shifts lines relative to each other. Card returns to full height
+       (paper full-bleed, like the printed reference). */
+    .fq-content {
+      justify-content: space-between !important;
+    }
+    .fq-quran-safha {
+      flex: none !important;
+      justify-content: flex-start !important;
+      gap: 0.85em !important;
+    }
+  }
+
+  /* ---- SPIKE #766: small phones ------------------------------------------------
+     Short viewports can't fit header + full-gap text + footer: shrink the fixed
+     gap instead of clipping (card is overflow-hidden). 360x640 is the verify
+     size. Remove with the spike block above if the spike fails. */
+  @media (max-width: 1023px) and (max-height: 700px) {
+    .fq-quran-safha {
+      gap: 0.5em !important;
+    }
+  }
+
+  /* ---- SPIKE #766: hold the tablet tall-band on fixed gap -------------------
+     Neutralizes the min-height:800px space-between claim (reader rhythm) in the
+     tablet band only — desktop ≥1367px keeps it. Surplus collects below the page
+     instead of stretching gaps, so the OS-bar toggle can't move lines. Same
+     remove-if-fails terms as above. */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    .fq-spread .fq-quran-safha {
+      flex: none !important;
+      justify-content: flex-start !important;
+    }
+    .fq-content {
+      justify-content: space-between !important;
+    }
+    .fq-spread .fq-skeleton-lines {
+      justify-content: flex-start !important;
+    }
+  }
 }
