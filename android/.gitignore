@@ -53,9 +53,13 @@ captures/
 .idea/navEditor.xml
 
 # Keystore files — never committed (plan signed-release-build: the upload key
-# lives with the owner and reaches CI only as secrets).
+# lives with the owner and reaches CI only as secrets). Sole exception:
+# android/debug.keystore, the shared DEV-ONLY key (public Android-default
+# password, spike #766) that keeps every CI debug APK on one signature so
+# on-device reinstalls update instead of wiping.
 *.jks
 *.keystore
+!debug.keystore
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild

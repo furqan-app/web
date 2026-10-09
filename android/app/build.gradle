@@ -22,13 +22,24 @@ android {
         }
     }
     signingConfigs {
+        // Shared DEV-ONLY key (spike #766): android/debug.keystore carries the
+        // public Android-default password and keeps every CI debug APK on one
+        // signature, so on-device reinstalls update instead of wiping. Upload-key
+        // policy below is unchanged: the release key is never committed.
+        debug {
+            storeFile rootProject.file("debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
         release {
             // Upload-key signing (plan signed-release-build): credentials
             // arrive as CI secrets mapped to env (see android-release.yml).
             // Absent locally, the config stays empty and bundleRelease fails
             // with a clear keystore error instead of silently shipping
-            // debug keys. The keystore itself is never committed
-            // (android/.gitignore ignores *.jks/*.keystore).
+            // debug keys. The upload keystore itself is never committed
+            // (android/.gitignore ignores *.jks/*.keystore apart from the
+            // shared debug.keystore exception above).
             if (System.getenv("ANDROID_KEYSTORE_PATH")) {
                 storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
                 storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
