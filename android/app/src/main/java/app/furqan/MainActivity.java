@@ -36,8 +36,8 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
                 Insets systemBars = windowInsets.getInsets(
                     WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
                 );
-                Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
-                int bottomPadding = Math.max(systemBars.bottom, ime.bottom);
+                boolean keyboardVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
+                int bottomPadding = keyboardVisible ? 0 : systemBars.bottom;
                 v.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomPadding);
 
                 // Consume systemBars and displayCutout so WebView does not receive them and apply double padding in CSS
