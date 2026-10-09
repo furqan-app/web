@@ -76,12 +76,13 @@ export const ReaderPage = async ({
       <script dangerouslySetInnerHTML={{ __html: jumpGateScript }} />
       <script dangerouslySetInnerHTML={{ __html: coverRevealScript }} />
       {/* Static splash-continuity layer (ADR 0065): hidden by default via CSS,
-          shown only while <html> carries `fq-launch-cover`. Inline wordmark
-          only — no <img>, no fetched asset, zero network. `aria-hidden` and no
-          focusable children: it blocks no choice, so it takes no focus trap
-          (the first-run gate's focus-trap spec must keep passing). */}
+          shown only while <html> carries `fq-launch-cover`. Logo silhouette
+          via CSS mask over the already-precached nav mark — no <img>, zero
+          runtime network. `aria-hidden` and no focusable children: it blocks
+          no choice, so it takes no focus trap (the first-run gate's
+          focus-trap spec must keep passing). */}
       <div id="fq-launch-cover" aria-hidden="true">
-        <span className="fq-launch-cover-mark">Furqan</span>
+        <span className="fq-launch-cover-logo" />
       </div>
       <ReaderPager
         initialPage={pageNumber}

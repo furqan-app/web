@@ -109,10 +109,10 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
 | tafsir | [Tafsir: Offline Download & Cache Management for PWA](tafsir-offline-download.md) | implemented | feature |
-| theming | [Native brand icons and splash from the Furqan mark](app-brand-icons.md) | ready-to-implement | feature |
 | theming | [Design Migration — reader-lab language, app-wide](design-migration/INDEX.md) | in-progress | feature |
 | theming | [Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette](dark-theme-mushaf-unification.md) | implemented | feature |
 | theming | [Home Page Design Fixes](home-page-design-fixes.md) | implemented | feature |
+| theming | [Native brand icons and splash from the Furqan mark](app-brand-icons.md) | implemented | feature |
 | theming | [Reading-desk depth for light & gold — and de-duplicating the reader CSS](theme-depth-unification.md) | implemented | feature |
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
