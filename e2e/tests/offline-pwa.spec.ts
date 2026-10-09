@@ -152,6 +152,8 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // …and lifts once the pair's data + fonts are ready. Fonts were delayed
     // ~1.2s but never blocked, so a lift well under the 5s safety bound proves
     // the ready path did it — not the safety timer.
+    // The cover shows the brand logo mark (navy + logo unification) while up.
+    await expect(page.locator("#fq-launch-cover .fq-launch-cover-logo")).toBeVisible();
     await waitForActivePanelContent(page);
     await page.waitForFunction(
       () => !document.documentElement.classList.contains("fq-launch-cover"),
