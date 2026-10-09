@@ -18,6 +18,9 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // SPIKE (#766): register before super.onCreate — the bridge is created
+        // at the end of super.onCreate, so registering after would miss it.
+        registerPlugin(StatusBarTogglePlugin.class);
         super.onCreate(savedInstanceState);
 
         // Ensure window decor carries the brand navy background (#16232F)

@@ -25,6 +25,7 @@ import { useIsTablet } from "@/app/hooks/use-is-tablet";
 import { useNavOverlay } from "@/app/contexts/NavOverlayContext";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { useReaderNavigation } from "@/app/contexts/ReaderNavigationContext";
+import { setStatusBarVisible } from "@/app/utils/platform";
 import { storage } from "@/app/utils/storage";
 import { DEFAULT_MUSHAF_ID } from "@/app/utils/mushaf-editions";
 import { ensurePageFonts, pageFontsReady, warmColorGlyphFont } from "@/app/utils/page-font-registry";
@@ -219,7 +220,7 @@ export function ReaderPager({
   const { view } = useQuranSafhaView();
   const isLgUp = useIsLgUp();
   const isTablet = useIsTablet();
-  const { toggleOverlay, toggleFineChrome, isOverlayMode, isTouchOverlay } =
+  const { toggleOverlay, toggleFineChrome, isOverlayMode, isTouchOverlay, overlayVisible } =
     useNavOverlay();
   const { mushafId, edition, hydrated: mushafHydrated } = useQuranMushaf();
   const { setJumpTo } = useReaderNavigation();
@@ -495,6 +496,20 @@ export function ReaderPager({
     setJumpTo(jumpTo);
     return () => setJumpTo(null);
   }, [jumpTo, setJumpTo]);
+
+  // SPIKE (#766): mirrors the OS status bar to the app chrome in the Capacitor
+  // shell only — setStatusBarVisible no-ops everywhere else, so this effect is
+  // inert outside the shell. Overlay hidden = reading = bar hidden (sticky:
+  // an edge swipe reveals it transiently, never pinned); overlay shown = bar
+  // shown. Restored on unmount so leaving the reader never strands the bar
+  // hidden on a route with no toggle. Plain useEffect: OS-chrome timing is
+  // paint-independent, unlike the layout-effect-gated jump correction below.
+  useEffect(() => {
+    setStatusBarVisible(overlayVisible);
+  }, [overlayVisible]);
+  useEffect(() => {
+    return () => setStatusBarVisible(true);
+  }, []);
 
   // Self-correction for the offline navigation fallback (ADR 0014 Addendum 3):
   // when the service worker's setCatchHandler serves the precached page-1

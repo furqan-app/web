@@ -34,6 +34,34 @@ export const isNativePlatform = () =>
 // button/gesture to trap, and `window.close()` has no effect there (ADR 0040).
 export const isAndroid = () => /Android/i.test(navigator.userAgent);
 
+// SPIKE (#766): status-bar toggle for the Capacitor shell's reader focus mode.
+// Calls the hand-rolled StatusBarToggle plugin through the injected bridge
+// (no `@capacitor/core` dependency — same duck-typed pattern as
+// `isNativePlatform` above; `toNative` with a null callback is safe, the
+// bridge guards it). No-ops everywhere else (plain tabs, PWA, iOS) and on any
+// bridge failure, so a missing/unreachable bridge can never break the reader:
+// the bar simply stays shown, which is today's behavior.
+export const setStatusBarVisible = (visible: boolean): void => {
+  if (typeof window === "undefined" || !isNativePlatform()) return;
+  const bridge = (
+    window as unknown as {
+      Capacitor?: {
+        toNative?: (
+          plugin: string,
+          method: string,
+          options: object,
+          callback: null,
+        ) => unknown;
+      };
+    }
+  ).Capacitor;
+  try {
+    bridge?.toNative?.("StatusBarToggle", visible ? "show" : "hide", {}, null);
+  } catch {
+    // Native call failed — reader keeps working with the bar shown.
+  }
+};
+
 // Offline route coverage (ADR 0014 Addendum 10, #591): in-app taps are RSC
 // soft-navs, which fail for a never-visited page with no connection. When
 // offline, prevent the soft nav and hard-navigate so the service worker serves
