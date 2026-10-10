@@ -47,9 +47,20 @@ public class StatusBarTogglePlugin extends Plugin {
             // the new visibility. The system does not reliably re-dispatch here
             // (the listener consumes systemBars as Insets.NONE), and without
             // this the hidden bar leaves a stale navy band top and bottom.
+            // Belt and suspenders: request a fresh dispatch AND set the padding
+            // explicitly from the geometric insets, so the layout is correct even
+            // if the re-dispatch never arrives. Top is 0 while hidden (the bar
+            // occupies no space); sides/bottom/cutout always come from geometry;
+            // IME is left to the listener's own dispatches (unchanged).
             View root = activity.findViewById(android.R.id.content);
             if (root != null) {
                 root.requestApplyInsets();
+                WindowInsetsCompat rootInsets = ViewCompat.getRootWindowInsets(root);
+                if (rootInsets != null) {
+                    Insets geo = rootInsets.getInsetsIgnoringVisibility(
+                        WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                    root.setPadding(geo.left, visible ? geo.top : 0, geo.right, geo.bottom);
+                }
             }
             call.resolve();
         });
