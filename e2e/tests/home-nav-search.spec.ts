@@ -23,9 +23,6 @@ test.describe("Home Navigation Search — Initial State & Rendering", () => {
 
     // Verify all 114 surah cards are rendered
     await expect(page.locator("[data-surah-id]")).toHaveCount(114);
-
-    // Verify recommended surahs section exists
-    await expect(page.getByRole("region", { name: "السور الموصى بها" })).toBeVisible();
   });
 
   test("renders search input with English placeholder in English locale", async ({
@@ -236,7 +233,7 @@ test.describe("Home Navigation Search — Empty State & Section Visibility", () 
     ).toBeVisible();
   });
 
-  test("active query hides continue-reading and recommended cards; clearing restores them", async ({
+  test("active query hides the continue-reading card; clearing restores the grid", async ({
     page,
   }) => {
     await page.goto("/ar");
@@ -244,9 +241,7 @@ test.describe("Home Navigation Search — Empty State & Section Visibility", () 
 
     // Type query
     await searchInput.fill("الملك");
-
-    // Continue reading / recommended section hidden
-    await expect(page.getByRole("region", { name: "السور الموصى بها" })).toBeHidden();
+    await expect(page.locator("[data-surah-id]")).toHaveCount(1);
 
     // Click clear 'X' button
     const clearButton = page.getByRole("button", { name: "مسح البحث" });
