@@ -1456,6 +1456,23 @@ body,
     }
   }
 
+  /* Installed-PWA fullscreen breathing room (spike #766 addendum 2026-10-10):
+     the always-visible safha strip (juz | surah | hizb, `.fq-safha-header`,
+     `pt-1`) sits ~4px under the top edge when the OS status bar is hidden in
+     `display: fullscreen`. Guarantee a 0.75rem (spacing-scale) minimum here,
+     scoped to fullscreen only — standalone keeps its long-standing look (the
+     visible status bar supplies the separation), browser tabs and desktop
+     never match this query. Pure CSS `@media` gate (no JS breakpoint hook)
+     per ADR 0043; `!important` beats the `pt-1` utility (same mechanism as
+     the positioning block above). Constant across transient system-bar
+     show/hide (no resize, insets stay 0), so it cannot shift content or
+     reintroduce a toggle jump. */
+  @media (display-mode: fullscreen) {
+    .fq-safha-header {
+      padding-top: max(0.75rem, env(safe-area-inset-top, 0px)) !important;
+    }
+  }
+
   /* Suppress the word `:hover` cue while a swipe drag is in progress (ADR 0023
      Addendum 8, docs/plans/fix-tajweed-swipe-flicker.md). `ReaderPager` toggles
      `.fq-dragging` on the strip imperatively (same touch handlers that already

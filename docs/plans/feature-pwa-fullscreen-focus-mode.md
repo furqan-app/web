@@ -83,4 +83,13 @@ Button visibility:
 
 ## Revision History
 
+- 2026-10-10 — Spike Addendum (#766). **PWA parity measured on-device (LAN HTTPS install):** overlay show/hide moves the surah frame `0px` (frame-top 669→669, frame-bottom 1617→1617 at 1080×2392) — matches the native 1px result. System status bar stays hidden until an edge swipe (transient, overlays content, no resize) — the desired UX, not the #317 tap-coupling. **Header-top gap:** in `display: fullscreen` the OS inset is 0 so `env(safe-area-inset-top, 0px)` leaves the nav glued to the top edge (the old "inert no-op" verdict assumed `standalone`, where the always-visible status bar supplies the visual separation). Decision (user-confirmed): keep `fullscreen` + guarantee a `0.75rem` minimum top padding on `.fq-nav-overlay-page` scoped to `(display-mode: fullscreen)` only — `standalone`, browser tabs, and desktop are untouched. The padding is constant across transient-bar show/hide (Chrome delivers no resize and insets stay 0), so it cannot reintroduce a jump; verified on-device by screenshot.
+  Correction (same day, user-confirmed): the glued element is the always-visible
+  safha strip (juz | surah | hizb, `.fq-safha-header`, `pt-1`), not the `<nav>`
+  overlay — the first attempt targeted `.fq-nav-overlay-page` and was reverted
+  as wrong-target (it measured no change: `env()` already resolves to the live
+  inset there, and a remote-computed-style probe confirmed `0px`). The
+  `0.75rem` floor now applies to `.fq-safha-header`, same fullscreen-only
+  scope, pure-CSS gate per ADR 0043.
+
 - 2026-08-16 — folded Addendum (#317). **Reverts the "Mobile/Tablet installed PWA" half of this plan:** `manifest.display` `"fullscreen"` → `"standalone"`, iOS `statusBarStyle` `"black-translucent"` → `"default"`. Android's non-sticky immersive mode surfaced the OS status bar on every ordinary tap, coupling it to `ReaderPager`'s `toggleOverlay()` tap handler. Extensive investigation ruled out a font/layout bug; the fix is to stop using `fullscreen` mode. Desktop's `requestFullscreen()` button, `viewport-fit: "cover"`, the safe-area padding (now inert no-ops), and the ADR 0044 ICB height fix are all kept.
