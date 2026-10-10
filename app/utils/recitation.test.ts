@@ -9,7 +9,11 @@ import {
   decideSkipWord,
   findActiveVerseTiming,
   getNextPlaybackSpeed,
+  offlineDownloadDisplayLabel,
+  surahDisplayName,
 } from "@/app/utils/recitation";
+import type { SurahResult } from "@/app/types";
+import type { RecitationDownloadItem } from "@/app/types/recitation";
 
 // Attach/detach follow decision (ADR 0050 / recitation-playback.md Addendum 13).
 // getPagePair pairs (1,2), (3,4), … so page 3 is visible at anchor 3 or 4 in
@@ -541,5 +545,117 @@ describe("findActiveVerseTiming", () => {
       },
     ];
     expect(findActiveVerseTiming(delayedTimings, 500)).toBeUndefined();
+  });
+});
+
+// Offline download display label (#767): re-derived at render time so legacy
+// English-labelled entries and locale switches display correctly.
+describe("offlineDownloadDisplayLabel", () => {
+  const chapters: SurahResult[] = [
+    { id: 1, name_arabic: "الفاتحة", name_simple: "Al-Fatihah", verses_count: 7, revelation_place: "makkah", pages: "1-1" },
+    { id: 2, name_arabic: "البقرة", name_simple: "Al-Baqarah", verses_count: 286, revelation_place: "madinah", pages: "2-49" },
+  ];
+  const surahItem: Pick<RecitationDownloadItem, "kind" | "key" | "label"> = {
+    kind: "surah",
+    key: 1,
+    label: "Mishari Rashid al-`Afasy · Al-Fatihah",
+  };
+  const juzItem: Pick<RecitationDownloadItem, "kind" | "key" | "label"> = {
+    kind: "juz",
+    key: 1,
+    label: "Mishari Rashid al-`Afasy · Juz 1",
+  };
+
+  it("renders the Arabic surah name for the ar locale", () => {
+    expect(
+      offlineDownloadDisplayLabel(surahItem, {
+        chapters,
+        reciterName: "مشاري راشد العفاسي",
+        juzWord: "جزء",
+        locale: "ar",
+      }),
+    ).toBe("مشاري راشد العفاسي · الفاتحة");
+  });
+
+  it("renders the simple surah name for the en locale", () => {
+    expect(
+      offlineDownloadDisplayLabel(surahItem, {
+        chapters,
+        reciterName: "Mishari Rashid al-`Afasy",
+        juzWord: "Juz",
+        locale: "en",
+      }),
+    ).toBe("Mishari Rashid al-`Afasy · Al-Fatihah");
+  });
+
+  it("localizes the juz word and numerals per locale", () => {
+    expect(
+      offlineDownloadDisplayLabel(juzItem, {
+        chapters,
+        reciterName: "مشاري راشد العفاسي",
+        juzWord: "جزء",
+        locale: "ar",
+      }),
+    ).toBe("مشاري راشد العفاسي · جزء ١");
+    expect(
+      offlineDownloadDisplayLabel(juzItem, {
+        chapters,
+        reciterName: "Mishari Rashid al-`Afasy",
+        juzWord: "Juz",
+        locale: "en",
+      }),
+    ).toBe("Mishari Rashid al-`Afasy · Juz 1");
+  });
+
+  it("recomputes a legacy English label when viewed in ar", () => {
+    expect(
+      offlineDownloadDisplayLabel(
+        { kind: "surah", key: 2, label: "Mishari Rashid al-`Afasy · Al-Baqarah" },
+        { chapters, reciterName: "مشاري راشد العفاسي", juzWord: "جزء", locale: "ar" },
+      ),
+    ).toBe("مشاري راشد العفاسي · البقرة");
+  });
+
+  it("falls back to the stored label when the chapter is unknown", () => {
+    expect(
+      offlineDownloadDisplayLabel(
+        { kind: "surah", key: 999, label: "Mishari Rashid al-`Afasy · Al-Fatihah" },
+        { chapters, reciterName: "مشاري راشد العفاسي", juzWord: "جزء", locale: "ar" },
+      ),
+    ).toBe("Mishari Rashid al-`Afasy · Al-Fatihah");
+  });
+
+  it("falls back to the stored label when the reciter is unresolved", () => {
+    expect(
+      offlineDownloadDisplayLabel(surahItem, {
+        chapters,
+        reciterName: undefined,
+        juzWord: "جزء",
+        locale: "ar",
+      }),
+    ).toBe(surahItem.label);
+  });
+
+  it("falls back to the stored label for an out-of-range juz key", () => {
+    for (const key of [0, 31]) {
+      expect(
+        offlineDownloadDisplayLabel(
+          { kind: "juz", key, label: "Mishari Rashid al-`Afasy · Juz 1" },
+          { chapters, reciterName: "مشاري راشد العفاسي", juzWord: "جزء", locale: "ar" },
+        ),
+      ).toBe("Mishari Rashid al-`Afasy · Juz 1");
+    }
+  });
+});
+
+describe("surahDisplayName", () => {
+  const chapter = { name_arabic: "الفاتحة", name_simple: "Al-Fatihah" };
+
+  it("returns the Arabic name for the ar locale", () => {
+    expect(surahDisplayName(chapter, "ar")).toBe("الفاتحة");
+  });
+
+  it("returns the simple name for any other locale", () => {
+    expect(surahDisplayName(chapter, "en")).toBe("Al-Fatihah");
   });
 });

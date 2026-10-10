@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-116 active plans.
+117 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -90,6 +90,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Reader Swipe Performance: Persistent Client Pager](reader-persistent-pager.md) | implemented | feature |
 | reader | [Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression](tajweed-stylesheet-hover-suppression.md) | implemented | bug |
 | recitation | [Add Quran Recitation Playback with Reciter Selection](recitation-playback.md) | implemented | feature |
+| recitation | [Fix untranslated surah list in Offline Recitation settings](fix-offline-recitation-surah-i18n.md) | implemented | bug |
 | recitation | [Listening Wird: Inline Playback on Assignment Rows](listening-wird-inline-playback.md) | implemented | feature |
 | recitation | [Play Audio for Individual Words](word-audio-playback.md) | implemented | feature |
 | recitation | [Recitation Bar: Vertical Rail (Desktop)](recitation-bar-vertical-rail.md) | implemented | feature |
