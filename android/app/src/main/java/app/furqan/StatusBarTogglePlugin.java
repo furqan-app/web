@@ -43,6 +43,14 @@ public class StatusBarTogglePlugin extends Plugin {
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
                 controller.hide(WindowInsetsCompat.Type.statusBars());
             }
+            // Re-run MainActivity's insets listener so contentView padding tracks
+            // the new visibility. The system does not reliably re-dispatch here
+            // (the listener consumes systemBars as Insets.NONE), and without
+            // this the hidden bar leaves a stale navy band top and bottom.
+            View root = activity.findViewById(android.R.id.content);
+            if (root != null) {
+                ViewCompat.requestApplyInsets(root);
+            }
             call.resolve();
         });
     }
