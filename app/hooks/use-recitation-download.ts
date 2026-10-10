@@ -97,6 +97,7 @@ async function performDownloadSurah(
   surah: SurahResult,
   reciterId: number,
   reciterLabel: string,
+  surahDisplayName: string,
 ): Promise<RecitationDownloadItem> {
   const downloadCache = await caches.open(RECITATION_DOWNLOAD_CACHE_NAME);
   const pagesCache = await caches.open(PAGES_CACHE_NAME);
@@ -111,7 +112,7 @@ async function performDownloadSurah(
     kind: "surah",
     key: surah.id,
     reciterId,
-    label: `${reciterLabel} · ${surah.name_simple}`,
+    label: `${reciterLabel} · ${surahDisplayName}`,
     startVerseKey,
     stopVerseKey,
     stopChapterId: surah.id,
@@ -127,6 +128,7 @@ async function performDownloadJuz(
   chapters: SurahResult[],
   reciterId: number,
   reciterLabel: string,
+  juzDisplay: string,
 ): Promise<RecitationDownloadItem> {
   const bounds = await fetchJuzBounds(juzNumber);
   const downloadCache = await caches.open(RECITATION_DOWNLOAD_CACHE_NAME);
@@ -149,7 +151,7 @@ async function performDownloadJuz(
     kind: "juz",
     key: juzNumber,
     reciterId,
-    label: `${reciterLabel} · Juz ${juzNumber}`,
+    label: `${reciterLabel} · ${juzDisplay}`,
     startVerseKey: bounds.firstVerseKey,
     stopVerseKey: bounds.lastVerseKey,
     stopChapterId: bounds.lastChapterId,
@@ -200,11 +202,11 @@ export const useRecitationDownload = () => {
   );
 
   const downloadSurah = useCallback(
-    async (surah: SurahResult, reciterId: number, reciterLabel: string) => {
+    async (surah: SurahResult, reciterId: number, reciterLabel: string, surahDisplayName: string) => {
       const id = itemId("surah", surah.id, reciterId);
       setItemState(id, "downloading");
       try {
-        const item = await performDownloadSurah(surah, reciterId, reciterLabel);
+        const item = await performDownloadSurah(surah, reciterId, reciterLabel, surahDisplayName);
         replaceItem(item);
         setItemState(id, "downloaded");
       } catch {
@@ -215,11 +217,11 @@ export const useRecitationDownload = () => {
   );
 
   const downloadJuz = useCallback(
-    async (juzNumber: number, chapters: SurahResult[], reciterId: number, reciterLabel: string) => {
+    async (juzNumber: number, chapters: SurahResult[], reciterId: number, reciterLabel: string, juzDisplay: string) => {
       const id = itemId("juz", juzNumber, reciterId);
       setItemState(id, "downloading");
       try {
-        const item = await performDownloadJuz(juzNumber, chapters, reciterId, reciterLabel);
+        const item = await performDownloadJuz(juzNumber, chapters, reciterId, reciterLabel, juzDisplay);
         replaceItem(item);
         setItemState(id, "downloaded");
       } catch {
