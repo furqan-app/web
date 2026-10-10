@@ -47,20 +47,25 @@ public class StatusBarTogglePlugin extends Plugin {
             // the new visibility. The system does not reliably re-dispatch here
             // (the listener consumes systemBars as Insets.NONE), and without
             // this the hidden bar leaves a stale navy band top and bottom.
-            // Belt and suspenders: request a fresh dispatch AND set the padding
-            // explicitly from the geometric insets, so the layout is correct even
-            // if the re-dispatch never arrives. Top is 0 while hidden (the bar
-            // occupies no space); sides/bottom/cutout always come from geometry;
-            // IME is left to the listener's own dispatches (unchanged).
+            // Belt and suspenders: request a fresh dispatch AND fix the top
+            // padding explicitly (0 while hidden, the real bar height while
+            // shown), so the layout is correct even if the re-dispatch never
+            // arrives. Only the top edge is touched — sides/bottom/cutout and
+            // the IME path stay exactly as the listener computes them. The
+            // height comes from the platform resource (all API levels) instead
+            // of the newer ignoring-visibility API this project's core version
+            // does not carry.
             View root = activity.findViewById(android.R.id.content);
             if (root != null) {
                 root.requestApplyInsets();
-                WindowInsetsCompat rootInsets = ViewCompat.getRootWindowInsets(root);
-                if (rootInsets != null) {
-                    Insets geo = rootInsets.getInsetsIgnoringVisibility(
-                        WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-                    root.setPadding(geo.left, visible ? geo.top : 0, geo.right, geo.bottom);
+                int barHeight = 0;
+                int resId = activity.getResources().getIdentifier(
+                    "status_bar_height", "dimen", "android");
+                if (resId > 0) {
+                    barHeight = activity.getResources().getDimensionPixelSize(resId);
                 }
+                root.setPadding(root.getPaddingLeft(), visible ? barHeight : 0,
+                    root.getPaddingRight(), root.getPaddingBottom());
             }
             call.resolve();
         });
