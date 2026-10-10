@@ -49,7 +49,7 @@ public class StatusBarTogglePlugin extends Plugin {
             // this the hidden bar leaves a stale navy band top and bottom.
             View root = activity.findViewById(android.R.id.content);
             if (root != null) {
-                ViewCompat.requestApplyInsets(root);
+                root.requestApplyInsets();
             }
             call.resolve();
         });
