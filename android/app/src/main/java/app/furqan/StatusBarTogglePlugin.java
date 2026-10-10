@@ -32,23 +32,23 @@ public class StatusBarTogglePlugin extends Plugin {
         return statusBarVisible;
     }
 
-    // Band + icon colors follow the app theme (spike #766): the reserved
-    // system-bar zones must read as app chrome, not as a fixed navy slab.
-    // Values mirror the web --background tokens (light/gold) and the existing
-    // shell navy (dark). Every layer that can paint these zones is themed
+    // Band + icon colors follow the MUSHF PAPER itself (spike #766), not the app
+    // background — any contrast between the reserved zones and the page reads
+    // as a slab. Values mirror the web --mushaf-paper tokens exactly
+    // (light/gold/dark) so the seam disappears. Every layer that can paint these zones is themed
     // together (decor, window bar colors, contrast enforcement) because the
     // visible owner differs per device/OS (window background vs system scrim).
     private void applyColors(String theme, WindowInsetsControllerCompat controller, View decorView, android.view.Window window) {
         int bg;
         boolean lightBars;
         if ("gold".equals(theme)) {
-            bg = 0xFFEEE5CE;
+            bg = 0xFFFDF9EE;
             lightBars = true;
         } else if ("light".equals(theme)) {
-            bg = 0xFFEEF2F7;
+            bg = 0xFFFDFDFC;
             lightBars = true;
         } else {
-            bg = 0xFF16232F;
+            bg = 0xFF111820;
             lightBars = false;
         }
         decorView.setBackgroundColor(bg);
