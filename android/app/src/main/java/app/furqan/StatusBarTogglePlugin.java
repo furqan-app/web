@@ -35,8 +35,10 @@ public class StatusBarTogglePlugin extends Plugin {
     // Band + icon colors follow the app theme (spike #766): the reserved
     // system-bar zones must read as app chrome, not as a fixed navy slab.
     // Values mirror the web --background tokens (light/gold) and the existing
-    // shell navy (dark).
-    private void applyColors(String theme, WindowInsetsControllerCompat controller, View decorView) {
+    // shell navy (dark). Every layer that can paint these zones is themed
+    // together (decor, window bar colors, contrast enforcement) because the
+    // visible owner differs per device/OS (window background vs system scrim).
+    private void applyColors(String theme, WindowInsetsControllerCompat controller, View decorView, android.view.Window window) {
         int bg;
         boolean lightBars;
         if ("gold".equals(theme)) {
@@ -50,6 +52,19 @@ public class StatusBarTogglePlugin extends Plugin {
             lightBars = false;
         }
         decorView.setBackgroundColor(bg);
+        // The padding zones belong to the content view, which carries the
+        // theme's own navy android:background (styles.xml) — painting only the
+        // decor leaves them navy. Paint both.
+        View content = decorView.findViewById(android.R.id.content);
+        if (content != null) {
+            content.setBackgroundColor(bg);
+        }
+        window.setStatusBarColor(bg);
+        window.setNavigationBarColor(bg);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.setStatusBarContrastEnforced(false);
+            window.setNavigationBarContrastEnforced(false);
+        }
         if (controller != null) {
             controller.setAppearanceLightStatusBars(lightBars);
             controller.setAppearanceLightNavigationBars(lightBars);
@@ -79,7 +94,7 @@ public class StatusBarTogglePlugin extends Plugin {
                 return;
             }
             statusBarVisible = visible;
-            applyColors(optTheme(call), controller, decorView);
+            applyColors(optTheme(call), controller, decorView, activity.getWindow());
             if (visible) {
                 controller.show(WindowInsetsCompat.Type.statusBars());
             } else {
@@ -91,25 +106,11 @@ public class StatusBarTogglePlugin extends Plugin {
             // the new visibility. The system does not reliably re-dispatch here
             // (the listener consumes systemBars as Insets.NONE), and without
             // this the hidden bar leaves a stale navy band top and bottom.
-            // Belt and suspenders: request a fresh dispatch AND fix the top
-            // padding explicitly (0 while hidden, the real bar height while
-            // shown), so the layout is correct even if the re-dispatch never
-            // arrives. Only the top edge is touched — sides/bottom/cutout and
-            // the IME path stay exactly as the listener computes them. The
-            // height comes from the platform resource (all API levels) instead
-            // of the newer ignoring-visibility API this project's core version
-            // does not carry.
+            // Padding math itself (flag-gated top, always-cleared cutout) lives
+            // in the listener — the single owner — so this only retriggers it.
             View root = activity.findViewById(android.R.id.content);
             if (root != null) {
                 root.requestApplyInsets();
-                int barHeight = 0;
-                int resId = activity.getResources().getIdentifier(
-                    "status_bar_height", "dimen", "android");
-                if (resId > 0) {
-                    barHeight = activity.getResources().getDimensionPixelSize(resId);
-                }
-                root.setPadding(root.getPaddingLeft(), visible ? barHeight : 0,
-                    root.getPaddingRight(), root.getPaddingBottom());
             }
             call.resolve();
         });
@@ -138,7 +139,7 @@ public class StatusBarTogglePlugin extends Plugin {
             View decorView = activity.getWindow().getDecorView();
             WindowInsetsControllerCompat controller =
                 WindowCompat.getInsetsController(activity.getWindow(), decorView);
-            applyColors(optTheme(call), controller, decorView);
+            applyColors(optTheme(call), controller, decorView, activity.getWindow());
             call.resolve();
         });
     }
