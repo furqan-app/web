@@ -36,18 +36,18 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         View contentView = findViewById(android.R.id.content);
         if (contentView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(contentView, (v, windowInsets) -> {
-                Insets systemBars = windowInsets.getInsets(
-                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
-                );
+                Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                Insets cut = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
+                Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
                 boolean keyboardVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
-                // SPIKE (#766): the top edge follows the plugin's visibility flag,
-                // not the raw inset — the raw value does not track hide/show on
-                // this path, so re-applying it resurrects the empty band. Both
-                // writers (here and the plugin's explicit set) now compute the
-                // same value, so ordering no longer matters.
-                int topPadding = StatusBarTogglePlugin.isStatusBarVisible() ? systemBars.top : 0;
-                int bottomPadding = keyboardVisible ? 0 : systemBars.bottom;
-                v.setPadding(systemBars.left, topPadding, systemBars.right, bottomPadding);
+                // SPIKE (#766): topPadding is permanently anchored to the status-bar/cutout height.
+                // The status-bar toggles as a floating overlay above this reserved zone
+                // (matching mushaf paper color), keeping WebView height constant so
+                // space-between lines never jump.
+                int topPadding = Math.max(cut.top, bars.top);
+                int bottomPadding = keyboardVisible ? 0 : Math.max(bars.bottom, cut.bottom);
+                v.setPadding(Math.max(bars.left, cut.left), topPadding,
+                    Math.max(bars.right, cut.right), bottomPadding);
 
                 // Consume systemBars and displayCutout so WebView does not receive them and apply double padding in CSS
                 return new WindowInsetsCompat.Builder(windowInsets)

@@ -54,9 +54,9 @@ const readShellTheme = (): ShellTheme => {
   return "light";
 };
 
-export const setStatusBarVisible = (visible: boolean): void => {
-  if (typeof window === "undefined" || !isNativePlatform()) return;
-  const bridge = (
+const getCapacitorBridge = () => {
+  if (typeof window === "undefined" || !isNativePlatform()) return null;
+  return (
     window as unknown as {
       Capacitor?: {
         toNative?: (
@@ -68,6 +68,10 @@ export const setStatusBarVisible = (visible: boolean): void => {
       };
     }
   ).Capacitor;
+};
+
+export const setStatusBarVisible = (visible: boolean): void => {
+  const bridge = getCapacitorBridge();
   try {
     bridge?.toNative?.(
       "StatusBarToggle",
@@ -83,22 +87,15 @@ export const setStatusBarVisible = (visible: boolean): void => {
 // Theme-only sync for mid-session theme switches (no visibility change).
 // Called from useTheme's setter, which runs exactly when the user picks a
 // theme; startup is covered by the pager effect above.
-export const syncShellTheme = (): void => {
-  if (typeof window === "undefined" || !isNativePlatform()) return;
-  const bridge = (
-    window as unknown as {
-      Capacitor?: {
-        toNative?: (
-          plugin: string,
-          method: string,
-          options: object,
-          callback: null,
-        ) => unknown;
-      };
-    }
-  ).Capacitor;
+export const syncShellTheme = (explicitTheme?: ShellTheme): void => {
+  const bridge = getCapacitorBridge();
   try {
-    bridge?.toNative?.("StatusBarToggle", "applyTheme", { theme: readShellTheme() }, null);
+    bridge?.toNative?.(
+      "StatusBarToggle",
+      "applyTheme",
+      { theme: explicitTheme ?? readShellTheme() },
+      null,
+    );
   } catch {
     // Native call failed — web theme still applies; only the shell bands lag.
   }

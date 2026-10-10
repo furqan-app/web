@@ -2530,40 +2530,31 @@ body,
     }
   }
 
-  /* ---- SPIKE #766: content-sized compact safha (focus-mode retry) -----------
-     v2: card stays full height (paper full-bleed); the TEXT block is
-     content-sized with a fixed gap and centered between a top-pinned header
-     and a bottom-pinned footer, so viewport-height changes (status-bar
-     show/hide) move the text rigidly but never shift lines relative to each
-     other. Tuned 2026-10-09 from headless measurement at 390x844 (page 3):
-     0.85em. Re-tune if the font formula or line count changes. The off-spread
-     skeleton overlay keeps its own justify-between Tailwind layout (transient
-     font-wait only, absolute, contributes no height). Remove this whole block
-     if the spike fails. See docs/plans/feature-pwa-fullscreen-focus-mode.md
-     Addendum 2026-10-09. */
+  /* ---- SPIKE #766: full-height compact safha with reserved status-bar slot --
+     Full-height paper card: header pinned top, footer pinned bottom,
+     text block flexes to fill the height between them with even space-between.
+     In Android, shell topPadding permanently anchors the status-bar/cutout zone
+     so the WebView height is constant on status-bar toggle. In PWA, display-mode
+     fullscreen reserves the safe top floor on .fq-safha-header without resizing
+     the window. Zero toggle jump, no dead mid-screen float. */
   @media (max-width: 1023px) {
-    /* Header pinned top, footer pinned bottom, text centered between them with
-       two EQUAL middle gaps (space-between over 3 children). Inter-line gaps
-       stay fixed, so a viewport-height change moves the text block rigidly but
-       never shifts lines relative to each other. Card returns to full height
-       (paper full-bleed, like the printed reference). */
     .fq-content {
       justify-content: space-between !important;
     }
     .fq-quran-safha {
-      flex: none !important;
-      justify-content: flex-start !important;
-      gap: 0.85em !important;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      justify-content: space-between !important;
+      gap: 0 !important;
     }
   }
 
   /* ---- SPIKE #766: small phones ------------------------------------------------
-     Short viewports can't fit header + full-gap text + footer: shrink the fixed
-     gap instead of clipping (card is overflow-hidden). 360x640 is the verify
-     size. Remove with the spike block above if the spike fails. */
+     Short viewports (<=700px): keep lines gracefully fit without clipping.
+     360x640 is the verify size. */
   @media (max-width: 1023px) and (max-height: 700px) {
     .fq-quran-safha {
-      gap: 0.5em !important;
+      padding-block: 0.25em !important;
     }
   }
 

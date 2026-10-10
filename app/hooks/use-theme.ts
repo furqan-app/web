@@ -28,7 +28,7 @@ export function useTheme() {
     // SPIKE (#766): recolor the native shell's system-bar bands immediately.
     // No-op outside the Capacitor shell; startup is covered by the reader
     // pager's mount sync (setStatusBarVisible carries the theme too).
-    syncShellTheme();
+    syncShellTheme(newTheme);
   };
 
   useEffect(() => {

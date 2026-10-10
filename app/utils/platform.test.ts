@@ -162,6 +162,20 @@ describe("syncShellTheme", () => {
     expect(toNative).toHaveBeenCalledWith("StatusBarToggle", "applyTheme", { theme: "light" }, null);
   });
 
+  it("sends an explicit theme when provided, bypassing document classes", () => {
+    const toNative = vi.fn();
+    stubBrowser({ capacitorNative: true, toNative });
+    Object.defineProperty(globalThis, "document", {
+      value: {
+        documentElement: { classList: { contains: (c: string) => c === "theme-light" } },
+      },
+      writable: true,
+      configurable: true,
+    });
+    syncShellTheme("gold");
+    expect(toNative).toHaveBeenCalledWith("StatusBarToggle", "applyTheme", { theme: "gold" }, null);
+  });
+
   it("is a silent no-op outside the shell", () => {
     stubBrowser({});
     expect(() => syncShellTheme()).not.toThrow();
