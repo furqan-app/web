@@ -41,6 +41,19 @@ export const isAndroid = () => /Android/i.test(navigator.userAgent);
 // bridge guards it). No-ops everywhere else (plain tabs, PWA, iOS) and on any
 // bridge failure, so a missing/unreachable bridge can never break the reader:
 // the bar simply stays shown, which is today's behavior.
+export type ShellTheme = "light" | "dark" | "gold";
+
+// Read from the document classes (set pre-paint by layout.tsx, kept current by
+// useTheme) rather than a subscription — the caller needs the value at call
+// time only, and this stays correct even where no theme context is mounted.
+const readShellTheme = (): ShellTheme => {
+  if (typeof document === "undefined") return "dark";
+  const classes = document.documentElement.classList;
+  if (classes.contains("theme-gold")) return "gold";
+  if (classes.contains("theme-dark")) return "dark";
+  return "light";
+};
+
 export const setStatusBarVisible = (visible: boolean): void => {
   if (typeof window === "undefined" || !isNativePlatform()) return;
   const bridge = (
@@ -56,9 +69,38 @@ export const setStatusBarVisible = (visible: boolean): void => {
     }
   ).Capacitor;
   try {
-    bridge?.toNative?.("StatusBarToggle", visible ? "show" : "hide", {}, null);
+    bridge?.toNative?.(
+      "StatusBarToggle",
+      visible ? "show" : "hide",
+      { theme: readShellTheme() },
+      null,
+    );
   } catch {
     // Native call failed — reader keeps working with the bar shown.
+  }
+};
+
+// Theme-only sync for mid-session theme switches (no visibility change).
+// Called from useTheme's setter, which runs exactly when the user picks a
+// theme; startup is covered by the pager effect above.
+export const syncShellTheme = (): void => {
+  if (typeof window === "undefined" || !isNativePlatform()) return;
+  const bridge = (
+    window as unknown as {
+      Capacitor?: {
+        toNative?: (
+          plugin: string,
+          method: string,
+          options: object,
+          callback: null,
+        ) => unknown;
+      };
+    }
+  ).Capacitor;
+  try {
+    bridge?.toNative?.("StatusBarToggle", "applyTheme", { theme: readShellTheme() }, null);
+  } catch {
+    // Native call failed — web theme still applies; only the shell bands lag.
   }
 };
 

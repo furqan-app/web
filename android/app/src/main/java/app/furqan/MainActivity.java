@@ -40,8 +40,14 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
                     WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
                 );
                 boolean keyboardVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
+                // SPIKE (#766): the top edge follows the plugin's visibility flag,
+                // not the raw inset — the raw value does not track hide/show on
+                // this path, so re-applying it resurrects the empty band. Both
+                // writers (here and the plugin's explicit set) now compute the
+                // same value, so ordering no longer matters.
+                int topPadding = StatusBarTogglePlugin.isStatusBarVisible() ? systemBars.top : 0;
                 int bottomPadding = keyboardVisible ? 0 : systemBars.bottom;
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomPadding);
+                v.setPadding(systemBars.left, topPadding, systemBars.right, bottomPadding);
 
                 // Consume systemBars and displayCutout so WebView does not receive them and apply double padding in CSS
                 return new WindowInsetsCompat.Builder(windowInsets)

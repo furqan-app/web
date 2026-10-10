@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { storage } from '@/app/utils/storage';
+import { syncShellTheme } from '@/app/utils/platform';
 
 type Theme = 'light' | 'dark' | 'gold';
 
@@ -24,6 +25,10 @@ export function useTheme() {
   const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme);
     storage.set("theme", newTheme);
+    // SPIKE (#766): recolor the native shell's system-bar bands immediately.
+    // No-op outside the Capacitor shell; startup is covered by the reader
+    // pager's mount sync (setStatusBarVisible carries the theme too).
+    syncShellTheme();
   };
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { isNativePlatform, isStandaloneDisplayMode, isAndroid, setStatusBarVisible } from "./platform";
+import { isNativePlatform, isStandaloneDisplayMode, isAndroid, setStatusBarVisible, syncShellTheme } from "./platform";
 
 let originalWindowDescriptor: PropertyDescriptor | undefined;
 let originalNavigatorDescriptor: PropertyDescriptor | undefined;
@@ -110,18 +110,30 @@ describe("isAndroid", () => {
 });
 
 describe("setStatusBarVisible", () => {
+  const stubTheme = (name: string) => {
+    Object.defineProperty(globalThis, "document", {
+      value: {
+        documentElement: { classList: { contains: (c: string) => c === `theme-${name}` } },
+      },
+      writable: true,
+      configurable: true,
+    });
+  };
+
   it("calls the native hide method when the overlay hides the chrome", () => {
     const toNative = vi.fn();
     stubBrowser({ capacitorNative: true, toNative });
+    stubTheme("dark");
     setStatusBarVisible(false);
-    expect(toNative).toHaveBeenCalledWith("StatusBarToggle", "hide", {}, null);
+    expect(toNative).toHaveBeenCalledWith("StatusBarToggle", "hide", { theme: "dark" }, null);
   });
 
   it("calls the native show method when the overlay reveals the chrome", () => {
     const toNative = vi.fn();
     stubBrowser({ capacitorNative: true, toNative });
+    stubTheme("gold");
     setStatusBarVisible(true);
-    expect(toNative).toHaveBeenCalledWith("StatusBarToggle", "show", {}, null);
+    expect(toNative).toHaveBeenCalledWith("StatusBarToggle", "show", { theme: "gold" }, null);
   });
 
   it("is a silent no-op in a plain browser tab", () => {
@@ -132,5 +144,26 @@ describe("setStatusBarVisible", () => {
   it("is a silent no-op when the bridge has no callable surface", () => {
     stubBrowser({ capacitorNative: true });
     expect(() => setStatusBarVisible(false)).not.toThrow();
+  });
+});
+
+describe("syncShellTheme", () => {
+  it("sends the current document theme to the native shell", () => {
+    const toNative = vi.fn();
+    stubBrowser({ capacitorNative: true, toNative });
+    Object.defineProperty(globalThis, "document", {
+      value: {
+        documentElement: { classList: { contains: (c: string) => c === "theme-light" } },
+      },
+      writable: true,
+      configurable: true,
+    });
+    syncShellTheme();
+    expect(toNative).toHaveBeenCalledWith("StatusBarToggle", "applyTheme", { theme: "light" }, null);
+  });
+
+  it("is a silent no-op outside the shell", () => {
+    stubBrowser({});
+    expect(() => syncShellTheme()).not.toThrow();
   });
 });

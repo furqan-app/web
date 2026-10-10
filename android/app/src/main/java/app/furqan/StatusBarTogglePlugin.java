@@ -22,6 +22,48 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "StatusBarToggle")
 public class StatusBarTogglePlugin extends Plugin {
 
+    // Single source of truth for the bar's visibility, read by MainActivity's
+    // insets listener below. Without this the listener re-applies the stale
+    // full top padding after an explicit hide (its getInsets() does not track
+    // visibility on this path), resurrecting the empty navy band.
+    private static volatile boolean statusBarVisible = true;
+
+    public static boolean isStatusBarVisible() {
+        return statusBarVisible;
+    }
+
+    // Band + icon colors follow the app theme (spike #766): the reserved
+    // system-bar zones must read as app chrome, not as a fixed navy slab.
+    // Values mirror the web --background tokens (light/gold) and the existing
+    // shell navy (dark).
+    private void applyColors(String theme, WindowInsetsControllerCompat controller, View decorView) {
+        int bg;
+        boolean lightBars;
+        if ("gold".equals(theme)) {
+            bg = 0xFFEEE5CE;
+            lightBars = true;
+        } else if ("light".equals(theme)) {
+            bg = 0xFFEEF2F7;
+            lightBars = true;
+        } else {
+            bg = 0xFF16232F;
+            lightBars = false;
+        }
+        decorView.setBackgroundColor(bg);
+        if (controller != null) {
+            controller.setAppearanceLightStatusBars(lightBars);
+            controller.setAppearanceLightNavigationBars(lightBars);
+        }
+    }
+
+    private String optTheme(PluginCall call) {
+        String theme = call.getString("theme");
+        if (theme == null) {
+            theme = "dark";
+        }
+        return theme;
+    }
+
     private void apply(final boolean visible, final PluginCall call) {
         final Activity activity = getActivity();
         if (activity == null) {
@@ -36,6 +78,8 @@ public class StatusBarTogglePlugin extends Plugin {
                 call.reject("No window insets controller");
                 return;
             }
+            statusBarVisible = visible;
+            applyColors(optTheme(call), controller, decorView);
             if (visible) {
                 controller.show(WindowInsetsCompat.Type.statusBars());
             } else {
@@ -79,5 +123,23 @@ public class StatusBarTogglePlugin extends Plugin {
     @PluginMethod
     public void show(PluginCall call) {
         apply(true, call);
+    }
+
+    // Theme-only sync (no visibility change): called when the user switches
+    // theme mid-session so the bands follow without waiting for a toggle.
+    @PluginMethod
+    public void applyTheme(PluginCall call) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            call.reject("No activity attached");
+            return;
+        }
+        activity.runOnUiThread(() -> {
+            View decorView = activity.getWindow().getDecorView();
+            WindowInsetsControllerCompat controller =
+                WindowCompat.getInsetsController(activity.getWindow(), decorView);
+            applyColors(optTheme(call), controller, decorView);
+            call.resolve();
+        });
     }
 }
