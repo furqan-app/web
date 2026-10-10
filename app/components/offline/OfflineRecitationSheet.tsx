@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useLocale } from "next-intl";
 import {
   Check,
@@ -28,6 +28,7 @@ import { useOnlineStatus } from "@hooks/use-online-status";
 import { useCloseOnBackGesture } from "@/app/hooks/use-close-on-back-gesture";
 import useTranslations from "@hooks/use-translations";
 import { getLanguageDirection, toLocaleNumeral } from "@utils/i18n";
+import { offlineDownloadDisplayLabel, surahDisplayName } from "@utils/recitation";
 import { RecitationDownloadItem } from "@/app/types/recitation";
 import { SurahResult } from "@/app/types";
 
@@ -93,6 +94,22 @@ export const OfflineRecitationSheet = () => {
 
   const reciterId = settings.reciterId ?? reciters[0]?.id ?? null;
   const reciter = reciters.find((r) => r.id === reciterId);
+  const juzWord = t("juz", "Juz");
+
+  // Downloaded labels are re-derived from live data on every render so
+  // entries stored before surah/juz labels were localized (or downloaded
+  // under the other locale) display in the current language. Falls back to
+  // the persisted label when data isn't resolvable yet.
+  const displayLabelFor = useCallback(
+    (item: RecitationDownloadItem) =>
+      offlineDownloadDisplayLabel(item, {
+        chapters,
+        reciterName: reciters.find((r) => r.id === item.reciterId)?.translatedName,
+        juzWord,
+        locale,
+      }),
+    [chapters, reciters, juzWord, locale],
+  );
 
   // A downloaded item may belong to a different reciter than the one
   // currently selected — play() always reads settings.reciterId, it takes no
@@ -108,11 +125,11 @@ export const OfflineRecitationSheet = () => {
         stopChapterId: pending.stopChapterId,
         rangeRepeatCount: 1,
         id: `download:${pending.kind}:${pending.key}`,
-        label: pending.label,
+        label: displayLabelFor(pending),
       });
       setOpen(false);
     }
-  }, [settings.reciterId, play]);
+  }, [settings.reciterId, play, displayLabelFor]);
 
   const handlePlay = (item: RecitationDownloadItem) => {
     if (settings.reciterId !== item.reciterId) {
@@ -125,7 +142,7 @@ export const OfflineRecitationSheet = () => {
       stopChapterId: item.stopChapterId,
       rangeRepeatCount: 1,
       id: `download:${item.kind}:${item.key}`,
-      label: item.label,
+      label: displayLabelFor(item),
     });
     setOpen(false);
   };
@@ -203,15 +220,21 @@ export const OfflineRecitationSheet = () => {
             <TabsContent value="surah" className="mt-3 space-y-2 max-h-72 overflow-y-auto">
               {chapters.map((surah: SurahResult) => {
                 const state = reciterId ? getItemState("surah", surah.id, reciterId) : "idle";
+                const name = surahDisplayName(surah, locale);
                 return (
-                  <Row key={surah.id} label={surah.name_simple}>
+                  <Row key={surah.id} label={name}>
                     <RowIcon
                       state={state}
                       label={t("offlineRecitation.download", "Download")}
-                      disabled={!isOnline || !reciterId}
+                      disabled={!isOnline || !reciterId || !reciter}
                       onDownload={() => {
                         if (!reciterId || !isOnline) return;
-                        downloadSurah(surah, reciterId, reciter?.translatedName ?? "");
+                        downloadSurah(
+                          surah,
+                          reciterId,
+                          reciter?.translatedName ?? "",
+                          name,
+                        );
                       }}
                     />
                   </Row>
@@ -222,18 +245,25 @@ export const OfflineRecitationSheet = () => {
             <TabsContent value="juz" className="mt-3 space-y-2 max-h-72 overflow-y-auto">
               {Array.from({ length: JUZ_COUNT }, (_, i) => i + 1).map((juzNumber) => {
                 const state = reciterId ? getItemState("juz", juzNumber, reciterId) : "idle";
+                const label = `${juzWord} ${toLocaleNumeral(juzNumber, locale)}`;
                 return (
                   <Row
                     key={juzNumber}
-                    label={`${t("juz", "Juz")} ${toLocaleNumeral(juzNumber, locale)}`}
+                    label={label}
                   >
                     <RowIcon
                       state={state}
                       label={t("offlineRecitation.download", "Download")}
-                      disabled={!isOnline || !reciterId}
+                      disabled={!isOnline || !reciterId || !reciter}
                       onDownload={() => {
                         if (!reciterId || !isOnline) return;
-                        downloadJuz(juzNumber, chapters, reciterId, reciter?.translatedName ?? "");
+                        downloadJuz(
+                          juzNumber,
+                          chapters,
+                          reciterId,
+                          reciter?.translatedName ?? "",
+                          label,
+                        );
                       }}
                     />
                   </Row>
@@ -258,7 +288,7 @@ export const OfflineRecitationSheet = () => {
                     className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2.5"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-foreground">{item.label}</p>
+                      <p className="truncate text-sm text-foreground">{displayLabelFor(item)}</p>
                       <p className="text-xs text-muted-foreground">
                         {toLocaleNumeral(bytesToMb(item.sizeBytes), locale)} {t("offlineRecitation.mb", "MB")}
                       </p>

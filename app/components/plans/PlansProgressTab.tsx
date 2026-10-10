@@ -314,9 +314,6 @@ export const PlansProgressTab = ({ hasPlans = true, onSelectTab }: PlansProgress
               <div className="flex items-baseline justify-between pt-1">
                 <div>
                   <span className="text-2xl font-extrabold text-foreground tracking-tight">
-                    {toLocaleNumeral(count, locale)}
-                  </span>
-                  <span className="ms-1.5 text-xs font-medium text-muted-foreground">
                     {tIntl("plans.dashboard.streaks.daysCount", {
                       count,
                       n: toLocaleNumeral(count, locale),

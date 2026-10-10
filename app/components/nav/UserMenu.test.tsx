@@ -20,14 +20,16 @@ vi.mock("@/app/lib/shell/native-signin", () => ({
 
 const mockSignOut = vi.fn();
 const mockSignIn = vi.fn();
+const mockUseSession = vi.fn();
+mockUseSession.mockReturnValue({
+  data: {
+    user: { name: "Test User", email: "test@example.com" },
+  },
+  status: "authenticated",
+});
 
 vi.mock("next-auth/react", () => ({
-  useSession: () => ({
-    data: {
-      user: { name: "Test User", email: "test@example.com" },
-    },
-    status: "authenticated",
-  }),
+  useSession: () => mockUseSession(),
   signOut: (...args: unknown[]) => mockSignOut(...args),
   signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
@@ -124,3 +126,83 @@ describe("UserMenu sign-out", () => {
     renderer?.unmount();
   });
 });
+
+describe("UserMenu sign-in", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseSession.mockReturnValue({
+      data: null,
+      status: "unauthenticated",
+    });
+  });
+
+  it("calls nativeGoogleSignIn and does not call next-auth signIn when in native shell", async () => {
+    mockIsNativePlatform.mockReturnValue(true);
+
+    let renderer: ReturnType<typeof create> | undefined;
+    await act(async () => {
+      renderer = create(<UserMenu menuRow />);
+    });
+
+    const root = renderer!.root;
+
+    // Expand the account menu row
+    const expandButton = root.findByProps({ "aria-expanded": false });
+    await act(async () => {
+      expandButton.props.onClick();
+    });
+
+    // Locate the sign-in button inside the expanded content
+    const buttons = root.findAllByType("button");
+    const signInButton = buttons.find((btn) => {
+      const text = btn.children.join("");
+      return text.includes("Sign in") || text.includes("signIn");
+    });
+    expect(signInButton).toBeDefined();
+
+    await act(async () => {
+      signInButton!.props.onClick();
+    });
+
+    expect(mockNativeGoogleSignIn).toHaveBeenCalledTimes(1);
+    expect(mockSignIn).not.toHaveBeenCalled();
+
+    renderer?.unmount();
+  });
+
+  it("calls next-auth signIn explicitly with 'google' provider when on web", async () => {
+    mockIsNativePlatform.mockReturnValue(false);
+
+    let renderer: ReturnType<typeof create> | undefined;
+    await act(async () => {
+      renderer = create(<UserMenu menuRow />);
+    });
+
+    const root = renderer!.root;
+
+    // Expand the account menu row
+    const expandButton = root.findByProps({ "aria-expanded": false });
+    await act(async () => {
+      expandButton.props.onClick();
+    });
+
+    // Locate the sign-in button inside the expanded content
+    const buttons = root.findAllByType("button");
+    const signInButton = buttons.find((btn) => {
+      const text = btn.children.join("");
+      return text.includes("Sign in") || text.includes("signIn");
+    });
+    expect(signInButton).toBeDefined();
+
+    await act(async () => {
+      signInButton!.props.onClick();
+    });
+
+    expect(mockSignIn).toHaveBeenCalledTimes(1);
+    expect(mockSignIn).toHaveBeenCalledWith("google");
+    expect(mockNativeGoogleSignIn).not.toHaveBeenCalled();
+
+    renderer?.unmount();
+  });
+});
+

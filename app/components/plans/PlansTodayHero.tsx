@@ -134,6 +134,7 @@ export const PlansTodayHero = ({
   onSelectReminders?: () => void;
 } = {}) => {
   const t = useTranslations();
+  const tIntl = useNextIntlTranslations();
   const locale = useLocale();
   const isOnline = useOnlineStatus();
   const { data: session } = useSession();
@@ -172,8 +173,10 @@ export const PlansTodayHero = ({
         </div>
         <div className="mt-1 text-sm text-muted-foreground">
           {t("plans.hero.keepGoing", "Keep going — you're now on")}{" "}
-          {toLocaleNumeral(streakLength, locale)}{" "}
-          {t("plans.hero.streakDays", "day streak")}
+          {tIntl("plans.hero.streakDaysAcc", {
+            count: streakLength,
+            n: toLocaleNumeral(streakLength, locale),
+          })}
         </div>
         {week.length === 7 ? (
           <div className="mt-4">
@@ -223,10 +226,10 @@ export const PlansTodayHero = ({
         </div>
         <div className="text-end">
           <div className="text-[22px] font-extrabold text-primary">
-            {toLocaleNumeral(streakLength, locale)}
-          </div>
-          <div className="text-[10px] font-bold text-muted-foreground">
-            {t("plans.hero.streakDays", "day streak")}
+            {tIntl("plans.hero.streakDays", {
+              count: streakLength,
+              n: toLocaleNumeral(streakLength, locale),
+            })}
           </div>
         </div>
       </div>

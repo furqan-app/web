@@ -164,7 +164,7 @@ test.describe("My Marks page offline (read plus local-first delete)", () => {
     await setupMarksSession(page, context, projectUser(testInfo));
 
     await markWord(page, "1:1:1", "mark-color-forgetting", "حفظ: نسيان", isMobile);
-    await markWord(page, "1:1:2", "mark-color-linking", "حفظ: تربيط", isMobile);
+    await markWord(page, "1:1:2", "mark-color-linking", "حفظ: الربط", isMobile);
 
     // Store holds both records (pending is enough — the store is the read truth).
     await expect
@@ -204,10 +204,10 @@ test.describe("My Marks page offline (read plus local-first delete)", () => {
     if (isMobile) {
       await expect(page.getByRole("button", { name: "تصفية العلامات" })).toBeVisible();
       await page.getByRole("button", { name: "تصفية العلامات" }).click();
-      await page.getByRole("menuitem", { name: /تربيط/ }).click();
+      await page.getByRole("menuitem", { name: /الربط/ }).click();
     } else {
       await expect(page.getByRole("button", { name: "الكل" })).toBeVisible();
-      await page.getByRole("button", { name: "تربيط" }).click();
+      await page.getByRole("button", { name: "الربط" }).click();
     }
     await expect(page.locator('main a[href$="/pages/1"]')).toHaveCount(1);
 

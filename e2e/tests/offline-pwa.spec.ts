@@ -88,9 +88,9 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await page.goto("/ar/pages/1");
 
     // Blocking first-run dialog appears
-    const gate = page.getByRole("dialog", { name: "اقرأ القرآن بدون إنترنت" });
+    const gate = page.getByRole("dialog", { name: "اقرأ القرآن دون اتصال بالإنترنت" });
     await expect(gate).toBeVisible();
-    await expect(gate.getByRole("heading", { name: "اقرأ القرآن بدون إنترنت" })).toBeVisible();
+    await expect(gate.getByRole("heading", { name: "اقرأ القرآن دون اتصال بالإنترنت" })).toBeVisible();
 
     // Escape and outside clicking are suppressed (ADR 0014 Addendum 2)
     await page.keyboard.press("Escape");
@@ -152,6 +152,8 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // …and lifts once the pair's data + fonts are ready. Fonts were delayed
     // ~1.2s but never blocked, so a lift well under the 5s safety bound proves
     // the ready path did it — not the safety timer.
+    // The cover shows the brand logo mark (navy + logo unification) while up.
+    await expect(page.locator("#fq-launch-cover .fq-launch-cover-logo")).toBeVisible();
     await waitForActivePanelContent(page);
     await page.waitForFunction(
       () => !document.documentElement.classList.contains("fq-launch-cover"),
@@ -184,14 +186,14 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await expect(offlineRecitationTrigger).toBeVisible();
     await offlineRecitationTrigger.click();
 
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet).toBeVisible();
 
     // Wait for reciter to resolve
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
     // Locate Al-Kahf row in the surah tab and trigger download
-    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
+    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "الكهف" }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeEnabled();
     await downloadBtn.click();
@@ -199,8 +201,8 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // Appears under downloaded section
     const downloadedItem = sheet
       .locator("div.bg-muted")
-      .filter({ hasText: "Al-Kahf" })
-      .filter({ has: page.getByRole("button", { name: "استماع" }) })
+      .filter({ hasText: "الكهف" })
+      .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
 
@@ -247,18 +249,18 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const offlineRecitationTrigger = settingsSheet.getByRole("button", { name: /التلاوة دون اتصال/ });
     await offlineRecitationTrigger.click();
 
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
-    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
+    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "الكهف" }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeEnabled();
     await downloadBtn.click();
 
     const downloadedItem = sheet
       .locator("div.bg-muted")
-      .filter({ hasText: "Al-Kahf" })
-      .filter({ has: page.getByRole("button", { name: "استماع" }) })
+      .filter({ hasText: "الكهف" })
+      .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
 
@@ -270,7 +272,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await expect(sheet.getByText("اتصل بالإنترنت للتنزيل.")).toBeVisible();
 
     // Start playback from downloaded item
-    const listenBtn = downloadedItem.getByRole("button", { name: "استماع" });
+    const listenBtn = downloadedItem.getByRole("button", { name: "استمع" });
     await expect(listenBtn).toBeVisible();
     await listenBtn.click();
 
@@ -311,23 +313,23 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // Download Al-Kahf online so pages 293-304 are cached
     const settingsSheet = await openSettings(page);
     await settingsSheet.getByRole("button", { name: /التلاوة دون اتصال/ }).click();
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
-    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
+    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "الكهف" }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeEnabled();
     await downloadBtn.click();
 
     const downloadedItem = sheet
       .locator("div.bg-muted")
-      .filter({ hasText: "Al-Kahf" })
-      .filter({ has: page.getByRole("button", { name: "استماع" }) })
+      .filter({ hasText: "الكهف" })
+      .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
 
     // Start playback (starts at 18:1 on page 293)
-    await downloadedItem.getByRole("button", { name: "استماع" }).click();
+    await downloadedItem.getByRole("button", { name: "استمع" }).click();
     await page.keyboard.press("Escape");
 
     await page.waitForFunction(audioIsPlaying);
@@ -391,10 +393,10 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // Open Settings -> Offline Recitation
     const settingsSheet = await openSettings(page);
     await settingsSheet.getByRole("button", { name: /التلاوة دون اتصال/ }).click();
-    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال" });
+    const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
 
     // Download buttons are disabled
-    const alKahfRow = sheet.locator("div.bg-muted").filter({ hasText: /^Al-Kahf$/ }).first();
+    const alKahfRow = sheet.locator("div.bg-muted").filter({ hasText: /^الكهف$/ }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeDisabled();
 
@@ -403,7 +405,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await page.waitForTimeout(200);
 
     // Attempting to trigger recitation from the navbar listen button
-    const listenNavBtn = page.getByRole("button", { name: "استماع" });
+    const listenNavBtn = page.getByRole("button", { name: "استمع" });
     if (await listenNavBtn.isVisible()) {
       await listenNavBtn.click();
       // Verifies offline playback guard does not throw unhandled exception

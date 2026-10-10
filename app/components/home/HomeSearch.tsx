@@ -123,7 +123,10 @@ export const HomeSearch = ({ surahs, query, onQueryChange }: Props) => {
         {/* Live result count */}
         {isFiltering && filtered.length > 0 && (
           <p className="mt-1.5 text-xs text-muted-foreground" role="status">
-            {t("resultsCount", { count: toLocaleNumeral(filtered.length, locale) })}
+            {t("resultsCount", {
+              count: filtered.length,
+              n: toLocaleNumeral(filtered.length, locale),
+            })}
           </p>
         )}
 

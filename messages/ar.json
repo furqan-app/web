@@ -2,13 +2,13 @@
   "home": {
     "title": "الفرقان",
     "tagline": "كلُّ كلمة أمانة، وكلُّ آية رحلة — علِّق وتأمَّل وأتقن حفظك للقرآن الكريم، خطوةً بخطوة بجانب شيخك.",
-    "description": "اقرأ واستمع إلى القرآن",
+    "description": "اقرأ القرآن الكريم واستمع إليه",
     "continueReading": "تابع القراءة",
-    "resumeReading": "متابعة التلاوة",
-    "searchLabel": "البحث التنقلي",
+    "resumeReading": "متابعة القراءة",
+    "searchLabel": "البحث والتنقل",
     "searchPlaceholder": "ابحث بسورة (الكهف)، جزء (جزء ٢٠)، أو صفحة (صفحة ٥٠)...",
     "searchClear": "مسح البحث",
-    "resultsCount": "{count} نتيجة",
+    "resultsCount": "{count, plural, zero {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {{n} نتائج} many {{n} نتيجة} other {{n} نتيجة}}",
     "juzRow": "الجزء {n} · يبدأ في ص {page}",
     "juzRowShort": "الجزء {n}",
     "pageRow": "صفحة {n}",
@@ -33,7 +33,7 @@
     "noResults": "لا توجد نتائج",
     "noResultsHint": "جرّب كتابة مختلفة، أو ابحث برقم السورة.",
     "pageTitle": "نتائج البحث",
-    "resultsCount": "عدد النتائج: {count}",
+    "resultsCount": "{count, plural, zero {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {{n} نتائج} many {{n} نتيجة} other {{n} نتيجة}}",
     "errorTitle": "تعذّر البحث",
     "errorHint": "تحقق من الاتصال ثم حاول مجددًا.",
     "retry": "إعادة المحاولة",
@@ -48,7 +48,7 @@
     "filterPlaceholderSurahs": "اسم السورة أو رقمها...",
     "filterPlaceholderRubs": "الجزء أو الحزب أو الربع...",
     "filterClear": "مسح البحث",
-    "filterResultsCount": "{count, plural, one {{n} نتيجة} two {نتيجتان} few {{n} نتائج} many {{n} نتيجة} other {{n} نتيجة}}",
+    "filterResultsCount": "{count, plural, one {نتيجة واحدة} two {نتيجتان} few {{n} نتائج} many {{n} نتيجة} other {{n} نتيجة}}",
     "filterNoMatches": "لا توجد نتائج",
     "filterRangeSurahs": "السور ١–١١٤",
     "filterRangeRubs": "الجزء ١–٣٠ · الحزب ١–٦٠ · الربع ١–٢٤٠",
@@ -64,9 +64,9 @@
     "close": "إغلاق"
   },
   "signInModal": {
-    "description": "سجّل الدخول لتحديد الكلمات والآيات في القرآن."
+    "description": "سجّل الدخول لوضع علامات على الكلمات والآيات في القرآن."
   },
-  "settingsDescription": "عدّل اللغة وحجم الخط والمظهر والوصول دون اتصال.",
+  "settingsDescription": "عدّل اللغة وحجم الخط والمظهر والقراءة دون اتصال بالإنترنت.",
   "reader": {
     "singlePageView": "عرض صفحة واحدة",
     "doublePageView": "عرض صفحتين"
@@ -79,15 +79,14 @@
   "hizb": "الحزب",
   "hizb-quarter": "ربع الحزب",
   "hizb-half": "نصف الحزب",
-  "hizb-three-quarters": "ثلاث أرباع الحزب",
-  "hizb-full": "الحزب كامل",
+  "hizb-three-quarters": "ثلاثة أرباع الحزب",
   "account": "حسابي",
   "settings": "الإعدادات",
   "language": "اللغة",
   "quranFontSize": "حجم الخط",
   "pageView": "عرض الصفحة",
   "appearance": "المظهر",
-  "keepScreenAwake": "الشاشة",
+  "keepScreenAwake": "الشاشة والإضاءة",
   "keepScreenAwakeLabel": "إبقاء الشاشة مضاءة",
   "keepScreenAwakeDescription": "منع شاشة جهازك من الإغلاق التلقائي أثناء فتح التطبيق",
   "theme": {
@@ -96,11 +95,11 @@
     "gold": "ذهبي"
   },
   "mushafLayout": {
-    "title": "تخطيط المصحف",
+    "title": "طبعة المصحف",
     "switchAction": "التبديل إلى هذا المصحف",
     "active": "نشط",
     "downloaded": "تم التنزيل",
-    "activeNeedsDownload": "مصحفك الحالي — نزّله للقراءة دون إنترنت",
+    "activeNeedsDownload": "مصحفك الحالي — نزّله للقراءة دون اتصال بالإنترنت",
     "editions": {
       "1": {
         "name": "مصحف مجمع الملك فهد (طبعة ١٤٢١هـ)"
@@ -114,8 +113,8 @@
     }
   },
   "offline": {
-    "gateTitle": "اقرأ القرآن بدون إنترنت",
-    "sizeNotice": "حوالي {size} ميجابايت. يُفضّل عبر Wi-Fi.",
+    "gateTitle": "اقرأ القرآن دون اتصال بالإنترنت",
+    "sizeNotice": "حوالي {size} ميجابايت. يُفضّل التنزيل عبر شبكة واي فاي.",
     "download": "تنزيل",
     "downloadWithSize": "تنزيل ({size} ميجابايت)",
     "skip": "تخطٍّ الآن",
@@ -123,17 +122,17 @@
     "settingsHint": "يمكنك التنزيل لاحقًا من الإعدادات.",
     "runningTitle": "جارٍ تنزيل القرآن",
     "progress": "{cached} من {total} صفحة",
-    "ready": "متاح بدون إنترنت",
+    "ready": "متاح دون اتصال بالإنترنت",
     "partialTitle": "تعذّر تنزيل بعض الصفحات",
     "partialBody": "{cached} من {total} صفحة جاهزة — تعذّر تنزيل {failed}.",
     "retry": "أعد المحاولة",
     "continueAnyway": "المتابعة على أي حال",
     "offlineTitle": "أنت غير متصل بالإنترنت",
-    "offlineBody": "اتصل بالإنترنت لتنزيل القرآن للقراءة بدون إنترنت.",
+    "offlineBody": "اتصل بالإنترنت لتنزيل القرآن للقراءة دون اتصال بالإنترنت.",
     "installedTitle": "تم تثبيت فرقان",
-    "installedBody": "نزّل القرآن الآن لتقرأه بدون إنترنت.",
-    "checking": "جارٍ التحقق من التوفّر بدون إنترنت",
-    "gateDescription": "اختر ما إذا كنت تريد تنزيل القرآن للقراءة بدون إنترنت.",
+    "installedBody": "نزّل القرآن الآن لتقرأه دون اتصال بالإنترنت.",
+    "checking": "جارٍ التحقق من التوفّر دون اتصال بالإنترنت",
+    "gateDescription": "اختر ما إذا كنت تريد تنزيل القرآن للقراءة دون اتصال بالإنترنت.",
     "resumeProgress": "تم تنزيل {cached} من {total} صفحة",
     "resume": "استئناف التنزيل",
     "notAvailableOffline": "لم يتم تنزيل هذه الصفحة بعد — اتصل بالإنترنت لقراءتها."
@@ -141,11 +140,11 @@
   "swUpdate": {
     "title": "يتوفر إصدار جديد",
     "refresh": "تحديث",
-    "dismiss": "لاحقاً"
+    "dismiss": "لاحقًا"
   },
   "notFound": {
     "title": "404 - الصفحة غير موجودة",
-    "description": "عذراً، الصفحة التي تبحث عنها غير موجودة.",
+    "description": "عذرًا، الصفحة التي تبحث عنها غير موجودة.",
     "homeLink": "العودة إلى الصفحة الرئيسية",
     "returnToReading": "العودة إلى القراءة"
   },
@@ -160,11 +159,11 @@
     "similar": "متشابه",
     "tashkeelError": "خطأ في التشكيل",
     "tajweedError": "خطأ تجويدي",
-    "linking": "تربيط",
+    "linking": "الربط",
     "other": "أخرى",
     "removeMark": "إزالة العلامة",
-    "markWordLabel": "تحديد كلمة",
-    "markVerseLabel": "تحديد آية",
+    "markWordLabel": "تعليم كلمة",
+    "markVerseLabel": "تعليم آية",
     "chooseCategoryLabel": "ضع علامة للمراجعة",
     "saveMark": "حفظ العلامة",
     "commentPlaceholder": "أضف تعليقًا (اختياري)…",
@@ -173,9 +172,9 @@
     "markedBy": "علامة من",
     "offlineNotice": "اتصل بالإنترنت لعرض العلامات أو إضافتها",
     "playFromHere": "التشغيل من هنا",
-    "playPronunciation": "سماع النطق",
+    "playPronunciation": "استمع إلى النطق",
     "viewTafsir": "تفسير الآية",
-    "signInToMark": "سجّل الدخول لتحديد الكلمات والآيات",
+    "signInToMark": "سجّل الدخول لوضع علامات على الكلمات والآيات",
     "copyVerse": "نسخ الآية",
     "shareVerse": "مشاركة الآية",
     "copied": "تم النسخ",
@@ -267,10 +266,10 @@
     "pageTitle": "الأوراد وخطط التعلم",
     "signedOut": "سجّل الدخول لرؤية أورادك اليومية وخطط التعلم.",
     "empty": "لا توجد خطط بعد — اشترك في إحداها بالأسفل.",
-    "emptyHint": "تمنحك الخطة ورداً يومياً للقراءة أو الاستماع أو الحفظ.",
+    "emptyHint": "تمنحك الخطة وردًا يوميًا للقراءة أو الاستماع أو الحفظ.",
     "nothingToday": "لا يوجد شيء مستحق اليوم.",
     "noTasksToday": "لا توجد مهام مستحقة اليوم.",
-    "noTasksHint": "قد تكون خططك متوقفة مؤقتاً أو مكتملة. يمكنك متابعتها من إدارة الخطط.",
+    "noTasksHint": "قد تكون خططك متوقفة مؤقتًا أو مكتملة. يمكنك متابعتها من إدارة الخطط.",
     "goToManage": "الانتقال إلى إدارة الخطط ←",
     "manageHint": "تريد تعديل خطتك أو مراجعة السجل؟ انتقل إلى إدارة الخطط ←",
     "tabs": {
@@ -281,14 +280,14 @@
     },
     "dashboard": {
       "title": "سجل الإنجاز والتقدّم",
-      "subtitle": "متابعة الاستمرار في التلاوة والاستماع والحفظ والمراجعة",
+      "subtitle": "تابع التزامك بالتلاوة والاستماع والحفظ والمراجعة",
       "streaks": {
         "read": "التلاوة",
         "listen": "الاستماع",
         "memorize": "الحفظ",
         "review": "المراجعة",
-        "daysCount": "{count, plural, zero {ولا يوم} one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يوماً} other {{n} يوم}}",
-        "activeDaysCount": "{count, plural, zero {ابدأ اليوم} one {يوم واحد نشط} two {يومان نشطان} few {{n} أيام نشطة} many {{n} يوماً نشطاً} other {{n} يوم نشط}}",
+        "daysCount": "{count, plural, zero {لم تبدأ بعد} one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}}",
+        "activeDaysCount": "{count, plural, zero {ابدأ اليوم} one {يوم واحد نشط} two {يومان نشطان} few {{n} أيام نشطة} many {{n} يومًا نشطًا} other {{n} يوم نشط}}",
         "completedToday": "أُنجز اليوم",
         "pendingToday": "متبقٍ لليوم",
         "noActivePlan": "لا توجد خطة مفعلة"
@@ -299,31 +298,31 @@
         "listenedPages": "صفحات تم الاستماع إليها",
         "memorizedVerses": "آيات تم حفظها",
         "reviewedPages": "صفحات تمت مراجعتها",
-        "pagesCount": "{count, plural, zero {ولا صفحة} one {صفحة واحدة} two {صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
-        "versesCount": "{count, plural, zero {ولا آية} one {آية واحدة} two {آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
-        "khatmatCount": "{count, plural, zero {ولا ختمة} one {ختمة واحدة} two {ختمتان} few {{n} ختمات} many {{n} ختمة} other {{n} ختمة}}"
+        "pagesCount": "{count, plural, zero {لم تبدأ بعد} one {صفحة واحدة} two {صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
+        "versesCount": "{count, plural, zero {لم تبدأ بعد} one {آية واحدة} two {آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
+        "khatmatCount": "{count, plural, zero {لم تبدأ بعد} one {ختمة واحدة} two {ختمتان} few {{n} ختمات} many {{n} ختمة} other {{n} ختمة}}"
       },
       "heatmap": {
         "title": "خريطة النشاط والمدارسة",
-        "summary": "{activeDays, plural, zero {لم تسجل نشاطاً بعد} one {يوم واحد من المدارسة في آخر سنة} two {يومان من المدارسة في آخر سنة} few {{activeDaysFormatted} أيام من المدارسة في آخر سنة} many {{activeDaysFormatted} يوماً من المدارسة في آخر سنة} other {{activeDaysFormatted} يوم من المدارسة في آخر سنة}}",
+        "summary": "{activeDays, plural, zero {لم تسجل نشاطًا بعد} one {يوم واحد من المدارسة في آخر سنة} two {يومان من المدارسة في آخر سنة} few {{activeDaysFormatted} أيام من المدارسة في آخر سنة} many {{activeDaysFormatted} يومًا من المدارسة في آخر سنة} other {{activeDaysFormatted} يوم من المدارسة في آخر سنة}}",
         "directionHint": "الأسبوع الحالي على اليمين ← الماضي على اليسار",
         "viewInHistory": "عرض في سجل الخطط ←",
         "currentMonthNow": "الآن",
-        "legendCaption": "كل نقطة تمثل يوماً أنجزت فيه ورداً أو أكثر",
+        "legendCaption": "كل نقطة تمثل يومًا أنجزت فيه وردًا أو أكثر",
         "legendLess": "أقل",
         "legendMore": "أكثر",
         "tooltipTasks": "{count, plural, zero {لا مهام} one {مهمة واحدة منجزة} two {مهمتان منجزتان} few {{n} مهام منجزة} many {{n} مهمة منجزة} other {{n} مهمة منجزة}}"
       },
       "empty": {
         "title": "لا توجد خطط مسجلة بعد",
-        "hint": "اختر ورداً يومياً أو خطة مخصصة لتبدأ متابعة إنجازك وتثبيت التزامك."
+        "hint": "اختر وردًا يوميًا أو خطة مخصصة لتبدأ متابعة إنجازك وتثبيت التزامك."
       },
       "sparse": {
         "encouragement": "بداية مباركة — كل خطوة في مدارسة القرآن أجر وثبات."
       }
     },
     "summary": {
-      "allQuran": "كامل المصحف (٣٠ جزءاً)",
+      "allQuran": "كامل المصحف (٣٠ جزءًا)",
       "juzRange": "الجزء {start} إلى {end}"
     },
     "checkOff": "وضع علامة إتمام",
@@ -357,10 +356,11 @@
       "title": "وِردك اليوم",
       "of": "من",
       "today": "اليوم",
-      "streakDays": "يوماً متتالياً",
+      "streakDays": "{count, plural, one {يوم واحد متتالٍ} two {يومان متتاليان} few {{n} أيام متتالية} many {{n} يومًا متتاليًا} other {{n} يوم متتالٍ}}",
+      "streakDaysAcc": "{count, plural, one {يومًا واحدًا متتاليًا} two {يومين متتاليين} few {{n} أيام متتالية} many {{n} يومًا متتاليًا} other {{n} يوم متتاليًا}}",
       "last7Days": "آخر ٧ أيام",
       "allDone": "أحسنت، أتممتَ وِردك لهذا اليوم",
-      "keepGoing": "استمر — أنت الآن على",
+      "keepGoing": "استمر — لقد حققت حتى الآن",
       "reminderLabel": "تذكير يومي: {time}",
       "remindersMultiple": "تذكيرات اليوم: {count}",
       "reminderSet": "ضبط تذكير الورد اليومي"
@@ -374,13 +374,13 @@
     },
     "browse": {
       "title": "أورادٌ وخطط جديدة",
-      "description": "اشترك في ورد جديد، أو عدّل ورداً نشطاً.",
+      "description": "اشترك في ورد جديد، أو عدّل وردًا نشطًا.",
       "addNew": "ورد جديد",
       "addNewDescription": "استكشف الأوراد وخطط التعلم المتاحة",
       "back": "رجوع",
       "next": "التالي",
       "previous": "السابق",
-      "husunOverview": "خمسة مسارات مترابطة: تحفظ صفحة جديدة يومياً، وتحضّرها، وتراجعها قريباً وبعيداً — تلقائياً حسب ما تحفظه. تختار أنت فقط معدل الحفظ ونطاقه.",
+      "husunOverview": "خمسة مسارات مترابطة: تحفظ صفحة جديدة يوميًا، وتحضّرها، وتراجعها قريبًا وبعيدًا — تلقائيًا حسب ما تحفظه. تختار أنت فقط معدل الحفظ ونطاقه.",
       "dailyWirdType": {
         "title": "الورد اليومي",
         "description": "ختمة كاملة متكررة للمصحف بنشاط ومعدل تختارهما"
@@ -389,13 +389,13 @@
         "title": "ورد مخصص",
         "description": "اختَر مقدارًا مخصّصًا وحدِّد وتيرته اليومية أو تاريخ انتهائه"
       },
-      "comingSoon": "قريباً"
+      "comingSoon": "قريبًا"
     },
     "startPoint": {
       "label": "نقطة البداية (اختياري)",
       "fromBeginning": "من الصفحة الأولى",
       "pagePrefix": "صفحة",
-      "lockedNotice": "بدأ الورد بالفعل — تُستأنف القراءة تلقائياً من حيث توقفت",
+      "lockedNotice": "بدأ الورد بالفعل — تُستأنف القراءة تلقائيًا من حيث توقفت",
       "byPage": "بالصفحة",
       "bySurah": "بالسورة",
       "pageNumber": "رقم الصفحة",
@@ -410,11 +410,11 @@
     "custom": {
       "newTitle": "ورد مخصص جديد",
       "editTitle": "تعديل الورد المخصص",
-      "description": "حدد المقدار والوتيرة المناسبة لك",
+      "description": "حدد النطاق والوتيرة المناسبة لك",
       "nameLabel": "اسم الورد",
       "namePlaceholder": "مثال: حفظ سورة البقرة",
       "activityLabel": "نوع الورد",
-      "rangeLabel": "المقدار",
+      "rangeLabel": "النطاق",
       "rangeMode": {
         "wholeMushaf": "كامل المصحف",
         "surah": "بالسورة",
@@ -453,20 +453,20 @@
       "repetitions": "عدد الختمات",
       "pagesRange": "صفحات {start}–{end}",
       "singlePage": "صفحة {page}",
-      "pagesCount": "{count, plural, one {{n} صفحة} two {{n} صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
-      "versesCount": "{count, plural, one {{n} آية} two {{n} آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
-      "daysCount": "{count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}}",
-      "pagesPerDay": "{count, plural, one {{n} صفحة/يوم} two {{n} صفحتان/يوم} few {{n} صفحات/يوم} many {{n} صفحة/يوم} other {{n} صفحة/يوم}}",
-      "versesPerDay": "{count, plural, one {{n} آية/يوم} two {{n} آيتان/يوم} few {{n} آيات/يوم} many {{n} آية/يوم} other {{n} آية/يوم}}",
-      "pagesPerWeek": "{count, plural, one {{n} صفحة/أسبوع} two {{n} صفحتان/أسبوع} few {{n} صفحات/أسبوع} many {{n} صفحة/أسبوع} other {{n} صفحة/أسبوع}}",
+      "pagesCount": "{count, plural, one {صفحة واحدة} two {صفحتان} few {{n} صفحات} many {{n} صفحة} other {{n} صفحة}}",
+      "versesCount": "{count, plural, one {آية واحدة} two {آيتان} few {{n} آيات} many {{n} آية} other {{n} آية}}",
+      "daysCount": "{count, plural, one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}}",
+      "pagesPerDay": "{count, plural, one {صفحة واحدة/يوم} two {صفحتان/يوم} few {{n} صفحات/يوم} many {{n} صفحة/يوم} other {{n} صفحة/يوم}}",
+      "versesPerDay": "{count, plural, one {آية واحدة/يوم} two {آيتان/يوم} few {{n} آيات/يوم} many {{n} آية/يوم} other {{n} آية/يوم}}",
+      "pagesPerWeek": "{count, plural, one {صفحة واحدة/أسبوع} two {صفحتان/أسبوع} few {{n} صفحات/أسبوع} many {{n} صفحة/أسبوع} other {{n} صفحة/أسبوع}}",
       "estimate": {
-        "days": "≈ {count, plural, one {{n} يوم} two {{n} يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}} للإتمام",
+        "days": "≈ {count, plural, one {يوم واحد} two {يومان} few {{n} أيام} many {{n} يومًا} other {{n} يوم}} للإتمام",
         "pace": "≈ {pace} (يُعاد حسابه تلقائيًا)",
         "paceWithDays": "≈ {pace} (يُنجز في {daysCount, plural, zero {{daysN} يوم} one {يوم واحد} two {يومين} few {{daysN} أيام} many {{daysN} يومًا} other {{daysN} يوم}})",
         "weekly": "كل {weekday}",
         "daily": "يتكرر كامل النطاق كل يوم"
       },
-      "rangeFrozen": "تم تثبيت المقدار لتسجيل قراءات سابقة",
+      "rangeFrozen": "تم تثبيت النطاق لتسجيل قراءات سابقة",
       "verseWeeklyUnavailable": "المعدل الأسبوعي غير متاح للآيات؛ حدد معدلًا يوميًا أو تاريخ انتهاء",
       "memorizeRepetitionsLocked": "خطط الحفظ تقتصر على ختمة واحدة",
       "submit": "ابدأ الورد",
@@ -479,7 +479,7 @@
       },
       "listeningWird": {
         "label": "الورد اليومي — استماع",
-        "description": "استمع إلى عدد من الصفحات يوميًا، وتدور الاستماع على كامل المصحف."
+        "description": "استمع إلى عدد من الصفحات يوميًا، ويدور الاستماع على كامل المصحف."
       },
       "memorizingWird": {
         "label": "الورد اليومي — حفظ",
@@ -527,7 +527,7 @@
       "pause": "إيقاف مؤقت",
       "resume": "استئناف",
       "markCompleted": "وضع علامة اكتمال",
-      "abandon": "ترك الخطة"
+      "abandon": "إلغاء الخطة"
     },
     "history": {
       "toggle": "السجل",
@@ -535,7 +535,7 @@
       "empty": "لا يوجد سجل بعد."
     },
     "widget": {
-      "open": "أشّر ورد اليوم",
+      "open": "سجّل إنجاز ورد اليوم",
       "dialLabel": "ورد",
       "title": "ورد اليوم",
       "description": "المهام المطلوبة في هذه الصفحة من خططك النشطة.",
@@ -549,19 +549,19 @@
       "reviewOfferTitle": "أتممت ورد المراجعة اليوم؟",
       "confirm": "تأكيد",
       "dismiss": "ليس الآن",
-      "autoWriteNoticeReading": "تم تسجيل ورد القراءة تلقائياً",
-      "autoWriteNoticeListening": "تم تسجيل ورد الاستماع تلقائياً",
-      "autoWriteNoticeGeneric": "تم تسجيل إنجاز الورد تلقائياً",
+      "autoWriteNoticeReading": "تم تسجيل ورد القراءة تلقائيًا",
+      "autoWriteNoticeListening": "تم تسجيل ورد الاستماع تلقائيًا",
+      "autoWriteNoticeGeneric": "تم تسجيل إنجاز الورد تلقائيًا",
       "undo": "تراجع",
-      "autoRecordedBadge": "سُجّل تلقائياً",
-      "autoRecordedHint": "سُجّل هذا الإنجاز تلقائياً بناءً على القراءة أو الاستماع.",
+      "autoRecordedBadge": "سُجّل تلقائيًا",
+      "autoRecordedHint": "سُجّل هذا الإنجاز تلقائيًا بناءً على القراءة أو الاستماع.",
       "pagesRemaining": "{count, plural, zero {اكتملت جميع الصفحات} one {تبقى صفحة واحدة ({count})} two {تبقت صفحتان ({count})} few {تبقت {count} صفحات} many {تبقت {count} صفحة} other {تبقت {count} صفحة}}"
     },
     "settings": {
-      "autoWriteTitle": "التأشير التلقائي للورد",
-      "autoWriteDescription": "تسجيل إنجاز ورد القراءة أو الاستماع تلقائياً فور استيفاء وقت القراءة أو التلاوة دون طلب تأكيد."
+      "autoWriteTitle": "التسجيل التلقائي للورد",
+      "autoWriteDescription": "تسجيل إنجاز ورد القراءة أو الاستماع تلقائيًا فور استيفاء وقت القراءة أو الاستماع دون طلب تأكيد."
     },
-    "verse": "verse"
+    "verse": "آية"
   },
   "recitation": {
     "settingsTitle": "إعدادات التلاوة",
@@ -576,7 +576,7 @@
     "playbackSpeed": "سرعة التشغيل",
     "playbackSpeedWithVal": "سرعة التشغيل: {speed}",
     "pauseBetweenRepeats": "توقف بين التكرارات",
-    "listen": "استماع",
+    "listen": "استمع",
     "pause": "إيقاف مؤقت",
     "resume": "متابعة",
     "stop": "إيقاف",
@@ -584,7 +584,7 @@
     "nextAyah": "الآية التالية",
     "previousWord": "الكلمة السابقة",
     "nextWord": "الكلمة التالية",
-    "nowPlaying": "تلاوة",
+    "nowPlaying": "التلاوة جارية",
     "stopPointRub": "نهاية الربع",
     "stopPointHizb": "نهاية الحزب",
     "stopPointJuz": "نهاية الجزء",
@@ -600,10 +600,10 @@
     "surahPlaceholder": "اختر سورة",
     "surahSearchPlaceholder": "ابحث عن سورة…",
     "surahEmpty": "لم يتم العثور على سورة.",
-    "offlineUnavailable": "غير متاح دون اتصال",
+    "offlineUnavailable": "غير متاح دون اتصال بالإنترنت",
     "playbackFailed": "فشل تشغيل التلاوة",
     "repeatCycleOff": "بدون تكرار للآية",
-    "repeatCycleTimes": "تكرار الآية {n} مرة",
+    "repeatCycleTimes": "{count, plural, one {تكرار الآية مرة واحدة} two {تكرار الآية مرتين} few {تكرار الآية {n} مرات} many {تكرار الآية {n} مرة} other {تكرار الآية {n} مرة}}",
     "repeatCycleInfinite": "تكرار الآية باستمرار",
     "startFrom": "ابدأ من",
     "startCurrentVerse": "الآية الحالية",
@@ -620,7 +620,7 @@
     "returnToRecitedVerse": "العودة إلى صفحة {page} · سورة {surah} · آية {ayah}"
   },
   "offlineRecitation": {
-    "title": "التلاوة دون اتصال",
+    "title": "التلاوة دون اتصال بالإنترنت",
     "description": "نزّل سورة أو جزءًا للاستماع دون اتصال بالإنترنت.",
     "bySurah": "حسب السورة",
     "byJuz": "حسب الجزء",
@@ -688,7 +688,7 @@
   "readerLab": {
     "title": "فرقان",
     "badge": "مختبر القراءة",
-    "viewportTooShort": "الشاشة قصيرة جداً لعرض صفحة المصحف — أدر الجهاز أو كبّر النافذة",
+    "viewportTooShort": "الشاشة قصيرة جدًا لعرض صفحة المصحف — أدر الجهاز أو كبّر النافذة",
     "searchTooltip": "البحث (عرض تجريبي)",
     "bookmarkTooltip": "العلامات المرجعية (عرض تجريبي)",
     "notificationsTooltip": "الإشعارات (عرض تجريبي)",
@@ -718,11 +718,11 @@
     "categoryPageView": "صفحتان متقابلتان",
     "categoryAppearance": "داكن",
     "categoryMushafLayout": "مصحف مجمع الملك فهد (طبعة ١٤٠٥هـ)",
-    "categoryKeepScreenAwake": "مفعل تلقائياً",
+    "categoryKeepScreenAwake": "مفعل تلقائيًا",
     "categoryNotifications": "غير مفعلة",
     "categoryOfflineRecitation": "جاهز للاستماع",
     "metadataPlaceholder": "بيانات الصفحة…",
-    "presentationOnly": "لوحة عرض: كل خيار هنا يُظهر حالته الحالية فقط، ولا يغيّر شيئاً في التطبيق.",
+    "presentationOnly": "لوحة عرض: كل خيار هنا يُظهر حالته الحالية فقط، ولا يغيّر شيئًا في التطبيق.",
     "sectionReading": "القراءة",
     "sectionDevice": "الجهاز والتلاوة",
     "stateLocked": "مثبت",
@@ -747,53 +747,43 @@
     "ayahLabel": "الآية {ayah}",
     "surahAyahHeader": "سورة {surah} - الآية {ayah}",
     "loading": "جارٍ تحميل التفسير…",
-    "error": "تعذر تحميل التفسير. يرجى التحقق من الاتصال والمحاولة مجدداً.",
+    "error": "تعذر تحميل التفسير. يرجى التحقق من الاتصال والمحاولة مجددًا.",
     "retry": "إعادة المحاولة",
     "empty": "لا يتوفر تفسير لهذه الآية في الطبعة المحددة.",
     "close": "إغلاق",
-    "availableOffline": "متاح دون اتصال"
+    "availableOffline": "متاح دون اتصال بالإنترنت"
   },
   "light": "فاتح",
   "gold": "ذهبي",
   "dark": "داكن",
-  "overline": "",
-  "title": "",
-  "tagline": "",
-  "recommendedSurahs": "",
-  "searchLabel": "",
-  "searchPlaceholder": "",
-  "searchClear": "",
-  "noMatches": "",
-  "verseSearchHint": "",
-  "viewingChipGeneric": "",
   "offlineTafsir": {
-    "title": "التفسير دون اتصال",
-    "description": "نزّل نسخة تفسير كاملة للقراءة دون اتصال.",
+    "title": "التفسير دون اتصال بالإنترنت",
+    "description": "نزّل نسخة تفسير كاملة للقراءة دون اتصال بالإنترنت.",
     "download": "تنزيل",
     "retry": "إعادة المحاولة",
     "delete": "حذف",
     "offlineNotice": "اتصل بالإنترنت للتنزيل.",
-    "sizeMb": "{size} ميغابايت",
+    "sizeMb": "{size} ميجابايت",
     "progress": "{cached} من {total} سورة",
-    "spaceAvailable": "{size} ميغابايت متاحة",
+    "spaceAvailable": "{size} ميجابايت متاحة",
     "notEnoughSpace": "لا توجد مساحة تخزين كافية لهذه النسخة.",
-    "alsoMushafLabel": "تنزيل صفحات المصحف أيضاً",
-    "alsoMushafHint": "تفتح ورقة التفسير فوق صفحة المصحف — نزّلها أيضاً (~{size} ميغابايت) لتظهر الصفحة دون اتصال."
+    "alsoMushafLabel": "تنزيل صفحات المصحف أيضًا",
+    "alsoMushafHint": "تفتح ورقة التفسير فوق صفحة المصحف — نزّلها أيضًا (~{size} ميجابايت) لتظهر الصفحة دون اتصال بالإنترنت."
   },
   "privacy": {
     "title": "سياسة الخصوصية",
-    "updated": "آخر تحديث: سبتمبر 2026",
+    "updated": "آخر تحديث: سبتمبر ٢٠٢٦",
     "intro": "فرقان تطبيق لقراءة القرآن الكريم بالتركيز على الكلمة. توضح هذه السياسة البيانات التي نجمعها وسبب جمعها. لا نعرض إعلانات ولا نبيع البيانات ولا نستخدم أدوات تتبع خارجية.",
     "s1t": "معلومات الحساب",
-    "s1b": "عند تسجيل الدخول عبر جوجل نستقبل الاسم والبريد الإلكتروني ونحفظهما لتعريف حسابك. تسجيل الدخول اختياري — القراءة والتعليم والتحميل دون اتصال تعمل بدون حساب.",
+    "s1b": "عند تسجيل الدخول عبر جوجل نستقبل الاسم والبريد الإلكتروني ونحفظهما لتعريف حسابك. تسجيل الدخول اختياري — القراءة والتعليم والتحميل دون اتصال بالإنترنت يعمل بدون حساب.",
     "s2t": "بيانات القراءة",
     "s2b": "العلامات (على مستوى الكلمة والآية مع تعليقات اختيارية) وخطط القراءة والتقدم وتفضيلات التنبيهات تُحفظ على خوادمنا لتتزامن عبر أجهزتك. مشاركة المصحف تُظهر تقدمك فقط للأشخاص الذين توافق عليهم ويمكن لأي طرف إلغاء الوصول في أي وقت.",
     "s3t": "التنبيهات",
     "s3b": "عند تفعيل التذكيرات نحفظ اشتراكات الدفع ورموز الأجهزة لإيصالها. يمكنك إيقاف التنبيهات في أي وقت من الإعدادات أو من جهازك.",
     "s4t": "البيانات على الجهاز",
-    "s4b": "صفحات المصحف والخطوط وتلاوات الصوت والتفاسير المحمّلة تبقى على جهازك. مسح تخزين التطبيق أو إلغاء تثبيته يزيلها.",
+    "s4b": "صفحات المصحف والخطوط والتسجيلات الصوتية للتلاوة والتفاسير المحمّلة تبقى على جهازك. مسح تخزين التطبيق أو إلغاء تثبيته يزيلها.",
     "s5t": "تقارير الأعطال",
-    "s5b": "تقارير الأعطال تساعدنا على إصلاح الأخطاء ولا تحتوي على معرفات إعلانية ولا تُستخدم أبدا للإعلان.",
+    "s5b": "تقارير الأعطال تساعدنا على إصلاح الأخطاء ولا تحتوي على معرفات إعلانية ولا تُستخدم أبدًا للإعلان.",
     "s7t": "حذف البيانات",
     "s7b": "لحذف حسابك وكل البيانات المرتبطة به راسلنا على البريد أدناه. التحميلات على جهازك تُزال بمسح التخزين أو إلغاء التثبيت.",
     "s8t": "التغييرات والتواصل",
@@ -802,5 +792,5 @@
   "nativeSignIn": {
     "error": "تعذّر تسجيل الدخول بحساب Google. تأكّد من اتصالك بالإنترنت ومن وجود حساب Google على الجهاز، ثم حاول مرة أخرى."
   },
-  "close": "Close"
+  "close": "إغلاق"
 }
