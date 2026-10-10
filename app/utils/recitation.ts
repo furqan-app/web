@@ -1,5 +1,10 @@
 import { PLAYBACK_SPEED_PRESETS, QURAN_LAST_CHAPTER_ID, QURAN_LAST_VERSE_KEY } from "@/app/constants/recitation";
-import { RecitationStatus, RepeatCount, VerseTiming } from "@/app/types/recitation";
+import {
+  RecitationDownloadItem,
+  RecitationStatus,
+  RepeatCount,
+  VerseTiming,
+} from "@/app/types/recitation";
 import { WordWithVerse } from "@/app/types/prisma";
 import type { SurahResult } from "@/app/types";
 import { getPagePair } from "@/app/utils/quran-pages";
@@ -174,6 +179,39 @@ export const recitedVerseLabelParts = (
     surah: locale === "ar" ? chapter.name_arabic : chapter.name_simple,
     page: toLocaleNumeral(page, locale),
   };
+};
+
+// ── Offline download display label ──────────────────────────────────────────
+// Surah display name by locale — data selection from chapters.json, not
+// catalogue copy (same pattern as RecitationSettingsSheet/CustomWirdForm).
+export const surahDisplayName = (
+  chapter: Pick<SurahResult, "name_arabic" | "name_simple">,
+  locale: string,
+): string => (locale === "ar" ? chapter.name_arabic : chapter.name_simple);
+
+// The Downloaded section of OfflineRecitationSheet re-derives each item's
+// label at render time from live data instead of trusting the persisted
+// `item.label`: entries stored before surah/juz labels were localized (and
+// any locale switch after download) would otherwise keep showing stale copy.
+// Returns the persisted label verbatim when the chapter or reciter can't be
+// resolved yet — never blank, never throws.
+export const offlineDownloadDisplayLabel = (
+  item: Pick<RecitationDownloadItem, "kind" | "key" | "label">,
+  opts: {
+    chapters: SurahResult[];
+    reciterName: string | null | undefined;
+    juzWord: string;
+    locale: string;
+  },
+): string => {
+  if (!opts.reciterName) return item.label;
+  if (item.kind === "surah") {
+    const chapter = opts.chapters.find((c) => c.id === item.key);
+    if (!chapter) return item.label;
+    return `${opts.reciterName} · ${surahDisplayName(chapter, opts.locale)}`;
+  }
+  if (!Number.isInteger(item.key) || item.key < 1 || item.key > 30) return item.label;
+  return `${opts.reciterName} · ${opts.juzWord} ${toLocaleNumeral(item.key, opts.locale)}`;
 };
 
 // The verse_key of the first word on a page, used as the default start point
