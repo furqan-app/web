@@ -759,61 +759,90 @@ body,
       max-width: 100% !important;
     }
 
-    /* Lightweight page-side cue: one narrow paint strip, not stacked full-page
-       elements. The existing physical side class comes from the Mushaf pair
-       (odd/right, even/left). It changes no width, position, or text geometry. */
+    /* Mobile page-side cues (Addendum 2026-10-10, #771):
+       - Outer edge (::after): realistic layered paper stack edge indicating book thickness.
+       - Inner edge (::before): subtle gutter crease shadow indicating the spine fold. */
     .fq-spread .fq-safha-card::after {
-      --fq-stack-stripe: hsl(var(--muted-foreground) / 0.32);
+      --fq-stack-casing: rgba(15, 23, 42, 0.55);
+      --fq-stack-groove: rgba(15, 23, 42, 0.28);
+      --fq-stack-highlight: rgba(255, 255, 255, 0.95);
+      --fq-stack-shadow: rgba(15, 23, 42, 0.12);
       content: "";
       position: absolute;
       inset-block: 0;
-      width: 8px;
+      width: 12px;
       z-index: 1;
       pointer-events: none;
+      border: none;
     }
-    :root.theme-light .fq-spread .fq-safha-card::after {
-      --fq-stack-stripe: hsl(var(--muted-foreground) / 0.62);
+    :root.theme-gold .fq-spread .fq-safha-card::after {
+      --fq-stack-casing: rgba(65, 48, 22, 0.55);
+      --fq-stack-groove: rgba(70, 52, 24, 0.28);
+      --fq-stack-highlight: rgba(255, 253, 245, 0.95);
+      --fq-stack-shadow: rgba(70, 52, 24, 0.14);
     }
     :root.theme-dark .fq-spread .fq-safha-card::after {
-      --fq-stack-stripe: hsl(var(--foreground) / 0.5);
+      --fq-stack-casing: rgba(0, 0, 0, 0.85);
+      --fq-stack-groove: rgba(0, 0, 0, 0.65);
+      --fq-stack-highlight: rgba(255, 255, 255, 0.12);
+      --fq-stack-shadow: rgba(0, 0, 0, 0.45);
     }
     .fq-spread .fq-compensate-r > .fq-safha-card::after {
       right: 0;
-      border-left: 1px solid var(--mushaf-paper-highlight);
-      background-color: var(--mushaf-paper);
-      background-image: repeating-linear-gradient(
+      background: linear-gradient(
         to left,
-        var(--mushaf-paper) 0 1px,
-        var(--fq-stack-stripe) 1px 2px
+        var(--fq-stack-casing) 0px,
+        var(--fq-stack-casing) 2px,
+        var(--fq-stack-groove) 2px,
+        var(--fq-stack-highlight) 3.5px,
+        var(--mushaf-sheet-face) 4.5px,
+        var(--fq-stack-groove) 5.5px,
+        var(--fq-stack-highlight) 7px,
+        var(--mushaf-sheet-face) 8.5px,
+        var(--fq-stack-groove) 9.5px,
+        var(--fq-stack-highlight) 10.5px,
+        var(--mushaf-paper) 11.5px,
+        transparent 12px
       );
+      box-shadow: -1px 0 3px var(--fq-stack-shadow);
     }
     .fq-spread .fq-compensate-l > .fq-safha-card::after {
       left: 0;
-      border-right: 1px solid var(--mushaf-paper-highlight);
-      background-color: var(--mushaf-paper);
-      background-image: repeating-linear-gradient(
+      background: linear-gradient(
         to right,
-        var(--mushaf-paper) 0 1px,
-        var(--fq-stack-stripe) 1px 2px
+        var(--fq-stack-casing) 0px,
+        var(--fq-stack-casing) 2px,
+        var(--fq-stack-groove) 2px,
+        var(--fq-stack-highlight) 3.5px,
+        var(--mushaf-sheet-face) 4.5px,
+        var(--fq-stack-groove) 5.5px,
+        var(--fq-stack-highlight) 7px,
+        var(--mushaf-sheet-face) 8.5px,
+        var(--fq-stack-groove) 9.5px,
+        var(--fq-stack-highlight) 10.5px,
+        var(--mushaf-paper) 11.5px,
+        transparent 12px
       );
+      box-shadow: 1px 0 3px var(--fq-stack-shadow);
     }
 
-    /* Mobile: remove side stripe/border paint around pages. */
-    .fq-spread .fq-compensate-r > .fq-safha-card::after,
-    .fq-spread .fq-compensate-l > .fq-safha-card::after,
-    .fq-spread .fq-safha-card::after {
-      content: none !important;
-      background: none !important;
-      width: 0 !important;
-      border: 0 !important;
-    }
+    /* Inner spine gutter crease shadow */
     .fq-spread .fq-compensate-r > .fq-safha-card::before,
-    .fq-spread .fq-compensate-l > .fq-safha-card::before,
-    .fq-spread .fq-safha-card::before {
-      content: none !important;
-      background: none !important;
-      width: 0 !important;
-      border: 0 !important;
+    .fq-spread .fq-compensate-l > .fq-safha-card::before {
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      width: 14px;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .fq-spread .fq-compensate-r > .fq-safha-card::before {
+      left: 0;
+      background: linear-gradient(to right, var(--mushaf-crease-soft), transparent);
+    }
+    .fq-spread .fq-compensate-l > .fq-safha-card::before {
+      right: 0;
+      background: linear-gradient(to left, var(--mushaf-crease-soft), transparent);
     }
 
     /* Feature 3 — Ink & ornament colours (mirrors tablet). */
@@ -1028,15 +1057,6 @@ body,
   @media (min-width: 1367px) {
     :root[data-safha-view="double"] .fq-spread .fq-safha-partner {
       display: block;
-    }
-    /* Safha ribbon (docs/plans/safha-ribbon-indicator.md) — same reasoning as the
-       tablet block above: one ribbon centred on the seam, not two meeting halves. */
-    :root[data-safha-view="double"] .fq-spread .fq-compensate-r .fq-safha-ribbon {
-      right: auto !important;
-      left: -4px !important;
-    }
-    :root[data-safha-view="double"] .fq-spread .fq-compensate-l .fq-safha-ribbon {
-      display: none !important;
     }
     :root[data-safha-view="double"] .fq-spread {
       /* 224px keeps the two-card width budget correct after restoring the
@@ -1660,22 +1680,6 @@ body,
        the desktop-only stored view preference, including before hydration. */
     .fq-spread .fq-safha-partner {
       display: block;
-    }
-    /* Safha ribbon (docs/plans/safha-ribbon-indicator.md): both pages show, so
-       one ribbon centred on the seam reads as the book's single ribbon rather
-       than two halves meeting. The right/odd card's ribbon (default at its own
-       right edge) moves to its left edge, offset by half its own width so it
-       sits exactly on the `gap-0` seam; the left/even card's ribbon is hidden
-       rather than doubling up. `!important`: this file is one `@layer base`
-       block and loses to the Tailwind utility layer (`right-2`) at equal
-       specificity by source order — same reason every other rule in this block
-       needs it. */
-    .fq-spread .fq-compensate-r .fq-safha-ribbon {
-      right: auto !important;
-      left: -4px !important;
-    }
-    .fq-spread .fq-compensate-l .fq-safha-ribbon {
-      display: none !important;
     }
     /* Swipe carousel (tablet double-view only). Reveal the neighbor spreads and
        rest the 3-panel strip at translateX(-100%) so the CURRENT (middle) panel is

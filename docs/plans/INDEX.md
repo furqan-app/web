@@ -102,7 +102,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | rendering | [Fix Tajweed Mushaf Font Size to Match Regular Mushaf](fix-tajweed-font-size.md) | implemented | bug |
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |
 | rendering | [Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle](fix-quran-page-font-loading.md) | implemented | bug |
-| rendering | [Safha Ribbon Indicator](safha-ribbon-indicator.md) | implemented | feature |
+| rendering | [Mobile Safha Orientation & Page Affordances](safha-ribbon-indicator.md) | implemented | feature |
 | search | [Dedicated Search Results Page with Infinite Scroll](search-results-page.md) | implemented | feature |
 | search | [Fix Search Debounce Lag](fix-search-debounce-lag.md) | implemented | bug |
 | search | [Fix search sheet blank space with soft keyboard in the native shell](fix-search-sheet-keyboard-geometry.md) | implemented | bug |
