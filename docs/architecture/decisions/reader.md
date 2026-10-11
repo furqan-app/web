@@ -275,3 +275,20 @@ payload; windowing removes the mass mount.
 - Keep the width queries numerically identical to their CSS twins; the capability query is additive, never a replacement.
 - True-coarse-primary hybrids with a mouse keep touch interaction — accepted tradeoff, do not special-case per-device.
 
+---
+
+## Mobile Safha Page Orientation Affordances
+
+**Status:** active (2026-10-10, #771)
+
+**Decision:** On mobile viewports (`<1024px`), page orientation (distinguishing right vs. left page in single-page view) is indicated via three authentic book physics affordances rather than an artificial bookmark ribbon:
+1. Outer paper stack edge: layered hairline CSS pseudo-element (`.fq-safha-card::after`, 12px) on the outer edge (`stackPeekSide`) using neutral casing tokens (`--fq-stack-casing`, `--fq-stack-groove`, `--fq-stack-highlight`, `--mushaf-sheet-face`).
+2. Inner gutter crease shadow: soft gradient CSS pseudo-element (`.fq-safha-card::before`, 14px) along the inner spine edge fading from `--mushaf-crease-soft` to transparent.
+3. Open-book footer indicator: miniature SVG (`BookSafhaNumber`) placed at the outer corner (`justify-end pr-4` for odd/right, `justify-start pl-4` for even/left under `dir="ltr"`), displaying the page numeral on the active open half.
+
+**Constraints:**
+- Decorative overlays (`::before`, `::after`) must remain `pointer-events-none` and stay strictly within margin thresholds (≤14px) so they never overlap Quran text, diacritics, or ayah glyphs on compact mobile viewports (ADR 0011 width budget).
+- Theme neutrality: all stack layers and spine shadows must derive from theme variables without introducing green or hardcoded accent colors.
+- Standalone `QuranSafha` instances (`compensateStackGap` false) must not render these cues.
+
+
