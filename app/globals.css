@@ -950,8 +950,8 @@ body,
      compact sizes its font from viewport width, not from a card clamp. */
   @media (min-width: 1367px) {
     .fq-spread .fq-safha-card {
-      width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
-      min-width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 9rem)) !important;
+      width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 4.25rem)) !important;
+      min-width: min(100vw, calc(var(--fq-card-word, var(--fq-desktop-word)) * 14.7 + 4.25rem)) !important;
     }
   }
 
@@ -1059,9 +1059,8 @@ body,
       display: block;
     }
     :root[data-safha-view="double"] .fq-spread {
-      /* 224px keeps the two-card width budget correct after restoring the
-         printed-page side margin (64px more per card than the earlier formula). */
-      --fq-dv-word: calc((50vw - 224px) / 14.7);
+      /* 160px keeps the two-card width budget correct with 34px side margins. */
+      --fq-dv-word: calc((50vw - 160px) / 14.7);
       --fq-card-word: min(var(--fq-desktop-word), var(--fq-dv-word));
     }
     /* Both pages showing → symmetric, so drop the single-display compensate margin. */
@@ -1327,7 +1326,7 @@ body,
        a wider page (a mushaf line is justified by the font's own kashida, never by
        word spacing — DECISIONS.md), so the extra width goes to the page margin. */
     .fq-spread .fq-content {
-      padding-inline: 68px;
+      padding-inline: 34px;
     }
     /* ---- Recitation rail: a full-height alignment zone ---------------------
        Ported from the lab. It was a 96px floating card, vertically centred,
@@ -1708,13 +1707,21 @@ body,
       background-color: var(--viewer-background) !important;
     }
 
-    /* Spread container: no nav arrows, no outer gap — but keep an inline clearance
-       so each page's outer paper-stack layers (translate-x up to 14px on the
-       deepest tablet layer) aren't clipped at the viewport edge. 16px > 14px peek. */
+    /* Spread container: flush to the viewport edges on tablet with no lateral gap. */
     .fq-reader-spread-container {
-      padding-inline-start: 16px !important;
-      padding-inline-end: 16px !important;
+      padding-inline-start: 0 !important;
+      padding-inline-end: 0 !important;
       gap: 0 !important;
+    }
+
+    /* Stack protrusion clearance: 14px outer margin matches the 6-layer stack peek
+       (translate-x up to 14px) exactly, so the stack meets the viewport edge without
+       being clipped at rest, leaving zero desk gap beyond the book. */
+    .fq-compensate-r {
+      margin-right: 14px !important;
+    }
+    .fq-compensate-l {
+      margin-left: 14px !important;
     }
 
     /* Nav arrows are hidden on tablet — swipe handles navigation. */
