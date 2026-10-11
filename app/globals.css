@@ -1456,6 +1456,23 @@ body,
     }
   }
 
+  /* Installed-PWA fullscreen breathing room (spike #766 addendum 2026-10-10):
+     the always-visible safha strip (juz | surah | hizb, `.fq-safha-header`,
+     `pt-1`) sits ~4px under the top edge when the OS status bar is hidden in
+     `display: fullscreen`. Guarantee a 0.75rem (spacing-scale) minimum here,
+     scoped to fullscreen only — standalone keeps its long-standing look (the
+     visible status bar supplies the separation), browser tabs and desktop
+     never match this query. Pure CSS `@media` gate (no JS breakpoint hook)
+     per ADR 0043; `!important` beats the `pt-1` utility (same mechanism as
+     the positioning block above). Constant across transient system-bar
+     show/hide (no resize, insets stay 0), so it cannot shift content or
+     reintroduce a toggle jump. */
+  @media (display-mode: fullscreen) {
+    .fq-safha-header {
+      padding-top: max(0.75rem, env(safe-area-inset-top, 0px)) !important;
+    }
+  }
+
   /* Suppress the word `:hover` cue while a swipe drag is in progress (ADR 0023
      Addendum 8, docs/plans/fix-tajweed-swipe-flicker.md). `ReaderPager` toggles
      `.fq-dragging` on the strip imperatively (same touch handlers that already
@@ -2510,6 +2527,52 @@ body,
     .fq-recitation-bar-rail .fq-recitation-lead-btn {
       width: 40px;
       height: 40px;
+    }
+  }
+
+  /* ---- SPIKE #766: full-height compact safha with reserved status-bar slot --
+     Full-height paper card: header pinned top, footer pinned bottom,
+     text block flexes to fill the height between them with even space-between.
+     In Android, shell topPadding permanently anchors the status-bar/cutout zone
+     so the WebView height is constant on status-bar toggle. In PWA, display-mode
+     fullscreen reserves the safe top floor on .fq-safha-header without resizing
+     the window. Zero toggle jump, no dead mid-screen float. */
+  @media (max-width: 1023px) {
+    .fq-content {
+      justify-content: space-between !important;
+    }
+    .fq-quran-safha {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      justify-content: space-between !important;
+      gap: 0 !important;
+    }
+  }
+
+  /* ---- SPIKE #766: small phones ------------------------------------------------
+     Short viewports (<=700px): keep lines gracefully fit without clipping.
+     360x640 is the verify size. */
+  @media (max-width: 1023px) and (max-height: 700px) {
+    .fq-quran-safha {
+      padding-block: 0.25em !important;
+    }
+  }
+
+  /* ---- SPIKE #766: hold the tablet tall-band on fixed gap -------------------
+     Neutralizes the min-height:800px space-between claim (reader rhythm) in the
+     tablet band only — desktop ≥1367px keeps it. Surplus collects below the page
+     instead of stretching gaps, so the OS-bar toggle can't move lines. Same
+     remove-if-fails terms as above. */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    .fq-spread .fq-quran-safha {
+      flex: none !important;
+      justify-content: flex-start !important;
+    }
+    .fq-content {
+      justify-content: space-between !important;
+    }
+    .fq-spread .fq-skeleton-lines {
+      justify-content: flex-start !important;
     }
   }
 }
