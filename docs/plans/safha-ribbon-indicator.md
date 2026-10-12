@@ -1,76 +1,92 @@
 ---
-title: Safha Ribbon Indicator
+title: Mobile Safha Orientation & Page Affordances
 type: feature
-date: 2026-08-18
+date: 2026-10-10
 status: implemented
 area: rendering
 ---
 
-# Safha Ribbon Indicator
+# Mobile Safha Orientation & Page Affordances
 
 ## Summary
 
-Add a purely decorative bookmark-ribbon shape to the mushaf reader, unrelated to the existing `◆ {page} ◆` footer already printed under each `QuranSafha` card. In tablet/desktop **double** view it sits centered on the gutter seam between the two facing pages (echoing where a real book's ribbon bookmark drapes). In mobile and desktop **single** view it hangs off the page's outer edge — right for an odd page, left for an even page — which doubles as a functional cue: since a single page shows no facing partner, the ribbon's side tells the reader whether this page would sit on the right or left half of a spread.
-
-Confirmed with the user via an SVG mockup (three placements: double-view gutter, single-view odd/right, single-view even/left) — approved as-is.
+Provides orientation and page-side affordances for the mushaf reader. Originally implemented as a green bookmark ribbon (`SafhaRibbon`), which was subsequently superseded in #771 by authentic book affordances:
+1. **Outer Paper Stack Edge (Mobile):** A layered paper edge along the outer margin (right for odd/right pages, left for even/left pages) simulating book leaf thickness.
+2. **Inner Gutter Crease Shadow (Mobile):** A subtle darkening gradient along the inner margin (left for odd/right pages, right for even/left pages) simulating the book spine fold.
+3. **Open-Book Footer with Outer Page Number (Mobile):** Replaces the mobile centered `◆ {page} ◆` with an SVG open-book indicator placed at the outer corner (bottom-right for odd/right pages, bottom-left for even/left pages). The active page side is highlighted and displays the page number in Arabic numerals.
+4. **Desktop and Tablet:** Ribbon is completely removed; centered `◆ {page} ◆` footer and existing desktop offset stack layers (`fq-stack-layer`) remain.
 
 ## Approach
 
 The codebase already carries everything needed to place this with pure CSS, no new JS state:
 
-- `QuranSpread.tsx` already passes `stackPeekSide="right"` to the physically-right `QuranSafha` (always the **odd**, lower-numbered half of the pair — confirmed via `getPagePair`: `rightPage = pairIndex*2-1`, `leftPage = pairIndex*2`) and `stackPeekSide="left"` to the even one. This is exactly the odd/even signal the ribbon needs — no new prop.
-- `compensateStackGap` (already `true` only for spread-rendered cards, `false` for standalone `QuranSafha` elsewhere) gates the ribbon so it never appears outside the reader.
-- Single-vs-double **display** is already CSS-gated, not JS-gated (ADR 0013 Addendum 4 / ADR 0043): tablet (1024–1366px) forces double unconditionally; desktop (≥1367px) shows double only when `:root[data-safha-view="double"]`. The ribbon's placement switch reuses these exact same media queries, so it is correct at first paint with no flash.
-- In single view only one of the two `QuranSafha` cards is ever visible (`.fq-spread .fq-safha-partner { display: none }`, already existing) — so rendering one ribbon per card and letting existing partner-visibility rules hide the other's ribbon automatically avoids any new "which page is current" branching.
+- `QuranSpread.tsx` passes `stackPeekSide="right"` to the physically-right `QuranSafha` (odd, lower-numbered half) and `stackPeekSide="left"` to the even one. This odd/even signal places both the outer stack edge, inner crease shadow, and open-book footer.
+- `compensateStackGap` (true only for spread-rendered cards, false for standalone `QuranSafha`) gates these cues so they never appear outside the reader.
+- Single-vs-double display is CSS-gated, not JS-gated (ADR 0043).
+- Responsive media queries ensure mobile rules only apply `<1024px`, leaving tablet and desktop layouts unaffected.
 
 ## Decision Tree
 
-| Condition | Ribbon behavior |
-|---|---|
-| Viewport < 1024px (mobile, small laptop) | Only the current card renders (partner hidden). Its ribbon sits at its own `stackPeekSide` edge: right if that card is the odd/right one, left if even/left. |
-| 1024–1366px (tablet, always double) | Both cards render. The right/odd card's ribbon relocates to its **left** edge (the gutter); the left/even card's ribbon is hidden — one ribbon, centered on the seam. |
-| ≥1367px, `data-safha-view` ≠ "double" (desktop single, default) | Same as the <1024px row — only the current card shows, ribbon at its own outer edge. |
-| ≥1367px, `data-safha-view="double"` (desktop double) | Same as the 1024–1366px row — right card's ribbon moves to the gutter, left card's ribbon hidden. |
+| Viewport & Page Type | Ribbon | Outer Edge (Paper Stack) | Inner Edge (Gutter Crease) | Footer Indicator |
+|---|---|---|---|---|
+| Mobile (<1024px) Odd (Right Page) | None | Right edge has paper stack lines (`::after`) | Left edge has subtle crease gradient (`::before`) | Bottom-right open-book icon, number in right half |
+| Mobile (<1024px) Even (Left Page) | None | Left edge has paper stack lines (`::after`) | Right edge has subtle crease gradient (`::before`) | Bottom-left open-book icon, number in left half |
+| Tablet (1024–1366px, double) | None | Existing desktop stack peek | Book seam | Centered `◆ {page} ◆` on each card |
+| Desktop (≥1367px, single or double) | None | Existing desktop stack peek | Clean desk / seam | Centered `◆ {page} ◆` on each card |
 
 ## Verified Test Cases
 
-- Page 403 (odd) in mobile single view → ribbon on the right edge of the visible card.
-- Page 404 (even) in mobile single view → ribbon on the left edge.
-- Pages 403/404 in tablet double view → one ribbon centered on the seam between them (from the 403 card's div, repositioned to its left edge via the tablet media query; the 404 card's ribbon is hidden).
-- Pages 403/404 in desktop double view (`data-safha-view="double"`, ≥1367px) → same as tablet.
-- Page 404 alone in desktop single view (default `data-safha-view`, ≥1367px) → ribbon on the left edge, same as mobile.
-- Standalone `QuranSafha` usage (`compensateStackGap` false — e.g. any non-pager render) → no ribbon at all.
+- Page 1 (odd / right page) on Mobile:
+  - No green ribbon.
+  - Right edge displays paper stack leaves; left edge displays gentle spine shadow.
+  - Footer bottom-right displays open-book icon with "١" in the right open page.
+- Page 20 (even / left page) on Mobile:
+  - No green ribbon.
+  - Left edge displays paper stack leaves; right edge displays gentle spine shadow.
+  - Footer bottom-left displays open-book icon with "٢٠" in the left open page.
+- Page 20 on Desktop Single / Double:
+  - No green ribbon.
+  - Centered `◆ ٢٠ ◆` footer remains unchanged.
+  - Existing `fq-stack-layer` remains unchanged.
+- Standalone `QuranSafha` usage (`compensateStackGap` false) → no stack, crease, or book footer.
 
-## Visual Design (confirmed via mockup)
+## Visual & Technical Design
 
-- Bookmark-tail shape: a vertical strip ending in a pointed/forked (swallow-tail) notch at the bottom, like a real ribbon bookmark — not a plain rectangle.
-- Single accent color only, per `docs/design/design-principles.md`: main body `fill: hsl(var(--primary))`; the top ~15% (the "fold" where the ribbon wraps the page's top edge) is the same hue darkened via `filter: brightness(0.7)` — no second hue introduced.
-- No text/number on the ribbon — purely a shape, unlike the print-style `◆ {page} ◆` footer.
-- No interaction — not a link, not clickable, `pointer-events-none`.
-- Drapes from slightly above the card's top edge down past its bottom edge (echoes a real ribbon's excess hanging past the closed pages).
-- Implemented as inline JSX SVG in `QuranSafha.tsx` (consistent with the existing `◆` diamond ornaments, which are also inline rather than an imported asset file) — the shape is simple enough not to need a separate `.svg` import like `BismillahSVG`/`SurahFrameSVG`.
+- **Paper Stack Layer:** Implemented via CSS pseudo-element on `.fq-safha-card::after` on mobile, scoped to `.fq-compensate-r` (right) and `.fq-compensate-l` (left). Uses a layered hairline gradient with `--fq-stack-casing`, `--fq-stack-groove`, `--fq-stack-highlight`, and `--mushaf-sheet-face` with neutral tones across light, gold, and dark themes.
+- **Spine Crease Shadow:** Implemented via CSS pseudo-element on `.fq-safha-card::before` on mobile, scoped opposite to stack (`.fq-compensate-r` left, `.fq-compensate-l` right). Uses a soft gradient fading from `--mushaf-crease-soft` to transparent (14px width).
+- **Text Safety:** Stack and crease are purely decorative overlays (`pointer-events-none`) within existing card boundaries and do NOT squeeze or modify `--fq-mobile-font` or line width budget (ADR 0011).
+- **Open-Book Icon:** Clean, lightweight inline SVG component (`BookSafhaNumber`) inside `QuranSafha.tsx`. Rendered at mobile breakpoint only (hidden on `md+`, where the standard centered diamond footer renders). Uses `text-muted-foreground` and theme tokens.
 
 ## Files to Change
 
-- `app/components/QuranSafha.tsx` — add the ribbon SVG, rendered only when `compensateStackGap` is true, positioned by `stackPeekSide` via a new `fq-safha-ribbon` class + inline right/left edge placement (mirrors how the existing stack-layer decorations use `stackPeekSide`).
-- `app/globals.css` — two new rules reusing the existing double-view media queries (tablet `1024–1366px` block near the `.fq-safha-partner { display: block }` rule, and the `≥1367px` + `:root[data-safha-view="double"]` block) to: (a) flip `.fq-compensate-r .fq-safha-ribbon` from its right edge to its left edge, and (b) hide `.fq-compensate-l .fq-safha-ribbon` entirely.
+- `app/components/QuranSafha.tsx`:
+  - Remove `SafhaRibbon` component and its render call.
+  - Add `BookSafhaNumber` component for the mobile footer.
+  - Update footer markup to show `BookSafhaNumber` on mobile and centered diamonds on `md+`.
+- `app/globals.css`:
+  - Remove `.fq-safha-ribbon` rules from tablet and desktop double-view blocks.
+  - Style mobile paper stack (`::after`) and gutter crease (`::before`) for `.fq-compensate-r` and `.fq-compensate-l`.
 
 ## Constraints
 
-- No JS breakpoint hooks (`useIsTablet`, `useIsLgUp`) may gate the ribbon's position/visibility — CSS media queries only, matching ADR 0043 (first-paint correctness).
-- Do not touch the existing `◆ {page} ◆` footer — confirmed unrelated, stays as-is.
-- Do not add any click handler, link, or state to the ribbon — purely decorative.
-- Do not introduce a second accent hue — the fold shading must be a `brightness()`/opacity variation of `var(--primary)`, not a new color.
-- Ribbon must not render for standalone `QuranSafha` usage (`compensateStackGap` false).
+- No JS breakpoint hooks (`useIsTablet`, `useIsLgUp`) may gate position/visibility — CSS media queries only, matching ADR 0043 (first-paint correctness).
+- Must not alter the font calculation formula in ADR 0011 or compress text column width.
+- Theme-agnostic design tokens only (`--mushaf-paper`, `--mushaf-sheet-face`, `--mushaf-crease-soft`, `--muted-foreground`) — no hardcoded colors that break Dark or Gold modes.
+- Do not add any click handler, link, or state to the cues — purely decorative.
+- Affordances must not render for standalone `QuranSafha` usage (`compensateStackGap` false).
 
 ## What NOT to Do
 
-- Do not make the ribbon show the page number — considered and explicitly rejected by the user; that information already lives in the separate footer.
-- Do not make the ribbon interactive (bookmark/jump-on-tap) — considered and explicitly rejected; purely visual.
-- Do not render two ribbons in double view (one per card meeting at the seam) — rejected in favor of one ribbon (from the odd/right card) repositioned onto the gutter, matching the single-ribbon look of a real book.
+- Do not make the affordance interactive (bookmark/jump-on-tap) — purely visual.
 - Do not introduce a new prop for odd/even or left/right — `stackPeekSide` already carries this.
+- Do not alter desktop or tablet centered footer diamonds.
 
 ## Decisions Made
 
-- Reuse `stackPeekSide` (already odd=right/even=left per pair) instead of adding a new prop — noted here since it's a non-obvious reuse a future reader might not expect from the prop's original name/purpose (stack-layer peek direction).
-- No new ADR: this only applies the existing CSS-gated-breakpoint decision (ADR 0043) to a new consumer; it does not introduce a new invariant.
+- Reuse `stackPeekSide` (already odd=right/even=left per pair) instead of adding a new prop.
+- Remove green ribbon across all breakpoints in favor of authentic book physics (outer stack edge, inner gutter crease, open-book page footer).
+- No new ADR: applies existing CSS-gated-breakpoint decision (ADR 0043).
+
+## Revision History
+
+- 2026-10-10: **Folded Addendum (#771)** — green bookmark ribbon (`SafhaRibbon`) **superseded and removed** across all breakpoints; mobile page orientation replaced with authentic paper stack edge (`::after`), inner gutter crease shadow (`::before`), and outer open-book footer indicator (`BookSafhaNumber`).

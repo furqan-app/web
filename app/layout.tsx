@@ -58,6 +58,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#16232F",
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({

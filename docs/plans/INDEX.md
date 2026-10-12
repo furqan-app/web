@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-115 active plans.
+119 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -68,6 +68,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | pwa | [Capacitor Cold Launch — Route Entry Through launch.html to Resume Last-Read Page](capacitor-cold-launch-resume.md) | implemented | bug |
 | pwa | [Feature: Browser Fullscreen Focus Mode (desktop)](feature-pwa-fullscreen-focus-mode.md) | implemented | feature |
 | pwa | [Fix mobile shell status bar and navigation bar overlap in Capacitor](fix-mobile-shell-status-bar-overlap.md) | implemented | bug |
+| pwa | [Fix web sign-in provider selection & Android shell activity result forwarding](fix-signin-web-and-android-shell.md) | implemented | Bug |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
 | pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
@@ -87,8 +88,10 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Nocturnal Reader Lab — Desktop RTL](reader-lab-nocturnal-desktop.md) | implemented | feature |
 | reader | [Page Turn Blanks the Reader on Slow Networks](fix-page-turn-blank-slow-network.md) | implemented | bug |
 | reader | [Reader Swipe Performance: Persistent Client Pager](reader-persistent-pager.md) | implemented | feature |
+| reader | [Reduce Desktop Mushaf Safha Card Margins, Flush Tablet Spread, and 6-Layer Paper Stack](desktop-safha-card-padding.md) | implemented | feature |
 | reader | [Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression](tajweed-stylesheet-hover-suppression.md) | implemented | bug |
 | recitation | [Add Quran Recitation Playback with Reciter Selection](recitation-playback.md) | implemented | feature |
+| recitation | [Fix untranslated surah list in Offline Recitation settings](fix-offline-recitation-surah-i18n.md) | implemented | bug |
 | recitation | [Listening Wird: Inline Playback on Assignment Rows](listening-wird-inline-playback.md) | implemented | feature |
 | recitation | [Play Audio for Individual Words](word-audio-playback.md) | implemented | feature |
 | recitation | [Recitation Bar: Vertical Rail (Desktop)](recitation-bar-vertical-rail.md) | implemented | feature |
@@ -100,7 +103,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | rendering | [Fix Tajweed Mushaf Font Size to Match Regular Mushaf](fix-tajweed-font-size.md) | implemented | bug |
 | rendering | [Fix ViewingChip IntlError: missing {name} interpolation variable](fix-viewing-chip-intl-interpolation.md) | implemented | bug |
 | rendering | [Fix: Garbled Quran Text on Page Navigation + PWA Precache Bandwidth Throttle](fix-quran-page-font-loading.md) | implemented | bug |
-| rendering | [Safha Ribbon Indicator](safha-ribbon-indicator.md) | implemented | feature |
+| rendering | [Mobile Safha Orientation & Page Affordances](safha-ribbon-indicator.md) | implemented | feature |
 | search | [Dedicated Search Results Page with Infinite Scroll](search-results-page.md) | implemented | feature |
 | search | [Fix Search Debounce Lag](fix-search-debounce-lag.md) | implemented | bug |
 | search | [Fix search sheet blank space with soft keyboard in the native shell](fix-search-sheet-keyboard-geometry.md) | implemented | bug |
@@ -108,11 +111,12 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | seeder | [Reproducible Quran Database Seeder](reproducible-quran-seeder.md) | implemented | chore |
 | surah-layout | [Fix: Surah Banner Placement and Standalone Line Sizing](fix-surah-banner-placement.md) | implemented | bug |
 | tafsir | [Tafsir: Offline Download & Cache Management for PWA](tafsir-offline-download.md) | implemented | feature |
-| theming | [Native brand icons and splash from the Furqan mark](app-brand-icons.md) | ready-to-implement | feature |
 | theming | [Design Migration — reader-lab language, app-wide](design-migration/INDEX.md) | in-progress | feature |
 | theming | [Dark Theme Visual Refinement — Unify Mushaf & App Shell Palette](dark-theme-mushaf-unification.md) | implemented | feature |
 | theming | [Home Page Design Fixes](home-page-design-fixes.md) | implemented | feature |
+| theming | [Native brand icons and splash from the Furqan mark](app-brand-icons.md) | implemented | feature |
 | theming | [Reading-desk depth for light & gold — and de-duplicating the reader CSS](theme-depth-unification.md) | implemented | feature |
+| theming | [Remove Homepage Basmala Overline and Recommended Surahs Section](remove-homepage-basmala-recommended.md) | implemented | feature |
 | theming | [Replace placeholder logo with the Furqan brand mark (favicon, PWA icons, nav)](brand-mark-icons.md) | implemented | feature |
 | theming | [Unify Accents: Replace Gold Accents and Ornaments with Emerald Green](unify-accents-gold-to-green.md) | implemented | feature |
 | workflow | [Domain-split DECISIONS.md into decisions/*.md + thin always-loaded index](split-decisions-by-domain.md) | implemented | feature |

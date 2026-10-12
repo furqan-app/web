@@ -178,32 +178,75 @@ const SurahBannerLine = ({ surahId, fontReady }: { surahId: number; fontReady: b
   );
 };
 
-// Purely decorative bookmark-ribbon shape (docs/plans/safha-ribbon-indicator.md) —
-// unrelated to the printed `◆ {page} ◆` footer below. Positioned via `stackPeekSide`
-// (already odd=right/even=left per pair, same signal the stack-layer decorations
-// use) so no new prop or JS breakpoint check is needed. Double-view repositions/hides
-// this via globals.css media queries mirroring the existing CSS-gated single/double
-// display switch (ADR 0043) — never via useIsTablet/useIsLgUp.
-const SafhaRibbon = ({ side }: { side: "left" | "right" }) => (
-  <div
-    aria-hidden="true"
-    className={`fq-safha-ribbon absolute z-10 top-0 h-[8%] w-[8px] bg-primary border border-foreground/20 shadow-md pointer-events-none ${
-      // Flush to the card edge below md: mobile's `.fq-content` carries no
-      // horizontal padding (only `md:px-7`), so an 8px inset there sits over
-      // the text itself rather than in a margin. md+ has that padding, so the
-      // ribbon can sit 8px in without overlapping ink.
-      side === "right" ? "right-0 md:right-2" : "left-0 md:left-2"
-    }`}
-    style={{
-      clipPath:
-        "polygon(0% 0%, 100% 0%, 100% calc(100% - 10px), 50% 100%, 0% calc(100% - 10px))",
-    }}
-  >
-    {/* Fold where the ribbon wraps the page's top edge — same hue, darkened via
-        brightness rather than a second colour (single-accent rule, design-principles.md). */}
-    <div className="absolute inset-x-0 top-0 h-[8px] bg-primary brightness-75" />
-  </div>
-);
+// Mobile open-book page indicator (Addendum 2026-10-10, #771) — replaces the green
+// ribbon on mobile. Positioned via `stackPeekSide` on the outer edge of the card,
+// displaying the page numeral on the active open half of the miniature book.
+const BookSafhaNumber = ({
+  pageNumber,
+  side,
+}: {
+  pageNumber: string;
+  side: "left" | "right";
+}) => {
+  const isRight = side === "right";
+  return (
+    <div
+      aria-hidden="true"
+      dir="ltr"
+      className="relative inline-flex items-center justify-center w-8 h-5.5 select-none text-muted-foreground/80 pointer-events-none"
+    >
+      <svg
+        viewBox="0 0 32 22"
+        className="w-full h-full"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Left page */}
+        <path
+          d="M16 3.5 C 11.5 1.5, 6 1.5, 2 2.5 L 2 17.5 C 6 16.5, 11.5 16.5, 16 18.5 Z"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+          className={
+            !isRight
+              ? "fill-primary/15 text-foreground stroke-foreground/40"
+              : "fill-transparent stroke-muted-foreground/50"
+          }
+        />
+        {/* Right page */}
+        <path
+          d="M16 3.5 C 20.5 1.5, 26 1.5, 30 2.5 L 30 17.5 C 26 16.5, 20.5 16.5, 16 18.5 Z"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+          className={
+            isRight
+              ? "fill-primary/15 text-foreground stroke-foreground/40"
+              : "fill-transparent stroke-muted-foreground/50"
+          }
+        />
+        {/* Center spine */}
+        <line
+          x1="16"
+          y1="3.5"
+          x2="16"
+          y2="18.5"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          className="stroke-muted-foreground/60"
+        />
+      </svg>
+      {/* Page number on active side */}
+      <span
+        className={`absolute inset-y-0 flex items-center justify-center text-[9px] font-bold leading-none text-foreground ${
+          isRight ? "right-0 w-1/2" : "left-0 w-1/2"
+        }`}
+      >
+        {pageNumber}
+      </span>
+    </div>
+  );
+};
 
 const BismillahLine = () => (
   <div
@@ -689,24 +732,26 @@ export const QuranSafha = ({
           className={`relative w-full md:w-auto md:h-full ${compensateStackGap ? (stackPeekSide === "right" ? "fq-compensate-r" : "fq-compensate-l") : ""}`}
         >
           {/* Stacked paper layers are hidden on mobile and paint behind the active
-              card only at md+. They peek toward stackPeekSide (the outer edge).
-              2 layers everywhere, plus a deeper pair revealed only on dark desktop
-              (>=1367px) by .fq-stack-deep in globals.css — the 2-layer decision
-              still holds at every narrower width. Earlier siblings paint furthest
-              back, so the deep pair comes first and carries the largest offsets. */}
+              card at md+ (tablet and desktop). 6 layers staggered by 2-2.5px each
+              peeking toward stackPeekSide (the outer edge) to create a thick open-book stack. */}
           <div
-            className={`fq-stack-layer fq-stack-deep absolute inset-0 translate-y-2 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden ${stackPeekSide === "right" ? "translate-x-4" : "-translate-x-4"}`}
+            className={`fq-stack-layer absolute inset-0 translate-y-2.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-3.5" : "-translate-x-3.5"}`}
           />
           <div
-            className={`fq-stack-layer fq-stack-deep absolute inset-0 translate-y-1.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden ${stackPeekSide === "right" ? "translate-x-3" : "-translate-x-3"}`}
+            className={`fq-stack-layer absolute inset-0 translate-y-2 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-3" : "-translate-x-3"}`}
+          />
+          <div
+            className={`fq-stack-layer absolute inset-0 translate-y-1.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-2.5" : "-translate-x-2.5"}`}
           />
           <div
             className={`fq-stack-layer absolute inset-0 translate-y-1 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-2" : "-translate-x-2"}`}
           />
           <div
+            className={`fq-stack-layer absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-1.5" : "-translate-x-1.5"}`}
+          />
+          <div
             className={`fq-stack-layer absolute inset-0 translate-y-0.5 rounded-none bg-card dark:bg-muted border border-muted-foreground/30 opacity-100 pointer-events-none hidden md:block ${stackPeekSide === "right" ? "translate-x-1" : "-translate-x-1"}`}
           />
-          {compensateStackGap ? <SafhaRibbon side={stackPeekSide} /> : null}
           {/* On desktop the card width and word ink share --fq-card-word. That keeps
               a 26/28/30px preference proportional rather than shrinking the text
               inside an old, oversized card. Tablet/mobile rules own their widths. */}
@@ -849,11 +894,35 @@ export const QuranSafha = ({
               </div>
               {/* Footer */}
               <div
-                className="fq-safha-footer shrink-0 flex items-center justify-center gap-2 text-muted-foreground text-xs pt-2 pb-0"
+                dir="ltr"
+                className={`fq-safha-footer shrink-0 flex items-center pt-2 pb-0 text-muted-foreground text-xs ${
+                  compensateStackGap
+                    ? stackPeekSide === "right"
+                      ? "justify-end pr-4 md:justify-center md:pr-0"
+                      : "justify-start pl-4 md:justify-center md:pl-0"
+                    : "justify-center"
+                }`}
               >
-                <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
-                <span>{toLocaleNumeral(page, locale)}</span>
-                <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
+                {/* Mobile reader: open-book indicator on the outer edge */}
+                {compensateStackGap ? (
+                  <div className="md:hidden flex items-center">
+                    <BookSafhaNumber
+                      pageNumber={toLocaleNumeral(page, locale)}
+                      side={stackPeekSide}
+                    />
+                  </div>
+                ) : null}
+
+                {/* Desktop/Tablet (and standalone cards): centered diamonds */}
+                <div
+                  className={`items-center justify-center gap-2 ${
+                    compensateStackGap ? "hidden md:flex" : "flex"
+                  }`}
+                >
+                  <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
+                  <span>{toLocaleNumeral(page, locale)}</span>
+                  <span className="fq-ornament text-primary opacity-70 text-[10px]">◆</span>
+                </div>
               </div>
             </div>
           </div>
