@@ -8,6 +8,11 @@ name: Android debug APK
 
 on:
   workflow_dispatch:
+    inputs:
+      server-url:
+        description: "Override shell server.url (e.g. LAN dev http://192.168.1.x:7000). Empty = production host."
+        required: false
+        default: ""
   pull_request:
     paths:
       - "android/**"
@@ -42,8 +47,13 @@ jobs:
 
       # Required, not optional: sync generates the cordova-plugins gradle
       # include (missing it fails the build) and the runtime
-      # capacitor.config.json carrying server.url into the APK.
+      # capacitor.config.json carrying server.url into the APK. An explicit
+      # server-url input (e.g. a LAN dev server for on-device spike testing)
+      # flows through LOCAL_DEV_SERVER exactly like local runs; empty keeps
+      # the production host.
       - name: Sync Capacitor shell
+        env:
+          LOCAL_DEV_SERVER: ${{ inputs.server-url }}
         run: npx cap sync android
 
       - name: Set up JDK 21

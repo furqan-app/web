@@ -275,3 +275,37 @@ payload; windowing removes the mass mount.
 - Keep the width queries numerically identical to their CSS twins; the capability query is additive, never a replacement.
 - True-coarse-primary hybrids with a mouse keep touch interaction — accepted tradeoff, do not special-case per-device.
 
+---
+
+## Mobile Safha Page Orientation Affordances
+
+**Status:** active (2026-10-10, #771)
+
+**Decision:** On mobile viewports (`<1024px`), page orientation (distinguishing right vs. left page in single-page view) is indicated via three authentic book physics affordances rather than an artificial bookmark ribbon:
+1. Outer paper stack edge: layered hairline CSS pseudo-element (`.fq-safha-card::after`, 12px) on the outer edge (`stackPeekSide`) using neutral casing tokens (`--fq-stack-casing`, `--fq-stack-groove`, `--fq-stack-highlight`, `--mushaf-sheet-face`).
+2. Inner gutter crease shadow: soft gradient CSS pseudo-element (`.fq-safha-card::before`, 14px) along the inner spine edge fading from `--mushaf-crease-soft` to transparent.
+3. Open-book footer indicator: miniature SVG (`BookSafhaNumber`) placed at the outer corner (`justify-end pr-4` for odd/right, `justify-start pl-4` for even/left under `dir="ltr"`), displaying the page numeral on the active open half.
+
+**Constraints:**
+- Decorative overlays (`::before`, `::after`) must remain `pointer-events-none` and stay strictly within margin thresholds (≤14px) so they never overlap Quran text, diacritics, or ayah glyphs on compact mobile viewports (ADR 0011 width budget).
+- Theme neutrality: all stack layers and spine shadows must derive from theme variables without introducing green or hardcoded accent colors.
+- Standalone `QuranSafha` instances (`compensateStackGap` false) must not render these cues.
+
+---
+
+## Mushaf Card Margins & Multi-Layer Paper Stack
+
+**Status:** active (2026-10-12)
+
+**Decision:**
+1. **Desktop Safha Card Margins (`≥1367px`):** Lateral inner padding is set to 34px on `.fq-spread .fq-content` (halved from historical 68px), and the card width clamp (`.fq-spread .fq-safha-card`) uses `+ 4.25rem` (68px total margin allowance). In double-page view, `--fq-dv-word` is computed as `calc((50vw - 160px) / 14.7)`, ensuring facing pages snugly wrap justified Quran lines without dead whitespace around the text block.
+2. **6-Layer Open-Book Paper Stack (`md+`):** The paper stack underneath the active page card renders 6 distinct physical layers in `QuranSafha.tsx` (`hidden md:block`), staggered outward up to 14px (`translate-x-3.5` down to `translate-x-1` / 14px, 12px, 10px, 8px, 6px, 4px) with subtle vertical offset (`translate-y-2.5` to `0.5`), simulating authentic physical volume of closed pages on both outer edges.
+3. **Tablet Landscape Spread Alignment (`1024px–1366px`):** The spread container `.fq-reader-spread-container` has `padding-inline: 0 !important` and `gap: 0 !important` so the open mushaf reaches the viewport edges. To prevent the 14px stack protrusion from being clipped by the ICB viewport's `overflow: hidden` at rest (which previously caused stack width to visibly pop during swipe drag), `.fq-compensate-r` and `.fq-compensate-l` reserve exactly 14px (`margin-right: 14px !important;` and `margin-left: 14px !important;`). The outermost stack sheet meets the screen edge (`x = 0` and `x = 100vw`) with zero clipping and zero empty desk space outside the book.
+
+**Constraints:**
+- Mobile viewports (`<1024px`) keep the stack layers hidden via `hidden md:block` and use mobile-specific book edge affordances (ADR 0071, #771).
+- Desktop double-view resets `.fq-compensate-r` / `.fq-compensate-l` margins to 0 because desktop centers pages within a wider desk stage with navigation arrows.
+- Stack layer colors derive strictly from theme tokens (`--mushaf-sheet-face`, `--mushaf-sheet-edge`).
+
+
+

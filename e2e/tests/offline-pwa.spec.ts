@@ -152,6 +152,8 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // …and lifts once the pair's data + fonts are ready. Fonts were delayed
     // ~1.2s but never blocked, so a lift well under the 5s safety bound proves
     // the ready path did it — not the safety timer.
+    // The cover shows the brand logo mark (navy + logo unification) while up.
+    await expect(page.locator("#fq-launch-cover .fq-launch-cover-logo")).toBeVisible();
     await waitForActivePanelContent(page);
     await page.waitForFunction(
       () => !document.documentElement.classList.contains("fq-launch-cover"),
@@ -191,7 +193,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
     // Locate Al-Kahf row in the surah tab and trigger download
-    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
+    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "الكهف" }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeEnabled();
     await downloadBtn.click();
@@ -199,7 +201,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     // Appears under downloaded section
     const downloadedItem = sheet
       .locator("div.bg-muted")
-      .filter({ hasText: "Al-Kahf" })
+      .filter({ hasText: "الكهف" })
       .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
@@ -250,14 +252,14 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
-    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
+    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "الكهف" }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeEnabled();
     await downloadBtn.click();
 
     const downloadedItem = sheet
       .locator("div.bg-muted")
-      .filter({ hasText: "Al-Kahf" })
+      .filter({ hasText: "الكهف" })
       .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
@@ -314,14 +316,14 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
     await expect(sheet.getByRole("button", { name: "ياسر الدوسري" })).toBeVisible();
 
-    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "Al-Kahf" }).first();
+    const alKahfRow = sheet.getByRole("tabpanel").locator("div.bg-muted").filter({ hasText: "الكهف" }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeEnabled();
     await downloadBtn.click();
 
     const downloadedItem = sheet
       .locator("div.bg-muted")
-      .filter({ hasText: "Al-Kahf" })
+      .filter({ hasText: "الكهف" })
       .filter({ has: page.getByRole("button", { name: "استمع" }) })
       .first();
     await expect(downloadedItem).toBeVisible({ timeout: 30000 });
@@ -394,7 +396,7 @@ test.describe("Offline PWA: Setup Gate & Precached Asset Navigation", () => {
     const sheet = page.getByRole("dialog", { name: "التلاوة دون اتصال بالإنترنت" });
 
     // Download buttons are disabled
-    const alKahfRow = sheet.locator("div.bg-muted").filter({ hasText: /^Al-Kahf$/ }).first();
+    const alKahfRow = sheet.locator("div.bg-muted").filter({ hasText: /^الكهف$/ }).first();
     const downloadBtn = alKahfRow.getByRole("button", { name: "تنزيل" });
     await expect(downloadBtn).toBeDisabled();
 

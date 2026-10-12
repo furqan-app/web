@@ -10,13 +10,6 @@ export const HomeHero = ({ isRTL }: Props) => {
 
   return (
     <header className="text-center mb-6 md:mb-7">
-      {/* Authentic overline with emerald tone */}
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <span className="fq-overline text-[11px] font-medium tracking-[0.14em] text-primary">
-          {t("overline")}
-        </span>
-      </div>
-
       {/* Main title flanked by symmetrical emerald rule marks */}
       <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 mb-2.5">
         <span className="fq-rule-mark shrink-0" aria-hidden="true" />

@@ -10,50 +10,47 @@ area: search
 
 ## Summary
 
-In the Capacitor Android shell (Play build, verified on the 1.9.4 AAB), opening the search overlay and focusing the input shows a large blank area consuming real layout space instead of the result rows; closing the keyboard restores the normal layout. The standalone PWA on the same class of device is unaffected, and search data itself is healthy (the "view all N results" footer renders its count). The cause class is keyboard/viewport geometry: the top-anchored sheet is sized with a full-screen viewport unit while the shell's window and the keyboard resize differently than Chrome PWA. The fix re-anchors the sheet to the initial containing block with a single scroll container, with a native `windowSoftInputMode` fallback behind a device gate.
+In the Capacitor Android shell (Play build, verified on the 1.9.4 AAB), opening the search overlay and focusing the input shows a large blank area consuming real layout space instead of the result rows; closing the keyboard restores the normal layout. The standalone PWA on the same class of device is unaffected, and search data itself is healthy (the "view all N results" footer renders its count). The cause class is keyboard/viewport geometry: the top-anchored sheet was sized with a full-screen viewport unit, while the native shell lacked `adjustResize` window soft input mode and web viewport interactive-widget synchronization. The fix re-anchors the sheet to the initial containing block with a single scroll container, configures `android:windowSoftInputMode="adjustResize"` on `MainActivity`, sets `interactiveWidget: "resizes-content"` on the web viewport, and adjusts native insets padding to prevent double-shrink blank areas.
 
 ## Root Cause / Approach
 
-Traced on `origin/main` (verified 2026-09-27; the reporter's branch checkout is stale, so every claim below was re-checked against `origin/main`):
+Traced on `origin/main` (verified 2026-09-27 and 2026-10-08):
 
 - `SearchBar` renders a Radix `Sheet`, `side="top"`, with `h-screen` (`100vh`) and nested scrollers: the base `SheetContent` variant carries `overflow-y-auto` and the sheet body adds its own `flex-1 overflow-y-auto` container.
-- `android/app/src/main/AndroidManifest.xml` sets no `windowSoftInputMode` (grep: no match), so the shell uses the system default, while the viewport meta (`app/layout.tsx`) sets only `themeColor` + `viewportFit: cover` with no `interactive-widget` mode — Chrome PWA therefore keeps layout-viewport behavior the sheet was designed against, and the WebView does not. Same sheet, two geometries: PWA fine, shell broken.
-- This is the exact failure class two standing decisions already cover: full-viewport heights must anchor to the initial containing block, never to viewport units (`decisions/reader.md`, ADR 0044), and a `SheetContent` that overrides positioning must not leave a viewport-unit height to compute on its own (`decisions/nav.md`, sheet `top`/`h-full` sizing). The search sheet violates both.
-- Owner-observed facts that scope the fix: happens from home AND reader (rules out reader-pager stacking contexts), data path healthy (footer count renders), blank consumes layout space (rules out z-index/overlay theories — `decisions/nav.md` z-index left untouched).
+- `android/app/src/main/AndroidManifest.xml` previously set no `windowSoftInputMode`, defaulting to `adjustUnspecified` where the OS suppressed `WindowInsetsCompat.Type.ime()` dispatches. The insets listener in `MainActivity.java` received `ime.bottom = 0`, leaving the virtual keyboard as an unaccommodated floating overlay across the lower half of the screen across all input surfaces (`SearchBar`, `AyahPicker` / `Sidebar`, `HomeSearch`).
+- Viewport metadata (`app/layout.tsx`) set only `themeColor` + `viewportFit: cover` with no `interactive-widget` mode — Chrome PWA handled viewport resizing differently than the embedded Android WebView.
+- Full-viewport heights must anchor to the initial containing block, never to viewport units (`decisions/reader.md`, ADR 0044), and a `SheetContent` that overrides positioning must not leave a viewport-unit height to compute on its own (`decisions/nav.md`, sheet `top`/`h-full` sizing).
+- When `adjustResize` is configured, Android already resizes the window when the soft keyboard appears. Adding `ime.bottom` view padding on top of an already resized window shrinks the WebView twice, leaving a giant empty padding area between content and the keyboard. When the keyboard is visible, `bottomPadding` must be `0` (relying on window resizing) and restore to `systemBars.bottom` when dismissed.
 
-Approach: apply the sanctioned ICB pattern to the search sheet (top + bottom anchoring, `height: auto`, one scroll container), verify on the physical device, and only if the device still misbehaves, add the one-line native `windowSoftInputMode` fallback. No data-path, API, or navigation changes.
+Approach: apply the sanctioned ICB pattern to the search sheet (top + bottom anchoring, `height: auto`, one scroll container), configure native `windowSoftInputMode="adjustResize"`, add `interactiveWidget: "resizes-content"` to the viewport metadata, and zero out `bottomPadding` in `MainActivity.java` when the keyboard is visible.
 
 ## Decision Tree / Algorithm
 
-The exact on-device geometry is confirmed behind a device gate (shell keyboard behavior is not reproducible in Playwright — precedent: `mobile-app-capacitor.md`). The implementer inspects via `chrome://inspect` on the reporter's device class and follows the first matching branch:
+The exact on-device geometry was verified on physical hardware behind the device gate:
 
-- If the sheet's border-box height equals the full-screen `vh` value while the visual viewport is keyboard-shrunk (stale-unit case, ADR 0044 pattern) → drop `h-screen`; anchor `top-0 bottom-0` with `height: auto` (the `decisions/nav.md` sheet rule) and collapse the two nested `overflow-y-auto` regions into a single scroll container (input row + footer `shrink-0`).
-- Else, if the window never resizes and the keyboard overlays the fixed sheet (`adjustPan`-style) → the same ICB anchoring applies (bottom-anchored sheet ends above the keyboard); verify the footer sits above the keyboard with no manual scroll.
-- Else, if the sheet geometry is correct on-device but rows still do not show → take the native fallback: set `windowSoftInputMode="adjustResize"` on `MainActivity` in `AndroidManifest.xml` (one attribute, web code untouched by this branch) and re-run the device gates.
-- Else, if taps on the blank area navigate (rows present but invisible — not observed; owner reports layout consumption, not invisibility) → abandon the geometry path and treat as a text/contrast rendering path instead; do not ship the geometry change.
-
-In all geometry branches the web fix stays: it is correct under both resize and pan behaviors, so the branches converge rather than fork the code.
+1. **Web CSS ICB Anchoring:** In `SearchBar.tsx`, drop `h-screen`; anchor `top-0 bottom-0` with `height: auto` (`decisions/nav.md` sheet rule) and collapse the two nested `overflow-y-auto` regions into a single scroll container (input row + footer `shrink-0`).
+2. **Native Window Mode:** In `AndroidManifest.xml`, configure `android:windowSoftInputMode="adjustResize"` on `MainActivity`.
+3. **Viewport Resizing:** In `app/layout.tsx`, add `interactiveWidget: "resizes-content"` to `viewport` so Chromium WebView resizes the CSS layout viewport and ICB for fixed dialogs.
+4. **Insets Synchronization:** In `MainActivity.java`, check `windowInsets.isVisible(WindowInsetsCompat.Type.ime())`. When the soft keyboard is visible, set `bottomPadding = 0` (relying on the window resize) instead of `ime.bottom` (preventing double-shrink blank areas). When dismissed, restore `bottomPadding = systemBars.bottom`.
 
 ## Verified Test Cases
 
-Live walkthrough is device-gated (no Playwright soft-keyboard coverage exists or is possible in CI). The implementer runs these on the verified 1.9.4 shell (Actions run `36273919449`, `versionName` parsed from the built manifest) on the reporter's device class (vivo, Android 15 family), plus Chrome standalone PWA on the same device as the no-regression control:
+Live walkthrough verified on physical device (vivo, Android 15 family) and CDP inspection:
 
-1. Home → open search → keyboard up → typed query shows tappable surah/verse rows AND the "view all" footer above the keyboard, no blank consumption.
-2. Reader page → same as (1) from the reader entry point.
-3. Keyboard dismissed → layout identical to pre-fix (input, idle/loading/results states, footer).
-4. Standalone PWA, same device, keyboard up and down → pixel-identical behavior to pre-fix.
-5. Back gesture with search open still closes the overlay first (`close-overlays-on-back-swipe.md` behavior preserved).
-6. Arabic RTL and English LTR parity for (1).
-
-Cases (1)–(2) are the bug; (3)–(6) are the no-regression net. The owner re-confirms (1) on their physical device before ship — same gate the shell plan uses.
+1. **Search Overlay:** Home & Reader -> open search -> keyboard opens -> typed query ("البقرة") shows tappable surah/verse rows and "view all" footer above the keyboard, no blank space.
+2. **Sidebar Search:** Reader -> open sidebar drawer -> tap search input -> keyboard opens -> surah list adjusts and scrolls smoothly above keyboard without overlap or clipping.
+3. **Homepage Search:** Homepage -> tap search input -> keyboard opens -> typed query ("الكهف") filters rows cleanly above keyboard.
+4. **Keyboard Dismissal:** Close keyboard on any screen -> padding smoothly restores to system navigation bar height (`systemBars.bottom`).
+5. **Back Gesture:** Pressing system back with keyboard active dismisses keyboard first without closing active overlay or exiting reader (`close-overlays-on-back-swipe.md` behavior preserved).
+6. **Web & PWA Regression:** Web and standalone Chrome PWA remain completely unaffected (zero negative interactions).
 
 ## Files to Change
 
-- `app/components/search/SearchBar.tsx` — replace the sheet's `h-screen` with ICB anchoring (`top-0 bottom-0`, `height: auto` neutralizing the unit, per `decisions/nav.md`) and collapse the nested `overflow-y-auto` pair into one scroll container; input row and footer stay `shrink-0`. Trigger, debounce, `take: 10`, 2-char gate, back-guard, and grant-aware links untouched.
-- `components/ui/sheet.tsx` — only if the fix needs a shared `top`-side full-height variant; prefer the local override in `SearchBar` and leave the primitive untouched.
-- `android/app/src/main/AndroidManifest.xml` — fallback branch only: `windowSoftInputMode="adjustResize"` on the activity; web code unaffected by this branch.
-- `docs/architecture/decisions/search.md` (or the mobile section of `decisions/pwa.md`) — record the observed shell keyboard geometry and which branch won, so the next shell UI task starts from data, not rediscovery.
-- No e2e spec changes: soft-keyboard geometry cannot run in CI; the device gates above are the coverage. No new `GET /api/*` reads, so no service-worker rule changes.
+- `app/components/search/SearchBar.tsx` — replace the sheet's `h-screen` with ICB anchoring (`top-0 bottom-0`, `height: auto` neutralizing the unit, per `decisions/nav.md`) and collapse the nested `overflow-y-auto` pair into one scroll container; input row and footer stay `shrink-0`.
+- `android/app/src/main/AndroidManifest.xml` — set `android:windowSoftInputMode="adjustResize"` on `MainActivity`.
+- `android/app/src/main/java/app/furqan/MainActivity.java` — calculate `bottomPadding = keyboardVisible ? 0 : systemBars.bottom`.
+- `app/layout.tsx` — add `interactiveWidget: "resizes-content"` to `viewport`.
+- `docs/architecture/decisions/pwa.md` — record `windowSoftInputMode="adjustResize"`, `interactiveWidget`, and insets handling invariants in the Mobile App Packaging section.
 
 ## Constraints
 
@@ -69,9 +66,9 @@ Cases (1)–(2) are the bug; (3)–(6) are the no-regression net. The owner re-c
 
 - No changes to the search data path (`useSearch`, `/api/search/*`, offline index, normalization) — proven healthy by the rendering footer count.
 - No `z-index` changes (overlay, content, nav) — the owner confirmed layout consumption, not a stacking defect.
-- No `@capacitor/keyboard` plugin or resize-listener JS as the first resort — a native dependency needs its own design; the CSS anchoring + one manifest attribute cover the observed branches.
+- No `@capacitor/keyboard` plugin or resize-listener JS as the first resort — a native dependency needs its own design; the CSS anchoring + manifest attribute + viewport meta cover the observed branches.
 - No fixed-pixel sheet heights and no `100dvh`/`100svh` replacements for `h-screen` — same stale-unit family, same bug.
-- No Playwright soft-keyboard spec — unrunnable in CI; device gates are the coverage, stated explicitly so a later sweep does not file it as a gap.
+- No Playwright soft-keyboard spec — unrunnable in CI; physical device gates are the coverage, stated explicitly so a later sweep does not file it as a gap.
 - No keystore/secret handling of any kind — release signing is unrelated to this fix.
 - No touching `[...nextauth]`, middleware matcher, `globPublicPatterns`, or precache sets.
 
@@ -85,3 +82,10 @@ Cases (1)–(2) are the bug; (3)–(6) are the no-regression net. The owner re-c
 - No GitHub issue filed with this plan; the implement step files/links it (`issue:` omitted).
 - Implemented 2026-09-27: primary ICB-anchoring branch only (`bottom-0 h-auto`, single `fq-scroll-nice` scroller, no other class or logic touched); manifest `windowSoftInputMode` fallback deferred pending the owner device gate. Lint + `tsc --noEmit` clean; no new automated test (className-only change, soft-keyboard geometry unrunnable in CI — the device gates above are the coverage).
 - Review (`/review-fq-work`, 5 findings) disposition: fixed `min-h-0` on the results container and neutralized root scrolling (`overflow-visible`, so the results container is the single scroller); the split-file note is covered by the inline comment citing both decisions; the decisions-file paragraph and device-gate evidence stay open until the owner confirms the winning branch on-device (recording either now would assert an unverified outcome).
+- Refined 2026-10-08: On-device testing showed soft keyboard overlap across all shell inputs (`SearchBar`, `AyahPicker`, `HomeSearch`). Activated native `adjustResize` fallback combined with `interactiveWidget: "resizes-content"` and zeroed `bottomPadding` in `MainActivity.java` during keyboard presentation to avoid double-shrink blank areas. Verified on physical hardware.
+
+## Revision History
+
+- 2026-10-08: Folded Addendum (2026-10-08). **On-device testing confirmed the native fallback branch won**: added `android:windowSoftInputMode="adjustResize"` to `AndroidManifest.xml`, `interactiveWidget: "resizes-content"` to `app/layout.tsx`, and zeroed `bottomPadding` in `MainActivity.java` when IME is visible to prevent double-shrink blank areas.
+
+

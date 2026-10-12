@@ -34,6 +34,73 @@ export const isNativePlatform = () =>
 // button/gesture to trap, and `window.close()` has no effect there (ADR 0040).
 export const isAndroid = () => /Android/i.test(navigator.userAgent);
 
+// SPIKE (#766): status-bar toggle for the Capacitor shell's reader focus mode.
+// Calls the hand-rolled StatusBarToggle plugin through the injected bridge
+// (no `@capacitor/core` dependency — same duck-typed pattern as
+// `isNativePlatform` above; `toNative` with a null callback is safe, the
+// bridge guards it). No-ops everywhere else (plain tabs, PWA, iOS) and on any
+// bridge failure, so a missing/unreachable bridge can never break the reader:
+// the bar simply stays shown, which is today's behavior.
+export type ShellTheme = "light" | "dark" | "gold";
+
+// Read from the document classes (set pre-paint by layout.tsx, kept current by
+// useTheme) rather than a subscription — the caller needs the value at call
+// time only, and this stays correct even where no theme context is mounted.
+const readShellTheme = (): ShellTheme => {
+  if (typeof document === "undefined") return "dark";
+  const classes = document.documentElement.classList;
+  if (classes.contains("theme-gold")) return "gold";
+  if (classes.contains("theme-dark")) return "dark";
+  return "light";
+};
+
+const getCapacitorBridge = () => {
+  if (typeof window === "undefined" || !isNativePlatform()) return null;
+  return (
+    window as unknown as {
+      Capacitor?: {
+        toNative?: (
+          plugin: string,
+          method: string,
+          options: object,
+          callback: null,
+        ) => unknown;
+      };
+    }
+  ).Capacitor;
+};
+
+export const setStatusBarVisible = (visible: boolean): void => {
+  const bridge = getCapacitorBridge();
+  try {
+    bridge?.toNative?.(
+      "StatusBarToggle",
+      visible ? "show" : "hide",
+      { theme: readShellTheme() },
+      null,
+    );
+  } catch {
+    // Native call failed — reader keeps working with the bar shown.
+  }
+};
+
+// Theme-only sync for mid-session theme switches (no visibility change).
+// Called from useTheme's setter, which runs exactly when the user picks a
+// theme; startup is covered by the pager effect above.
+export const syncShellTheme = (explicitTheme?: ShellTheme): void => {
+  const bridge = getCapacitorBridge();
+  try {
+    bridge?.toNative?.(
+      "StatusBarToggle",
+      "applyTheme",
+      { theme: explicitTheme ?? readShellTheme() },
+      null,
+    );
+  } catch {
+    // Native call failed — web theme still applies; only the shell bands lag.
+  }
+};
+
 // Offline route coverage (ADR 0014 Addendum 10, #591): in-app taps are RSC
 // soft-navs, which fail for a never-visited page with no connection. When
 // offline, prevent the soft nav and hard-navigate so the service worker serves
