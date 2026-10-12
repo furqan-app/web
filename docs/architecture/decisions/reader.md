@@ -291,4 +291,21 @@ payload; windowing removes the mass mount.
 - Theme neutrality: all stack layers and spine shadows must derive from theme variables without introducing green or hardcoded accent colors.
 - Standalone `QuranSafha` instances (`compensateStackGap` false) must not render these cues.
 
+---
+
+## Mushaf Card Margins & Multi-Layer Paper Stack
+
+**Status:** active (2026-10-12)
+
+**Decision:**
+1. **Desktop Safha Card Margins (`≥1367px`):** Lateral inner padding is set to 34px on `.fq-spread .fq-content` (halved from historical 68px), and the card width clamp (`.fq-spread .fq-safha-card`) uses `+ 4.25rem` (68px total margin allowance). In double-page view, `--fq-dv-word` is computed as `calc((50vw - 160px) / 14.7)`, ensuring facing pages snugly wrap justified Quran lines without dead whitespace around the text block.
+2. **6-Layer Open-Book Paper Stack (`md+`):** The paper stack underneath the active page card renders 6 distinct physical layers in `QuranSafha.tsx` (`hidden md:block`), staggered outward up to 14px (`translate-x-3.5` down to `translate-x-1` / 14px, 12px, 10px, 8px, 6px, 4px) with subtle vertical offset (`translate-y-2.5` to `0.5`), simulating authentic physical volume of closed pages on both outer edges.
+3. **Tablet Landscape Spread Alignment (`1024px–1366px`):** The spread container `.fq-reader-spread-container` has `padding-inline: 0 !important` and `gap: 0 !important` so the open mushaf reaches the viewport edges. To prevent the 14px stack protrusion from being clipped by the ICB viewport's `overflow: hidden` at rest (which previously caused stack width to visibly pop during swipe drag), `.fq-compensate-r` and `.fq-compensate-l` reserve exactly 14px (`margin-right: 14px !important;` and `margin-left: 14px !important;`). The outermost stack sheet meets the screen edge (`x = 0` and `x = 100vw`) with zero clipping and zero empty desk space outside the book.
+
+**Constraints:**
+- Mobile viewports (`<1024px`) keep the stack layers hidden via `hidden md:block` and use mobile-specific book edge affordances (ADR 0071, #771).
+- Desktop double-view resets `.fq-compensate-r` / `.fq-compensate-l` margins to 0 because desktop centers pages within a wider desk stage with navigation arrows.
+- Stack layer colors derive strictly from theme tokens (`--mushaf-sheet-face`, `--mushaf-sheet-edge`).
+
+
 
