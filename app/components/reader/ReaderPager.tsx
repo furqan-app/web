@@ -328,6 +328,9 @@ export function ReaderPager({
       strip.style.transition = "none";
       flushSync(() => setAnchor(target));
       strip.style.transform = "translateX(-100%)";
+      strip.querySelectorAll<HTMLElement>(".fq-reader-panel").forEach((p) => {
+        p.scrollTop = 0;
+      });
       // Deferred here rather than in the touch handler so `.fq-dragging` (ADR
       // 0023 Addendum 8's hover-suppression gate) stays active through the
       // whole commit-slide settle, not just until touch lifts — both the
@@ -362,7 +365,12 @@ export function ReaderPager({
       window.history.replaceState(null, "", `${basePath}/${target}`);
       if (strip) strip.style.transition = "none";
       setAnchor(target);
-      if (strip) strip.style.transform = "translateX(-100%)";
+      if (strip) {
+        strip.style.transform = "translateX(-100%)";
+        strip.querySelectorAll<HTMLElement>(".fq-reader-panel").forEach((p) => {
+          p.scrollTop = 0;
+        });
+      }
     },
     [basePath],
   );
