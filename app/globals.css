@@ -1909,7 +1909,7 @@ body,
          than a scroll (ADR 0044). `.fq-reader-pager-viewport` is the size container
          (`container-type: size`, set in the ICB block above), so `100cqh` is that
          box's own height: ICB-derived, and immune to the stale-unit bug. */
-      --fq-tablet-word: calc(min(calc((50vw - 16px) / 14.7), calc((100cqh - 50px) / 23)) * 0.96);
+      --fq-tablet-word: calc(min(calc((50vw - 16px) / 14.7), calc((100cqh - 50px) / 20.5)) * 0.98);
       --fq-card-word: var(--fq-tablet-word);
     }
     .fq-spread .fq-quran-safha {
@@ -2569,21 +2569,21 @@ body,
     }
   }
 
-  /* ---- SPIKE #766: hold the tablet tall-band on fixed gap -------------------
-     Neutralizes the min-height:800px space-between claim (reader rhythm) in the
-     tablet band only — desktop ≥1367px keeps it. Surplus collects below the page
-     instead of stretching gaps, so the OS-bar toggle can't move lines. Same
-     remove-if-fails terms as above. */
+  /* ---- Tablet landscape full-height safha ------------------------------------
+     Restores full-height space-between layout on tablet landscape, matching mobile.
+     Header pinned top, footer pinned bottom, lines distributed evenly across height. */
   @media (min-width: 1024px) and (max-width: 1366px) {
     .fq-spread .fq-quran-safha {
-      flex: none !important;
-      justify-content: flex-start !important;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      justify-content: space-between !important;
+      gap: 0 !important;
     }
     .fq-content {
       justify-content: space-between !important;
     }
     .fq-spread .fq-skeleton-lines {
-      justify-content: flex-start !important;
+      justify-content: space-between !important;
     }
   }
 }
