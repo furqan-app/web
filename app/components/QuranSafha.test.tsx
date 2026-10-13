@@ -125,12 +125,21 @@ describe("QuranSafha mobile orientation and footer", () => {
     expect(footer.props.dir).toBe("ltr");
     expect(footer.props.className).toContain("justify-start");
     expect(footer.props.className).toContain("pl-4");
+    expect(footer.props.className).toContain("pb-[max(0.625rem,env(safe-area-inset-bottom,0px))]");
+    expect(footer.props.className).toContain("md:pb-0");
 
-    // Book indicator active numeral span for left page is left-0
+    // Book indicator container is scaled to w-10 h-7
+    const bookIcon = root.find((el) =>
+      (el.props?.className ?? "").includes("w-10") && (el.props?.className ?? "").includes("h-7")
+    );
+    expect(bookIcon).toBeDefined();
+
+    // Book indicator active numeral span for left page is left-0 with text-[11px]
     const activeNumeral = root.find((el) =>
       (el.props?.className ?? "").includes("left-0") && (el.props?.className ?? "").includes("w-1/2")
     );
     expect(activeNumeral).toBeDefined();
+    expect(activeNumeral.props.className).toContain("text-[11px]");
     expect(activeNumeral.children).toContain("٢٠");
     renderer?.unmount();
   });
@@ -156,13 +165,49 @@ describe("QuranSafha mobile orientation and footer", () => {
     expect(footer.props.dir).toBe("ltr");
     expect(footer.props.className).toContain("justify-end");
     expect(footer.props.className).toContain("pr-4");
+    expect(footer.props.className).toContain("pb-[max(0.625rem,env(safe-area-inset-bottom,0px))]");
+    expect(footer.props.className).toContain("md:pb-0");
 
-    // Book indicator active numeral span for right page is right-0
+    // Book indicator container is scaled to w-10 h-7
+    const bookIcon = root.find((el) =>
+      (el.props?.className ?? "").includes("w-10") && (el.props?.className ?? "").includes("h-7")
+    );
+    expect(bookIcon).toBeDefined();
+
+    // Book indicator active numeral span for right page is right-0 with text-[11px]
     const activeNumeral = root.find((el) =>
       (el.props?.className ?? "").includes("right-0") && (el.props?.className ?? "").includes("w-1/2")
     );
     expect(activeNumeral).toBeDefined();
+    expect(activeNumeral.props.className).toContain("text-[11px]");
     expect(activeNumeral.children).toContain("٢١");
+    renderer?.unmount();
+  });
+
+  it("renders 3-digit page numbers with text-[9px] tracking-tight inside open-book indicator", async () => {
+    let renderer: ReturnType<typeof create> | undefined;
+    await act(async () => {
+      renderer = create(
+        <QuranSafha
+          page={562}
+          lines={{}}
+          pageMetadata={{ ...dummyMetadata, page_number: 562 } as any}
+          locale="ar"
+          stackPeekSide="left"
+          compensateStackGap
+        />
+      );
+    });
+
+    const root = renderer!.root;
+    const activeNumeral = root.find((el) =>
+      (el.props?.className ?? "").includes("left-0") && (el.props?.className ?? "").includes("w-1/2")
+    );
+    expect(activeNumeral).toBeDefined();
+    expect(activeNumeral.props.className).toContain("text-[9px]");
+    expect(activeNumeral.props.className).toContain("tracking-tight");
+    expect(activeNumeral.props.className).toContain("pl-1");
+    expect(activeNumeral.children).toContain("٥٦٢");
     renderer?.unmount();
   });
 

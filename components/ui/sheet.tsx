@@ -89,7 +89,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       {!hideDefaultClose && (
-        <SheetPrimitive.Close className="fq-focus-ring fq-control-live absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none">
+        <SheetPrimitive.Close className="fq-focus-ring fq-control-live absolute end-4 top-[max(1rem,calc(0.5rem+env(safe-area-inset-top,0px)))] rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none">
           <X className="h-4 w-4" />
           <span className="sr-only">{closeLabel}</span>
         </SheetPrimitive.Close>

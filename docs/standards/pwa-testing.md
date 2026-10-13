@@ -70,3 +70,31 @@ Testing PWA installation and service-worker lifecycle on real mobile devices req
 - **Trust CA on Device:** Push the root CA certificate to the phone (`/sdcard/furqan-local-ca.crt`) and install it under Android Credential Storage -> CA Certificates.
 - **Service Worker Production Build:** Serwist is disabled in development; build locally via `npm run build:local && PORT=7000 npm start`.
 - **Bypassing Service Worker Cache:** When updating CSS or JS, restart the server, then dismiss the installed WebAPK from Android recent apps (swipe away) before reopening to trigger `clientsClaim` / `skipWaiting` updates.
+
+### 3. USB Port Reversal (`adb reverse`) & Dev-Server Testing (No HTTPS/Certs Needed)
+Chromium considers `http://localhost` a secure origin by spec. Connecting over USB with port reversal gives full PWA capabilities (Service Worker, WebAPK installation, standalone/fullscreen display mode) without generating local certificates or configuring LAN TLS:
+
+1. **Reverse the dev port:**
+   ```bash
+   adb reverse tcp:7000 tcp:7000
+   ```
+2. **Open on device:**
+   Navigate in Chrome on the device to `http://localhost:7000/launch.html` or `http://localhost:7000/ar`.
+3. **Bypass the Development-Mode Offline Gate:**
+   In development (`npm run dev`), Serwist disables the service worker, which prevents `navigator.serviceWorker.ready` from resolving. This leaves `OfflineSetupGate` stuck indefinitely on an unclosable wait spinner in standalone mode. To bypass it immediately during development, set the versioned dismissal flag in localStorage:
+   ```js
+   localStorage.setItem("fq-offline-prompt-dismissed-v2-2", "1");
+   window.dispatchEvent(new Event("fq-offline-dismissed"));
+   ```
+4. **Remote Debugging & Inspections:**
+   Forward DevTools:
+   ```bash
+   adb forward tcp:9223 localabstract:chrome_devtools_remote
+   ```
+   Query tabs with `curl http://localhost:9223/json`, inspect DOM/evaluate JS via WebSocket, take screenshots directly with:
+   ```bash
+   adb exec-out screencap -p > /tmp/screen.png
+   ```
+5. **Xiaomi / MIUI Gotcha:**
+   On Linux, Xiaomi devices require a udev rule (`ATTR{idVendor}=="2717"`). Additionally, `adb shell input tap` throws `SecurityException` unless "USB debugging (Security settings)" is enabled with a SIM card in MIUI. As an alternative, dispatch input events directly via DevTools Protocol (`Input.dispatchMouseEvent` / CDP) without needing MIUI security permissions.
+
