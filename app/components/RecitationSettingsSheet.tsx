@@ -692,7 +692,7 @@ export const RecitationSettingsSheet = () => {
         closeLabel={t("common.close", "Close")}
         className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
-        <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-5 border-b border-border/70 text-start">
+        <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-[max(1.25rem,calc(0.75rem+env(safe-area-inset-top,0px)))] border-b border-border/70 text-start">
           <SheetTitle className="text-[15px] font-semibold leading-none text-foreground">
             {t("recitation.settingsTitle", "Recitation settings")}
           </SheetTitle>
@@ -704,7 +704,7 @@ export const RecitationSettingsSheet = () => {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           {activeOverride ? (
             <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2.5 text-xs text-primary">
               <Headphones className="size-4 shrink-0" strokeWidth={1.8} />
