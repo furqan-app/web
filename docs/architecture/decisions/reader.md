@@ -307,5 +307,21 @@ payload; windowing removes the mass mount.
 - Desktop double-view resets `.fq-compensate-r` / `.fq-compensate-l` margins to 0 because desktop centers pages within a wider desk stage with navigation arrows.
 - Stack layer colors derive strictly from theme tokens (`--mushaf-sheet-face`, `--mushaf-sheet-edge`).
 
+---
 
+## Mobile Landscape Fit-to-Width & Vertical Scroll
 
+**Status:** active (2026-10-13, #784)
+
+**Decision:** On mobile viewports rotated to landscape orientation (`@media (max-width: 1023px) and (orientation: landscape) and (max-height: 550px)`), the reader transitions from the fixed-height 15-line compression model to a **fit-to-width vertically scrollable reading mode**:
+1. **Uncapped Font Scale:** `--fq-mobile-font` removes the 28px cap and scales directly to full landscape width: `calc((100vw - 24px) / 14.7)`.
+2. **Panel-Level Scrolling:** `.fq-reader-panel` is given `height: 100% !important; overflow-y: auto !important; touch-action: pan-y !important; overscroll-behavior-y: contain;`, while `.fq-reader-pager-viewport` retains its fixed full-screen swipe container.
+3. **Natural Line Flow:** `.fq-quran-safha` relaxes `flex-1` and fixed vertical distribution to flow downward at natural line height with `--fq-line-gap: calc(var(--fq-mobile-font) * 0.42)`.
+4. **Desktop/Tablet Affordance Suppression:** Book stack peek layers (`.fq-stack-layer`), nav arrows (`.fq-nav-arrow`), book edge pseudo-elements (`::before`, `::after`), and lateral compensation margins (`.fq-compensate-r`, `.fq-compensate-l`) that trigger at `md` (`≥768px`) are explicitly suppressed.
+5. **Scroll Reset on Turn:** In `ReaderPager.tsx`, `commitTo` and `jumpTo` reset all `.fq-reader-panel` scroll positions (`scrollTop = 0`) synchronously upon navigation so subsequent pages open at the top.
+6. **MarkModal Compact Layout:** On short viewports (`max-height <= 550px`), the mark modal is clamped to `max-height: 94dvh`, its body is made scrollable (`overflow-y: auto`), and the category radio choices are laid out in 3 columns (`grid-cols-3`) with compact buttons, ensuring Header, Close button, and Save button remain visible and accessible.
+
+**Constraints:**
+- Tablet landscape (`1024px–1366px`) is permanently a 2-page spread and must remain untouched. The height gate (`max-height: 550px`) and width gate (`max-width: 1023px`) prevent bleed into tablet landscape.
+- Mobile portrait mode remains 100% single-page with vertical `justify-content: space-between` and the 28px font cap.
+- In `ReaderPager.tsx`, horizontal gesture discrimination (`Math.abs(deltaY) >= Math.abs(deltaX)`) must not be broken so vertical scrolling does not commit page turns.

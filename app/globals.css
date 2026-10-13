@@ -2586,4 +2586,172 @@ body,
       justify-content: flex-start !important;
     }
   }
+
+  /* ---- Mobile Landscape: Fit-to-Width & Vertical Scroll -------------------
+     When a mobile phone is rotated to landscape (width < 1024px, orientation: landscape,
+     and height <= 550px): scale font to fit full landscape width without 28px cap,
+     enable smooth vertical scrolling in the panel, flow lines with natural gap,
+     and suppress desktop paper stack & nav arrows that trigger at md (>=768px). */
+  @media (max-width: 1023px) and (orientation: landscape) and (max-height: 550px) {
+    .fq-content {
+      /* Full width scaling: compute from viewport width without 28px cap */
+      --fq-mobile-font: calc((100vw - 24px) / 14.7) !important;
+      --fq-line-gap: calc(var(--fq-mobile-font) * 0.42) !important;
+      --fq-heading-h: calc(var(--fq-mobile-font) * 2.4) !important;
+    }
+
+    /* Pager viewport stays fixed full screen, but each panel scrolls vertically */
+    .fq-reader-panel {
+      height: 100% !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-y !important;
+      overscroll-behavior-y: contain;
+    }
+
+    /* The outer container and safha wrappers take natural content height */
+    .fq-reader-outer {
+      height: auto !important;
+      min-height: 100% !important;
+      padding-bottom: 0 !important;
+    }
+
+    .fq-reader-spread-container,
+    .fq-spread-col,
+    .fq-spread,
+    .fq-full-safha,
+    .fq-full-safha > div {
+      height: auto !important;
+      min-height: 100% !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    /* Suppress desktop paper stack, nav arrows, and book edge pseudo-elements */
+    .fq-stack-layer,
+    .fq-nav-arrow,
+    .fq-spread .fq-safha-card::after,
+    .fq-spread .fq-safha-card::before {
+      display: none !important;
+    }
+
+    /* Reset tablet/stack compensation margins */
+    .fq-compensate-r,
+    .fq-compensate-l {
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+    }
+
+    /* Safha card expands to full width and natural content height */
+    .fq-safha-card {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      min-height: 100% !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+    }
+
+    .fq-content {
+      height: auto !important;
+      min-height: 100% !important;
+      justify-content: flex-start !important;
+      padding-inline: 12px !important;
+      padding-top: 0.5rem !important;
+      padding-bottom: 0 !important;
+    }
+
+    /* Lines flow naturally down the page with uniform line gap */
+    .fq-quran-safha {
+      --fq-safha-font: var(--fq-mobile-font) !important;
+      font-size: var(--fq-mobile-font) !important;
+      flex: none !important;
+      height: auto !important;
+      min-height: auto !important;
+      justify-content: flex-start !important;
+      gap: var(--fq-line-gap) !important;
+      padding-block: 0.5em !important;
+      overflow: visible !important;
+    }
+
+    .fq-quran-safha.fq-mushaf-v2 {
+      font-size: calc(var(--fq-mobile-font) * 0.88) !important;
+      --fq-safha-font: calc(var(--fq-mobile-font) * 0.88) !important;
+    }
+
+    .fq-quran-safha > * {
+      margin-bottom: 0 !important;
+    }
+
+    .fq-surah-frame {
+      margin-top: 0.4em !important;
+      margin-bottom: var(--fq-line-gap) !important;
+    }
+
+    .fq-safha-header {
+      padding-top: 0.5rem !important;
+      padding-bottom: 1rem !important;
+      padding-inline: 1rem !important;
+    }
+
+    .fq-safha-footer {
+      padding-top: 0.5rem !important;
+      padding-bottom: 0.75rem !important;
+    }
+
+    /* MarkModal in mobile landscape: compact & scrollable to fit short viewports */
+    .fq-mark-modal-dialog {
+      max-height: 94dvh !important;
+      max-width: min(540px, 92vw) !important;
+      overflow: hidden !important;
+      border-radius: 1rem !important;
+      border: 1px solid hsl(var(--border)) !important;
+      top: 50% !important;
+      left: 50% !important;
+      bottom: auto !important;
+      right: auto !important;
+      transform: translate(-50%, -50%) !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .fq-mark-modal-body {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      padding: 0.625rem 1rem !important;
+      gap: 0.375rem !important;
+    }
+
+    .fq-mark-modal-body > * + * {
+      margin-top: 0.375rem !important;
+    }
+
+    /* 3 columns for mark categories in wide landscape dialog */
+    .fq-mark-modal-body .grid.grid-cols-2 {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 0.375rem !important;
+    }
+
+    .fq-mark-modal-body label {
+      min-height: 2.25rem !important;
+      padding: 0.25rem 0.5rem !important;
+    }
+
+    .fq-mark-modal-body textarea {
+      height: 2.5rem !important;
+      min-height: 2.5rem !important;
+    }
+
+    .fq-mark-modal-footer {
+      padding: 0.5rem 1rem !important;
+    }
+
+    .fq-mark-modal-footer button {
+      min-height: 2.5rem !important;
+      height: 2.5rem !important;
+    }
+  }
 }
