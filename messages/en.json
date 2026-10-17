@@ -606,7 +606,6 @@
     "repeatCycleTimes": "{count, plural, one {Repeat current ayah once} other {Repeat current ayah {n} times}}",
     "repeatCycleInfinite": "Repeat current ayah endlessly",
     "startFrom": "Start from",
-    "startCurrentVerse": "Current verse",
     "startCurrentPage": "Current page",
     "startSurahStart": "Start of surah",
     "startRubStart": "Start of rub'",

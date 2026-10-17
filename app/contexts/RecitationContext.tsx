@@ -142,6 +142,12 @@ type RecitationContextType = {
   chapters: SurahResult[];
   status: RecitationStatus;
   currentVerseKey: string | null;
+  // Launch verse of the current session (the verseKey play() was called
+  // with), or null when idle. Lets consumers (e.g. RecitationSettingsSheet)
+  // pin the session's start point instead of tracking the drifting current
+  // verse. Mirrors startVerseKeyRef as state. See
+  // docs/plans/fix-recitation-custom-stop-start-point.md.
+  startVerseKey: string | null;
   // Mushaf page of the currently recited verse, or null when not playing. The
   // persistent pager (ADR 0028) watches this to keep the recited page on screen —
   // navigation lives in the pager, not here.
@@ -207,17 +213,17 @@ type RecitationContextType = {
   playbackError: "offline-unavailable" | "playback-failed" | null;
 };
 
-// A drafted Start From point (#393). Per-session, never persisted — derived
-// fresh every time the settings sheet opens (Current Verse while playing,
-// Current Page while idle) and discarded on close. Unlike RangePoint (the
-// persisted "custom" stop target) there is no localStorage footprint.
+// A drafted Start From point (#393, refined #788). Per-session, never persisted —
+// seeded to the concrete launch verse upon session start, or Current Page while idle.
+// Unlike RangePoint (the persisted "custom" stop target) there is no localStorage footprint.
 export type StartPoint =
-  | { type: "current-verse" }
   | { type: "current-page" }
   | { type: "surah-start" }
   | { type: "rub-start" }
   | { type: "verse"; surah: number; ayah: number }
-  | { type: "page"; page: number };
+  | { type: "page"; page: number }
+  // Legacy variant kept for resolveStartPoint exhaustiveness; UI uses current-page or verse.
+  | { type: "current-verse" };
 
 const RecitationContext = createContext<RecitationContextType | undefined>(undefined);
 
@@ -250,6 +256,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [chapters, setChapters] = useState<SurahResult[]>([]);
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
+  const [startVerseKey, setStartVerseKey] = useState<string | null>(null);
   const [recitedPage, setRecitedPage] = useState<number | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
@@ -350,6 +357,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     currentChapterIdRef.current = null;
     currentVerseKeyRef.current = null;
     setCurrentVerseKey(null);
+    setStartVerseKey(null);
     setRecitedPage(null);
     setIsFollowing(false);
     rangeRepeatOverrideRef.current = null;
@@ -396,6 +404,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       const chapterId = parseChapterIdFromVerseKey(verseKey);
       setStatus("loading");
+      // Publish the launch verse synchronously with the status transition so
+      // effects keyed on status (e.g. the settings sheet's start-point seed)
+      // observe both in the same render. See
+      // docs/plans/fix-recitation-custom-stop-start-point.md.
+      setStartVerseKey(verseKey);
       setPlaybackError(null);
       // Published before the awaits below so a UI row can recognise "this
       // session is mine" while it's still loading (re-entry guard) — cleared
@@ -435,6 +448,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
           setStatus("idle");
           rangeRepeatOverrideRef.current = null;
           setActiveOverride(null);
+          setStartVerseKey(null);
           setPlaybackError("playback-failed");
           return false;
         }
@@ -484,6 +498,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         setStatus("idle");
         rangeRepeatOverrideRef.current = null;
         setActiveOverride(null);
+        setStartVerseKey(null);
         setIsFollowing(false);
         if (!isOnline) {
           setPlaybackError("offline-unavailable");
@@ -774,6 +789,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         const timing = verseTimingsRef.current.find((vt) => vt.verseKey === verseKey);
         if (!timing) return;
         startVerseKeyRef.current = verseKey;
+        setStartVerseKey(verseKey);
         currentVerseKeyRef.current = verseKey;
         setCurrentVerseKey(verseKey);
         updateRecitedPage(verseKey);
@@ -785,6 +801,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       if (!reciterId) return;
       try {
         startVerseKeyRef.current = verseKey;
+        setStartVerseKey(verseKey);
         const ok = await loadChapter(reciterId, chapterId, verseKey);
         if (!ok) stop();
       } catch {
@@ -1282,6 +1299,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         chapters,
         status,
         currentVerseKey,
+        startVerseKey,
         recitedPage,
         isFollowing,
         setIsFollowing,

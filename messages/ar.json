@@ -606,7 +606,6 @@
     "repeatCycleTimes": "{count, plural, one {تكرار الآية مرة واحدة} two {تكرار الآية مرتين} few {تكرار الآية {n} مرات} many {تكرار الآية {n} مرة} other {تكرار الآية {n} مرة}}",
     "repeatCycleInfinite": "تكرار الآية باستمرار",
     "startFrom": "ابدأ من",
-    "startCurrentVerse": "الآية الحالية",
     "startCurrentPage": "الصفحة الحالية",
     "startSurahStart": "بداية السورة",
     "startRubStart": "بداية الربع",
