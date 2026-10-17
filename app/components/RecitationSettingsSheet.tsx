@@ -31,6 +31,7 @@ import { ReciterCombobox } from "@/app/components/recitation/ReciterCombobox";
 import { NumberCombobox } from "@/components/ui/number-combobox";
 import { getLanguageDirection } from "@/app/utils/i18n";
 import useTranslations from "@/app/hooks/use-translations";
+import { useVersePages } from "@/app/hooks/use-verse-pages";
 import {
   Command,
   CommandEmpty,
@@ -218,22 +219,6 @@ const SurahCombobox = ({
   );
 };
 
-// A page's APPROXIMATE surah, from chapters.json's per-surah page range —
-// UI-level constraint only (exact page resolution happens at Apply via
-// fetchPageBounds).
-const pageSurahRange = (
-  chapters: SurahResult[],
-  page: number,
-): [number, number] => {
-  for (const c of chapters) {
-    const [start, end] = String(c.pages ?? "").split("-").map(Number);
-    if (!Number.isNaN(start) && !Number.isNaN(end)) {
-      if (page >= start && page <= end) return [c.id, c.id];
-    }
-  }
-  return [1, 114];
-};
-
 // Module-level memory of the last explicitly-chosen verse point in the
 // Stop-At custom picker. The picker unmounts whenever stopPoint leaves
 // "custom", which would otherwise wipe the user's selection on every
@@ -253,6 +238,7 @@ const CustomRangePicker = ({
   onChange,
   startFloorKey,
   referencePage,
+  startPageFloor,
   portalContainer,
   disabled = false,
 }: {
@@ -262,57 +248,88 @@ const CustomRangePicker = ({
   // Ordered verse key of the drafted Start — the ONLY range constraint.
   startFloorKey: string;
   referencePage: number;
+  // First page the stop point may land on (the start verse's page). Falls
+  // back to referencePage when the caller cannot resolve it.
+  startPageFloor?: number;
   portalContainer: HTMLElement | null;
   disabled?: boolean;
 }) => {
   const locale = useLocale();
   const t = useTranslations();
 
+  const [startSurahRaw, startAyahRaw] = startFloorKey.split(":").map(Number);
+  const startSurah = startSurahRaw > 0 ? startSurahRaw : 1;
+  const startAyah = startAyahRaw > 0 ? startAyahRaw : 1;
+  // The page picker's ONLY floor — a numeric page bound, never the coarse
+  // approx-surah comparison (which misclassified multi-surah pages and pages
+  // behind the start verse, overwriting the start via push-apart — #788).
+  const pageFloor = Math.max(startPageFloor ?? referencePage, 1);
+
+  // A cached verse preceding the drafted start is stale (chosen under an
+  // earlier session/start) and must never resurface as the stop point — it
+  // is discarded here and in the module cache, so the picker defaults to
+  // >= start (#788).
+  const isStaleCache = (p: RangePoint | null): boolean =>
+    p?.type === "verse" &&
+    compareVerseKeys(`${p.surah}:${p.ayah}`, startFloorKey) < 0;
   // Last explicitly-chosen verse point — so switching Page↔Verse doesn't
   // reset the surah/ayah to defaults every time (user-reported: toggling to
   // "Verse" always landed on Al-Fatiha). Also survives across sheet
   // sessions via a module-level cache: the picker remounts when stopPoint
   // leaves "custom", and without this the memory died with the mount.
-  const [lastVersePoint, setLastVersePoint] = useState<RangePoint | null>(
-    () => LAST_VERSE_POINT_CACHE.current,
+  const [lastVersePoint, setLastVersePoint] = useState<RangePoint | null>(() =>
+    isStaleCache(LAST_VERSE_POINT_CACHE.current) ? null : LAST_VERSE_POINT_CACHE.current,
   );
   const rememberVersePoint = (p: RangePoint) => {
     LAST_VERSE_POINT_CACHE.current = p;
     setLastVersePoint(p);
   };
+  useEffect(() => {
+    if (isStaleCache(LAST_VERSE_POINT_CACHE.current)) LAST_VERSE_POINT_CACHE.current = null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startFloorKey]);
+  const effectiveLastVersePoint = isStaleCache(lastVersePoint) ? null : lastVersePoint;
 
   useEffect(() => {
     if (!rangeTo) {
-      onChange({ type: "page", page: Math.max(referencePage, 1) });
+      onChange({ type: "page", page: Math.max(referencePage, pageFloor) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangeTo]);
 
   const type = rangeTo?.type ?? "page";
-  const page = rangeTo?.type === "page" ? Math.max(rangeTo.page, 1) : Math.max(referencePage, 1);
+  const page =
+    rangeTo?.type === "page"
+      ? Math.max(rangeTo.page, pageFloor)
+      : Math.max(referencePage, pageFloor);
   // In verse mode use the committed value; in page mode fall back to the
   // last-chosen verse (or the start floor's surah — never blind Al-Fatiha).
   const fallbackSurah = (() => {
-    const ss = Number(startFloorKey.split(":")[0]);
-    return lastVersePoint?.type === "verse"
-      ? lastVersePoint.surah
-      : ss > 0
-        ? ss
-        : 1;
+    if (
+      effectiveLastVersePoint?.type === "verse" &&
+      effectiveLastVersePoint.surah >= startSurah
+    )
+      return effectiveLastVersePoint.surah;
+    return startSurah;
   })();
   const fallbackAyah = (() => {
-    const sa = Number(startFloorKey.split(":")[1]);
-    return lastVersePoint?.type === "verse" ? lastVersePoint.ayah : sa > 0 ? sa : 1;
+    if (
+      effectiveLastVersePoint?.type === "verse" &&
+      effectiveLastVersePoint.surah >= startSurah
+    )
+      return effectiveLastVersePoint.ayah;
+    return startAyah;
   })();
-  const surah = rangeTo?.type === "verse" ? rangeTo.surah : fallbackSurah;
+  const surah = rangeTo?.type === "verse" ? Math.max(rangeTo.surah, startSurah) : fallbackSurah;
   const selectedChapter = chapters.find((c) => c.id === surah);
   const ayahCeil = selectedChapter?.verses_count ?? 286;
+  // Ayah floor: within the start surah the stop verse cannot precede the
+  // start verse; later surahs offer their full range (#788).
+  const ayahFloor = surah === startSurah ? startAyah : 1;
   const ayah = Math.min(
-    rangeTo?.type === "verse" ? rangeTo.ayah : fallbackAyah,
+    Math.max(rangeTo?.type === "verse" ? rangeTo.ayah : fallbackAyah, ayahFloor),
     ayahCeil,
   );
-
-  const [startSurah] = startFloorKey.split(":").map(Number);
 
   return (
     <div className="rounded-xl border border-border bg-card p-3.5 space-y-3">
@@ -357,14 +374,9 @@ const CustomRangePicker = ({
       {type === "page" ? (
         <NumberCombobox
           variant="settings"
-          values={Array.from({ length: MUSHAF_LAST_PAGE }, (_, i) => i + 1).filter(
-            // Page floor derives from the approx-surah of the drafted start:
-            // a page whose surah precedes the start's surah is behind it.
-            (p) => {
-              const [ps] = pageSurahRange(chapters, p);
-              const [ss] = startFloorKey.split(":").map(Number);
-              return ps >= ss || ss === 0;
-            },
+          values={Array.from(
+            { length: MUSHAF_LAST_PAGE - pageFloor + 1 },
+            (_, i) => pageFloor + i,
           )}
           value={page}
           onChange={(p) => onChange({ type: "page", page: p })}
@@ -384,10 +396,11 @@ const CustomRangePicker = ({
               minSurah={startSurah}
               onChange={(nextSurah) => {
                 const nextChapter = chapters.find((c) => c.id === nextSurah);
+                const nextFloor = nextSurah === startSurah ? startAyah : 1;
                 const next = {
                   type: "verse" as const,
                   surah: nextSurah,
-                  ayah: Math.min(ayah, nextChapter?.verses_count ?? 1),
+                  ayah: Math.min(Math.max(ayah, nextFloor), nextChapter?.verses_count ?? 1),
                 };
                 rememberVersePoint(next);
                 onChange(next);
@@ -399,7 +412,7 @@ const CustomRangePicker = ({
           <div className="w-24 shrink-0">
             <NumberCombobox
               variant="settings"
-              values={Array.from({ length: ayahCeil }, (_, i) => i + 1)}
+              values={Array.from({ length: ayahCeil - ayahFloor + 1 }, (_, i) => ayahFloor + i)}
               value={ayah}
               onChange={(a) => {
                 const next = { type: "verse" as const, surah, ayah: a };
@@ -479,6 +492,7 @@ export const RecitationSettingsSheet = () => {
     chapters,
     status,
     currentVerseKey,
+    startVerseKey,
     isSettingsOpen,
     closeSettings,
     pageFirstVerseKey,
@@ -489,6 +503,7 @@ export const RecitationSettingsSheet = () => {
     resolveStartPoint,
     activeOverride,
   } = useRecitation();
+  const { data: versePages } = useVersePages(isSettingsOpen);
   // Popovers rendered inside this Sheet (e.g. ReciterCombobox) must portal
   // here instead of document.body — see components/ui/popover.tsx.
   const [sheetContentEl, setSheetContentEl] = useState<HTMLDivElement | null>(null);
@@ -502,26 +517,79 @@ export const RecitationSettingsSheet = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSettingsOpen]);
 
-  // Drafted Start From point (#393 D4, refined per user feedback): the preset
-  // captures the position where the CURRENT SESSION started and holds it for
-  // the session's lifetime — opening the sheet later does NOT re-derive it
-  // (start at page-first verse, play three verses, open the sheet → still
-  // shows that first verse). A new seed happens only when a NEW session
-  // starts (idle → playing transition).
+  // Drafted Start From point (#393 D4, refined per user feedback + #788):
+  // the seed captures the position where the CURRENT SESSION started and
+  // holds it for the session's lifetime — opening the sheet later does NOT
+  // re-derive it (start at page-first verse, play three verses, open the
+  // sheet → still shows that first verse). The seed is the session's launch
+  // verse (startVerseKey, falling back to currentVerseKey) pinned as a
+  // concrete { type: "verse" } point — never the drifting "current-verse"
+  // preset, whose referenceVerseKey advances with playback. A re-seed happens
+  // only for a NEW session (idle → active transition, or a changed launch
+  // verse from a play() while already active, e.g. Mark Modal while paused)
+  // or when the sheet opens onto an unseeded session — never on every open,
+  // so a user's in-session custom start edit survives close/reopen. Seeding
+  // also raises a drafted custom stop that precedes the new start (forward
+  // push only — editing Stop must never lower Start, see pushStartBeforeEnd).
+  // startPoint stays ephemeral per-session state: no localStorage key
+  // (Addendum 12).
   const [startPoint, setStartPoint] = useState<StartPoint>({ type: "current-page" });
   const prevStatusRef = useRef<RecitationStatus>(status);
+  const startSeedKeyRef = useRef<string | null>(null);
+  const parseAnchorPoint = (anchor: string): { type: "verse"; surah: number; ayah: number } | null => {
+    const [s, a] = anchor.split(":").map(Number);
+    return s > 0 && a > 0 ? { type: "verse", surah: s, ayah: a } : null;
+  };
+  const seedStartPoint = (anchor: string): void => {
+    const point = parseAnchorPoint(anchor);
+    if (!point) return;
+    startSeedKeyRef.current = anchor;
+    setStartPoint(point);
+    // Forward push only: a drafted custom stop preceding the new start is
+    // raised to the start so end >= start always holds.
+    setDraft((prev) => {
+      if (prev.stopPoint !== "custom" || !prev.rangeTo) return prev;
+      const endKey =
+        prev.rangeTo.type === "verse"
+          ? `${prev.rangeTo.surah}:${prev.rangeTo.ayah}`
+          : `${pageToApproxSurah(prev.rangeTo.page)}:286`;
+      return compareVerseKeys(endKey, anchor) < 0
+        ? { ...prev, rangeTo: { type: "verse", surah: point.surah, ayah: point.ayah } }
+        : prev;
+    });
+  };
   useEffect(() => {
     const wasIdle = prevStatusRef.current === "idle";
     prevStatusRef.current = status;
-    if (wasIdle && status !== "idle") {
-      setStartPoint({ type: "current-verse" });
+    if (status === "idle") {
+      startSeedKeyRef.current = null;
+      return;
     }
-  }, [status]);
+    // currentVerseKey is deliberately NOT a dep: it advances every verse and
+    // re-seeding from it would reintroduce the drift this fix removes. The
+    // batched play() update sets startVerseKey alongside status, so the
+    // transition render already observes the fresh launch verse.
+    const anchor = startVerseKey ?? currentVerseKey;
+    if (!anchor) {
+      if (wasIdle) setStartPoint({ type: "current-page" });
+      return;
+    }
+    if (wasIdle || startSeedKeyRef.current !== anchor) seedStartPoint(anchor);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, startVerseKey]);
   useEffect(() => {
-    if (isSettingsOpen && status === "idle") {
+    if (!isSettingsOpen) return;
+    if (status === "idle") {
       // Idle with no session: fresh per-open derivation is correct here.
+      startSeedKeyRef.current = null;
       setStartPoint({ type: "current-page" });
+      return;
     }
+    // Opening onto a live session that was never seeded (e.g. play() fired
+    // while active before this mount observed it): backstop seed. A no-op
+    // when the session seed is current, so custom start edits survive reopen.
+    const anchor = startVerseKey ?? currentVerseKey;
+    if (anchor && startSeedKeyRef.current !== anchor) seedStartPoint(anchor);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSettingsOpen]);
 
@@ -537,12 +605,12 @@ export const RecitationSettingsSheet = () => {
   const referenceAyah = referenceAyahRaw || 1;
   const referencePage = recitedPage ?? currentPageNumber ?? 1;
 
-  // --- Mutual push-apart (#393 D6) -----------------------------------------
-  // The drafted Start and drafted End constrain each other: whichever side is
-  // edited last wins, the opposing side is pushed so start ≤ end always holds.
-  // Comparison uses ordered verse keys; a page-type point contributes its
-  // APPROXIMATE surah via chapters.json's page range (UI-level constraint
-  // only — Apply resolves pages exactly through fetchPageBounds).
+  // --- Mutual push-apart (#393 D6, forward-only since #788) ------------------
+  // Editing START past the drafted END raises END (start wins); editing END
+  // never moves START. Comparison uses ordered verse keys; a page-type point
+  // contributes its APPROXIMATE surah via chapters.json's page range
+  // (UI-level constraint only — Apply resolves pages exactly through
+  // fetchPageBounds).
   const pageToApproxSurah = (page: number): number => {
     for (const c of chapters) {
       const [start, end] = String(c.pages ?? "").split("-").map(Number);
@@ -573,6 +641,28 @@ export const RecitationSettingsSheet = () => {
     return draft.rangeTo.type === "verse"
       ? `${draft.rangeTo.surah}:${draft.rangeTo.ayah}`
       : `${pageToApproxSurah(draft.rangeTo.page)}:286`;
+  };
+  // First page the custom stop picker may land on (#788): exact when the
+  // drafted start is itself a page; otherwise resolved from the active edition's
+  // verse-pages map (useVersePages), or recitedPage when start is the active launch
+  // verse, or the start surah's first page from chapters.json.
+  const startPageFloor = (): number => {
+    if (startPoint.type === "page") return startPoint.page;
+    if (startPoint.type === "verse") {
+      const key = `${startPoint.surah}:${startPoint.ayah}`;
+      const exactPage = versePages?.[key];
+      if (exactPage && exactPage > 0) return exactPage;
+      if (startVerseKey === key && recitedPage && recitedPage > 0) return recitedPage;
+      const c = chapters.find((cc) => cc.id === startPoint.surah);
+      const [p] = String(c?.pages ?? "").split("-").map(Number);
+      if (p > 0) return p;
+    }
+    if (startPoint.type === "surah-start") {
+      const c = chapters.find((cc) => cc.id === referenceSurah);
+      const [p] = String(c?.pages ?? "").split("-").map(Number);
+      if (p > 0) return p;
+    }
+    return referencePage;
   };
   // Editing START past the drafted END raises END (start wins).
   const pushEndPastStart = (nextStart: StartPoint): StartPoint => {
@@ -606,22 +696,12 @@ export const RecitationSettingsSheet = () => {
       case "page": return `${pageToApproxSurah(sp.page)}:1`;
     }
   }
-  // Editing END before the drafted START lowers START (end wins).
-  const pushStartBeforeEnd = (nextRangeTo: RangePoint): void => {
+  // Editing END never moves START (#788): the start stays pinned to the
+  // session's launch verse however the stop point is edited. The forward
+  // constraint (end >= start) is enforced by the CustomRangePicker's floors,
+  // which never offer a stop point preceding the drafted start.
+  const setCustomRangeTo = (nextRangeTo: RangePoint): void => {
     patchDraft({ rangeTo: nextRangeTo });
-    const nextEndKey =
-      nextRangeTo.type === "verse"
-        ? `${nextRangeTo.surah}:${nextRangeTo.ayah}`
-        : `${pageToApproxSurah(nextRangeTo.page)}:286`;
-    const curStartKey = startPointAsKey();
-    if (compareVerseKeys(curStartKey, nextEndKey) > 0) {
-      // Push START to match END's position.
-      if (nextRangeTo.type === "verse") {
-        setStartPoint({ type: "verse", surah: nextRangeTo.surah, ayah: nextRangeTo.ayah });
-      } else {
-        setStartPoint({ type: "page", page: nextRangeTo.page });
-      }
-    }
   };
 
   const setDraftStopPoint = (stopPoint: StopPoint) => {
@@ -630,9 +710,6 @@ export const RecitationSettingsSheet = () => {
 
   const setStartPreset = (preset: StartPoint["type"]) => {
     switch (preset) {
-      case "current-verse":
-        pushEndPastStart({ type: "current-verse" });
-        break;
       case "current-page":
         pushEndPastStart({ type: "current-page" });
         break;
@@ -739,7 +816,7 @@ export const RecitationSettingsSheet = () => {
               }
               onValueChange={(value) => {
                 if (value === "custom-start") {
-                  setStartPoint({ type: "verse", surah: referenceSurah, ayah: referenceAyah });
+                  pushEndPastStart({ type: "verse", surah: referenceSurah, ayah: referenceAyah });
                 } else {
                   setStartPreset(value as Exclude<StartPoint["type"], "verse" | "page">);
                 }
@@ -747,7 +824,6 @@ export const RecitationSettingsSheet = () => {
               className="grid grid-cols-2 gap-2"
             >
               {[
-                { value: "current-verse", labelKey: "recitation.startCurrentVerse", fallback: "Current verse" },
                 { value: "current-page", labelKey: "recitation.startCurrentPage", fallback: "Current page" },
                 { value: "surah-start", labelKey: "recitation.startSurahStart", fallback: "Start of surah" },
                 { value: "rub-start", labelKey: "recitation.startRubStart", fallback: "Start of rub'" },
@@ -907,9 +983,10 @@ export const RecitationSettingsSheet = () => {
             <CustomRangePicker
               chapters={chapters}
               rangeTo={draft.rangeTo}
-              onChange={pushStartBeforeEnd}
+              onChange={setCustomRangeTo}
               startFloorKey={startPointAsKey()}
               referencePage={referencePage}
+              startPageFloor={startPageFloor()}
               portalContainer={sheetContentEl}
               disabled={activeOverride != null}
             />
