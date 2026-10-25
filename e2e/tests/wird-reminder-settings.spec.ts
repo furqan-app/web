@@ -157,8 +157,8 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
 
     await page.goto("/ar/plans");
 
-    // Switch to My Plans tab so PlanCard elements are mounted
-    const plansTab = page.locator('[data-testid="tab-plans"]');
+    // Verify PlanCard elements are mounted on the unified My Awrad tab
+    const plansTab = page.locator('[data-testid="tab-today"]');
     await expect(plansTab).toBeVisible();
     await plansTab.click();
     await expect(plansTab).toHaveAttribute("aria-selected", "true");
@@ -182,8 +182,8 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     // Reload and verify dedicated time persists
     await page.reload();
 
-    // Reload resets the tab to default; switch to My Plans again
-    const plansTabReloaded = page.locator('[data-testid="tab-plans"]');
+    // Reload keeps the user on the primary My Awrad tab
+    const plansTabReloaded = page.locator('[data-testid="tab-today"]');
     await expect(plansTabReloaded).toBeVisible();
     await plansTabReloaded.click();
     await expect(plansTabReloaded).toHaveAttribute("aria-selected", "true");

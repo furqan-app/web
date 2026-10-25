@@ -68,4 +68,45 @@ describe("isCustomPlanCompleted", () => {
     };
     expect(await isCustomPlanCompleted(1, pace, dbWithFullRangeEntry)).toBe(true);
   });
+
+  it("never completes a pace wird when repeat is true", async () => {
+    const repeatingPace: CustomWirdDefinition = {
+      ...weeklyRead,
+      cadence: { type: "pace", unitsPerDay: 1, repeat: true },
+    };
+    expect(
+      await isCustomPlanCompleted(1, repeatingPace, dbWithFullRangeEntry)
+    ).toBe(false);
+  });
+
+  it("does not complete a 0.5-page plan at verse 604; completes only at terminal verse 6236", async () => {
+    const halfPagePlan: CustomWirdDefinition = {
+      activity: "read",
+      unit: "page",
+      rangeStart: 1,
+      rangeEnd: 604,
+      cadence: { type: "pace", unitsPerDay: 0.5, repeat: false },
+    };
+
+    const dbAtVerse604 = {
+      planProgressEntry: {
+        findMany: vi.fn(async () => [{ range_end: "604" }]),
+        count: vi.fn(async () => 0),
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    expect(await isCustomPlanCompleted(1, halfPagePlan, dbAtVerse604)).toBe(false);
+
+    const dbAtVerse6236 = {
+      planProgressEntry: {
+        findMany: vi.fn(async () => [{ range_end: "6236" }]),
+        count: vi.fn(async () => 1),
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    expect(await isCustomPlanCompleted(1, halfPagePlan, dbAtVerse6236)).toBe(true);
+  });
 });
+

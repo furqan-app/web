@@ -78,17 +78,17 @@ test.describe("Plans Page: Authenticated Empty State & Header CTA", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
-    // 3-way wird-type picker
-    await expect(dialog.getByText("الورد اليومي")).toBeVisible();
-    await expect(dialog.getByText("ورد مخصص")).toBeVisible();
+    // Unified creation dialog options:
+    await expect(dialog.getByText("ورد جديد")).toBeVisible();
     await expect(dialog.getByText("الحصون الخمسة")).toBeVisible();
+    await expect(dialog.getByText("أوراد جاهزة للاشتراك السريع")).toBeVisible();
 
-    // Clicking "الورد اليومي" reveals the activity sub-picker
-    await dialog.getByText("الورد اليومي").click();
-    await expect(dialog.getByRole("tab", { name: "قراءة" })).toBeVisible();
-    await expect(dialog.getByRole("tab", { name: "استماع" })).toBeVisible();
-    await expect(dialog.getByRole("tab", { name: "حفظ" })).toBeVisible();
-    await expect(dialog.getByRole("tab", { name: "مراجعة" })).toBeVisible();
+    // Clicking "ورد جديد" reveals the unified custom wird form
+    await dialog.getByText("ورد جديد").click();
+    await expect(dialog.getByRole("radio", { name: "قراءة" })).toBeVisible();
+    await expect(dialog.getByRole("radio", { name: "استماع" })).toBeVisible();
+    await expect(dialog.getByRole("radio", { name: "حفظ" })).toBeVisible();
+    await expect(dialog.getByRole("radio", { name: "مراجعة" })).toBeVisible();
 
     // Press Escape to dismiss dialog
     await page.keyboard.press("Escape");
@@ -96,7 +96,7 @@ test.describe("Plans Page: Authenticated Empty State & Header CTA", () => {
   });
 });
 
-test.describe("Plans Page: Segmented Dual-View Navigation", () => {
+test.describe("Plans Page: Segmented Navigation", () => {
   test.beforeEach(async ({ context }) => {
     await clearUserPlans();
     await createTestPlan(1, "daily-wird", { quantities: { reading: 5 } });
@@ -107,7 +107,7 @@ test.describe("Plans Page: Segmented Dual-View Navigation", () => {
     await clearUserPlans();
   });
 
-  test("toggles between 'Today Tasks' and 'Plan Management' tabs", async ({
+  test("toggles between 'My Awrad', 'Progress', and 'Reminders' tabs", async ({
     page,
   }) => {
     await page.goto("/ar/plans");
@@ -115,28 +115,40 @@ test.describe("Plans Page: Segmented Dual-View Navigation", () => {
     const tablist = page.getByRole("tablist");
     await expect(tablist).toBeVisible();
 
-    const todayTab = page.getByRole("tab", { name: /مهام اليوم/i });
-    const plansTab = page.getByRole("tab", { name: /إدارة الخطط/i });
+    const todayTab = page.getByRole("tab", { name: /أورادي/i });
+    const progressTab = page.getByRole("tab", { name: /التقدّم/i });
+    const remindersTab = page.getByRole("tab", { name: /التنبيهات/i });
 
     await expect(todayTab).toBeVisible();
-    await expect(plansTab).toBeVisible();
+    await expect(progressTab).toBeVisible();
+    await expect(remindersTab).toBeVisible();
 
     // Today tab is selected by default
     await expect(todayTab).toHaveAttribute("aria-selected", "true");
-    await expect(plansTab).toHaveAttribute("aria-selected", "false");
+    await expect(progressTab).toHaveAttribute("aria-selected", "false");
+    await expect(remindersTab).toHaveAttribute("aria-selected", "false");
 
     // Today tabpanel is rendered
     const todayPanel = page.locator("#tabpanel-today");
     await expect(todayPanel).toBeVisible();
 
-    // Switch to Plans tab
-    await plansTab.click();
-    await expect(plansTab).toHaveAttribute("aria-selected", "true");
+    // Switch to Progress tab
+    await progressTab.click();
+    await expect(progressTab).toHaveAttribute("aria-selected", "true");
     await expect(todayTab).toHaveAttribute("aria-selected", "false");
 
-    const plansPanel = page.locator("#tabpanel-plans");
-    await expect(plansPanel).toBeVisible();
+    const progressPanel = page.locator("#tabpanel-progress");
+    await expect(progressPanel).toBeVisible();
     await expect(todayPanel).not.toBeVisible();
+
+    // Switch to Reminders tab
+    await remindersTab.click();
+    await expect(remindersTab).toHaveAttribute("aria-selected", "true");
+    await expect(progressTab).toHaveAttribute("aria-selected", "false");
+
+    const remindersPanel = page.locator("#tabpanel-reminders");
+    await expect(remindersPanel).toBeVisible();
+    await expect(progressPanel).not.toBeVisible();
 
     // Switch back to Today tab
     await todayTab.click();
@@ -156,10 +168,12 @@ test.describe("Plans Page: Segmented Dual-View Navigation", () => {
     const tablist = page.getByRole("tablist");
     await expect(tablist).toBeVisible();
 
-    const todayTab = page.getByRole("tab", { name: /Today's Tasks/i });
-    const plansTab = page.getByRole("tab", { name: /My Plans/i });
+    const todayTab = page.getByRole("tab", { name: /My Awrad/i });
+    const progressTab = page.getByRole("tab", { name: /Progress/i });
+    const remindersTab = page.getByRole("tab", { name: /Reminders/i });
 
     await expect(todayTab).toBeVisible();
-    await expect(plansTab).toBeVisible();
+    await expect(progressTab).toBeVisible();
+    await expect(remindersTab).toBeVisible();
   });
 });

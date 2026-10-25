@@ -45,6 +45,7 @@ export type CustomWirdCadenceInput =
       type: "pace";
       period?: "day" | "week";
       amount: number;
+      repeat?: boolean;
     }
   | {
       type: "deadline";
@@ -116,7 +117,7 @@ const ALLOWED_KEYS_BY_MODE: Record<string, string[]> = {
 };
 
 const ALLOWED_CADENCE_KEYS_BY_TYPE: Record<string, string[]> = {
-  pace: ["type", "period", "amount"],
+  pace: ["type", "period", "amount", "repeat"],
   deadline: ["type", "endDate", "repetitions"],
   weekly: ["type", "weekday"],
   daily: ["type"],
@@ -284,6 +285,8 @@ export const resolveCustomCadence = (
       return { error: "Invalid cadence period" };
     }
 
+    const repeat = cadence.repeat === true ? true : undefined;
+
     if (period === "week") {
       if (unit === "verse") {
         return {
@@ -296,12 +299,14 @@ export const resolveCustomCadence = (
         cadence: {
           type: "pace",
           unitsPerDay: amount / 7,
+          ...(repeat ? { repeat: true } : {}),
         },
       };
     }
 
     // Daily pace (period === "day")
-    if (!Number.isInteger(amount) || amount < 1) {
+    const isHalfPage = unit === "page" && amount === 0.5;
+    if (!isHalfPage && (!Number.isInteger(amount) || amount < 1)) {
       return { error: "Daily pace must be an integer" };
     }
 
@@ -309,6 +314,7 @@ export const resolveCustomCadence = (
       cadence: {
         type: "pace",
         unitsPerDay: amount,
+        ...(repeat ? { repeat: true } : {}),
       },
     };
   }
@@ -436,8 +442,26 @@ export const resolveCustomPlanEnrollment = async (
     cadence: cadenceResult.cadence,
   };
 
+  const isFractionalPage =
+    cadenceResult.cadence.type === "pace" &&
+    cadenceResult.cadence.unitsPerDay === 0.5 &&
+    rangeResult.unit === "page";
+
+  const fractionalAmount =
+    cadenceResult.cadence.type === "pace" ? cadenceResult.cadence.unitsPerDay : 0;
+
   const params: UserPlanParams = {
-    trackUnits: { custom: rangeResult.unit },
+    trackUnits: { custom: isFractionalPage ? "verse" : rangeResult.unit },
+    ...(isFractionalPage
+      ? {
+          quantities: {
+            custom: {
+              unit: "pages" as const,
+              amount: fractionalAmount,
+            },
+          },
+        }
+      : {}),
     ...(cadenceResult.endDate ? { endDate: cadenceResult.endDate } : {}),
   };
 
@@ -565,10 +589,44 @@ export const resolveCustomPlanEdit = async (
   };
 
   const existingParams = (existingPlan.params as UserPlanParams | null) ?? {};
+
+  const currentIsFractional =
+    currentDef.cadence.type === "pace" &&
+    currentDef.cadence.unitsPerDay === 0.5 &&
+    currentDef.unit === "page";
+  const currentTrackUnit =
+    existingParams.trackUnits?.custom ?? (currentIsFractional ? "verse" : currentDef.unit);
+
+  const nextIsFractional =
+    nextDefinition.cadence.type === "pace" &&
+    nextDefinition.cadence.unitsPerDay === 0.5 &&
+    nextDefinition.unit === "page";
+  const nextTrackUnit = nextIsFractional ? "verse" : nextDefinition.unit;
+
+  if (progressCount > 0 && currentTrackUnit !== nextTrackUnit) {
+    return {
+      error:
+        nextIsFractional
+          ? "Cannot switch to half-page pace after progress has been logged"
+          : "Cannot switch from half-page pace to page pace after progress has been logged",
+    };
+  }
+
   const nextParams: UserPlanParams = {
     ...existingParams,
-    trackUnits: { custom: nextDefinition.unit },
+    trackUnits: { custom: nextTrackUnit },
   };
+
+  if (nextIsFractional && nextDefinition.cadence.type === "pace") {
+    nextParams.quantities = {
+      ...nextParams.quantities,
+      custom: { unit: "pages" as const, amount: nextDefinition.cadence.unitsPerDay },
+    };
+  } else if (nextParams.quantities?.custom) {
+    const nextQ = { ...nextParams.quantities };
+    delete nextQ.custom;
+    nextParams.quantities = nextQ;
+  }
 
   if (nextDefinition.cadence.type === "deadline") {
     nextParams.endDate = nextDefinition.cadence.endDate;

@@ -21,7 +21,7 @@ const roundToStep = (n: number, step: number) => Math.round(n / step) * step;
 // the Claude Design reference's pages/day controls (listening wird, husun's
 // hifz qty) with typing added — clicking +/- 20 times to go 40 -> 20 is bad UX.
 export const QuantityStepper = ({ value, onChange, min = 1, max, step = 1 }: Props) => {
-  const isFractional = step < 1;
+  const isFractional = step < 1 || min < 1;
   // Local draft so a mid-edit empty/partial field doesn't clamp on every
   // keystroke — only committed (clamped/rounded to a step multiple >= min) on blur.
   const [draft, setDraft] = useState<string | null>(null);
@@ -29,9 +29,13 @@ export const QuantityStepper = ({ value, onChange, min = 1, max, step = 1 }: Pro
   const commit = (raw: string) => {
     const n = Number(raw);
     if (Number.isFinite(n)) {
-      let clamped = Math.max(min, roundToStep(n, step));
-      if (max !== undefined) clamped = Math.min(clamped, roundToStep(max, step));
-      onChange(clamped);
+      if (step === 1 && min < 1 && n > 0 && n < 1) {
+        onChange(min);
+      } else {
+        let clamped = Math.max(min, roundToStep(n, step));
+        if (max !== undefined) clamped = Math.min(clamped, roundToStep(max, step));
+        onChange(clamped);
+      }
     } else {
       onChange(value);
     }
@@ -43,7 +47,12 @@ export const QuantityStepper = ({ value, onChange, min = 1, max, step = 1 }: Pro
       <button
         type="button"
         onClick={() => {
-          let nextValue = roundToStep(value - step, step);
+          let nextValue: number;
+          if (step === 1 && min < 1 && value <= 1) {
+            nextValue = min;
+          } else {
+            nextValue = roundToStep(value - step, step);
+          }
           if (max !== undefined && nextValue > max) nextValue = roundToStep(max, step);
           onChange(Math.max(min, nextValue));
         }}
@@ -69,7 +78,12 @@ export const QuantityStepper = ({ value, onChange, min = 1, max, step = 1 }: Pro
       <button
         type="button"
         onClick={() => {
-          let nextValue = roundToStep(value + step, step);
+          let nextValue: number;
+          if (step === 1 && min < 1 && value < 1) {
+            nextValue = 1;
+          } else {
+            nextValue = roundToStep(value + step, step);
+          }
           if (max !== undefined) nextValue = Math.min(nextValue, roundToStep(max, step));
           onChange(nextValue);
         }}

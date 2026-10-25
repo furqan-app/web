@@ -755,6 +755,18 @@ describe("custom wird engine (#608)", () => {
       },
     });
 
+    const paceRepeatDef: CustomWirdDefinition = {
+      ...paceDef,
+      cadence: { type: "pace", unitsPerDay: 2, repeat: true },
+    };
+    const tPaceRepeat = planTemplateFromDefinition(paceRepeatDef);
+    expect(tPaceRepeat.tracks[0]).toMatchObject({
+      rule: {
+        kind: "fixed_cycle",
+        onComplete: "wrap",
+      },
+    });
+
     const deadlineDef: CustomWirdDefinition = {
       activity: "memorize",
       unit: "verse",

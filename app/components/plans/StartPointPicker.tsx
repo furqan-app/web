@@ -34,6 +34,36 @@ type Props = {
   disabled?: boolean;
 };
 
+// Find the surah that corresponds to the current value:
+// 1. Explicitly selected surah if it still matches `value`
+// 2. Surah that starts on `value`
+// 3. Fallback to surah spanning `value`
+export const resolveActiveSurah = (
+  chapters: SurahResult[],
+  value: number,
+  selectedSurahId: number | null
+): SurahResult | null => {
+  if (selectedSurahId != null) {
+    const explicit = chapters.find((c) => c.id === selectedSurahId);
+    if (explicit) {
+      const [start, end] = explicit.pages.split("-").map(Number);
+      if (value >= start && value <= (end ?? start)) {
+        return explicit;
+      }
+    }
+  }
+
+  const starting = chapters.find((c) => Number(c.pages.split("-")[0]) === value);
+  if (starting) return starting;
+
+  return (
+    chapters.find((c) => {
+      const [start, end] = c.pages.split("-").map(Number);
+      return value >= start && value <= (end ?? start);
+    }) ?? null
+  );
+};
+
 export const StartPointPicker = ({
   value,
   onChange,
@@ -45,6 +75,7 @@ export const StartPointPicker = ({
   const [mode, setMode] = useState<PickerMode>("page");
   const [openPage, setOpenPage] = useState(false);
   const [openSurah, setOpenSurah] = useState(false);
+  const [selectedSurahId, setSelectedSurahId] = useState<number | null>(null);
 
   const { data: chapters = [] } = useQuery({
     queryKey: ["quran-chapters"],
@@ -54,21 +85,20 @@ export const StartPointPicker = ({
 
   const surahName = (c: SurahResult) => (locale === "ar" ? c.name_arabic : c.name_simple);
 
-  // Find the surah that starts on or spans the current value
-  const currentSurah = useMemo(() => {
-    return chapters.find((c) => {
-      const [start, end] = c.pages.split("-").map(Number);
-      return value >= start && value <= end;
-    }) ?? null;
-  }, [chapters, value]);
+  const currentSurah = useMemo(
+    () => resolveActiveSurah(chapters, value, selectedSurahId),
+    [chapters, value, selectedSurahId]
+  );
 
   const handlePageSelect = (page: number) => {
+    setSelectedSurahId(null);
     onChange(page);
     setOpenPage(false);
   };
 
   const handleSurahSelect = (chapter: SurahResult) => {
     const startPage = Number(chapter.pages.split("-")[0]);
+    setSelectedSurahId(chapter.id);
     onChange(startPage);
     setOpenSurah(false);
   };
@@ -229,7 +259,7 @@ export const StartPointPicker = ({
                     <CommandGroup>
                       {chapters.map((chapter) => {
                         const chapterStartPage = Number(chapter.pages.split("-")[0]);
-                        const isSelected = value === chapterStartPage;
+                        const isSelected = currentSurah?.id === chapter.id;
                         return (
                           <CommandItem
                             key={chapter.id}

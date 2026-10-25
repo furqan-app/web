@@ -30,6 +30,8 @@ export type CustomWirdCadence =
       type: "pace";
       /** Units (pages or verses, depending on track unit) per day. */
       unitsPerDay: number;
+      /** Whether to wrap on completion (continuous repeating khatma). Defaults to false (stop). */
+      repeat?: boolean;
     }
   | {
       type: "deadline";
@@ -324,6 +326,9 @@ export const PLAN_TEMPLATES: Record<string, PlanTemplate> = {
 export const getPlanTemplate = (key: string): PlanTemplate | null =>
   PLAN_TEMPLATES[key] ?? null;
 
+export const isFractionalPage = (unitsPerDay: number | undefined): boolean =>
+  unitsPerDay === 0.5;
+
 /**
  * Purely constructs a PlanTemplate from a stored CustomWirdDefinition (ADR 0067).
  * Single track with key "custom", deriving cursor_advance for memorize and
@@ -367,10 +372,20 @@ export const planTemplateFromDefinition = (
   const repetitions =
     definition.cadence.type === "deadline" ? (definition.cadence.repetitions ?? 1) : 1;
 
+  const isPaceRepeat =
+    definition.cadence.type === "pace" && definition.cadence.repeat === true;
+
+  const isFractionalPage =
+    definition.cadence.type === "pace" &&
+    definition.cadence.unitsPerDay === 0.5 &&
+    definition.unit === "page";
+
+  const trackUnit = isFractionalPage ? "verse" : definition.unit;
+
   const rule: TrackRule = isMemorize
     ? {
         kind: "cursor_advance",
-        defaultUnitsPerDay,
+        defaultUnitsPerDay: isFractionalPage ? 1 : defaultUnitsPerDay,
         targetStart: definition.rangeStart,
         targetEnd: definition.rangeEnd,
         boundsUnit: definition.unit,
@@ -380,8 +395,8 @@ export const planTemplateFromDefinition = (
         rangeStart: definition.rangeStart,
         rangeEnd: definition.rangeEnd,
         boundsUnit: definition.unit,
-        defaultUnitsPerDay,
-        onComplete: "stop",
+        defaultUnitsPerDay: isFractionalPage ? 1 : defaultUnitsPerDay,
+        onComplete: isPaceRepeat ? "wrap" : "stop",
         repetitions,
       };
 
@@ -392,7 +407,7 @@ export const planTemplateFromDefinition = (
       {
         key: "custom",
         activity: definition.activity,
-        unit: definition.unit,
+        unit: trackUnit,
         rule,
       },
     ],

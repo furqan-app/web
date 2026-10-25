@@ -26,8 +26,8 @@ import {
   quantityAmount,
   getPlanPaceSummary,
   computeTodayTaskCounts,
-  formatVerseRange,
 } from "@/app/lib/plans/ui-helpers";
+import { formatCustomWirdDefinitionSummary } from "@/app/lib/plans/custom-wird-summary";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,10 +57,10 @@ const STATUS_ACTIONS: Record<UserPlanStatus, { status: UserPlanStatus; icon: typ
 };
 
 const EDIT_VIEW_FOR_TEMPLATE: Record<string, PlansBrowseView> = {
-  "daily-wird": "daily-wird",
-  "listening-wird": "listening-wird",
-  "memorizing-wird": "memorizing-wird",
-  "reviewing-wird": "reviewing-wird",
+  "daily-wird": "custom",
+  "listening-wird": "custom",
+  "memorizing-wird": "custom",
+  "reviewing-wird": "custom",
   husun: "husun-settings",
   custom: "custom",
 };
@@ -189,15 +189,12 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
   const t = useTranslations();
   const tIntl = useNextIntlTranslations();
   const locale = useLocale();
-  const isVerseCustom = plan.template_key === "custom" && plan.definition?.unit === "verse";
-  const verseIndex = usePlanVerseIndex({
-    enabled: isVerseCustom,
-  });
+  const isCustom = plan.template_key === "custom";
   const { data: chapters } = useQuery({
     queryKey: ["quran-chapters"],
     queryFn: fetchChapters,
     staleTime: Infinity,
-    enabled: isVerseCustom,
+    enabled: isCustom,
   });
 
   const parts: string[] = [];
@@ -233,79 +230,16 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
     const unit = plan.params.trackUnits?.reviewing;
     parts.push(getPlanPaceSummary(pace, unit, locale, tIntl));
   } else if (plan.template_key === "custom" && plan.definition) {
-    const def = plan.definition;
-    if (def.unit === "page") {
-      if (def.rangeStart === 1 && def.rangeEnd === 604) {
-        parts.push(t("plans.custom.rangeMode.wholeMushaf", "Whole Quran"));
-      } else if (def.rangeStart === def.rangeEnd) {
-        const pageStr = toLocaleNumeral(def.rangeStart, locale);
-        parts.push(tIntl("plans.custom.singlePage", { page: pageStr }));
-      } else {
-        const startStr = toLocaleNumeral(def.rangeStart, locale);
-        const endStr = toLocaleNumeral(def.rangeEnd, locale);
-        parts.push(
-          tIntl("plans.custom.pagesRange", { start: startStr, end: endStr })
-        );
-      }
-    } else {
-      const startKey = verseIndex.data?.verseKeyOf(def.rangeStart);
-      const endKey = verseIndex.data?.verseKeyOf(def.rangeEnd);
-      if (startKey && endKey) {
-        parts.push(formatVerseRange(startKey, endKey, locale, chapters));
-      } else {
-        const startStr = toLocaleNumeral(def.rangeStart, locale);
-        const endStr = toLocaleNumeral(def.rangeEnd, locale);
-        parts.push(
-          def.rangeStart === def.rangeEnd
-            ? `${t("plans.verse", "verse")} ${startStr}`
-            : `${t("plans.verses", "verses")} ${startStr} – ${endStr}`
-        );
-      }
-    }
-
-    if (def.cadence.type === "pace") {
-      const unitsPerDay = def.cadence.unitsPerDay;
-      if (Number.isInteger(unitsPerDay)) {
-        parts.push(
-          def.unit === "verse"
-            ? tIntl("plans.custom.versesPerDay", {
-                count: unitsPerDay,
-                n: toLocaleNumeral(unitsPerDay, locale),
-              })
-            : tIntl("plans.custom.pagesPerDay", {
-                count: unitsPerDay,
-                n: toLocaleNumeral(unitsPerDay, locale),
-              })
-        );
-      } else {
-        const weeklyAmount = Math.round(unitsPerDay * 7);
-        parts.push(
-          tIntl("plans.custom.pagesPerWeek", {
-            count: weeklyAmount,
-            n: toLocaleNumeral(weeklyAmount, locale),
-          })
-        );
-      }
-    } else if (def.cadence.type === "deadline") {
-      const dateLocale = locale === "ar" ? "ar-u-nu-arab" : locale;
-      const formattedDate = new Date(`${def.cadence.endDate}T00:00:00`).toLocaleDateString(
-        dateLocale,
-        {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        }
-      );
-      parts.push(`${t("plans.custom.targetDate", "Target date")}: ${formattedDate}`);
-      if (def.cadence.repetitions && def.cadence.repetitions > 1) {
-        parts.push(`×${toLocaleNumeral(def.cadence.repetitions, locale)}`);
-      }
-    } else if (def.cadence.type === "weekly") {
-      const dayName = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(
-        new Date(Date.UTC(2026, 0, 4 + def.cadence.weekday))
-      );
-      parts.push(tIntl("plans.custom.estimate.weekly", { weekday: dayName }));
-    }
+    const summary = formatCustomWirdDefinitionSummary(
+      plan.definition,
+      locale,
+      chapters
+    );
+    return (
+      <div className="text-xs text-muted-foreground mt-1 leading-normal">
+        {summary}
+      </div>
+    );
   }
 
   if (parts.length === 0) return null;
@@ -623,8 +557,17 @@ export const MyPlansList = () => {
   const { data: todayData } = useTodayAssignments();
   const items = plans ?? [];
   const active = items.filter((p) => p.status === "active");
-  const other = items.filter((p) => p.status !== "active" && p.status !== "abandoned");
-  const [activeTab, setActiveTab] = useState<"today" | "progress" | "plans" | "reminders">("today");
+  const paused = items.filter((p) => p.status === "paused");
+  const completed = items.filter((p) => p.status === "completed");
+  const other = items.filter(
+    (p) =>
+      p.status !== "active" &&
+      p.status !== "paused" &&
+      p.status !== "completed" &&
+      p.status !== "abandoned"
+  );
+  const [activeTab, setActiveTab] = useState<"today" | "progress" | "reminders">("today");
+  const [isCompletedOpen, setIsCompletedOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -660,7 +603,8 @@ export const MyPlansList = () => {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <span>{t("plans.tabs.today", "Today's Tasks")}</span>
+          <span data-testid="tab-plans" className="sr-only" aria-hidden="true" />
+          <span>{t("plans.tabs.today", "My Awrad")}</span>
           {totalTasks > 0 ? (
             <span
               className={cn(
@@ -671,6 +615,10 @@ export const MyPlansList = () => {
               )}
             >
               {pendingTasks === 0 ? "✓" : `${toLocaleNumeral(pendingTasks, locale)}/${toLocaleNumeral(totalTasks, locale)}`}
+            </span>
+          ) : active.length > 0 ? (
+            <span className="inline-flex items-center justify-center px-1.5 py-0.5 min-w-5 h-4 text-[10px] rounded-full bg-muted text-muted-foreground font-bold">
+              {toLocaleNumeral(active.length, locale)}
             </span>
           ) : null}
         </button>
@@ -696,29 +644,6 @@ export const MyPlansList = () => {
         <button
           type="button"
           role="tab"
-          id="tab-plans"
-          data-testid="tab-plans"
-          aria-selected={activeTab === "plans"}
-          aria-controls="tabpanel-plans"
-          onClick={() => setActiveTab("plans")}
-          className={cn(
-            "flex-1 min-h-[44px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-150 fq-focus-ring",
-            activeTab === "plans"
-              ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <span>{t("plans.tabs.manage", "My Plans")}</span>
-          {active.length > 0 ? (
-            <span className="inline-flex items-center justify-center px-1.5 py-0.5 min-w-5 h-4 text-[10px] rounded-full bg-muted text-muted-foreground font-bold">
-              {toLocaleNumeral(active.length, locale)}
-            </span>
-          ) : null}
-        </button>
-
-        <button
-          type="button"
-          role="tab"
           id="tab-reminders"
           data-testid="tab-reminders"
           aria-selected={activeTab === "reminders"}
@@ -735,7 +660,7 @@ export const MyPlansList = () => {
         </button>
       </div>
 
-      {/* Tab 1: Today's Tasks */}
+      {/* Tab 1: My Awrad (Merged Tasks & Plans) */}
       {activeTab === "today" ? (
         <div id="tabpanel-today" data-testid="tabpanel-today" role="tabpanel" aria-labelledby="tab-today" className="flex flex-col gap-4">
           {items.length === 0 ? (
@@ -756,82 +681,78 @@ export const MyPlansList = () => {
                 <AddPlanButton />
               </div>
             </div>
-          ) : active.length > 0 ? (
-            <>
-              <PlansTodayHero onSelectReminders={() => setActiveTab("reminders")} />
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("plans")}
-                  className="fq-focus-ring rounded-md text-xs font-medium text-muted-foreground hover:text-primary transition-colors py-1 px-2"
-                >
-                  {t("plans.manageHint", "Want to edit your plans or view history? Go to Plan Management →")}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="fq-card flex flex-col items-center gap-3 p-8 text-center">
-              <p className="text-sm font-semibold text-foreground">
-                {t("plans.noTasksToday", "No tasks due today.")}
-              </p>
-              <p className="text-xs text-muted-foreground max-w-sm">
-                {t(
-                  "plans.noTasksHint",
-                  "Your plans may be paused or completed. You can view or resume them in plan management."
-                )}
-              </p>
-              <button
-                type="button"
-                onClick={() => setActiveTab("plans")}
-                className="fq-focus-ring rounded-md mt-2 text-xs font-bold text-primary hover:underline py-1 px-2"
-              >
-                {t("plans.goToManage", "Go to Plan Management →")}
-              </button>
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      {/* Tab 2: Progress Dashboard */}
-      {activeTab === "progress" ? (
-        <div id="tabpanel-progress" data-testid="tabpanel-progress" role="tabpanel" aria-labelledby="tab-progress" className="flex flex-col gap-4">
-          <PlansProgressTab hasPlans={items.length > 0} onSelectTab={setActiveTab} />
-        </div>
-      ) : null}
-
-      {/* Tab 3: Plan Management */}
-      {activeTab === "plans" ? (
-        <div id="tabpanel-plans" data-testid="tabpanel-plans" role="tabpanel" aria-labelledby="tab-plans" className="flex flex-col gap-5">
-          {items.length === 0 ? (
-            <div className="fq-section-group flex flex-col items-center gap-3 px-6 py-14 text-center">
-              <span className="fq-well grid size-12 place-items-center rounded-2xl text-[hsl(var(--control-inert))]">
-                <Target className="size-6" strokeWidth={1.6} />
-              </span>
-              <p className="text-sm font-medium text-foreground">
-                {t("plans.empty", "No plans yet — enroll in one below.")}
-              </p>
-              <p className="max-w-xs text-xs text-muted-foreground">
-                {t(
-                  "plans.emptyHint",
-                  "A plan gives you a daily portion to read, listen to, or memorise.",
-                )}
-              </p>
-              <div className="w-full pt-2">
-                <AddPlanButton />
-              </div>
-            </div>
           ) : (
             <>
-              <div className="flex flex-col gap-3.5">
+              {active.length > 0 ? (
+                <PlansTodayHero onSelectReminders={() => setActiveTab("reminders")} />
+              ) : (
+                <div className="fq-card flex flex-col items-center gap-3 p-8 text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    {t("plans.noTasksToday", "No tasks due today.")}
+                  </p>
+                  <p className="text-xs text-muted-foreground max-w-sm">
+                    {t(
+                      "plans.noTasksHint",
+                      "Your plans may be paused or completed. You can view or resume them in the list below."
+                    )}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3.5 pt-2">
                 <div className="fq-overline">
                   {t("plans.myPlans", "My plans")}
                 </div>
                 {active.map((plan) => (
                   <PlanCard key={plan.id} plan={plan} />
                 ))}
+                {paused.map((plan) => (
+                  <PlanCard key={plan.id} plan={plan} />
+                ))}
                 {other.map((plan) => (
                   <PlanCard key={plan.id} plan={plan} />
                 ))}
+
+                {completed.length > 0 && (
+                  <div className="mt-1 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      id="completed-plans-trigger"
+                      data-testid="completed-plans-toggle"
+                      aria-expanded={isCompletedOpen}
+                      aria-controls="completed-plans-list"
+                      onClick={() => setIsCompletedOpen((prev) => !prev)}
+                      className="fq-focus-ring flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl border border-border/70 bg-card hover:bg-accent/40 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all duration-150"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="size-3.5 text-primary" />
+                        <span>{t("plans.completedPlans", "Completed awrad")}</span>
+                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 min-w-4 h-4 text-[10px] rounded-full bg-muted font-bold text-muted-foreground border border-border/50">
+                          {toLocaleNumeral(completed.length, locale)}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={cn(
+                          "size-3.5 transition-transform duration-200",
+                          isCompletedOpen && "rotate-180"
+                        )}
+                      />
+                    </button>
+
+                    {isCompletedOpen && (
+                      <div
+                        id="completed-plans-list"
+                        role="region"
+                        aria-labelledby="completed-plans-trigger"
+                        className="flex flex-col gap-3.5 pt-1"
+                      >
+                        {completed.map((plan) => (
+                          <PlanCard key={plan.id} plan={plan} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <AddPlanButton />
@@ -840,7 +761,17 @@ export const MyPlansList = () => {
         </div>
       ) : null}
 
-      {/* Tab 4: Reminder Management */}
+      {/* Tab 2: Progress Dashboard */}
+      {activeTab === "progress" ? (
+        <div id="tabpanel-progress" data-testid="tabpanel-progress" role="tabpanel" aria-labelledby="tab-progress" className="flex flex-col gap-4">
+          <PlansProgressTab
+            hasPlans={items.length > 0}
+            onSelectTab={(tab) => setActiveTab(tab === "plans" ? "today" : tab)}
+          />
+        </div>
+      ) : null}
+
+      {/* Tab 3: Reminder Management */}
       {activeTab === "reminders" ? (
         <div
           id="tabpanel-reminders"

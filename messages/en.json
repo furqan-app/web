@@ -269,11 +269,11 @@
     "emptyHint": "A plan gives you a daily portion to read, listen to, or memorise.",
     "nothingToday": "Nothing due today.",
     "noTasksToday": "No tasks due today.",
-    "noTasksHint": "Your plans may be paused or completed. You can view or resume them in plan management.",
+    "noTasksHint": "Your plans may be paused or completed. You can view or resume them in the list below.",
     "goToManage": "Go to Plan Management →",
     "manageHint": "Want to edit your plans or view history? Go to Plan Management →",
     "tabs": {
-      "today": "Today's Tasks",
+      "today": "My Awrad",
       "progress": "Progress",
       "manage": "My Plans",
       "reminders": "Reminders"
@@ -352,6 +352,7 @@
     "enrollError": "Something went wrong. Try again.",
     "offlineNotice": "Connect to the internet to check off progress",
     "myPlans": "My plans",
+    "completedPlans": "Completed awrad",
     "hero": {
       "title": "Today's wird",
       "of": "of",
@@ -386,8 +387,8 @@
         "description": "A repeating full-mushaf khatma with your choice of activity and pace."
       },
       "customWirdType": {
-        "title": "Custom wird",
-        "description": "Pick a custom range and set its daily pace or an end date"
+        "title": "New wird",
+        "description": "A full khatma, surah, or custom range at your own pace"
       },
       "comingSoon": "Soon"
     },
@@ -456,6 +457,7 @@
       "pagesCount": "{count, plural, one {{n} page} other {{n} pages}}",
       "versesCount": "{count, plural, one {{n} verse} other {{n} verses}}",
       "daysCount": "{count, plural, one {{n} day} other {{n} days}}",
+      "halfPagePerDay": "Half page/day",
       "pagesPerDay": "{count, plural, one {{n} page/day} other {{n} pages/day}}",
       "versesPerDay": "{count, plural, one {{n} verse/day} other {{n} verses/day}}",
       "pagesPerWeek": "{count, plural, one {{n} page/week} other {{n} pages/week}}",
@@ -469,6 +471,22 @@
       "rangeFrozen": "Target range is locked because progress has been logged",
       "verseWeeklyUnavailable": "Weekly pace is not available for verses; specify daily verses or set a deadline",
       "memorizeRepetitionsLocked": "Memorization plans track a single completion",
+      "repeatKhatma": {
+        "title": "Repeat khatma automatically on completion",
+        "hint": "Automatically restarts from Al-Fatihah once the khatma is completed.",
+        "badge": "Continuous"
+      },
+      "cadenceTabs": {
+        "daily": "Daily wird",
+        "weekly": "Weekly wird",
+        "deadline": "Target date"
+      },
+      "dailySubtype": {
+        "fullRange": "Entire range daily",
+        "pace": "Specific daily pace"
+      },
+      "resetSuggestedName": "Reset to suggested name",
+      "summaryBannerTitle": "Wird Summary",
       "submit": "Start wird",
       "save": "Save changes"
     },
@@ -496,6 +514,27 @@
       "custom": {
         "label": "Custom wird",
         "description": "A personalized goal with custom range and cadence."
+      }
+    },
+    "presets": {
+      "sectionTitle": "Quick Ready-Made Awrad",
+      "enroll": "Enroll",
+      "enrolling": "Enrolling…",
+      "mulkDaily": {
+        "title": "Surah Al-Mulk Daily",
+        "description": "Recite all of Surah Al-Mulk every day"
+      },
+      "kahfWeekly": {
+        "title": "Surah Al-Kahf Every Friday",
+        "description": "Recite all of Surah Al-Kahf every Friday"
+      },
+      "monthlyKhatma": {
+        "title": "Monthly Khatma (1 Juz/day)",
+        "description": "Recite 1 juz (20 pages) daily through the whole Quran, recurring"
+      },
+      "tayseerKhatma": {
+        "title": "Ease Wird (Half page/day)",
+        "description": "Recite half a page daily through the whole Quran, recurring"
       }
     },
     "tracks": {
