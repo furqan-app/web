@@ -79,12 +79,12 @@ test.describe("Plans Page: Authenticated Empty State & Header CTA", () => {
     await expect(dialog).toBeVisible();
 
     // Unified creation dialog options:
-    await expect(dialog.getByText("ورد جديد")).toBeVisible();
+    await expect(dialog.getByText("ورد جديد", { exact: true })).toBeVisible();
     await expect(dialog.getByText("الحصون الخمسة")).toBeVisible();
     await expect(dialog.getByText("أوراد جاهزة للاشتراك السريع")).toBeVisible();
 
     // Clicking "ورد جديد" reveals the unified custom wird form
-    await dialog.getByText("ورد جديد").click();
+    await dialog.getByText("ورد جديد", { exact: true }).click();
     await expect(dialog.getByRole("radio", { name: "قراءة" })).toBeVisible();
     await expect(dialog.getByRole("radio", { name: "استماع" })).toBeVisible();
     await expect(dialog.getByRole("radio", { name: "حفظ" })).toBeVisible();
