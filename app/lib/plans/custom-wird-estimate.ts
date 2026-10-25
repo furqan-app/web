@@ -90,7 +90,8 @@ export const computeRangeTotalUnits = (
   chapters: SurahResult[] = []
 ): { totalUnits: number; unit: "page" | "verse" } => {
   if (mode === "mushaf") {
-    return { totalUnits: 604, unit: "page" };
+    const s = params.startPage ?? 1;
+    return { totalUnits: Math.max(1, 604 - s + 1), unit: "page" };
   }
   if (mode === "page") {
     const s = params.startPage ?? 1;

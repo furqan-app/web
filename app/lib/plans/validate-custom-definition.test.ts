@@ -7,6 +7,7 @@ import {
   type PatchCustomPlanBody,
 } from "./validate-custom-definition";
 import { quranPrisma } from "@/app/utils/db";
+import { READY_MADE_PRESETS } from "@/app/constants/plan-presets";
 
 vi.mock("@/app/utils/db", () => {
   return {
@@ -191,6 +192,27 @@ describe("validate-custom-definition", () => {
       if ("error" in res) return;
 
       expect(res.definition.cadence).toEqual({ type: "pace", unitsPerDay: 4 });
+      expect(res.params.endDate).toBeUndefined();
+    });
+
+    it("7b. resolves daily pace with repeat: true", async () => {
+      const body: CreateCustomPlanBody = {
+        template_key: "custom",
+        name: "Repeating Daily Pace",
+        activity: "read",
+        range: { mode: "page", startPage: 1, endPage: 604 },
+        cadence: { type: "pace", amount: 4, repeat: true },
+      };
+
+      const res = await resolveCustomPlanEnrollment(body);
+      expect("error" in res).toBe(false);
+      if ("error" in res) return;
+
+      expect(res.definition.cadence).toEqual({
+        type: "pace",
+        unitsPerDay: 4,
+        repeat: true,
+      });
       expect(res.params.endDate).toBeUndefined();
     });
 
@@ -701,6 +723,141 @@ describe("validate-custom-definition", () => {
       expect("error" in res).toBe(true);
       if ("error" in res) {
         expect(res.error).toBe("activity cannot change after enrollment");
+      }
+    });
+
+    it("23. handles editing a plan to 0.5 page pace correctly", async () => {
+      const body: PatchCustomPlanBody = {
+        cadence: { type: "pace", period: "day", amount: 0.5 },
+      };
+
+      const res = await resolveCustomPlanEdit(body, existingPlan, 0);
+      expect("error" in res).toBe(false);
+      if ("error" in res) return;
+
+      expect(res.definition?.cadence).toEqual({
+        type: "pace",
+        unitsPerDay: 0.5,
+      });
+      expect(res.params?.trackUnits).toEqual({ custom: "verse" });
+      expect(res.params?.quantities?.custom).toEqual({
+        unit: "pages",
+        amount: 0.5,
+      });
+    });
+
+    const existingHalfPagePlan = {
+      template_key: "custom",
+      name: "ختمة تيسير",
+      definition: {
+        activity: "read" as const,
+        unit: "page" as const,
+        rangeStart: 1,
+        rangeEnd: 604,
+        cadence: { type: "pace" as const, unitsPerDay: 0.5, repeat: true },
+      },
+      params: {
+        trackUnits: { custom: "verse" as const },
+        quantities: { custom: { unit: "pages", amount: 0.5 } },
+      },
+      start_date: new Date("2026-09-01T00:00:00Z"),
+    };
+
+    it("allows editing name and repeat on an existing 0.5-page plan with progress when pace remains 0.5", async () => {
+      const body: PatchCustomPlanBody = {
+        name: "ختمة تيسير المحدثة",
+        cadence: { type: "pace", period: "day", amount: 0.5, repeat: false },
+      };
+      const res = await resolveCustomPlanEdit(body, existingHalfPagePlan, 5);
+      expect("error" in res).toBe(false);
+      if ("error" in res) return;
+      expect(res.name).toBe("ختمة تيسير المحدثة");
+      expect(res.definition?.cadence).toEqual({
+        type: "pace",
+        unitsPerDay: 0.5,
+      });
+      expect(res.params?.trackUnits).toEqual({ custom: "verse" });
+    });
+
+    it("rejects editing pace from 0.5 to 1 page/day when progress has been logged (track unit change from verse to page forbidden)", async () => {
+      const body: PatchCustomPlanBody = {
+        cadence: { type: "pace", period: "day", amount: 1 },
+      };
+      const res = await resolveCustomPlanEdit(body, existingHalfPagePlan, 5);
+      expect("error" in res).toBe(true);
+      if ("error" in res) {
+        expect(res.error).toBe(
+          "Cannot switch from half-page pace to page pace after progress has been logged"
+        );
+      }
+    });
+
+    it("rejects editing pace from integer page to 0.5 page/day when progress has been logged (track unit change from page to verse forbidden)", async () => {
+      const body: PatchCustomPlanBody = {
+        cadence: { type: "pace", period: "day", amount: 0.5 },
+      };
+      const res = await resolveCustomPlanEdit(body, existingPlan, 5);
+      expect("error" in res).toBe(true);
+      if ("error" in res) {
+        expect(res.error).toBe(
+          "Cannot switch to half-page pace after progress has been logged"
+        );
+      }
+    });
+  });
+
+  describe("0.5 page pace & Ready-made Presets", () => {
+    it("resolves fractional 0.5 page pace with verse track unit and quantities override (ADR 0038)", async () => {
+      const body: CreateCustomPlanBody = {
+        template_key: "custom",
+        name: "Half page daily",
+        activity: "read",
+        range: { mode: "page", startPage: 1, endPage: 604 },
+        cadence: { type: "pace", period: "day", amount: 0.5, repeat: true },
+      };
+
+      const res = await resolveCustomPlanEnrollment(body);
+      expect("error" in res).toBe(false);
+      if ("error" in res) return;
+
+      expect(res.definition.cadence).toEqual({
+        type: "pace",
+        unitsPerDay: 0.5,
+        repeat: true,
+      });
+      expect(res.params.trackUnits).toEqual({ custom: "verse" });
+      expect(res.params.quantities?.custom).toEqual({
+        unit: "pages",
+        amount: 0.5,
+      });
+    });
+
+    it("rejects 0.5 pace for verse-unit range", async () => {
+      const body: CreateCustomPlanBody = {
+        template_key: "custom",
+        name: "Half verse daily",
+        activity: "read",
+        range: { mode: "verse", startVerse: 1, endVerse: 100 },
+        cadence: { type: "pace", period: "day", amount: 0.5 },
+      };
+
+      const res = await resolveCustomPlanEnrollment(body);
+      expect("error" in res).toBe(true);
+      if ("error" in res) {
+        expect(res.error).toBe("Daily pace must be an integer");
+      }
+    });
+
+    it("resolves all ready-made presets successfully", async () => {
+      // Mock db aggregate for surah presets (Mulk and Kahf)
+      vi.mocked(quranPrisma.verse.aggregate).mockResolvedValue({
+        _min: { page_number: 1 },
+        _max: { page_number: 604 },
+      } as unknown as Awaited<ReturnType<typeof quranPrisma.verse.aggregate>>);
+
+      for (const preset of READY_MADE_PRESETS) {
+        const res = await resolveCustomPlanEnrollment(preset.payload);
+        expect("error" in res, `Preset ${preset.id} failed validation`).toBe(false);
       }
     });
   });

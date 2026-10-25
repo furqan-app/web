@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { authenticateAsUser, clearUserPlans, createTestPlan } from "../helpers/auth";
 
 test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () => {
+  test.describe.configure({ mode: "serial" });
+
   test.beforeEach(async ({ context }) => {
     await authenticateAsUser(context);
   });
@@ -157,8 +159,8 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
 
     await page.goto("/ar/plans");
 
-    // Switch to My Plans tab so PlanCard elements are mounted
-    const plansTab = page.locator('[data-testid="tab-plans"]');
+    // Verify PlanCard elements are mounted on the unified My Awrad tab
+    const plansTab = page.locator('[data-testid="tab-today"]');
     await expect(plansTab).toBeVisible();
     await plansTab.click();
     await expect(plansTab).toHaveAttribute("aria-selected", "true");
@@ -166,30 +168,47 @@ test.describe("Daily Wird Reminder Settings & Deep Link Affordance (#600)", () =
     // Click dedicated set button on the plan card
     const dedicatedSetButton = page.locator(`[data-testid="plan-card-dedicated-set-${planId}"]`);
     await expect(dedicatedSetButton).toBeVisible();
+    const setPromise = page.waitForResponse(
+      (res) =>
+        res.request().method() === "POST" &&
+        res.url().includes("/api/notifications/daily-reminder"),
+      { timeout: 30000 }
+    );
     await dedicatedSetButton.click();
+    await setPromise;
 
     // After setting, the dedicated time trigger should appear
     const dedicatedTrigger = page.locator(`[data-testid="dedicated-reminder-time-trigger-${planId}"]`);
-    await expect(dedicatedTrigger).toBeEnabled();
+    await expect(dedicatedTrigger).toBeEnabled({ timeout: 15000 });
 
     // Open the time popover and select 21:00
     await dedicatedTrigger.click();
     const option2100 = page.locator('[data-testid="wird-reminder-time-option-2100"]');
     await expect(option2100).toBeVisible();
+
+    const savePromise = page.waitForResponse(
+      (res) =>
+        res.request().method() === "POST" &&
+        res.url().includes("/api/notifications/daily-reminder"),
+      { timeout: 30000 }
+    );
     await option2100.click();
     await expect(page.locator('[data-testid="wird-reminder-time-popover"]')).not.toBeVisible();
+    await savePromise;
+    await expect(dedicatedTrigger).toContainText("٠٩:٠٠");
 
     // Reload and verify dedicated time persists
     await page.reload();
 
-    // Reload resets the tab to default; switch to My Plans again
-    const plansTabReloaded = page.locator('[data-testid="tab-plans"]');
+    // Reload keeps the user on the primary My Awrad tab
+    const plansTabReloaded = page.locator('[data-testid="tab-today"]');
     await expect(plansTabReloaded).toBeVisible();
     await plansTabReloaded.click();
     await expect(plansTabReloaded).toHaveAttribute("aria-selected", "true");
 
     const reloadedDedicatedTrigger = page.locator(`[data-testid="dedicated-reminder-time-trigger-${planId}"]`);
-    await expect(reloadedDedicatedTrigger).toBeEnabled();
+    await expect(reloadedDedicatedTrigger).toBeEnabled({ timeout: 15000 });
+    await expect(reloadedDedicatedTrigger).toContainText("٠٩:٠٠");
 
     // Verify the remove button is present (dedicated reminder is active)
     const dedicatedRemove = page.locator(`[data-testid="plan-card-dedicated-remove-${planId}"]`);
