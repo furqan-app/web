@@ -33,3 +33,32 @@ export const unregisterPushSubscription = async (endpoint: string): Promise<bool
     return false;
   }
 };
+
+/** Native push (ADR 0076): register the shell's FCM token for the signed-in caller. */
+export const registerDeviceToken = async (token: string): Promise<boolean> => {
+  try {
+    const { success } = await fetch("/api/notifications/device-tokens", {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ provider: "fcm", token }),
+    }).then((r) => r.json());
+    return success;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+};
+
+export const unregisterDeviceToken = async (token: string): Promise<boolean> => {
+  try {
+    const { success } = await fetch("/api/notifications/device-tokens", {
+      method: "DELETE",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ token }),
+    }).then((r) => r.json());
+    return success;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+};

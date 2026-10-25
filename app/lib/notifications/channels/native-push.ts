@@ -3,19 +3,24 @@ import type {
   ChannelSendInput,
   DeliveryResult,
   DeviceTokenProvider,
+  NativePushSendOutcome,
   NotificationChannel,
   NotificationStore,
 } from "@/app/lib/notifications/types";
 
-/** Pluggable native sender (APNs/FCM) — wired once credentials exist (Phase 2 push). Absent until then, by design. */
+/** Pluggable native sender (FCM today, APNs later — ADR 0076). Returns a per-token outcome:
+ *  "sent" or "unhandled_provider" (skip recorded by the channel, never a failure). Throws
+ *  only for genuine delivery failures the channel converts to `{ status: "failed" }`. */
 export type NativePushSender = (input: {
+  userId: number;
   provider: DeviceTokenProvider;
   token: string;
+  tokenHash: string;
   title: string;
   body: string;
   url?: string;
   notificationId: number;
-}) => Promise<void>;
+}) => Promise<NativePushSendOutcome>;
 
 export const createNativePushChannel = (deps: {
   store: NotificationStore;
@@ -43,25 +48,37 @@ export const createNativePushChannel = (deps: {
     }
 
     // A null token means its row vanished concurrently (deleted elsewhere
-    // after the list read) — counts as not-sent, never as sent.
+    // after the list read) — counts as not-sent, never as sent. An
+    // "unhandled_provider" outcome is an explicit skip (e.g. apns rows until
+    // Apple credentials exist — ADR 0076), never a failure and never a send.
     const outcomes = await Promise.allSettled(
       tokens.map(async (row) => {
         const token = await deps.store.getDeviceToken(recipient.userId, row.tokenHash);
         if (!token) return false;
-        await sender({
+        return sender({
+          userId: recipient.userId,
           provider: row.provider,
           token,
+          tokenHash: row.tokenHash,
           title: content.title,
           body: content.body,
           url: content.url,
           notificationId,
         });
-        return true;
       })
     );
 
-    const anySent = outcomes.some((r) => r.status === "fulfilled" && r.value === true);
+    const anySent = outcomes.some(
+      (r) => r.status === "fulfilled" && r.value === "sent"
+    );
     if (anySent) return { status: "sent" };
+
+    const anyUnhandledProvider = outcomes.some(
+      (r) => r.status === "fulfilled" && r.value === "unhandled_provider"
+    );
+    if (anyUnhandledProvider && !outcomes.some((r) => r.status === "rejected")) {
+      return { status: "skipped", reason: "provider_unhandled" };
+    }
 
     const firstError = outcomes.find(
       (r): r is PromiseRejectedResult => r.status === "rejected"
