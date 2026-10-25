@@ -75,7 +75,7 @@ export type SystemTestPayload = {
 export const NOTIFICATION_TYPES: Record<string, NotificationTypeDef> = {
   "plans.daily_reminder": {
     key: "plans.daily_reminder",
-    defaultChannels: ["push"],
+    defaultChannels: ["push", "native_push"],
     render: (payload: PlanDailyReminderPayload, ctx: RenderContext) => {
       const { t, tPlural, locale } = ctx;
       let displayName = payload.planName;

@@ -40,6 +40,12 @@ export type ChannelRegistry = Partial<Record<NotificationChannelKey, Notificatio
 /** Native push providers for DeviceToken rows (ADR 0072) — validated by an allowlist guard at the route, never a silent default. */
 export type DeviceTokenProvider = "apns" | "fcm";
 
+/** Per-token outcome of the pluggable native sender (ADR 0076).
+ *  "sent" — the push went out for this token; "unhandled_provider" — the sender
+ *  exists but has no credentials for this token's provider (e.g. apns until
+ *  Apple credentials land); recorded as an explicit skip, never a failure. */
+export type NativePushSendOutcome = "sent" | "unhandled_provider";
+
 export type CreateNotificationInput = {
   userId: number;
   type: string;
