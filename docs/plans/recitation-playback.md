@@ -12,7 +12,7 @@ adr: [0021, 0056]
 
 ## Summary
 
-Listen to full-Quran recitations while reading along. A reciter picker (backed by QDC's live reciter list) lets users choose any available reciter. Playback starts from a "listen" entry point on the reader or "play from here" in `MarkModal`, plays continuously — **chaining across chapters** — highlights the exact word being recited (word-level, karaoke), and while *attached* auto-advances the reader across page boundaries. Practice controls (stop point, per-ayah repeat, whole-range repeat, speed, pause-between-repeats, a "Start From" scope) live in a settings sheet with a draft model.
+Listen to full-Quran recitations while reading along. A reciter picker (backed by QDC's live reciter list) lets users choose any available reciter. Playback starts from a "listen" entry point on the reader or "play from here" in `MarkModal`, plays continuously — **chaining across chapters** — highlights the exact word being recited (word-level, karaoke), and while *attached* auto-advances the reader across page boundaries. Practice controls (stop point, per-ayah repeat, whole-range repeat, speed, pause-between-repeats, a "Start From" scope) live in a settings sheet with a draft model. When repeating verses (`perAyahRepeatCount > 1`) or stopping at a target (`isStopVerse`), exact millisecond cutoff calculations with a 25ms safety margin, a 25ms micro-fade, and muted seek pipelines eliminate audio bleed into subsequent verses (#791).
 
 Playback has **one app-wide lifecycle** ([ADR 0056](../architecture/adr/0056-recitation-global-playback-and-detachable-follow.md)): it ends only when the user stops it, its range finishes, or a hard error kills it. No navigation — page swipe, arrows, keyboard, sidebar/search jump, top-level route switch, closing the reader — ever stops it. See [ADR 0021](../architecture/adr/0021-recitation-playback.md) for proxying QDC at runtime and driving navigation from the audio timeline.
 
@@ -78,6 +78,17 @@ Navigation logic is driven by pure decision functions in `app/utils/recitation.t
 - Stepping while paused updates the audio timeline and word highlight while preserving paused state.
 - Bidirectional support: All 4 navigation icons carry `rtl:rotate-180`. In Arabic RTL, previous buttons point right toward earlier text, and next buttons point left toward subsequent text.
 
+### Repeat and stop audio cutoff (#791)
+
+When reciting with per-ayah repeat (`perAyahRepeatCount > 1`) or reaching a stop target (`isStopVerse`), continuous playback in the HTML5 `<audio>` element can bleed into subsequent verses before repeating or stopping due to browser `timeupdate` throttling (~250ms), deferred transition detection, and QDC timing skew where the next verse begins vocals before its nominal `timestamp_from`.
+
+To eliminate bleed while preserving the reciter's natural ending breath:
+- `calculateVerseCutoffMs` calculates an exact cutoff: `targetCutoffMs = boundaryMs - 25`, where `boundaryMs = Math.min(currentTiming.timestampTo, nextVocalStartMs)`. It accommodates aligner skew (next verse vocal onset within 100ms of `timestamp_from`), guards against aligner pinning artifacts by only flooring at `currentLastWordEndMs` when `currentLastWordEndMs < boundaryMs`, and strictly floors at `currentTiming.timestampFrom`.
+- `calculateBoundaryFadeVolume`: Micro-fade linear ramp across the final 25ms before cutoff to eliminate hardware speaker click/pop without attenuating spoken syllables.
+- `calculateVerseStartMs`: Starts repeated or sought verse at earliest vocal onset (`segments[0][1]`) if within 150ms of `timestampFrom`. `findActiveVerseTiming` indexes against `calculateVerseStartMs(vt)` so early-onset verses resolve immediately without false previous-verse transitions.
+- Asynchronous Seek Guard: In `scheduleSeek`, `<audio>` is paused, temporarily muted, seeked, and unmuted on `seeked` (with defensive 150ms timeout fallback) to stop hardware audio pipeline leakage during asynchronous seek operations.
+- High-precision cutoff timer (`setTimeout`) scheduled when repeating or reaching a stop target, taking `audio.playbackRate` into account. In `executeVerseBoundaryAction`, audio is paused before resetting cutoff state to prevent volume pops.
+
 ### "Play from here"
 
 `MarkModal`'s "play from here" is a **single instant-play button** — it does **not** open the settings sheet (Addendum 6 removed `openSettings(startVerseKey)` as dead code; it is not reintroduced). `MarkModal` gets no second recitation button (Addendum 12 #394's original MarkModal scope was dropped).
@@ -114,6 +125,15 @@ For `skipToPreviousWord()`:
 | Current word is first word in verse, and previous verse exists in chapter | Jump to `verseTimings[vIdx - 1].segments.at(-1).startMs`, update `currentVerseKey`, sync `recitedPage`, apply highlight |
 | Current word is first word in chapter, and `chapterId > 1` | Jump to previous chapter (`loadChapter`), land on last verse's last word |
 
+### Verse Repeat & Stop Boundary Cutoff (#791)
+
+| Condition | Active State | Action at Boundary |
+|---|---|---|
+| Repetition pass: `perAyahRepeatsDone + 1 < perAyahTarget` | Ayah repeat active | Cutoff timer active at `cutoffMs`. When fired (or `currentTimeMs >= cutoffMs` in `timeupdate`): pause, increment `perAyahRepeatsDone`, seek to `calculateVerseStartMs(currentTiming)` via `scheduleSeek`. Zero bleed into next verse. |
+| Final repetition pass: `perAyahRepeatsDone + 1 >= perAyahTarget` AND `!isStopVerse` | Normal continuous playback | No cutoff timer. Audio flows continuously and uninterrupted into verse $N+1$. `handleTimeUpdate` transitions to verse $N+1$ naturally. |
+| Final repetition pass AND `isStopVerse` | Stop target reached | Cutoff timer active at `cutoffMs`. When fired: pause audio cleanly at `cutoffMs`, then execute range repeat (`seekToRangeStart`) or `stop()`. Zero bleed into subsequent verse/surah. |
+| Chapter last verse reached | Natural file end | Browser `"ended"` event fires naturally. `handleChapterEnded` repeats or chains. |
+
 ## Verified Test Cases
 
 - **Route leave keeps playback.** Play on p1 → tap Home/Marks → audio still playing, player bar gone, return strip is a second nav row with "back to page 1" → tap Return → lands on `/pages/1`, follow attached.
@@ -130,13 +150,17 @@ For `skipToPreviousWord()`:
 - **Transport boundaries:** `1:1` disables previous verse/word; `114:6` or `stopVerseKey` disables next verse/word.
 - **Paused stepping:** Audio position and word highlight update while keeping audio paused.
 - **2-Row Responsive Player Bar:** Mobile/tablet renders Row 1 (reciter metadata + utilities) and Row 2 (centered 5 transport buttons); desktop rail renders vertical 5-button stack.
+- **Reciter 7 Al-Fatiha 1:1 → 1:2 repeat (`perAyahRepeatCount: 2`):** Pass 1 plays 1:1 through 5840ms, allows 160ms of natural ending breath until 6000ms, halts 25ms before "الْحَمْدُ" starts, and loops back to 0ms. Pass 2 plays continuously past 6025ms into 1:2 (#791).
+- **Tight inter-verse pause:** `boundaryMs = 5010`, `cutoffMs = max(5000, 4985) = 5000ms`, preserving full word ending without clipping and halting before next verse starts (#791).
+- **Fast Wasl recitation (Yasser Al-Dossari Surah Al-Adiyat 100:1 → 100:2):** 2785ms cutoff lands cleanly in silence gap, 25ms micro-fade prevents speaker pop, muted seek returns to 0ms with zero audio bleed (#791).
+- **Stop target reached:** Audio pauses cleanly at stop verse cutoff with zero audio escaping from the next verse (#791).
 
 ## Files to Change
 
 - `app/api/quran/recitations/reciters/route.ts`, `app/api/quran/recitations/[reciterId]/chapters/[chapterId]/route.ts`, `app/api/quran/chapters/[chapterId]/verse-pages/route.ts` — QDC proxies + verse→page map.
 - `app/api/quran/verses/[verseKey]/stop-point/route.ts` — `?scope=page|rub|hizb|juz|rub-start`, plain Prisma, `findFirst`.
 - `app/lib/recitation/qdc-provider.ts` — the single QDC normalization layer (segment 3-tuple filtering).
-- `app/contexts/RecitationContext.tsx` — `<audio>`, reciter (persisted), settings, `stopVerseKeyRef`/`stopChapterIdRef` (resolved async in `play()` and the stop-point-changed effect, against `currentVerseKeyRef` falling back to `startVerseKeyRef`); real `"ended"` detection → `decideChapterEnd`/`chainToNextChapter`/`loadChapter`; `seekToRangeStart` sets `currentVerseKeyRef` on the same-chapter branch; `isFollowing` state (not persisted; `play()` publishes `recitedPage` synchronously but does **not** force `isFollowing`; `stop()` + failure path reset it); `resetPerAyahRepeat()`; apply-time seek-to-drafted-start; Start From resolution helpers; `skipToNextVerse`, `skipToPreviousVerse`, `skipToNextWord`, `skipToPreviousWord` with pause preservation and highlight updates. **No** `rangeProgress`/`perAyahProgress` (Addendum 12 #394 badge deleted; `perAyahRepeatsDoneRef`/`rangeRepeatsDoneRef`/`resolveRepeatTarget` stay).
+- `app/contexts/RecitationContext.tsx` — `<audio>`, reciter (persisted), settings, `stopVerseKeyRef`/`stopChapterIdRef` (resolved async in `play()` and the stop-point-changed effect, against `currentVerseKeyRef` falling back to `startVerseKeyRef`); real `"ended"` detection → `decideChapterEnd`/`chainToNextChapter`/`loadChapter`; `seekToRangeStart` sets `currentVerseKeyRef` on the same-chapter branch; `isFollowing` state (not persisted; `play()` publishes `recitedPage` synchronously but does **not** force `isFollowing`; `stop()` + failure path reset it); `resetPerAyahRepeat()`; apply-time seek-to-drafted-start; Start From resolution helpers; `skipToNextVerse`, `skipToPreviousVerse`, `skipToNextWord`, `skipToPreviousWord` with pause preservation and highlight updates; cutoff timer & micro-fade lifecycle (`cutoffTimeoutRef`, `boundaryFadeRafRef`, `scheduleCutoff`, `clearCutoffState`); muted seek guard pipeline (`scheduleSeek`). **No** `rangeProgress`/`perAyahProgress` (Addendum 12 #394 badge deleted; `perAyahRepeatsDoneRef`/`rangeRepeatsDoneRef`/`resolveRepeatTarget` stay).
 - `app/types/recitation.ts` — `canSkipNextWord`, `canSkipPreviousWord`, and skip word methods in `RecitationContextType`.
 - `app/components/reader/RecitationFollow.tsx` — the attach/detach machine (thin wrapper over `decideRecitationFollow`; keeps `prevRecitedPage` stale on a follow; unmount → detach).
 - `app/components/recitation/RecitationReturnStrip.tsx` — **new**; the second nav row.
@@ -145,12 +169,12 @@ For `skipToPreviousWord()`:
 - `app/components/RecitationSettingsSheet.tsx` — draft model + sticky-footer CTA; Start From section + push-apart; stop-point pill grid; reciter combobox (`Popover` `container` = the sheet's own `SheetContent` node — the reusable nested-Popover-in-Sheet focus-trap fix, Addendum 5b); grouped surfaces.
 - `app/components/MarkModal.tsx` — a single instant "play from here" button (no `openSettings`).
 - `app/components/QuranWord.tsx` — `data-fq-word={word.location}`; drop `useRecitation()`.
-- `app/utils/recitation.ts` & `app/utils/recitation.test.ts` — `decideChapterEnd`, `decideRecitationFollow`, `recitedVerseLabelParts`, `decideSkipVerse`, `decideSkipWord`, `canSkipToPreviousWord`, `canSkipToNextWord` (+ comprehensive unit tests).
+- `app/utils/recitation.ts` & `app/utils/recitation.test.ts` — `decideChapterEnd`, `decideRecitationFollow`, `recitedVerseLabelParts`, `decideSkipVerse`, `decideSkipWord`, `canSkipToPreviousWord`, `canSkipToNextWord`, `calculateVerseCutoffMs`, `calculateVerseStartMs`, `calculateBoundaryFadeVolume`, `findActiveVerseTiming` (+ comprehensive unit tests).
 - `app/hooks/use-is-reader-route.ts` — **new**; extracted `pathname.includes("/pages/")` predicate (now render-decision-load-bearing, ADR 0056); `RecitationPlayerBar`/`Nav`/`PlansWidget` migrated onto it.
 - `components/ui/popover.tsx` — `container` prop on `PopoverContent` (forwarded to the Portal) — the reusable Dialog/Sheet-nested-Popover fix.
 - `app/globals.css` — `--fq-nav-extra`; `.fq-recitation-strip-open`; the settings-sheet / cycle-button styling; `.fq-recitation-bar-rail .fq-recitation-row-lead { display: contents; }` for rail mode.
 - `messages/{en,ar}.json` — reciter/stop-point/Start-From/cycle/CTA keys; `recitation.recitedVerseLabel`, `recitation.returnToRecitedVerse`; `nextAyah`, `previousAyah`, `nextWord`, `previousWord`; **removed** `recitation.rangeProgress*`.
-- `docs/architecture/adr/0021-recitation-playback.md` (+ its 2026-07-16 no-cross-chapter and 2026-08-03 highlight addenda, and the note that Addendum 10's hard stop is superseded), `adr/0056-…`, `docs/architecture/DECISIONS.md`.
+- `docs/architecture/adr/0021-recitation-playback.md` (+ its 2026-07-16 no-cross-chapter and 2026-08-03 highlight addenda, and the note that Addendum 10's hard stop is superseded), `adr/0056-…`, `docs/architecture/DECISIONS.md`, `docs/architecture/decisions/recitation.md`.
 - `e2e/tests/recitation-lifecycle.spec.ts` — **new** (route-leave, page-away, return, stop, pause/resume, mobile overlay-toggle; recitation APIs + a silent-WAV data URI stubbed via `page.route`).
 
 ## Constraints
@@ -172,6 +196,10 @@ For `skipToPreviousWord()`:
 - Word highlight on step must be DOM-direct (`applyWordHighlight`) without re-rendering the mushaf tree.
 - Stepping while paused must update audio position, active verse, and word highlight while preserving paused state (no auto-play).
 - Touch targets must remain comfortable (minimum 28px buttons with 44px hit-box clearance).
+- Pure decision functions in `app/utils/recitation.ts` with 100% unit test coverage.
+- Continuous unrepeated playback across non-stop verses MUST remain completely uninterrupted (no timers, no artificial gaps).
+- Playback rate (`audio.playbackRate`) MUST be accounted for in millisecond timer delay calculations: `delayMs = (cutoffMs - currentTimeMs) / playbackRate`.
+- Timers must be properly cleaned up on pause, stop, and seek to avoid memory leaks or orphan callbacks.
 
 ## What NOT to Do
 
@@ -188,6 +216,8 @@ For `skipToPreviousWord()`:
 - Do **not** touch the cross-chapter `loadChapter` branch to "also fix" the same-chapter repeat bug — it was already correct.
 - Do **not** re-render the whole mushaf tree on word step (DOM-direct highlight only).
 - Do **not** auto-play when stepping while paused.
+- Do **not** apply cutoff timers during continuous unrepeated playback across non-stop verses.
+- Do **not** seek unpaused `<audio>` elements without pausing or muting during the seek pipeline.
 
 ## Decisions Made
 
@@ -204,6 +234,7 @@ For `skipToPreviousWord()`:
 - Word stepping uses `ChevronLeft` and `ChevronRight` with `rtl:rotate-180` alongside `SkipBack` and `SkipForward`.
 - Stepping backward always lands on the start of the previous word (deterministic 1-step per click).
 - Hard boundaries enforce no overshooting beyond `1:1` or `114:6` / active stop target.
+- Repeat and stop cutoff boundaries calculated via `calculateVerseCutoffMs` with a 25ms safety margin floored at `timestampFrom`, a 25ms micro-fade to avoid hardware pop, and muting during seeks to prevent audio bleed across tight verse transitions (#791).
 
 ## Revision History
 
@@ -220,3 +251,4 @@ For `skipToPreviousWord()`:
 - 2026-09-01 — folded Addendum 13 (Issue #467, [ADR 0056](../architecture/adr/0056-recitation-global-playback-and-detachable-follow.md)). **Supersedes Addendum 10** (hard stop on route leave) **and** the "swiping away while playing snaps back" forced follow. Playback is now one app-wide lifecycle; follow is a two-state `isFollowing` attach/detach machine in the `RecitationFollow` leaf (`ReaderPager` still gains no `useRecitation()`); the way back to a detached session is `RecitationReturnStrip`, a second nav row that reserves space (`--fq-nav-extra`) and toggles with the nav overlay. Deleted Addendum 12 #394's `rangeProgress`/`perAyahProgress` state and badge; `RecitationPlayerBar` is reader-route-only and its verse-key line became `recitedVerseLabel`. **Known follow-up:** `followTo` still silently drops a follow issued mid drag/commit — the stale-`prevRecitedPage` retry covers the common case but not a follow lost right before a sub-threshold drag-return.
 - 2026-09-23 — folded Addendum 14 (Issue #379): Next/Previous verse navigation (SkipBack/SkipForward) and word stepping (ChevronLeft/ChevronRight) added to RecitationContext and RecitationPlayerBar. Reorganized mobile/tablet player bar into a 2-row tiered layout (Row 1 context & utilities, Row 2 centered 5-button transport cluster) with vertical stacking on desktop rail. Pure decision functions decideSkipVerse, decideSkipWord, canSkipToPreviousWord, and canSkipToNextWord with full unit test coverage.
 - 2026-09-25 — folded Addendum 15 (Issue #695): clamped QDC inter-verse timing overlaps (~10ms in Reciter 10 Sa'ud ash-Shuraim) in `qdc-provider.ts` and switched `findActiveVerseTiming` to `findLast` to prevent reader page flipping to anchor - 1 at playback start.
+- 2026-10-25 — folded Addendum 16 (Issue #791): calculated verse cutoff with 25ms safety margin floored at timestampFrom, 25ms boundary micro-fade to prevent speaker pop, muted seek pipeline guard, and findActiveVerseTiming integration.
