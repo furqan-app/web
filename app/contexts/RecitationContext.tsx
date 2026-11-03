@@ -24,6 +24,9 @@ import { fetchVersePages } from "@/app/hooks/use-verse-pages";
 import { useQuranMushaf } from "@/app/contexts/QuranMushafContext";
 import { SurahResult } from "@/app/types";
 import {
+  calculateBoundaryFadeVolume,
+  calculateVerseCutoffMs,
+  calculateVerseStartMs,
   canSkipToNext,
   canSkipToNextWord,
   canSkipToPrevious,
@@ -142,6 +145,12 @@ type RecitationContextType = {
   chapters: SurahResult[];
   status: RecitationStatus;
   currentVerseKey: string | null;
+  // Launch verse of the current session (the verseKey play() was called
+  // with), or null when idle. Lets consumers (e.g. RecitationSettingsSheet)
+  // pin the session's start point instead of tracking the drifting current
+  // verse. Mirrors startVerseKeyRef as state. See
+  // docs/plans/fix-recitation-custom-stop-start-point.md.
+  startVerseKey: string | null;
   // Mushaf page of the currently recited verse, or null when not playing. The
   // persistent pager (ADR 0028) watches this to keep the recited page on screen —
   // navigation lives in the pager, not here.
@@ -207,17 +216,17 @@ type RecitationContextType = {
   playbackError: "offline-unavailable" | "playback-failed" | null;
 };
 
-// A drafted Start From point (#393). Per-session, never persisted — derived
-// fresh every time the settings sheet opens (Current Verse while playing,
-// Current Page while idle) and discarded on close. Unlike RangePoint (the
-// persisted "custom" stop target) there is no localStorage footprint.
+// A drafted Start From point (#393, refined #788). Per-session, never persisted —
+// seeded to the concrete launch verse upon session start, or Current Page while idle.
+// Unlike RangePoint (the persisted "custom" stop target) there is no localStorage footprint.
 export type StartPoint =
-  | { type: "current-verse" }
   | { type: "current-page" }
   | { type: "surah-start" }
   | { type: "rub-start" }
   | { type: "verse"; surah: number; ayah: number }
-  | { type: "page"; page: number };
+  | { type: "page"; page: number }
+  // Legacy variant kept for resolveStartPoint exhaustiveness; UI uses current-page or verse.
+  | { type: "current-verse" };
 
 const RecitationContext = createContext<RecitationContextType | undefined>(undefined);
 
@@ -250,6 +259,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const [chapters, setChapters] = useState<SurahResult[]>([]);
   const [status, setStatus] = useState<RecitationStatus>("idle");
   const [currentVerseKey, setCurrentVerseKey] = useState<string | null>(null);
+  const [startVerseKey, setStartVerseKey] = useState<string | null>(null);
   const [recitedPage, setRecitedPage] = useState<number | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [pageFirstVerseKey, setPageFirstVerseKey] = useState<string | null>(null);
@@ -280,6 +290,61 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   const loadedReciterIdRef = useRef<number | null>(null);
   const activeWordLocationRef = useRef<string | null>(null);
   const pendingSeekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cutoffTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const boundaryFadeRafRef = useRef<number | null>(null);
+  const boundaryFadeCutoffRef = useRef<number | null>(null);
+
+  // Cancels every verse-boundary governor: the execute timer, the volume-fade
+  // rAF loop, and the audio element's playback volume. The volume reset to 1
+  // is load-bearing: any code path abandoning a mid-ramp fade (stop/pause/
+  // skip/seek/reciter change) must never leave the element quiet for whatever
+  // plays next. Every such path routes through here.
+  const clearCutoffState = useCallback(() => {
+    if (cutoffTimeoutRef.current) {
+      clearTimeout(cutoffTimeoutRef.current);
+      cutoffTimeoutRef.current = null;
+    }
+    if (boundaryFadeRafRef.current != null) {
+      cancelAnimationFrame(boundaryFadeRafRef.current);
+      boundaryFadeRafRef.current = null;
+    }
+    boundaryFadeCutoffRef.current = null;
+    if (audioRef.current) {
+      audioRef.current.volume = 1;
+      audioRef.current.muted = false;
+    }
+  }, []);
+
+  // Drives the linear volume micro-fade across the final ~25ms before an armed
+  // repeat/stop cutoff (#791). Ramping smoothly to silence across this tight window
+  // prevents hardware speaker pop/click and eliminates latency leaks without muffling
+  // or attenuating the reciter's actual spoken words. Volume is sampled from
+  // audio.currentTime (the audio clock — immune to wall-clock drift) each
+  // animation frame. Idempotent per cutoff: re-arming ticks for the same
+  // boundary do not restart the loop. A paused element exits the loop; the
+  // next play() re-arms via handleTimeUpdate and clearCutoffState restores
+  // the volume.
+  const startBoundaryFade = useCallback((cutoffMs: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (boundaryFadeCutoffRef.current === cutoffMs && boundaryFadeRafRef.current != null) return;
+    if (boundaryFadeRafRef.current != null) {
+      cancelAnimationFrame(boundaryFadeRafRef.current);
+      boundaryFadeRafRef.current = null;
+    }
+    boundaryFadeCutoffRef.current = cutoffMs;
+    const step = () => {
+      boundaryFadeRafRef.current = null;
+      const element = audioRef.current;
+      if (!element || element.paused) return;
+      const currentTimeMs = element.currentTime * 1000;
+      element.volume = calculateBoundaryFadeVolume(currentTimeMs, cutoffMs);
+      if (currentTimeMs < cutoffMs) {
+        boundaryFadeRafRef.current = requestAnimationFrame(step);
+      }
+    };
+    boundaryFadeRafRef.current = requestAnimationFrame(step);
+  }, []);
 
   useEffect(() => {
     setSettings(getInitialSettings());
@@ -341,15 +406,20 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
   const stop = useCallback(() => {
     const audio = audioRef.current;
-    audio?.pause();
+    if (audio) {
+      audio.pause();
+      audio.muted = false;
+    }
     if (pendingSeekTimeoutRef.current) {
       clearTimeout(pendingSeekTimeoutRef.current);
       pendingSeekTimeoutRef.current = null;
     }
+    clearCutoffState();
     setStatus("idle");
     currentChapterIdRef.current = null;
     currentVerseKeyRef.current = null;
     setCurrentVerseKey(null);
+    setStartVerseKey(null);
     setRecitedPage(null);
     setIsFollowing(false);
     rangeRepeatOverrideRef.current = null;
@@ -364,7 +434,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       playbackSpeed: prev.playbackSpeed,
     }));
     clearHighlight();
-  }, [clearHighlight]);
+  }, [clearCutoffState, clearHighlight]);
 
   // verse_key → page for the ACTIVE edition. Recitation follow navigates to the
   // page it reports, so resolving against the default edition sent the reader to
@@ -396,6 +466,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
       const chapterId = parseChapterIdFromVerseKey(verseKey);
       setStatus("loading");
+      // Publish the launch verse synchronously with the status transition so
+      // effects keyed on status (e.g. the settings sheet's start-point seed)
+      // observe both in the same render. See
+      // docs/plans/fix-recitation-custom-stop-start-point.md.
+      setStartVerseKey(verseKey);
       setPlaybackError(null);
       // Published before the awaits below so a UI row can recognise "this
       // session is mine" while it's still loading (re-entry guard) — cleared
@@ -435,6 +510,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
           setStatus("idle");
           rangeRepeatOverrideRef.current = null;
           setActiveOverride(null);
+          setStartVerseKey(null);
           setPlaybackError("playback-failed");
           return false;
         }
@@ -469,6 +545,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         loadedReciterIdRef.current = reciterId;
         setCurrentVerseKey(verseKey);
         clearHighlight();
+        clearCutoffState();
 
         audio.src = chapterAudio.audioUrl;
         audio.playbackRate = s.playbackSpeed;
@@ -484,6 +561,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         setStatus("idle");
         rangeRepeatOverrideRef.current = null;
         setActiveOverride(null);
+        setStartVerseKey(null);
         setIsFollowing(false);
         if (!isOnline) {
           setPlaybackError("offline-unavailable");
@@ -493,40 +571,60 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         return false;
       }
     },
-    [settings, reciters, getVersePages, clearHighlight, mushafId, isOnline],
+    [settings, reciters, getVersePages, clearHighlight, clearCutoffState, mushafId, isOnline],
   );
   const togglePlayPause = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (status === "playing") {
       audio.pause();
+      clearCutoffState();
       setStatus("paused");
     } else if (status === "paused") {
       audio.play();
       setStatus("playing");
     }
-  }, [status]);
+  }, [status, clearCutoffState]);
 
   const scheduleSeek = useCallback((timestampFromMs: number, pauseMs: number) => {
+    clearCutoffState();
     const audio = audioRef.current;
     if (!audio) return;
+
+    if (pendingSeekTimeoutRef.current) {
+      clearTimeout(pendingSeekTimeoutRef.current);
+      pendingSeekTimeoutRef.current = null;
+    }
+
+    audio.pause();
+    audio.muted = true;
+
+    const performSeek = () => {
+      let resolved = false;
+      const done = () => {
+        if (resolved) return;
+        resolved = true;
+        audio.removeEventListener("seeked", done);
+        audio.muted = false;
+        audio.volume = 1;
+        if (currentVerseKeyRef.current) {
+          audio.play().catch(() => {});
+        }
+      };
+      audio.addEventListener("seeked", done, { once: true });
+      audio.currentTime = timestampFromMs / 1000;
+      setTimeout(done, 150);
+    };
+
     if (pauseMs > 0) {
-      audio.pause();
       pendingSeekTimeoutRef.current = setTimeout(() => {
-        audio.currentTime = timestampFromMs / 1000;
-        audio.play();
         pendingSeekTimeoutRef.current = null;
+        performSeek();
       }, pauseMs);
     } else {
-      audio.currentTime = timestampFromMs / 1000;
-      // Always (re)start playback here, not just in the pauseMs>0 branch —
-      // scheduleSeek is also called from handleChapterEnded, where the audio
-      // is already paused (the native "ended" event fires with audio.paused
-      // === true). Calling play() on already-playing audio (the
-      // handleTimeUpdate call site) is a harmless no-op.
-      audio.play();
+      performSeek();
     }
-  }, []);
+  }, [clearCutoffState]);
 
   // Publish the Mushaf page of the recited verse. The persistent pager (ADR 0028)
   // owns navigation, so it — not this context — keeps that page on screen; here we
@@ -572,6 +670,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       seekVerseKey?: string | "last" | "first-word" | "last-word",
       autoPlay: boolean = true,
     ): Promise<boolean> => {
+      clearCutoffState();
       const audio = audioRef.current;
       if (!audio) return false;
 
@@ -613,7 +712,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         const targetTiming = targetVerseKey
           ? chapterAudio.verseTimings.find((vt) => vt.verseKey === targetVerseKey)
           : undefined;
-        targetTimestampMs = targetTiming?.timestampFrom ?? 0;
+        targetTimestampMs = targetTiming ? calculateVerseStartMs(targetTiming) : 0;
         if (targetTiming && targetTiming.segments.length > 0) {
           targetWordLocation = `${targetTiming.verseKey}:${targetTiming.segments[0][0]}`;
         }
@@ -641,7 +740,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       }
       return true;
     },
-    [settings.playbackSpeed, getVersePages, updateRecitedPage, applyWordHighlight],
+    [settings.playbackSpeed, getVersePages, updateRecitedPage, applyWordHighlight, clearCutoffState],
   );
 
   // Loads chapterId + 1's audio and keeps playing from its start — the
@@ -673,6 +772,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   // loadChapter first.
   const seekToRangeStart = useCallback(
     (pauseMs: number) => {
+      clearCutoffState();
       const startVerseKey = startVerseKeyRef.current;
       const audio = audioRef.current;
       if (!startVerseKey || !audio) return;
@@ -691,7 +791,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
           currentVerseKeyRef.current = startVerseKey;
           setCurrentVerseKey(startVerseKey);
           updateRecitedPage(startVerseKey);
-          scheduleSeek(startTiming.timestampFrom, pauseMs);
+          scheduleSeek(calculateVerseStartMs(startTiming), pauseMs);
         }
         return;
       }
@@ -714,7 +814,48 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         reload();
       }
     },
-    [settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
+    [clearCutoffState, settings.reciterId, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
+  );
+
+  // Executes the repeat or stop action when playback reaches a verse boundary
+  // (cutoff point) without leaking into the next verse (#791).
+  const executeVerseBoundaryAction = useCallback(
+    (currentTiming: VerseTiming) => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      clearCutoffState();
+      const perAyahTarget = resolveRepeatTarget(settings.perAyahRepeatCount);
+
+      if (perAyahRepeatsDoneRef.current + 1 < perAyahTarget) {
+        perAyahRepeatsDoneRef.current += 1;
+        scheduleSeek(calculateVerseStartMs(currentTiming), settings.pauseBetweenRepeatsMs);
+        return;
+      }
+
+      const isStopVerse = currentTiming.verseKey === stopVerseKeyRef.current;
+      if (isStopVerse) {
+        const rangeTarget = resolveRepeatTarget(
+          rangeRepeatOverrideRef.current ?? settings.rangeRepeatCount,
+        );
+        if (rangeRepeatsDoneRef.current + 1 < rangeTarget) {
+          rangeRepeatsDoneRef.current += 1;
+          perAyahRepeatsDoneRef.current = 0;
+          seekToRangeStart(settings.pauseBetweenRepeatsMs);
+          return;
+        }
+        stop();
+      }
+    },
+    [
+      clearCutoffState,
+      settings.perAyahRepeatCount,
+      settings.pauseBetweenRepeatsMs,
+      settings.rangeRepeatCount,
+      scheduleSeek,
+      seekToRangeStart,
+      stop,
+    ],
   );
 
   // Resolves a drafted Start From point to a verse key. Presets resolve
@@ -764,6 +905,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       if (status === "idle") return;
       const audio = audioRef.current;
       if (!audio) return;
+      clearCutoffState();
       const s = effectiveSettings ?? settings;
       const chapterId = parseChapterIdFromVerseKey(verseKey);
 
@@ -774,10 +916,11 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         const timing = verseTimingsRef.current.find((vt) => vt.verseKey === verseKey);
         if (!timing) return;
         startVerseKeyRef.current = verseKey;
+        setStartVerseKey(verseKey);
         currentVerseKeyRef.current = verseKey;
         setCurrentVerseKey(verseKey);
         updateRecitedPage(verseKey);
-        scheduleSeek(timing.timestampFrom, 0);
+        scheduleSeek(calculateVerseStartMs(timing), 0);
         return;
       }
 
@@ -785,13 +928,14 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       if (!reciterId) return;
       try {
         startVerseKeyRef.current = verseKey;
+        setStartVerseKey(verseKey);
         const ok = await loadChapter(reciterId, chapterId, verseKey);
         if (!ok) stop();
       } catch {
         stop();
       }
     },
-    [status, settings, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage],
+    [status, settings, reciters, loadChapter, scheduleSeek, stop, updateRecitedPage, clearCutoffState],
   );
 
   const skipToNextVerse = useCallback(async () => {
@@ -811,6 +955,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     if (decision.action === "none") return;
 
     clearHighlight();
+    clearCutoffState();
     if (pendingSeekTimeoutRef.current) {
       clearTimeout(pendingSeekTimeoutRef.current);
       pendingSeekTimeoutRef.current = null;
@@ -849,7 +994,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         stop();
       }
     }
-  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, clearHighlight, applyWordHighlight]);
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, clearHighlight, applyWordHighlight, clearCutoffState]);
 
   const skipToPreviousVerse = useCallback(async () => {
     if (status === "idle" || !currentVerseKeyRef.current) return;
@@ -868,6 +1013,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     if (decision.action === "none") return;
 
     clearHighlight();
+    clearCutoffState();
     if (pendingSeekTimeoutRef.current) {
       clearTimeout(pendingSeekTimeoutRef.current);
       pendingSeekTimeoutRef.current = null;
@@ -906,7 +1052,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         stop();
       }
     }
-  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, clearHighlight, applyWordHighlight]);
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, clearHighlight, applyWordHighlight, clearCutoffState]);
 
   const skipToNextWord = useCallback(async () => {
     if (status === "idle" || !currentVerseKeyRef.current) return;
@@ -927,6 +1073,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
     if (decision.action === "none") return;
 
+    clearCutoffState();
     if (pendingSeekTimeoutRef.current) {
       clearTimeout(pendingSeekTimeoutRef.current);
       pendingSeekTimeoutRef.current = null;
@@ -964,7 +1111,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         stop();
       }
     }
-  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, applyWordHighlight]);
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, applyWordHighlight, clearCutoffState]);
 
   const skipToPreviousWord = useCallback(async () => {
     if (status === "idle" || !currentVerseKeyRef.current) return;
@@ -985,6 +1132,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
     if (decision.action === "none") return;
 
+    clearCutoffState();
     if (pendingSeekTimeoutRef.current) {
       clearTimeout(pendingSeekTimeoutRef.current);
       pendingSeekTimeoutRef.current = null;
@@ -1022,7 +1170,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         stop();
       }
     }
-  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, applyWordHighlight]);
+  }, [status, settings.reciterId, reciters, loadChapter, stop, updateRecitedPage, applyWordHighlight, clearCutoffState]);
 
   const canSkipPrevious = canSkipToPrevious(currentVerseKey, status);
   const canSkipNext = canSkipToNext(
@@ -1061,12 +1209,13 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     const previousVerseKey = currentVerseKeyRef.current;
 
     if (activeTiming.verseKey !== previousVerseKey) {
+      clearCutoffState();
       const previousTiming = verseTimings.find((vt) => vt.verseKey === previousVerseKey);
       const perAyahTarget = resolveRepeatTarget(settings.perAyahRepeatCount);
 
       if (previousTiming && perAyahRepeatsDoneRef.current + 1 < perAyahTarget) {
         perAyahRepeatsDoneRef.current += 1;
-        scheduleSeek(previousTiming.timestampFrom, settings.pauseBetweenRepeatsMs);
+        scheduleSeek(calculateVerseStartMs(previousTiming), settings.pauseBetweenRepeatsMs);
         return;
       }
 
@@ -1093,6 +1242,45 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       updateRecitedPage(activeTiming.verseKey);
     }
 
+    // Cutoff evaluation for active verse when ayah repeat or stop target is active (#791):
+    const perAyahTarget = resolveRepeatTarget(settings.perAyahRepeatCount);
+    const isAyahRepeatActive = perAyahRepeatsDoneRef.current + 1 < perAyahTarget;
+    const isStopVerse = activeTiming.verseKey === stopVerseKeyRef.current;
+
+    if (isAyahRepeatActive || isStopVerse) {
+      const currentIndex = verseTimings.findIndex((vt) => vt.verseKey === activeTiming.verseKey);
+      const nextTiming = currentIndex >= 0 ? verseTimings[currentIndex + 1] : undefined;
+      if (nextTiming) {
+        const cutoffMs = calculateVerseCutoffMs(activeTiming, nextTiming);
+
+        // Defensive cutoff if playback has already reached or exceeded the cutoff point:
+        if (currentTimeMs >= cutoffMs) {
+          executeVerseBoundaryAction(activeTiming);
+          return;
+        }
+
+        // Arm/recalibrate high-precision cutoff timer when approaching the verse boundary (within 1500ms),
+        // and drive the volume micro-fade across the final ~25ms so the executor's fire
+        // latency can never leak the next verse's onset (#791):
+        const remainingMs = (cutoffMs - currentTimeMs) / audio.playbackRate;
+        if (remainingMs <= 1500) {
+          startBoundaryFade(cutoffMs);
+          if (cutoffTimeoutRef.current) {
+            clearTimeout(cutoffTimeoutRef.current);
+            cutoffTimeoutRef.current = null;
+          }
+          cutoffTimeoutRef.current = setTimeout(() => {
+            cutoffTimeoutRef.current = null;
+            const element = audioRef.current;
+            if (!element || element.paused) return;
+            executeVerseBoundaryAction(activeTiming);
+          }, Math.max(0, remainingMs));
+        }
+      }
+    } else if (cutoffTimeoutRef.current) {
+      clearCutoffState();
+    }
+
     // A tick matching no segment leaves the current word lit rather than
     // blanking it. Two real cases produce that: genuine silence between words
     // (89 such gaps in surah 2 alone for one reciter), and verse-boundary skew —
@@ -1103,7 +1291,17 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     // highlight blink on every verse. Only stop()/clearHighlight() clears.
     const wordLocation = findActiveWordLocation(activeTiming, currentTimeMs);
     if (wordLocation) applyWordHighlight(wordLocation);
-  }, [settings, scheduleSeek, seekToRangeStart, stop, updateRecitedPage, applyWordHighlight]);
+  }, [
+    settings,
+    scheduleSeek,
+    seekToRangeStart,
+    stop,
+    updateRecitedPage,
+    applyWordHighlight,
+    clearCutoffState,
+    startBoundaryFade,
+    executeVerseBoundaryAction,
+  ]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -1130,7 +1328,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
     const perAyahTarget = resolveRepeatTarget(settings.perAyahRepeatCount);
     if (perAyahRepeatsDoneRef.current + 1 < perAyahTarget) {
       perAyahRepeatsDoneRef.current += 1;
-      scheduleSeek(lastTiming.timestampFrom, settings.pauseBetweenRepeatsMs);
+      scheduleSeek(calculateVerseStartMs(lastTiming), settings.pauseBetweenRepeatsMs);
       return;
     }
 
@@ -1170,7 +1368,13 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
   // Live playback speed changes (no reload needed).
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = settings.playbackSpeed;
-  }, [settings.playbackSpeed]);
+    clearCutoffState();
+  }, [settings.playbackSpeed, clearCutoffState]);
+
+  // Clean up cutoff timer on unmount
+  useEffect(() => {
+    return () => clearCutoffState();
+  }, [clearCutoffState]);
 
   // Stop-point changed mid-session (via the player bar's settings sheet) —
   // recompute where the range should end without restarting playback.
@@ -1250,7 +1454,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
       const wasPlaying = status === "playing";
       audio.src = chapterAudio.audioUrl;
       audio.playbackRate = settings.playbackSpeed;
-      audio.currentTime = timing.timestampFrom / 1000;
+      audio.currentTime = calculateVerseStartMs(timing) / 1000;
       if (wasPlaying) audio.play();
     })();
 
@@ -1262,8 +1466,9 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
 
   const resetPerAyahRepeat = useCallback(() => {
     if (status === "idle") return;
+    clearCutoffState();
     perAyahRepeatsDoneRef.current = 0;
-  }, [status]);
+  }, [status, clearCutoffState]);
 
   const openSettings = useCallback(() => {
     setIsSettingsOpen(true);
@@ -1282,6 +1487,7 @@ export function RecitationProvider({ children }: { children: ReactNode }) {
         chapters,
         status,
         currentVerseKey,
+        startVerseKey,
         recitedPage,
         isFollowing,
         setIsFollowing,

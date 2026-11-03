@@ -13,6 +13,15 @@ import {
   formatRawVerseKey,
 } from "@/app/lib/plans/ui-helpers";
 import { PLAN_TRACK_UI } from "@/app/constants/plan-ui";
+import { computeRangeTotalUnits } from "@/app/lib/plans/custom-wird-estimate";
+import {
+  bindDedicatedReminderSafe,
+  buildRangeInput,
+  type CustomWirdFormState,
+} from "@/app/lib/plans/custom-wird-form-helpers";
+import { READY_MADE_PRESETS } from "@/app/constants/plan-presets";
+import { computeCustomWirdSummarySentence } from "@/app/lib/plans/custom-wird-summary";
+import { resolveActiveSurah } from "@/app/components/plans/StartPointPicker";
 
 describe("Plans UI Redesign (#595)", () => {
   describe("i18n Translation Keys Parity", () => {
@@ -54,8 +63,8 @@ describe("Plans UI Redesign (#595)", () => {
     });
 
     it("verifies tab labels are correctly localized", () => {
-      expect(arMessages.plans.tabs.today).toBe("مهام اليوم");
-      expect(enMessages.plans.tabs.today).toBe("Today's Tasks");
+      expect(arMessages.plans.tabs.today).toBe("أورادي");
+      expect(enMessages.plans.tabs.today).toBe("My Awrad");
       expect(arMessages.plans.tabs.manage).toBe("إدارة الخطط");
       expect(enMessages.plans.tabs.manage).toBe("My Plans");
     });
@@ -388,10 +397,10 @@ describe("Custom Wird UI (#610)", () => {
 
     it("verifies picker card description matches custom wird reality (Nit 4)", () => {
       expect(arMessages.plans.browse.customWirdType.description).toBe(
-        "اختَر مقدارًا مخصّصًا وحدِّد وتيرته اليومية أو تاريخ انتهائه"
+        "ختمة كاملة أو سورة أو جزء بنشاط ووتيرة تختارهما"
       );
       expect(enMessages.plans.browse.customWirdType.description).toBe(
-        "Pick a custom range and set its daily pace or an end date"
+        "A full khatma, surah, or custom range at your own pace"
       );
     });
 
@@ -615,6 +624,332 @@ describe("Custom Wird UI (#610)", () => {
     it("uses نتيجة واحدة for a single sidebar result (agy follow-up)", () => {
       const msg = new IntlMessageFormat(arMessages.sidebar.filterResultsCount, "ar");
       expect(msg.format({ count: 1, n: "١" })).toBe("نتيجة واحدة");
+    });
+  });
+
+  describe("Awrad Creation and Start Point (#613)", () => {
+    it("computes remaining units accurately when mushaf starts at an offset page", () => {
+      expect(computeRangeTotalUnits("mushaf", { startPage: 1 }).totalUnits).toBe(604);
+      expect(computeRangeTotalUnits("mushaf", { startPage: 599 }).totalUnits).toBe(6);
+      expect(computeRangeTotalUnits("mushaf", { startPage: 604 }).totalUnits).toBe(1);
+    });
+
+    it("builds range input with custom start page in mushaf mode", () => {
+      const sampleState: CustomWirdFormState = {
+        name: "",
+        activity: "read",
+        rangeMode: "mushaf",
+        startSurah: 1,
+        endSurah: 114,
+        startJuz: 1,
+        endJuz: 30,
+        startPage: 599,
+        endPage: 604,
+        startVerse: { surah: 1, ayah: 1 },
+        endVerse: { surah: 114, ayah: 6 },
+        cadenceType: "pace",
+        pacePeriod: "day",
+        paceAmount: 1,
+        deadlineEndDate: "2026-12-31",
+        repetitions: 1,
+        weekday: 5,
+      };
+
+      const rangeInput = buildRangeInput(sampleState);
+      expect(rangeInput).toEqual({
+        mode: "page",
+        startPage: 599,
+        endPage: 604,
+      });
+    });
+
+    it("prioritizes explicitly selected surah or exact startPage when chapters share a page", () => {
+      const mockChapters: SurahResult[] = [
+        {
+          id: 98,
+          name_arabic: "البينة",
+          name_simple: "Al-Bayyinah",
+          pages: "598-599",
+          revelation_place: "madinah",
+          verses_count: 8,
+        },
+        {
+          id: 99,
+          name_arabic: "الزلزلة",
+          name_simple: "Az-Zalzalah",
+          pages: "599-599",
+          revelation_place: "madinah",
+          verses_count: 8,
+        },
+        {
+          id: 100,
+          name_arabic: "العاديات",
+          name_simple: "Al-Adiyat",
+          pages: "599-600",
+          revelation_place: "makkah",
+          verses_count: 11,
+        },
+      ];
+
+      // 1. Explicitly clicking Al-Zalzalah (id 99) selects Al-Zalzalah
+      expect(resolveActiveSurah(mockChapters, 599, 99)?.name_arabic).toBe("الزلزلة");
+
+      // 2. Explicitly clicking Al-Adiyat (id 100) selects Al-Adiyat
+      expect(resolveActiveSurah(mockChapters, 599, 100)?.name_arabic).toBe("العاديات");
+
+      // 3. Entering page 599 with no explicit surah prioritizes the surah that starts on 599 (Al-Zalzalah), not Al-Bayyinah (starts on 598)
+      expect(resolveActiveSurah(mockChapters, 599, null)?.name_arabic).toBe("الزلزلة");
+    });
+
+    it("resolves active surah on page 604 containing three surahs (Al-Ikhlas, Al-Falaq, An-Nas)", () => {
+      const page604Chapters: SurahResult[] = [
+        {
+          id: 112,
+          name_arabic: "الإخلاص",
+          name_simple: "Al-Ikhlas",
+          pages: "604-604",
+          revelation_place: "makkah",
+          verses_count: 4,
+        },
+        {
+          id: 113,
+          name_arabic: "الفلق",
+          name_simple: "Al-Falaq",
+          pages: "604-604",
+          revelation_place: "makkah",
+          verses_count: 5,
+        },
+        {
+          id: 114,
+          name_arabic: "الناس",
+          name_simple: "An-Nas",
+          pages: "604-604",
+          revelation_place: "makkah",
+          verses_count: 6,
+        },
+      ];
+
+      // Explicit clicks
+      expect(resolveActiveSurah(page604Chapters, 604, 114)?.name_arabic).toBe("الناس");
+      expect(resolveActiveSurah(page604Chapters, 604, 113)?.name_arabic).toBe("الفلق");
+      expect(resolveActiveSurah(page604Chapters, 604, 112)?.name_arabic).toBe("الإخلاص");
+
+      // Default prioritization (first surah starting on page 604 -> Al-Ikhlas)
+      expect(resolveActiveSurah(page604Chapters, 604, null)?.name_arabic).toBe("الإخلاص");
+    });
+
+    it("separates active, paused, and completed plans properly for collapsible grouping", () => {
+      const mockPlans: UserPlanListItem[] = [
+        { id: 1, template_key: "daily-wird", params: {}, start_date: "2026-09-01", status: "active", has_progress: true },
+        { id: 2, template_key: "custom", params: {}, start_date: "2026-09-01", status: "paused", has_progress: true },
+        { id: 3, template_key: "custom", params: {}, start_date: "2026-08-01", status: "completed", has_progress: true },
+        { id: 4, template_key: "husun", params: {}, start_date: "2026-07-01", status: "completed", has_progress: true },
+        { id: 5, template_key: "custom", params: {}, start_date: "2026-06-01", status: "abandoned", has_progress: false },
+      ];
+
+      const active = mockPlans.filter((p) => p.status === "active");
+      const paused = mockPlans.filter((p) => p.status === "paused");
+      const completed = mockPlans.filter((p) => p.status === "completed");
+      const other = mockPlans.filter(
+        (p) =>
+          p.status !== "active" &&
+          p.status !== "paused" &&
+          p.status !== "completed" &&
+          p.status !== "abandoned"
+      );
+
+      expect(active).toHaveLength(1);
+      expect(active[0]?.id).toBe(1);
+
+      expect(paused).toHaveLength(1);
+      expect(paused[0]?.id).toBe(2);
+
+      expect(completed).toHaveLength(2);
+      expect(completed.map((p) => p.id)).toEqual([3, 4]);
+
+      expect(other).toHaveLength(0);
+    });
+  });
+
+  describe("Ready-made Presets and Half-page Pacing", () => {
+    it("ensures all preset translation keys exist in both ar.json and en.json", () => {
+      const getNested = (obj: Record<string, unknown>, path: string) =>
+        path
+          .split(".")
+          .reduce<unknown>(
+            (acc, part) =>
+              acc && typeof acc === "object"
+                ? (acc as Record<string, unknown>)[part]
+                : undefined,
+            obj
+          );
+
+      expect(arMessages.plans.presets.sectionTitle).toBeDefined();
+      expect(enMessages.plans.presets.sectionTitle).toBeDefined();
+      expect(arMessages.plans.presets.enroll).toBeDefined();
+      expect(enMessages.plans.presets.enroll).toBeDefined();
+      expect(arMessages.plans.presets.enrolling).toBeDefined();
+      expect(enMessages.plans.presets.enrolling).toBeDefined();
+
+      for (const preset of READY_MADE_PRESETS) {
+        // Strip leading "plans." to query messages.plans
+        const relTitleKey = preset.titleKey.replace(/^plans\./, "");
+        const relDescKey = preset.descriptionKey.replace(/^plans\./, "");
+
+        const arTitle = getNested(arMessages.plans, relTitleKey);
+        const enTitle = getNested(enMessages.plans, relTitleKey);
+        const arDesc = getNested(arMessages.plans, relDescKey);
+        const enDesc = getNested(enMessages.plans, relDescKey);
+
+        expect(arTitle, `Missing ar title for preset ${preset.id}`).toBeDefined();
+        expect(enTitle, `Missing en title for preset ${preset.id}`).toBeDefined();
+        expect(arDesc, `Missing ar desc for preset ${preset.id}`).toBeDefined();
+        expect(enDesc, `Missing en desc for preset ${preset.id}`).toBeDefined();
+      }
+    });
+
+    it("defines the 4 agreed ready-made presets with correct payload structures", () => {
+      const ids = READY_MADE_PRESETS.map((p) => p.id);
+      expect(ids).toEqual([
+        "mulk-daily",
+        "kahf-weekly",
+        "monthly-khatma",
+        "tayseer-khatma",
+      ]);
+
+      const mulk = READY_MADE_PRESETS.find((p) => p.id === "mulk-daily")!;
+      expect(mulk.payload.range).toEqual({ mode: "surah", startSurah: 67, endSurah: 67 });
+      expect(mulk.payload.cadence).toEqual({ type: "daily" });
+
+      const kahf = READY_MADE_PRESETS.find((p) => p.id === "kahf-weekly")!;
+      expect(kahf.payload.range).toEqual({ mode: "surah", startSurah: 18, endSurah: 18 });
+      expect(kahf.payload.cadence).toEqual({ type: "weekly", weekday: 5 });
+
+      const monthly = READY_MADE_PRESETS.find((p) => p.id === "monthly-khatma")!;
+      expect(monthly.payload.range).toEqual({ mode: "page", startPage: 1, endPage: 604 });
+      expect(monthly.payload.cadence).toEqual({ type: "pace", period: "day", amount: 20, repeat: true });
+
+      const tayseer = READY_MADE_PRESETS.find((p) => p.id === "tayseer-khatma")!;
+      expect(tayseer.payload.range).toEqual({ mode: "page", startPage: 1, endPage: 604 });
+      expect(tayseer.payload.cadence).toEqual({ type: "pace", period: "day", amount: 0.5, repeat: true });
+    });
+
+    it("formats summary sentences for half-page wird in both Arabic and English", () => {
+      const arSummary = computeCustomWirdSummarySentence({
+        activity: "read",
+        unit: "page",
+        rangeMode: "mushaf",
+        range: { startPage: 1, endPage: 604 },
+        cadence: { type: "pace", amount: 0.5, pacePeriod: "day", repeat: true },
+        locale: "ar",
+      });
+      expect(arSummary).toContain("بمعدل نصف صفحة يومياً");
+      expect(arSummary).toContain("ختمة مستمرة تتكرر تلقائياً");
+
+      const enSummary = computeCustomWirdSummarySentence({
+        activity: "read",
+        unit: "page",
+        rangeMode: "mushaf",
+        range: { startPage: 1, endPage: 604 },
+        cadence: { type: "pace", amount: 0.5, pacePeriod: "day", repeat: true },
+        locale: "en",
+      });
+      expect(enSummary).toContain("at half a page/day");
+      expect(enSummary).toContain("continuous repeating khatma");
+    });
+
+    it("respects startPage > 1 on mushaf range in summary sentence", () => {
+      const arSummary = computeCustomWirdSummarySentence({
+        activity: "read",
+        unit: "page",
+        rangeMode: "mushaf",
+        range: { startPage: 100, endPage: 604 },
+        cadence: { type: "pace", amount: 1, pacePeriod: "day", repeat: true },
+        locale: "ar",
+      });
+      expect(arSummary).toContain("المصحف بدءاً من صفحة ١٠٠");
+      expect(arSummary).toContain("ختمة مستمرة تتكرر تلقائياً");
+
+      const enSummary = computeCustomWirdSummarySentence({
+        activity: "read",
+        unit: "page",
+        rangeMode: "mushaf",
+        range: { startPage: 100, endPage: 604 },
+        cadence: { type: "pace", amount: 1, pacePeriod: "day", repeat: true },
+        locale: "en",
+      });
+      expect(enSummary).toContain("the Qur'an starting from page 100");
+      expect(enSummary).toContain("continuous repeating khatma");
+    });
+
+    it("does not include repeating khatma note when rangeMode is not mushaf", () => {
+      const arSummary = computeCustomWirdSummarySentence({
+        activity: "read",
+        unit: "page",
+        rangeMode: "surah",
+        range: { startSurah: 67, endSurah: 67 },
+        cadence: { type: "pace", amount: 2, pacePeriod: "day", repeat: true },
+        locale: "ar",
+      });
+      expect(arSummary).not.toContain("ختمة");
+    });
+
+    describe("Preset Default Dedicated Reminders (Addendum 1)", () => {
+      it("defines tailored default reminder times for specific presets", () => {
+        const kahf = READY_MADE_PRESETS.find((p) => p.id === "kahf-weekly");
+        const mulk = READY_MADE_PRESETS.find((p) => p.id === "mulk-daily");
+        const monthly = READY_MADE_PRESETS.find((p) => p.id === "monthly-khatma");
+        const tayseer = READY_MADE_PRESETS.find((p) => p.id === "tayseer-khatma");
+
+        expect(kahf?.defaultReminderTime).toBe("10:00");
+        expect(mulk?.defaultReminderTime).toBe("22:00");
+        expect(monthly?.defaultReminderTime).toBeUndefined();
+        expect(tayseer?.defaultReminderTime).toBeUndefined();
+      });
+
+      it("bindDedicatedReminderSafe posts to daily-reminder endpoint and handles success", async () => {
+        let sentUrl = "";
+        let sentBody: Record<string, unknown> | null = null;
+
+        const mockFetch = async (url: string | URL | Request, init?: RequestInit) => {
+          sentUrl = String(url);
+          sentBody = JSON.parse(String(init?.body));
+          return { ok: true, json: async () => ({ success: true }) } as Response;
+        };
+
+        const success = await bindDedicatedReminderSafe({
+          planId: 42,
+          time: "10:00",
+          locale: "ar",
+          fetchFn: mockFetch as unknown as typeof fetch,
+        });
+
+        expect(success).toBe(true);
+        expect(sentUrl).toBe("/api/notifications/daily-reminder");
+        expect(sentBody).toMatchObject({
+          type: "dedicated",
+          planId: 42,
+          time: "10:00",
+          enabled: true,
+          locale: "ar",
+        });
+        expect(typeof (sentBody as Record<string, unknown> | null)?.timezone).toBe("string");
+      });
+
+      it("bindDedicatedReminderSafe degrades safely without throwing when network/fetch fails", async () => {
+        const failingFetch = async () => {
+          throw new Error("Network error");
+        };
+
+        const success = await bindDedicatedReminderSafe({
+          planId: 42,
+          time: "10:00",
+          locale: "ar",
+          fetchFn: failingFetch as unknown as typeof fetch,
+        });
+
+        expect(success).toBe(false);
+      });
     });
   });
 });

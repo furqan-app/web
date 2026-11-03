@@ -64,7 +64,8 @@ export const findActiveVerseTiming = (
   currentTimeMs: number,
 ): VerseTiming | undefined => {
   const active = verseTimings.findLast(
-    (vt) => currentTimeMs >= vt.timestampFrom && currentTimeMs < vt.timestampTo,
+    (vt) =>
+      currentTimeMs >= calculateVerseStartMs(vt) && currentTimeMs < vt.timestampTo,
   );
   if (active) return active;
   return currentTimeMs >= (verseTimings[verseTimings.length - 1]?.timestampTo ?? 0)
@@ -83,6 +84,94 @@ export const findActiveWordLocation = (
     ([, startMs, endMs]) => currentTimeMs >= startMs && currentTimeMs < endMs,
   );
   return segment ? `${verseTiming.verseKey}:${segment[0]}` : null;
+};
+
+// Calculates the exact starting millisecond for repeating or seeking to `timing`.
+// If the first word segment starts slightly before `timestampFrom` (within 150ms skew in QDC metadata),
+// seeking to `segments[0][1]` prevents clipping the initial syllable (#791).
+export const calculateVerseStartMs = (timing: VerseTiming): number => {
+  if (
+    timing.segments.length > 0 &&
+    timing.segments[0][1] < timing.timestampFrom &&
+    timing.timestampFrom - timing.segments[0][1] <= 150
+  ) {
+    return timing.segments[0][1];
+  }
+  return timing.timestampFrom;
+};
+
+// Calculates the exact cutoff millisecond for `currentTiming` when an ayah repeat
+// or stop boundary is active, preventing audio bleed into `nextTiming` while
+// preserving the reciter's natural ending breath/pause (#791).
+export const calculateVerseCutoffMs = (
+  currentTiming: VerseTiming,
+  nextTiming?: VerseTiming,
+  safetyMarginMs: number = 25,
+): number => {
+  if (!nextTiming) {
+    return currentTiming.timestampTo;
+  }
+
+  const currentLastWordEndMs =
+    currentTiming.segments.length > 0
+      ? currentTiming.segments[currentTiming.segments.length - 1][2]
+      : currentTiming.timestampFrom;
+
+  // Determine the next verse's vocal start:
+  // QDC's nextTiming.timestampFrom is the calibrated verse partition boundary.
+  // In rare cases (e.g. Al-Fatiha 1:2 for Reciter 7, where 1:2 first segment starts at 6025ms
+  // while timestampFrom is 6090ms, and 1:1 last word ended at 5840ms), the vocal audio starts early.
+  // We only trust nextTiming.segments[0][1] as an early vocal onset if:
+  // 1. It is strictly after the current verse's last word with a clear gap (> currentLastWordEndMs + 50)
+  //    (filtering out aligner artifacts where segments[0][1] was pinned to the previous word end), AND
+  // 2. It is earlier than nextTiming.timestampFrom with skew <= 100ms.
+  let nextVocalStartMs = nextTiming.timestampFrom;
+  if (nextTiming.segments.length > 0) {
+    const firstWordStartMs = nextTiming.segments[0][1];
+    const skewMs = nextTiming.timestampFrom - firstWordStartMs;
+    if (
+      firstWordStartMs > currentLastWordEndMs + 50 &&
+      skewMs > 0 &&
+      skewMs <= 100
+    ) {
+      nextVocalStartMs = firstWordStartMs;
+    }
+  }
+
+  // The inter-verse partition boundary must never overshoot currentTiming.timestampTo,
+  // preventing bleed into the subsequent verse when timestampTo < nextTiming.timestampFrom (#791).
+  const boundaryMs = Math.min(currentTiming.timestampTo, nextVocalStartMs);
+  const targetCutoffMs = boundaryMs - safetyMarginMs;
+
+  // If the last word genuinely ended before the boundary, we floor at lastWordEnd
+  // to avoid unnecessarily cutting the last word when the inter-verse gap is very tight (< safetyMarginMs).
+  // But if lastWordEnd was pinned to or exceeds boundaryMs (a common QDC forced-aligner artifact),
+  // we do not floor at lastWordEnd, as that would eliminate the safety margin and cause bleed.
+  const floorMs =
+    currentLastWordEndMs < boundaryMs
+      ? Math.max(currentTiming.timestampFrom, currentLastWordEndMs)
+      : currentTiming.timestampFrom;
+
+  const safeCutoff = Math.max(floorMs, targetCutoffMs);
+  return Math.max(currentTiming.timestampFrom, Math.min(boundaryMs, safeCutoff));
+};
+
+// Volume envelope for the verse-boundary micro-fade (#791). The cutoff
+// pause/seek is executed by a setTimeout whose fire latency can occasionally
+// jitter under main-thread load. To ensure silence at cutoff and prevent hardware
+// speaker pop/click without attenuating or muffling the reciter's actual words,
+// the playback volume ramps linearly to zero across a tight `fadeDurationMs` (default 25ms)
+// window immediately before the cutoff (sampled from audio.currentTime).
+// Returns 1 outside the fade window and 0 at/after the cutoff.
+export const calculateBoundaryFadeVolume = (
+  currentTimeMs: number,
+  cutoffMs: number,
+  fadeDurationMs: number = 25,
+): number => {
+  const remainingMs = cutoffMs - currentTimeMs;
+  if (remainingMs <= 0) return 0;
+  if (remainingMs >= fadeDurationMs) return 1;
+  return remainingMs / fadeDurationMs;
 };
 
 // ── Attach/detach follow (ADR 0050) ─────────────────────────────────────────

@@ -68,7 +68,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
         closeLabel={t("common.close", "Close")}
         className="w-full sm:max-w-[408px] gap-0 p-0 flex flex-col"
       >
-        <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-5 border-b border-border/70 text-start">
+        <SheetHeader className="relative shrink-0 px-5 pb-3.5 pt-[max(1.25rem,calc(0.75rem+env(safe-area-inset-top,0px)))] border-b border-border/70 text-start">
           <SheetTitle className="text-[15px] font-semibold leading-none text-foreground">
             {t("settings", "Settings")}
           </SheetTitle>
@@ -83,7 +83,7 @@ export const SettingsSidebar = ({ open, onOpenChange }: Props = {}) => {
         {/* Grouped sections with identity overlines and hairline rows — matching
             the Reader Lab's structure. Three cohesive categories: Reading,
             Appearance, and Device & Recitation. */}
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           <SettingsSection
             title={t("settingsSectionReading", "Reading")}
           >

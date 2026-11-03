@@ -29,6 +29,8 @@ export type CustomWirdFormState = {
   repetitions: number;
   /** Due weekday (0–6) — only read when cadenceType === "weekly". */
   weekday: number;
+  /** Whether to repeat the khatma upon completion when range is whole mushaf. */
+  repeat?: boolean;
 };
 
 export const buildRangeInput = (
@@ -36,7 +38,7 @@ export const buildRangeInput = (
 ): CustomWirdRangeInput => {
   switch (state.rangeMode) {
     case "mushaf":
-      return { mode: "page", startPage: 1, endPage: 604 };
+      return { mode: "page", startPage: state.startPage, endPage: 604 };
     case "surah":
       return { mode: "surah", startSurah: state.startSurah, endSurah: state.endSurah };
     case "juz":
@@ -72,6 +74,7 @@ export const buildCustomCreateBody = (
       type: "pace",
       period: state.pacePeriod,
       amount: state.paceAmount,
+      ...(state.rangeMode === "mushaf" && state.repeat !== undefined ? { repeat: state.repeat } : {}),
     };
   } else {
     cadence = {
@@ -118,6 +121,7 @@ export const buildCustomPatchBody = (
       type: "pace",
       period: state.pacePeriod,
       amount: state.paceAmount,
+      ...(state.rangeMode === "mushaf" && state.repeat !== undefined ? { repeat: state.repeat } : {}),
     };
   } else {
     body.cadence = {
@@ -130,4 +134,39 @@ export const buildCustomPatchBody = (
   }
 
   return body;
+};
+
+export const bindDedicatedReminderSafe = async ({
+  planId,
+  time,
+  locale,
+  fetchFn = fetch,
+}: {
+  planId: number;
+  time: string;
+  locale: string;
+  fetchFn?: typeof fetch;
+}): Promise<boolean> => {
+  try {
+    const timezone =
+      typeof Intl !== "undefined"
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+        : "UTC";
+    const res = await fetchFn("/api/notifications/daily-reminder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "dedicated",
+        planId,
+        time,
+        enabled: true,
+        timezone,
+        locale,
+      }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Failed to auto-bind dedicated reminder for preset plan:", err);
+    return false;
+  }
 };

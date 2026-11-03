@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
   Headphones,
@@ -21,8 +21,10 @@ import type { SurahResult } from "@/app/types";
 import {
   PLAN_ACTIVITIES,
   type PlanActivity,
+  type UserPlanParams,
 } from "@/app/constants/plans";
-import { PLAN_ACTIVITY_UI } from "@/app/constants/plan-ui";
+import type { PlanPreset } from "@/app/constants/plan-presets";
+import { PLAN_ACTIVITY_UI, PLAN_TEMPLATE_UI } from "@/app/constants/plan-ui";
 import type { UserPlanListItem } from "@/app/server/actions/plans";
 import {
   computeCadenceEstimate,
@@ -32,12 +34,18 @@ import {
   type CustomWirdFormMode,
 } from "@/app/lib/plans/custom-wird-estimate";
 import {
+  bindDedicatedReminderSafe,
   buildCustomCreateBody,
   buildCustomPatchBody,
   type CustomWirdFormState,
 } from "@/app/lib/plans/custom-wird-form-helpers";
+import {
+  computeCustomWirdSummarySentence,
+  suggestWirdName,
+} from "@/app/lib/plans/custom-wird-summary";
 import { QuantityStepper } from "./QuantityStepper";
 import { JuzRangeSlider } from "./JuzRangeSlider";
+import { StartPointPicker } from "./StartPointPicker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -80,6 +88,7 @@ const ACTIVITY_ICONS: Record<PlanActivity, typeof BookOpen> = {
 
 type Props = {
   existingPlan?: UserPlanListItem;
+  preset?: PlanPreset | null;
   onDone: () => void;
 };
 
@@ -189,14 +198,24 @@ const SurahCombobox = ({
   );
 };
 
-export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
+export const CustomWirdForm = ({ existingPlan, preset, onDone }: Props) => {
   const t = useTranslations();
   const tIntl = useNextIntlTranslations();
   const locale = useLocale();
-  const { enrollCustom, updateCustom } = usePlans();
+  const queryClient = useQueryClient();
+  const { enrollCustom, updateCustom, updateParams } = usePlans();
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
   const isEdit = existingPlan !== undefined;
+  const isLegacyPreset = Boolean(existingPlan && existingPlan.template_key !== "custom");
+  const defaultPresetName =
+    isLegacyPreset && existingPlan
+      ? t(
+          PLAN_TEMPLATE_UI[existingPlan.template_key]?.labelKey ?? "plans.templates.dailyWird.label",
+          "Daily wird"
+        )
+      : "";
+  const presetName = preset ? t(preset.titleKey, preset.defaultTitle) : "";
   const hasProgress = Boolean(existingPlan?.has_progress);
   const existingDef = existingPlan?.definition;
 
@@ -207,34 +226,68 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
   });
 
   // Name
-  const [name, setName] = useState(existingPlan?.name ?? "");
+  const [isNameManuallyEdited, setIsNameManuallyEdited] = useState(
+    (isEdit && Boolean(existingPlan?.name)) || Boolean(preset)
+  );
+  const [name, setName] = useState(existingPlan?.name || presetName || defaultPresetName);
 
   // Activity (permanently frozen on edit)
-  const [activity, setActivity] = useState<PlanActivity>(
-    existingDef?.activity ?? "read"
-  );
+  const [activity, setActivity] = useState<PlanActivity>(() => {
+    if (existingDef?.activity) return existingDef.activity;
+    if (preset) return preset.payload.activity;
+    if (existingPlan?.template_key === "listening-wird") return "listen";
+    if (existingPlan?.template_key === "memorizing-wird") return "memorize";
+    if (existingPlan?.template_key === "reviewing-wird") return "review";
+    return "read";
+  });
 
   // Range Mode
   const initialRangeMode = useMemo<CustomWirdFormMode>(() => {
-    if (!existingDef) return "mushaf";
-    if (existingDef.unit === "verse") return "verse";
-    if (existingDef.rangeStart === 1 && existingDef.rangeEnd === 604) return "mushaf";
-    return "page";
-  }, [existingDef]);
+    if (existingDef) {
+      if (existingDef.unit === "verse") return "verse";
+      if (existingDef.rangeStart === 1 && existingDef.rangeEnd === 604) return "mushaf";
+      return "page";
+    }
+    if (preset) {
+      if (preset.payload.range.mode === "surah") return "surah";
+      if (preset.payload.range.mode === "juz") return "juz";
+      if (preset.payload.range.mode === "verse") return "verse";
+      if (
+        preset.payload.range.mode === "page" &&
+        preset.payload.range.startPage === 1 &&
+        preset.payload.range.endPage === 604
+      ) {
+        return "mushaf";
+      }
+      return "page";
+    }
+    return "mushaf";
+  }, [existingDef, preset]);
 
   const [rangeMode, setRangeMode] = useState<CustomWirdFormMode>(initialRangeMode);
 
   // Range values
-  const [startSurah, setStartSurah] = useState(1);
-  const [endSurah, setEndSurah] = useState(1);
+  const [startSurah, setStartSurah] = useState(() =>
+    preset?.payload.range.mode === "surah" ? preset.payload.range.startSurah : 1
+  );
+  const [endSurah, setEndSurah] = useState(() =>
+    preset?.payload.range.mode === "surah"
+      ? preset.payload.range.endSurah ?? preset.payload.range.startSurah
+      : 1
+  );
   const [startJuz, setStartJuz] = useState(1);
   const [endJuz, setEndJuz] = useState(30);
-  const [startPage, setStartPage] = useState(
-    existingDef && existingDef.unit === "page" ? existingDef.rangeStart : 1
-  );
-  const [endPage, setEndPage] = useState(
-    existingDef && existingDef.unit === "page" ? existingDef.rangeEnd : 604
-  );
+  const [startPage, setStartPage] = useState<number>(() => {
+    if (existingDef && existingDef.unit === "page") return existingDef.rangeStart;
+    if (existingPlan?.params?.startPage) return existingPlan.params.startPage;
+    if (preset?.payload.range.mode === "page") return preset.payload.range.startPage ?? 1;
+    return 1;
+  });
+  const [endPage, setEndPage] = useState(() => {
+    if (existingDef && existingDef.unit === "page") return existingDef.rangeEnd;
+    if (preset?.payload.range.mode === "page") return preset.payload.range.endPage ?? 604;
+    return 604;
+  });
   const [startVerse, setStartVerse] = useState({ surah: 1, ayah: 1 });
   const [endVerse, setEndVerse] = useState({ surah: 1, ayah: 7 });
 
@@ -246,19 +299,85 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     }
   }, [existingDef, chapters]);
 
-  // Cadence
-  const [cadenceType, setCadenceType] = useState<CustomCadenceType>(
-    existingDef?.cadence.type ?? "pace"
-  );
-  const [pacePeriod, setPacePeriod] = useState<"day" | "week">(
-    existingDef?.cadence.type === "pace" && !Number.isInteger(existingDef.cadence.unitsPerDay)
-      ? "week"
-      : "day"
-  );
+  // Auto-suggest wird name if user has not manually edited it
+  useEffect(() => {
+    if (!isNameManuallyEdited && !isEdit) {
+      const suggested = suggestWirdName({
+        activity,
+        rangeMode,
+        startSurah,
+        endSurah,
+        startJuz,
+        endJuz,
+        startPage,
+        endPage,
+        locale,
+        chapters,
+      });
+      setName(suggested);
+    }
+  }, [
+    isNameManuallyEdited,
+    isEdit,
+    activity,
+    rangeMode,
+    startSurah,
+    endSurah,
+    startJuz,
+    endJuz,
+    startPage,
+    endPage,
+    locale,
+    chapters,
+  ]);
+
+  // Cadence Tabs: daily | weekly | deadline
+  type CadenceTab = "daily" | "weekly" | "deadline";
+  const initialCadenceTab: CadenceTab = useMemo(() => {
+    if (existingDef?.cadence.type === "weekly") return "weekly";
+    if (existingDef?.cadence.type === "deadline") return "deadline";
+    if (preset?.payload.cadence.type === "weekly") return "weekly";
+    if (preset?.payload.cadence.type === "deadline") return "deadline";
+    return "daily";
+  }, [existingDef, preset]);
+
+  const [cadenceTab, setCadenceTab] = useState<CadenceTab>(initialCadenceTab);
+  const [dailySubtype, setDailySubtype] = useState<"fullRange" | "pace">(() => {
+    if (existingDef?.cadence.type === "daily") return "fullRange";
+    if (preset?.payload.cadence.type === "daily") return "fullRange";
+    return "pace";
+  });
+
+  const cadenceType: CustomCadenceType = useMemo(() => {
+    if (cadenceTab === "deadline") return "deadline";
+    if (cadenceTab === "weekly") return "weekly";
+    if (dailySubtype === "fullRange") return "daily";
+    return "pace";
+  }, [cadenceTab, dailySubtype]);
+
+  const pacePeriod: "day" | "week" = useMemo(() => {
+    if (existingDef?.cadence.type === "pace") {
+      const upd = existingDef.cadence.unitsPerDay;
+      if (upd !== 0.5 && !Number.isInteger(upd)) {
+        return "week";
+      }
+    }
+    return "day";
+  }, [existingDef]);
   const [paceAmount, setPaceAmount] = useState<number>(() => {
     if (existingDef?.cadence.type === "pace") {
       const upd = existingDef.cadence.unitsPerDay;
-      return Number.isInteger(upd) ? upd : Math.max(1, Math.round(upd * 7));
+      if (upd === 0.5) return 0.5;
+      if (!Number.isInteger(upd)) return Math.max(1, Math.round(upd * 7));
+      return upd;
+    }
+    if (existingPlan?.params?.quantities) {
+      const q = Object.values(existingPlan.params.quantities)[0];
+      if (typeof q === "number") return q;
+      if (typeof q === "object" && q && "amount" in q) return q.amount;
+    }
+    if (preset?.payload.cadence.type === "pace") {
+      return preset.payload.cadence.amount ?? 1;
     }
     return 1;
   });
@@ -271,9 +390,21 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     existingDef?.cadence.type === "deadline" ? existingDef.cadence.repetitions ?? 1 : 1
   );
   // Weekly recurrence due weekday (0 = Sunday … 6 = Saturday). Default Friday.
-  const [weekday, setWeekday] = useState<number>(
-    existingDef?.cadence.type === "weekly" ? existingDef.cadence.weekday : 5
-  );
+  const [weekday, setWeekday] = useState<number>(() => {
+    if (existingDef?.cadence.type === "weekly") return existingDef.cadence.weekday;
+    if (preset?.payload.cadence.type === "weekly") return preset.payload.cadence.weekday ?? 5;
+    return 5;
+  });
+  // Whether to repeat the khatma upon completion when range is whole mushaf
+  const [repeat, setRepeat] = useState<boolean>(() => {
+    if (existingDef?.cadence.type === "pace") {
+      return existingDef.cadence.repeat === true;
+    }
+    if (preset?.payload.cadence.type === "pace" && preset.payload.cadence.repeat !== undefined) {
+      return preset.payload.cadence.repeat;
+    }
+    return false;
+  });
 
   const [error, setError] = useState<string | null>(null);
 
@@ -286,17 +417,17 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     );
   }, [locale]);
 
-  // Silently force pacePeriod to "day" if switching to verse mode
+  // Silently adjust default pace if switching to verse mode
   const handleRangeModeChange = (newMode: CustomWirdFormMode) => {
     setRangeMode(newMode);
     if (newMode === "verse") {
-      const wasUntouchedDefault = paceAmount === 1 && pacePeriod === "day";
-      if (pacePeriod === "week") {
-        setPacePeriod("day");
-      }
+      const wasUntouchedDefault = paceAmount === 1;
       if (wasUntouchedDefault) {
         setPaceAmount(5);
       }
+    }
+    if (newMode === "mushaf" && dailySubtype === "fullRange" && !existingDef) {
+      setDailySubtype("pace");
     }
   };
 
@@ -343,11 +474,11 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
   // period switches from week -> day (both lower the cap); a stale value here
   // would submit a pace the wird can never actually need (#629).
   useEffect(() => {
-    const paceMax = pacePeriod === "week" ? totalUnits * 7 : totalUnits;
+    const paceMax = totalUnits;
     if (paceAmount > paceMax) {
       setPaceAmount(paceMax);
     }
-  }, [totalUnits, pacePeriod, paceAmount]);
+  }, [totalUnits, paceAmount]);
 
   const estimate = useMemo(() => {
     return computeCadenceEstimate({
@@ -373,6 +504,60 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     weekday,
   ]);
 
+  const summarySentence = useMemo(() => {
+    return computeCustomWirdSummarySentence({
+      activity,
+      unit,
+      rangeMode,
+      range: {
+        startSurah,
+        endSurah,
+        startJuz,
+        endJuz,
+        startPage,
+        endPage,
+        startVerse,
+        endVerse,
+      },
+      cadence: {
+        type: cadenceType,
+        amount: paceAmount,
+        pacePeriod,
+        repeat,
+        endDate: deadlineEndDate,
+        weekday,
+        repetitions,
+      },
+      estimatedDays:
+        estimate.estimatedDays ??
+        (estimate.type === "days" ? estimate.numericValue : undefined),
+      locale,
+      chapters,
+    });
+  }, [
+    activity,
+    unit,
+    rangeMode,
+    startSurah,
+    endSurah,
+    startJuz,
+    endJuz,
+    startPage,
+    endPage,
+    startVerse,
+    endVerse,
+    cadenceType,
+    paceAmount,
+    pacePeriod,
+    repeat,
+    deadlineEndDate,
+    weekday,
+    repetitions,
+    estimate,
+    locale,
+    chapters,
+  ]);
+
   const isRangeFrozen = isEdit && hasProgress;
   const isVerseLocked = isEdit && existingDef?.unit === "page";
   const isPageLocked = isEdit && existingDef?.unit === "verse";
@@ -382,7 +567,8 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     name.trim().length <= 100 &&
     (cadenceType !== "deadline" || Boolean(deadlineEndDate));
 
-  const isPending = enrollCustom.isPending || updateCustom.isPending;
+  const isPending =
+    enrollCustom.isPending || updateCustom.isPending || updateParams.isPending;
 
   const handleSubmit = async () => {
     setError(null);
@@ -406,9 +592,36 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
       deadlineEndDate,
       repetitions,
       weekday,
+      repeat,
     };
 
     if (isEdit) {
+      if (isLegacyPreset && existingPlan) {
+        const trackKey =
+          existingPlan.template_key === "listening-wird"
+            ? "listening"
+            : existingPlan.template_key === "memorizing-wird"
+              ? "memorizing"
+              : existingPlan.template_key === "reviewing-wird"
+                ? "reviewing"
+                : "reading";
+        const effectiveStartPage = hasProgress ? existingPlan.params.startPage : startPage;
+        const params: UserPlanParams = {
+          quantities: { [trackKey]: paceAmount },
+          trackUnits: existingPlan.params.trackUnits ?? { [trackKey]: "page" },
+          ...(effectiveStartPage !== undefined && effectiveStartPage !== 1
+            ? { startPage: effectiveStartPage }
+            : {}),
+        };
+        const success = await updateParams.mutateAsync({
+          planId: existingPlan.id,
+          params,
+        });
+        if (success) onDone();
+        else setError(t("plans.enrollError", "Something went wrong. Try again."));
+        return;
+      }
+
       const patchBody = buildCustomPatchBody(state, hasProgress);
       const result = await updateCustom.mutateAsync({
         planId: existingPlan.id,
@@ -419,8 +632,19 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     } else {
       const createBody = buildCustomCreateBody(state);
       const result = await enrollCustom.mutateAsync(createBody);
-      if (result.plan) onDone();
-      else setError(result.errorMessage ?? t("plans.enrollError", "Something went wrong. Try again."));
+      if (result.plan) {
+        if (preset?.defaultReminderTime && result.plan.id) {
+          await bindDedicatedReminderSafe({
+            planId: result.plan.id,
+            time: preset.defaultReminderTime,
+            locale,
+          });
+          queryClient.invalidateQueries({ queryKey: ["daily-wird-reminder"] });
+        }
+        onDone();
+      } else {
+        setError(result.errorMessage ?? t("plans.enrollError", "Something went wrong. Try again."));
+      }
     }
   };
 
@@ -440,14 +664,28 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
     <div ref={setContainerEl} className="flex flex-col gap-6">
       {/* 1. Name Input */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-foreground">
-          {t("plans.custom.nameLabel", "Wird name")}
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold text-foreground">
+            {t("plans.custom.nameLabel", "Wird name")}
+          </label>
+          {isNameManuallyEdited && !isEdit ? (
+            <button
+              type="button"
+              onClick={() => setIsNameManuallyEdited(false)}
+              className="text-[11px] font-medium text-primary hover:underline transition-colors"
+            >
+              {t("plans.custom.resetSuggestedName", "Reset suggested name")}
+            </button>
+          ) : null}
+        </div>
         <input
           type="text"
           maxLength={100}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setIsNameManuallyEdited(true);
+            setName(e.target.value);
+          }}
           placeholder={t(
             "plans.custom.namePlaceholder",
             "e.g. Surah Al-Baqarah memorization"
@@ -572,17 +810,26 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
 
         {/* Mode-specific controls */}
         {rangeMode === "mushaf" ? (
-          <div className="flex items-center justify-between rounded-xl bg-card border border-border px-3 py-2.5">
-            <div className="flex items-center gap-2">
-              <BookOpen className="size-4 text-primary" />
-              <span className="text-xs font-semibold text-foreground">
-                {t("plans.custom.rangeMode.wholeMushaf", "Whole Quran")}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between rounded-xl bg-card border border-border px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">
+                  {t("plans.custom.rangeMode.wholeMushaf", "Whole Quran")}
+                </span>
+              </div>
+              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                {toLocaleNumeral(startPage, locale)} – {toLocaleNumeral(604, locale)}{" "}
+                {t("plans.pages", "pages")}
               </span>
             </div>
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-              {toLocaleNumeral(1, locale)} – {toLocaleNumeral(604, locale)}{" "}
-              {t("plans.pages", "pages")}
-            </span>
+
+            <StartPointPicker
+              value={startPage}
+              onChange={setStartPage}
+              portalContainer={containerEl}
+              disabled={isRangeFrozen}
+            />
           </div>
         ) : null}
 
@@ -742,7 +989,7 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
           {t("plans.custom.cadenceLabel", "Schedule")}
         </label>
 
-        {/* Cadence Type Toggle */}
+        {/* 3 Mental Model Tabs: Daily | Weekly | Target Date */}
         <div
           role="radiogroup"
           aria-label={t("plans.custom.cadenceLabel", "Schedule")}
@@ -751,200 +998,174 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
           <button
             type="button"
             role="radio"
-            aria-checked={cadenceType === "pace"}
-            onClick={() => setCadenceType("pace")}
+            aria-checked={cadenceTab === "daily"}
+            onClick={() => setCadenceTab("daily")}
             className={cn(
               "flex-1 min-h-[44px] py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
-              cadenceType === "pace"
+              cadenceTab === "daily"
                 ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {t("plans.custom.cadenceType.pace", "By pace")}
+            {t("plans.custom.cadenceTabs.daily", "Daily")}
           </button>
           <button
             type="button"
             role="radio"
-            aria-checked={cadenceType === "deadline"}
-            onClick={() => setCadenceType("deadline")}
+            aria-checked={cadenceTab === "weekly"}
+            onClick={() => setCadenceTab("weekly")}
             className={cn(
               "flex-1 min-h-[44px] py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
-              cadenceType === "deadline"
+              cadenceTab === "weekly"
                 ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {t("plans.custom.cadenceType.deadline", "By deadline")}
+            {t("plans.custom.cadenceTabs.weekly", "Weekly")}
           </button>
           <button
             type="button"
             role="radio"
-            aria-checked={cadenceType === "daily" || cadenceType === "weekly"}
-            onClick={() => setCadenceType((prev) => (prev === "weekly" ? "weekly" : "daily"))}
+            aria-checked={cadenceTab === "deadline"}
+            onClick={() => setCadenceTab("deadline")}
             className={cn(
               "flex-1 min-h-[44px] py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
-              cadenceType === "daily" || cadenceType === "weekly"
+              cadenceTab === "deadline"
                 ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {t("plans.custom.cadenceType.recurring", "Recurring")}
+            {t("plans.custom.cadenceTabs.deadline", "By deadline")}
           </button>
         </div>
 
-        {/* Sub-form: Recurring (Daily vs Weekly) */}
-        {cadenceType === "daily" || cadenceType === "weekly" ? (
-          <div className="flex flex-col gap-3 pt-1">
-            {/* Period selector: Daily vs Weekly */}
-            <div className="flex justify-center gap-1 rounded-full bg-muted/60 p-1 max-w-[200px] mx-auto w-full">
-              <button
-                type="button"
-                aria-pressed={cadenceType === "daily"}
-                onClick={() => setCadenceType("daily")}
-                className={cn(
-                  "flex-1 min-h-[44px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors",
-                  cadenceType === "daily"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {t("plans.custom.recurrencePeriod.daily", "Daily")}
-              </button>
-              <button
-                type="button"
-                aria-pressed={cadenceType === "weekly"}
-                onClick={() => setCadenceType("weekly")}
-                className={cn(
-                  "flex-1 min-h-[44px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors",
-                  cadenceType === "weekly"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {t("plans.custom.recurrencePeriod.weekly", "Weekly")}
-              </button>
-            </div>
-
-            {cadenceType === "daily" ? (
-              <span className="text-xs text-muted-foreground text-center">
-                {t("plans.custom.dailyHint", "The entire range repeats every day")}
-              </span>
-            ) : null}
-
-            {cadenceType === "weekly" ? (
-              <div className="flex flex-col gap-2">
-                <span className="text-xs text-muted-foreground text-center">
-                  {t("plans.custom.weeklyHint", "Due on the same weekday every week")}
-                </span>
-                <div
-                  role="radiogroup"
-                  aria-label={t("plans.custom.weekdayLabel", "Due weekday")}
-                  className="flex gap-1 p-1 rounded-xl bg-muted/60 border border-border overflow-x-auto fq-scroll-nice"
-                >
-                  {weekdayNames.map((dayName, i) => {
-                    const isSelected = weekday === i;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        role="radio"
-                        aria-checked={isSelected}
-                        onClick={() => setWeekday(i)}
-                        className={cn(
-                          "flex-1 min-h-[44px] min-w-[40px] whitespace-nowrap px-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
-                          isSelected
-                            ? "bg-primary text-primary-foreground font-semibold"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        {dayName}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* Sub-form: Pace */}
-        {cadenceType === "pace" ? (
+        {/* Sub-form: Daily Tab */}
+        {cadenceTab === "daily" ? (
           <div className="flex flex-col gap-3.5 pt-1">
-            {/* Period selector: Day vs Week */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-center gap-1 rounded-full bg-muted/60 p-1 max-w-[200px] mx-auto w-full">
+            {rangeMode !== "mushaf" ? (
+              <div className="flex justify-center gap-1 rounded-full bg-muted/60 p-1 max-w-[280px] mx-auto w-full">
                 <button
                   type="button"
-                  aria-pressed={pacePeriod === "day"}
-                  onClick={() => setPacePeriod("day")}
+                  aria-pressed={dailySubtype === "fullRange"}
+                  onClick={() => setDailySubtype("fullRange")}
                   className={cn(
-                    "flex-1 min-h-[44px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors",
-                    pacePeriod === "day"
+                    "flex-1 min-h-[40px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors text-center px-2",
+                    dailySubtype === "fullRange"
                       ? "bg-primary text-primary-foreground font-semibold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {t("plans.custom.period.day", "Daily")}
+                  {t("plans.custom.dailySubtype.fullRange", "Full range daily")}
                 </button>
                 <button
                   type="button"
-                  aria-pressed={pacePeriod === "week"}
-                  disabled={rangeMode === "verse"}
-                  onClick={() => setPacePeriod("week")}
+                  aria-pressed={dailySubtype === "pace"}
+                  onClick={() => setDailySubtype("pace")}
                   className={cn(
-                    "flex-1 min-h-[44px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors",
-                    pacePeriod === "week"
+                    "flex-1 min-h-[40px] flex items-center justify-center rounded-full py-1 text-xs font-medium transition-colors text-center px-2",
+                    dailySubtype === "pace"
                       ? "bg-primary text-primary-foreground font-semibold"
-                      : "text-muted-foreground hover:text-foreground",
-                    rangeMode === "verse" && "opacity-40 cursor-not-allowed"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {t("plans.custom.period.week", "Weekly")}
+                  {t("plans.custom.dailySubtype.pace", "Fixed daily pace")}
                 </button>
               </div>
+            ) : null}
 
-              {/* Helper notice if weekly is disabled for verse mode */}
-              {rangeMode === "verse" ? (
-                <p className="text-[11px] text-muted-foreground text-center">
-                  {t(
-                    "plans.custom.verseWeeklyUnavailable",
-                    "Weekly pace is not available for verses; specify daily verses or set a deadline"
-                  )}
-                </p>
-              ) : null}
-            </div>
-
-            {/* Stepper */}
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {unit === "verse"
-                  ? tIntl("plans.custom.versesPerDay", {
-                      count: paceAmount,
-                      n: toLocaleNumeral(paceAmount, locale),
-                    })
-                  : pacePeriod === "week"
-                    ? tIntl("plans.custom.pagesPerWeek", {
+            {/* Stepper: shown if cadenceType is pace */}
+            {cadenceType === "pace" ? (
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-xs text-muted-foreground font-medium">
+                  {unit === "verse"
+                    ? tIntl("plans.custom.versesPerDay", {
                         count: paceAmount,
                         n: toLocaleNumeral(paceAmount, locale),
                       })
-                    : tIntl("plans.custom.pagesPerDay", {
-                        count: paceAmount,
-                        n: toLocaleNumeral(paceAmount, locale),
-                      })}
-              </span>
-              <QuantityStepper
-                value={paceAmount}
-                onChange={setPaceAmount}
-                min={1}
-                max={pacePeriod === "week" ? totalUnits * 7 : totalUnits}
-                step={1}
-              />
+                    : paceAmount === 0.5
+                      ? t("plans.custom.halfPagePerDay", "Half page/day")
+                      : tIntl("plans.custom.pagesPerDay", {
+                          count: paceAmount,
+                          n: toLocaleNumeral(paceAmount, locale),
+                        })}
+                </span>
+                <QuantityStepper
+                  value={paceAmount}
+                  onChange={setPaceAmount}
+                  min={unit === "page" ? 0.5 : 1}
+                  max={totalUnits}
+                  step={1}
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">
+                {t("plans.custom.dailyHint", "The entire range repeats every day")}
+              </p>
+            )}
+
+            {/* Repeating khatma toggle (when rangeMode is whole mushaf and cadence is pace) */}
+            {rangeMode === "mushaf" && cadenceType === "pace" ? (
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-3 mt-1 transition-colors">
+                <input
+                  type="checkbox"
+                  id="repeat-khatma"
+                  checked={repeat}
+                  onChange={(e) => setRepeat(e.target.checked)}
+                  className="mt-0.5 size-4 rounded border-border text-primary focus:ring-primary fq-focus-ring cursor-pointer"
+                />
+                <label htmlFor="repeat-khatma" className="flex flex-col gap-0.5 cursor-pointer flex-1">
+                  <span className="text-xs font-bold text-foreground">
+                    {t("plans.custom.repeatKhatma.title", "Repeat khatma automatically upon completion")}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {t(
+                      "plans.custom.repeatKhatma.hint",
+                      "Restarts automatically once the khatma is completed."
+                    )}
+                  </span>
+                </label>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Sub-form: Weekly Tab */}
+        {cadenceTab === "weekly" ? (
+          <div className="flex flex-col gap-3 pt-1">
+            <span className="text-xs text-muted-foreground text-center">
+              {t("plans.custom.weeklyHint", "Due on the same weekday every week")}
+            </span>
+            <div
+              role="radiogroup"
+              aria-label={t("plans.custom.weekdayLabel", "Due weekday")}
+              className="flex gap-1 p-1 rounded-xl bg-muted/60 border border-border overflow-x-auto fq-scroll-nice"
+            >
+              {weekdayNames.map((dayName, i) => {
+                const isSelected = weekday === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => setWeekday(i)}
+                    className={cn(
+                      "flex-1 min-h-[44px] min-w-[40px] whitespace-nowrap px-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 fq-focus-ring flex items-center justify-center",
+                      isSelected
+                        ? "bg-primary text-primary-foreground font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {dayName}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : null}
 
-        {/* Sub-form: Deadline */}
-        {cadenceType === "deadline" ? (
+        {/* Sub-form: Deadline Tab */}
+        {cadenceTab === "deadline" ? (
           <div className="flex flex-col gap-3.5 pt-1">
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -990,46 +1211,28 @@ export const CustomWirdForm = ({ existingPlan, onDone }: Props) => {
             ) : null}
           </div>
         ) : null}
+      </div>
 
-        {/* Live Derived Estimate Display */}
-        <div className="flex items-center gap-2.5 rounded-xl bg-primary/5 border border-primary/20 px-3.5 py-2.5 text-xs text-primary font-medium mt-1">
-          <Sparkles className="size-4 flex-none" />
-          <span>
-            {estimate.type === "weekly"
-              ? tIntl(estimate.textKey, {
-                  weekday: weekdayNames[estimate.weekday ?? weekday] ?? "",
-                })
-              : estimate.type === "daily"
-              ? t(estimate.textKey, "The entire range repeats every day")
-              : estimate.type === "days"
-              ? tIntl(estimate.textKey, {
-                  count: estimate.numericValue,
-                  n: toLocaleNumeral(estimate.numericValue, locale),
-                })
-              : tIntl(estimate.textKey, {
-                  count: estimate.numericValue,
-                  n: toLocaleNumeral(estimate.numericValue, locale),
-                  amount: toLocaleNumeral(estimate.numericValue, locale),
-                  daysCount: estimate.estimatedDays ?? 0,
-                  daysN: toLocaleNumeral(estimate.estimatedDays ?? 0, locale),
-                  pace:
-                    estimate.unit === "verse"
-                      ? tIntl("plans.custom.versesPerDay", {
-                          count: estimate.numericValue,
-                          n: toLocaleNumeral(estimate.numericValue, locale),
-                        })
-                      : tIntl("plans.custom.pagesPerDay", {
-                          count: estimate.numericValue,
-                          n: toLocaleNumeral(estimate.numericValue, locale),
-                        }),
-                })}
-          </span>
+      {/* 5. Prominent Live Wird Summary Banner */}
+      <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-primary/10 p-4 transition-all duration-200 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex size-9 flex-none items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm mt-0.5">
+            <Sparkles className="size-4" />
+          </div>
+          <div className="flex flex-1 flex-col gap-1 min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+              {t("plans.custom.summaryBannerTitle", "Wird summary")}
+            </span>
+            <p className="text-sm sm:text-base font-bold text-foreground leading-relaxed">
+              {summarySentence}
+            </p>
+          </div>
         </div>
       </div>
 
       {error ? <p className="text-xs text-destructive text-center">{error}</p> : null}
 
-      {/* 5. Submit CTA Button */}
+      {/* 6. Submit CTA Button */}
       <button
         type="button"
         onClick={handleSubmit}

@@ -1,10 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   registerPushSubscription,
   unregisterPushSubscription,
 } from "@/app/server/actions/notifications";
+import { isNativePlatform } from "@/app/utils/platform";
+import {
+  type NativePushPermission,
+  getNativePushPermission,
+  isNativePushSupported,
+  refreshNativePushRegistration,
+  subscribeNativePush,
+  unsubscribeNativePush,
+} from "@/app/lib/shell/native-push";
 
 const urlBase64ToUint8Array = (base64: string) => {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -36,19 +45,50 @@ export function getServiceWorkerReady(
   );
 }
 
-/** Web Push permission + subscribe/unsubscribe flow. Must be called from a user gesture; only works in an installed PWA on iOS. */
+/**
+ * Push permission + subscribe/unsubscribe flow, branching once on platform
+ * (ADR 0072/0076): inside the Capacitor shell it drives the native FCM flow
+ * (`@capacitor/push-notifications`); everywhere else it is the Web Push flow,
+ * unchanged. Must be called from a user gesture for subscribe().
+ */
 export const usePushSubscription = () => {
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Read-only mirror of Notification.permission. Surfaced (subtask 4.3) so the
-  // UI can SHOW a denied browser permission instead of silently snapping the
-  // toggle back off — a denial is unrecoverable in-app and the user has to be
-  // told where to undo it. This reads state; it does not change the flow.
-  const [permission, setPermission] = useState<NotificationPermission | "unknown">("unknown");
+  // Read-only mirror of Notification.permission (web) or the plugin's
+  // permission state (native). Surfaced (subtask 4.3) so the UI can SHOW a
+  // denied permission instead of silently snapping the toggle back off — a
+  // denial is unrecoverable in-app and the user has to be told where to undo
+  // it. This reads state; it does not change the flow.
+  const [permission, setPermission] = useState<NotificationPermission | NativePushPermission | "unknown">(
+    "unknown"
+  );
+
+  // Late async callbacks (token registration, permission reads) must not
+  // mutate state after the settings surface unmounts.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const check = async () => {
+      // Native shell (ADR 0076): the WebView has no service worker or
+      // PushManager — the Native Push module owns the flow instead.
+      if (isNativePlatform()) {
+        if (!(await isNativePushSupported()) || cancelled) return;
+        setSupported(true);
+        const perm = await refreshNativePushRegistration((token) => {
+          if (!cancelled && token) setSubscribed(true);
+        });
+        if (!cancelled) setPermission(perm);
+        return;
+      }
+
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
       setSupported(true);
       if ("Notification" in window) setPermission(Notification.permission);
@@ -62,14 +102,36 @@ export const usePushSubscription = () => {
       }
     };
     check();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const subscribe = useCallback(async () => {
-    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!publicKey) return false;
-
     setLoading(true);
     try {
+      // Native shell: permission request is the toggle's user gesture; the
+      // promise resolves only after the token is saved server-side.
+      if (isNativePlatform()) {
+        const ok = await subscribeNativePush((token) => {
+          if (mountedRef.current) setSubscribed(!!token);
+        });
+        if (ok) {
+          setPermission("granted");
+        } else {
+          // A denial is unrecoverable in-app — surface the real permission
+          // state so the UI can point the user at Android settings. A granted
+          // permission with a failed registration keeps "granted" (the toggle
+          // stays off because the server row was never created).
+          const perm = await getNativePushPermission();
+          if (perm && mountedRef.current) setPermission(perm);
+        }
+        return ok;
+      }
+
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!publicKey) return false;
+
       const result = await Notification.requestPermission();
       setPermission(result);
       if (result !== "granted") return false;
@@ -97,14 +159,29 @@ export const usePushSubscription = () => {
   const unsubscribe = useCallback(async () => {
     setLoading(true);
     try {
+      // Native shell: row deletion is the source of truth (no plugin-side
+      // unregister concept exists — ADR 0076).
+      if (isNativePlatform()) {
+        const ok = await unsubscribeNativePush((token) => {
+          if (!token && mountedRef.current) setSubscribed(false);
+        });
+        // A server DELETE failure leaves the token row live: keep the toggle
+        // on rather than lying about the subscription state (same discipline
+        // as the web branch below).
+        if (!ok) {
+          console.error("Failed to unregister device token on the server");
+        }
+        return ok;
+      }
+
       const registration = await getServiceWorkerReady();
       const subscription = await registration.pushManager.getSubscription();
       if (!subscription) return true;
 
       await subscription.unsubscribe();
       // The browser is now unsubscribed regardless of whether the server
-      // call below succeeds — reflect that immediately rather than reading
-      // a stale `subscribed` closure value on server failure.
+      // call below succeeds — reflect that immediately rather than reading a
+      // stale `subscribed` closure value on server failure.
       setSubscribed(false);
 
       const ok = await unregisterPushSubscription(subscription.endpoint);

@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-119 active plans.
+122 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -23,6 +23,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | awrad | [Daily Awrad UI](daily-awrad-ui.md) | implemented | feature |
 | awrad | [Daily wird presets: add memorize & review flavours, reframe as \"Daily wird — <activity>\" + optional start point](607-daily-wird-activity-flavours.md) | implemented | feature |
 | awrad | [Daily-Recurring Custom Wirds with Full-Range Wrap](daily-recurring-custom-wirds.md) | implemented | feature |
+| awrad | [Unify Awrad Creation Flow and Consolidate Main Plans Tabs](unify-awrad-creation-and-tabs.md) | implemented | feature |
 | awrad | [Verse & Fractional-Page Granularity for Awrad](awrad-verse-granularity.md) | implemented | feature |
 | awrad | [Weekly-Recurring Custom Wirds with Matching Weekly Reminders](weekly-custom-wirds.md) | implemented | feature |
 | ci | [Cloud Android build — debug APK artifact on demand](android-debug-apk.md) | ready-to-implement | feature |
@@ -60,7 +61,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
-| pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | ready-to-implement | feature |
+| pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | implemented | feature |
 | pwa | [Auth return fails silently in shell — route failed exchanges to the retry UI](auth-audible-failure.md) | implemented | bug |
 | pwa | [Auth return lands before the session cookie commits — verify session before landing](auth-session-race.md) | implemented | bug |
 | pwa | [Auth return lost on cold start — consume the launch URL on listener mount](auth-coldstart-launch-url.md) | implemented | bug |
@@ -70,6 +71,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | pwa | [Fix mobile shell status bar and navigation bar overlap in Capacitor](fix-mobile-shell-status-bar-overlap.md) | implemented | bug |
 | pwa | [Fix web sign-in provider selection & Android shell activity result forwarding](fix-signin-web-and-android-shell.md) | implemented | Bug |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
+| pwa | [Mobile PWA Safe Area and Indicator Ergonomics](fix-mobile-pwa-safe-area-and-footer.md) | implemented | bug |
 | pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |
 | pwa | [Restore Continue Reading nav icon on installed PWA](restore-continue-reading-pwa-icon.md) | implemented | bug |
@@ -83,6 +85,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Fix tablet-band reader for non-touch laptops via input-capability gating](fix-tablet-band-fine-pointer.md) | implemented | bug |
 | reader | [Fix Tajweed Mushaf Swipe Flicker](fix-tajweed-swipe-flicker.md) | implemented | bug |
 | reader | [Loading Placeholder Toggles the Scrollbar, Reflowing the Whole Document](fix-panel-placeholder-reflow.md) | implemented | bug |
+| reader | [Mobile Landscape Full-Width Scroll Spike](mobile-landscape-scroll.md) | implemented | feature |
 | reader | [Mushaf Double-Page Spread Toggle](mushaf-double-page-view.md) | implemented | feature |
 | reader | [Native Touch Long-Press for Word Marking](native-word-long-press.md) | implemented | bug |
 | reader | [Nocturnal Reader Lab — Desktop RTL](reader-lab-nocturnal-desktop.md) | implemented | feature |
@@ -91,6 +94,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Reduce Desktop Mushaf Safha Card Margins, Flush Tablet Spread, and 6-Layer Paper Stack](desktop-safha-card-padding.md) | implemented | feature |
 | reader | [Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression](tajweed-stylesheet-hover-suppression.md) | implemented | bug |
 | recitation | [Add Quran Recitation Playback with Reciter Selection](recitation-playback.md) | implemented | feature |
+| recitation | [Fix Recitation Start Point Overwrite on Custom Stop Point Selection](fix-recitation-custom-stop-start-point.md) | implemented | bug |
 | recitation | [Fix untranslated surah list in Offline Recitation settings](fix-offline-recitation-surah-i18n.md) | implemented | bug |
 | recitation | [Listening Wird: Inline Playback on Assignment Rows](listening-wird-inline-playback.md) | implemented | feature |
 | recitation | [Play Audio for Individual Words](word-audio-playback.md) | implemented | feature |
