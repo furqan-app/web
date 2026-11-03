@@ -62,4 +62,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Native push (ADR 0076): Android 13+ runtime permission, always requested
+         from a user gesture (the settings toggle tap). Never SCHEDULE_EXACT_ALARM
+         or RECEIVE_BOOT_COMPLETED — FCM delivery needs neither. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

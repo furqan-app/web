@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "158017076970",
+    "project_id": "furqan-303b3",
+    "storage_bucket": "furqan-303b3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:158017076970:android:18e579e0b5de5a122ba193",
+        "android_client_info": {
+          "package_name": "app.furqan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRTZ7k8RFSZ2eUpGx1krdJPAy664KMkyE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
