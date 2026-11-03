@@ -94,6 +94,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | reader | [Reduce Desktop Mushaf Safha Card Margins, Flush Tablet Spread, and 6-Layer Paper Stack](desktop-safha-card-padding.md) | implemented | feature |
 | reader | [Stabilize Tajweed Stylesheet Injection and Extend Swipe Hover Suppression](tajweed-stylesheet-hover-suppression.md) | implemented | bug |
 | recitation | [Add Quran Recitation Playback with Reciter Selection](recitation-playback.md) | implemented | feature |
+| recitation | [Fix Recitation Start Point Overwrite on Custom Stop Point Selection](fix-recitation-custom-stop-start-point.md) | implemented | bug |
 | recitation | [Fix untranslated surah list in Offline Recitation settings](fix-offline-recitation-surah-i18n.md) | implemented | bug |
 | recitation | [Listening Wird: Inline Playback on Assignment Rows](listening-wird-inline-playback.md) | implemented | feature |
 | recitation | [Play Audio for Individual Words](word-audio-playback.md) | implemented | feature |
