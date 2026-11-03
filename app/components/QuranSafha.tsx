@@ -189,11 +189,12 @@ const BookSafhaNumber = ({
   side: "left" | "right";
 }) => {
   const isRight = side === "right";
+  const isThreeDigits = pageNumber.length >= 3;
   return (
     <div
       aria-hidden="true"
       dir="ltr"
-      className="relative inline-flex items-center justify-center w-8 h-5.5 select-none text-muted-foreground/80 pointer-events-none"
+      className="relative inline-flex items-center justify-center w-10 h-7 select-none text-muted-foreground/80 pointer-events-none"
     >
       <svg
         viewBox="0 0 32 22"
@@ -238,8 +239,10 @@ const BookSafhaNumber = ({
       </svg>
       {/* Page number on active side */}
       <span
-        className={`absolute inset-y-0 flex items-center justify-center text-[9px] font-bold leading-none text-foreground ${
-          isRight ? "right-0 w-1/2" : "left-0 w-1/2"
+        className={`absolute inset-y-0 flex items-center justify-center font-bold leading-none text-foreground ${
+          isThreeDigits ? "text-[9px] tracking-tight" : "text-[11px]"
+        } ${
+          isRight ? "right-0 w-1/2 pr-1" : "left-0 w-1/2 pl-1"
         }`}
       >
         {pageNumber}
@@ -895,7 +898,7 @@ export const QuranSafha = ({
               {/* Footer */}
               <div
                 dir="ltr"
-                className={`fq-safha-footer shrink-0 flex items-center pt-2 pb-0 text-muted-foreground text-xs ${
+                className={`fq-safha-footer shrink-0 flex items-center pt-2 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] md:pb-0 text-muted-foreground text-xs ${
                   compensateStackGap
                     ? stackPeekSide === "right"
                       ? "justify-end pr-4 md:justify-center md:pr-0"

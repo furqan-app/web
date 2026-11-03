@@ -619,9 +619,9 @@ export function MarkModal({
         ref={setDialogContentEl}
         hideDefaultClose
         dir={getLanguageDirection(locale)}
-        className="fq-panel-cast left-0 right-0 top-auto bottom-0 flex w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-visible rounded-t-[1.5rem] border-x-0 border-b-0 bg-card p-0 sm:left-[50%] sm:right-auto sm:top-[50%] sm:bottom-auto sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border"
+        className="fq-panel-cast fq-mark-modal-dialog left-0 right-0 top-auto bottom-0 flex w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-visible rounded-t-[1.5rem] border-x-0 border-b-0 bg-card p-0 sm:left-[50%] sm:right-auto sm:top-[50%] sm:bottom-auto sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border"
       >
-        <div className="flex-none space-y-3 overflow-hidden px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
+        <div className="fq-mark-modal-body flex-none space-y-3 overflow-hidden px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
           {/* In-flow header keeps orientation balanced without competing with scripture. */}
           <div className="flex items-center gap-2">
             <DialogClose
@@ -863,7 +863,7 @@ export function MarkModal({
           )}
         </div>
         {canMark ? (
-          <div className="shrink-0 border-t border-border/80 bg-card px-4 py-2.5 sm:px-5">
+          <div className="fq-mark-modal-footer shrink-0 border-t border-border/80 bg-card px-4 py-2.5 sm:px-5">
             <button
               type="button"
               onClick={saveMark}

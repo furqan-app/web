@@ -4,6 +4,7 @@ import type { FqLogger } from "@/lib/fq-logger";
 import { appPrisma } from "@/app/utils/db";
 import { createNotificationStore } from "@/app/lib/notifications/repository";
 import { createChannelRegistry } from "@/app/lib/notifications/channels/registry";
+import { createFcmSender } from "@/app/lib/notifications/channels/fcm-sender";
 import { createSmtpEmailTransport } from "@/app/lib/notifications/channels/email/smtp-transport";
 import { createLogEmailTransport } from "@/app/lib/notifications/channels/email/log-transport";
 import type { EmailTransport } from "@/app/lib/notifications/channels/email/transport";
@@ -49,7 +50,16 @@ export const getNotificationDeps = (): DispatchDeps => {
   const requestLogger: FqLogger = getLogger();
   const store = createNotificationStore(appPrisma, requestLogger);
   const emailTransport = getEmailTransport();
-  const registry = createChannelRegistry({ store, emailTransport, webpush, logger: requestLogger });
+  // Native push sender (ADR 0076): built only when FCM credentials are set —
+  // absent credentials keep the channel's deliberate no_sender skip path.
+  const fcmSender = createFcmSender({ store, logger: requestLogger });
+  const registry = createChannelRegistry({
+    store,
+    emailTransport,
+    webpush,
+    nativePushSender: fcmSender ?? undefined,
+    logger: requestLogger,
+  });
 
   return {
     store,

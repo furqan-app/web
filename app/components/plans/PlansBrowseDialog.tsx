@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { useLocale } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
+import { BookOpen, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { READY_MADE_PRESETS, type PlanPreset } from "@/app/constants/plan-presets";
+import { bindDedicatedReminderSafe } from "@/app/lib/plans/custom-wird-form-helpers";
 import useTranslations from "@hooks/use-translations";
-import type { PlanActivity } from "@constants/plans";
 import { PLAN_TEMPLATE_UI } from "@constants/plan-ui";
 import { usePlans } from "@hooks/use-plans";
 import type { UserPlanListItem } from "@/app/server/actions/plans";
@@ -28,18 +31,6 @@ export type PlansBrowseView =
   | "husun-settings"
   | "custom";
 type View = PlansBrowseView;
-
-const DAILY_WIRD_ACTIVITIES: {
-  activity: PlanActivity;
-  templateKey: PlansBrowseView;
-  labelKey: string;
-  defaultLabel: string;
-}[] = [
-  { activity: "read", templateKey: "daily-wird", labelKey: "plans.activities.read", defaultLabel: "Read" },
-  { activity: "listen", templateKey: "listening-wird", labelKey: "plans.activities.listen", defaultLabel: "Listen" },
-  { activity: "memorize", templateKey: "memorizing-wird", labelKey: "plans.activities.memorize", defaultLabel: "Memorize" },
-  { activity: "review", templateKey: "reviewing-wird", labelKey: "plans.activities.review", defaultLabel: "Review" },
-];
 
 // Every step (except the root "list") shows this same back control, in the
 // same top position — previously husun-settings alone used a bottom
@@ -103,12 +94,26 @@ export const PlansBrowseDialog = ({
   initialPlan,
 }: Props) => {
   const t = useTranslations();
-  const { data: plans } = usePlans();
+  const locale = useLocale();
+  const queryClient = useQueryClient();
+  const { data: plans, enrollCustom } = usePlans();
   const [view, setView] = useState<View>(initialView);
+  const [enrollingPresetId, setEnrollingPresetId] = useState<string | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<PlanPreset | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      setView(initialView);
+      if (
+        initialView === "daily-wird" ||
+        initialView === "listening-wird" ||
+        initialView === "memorizing-wird" ||
+        initialView === "reviewing-wird"
+      ) {
+        setView("custom");
+      } else {
+        setView(initialView);
+      }
     }
   }, [open, initialView]);
 
@@ -118,15 +123,12 @@ export const PlansBrowseDialog = ({
   const close = () => {
     onOpenChange(false);
     setView(initialView);
+    setSelectedPreset(null);
+    setEnrollingPresetId(null);
+    setError(null);
   };
 
   const backLabel = t("plans.browse.back", "Back");
-
-  const isDailyWirdView =
-    view === "daily-wird" ||
-    view === "listening-wird" ||
-    view === "memorizing-wird" ||
-    view === "reviewing-wird";
 
   const renderList = () => (
     <>
@@ -134,11 +136,19 @@ export const PlansBrowseDialog = ({
         title={t("plans.browse.title", "New wird or plan")}
         srDescription={t("plans.browse.description", "Enroll in a template, or edit an active one.")}
       />
+      {error ? (
+        <div className="mt-2 rounded-xl bg-destructive/10 border border-destructive/20 p-2.5 text-xs text-destructive text-center">
+          {error}
+        </div>
+      ) : null}
       <div className="mt-2 flex flex-col gap-1">
-        {/* 1. Daily wird */}
+        {/* 1. New wird */}
         <button
           type="button"
-          onClick={() => setView("daily-wird")}
+          onClick={() => {
+            setSelectedPreset(null);
+            setView("custom");
+          }}
           className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-start hover:bg-accent/50 transition-colors min-h-[44px]"
         >
           <span className="grid place-items-center size-9 rounded-lg bg-primary/10 text-primary flex-none">
@@ -146,38 +156,12 @@ export const PlansBrowseDialog = ({
           </span>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-foreground">
-              {t("plans.browse.dailyWirdType.title", "Daily wird")}
-            </div>
-            <div className="text-xs text-muted-foreground truncate">
-              {t(
-                "plans.browse.dailyWirdType.description",
-                "A repeating full-mushaf khatma with your choice of activity and pace."
-              )}
-            </div>
-          </div>
-          <ChevronRight
-            className="size-3.5 text-muted-foreground flex-none rtl:rotate-180"
-            strokeWidth={1.8}
-          />
-        </button>
-
-        {/* 2. Custom wird */}
-        <button
-          type="button"
-          onClick={() => setView("custom")}
-          className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-start hover:bg-accent/50 transition-colors min-h-[44px]"
-        >
-          <span className="grid place-items-center size-9 rounded-lg bg-primary/10 text-primary flex-none">
-            <Sparkles className="size-[17px]" strokeWidth={1.7} />
-          </span>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-foreground">
-              {t("plans.browse.customWirdType.title", "Custom wird")}
+              {t("plans.browse.customWirdType.title", "New wird")}
             </div>
             <div className="text-xs text-muted-foreground truncate">
               {t(
                 "plans.browse.customWirdType.description",
-                "Choose a custom range, surah, or target completion date"
+                "Choose a full khatma, surah, or custom range at your own pace"
               )}
             </div>
           </div>
@@ -187,7 +171,7 @@ export const PlansBrowseDialog = ({
           />
         </button>
 
-        {/* 3. Al-Husun Al-Khamsa */}
+        {/* 2. Al-Husun Al-Khamsa */}
         {(() => {
           const husunUi = PLAN_TEMPLATE_UI.husun;
           const HusunIcon = husunUi.icon;
@@ -223,54 +207,104 @@ export const PlansBrowseDialog = ({
           );
         })()}
       </div>
-    </>
-  );
 
-  const renderDailyWird = (templateKey: string) => (
-    <>
-      <ViewHeader
-        title={t("plans.browse.dailyWirdType.title", "Daily wird")}
-        srDescription={t(
-          "plans.browse.dailyWirdType.description",
-          "A repeating full-mushaf khatma with your choice of activity and pace."
-        )}
-        onBack={() => setView("list")}
-        backLabel={backLabel}
-      />
-      <div className="mt-2 flex flex-col gap-4">
-        <div
-          role="tablist"
-          aria-label={t("plans.browse.dailyWirdType.title", "Daily wird")}
-          className="flex p-1 rounded-2xl bg-muted/60 border border-border text-xs font-semibold"
-        >
-          {DAILY_WIRD_ACTIVITIES.map((tab) => {
-            const isSelected = templateKey === tab.templateKey;
+      {/* Ready-made Presets */}
+      <div className="mt-4 pt-3 border-t border-border/60">
+        <div className="mb-2 px-1 text-xs font-semibold text-muted-foreground">
+          {t("plans.presets.sectionTitle", "أوراد جاهزة للاشتراك السريع")}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {READY_MADE_PRESETS.map((preset) => {
+            const isEnrolling = enrollingPresetId === preset.id;
+            const isAnyEnrolling = enrollingPresetId !== null;
+            const PresetIcon = preset.icon;
+            const title = t(preset.titleKey, preset.defaultTitle);
+            const description = t(preset.descriptionKey, preset.defaultDescription);
             return (
-              <button
-                key={tab.activity}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                onClick={() => setView(tab.templateKey)}
-                className={cn(
-                  "flex-1 min-h-[44px] flex items-center justify-center py-2 px-1 rounded-xl transition-all duration-150 fq-focus-ring text-xs",
-                  isSelected
-                    ? "bg-card text-foreground shadow-sm font-bold border border-border/60"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+              <div
+                key={preset.id}
+                className="group flex items-center justify-between gap-3 rounded-xl p-2.5 hover:bg-accent/50 transition-colors border border-border/40 text-start"
               >
-                <span>{t(tab.labelKey, tab.defaultLabel)}</span>
-              </button>
+                <button
+                  type="button"
+                  disabled={isAnyEnrolling}
+                  onClick={() => {
+                    setSelectedPreset(preset);
+                    setView("custom");
+                  }}
+                  className="flex items-center gap-3 min-w-0 flex-1 text-start fq-focus-ring rounded-lg cursor-pointer disabled:opacity-60"
+                >
+                  <span className="grid place-items-center size-9 rounded-lg bg-primary/10 text-primary flex-none">
+                    <PresetIcon className="size-[17px]" strokeWidth={1.7} />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-foreground truncate">
+                      {title}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {description}
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isAnyEnrolling}
+                  onClick={() => {
+                    setError(null);
+                    setEnrollingPresetId(preset.id);
+                    enrollCustom.mutate(
+                      {
+                        ...preset.payload,
+                        name: title,
+                      },
+                      {
+                        onSuccess: async (data) => {
+                          if (!data.plan) {
+                            setEnrollingPresetId(null);
+                            setError(
+                              data.errorMessage ??
+                                t("plans.enrollError", "Something went wrong. Try again.")
+                            );
+                            return;
+                          }
+                          if (preset.defaultReminderTime && data.plan.id) {
+                            await bindDedicatedReminderSafe({
+                              planId: data.plan.id,
+                              time: preset.defaultReminderTime,
+                              locale,
+                            });
+                            queryClient.invalidateQueries({ queryKey: ["daily-wird-reminder"] });
+                          }
+                          setEnrollingPresetId(null);
+                          close();
+                        },
+                        onError: (err) => {
+                          setEnrollingPresetId(null);
+                          setError(
+                            err instanceof Error && err.message
+                              ? err.message
+                              : t("plans.enrollError", "Something went wrong. Try again.")
+                          );
+                        },
+                      }
+                    );
+                  }}
+                  className="shrink-0 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 disabled:opacity-60 min-h-[36px]"
+                >
+                  {isEnrolling ? (
+                    <>
+                      <Loader2 className="size-3 animate-spin" />
+                      <span>{t("plans.presets.enrolling", "جارٍ الاشتراك…")}</span>
+                    </>
+                  ) : (
+                    <span>{t("plans.presets.enroll", "اشتراك")}</span>
+                  )}
+                </button>
+              </div>
             );
           })}
         </div>
-
-        <PlanEnrollForm
-          key={templateKey}
-          templateKey={templateKey}
-          existingPlan={activePlanFor(templateKey)}
-          onDone={close}
-        />
       </div>
     </>
   );
@@ -337,12 +371,16 @@ export const PlansBrowseDialog = ({
             "plans.custom.description",
             "Set a custom range and cadence"
           )}
-          onBack={() => setView("list")}
+          onBack={() => {
+            setSelectedPreset(null);
+            setView("list");
+          }}
           backLabel={backLabel}
         />
         <CustomWirdForm
-          key={initialPlan?.id ?? "new"}
+          key={initialPlan?.id ?? selectedPreset?.id ?? "new"}
           existingPlan={editingPlan}
+          preset={selectedPreset}
           onDone={close}
         />
       </>
@@ -355,11 +393,14 @@ export const PlansBrowseDialog = ({
         closeLabel={t("common.close", "Close")}
         className={cn(
           "w-[calc(100vw-2rem)] max-h-[85dvh] grid-cols-[minmax(0,1fr)] overflow-y-auto rounded-[20px] fq-scroll-nice",
-          view === "custom" ? "sm:max-w-lg p-5 sm:p-6" : "max-w-[360px] p-5"
+          view === "custom"
+            ? "sm:max-w-lg p-5 sm:p-6"
+            : view === "list"
+              ? "sm:max-w-md max-w-[420px] p-5"
+              : "max-w-[360px] p-5"
         )}
       >
         {view === "list" && renderList()}
-        {isDailyWirdView && renderDailyWird(view)}
         {view === "husun-overview" && renderHusunOverview()}
         {view === "husun-settings" && renderHusunSettings()}
         {view === "custom" && renderCustomWird()}

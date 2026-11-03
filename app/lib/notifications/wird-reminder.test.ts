@@ -251,7 +251,7 @@ describe("wird-reminder service", () => {
       expect(mockStore.upsertScheduledReminder).toHaveBeenCalledWith(
         expect.objectContaining({
           dedupeKey: "plans.daily_reminder:1:slot:1",
-          channels: ["push"],
+          channels: ["push", "native_push"],
         })
       );
 
@@ -367,7 +367,7 @@ describe("wird-reminder service", () => {
         expect.objectContaining({
           dedupeKey: "plans.daily_reminder:1:plan:42",
           payload: { time: "21:30", planId: 42 },
-          channels: ["push"],
+          channels: ["push", "native_push"],
         })
       );
 
