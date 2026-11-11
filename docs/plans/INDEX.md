@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-122 active plans.
+124 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -23,6 +23,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | awrad | [Daily Awrad UI](daily-awrad-ui.md) | implemented | feature |
 | awrad | [Daily wird presets: add memorize & review flavours, reframe as \"Daily wird — <activity>\" + optional start point](607-daily-wird-activity-flavours.md) | implemented | feature |
 | awrad | [Daily-Recurring Custom Wirds with Full-Range Wrap](daily-recurring-custom-wirds.md) | implemented | feature |
+| awrad | [Quran Heart Memorization Map & Visual Progress Hub](651-quran-heart-map.md) | implemented | feature |
 | awrad | [Unify Awrad Creation Flow and Consolidate Main Plans Tabs](unify-awrad-creation-and-tabs.md) | implemented | feature |
 | awrad | [Verse & Fractional-Page Granularity for Awrad](awrad-verse-granularity.md) | implemented | feature |
 | awrad | [Weekly-Recurring Custom Wirds with Matching Weekly Reminders](weekly-custom-wirds.md) | implemented | feature |
@@ -61,7 +62,6 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | nav | [Save Last Read Page + Navbar Link to Resume](save-last-read-page.md) | implemented | feature |
 | nav | [Sidebar Surah Indicator & Active Scroll](sidebar-surah-indicator.md) | implemented | feature |
 | notifications | [Fix dedicated reminder title fallback](fix-dedicated-reminder-title.md) | implemented | bug |
-| pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | implemented | feature |
 | pwa | [Auth return fails silently in shell — route failed exchanges to the retry UI](auth-audible-failure.md) | implemented | bug |
 | pwa | [Auth return lands before the session cookie commits — verify session before landing](auth-session-race.md) | implemented | bug |
 | pwa | [Auth return lost on cold start — consume the launch URL on listener mount](auth-coldstart-launch-url.md) | implemented | bug |
@@ -71,6 +71,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | pwa | [Fix mobile shell status bar and navigation bar overlap in Capacitor](fix-mobile-shell-status-bar-overlap.md) | implemented | bug |
 | pwa | [Fix web sign-in provider selection & Android shell activity result forwarding](fix-signin-web-and-android-shell.md) | implemented | Bug |
 | pwa | [Fix: Users See Stale App After Deployment (Service Worker Cache)](fix-sw-stale-cache.md) | implemented | bug |
+| pwa | [Mobile app (phone + tablet, iOS + Android) via Capacitor hosted shell](mobile-app-capacitor.md) | implemented | feature |
 | pwa | [Mobile PWA Safe Area and Indicator Ergonomics](fix-mobile-pwa-safe-area-and-footer.md) | implemented | bug |
 | pwa | [PWA Cold Launch Splash-Continuity Cover](pwa-launch-splash-continuity.md) | implemented | feature |
 | pwa | [PWA Conversion + Offline Quran Page Reading](pwa-offline-support.md) | implemented | feature |

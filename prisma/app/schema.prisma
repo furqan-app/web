@@ -219,3 +219,19 @@ model DeviceToken {
   @@index([user_id])
   @@map("device_tokens")
 }
+
+// User-scoped memorization tracking per surah and page (ADR 0077, #651).
+// Preserves ADR 0008 invariant: scalar chapter_id and page_number references only.
+model UserSurahPageMemorization {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  chapter_id  Int
+  page_number Int
+  status      String   // "mastered" | "needs_review"
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@unique([user_id, chapter_id, page_number])
+  @@index([user_id, chapter_id])
+  @@map("user_surah_page_memorizations")
+}

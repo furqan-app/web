@@ -6,7 +6,15 @@ import useTranslations from "@hooks/use-translations";
 import { isNativePlatform } from "@/app/utils/platform";
 import { nativeGoogleSignIn } from "@/app/lib/shell/native-signin";
 
-export const PlansSignedOutPrompt = () => {
+interface PlansSignedOutPromptProps {
+  descriptionKey?: string;
+  defaultDescription?: string;
+}
+
+export function PlansSignedOutPrompt({
+  descriptionKey = "plans.signedOut",
+  defaultDescription = "Sign in to see your daily awrad and learning plans.",
+}: PlansSignedOutPromptProps) {
   const t = useTranslations();
 
   // Shell return path (plan mobile-app-capacitor): system browser with the
@@ -26,7 +34,7 @@ export const PlansSignedOutPrompt = () => {
         <Target className="size-6" strokeWidth={1.6} />
       </span>
       <p className="max-w-xs text-sm text-muted-foreground">
-        {t("plans.signedOut", "Sign in to see your daily awrad and learning plans.")}
+        {t(descriptionKey, defaultDescription)}
       </p>
       <button
         onClick={startSignIn}

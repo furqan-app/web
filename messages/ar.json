@@ -261,6 +261,14 @@
       "cancel": "إلغاء"
     }
   },
+  "heart": {
+    "navLink": "قلبي القرآني",
+    "pageTitle": "قلبي القرآني",
+    "title": "قلبي القرآني",
+    "progressTitle": "حالة قلبي",
+    "mapAriaLabel": "خريطة القلب القرآني",
+    "signedOut": "سجّل الدخول لتتبّع حفظك للقرآن الكريم عبر خريطة قلبي القرآني."
+  },
   "plans": {
     "navLink": "خططي",
     "pageTitle": "الأوراد وخطط التعلم",
@@ -277,6 +285,40 @@
       "progress": "التقدّم",
       "manage": "إدارة الخطط",
       "reminders": "التنبيهات"
+    },
+    "heart": {
+      "legend": {
+        "mastered": "متقنة",
+        "needsReview": "تحتاج تعاهداً",
+        "partial": "حفظ جزئي",
+        "unmemorized": "غير محفوظة"
+      },
+      "stats": {
+        "pagesMemorized": "صفحة محفوظة",
+        "pagesRemaining": "{count} صفحة متبقية",
+        "completion": "نسبة الحفظ"
+      },
+      "inspector": {
+        "selectSurahPrompt": "اختر سورة من الخريطة لعرض تفاصيل حفظها",
+        "readInMushaf": "اقرأ في المصحف",
+        "toolsTitle": "أداة التحديد",
+        "toolMastered": "متقنة",
+        "toolNeedsReview": "تحتاج تعاهداً",
+        "toolEraser": "غير محفوظة",
+        "toolHint": "انقر على أرقام الصفحات بالأسفل لتحديد حالتها بالأداة المختارة",
+        "applyToAll": "تطبيق على الكل",
+        "totalPages": "صفحة",
+        "versesCount": "آية",
+        "pageNumber": "صفحة {page}",
+        "surahPrefix": "سورة",
+        "pageAbbrev": "ص",
+        "retentionMastered": "{count} متقنة",
+        "retentionNeedsReview": "{count} تحتاج تعاهداً",
+        "sheetTitle": "تفاصيل السورة والمحفوظ",
+        "sheetDescription": "تعديل صفحات السورة وتحديد حالتها من الحفظ والمراجعة",
+        "makkah": "مكية",
+        "madinah": "مدنية"
+      }
     },
     "dashboard": {
       "title": "سجل الإنجاز والتقدّم",

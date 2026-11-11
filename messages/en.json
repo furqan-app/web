@@ -261,6 +261,14 @@
       "cancel": "Cancel"
     }
   },
+  "heart": {
+    "navLink": "My Quranic Heart",
+    "pageTitle": "My Quranic Heart",
+    "title": "My Quranic Heart",
+    "progressTitle": "My Heart's State",
+    "mapAriaLabel": "Quranic Heart Map",
+    "signedOut": "Sign in to track your Quran memorization through My Quranic Heart map."
+  },
   "plans": {
     "navLink": "My Plans",
     "pageTitle": "Daily Awrad & Learning Plans",
@@ -277,6 +285,40 @@
       "progress": "Progress",
       "manage": "My Plans",
       "reminders": "Reminders"
+    },
+    "heart": {
+      "legend": {
+        "mastered": "Mastered",
+        "needsReview": "Needs Review",
+        "partial": "Partial",
+        "unmemorized": "Unmemorized"
+      },
+      "stats": {
+        "pagesMemorized": "Pages Memorized",
+        "pagesRemaining": "{count} pages remaining",
+        "completion": "Memorized"
+      },
+      "inspector": {
+        "selectSurahPrompt": "Select a surah from the map to inspect its memorization",
+        "readInMushaf": "Read in Mushaf",
+        "toolsTitle": "Marking Tool",
+        "toolMastered": "Mastered",
+        "toolNeedsReview": "Needs Review",
+        "toolEraser": "Unmemorized",
+        "toolHint": "Click page numbers below to apply the selected status",
+        "applyToAll": "Apply to all",
+        "totalPages": "pages",
+        "versesCount": "Verses",
+        "pageNumber": "Page {page}",
+        "surahPrefix": "Surah",
+        "pageAbbrev": "p.",
+        "retentionMastered": "{count} Mastered",
+        "retentionNeedsReview": "{count} Needs Review",
+        "sheetTitle": "Surah & Memorization Details",
+        "sheetDescription": "Edit surah pages and update their memorization and review status",
+        "makkah": "Meccan",
+        "madinah": "Medinan"
+      }
     },
     "dashboard": {
       "title": "Progress & Milestones",
