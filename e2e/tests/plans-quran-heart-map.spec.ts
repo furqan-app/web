@@ -30,25 +30,29 @@ test.describe("Quran Heart Memorization Map (#651)", () => {
     }
 
     // Inspector is visible (defaults to Al-Fatihah, chapter 1)
-    await expect(page.getByText("سورة الفاتحة")).toBeVisible();
-    await expect(page.getByRole("link", { name: /اقرأ في المصحف/i })).toBeVisible();
+    const inspector = isMobile ? page.locator('[role="dialog"]') : page.locator("main");
+    await expect(inspector.getByText("سورة الفاتحة")).toBeVisible();
+    await expect(inspector.getByRole("link", { name: /اقرأ في المصحف/i })).toBeVisible();
 
     // Tool selector bar
-    const toolMastered = page.getByRole("radio", { name: /متقنة/i });
-    const toolNeedsReview = page.getByRole("radio", { name: /تحتاج تعاهداً/i });
-    const toolEraser = page.getByRole("radio", { name: /غير محفوظة/i });
+    const toolMastered = inspector.getByRole("radio", { name: /متقنة/i });
+    const toolNeedsReview = inspector.getByRole("radio", { name: /تحتاج تعاهداً/i });
+    const toolEraser = inspector.getByRole("radio", { name: /غير محفوظة/i });
     await expect(toolMastered).toBeVisible();
     await expect(toolNeedsReview).toBeVisible();
     await expect(toolEraser).toBeVisible();
 
     // Bulk action: single unified "تطبيق على الكل" applying active tool
-    await expect(page.getByRole("button", { name: /تطبيق على الكل/i })).toBeVisible();
+    await expect(inspector.getByRole("button", { name: /تطبيق على الكل/i })).toBeVisible();
   });
 
-  test("allows selecting different surahs by clicking SVG polygons or navigating", async ({
-    page,
-  }) => {
+  test("allows selecting different surahs by clicking SVG polygons or navigating", async (
+    { page },
+    testInfo
+  ) => {
     await page.goto("/ar/heart");
+
+    const isMobile = testInfo.project.name === "mobile";
 
     // Find a surah path on the SVG, e.g. Al-Baqarah (surah 2)
     const baqarahPath = page.locator("#quran-heart-svg path[aria-label*='البقرة']");
@@ -56,7 +60,8 @@ test.describe("Quran Heart Memorization Map (#651)", () => {
     await baqarahPath.click();
 
     // Inspector updates to Al-Baqarah
-    await expect(page.getByText("سورة البقرة")).toBeVisible();
-    await expect(page.getByText(/٤٨ صفحة/)).toBeVisible();
+    const inspector = isMobile ? page.locator('[role="dialog"]') : page.locator("main");
+    await expect(inspector.getByText("سورة البقرة")).toBeVisible();
+    await expect(inspector.getByText(/٤٨ صفحة/)).toBeVisible();
   });
 });
