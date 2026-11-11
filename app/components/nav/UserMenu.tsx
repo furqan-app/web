@@ -12,6 +12,7 @@ import {
   Users,
   Loader2,
   AlertTriangle,
+  Heart,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -251,6 +252,10 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
               <CalendarDays className="size-4 flex-none" />
               {t("plans.navLink", "My Plans")}
             </Link>
+            <Link href="/heart" locale={locale} className={menuRowClassName} onClick={onNavigate}>
+              <Heart className="size-4 flex-none" />
+              {t("heart.navLink", "Quran Heart")}
+            </Link>
             {session ? (
               <SignOutControl menuRow onNavigate={onNavigate} />
             ) : (
@@ -317,6 +322,12 @@ export const UserMenu = ({ menuRow, container, onNavigate }: Props = {}) => {
           <Link href="/plans" locale={locale}>
             <CalendarDays className="size-4" />
             {t("plans.navLink", "My Plans")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/heart" locale={locale}>
+            <Heart className="size-4" />
+            {t("heart.navLink", "Quran Heart")}
           </Link>
         </DropdownMenuItem>
         {session ? (

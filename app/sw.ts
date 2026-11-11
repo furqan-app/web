@@ -317,6 +317,10 @@ const isMarksApi = (url: URL) =>
   url.pathname === "/api/marks" ||
   /^\/api\/quran\/pages\/[0-9]+\/marks$/.test(url.pathname);
 
+// Memorization API endpoints (ADR 0077, #651). Must never be served from cache.
+const isMemorizationApi = (url: URL) =>
+  url.pathname.startsWith("/api/plans/memorization");
+
 const serwist = new Serwist({
   precacheEntries: precacheManifest,
   skipWaiting: true,
@@ -465,6 +469,11 @@ const serwist = new Serwist({
     // reason as the QDC tafsir NetworkOnly rule above (ADR 0060).
     {
       matcher: ({ sameOrigin, url }) => sameOrigin && isMarksApi(url),
+      handler: new NetworkOnly(),
+    },
+    // Quran Heart Memorization Map API (ADR 0077, #651)
+    {
+      matcher: ({ sameOrigin, url }) => sameOrigin && isMemorizationApi(url),
       handler: new NetworkOnly(),
     },
     // ADR 0049 — actually aborts the launch-time session fetch at 3s instead

@@ -132,6 +132,17 @@ app/global-error.tsx         — last-resort error boundary for the root layout 
   PlansSignedOutPrompt       — client: sign-in CTA when unauthenticated (own copy, mirrors MarksSignedOutPrompt)
 ```
 
+## Zone: heart (`app/[locale]/heart/page.tsx`)
+
+```
+(page.tsx — server: header with manuscript title + session gate, self-memorization only, no grant equivalent)
+  PlansSignedOutPrompt       — client: sign-in CTA when unauthenticated (descriptionKey="heart.signedOut")
+  QuranHeartMapTab           — client: dedicated view container (ADR 0077 / #651) hosting the Quranic Heart Memorization Map, global donut progress metrics, visual legend, responsive desktop/mobile layouts, and Sheet inspector
+    QuranHeartMap            — client: interactive SVG vector heart map rendering 114 surah polygon paths, multi-state liquid gradients, centroids, and labels with keyboard accessibility (fq-focus-ring)
+    SurahInspector           — client: surah header, quick link to reader, retention breakdown, active tool selector (mastered, needs_review, unmemorized), and unified "Apply to all" bulk action
+      MicroMushafGrid        — client: responsive grid displaying all pages of the selected surah as circular page badges with 44px min touch targets for instant painting
+```
+
 ## Zone: vertical reader (`app/[locale]/pages/vertical/page.tsx`)
 
 ```
