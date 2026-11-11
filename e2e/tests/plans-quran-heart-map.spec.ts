@@ -8,10 +8,10 @@ test.describe("Quran Heart Memorization Map (#651)", () => {
     await authenticateAsUser(context);
   });
 
-  test("navigates to '/ar/heart', renders SVG heart map, donut chart, inspector, and tool switcher", async ({
-    page,
-    isMobile,
-  }) => {
+  test("navigates to '/ar/heart', renders SVG heart map, donut chart, inspector, and tool switcher", async (
+    { page },
+    testInfo
+  ) => {
     await page.goto("/ar/heart");
 
     // Verify SVG heart map is rendered
@@ -22,6 +22,7 @@ test.describe("Quran Heart Memorization Map (#651)", () => {
     await expect(page.getByRole("heading", { name: "قلبي القرآني" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "حالة قلبي" })).toBeVisible();
 
+    const isMobile = testInfo.project.name === "mobile";
     if (isMobile) {
       // On mobile, the inspector is in a bottom sheet opened by tapping a surah cell
       const fatihahPath = page.locator("#quran-heart-svg path[aria-label*='الفاتحة']");
