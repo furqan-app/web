@@ -2,11 +2,14 @@
 
 import React, { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { X } from "lucide-react";
+import { ArrowRight, BookOpen, Heart, Plus, SlidersHorizontal, X } from "lucide-react";
+import { Link } from "@/i18n/routing";
 import { toLocaleNumeral } from "@/app/utils/i18n";
 import { useMemorizationMap } from "@/app/hooks/use-memorization-map";
+import { usePlans } from "@/app/hooks/use-plans";
 import { QuranHeartMap } from "./QuranHeartMap";
 import { SurahInspector } from "./SurahInspector";
+import { HeartPulsePlanDialog } from "./HeartPulsePlanDialog";
 import {
   Sheet,
   SheetClose,
@@ -28,6 +31,12 @@ export function QuranHeartMapTab() {
     updateBatch,
     isUpdating,
   } = useMemorizationMap();
+
+  const { data: plans } = usePlans();
+  const heartPulsePlan = plans?.find(
+    (p) => p.template_key === "heart-pulse" && (p.status === "active" || p.status === "paused")
+  );
+  const [heartPulseDialogOpen, setHeartPulseDialogOpen] = useState(false);
 
   const [selectedSurahId, setSelectedSurahId] = useState<number>(1); // Default to Al-Fatihah
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
@@ -240,8 +249,86 @@ export function QuranHeartMapTab() {
               </div>
             </div>
           </div>
+
+          {/* Section 3: Dedicated Heart Pulse Wird Card */}
+          <div className="p-3.5 sm:p-4 rounded-2xl border border-border/60 bg-card shadow-sm flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <span className="grid place-items-center size-9 rounded-xl bg-primary/10 text-primary flex-none mt-0.5">
+                <Heart className="size-[18px]" strokeWidth={1.75} />
+              </span>
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className={cn("text-sm font-semibold text-foreground", locale === "ar" && "font-tajawal")}>
+                    {t("plans.heartPulse.cardTitle", { default: "ورد نبض القلب الذكي" })}
+                  </h3>
+                  {heartPulsePlan && (
+                    <span
+                      className={cn(
+                        "text-[11px] font-medium px-2 py-0.5 rounded-full",
+                        heartPulsePlan.status === "active"
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground bg-muted",
+                      )}
+                    >
+                      {heartPulsePlan.status === "active"
+                        ? t("plans.status.active", { default: "نشط" })
+                        : t("plans.status.paused", { default: "متوقف" })}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                  {heartPulsePlan
+                    ? (heartPulsePlan.name || t("plans.heartPulse.activeDesc", { default: "خطة يومية مبنية على نبض صدرك وحفظك في القلب القرآني." }))
+                    : t("plans.heartPulse.bannerHint", { default: "أنشئ خطة مخصصة للحفظ والمراجعة مبنية على نبض صدرك." })}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {heartPulsePlan && (
+                <Link
+                  href="/plans"
+                  className="flex-1 min-h-[40px] px-3.5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 fq-focus-ring active:scale-[0.98] cursor-pointer"
+                >
+                  <BookOpen className="size-4" strokeWidth={1.75} />
+                  <span>{t("plans.heartPulse.goToWird", { default: "الذهاب إلى ورد اليوم" })}</span>
+                  <ArrowRight className="size-3.5 rtl:rotate-180" />
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => setHeartPulseDialogOpen(true)}
+                className={cn(
+                  "min-h-[40px] px-3.5 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 fq-focus-ring active:scale-[0.98] cursor-pointer",
+                  heartPulsePlan
+                    ? "border border-border bg-background hover:bg-accent hover:text-accent-foreground text-foreground"
+                    : "flex-1 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
+                )}
+              >
+                {heartPulsePlan ? (
+                  <SlidersHorizontal className="size-3.5" strokeWidth={1.75} />
+                ) : (
+                  <Plus className="size-4" strokeWidth={2} />
+                )}
+                <span>
+                  {heartPulsePlan
+                    ? t("plans.heartPulse.editButton", { default: "تعديل الورد" })
+                    : t("plans.heartPulse.createButton", { default: "إنشاء ورد القلب" })}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Heart Pulse Plan Dialog */}
+      <HeartPulsePlanDialog
+        open={heartPulseDialogOpen}
+        onOpenChange={setHeartPulseDialogOpen}
+        memorizationMap={memorizationMap}
+        isLoadingMap={isLoading}
+        existingPlan={heartPulsePlan}
+      />
 
       {/* Mobile Bottom Sheet Inspector */}
       <div className="lg:hidden">

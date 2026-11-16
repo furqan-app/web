@@ -200,15 +200,18 @@ export async function PATCH(
     });
   }
 
-  if (hasCustomEdit) {
+  if (body?.cadence !== undefined || body?.range !== undefined) {
     return jsonResponse({
       code: 422,
-      message: "name/cadence/range apply only to custom wirds",
+      message: "cadence/range apply only to custom wirds",
     });
   }
 
-  const data: { status?: UserPlanStatus; params?: object } = {};
+  const data: { status?: UserPlanStatus; name?: string | null; params?: object } = {};
   if (status !== undefined) data.status = status;
+  if (body?.name !== undefined) {
+    data.name = typeof body.name === "string" ? body.name.trim() || null : null;
+  }
 
   if (hasParamsEdit) {
     const template = getEnrollmentTemplate(plan);
@@ -220,6 +223,18 @@ export async function PATCH(
     const resolved = await resolvePlanParams(body ?? {}, template, existingTrackUnits);
     if ("error" in resolved) {
       return jsonResponse({ code: 422, message: resolved.error });
+    }
+    if (plan.template_key === "heart-pulse") {
+      const counts = await appPrisma.planProgressEntry.groupBy({
+        by: ["track_key"],
+        where: { user_plan_id: planId, track_key: { in: ["hifz", "motafallit"] } },
+        _count: { id: true },
+      });
+      const baseline: Record<string, number> = {};
+      for (const row of counts) {
+        baseline[row.track_key] = row._count.id;
+      }
+      resolved.params.queueBaseline = baseline;
     }
     data.params = resolved.params as object;
   }

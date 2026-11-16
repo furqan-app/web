@@ -230,38 +230,53 @@ export const PlanAssignmentRow = ({
             ) : null}
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-medium text-foreground truncate">
-                  {planName || (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey)}
-                </div>
-                {isAuto ? (
-                  <span
-                    data-testid="auto-recorded-badge"
-                    title={t(
-                      "plans.detection.autoRecordedHint",
-                      "This entry was automatically recorded based on your reading or listening.",
-                    )}
-                    className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 shrink-0"
-                  >
-                    <span>{t("plans.detection.autoRecordedBadge", "Auto-recorded")}</span>
-                  </span>
-                ) : null}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {!planName && (
+              {(() => {
+                const isCustomNamed = assignment.trackKey === "custom" && Boolean(planName);
+                const primaryTitle = isCustomNamed
+                  ? planName!
+                  : (trackUi ? t(trackUi.labelKey, trackUi.defaultLabel) : assignment.trackKey);
+                return (
                   <>
-                    {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
-                    {" · "}
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-semibold text-foreground truncate">
+                        {primaryTitle}
+                      </div>
+                      {planName && !isCustomNamed ? (
+                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-md truncate max-w-[140px]">
+                          {planName}
+                        </span>
+                      ) : null}
+                      {isAuto ? (
+                        <span
+                          data-testid="auto-recorded-badge"
+                          title={t(
+                            "plans.detection.autoRecordedHint",
+                            "This entry was automatically recorded based on your reading or listening.",
+                          )}
+                          className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 shrink-0"
+                        >
+                          <span>{t("plans.detection.autoRecordedBadge", "Auto-recorded")}</span>
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {!isCustomNamed ? (
+                        <>
+                          {activityUi ? t(activityUi.labelKey, activityUi.defaultLabel) : assignment.activity}
+                          {" · "}
+                        </>
+                      ) : null}
+                      {rangeLabel}
+                      {assignment.repetitions ? ` · ×${toLocaleNumeral(assignment.repetitions, locale)}` : ""}
+                      {playFailed ? (
+                        <span className="text-destructive ms-1 font-medium">
+                          · {t("plans.playback.failed", "Playback failed")}
+                        </span>
+                      ) : null}
+                    </div>
                   </>
-                )}
-                {rangeLabel}
-                {assignment.repetitions ? ` · ×${toLocaleNumeral(assignment.repetitions, locale)}` : ""}
-                {playFailed ? (
-                  <span className="text-destructive ms-1 font-medium">
-                    · {t("plans.playback.failed", "Playback failed")}
-                  </span>
-                ) : null}
-              </div>
+                );
+              })()}
               {assignment.completed && assignment.next ? (
                 <div className="text-xs text-muted-foreground/70">
                   {t("plans.nextAssignment", "Next")}:{" "}

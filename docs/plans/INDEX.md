@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-124 active plans.
+125 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -24,6 +24,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | awrad | [Daily wird presets: add memorize & review flavours, reframe as \"Daily wird — <activity>\" + optional start point](607-daily-wird-activity-flavours.md) | implemented | feature |
 | awrad | [Daily-Recurring Custom Wirds with Full-Range Wrap](daily-recurring-custom-wirds.md) | implemented | feature |
 | awrad | [Quran Heart Memorization Map & Visual Progress Hub](651-quran-heart-map.md) | implemented | feature |
+| awrad | [Smart Heart Pulse Wird Plan](652-heart-pulse-wird.md) | implemented | feature |
 | awrad | [Unify Awrad Creation Flow and Consolidate Main Plans Tabs](unify-awrad-creation-and-tabs.md) | implemented | feature |
 | awrad | [Verse & Fractional-Page Granularity for Awrad](awrad-verse-granularity.md) | implemented | feature |
 | awrad | [Weekly-Recurring Custom Wirds with Matching Weekly Reminders](weekly-custom-wirds.md) | implemented | feature |

@@ -32,7 +32,10 @@ export const useTodayAssignments = ({ enabled = true }: { enabled?: boolean } = 
     refetchIntervalInBackground: false,
   });
 
-  const reload = () => queryClient.invalidateQueries({ queryKey: ["/plans"] });
+  const reload = () => {
+    queryClient.invalidateQueries({ queryKey: ["/plans"] });
+    queryClient.invalidateQueries({ queryKey: ["memorization-map"] });
+  };
 
   const checkOff = useMutation({
     mutationFn: (input: {

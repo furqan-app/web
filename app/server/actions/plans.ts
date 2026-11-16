@@ -41,6 +41,7 @@ export const enrollInPlan = async ({
   startDate,
   targetJuzStart,
   targetJuzEnd,
+  name,
 }: {
   templateKey: string;
   params?: UserPlanParams;
@@ -48,6 +49,7 @@ export const enrollInPlan = async ({
   /** Husun's hifz target range — resolved to pages server-side (D3). */
   targetJuzStart?: number;
   targetJuzEnd?: number;
+  name?: string;
 }): Promise<UserPlanListItem | null> => {
   try {
     const { data, success } = await fetch("/api/plans", {
@@ -56,6 +58,7 @@ export const enrollInPlan = async ({
       body: JSON.stringify({
         template_key: templateKey,
         params,
+        name,
         start_date: startDate,
         target_juz_start: targetJuzStart,
         target_juz_end: targetJuzEnd,
@@ -98,11 +101,13 @@ export const updatePlanParams = async ({
   params,
   targetJuzStart,
   targetJuzEnd,
+  name,
 }: {
   planId: number;
   params: UserPlanParams;
   targetJuzStart?: number;
   targetJuzEnd?: number;
+  name?: string;
 }): Promise<boolean> => {
   try {
     const { success } = await fetch(`/api/plans/${planId}`, {
@@ -110,6 +115,7 @@ export const updatePlanParams = async ({
       headers: JSON_HEADERS,
       body: JSON.stringify({
         params,
+        name,
         target_juz_start: targetJuzStart,
         target_juz_end: targetJuzEnd,
       }),

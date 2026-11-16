@@ -320,6 +320,58 @@
         "madinah": "Medinan"
       }
     },
+    "heartPulse": {
+      "createTitle": "Create Smart Heart Pulse Wird",
+      "editTitle": "Edit Heart Pulse Wird",
+      "description": "A smart multi-track plan tailored to your Quran Heart memorization state, respecting your daily capacity and keeping your heart cells updated upon completion.",
+      "planName": "Heart Pulse",
+      "diagnosticTitle": "Current Heart Diagnosis",
+      "diagnosticHint": "Determines priorities for memorization and review",
+      "masteredPages": "mastered pages",
+      "slippingPages": "pages need review",
+      "unmemorizedPages": "unmemorized pages",
+      "directionLabel": "Memorization & Review Direction",
+      "directionAscending": "Ascending from Surah An-Nas",
+      "directionAscendingDesc": "Starts from short surahs & Juz Amma upward, skipping mastered surahs.",
+      "directionDescending": "Descending from Surah Al-Baqarah",
+      "directionDescendingDesc": "Starts from Surah Al-Baqarah downward according to mushaf order.",
+      "directionAscendingShort": "From An-Nas",
+      "directionDescendingShort": "From Al-Baqarah",
+      "pagesPerDayShort": "p/day",
+      "recommended": "Recommended",
+      "tracksLabel": "Select Tracks & Daily Targets",
+      "hifzDesc": "Memorizing unmemorized pages sequentially along the selected direction.",
+      "noUnmemorizedPages": "No unmemorized pages remaining; all surahs are already memorized.",
+      "motafallitDesc": "Reviews slipping pages needing attention to promote them to mastered.",
+      "noSlippingPages": "There are currently no pages needing review in your heart.",
+      "qareebDesc": "Trailing window to review and consolidate recent new memorization.",
+      "tahdeerDesc": "Listen to and recite tomorrow's new memorization portion in advance.",
+      "requiresUnmemorized": "Requires unmemorized pages in the new memorization track.",
+      "requiresHifzTrack": "Requires enabling the new memorization track first.",
+      "fullyMasteredNotice": "MashaAllah! Your heart is 100% mastered (604 pages). There are no unmemorized or slipping pages to schedule right now.",
+      "pagesPerDay": "page / day",
+      "halfPagePerDay": "half page / day",
+      "trailingPages": "trailing pages",
+      "trailingHalfPage": "last 0.5 page",
+      "trailingOnePage": "last page",
+      "trailingPageAndHalf": "last 1.5 pages",
+      "trailingTwoPages": "last 2 pages",
+      "repeatPasses": "repeats",
+      "cardTitle": "Smart Heart Pulse Wird",
+      "nameLabel": "Wird Name",
+      "goToWird": "Go to Today's Wird",
+      "activeDesc": "Daily plan based on your heart's memorization state.",
+      "bannerHint": "Create your wird from your heart pulse",
+      "createButton": "Create Heart Wird",
+      "editButton": "Edit Wird",
+      "startPlan": "Start Plan",
+      "saveChanges": "Save Changes",
+      "cancel": "Cancel",
+      "errors": {
+        "atLeastOneTrack": "Please select at least one track to activate the plan",
+        "generic": "An error occurred while saving the plan"
+      }
+    },
     "dashboard": {
       "title": "Progress & Milestones",
       "subtitle": "Track your consistency across recitation, listening, memorization, and review",
@@ -556,6 +608,10 @@
       "custom": {
         "label": "Custom wird",
         "description": "A personalized goal with custom range and cadence."
+      },
+      "heartPulse": {
+        "label": "Heart Pulse",
+        "description": "A smart multi-track wird based on your heart's memorization state."
       }
     },
     "presets": {
@@ -588,7 +644,8 @@
       "hifz": "New memorization",
       "tahdeer": "Preparation",
       "qareeb": "Near review",
-      "baeed": "Distant review"
+      "baeed": "Distant review",
+      "motafallit": "Slipping review"
     },
     "activities": {
       "read": "Read",

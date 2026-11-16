@@ -17,6 +17,8 @@ import { AddPlanButton } from "./AddPlanButton";
 import { PlansProgressTab } from "./PlansProgressTab";
 import { DailyWirdReminderSection } from "@/app/components/notifications/DailyWirdReminderSection";
 import { PlansBrowseDialog, type PlansBrowseView } from "./PlansBrowseDialog";
+import { HeartPulsePlanDialog } from "./HeartPulsePlanDialog";
+import { useMemorizationMap } from "@hooks/use-memorization-map";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter } from "@/i18n/routing";
 import { TimeCombobox, formatTimeOption } from "@/components/ui/time-combobox";
@@ -229,6 +231,37 @@ export const PlanParametersSummary = ({ plan }: { plan: UserPlanListItem }) => {
     const pace = quantityAmount(plan.params.quantities?.reviewing, 1);
     const unit = plan.params.trackUnits?.reviewing;
     parts.push(getPlanPaceSummary(pace, unit, locale, tIntl));
+  } else if (plan.template_key === "heart-pulse") {
+    const p = plan.params;
+    const dir =
+      p.direction === "descending"
+        ? t("plans.heartPulse.directionDescendingShort", "من البقرة نزولاً")
+        : t("plans.heartPulse.directionAscendingShort", "من الناس صعوداً");
+    parts.push(dir);
+    if (p.activeTracks?.includes("hifz")) {
+      const q = typeof p.quantities?.hifz === "number" ? p.quantities.hifz : 1;
+      parts.push(
+        `${t("plans.tracks.hifz", "الحفظ الجديد")}: ${toLocaleNumeral(q, locale)} ${t("plans.heartPulse.pagesPerDayShort", "ص/يوم")}`
+      );
+    }
+    if (p.activeTracks?.includes("motafallit")) {
+      const q = typeof p.quantities?.motafallit === "number" ? p.quantities.motafallit : 2;
+      parts.push(
+        `${t("plans.tracks.motafallit", "مراجعة المتفلت")}: ${toLocaleNumeral(q, locale)} ${t("plans.heartPulse.pagesPerDayShort", "ص/يوم")}`
+      );
+    }
+    if (p.activeTracks?.includes("qareeb")) {
+      const q = typeof p.quantities?.qareeb === "number" ? p.quantities.qareeb : 5;
+      parts.push(
+        `${t("plans.tracks.qareeb", "مراجعة القريب")}: ${toLocaleNumeral(q, locale)} ${t("plans.heart.inspector.pageAbbrev", "ص")}`
+      );
+    }
+    if (p.activeTracks?.includes("tahdeer")) {
+      const q = typeof p.quantities?.tahdeer === "number" ? p.quantities.tahdeer : 3;
+      parts.push(
+        `${t("plans.tracks.tahdeer", "التحضير")}: ×${toLocaleNumeral(q, locale)}`
+      );
+    }
   } else if (plan.template_key === "custom" && plan.definition) {
     const summary = formatCustomWirdDefinitionSummary(
       plan.definition,
@@ -269,6 +302,11 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
   const statusUi = STATUS_LABEL[plan.status];
   const actions = STATUS_ACTIONS[plan.status];
   const editView = EDIT_VIEW_FOR_TEMPLATE[plan.template_key];
+  const isHeartPulse = plan.template_key === "heart-pulse";
+  const canEdit = Boolean(editView) || isHeartPulse;
+  const { memorizationMap, isLoading: isLoadingMap } = useMemorizationMap({
+    enabled: isHeartPulse && editOpen,
+  });
 
   const { data: todayData } = useTodayAssignments();
   const verseIndex = usePlanVerseIndex();
@@ -408,7 +446,7 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-extrabold text-foreground group-hover:text-primary group-hover/card:text-primary transition-colors">
-                {plan.template_key === "custom" && plan.name
+                {plan.name
                   ? plan.name
                   : ui
                     ? t(ui.labelKey, ui.defaultLabel)
@@ -430,7 +468,7 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
         </Link>
 
         <div className="flex items-center gap-1.5 flex-none" onClick={(e) => e.stopPropagation()}>
-          {editView ? (
+          {canEdit ? (
             <button
               type="button"
               onClick={() => setEditOpen(true)}
@@ -466,12 +504,22 @@ const PlanCard = ({ plan }: { plan: UserPlanListItem }) => {
         </div>
       </div>
 
-      {editView ? (
+      {editView && editOpen ? (
         <PlansBrowseDialog
           open={editOpen}
           onOpenChange={setEditOpen}
           initialView={editView}
           initialPlan={plan}
+        />
+      ) : null}
+
+      {isHeartPulse && editOpen ? (
+        <HeartPulsePlanDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          memorizationMap={memorizationMap}
+          isLoadingMap={isLoadingMap}
+          existingPlan={plan}
         />
       ) : null}
 

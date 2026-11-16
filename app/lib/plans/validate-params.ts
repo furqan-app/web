@@ -46,6 +46,8 @@ const FRACTIONAL_QUANTITY_TRACKS = new Set([
   "tilawa",
   "hifz",
   "baeed",
+  "motafallit",
+  "qareeb",
 ]);
 
 /**
@@ -106,6 +108,9 @@ export const resolvePlanParams = async (
       if (value !== "page" && value !== "verse") {
         return { error: `Invalid params.trackUnits.${key}` };
       }
+      if (template.key === "heart-pulse" && value !== "page") {
+        return { error: `Invalid params.trackUnits.${key}: heart-pulse only supports page units` };
+      }
     }
   }
   if (existingTrackUnits) {
@@ -118,8 +123,7 @@ export const resolvePlanParams = async (
     }
   }
 
-  // Only one track per template is ever cursor_advance (hifz, for husun) —
-  // the juz picker always targets it.
+  // The juz picker targets the primary cursor_advance track (e.g. hifz).
   const cursorAdvanceTrackKey = template.tracks.find((t) => t.rule.kind === "cursor_advance")?.key;
   const { target_juz_start: juzStart, target_juz_end: juzEnd } = body;
   if (juzStart !== undefined || juzEnd !== undefined) {
@@ -194,7 +198,12 @@ export const resolvePlanParams = async (
 
   if (params.quantities) {
     const isValidQuantity = (trackKey: string, value: PlanQuantity): boolean => {
-      if (typeof value === "number") return Number.isInteger(value) && value >= 1;
+      if (typeof value === "number") {
+        if (template.key === "heart-pulse" && FRACTIONAL_QUANTITY_TRACKS.has(trackKey)) {
+          return (Number.isInteger(value) || (value * 2) % 1 === 0) && value >= 0.5;
+        }
+        return Number.isInteger(value) && value >= 1;
+      }
       // {unit:"pages", amount} — only meaningful on a fractional-eligible
       // track whose resolved unit is "verse" (page-unit tracks are already
       // whole-page precision, ADR 0038).
@@ -213,6 +222,117 @@ export const resolvePlanParams = async (
     for (const [trackKey, value] of Object.entries(params.quantities)) {
       if (!isValidQuantity(trackKey, value)) {
         return { error: `Invalid params.quantities.${trackKey}` };
+      }
+    }
+  }
+
+  if (template.key !== "heart-pulse") {
+    for (const key of [
+      "direction",
+      "activeTracks",
+      "targetPages",
+      "slippingPages",
+      "targetQueue",
+      "slippingQueue",
+      "queueBaseline",
+    ] as const) {
+      if (params[key] !== undefined) {
+        return { error: `params.${key} is only supported for heart-pulse plans` };
+      }
+    }
+  } else {
+    if (params.direction !== undefined && params.direction !== "ascending" && params.direction !== "descending") {
+      return { error: "Invalid params.direction" };
+    }
+  }
+
+  if (params.activeTracks !== undefined) {
+    const validTrackKeys = new Set(template.tracks.map((t) => t.key));
+    if (
+      !Array.isArray(params.activeTracks) ||
+      params.activeTracks.length === 0 ||
+      !params.activeTracks.every((k) => typeof k === "string" && validTrackKeys.has(k))
+    ) {
+      return { error: "Invalid params.activeTracks" };
+    }
+  }
+
+  const MAX_QUEUE_LEN = 700;
+  for (const field of ["targetPages", "slippingPages"] as const) {
+    const arr = params[field];
+    if (arr !== undefined) {
+      if (
+        !Array.isArray(arr) ||
+        arr.length > MAX_QUEUE_LEN ||
+        !arr.every((p) => typeof p === "number" && Number.isInteger(p) && p >= MUSHAF_FIRST_PAGE && p <= MUSHAF_LAST_PAGE)
+      ) {
+        return { error: `Invalid params.${field}` };
+      }
+    }
+  }
+
+  for (const field of ["targetQueue", "slippingQueue"] as const) {
+    const arr = params[field];
+    if (arr !== undefined) {
+      if (
+        !Array.isArray(arr) ||
+        arr.length > MAX_QUEUE_LEN ||
+        !arr.every(
+          (item) =>
+            typeof item === "object" &&
+            item !== null &&
+            typeof item.chapterId === "number" &&
+            Number.isInteger(item.chapterId) &&
+            item.chapterId >= 1 &&
+            item.chapterId <= 114 &&
+            typeof item.pageNumber === "number" &&
+            Number.isInteger(item.pageNumber) &&
+            item.pageNumber >= MUSHAF_FIRST_PAGE &&
+            item.pageNumber <= MUSHAF_LAST_PAGE
+        )
+      ) {
+        return { error: `Invalid params.${field}` };
+      }
+    }
+  }
+
+  if (params.queueBaseline !== undefined) {
+    if (typeof params.queueBaseline !== "object" || params.queueBaseline === null || Array.isArray(params.queueBaseline)) {
+      return { error: "Invalid params.queueBaseline" };
+    }
+    for (const [k, v] of Object.entries(params.queueBaseline)) {
+      if (typeof v !== "number" || !Number.isInteger(v) || v < 0) {
+        return { error: `Invalid params.queueBaseline.${k}` };
+      }
+    }
+  }
+
+  if (template.key === "heart-pulse") {
+    const active = params.activeTracks ?? [];
+    if (active.length === 0) {
+      return { error: "At least one track must be active" };
+    }
+    const hasHifz = active.includes("hifz");
+    const hasMotafallit = active.includes("motafallit");
+    const hasDependent = active.includes("qareeb") || active.includes("tahdeer");
+
+    if (hasDependent && !hasHifz) {
+      return { error: "qareeb and tahdeer require hifz to be active" };
+    }
+    if (hasHifz) {
+      if (!params.targetPages || params.targetPages.length === 0) {
+        return { error: "hifz track requires at least one unmemorized page" };
+      }
+      if (!params.targetQueue || params.targetQueue.length !== params.targetPages.length) {
+        return { error: "targetQueue must match targetPages length" };
+      }
+    }
+    if (hasMotafallit) {
+      if (!params.slippingPages || params.slippingPages.length === 0) {
+        return { error: "motafallit track requires at least one slipping page" };
+      }
+      if (!params.slippingQueue || params.slippingQueue.length !== params.slippingPages.length) {
+        return { error: "slippingQueue must match slippingPages length" };
       }
     }
   }

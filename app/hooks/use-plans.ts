@@ -30,7 +30,10 @@ export const usePlans = () => {
     refetchIntervalInBackground: false,
   });
 
-  const reload = () => queryClient.invalidateQueries({ queryKey: ["/plans"] });
+  const reload = () => {
+    queryClient.invalidateQueries({ queryKey: ["/plans"] });
+    queryClient.invalidateQueries({ queryKey: ["memorization-map"] });
+  };
 
   const enroll = useMutation({
     mutationFn: enrollInPlan,

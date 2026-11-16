@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
   const plan = await appPrisma.userPlan.create({
     data: {
       user_id: user.id,
+      name: body.name ?? (template.key === "heart-pulse" ? "Heart Pulse" : null),
       template_key: template.key,
       params: params as object,
       start_date: new Date(`${startDate}T00:00:00Z`),

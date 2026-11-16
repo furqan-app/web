@@ -9,9 +9,11 @@ import { bindDedicatedReminderSafe } from "@/app/lib/plans/custom-wird-form-help
 import useTranslations from "@hooks/use-translations";
 import { PLAN_TEMPLATE_UI } from "@constants/plan-ui";
 import { usePlans } from "@hooks/use-plans";
+import { useMemorizationMap } from "@/app/hooks/use-memorization-map";
 import type { UserPlanListItem } from "@/app/server/actions/plans";
 import { PlanEnrollForm } from "./PlanEnrollForm";
 import { CustomWirdForm } from "./CustomWirdForm";
+import { HeartPulsePlanDialog } from "./HeartPulsePlanDialog";
 import {
   Dialog,
   DialogContent,
@@ -97,6 +99,10 @@ export const PlansBrowseDialog = ({
   const locale = useLocale();
   const queryClient = useQueryClient();
   const { data: plans, enrollCustom } = usePlans();
+  const [heartPulseDialogOpen, setHeartPulseDialogOpen] = useState(false);
+  const { memorizationMap, isLoading: isLoadingMap } = useMemorizationMap({
+    enabled: heartPulseDialogOpen,
+  });
   const [view, setView] = useState<View>(initialView);
   const [enrollingPresetId, setEnrollingPresetId] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<PlanPreset | null>(null);
@@ -194,6 +200,45 @@ export const PlansBrowseDialog = ({
                 </div>
               </div>
               {activeHusun ? (
+                <span className="text-xs font-semibold text-primary flex-none">
+                  {t("plans.status.active", "Active")}
+                </span>
+              ) : (
+                <ChevronRight
+                  className="size-3.5 text-muted-foreground flex-none rtl:rotate-180"
+                  strokeWidth={1.8}
+                />
+              )}
+            </button>
+          );
+        })()}
+
+        {/* 3. Heart Pulse Wird */}
+        {(() => {
+          const heartPulseUi = PLAN_TEMPLATE_UI["heart-pulse"];
+          const HeartPulseIcon = heartPulseUi.icon;
+          const activeHeartPulse = activePlanFor("heart-pulse");
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                setHeartPulseDialogOpen(true);
+                onOpenChange(false);
+              }}
+              className="flex items-center gap-3 rounded-xl px-2 py-2.5 text-start hover:bg-accent/50 transition-colors min-h-[44px]"
+            >
+              <span className="grid place-items-center size-9 rounded-lg bg-primary/10 text-primary flex-none">
+                <HeartPulseIcon className="size-[17px]" strokeWidth={1.7} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-foreground">
+                  {t(heartPulseUi.labelKey, heartPulseUi.defaultLabel)}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {t(heartPulseUi.descriptionKey, heartPulseUi.defaultDescription)}
+                </div>
+              </div>
+              {activeHeartPulse ? (
                 <span className="text-xs font-semibold text-primary flex-none">
                   {t("plans.status.active", "Active")}
                 </span>
@@ -388,23 +433,37 @@ export const PlansBrowseDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
-      <DialogContent
-        closeLabel={t("common.close", "Close")}
-        className={cn(
-          "w-[calc(100vw-2rem)] max-h-[85dvh] grid-cols-[minmax(0,1fr)] overflow-y-auto rounded-[20px] fq-scroll-nice",
-          view === "custom"
-            ? "sm:max-w-lg p-5 sm:p-6"
-            : view === "list"
-              ? "sm:max-w-md max-w-[420px] p-5"
-              : "max-w-[360px] p-5"
-        )}
-      >
-        {view === "list" && renderList()}
-        {view === "husun-overview" && renderHusunOverview()}
-        {view === "husun-settings" && renderHusunSettings()}
-        {view === "custom" && renderCustomWird()}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
+        <DialogContent
+          closeLabel={t("common.close", "Close")}
+          className={cn(
+            "w-[calc(100vw-2rem)] max-h-[85dvh] grid-cols-[minmax(0,1fr)] overflow-y-auto rounded-[20px] fq-scroll-nice",
+            view === "custom"
+              ? "sm:max-w-lg p-5 sm:p-6"
+              : view === "list"
+                ? "sm:max-w-md max-w-[420px] p-5"
+                : "max-w-[360px] p-5"
+          )}
+        >
+          {view === "list" && renderList()}
+          {view === "husun-overview" && renderHusunOverview()}
+          {view === "husun-settings" && renderHusunSettings()}
+          {view === "custom" && renderCustomWird()}
+        </DialogContent>
+      </Dialog>
+
+      {heartPulseDialogOpen ? (
+        <HeartPulsePlanDialog
+          open={heartPulseDialogOpen}
+          onOpenChange={setHeartPulseDialogOpen}
+          memorizationMap={memorizationMap}
+          isLoadingMap={isLoadingMap}
+          existingPlan={plans?.find(
+            (p) => p.template_key === "heart-pulse" && (p.status === "active" || p.status === "paused")
+          )}
+        />
+      ) : null}
+    </>
   );
 };

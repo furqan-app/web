@@ -163,6 +163,18 @@ export type UserPlanParams = {
   targetEnd?: number;
   endDate?: string;
   trackUnits?: Record<string, PlanUnit>;
+  /** Heart-pulse parameters (ADR 0078, #652) */
+  direction?: "ascending" | "descending";
+  activeTracks?: string[];
+  targetPages?: number[];
+  slippingPages?: number[];
+  targetQueue?: Array<{ chapterId: number; pageNumber: number }>;
+  slippingQueue?: Array<{ chapterId: number; pageNumber: number }>;
+  /**
+   * Entry count per track at the time the queue was last snapshotted (edit/PATCH),
+   * so historical progress entries before a queue re-snapshot don't skip new items.
+   */
+  queueBaseline?: Record<string, number>;
 };
 
 /**
@@ -317,6 +329,54 @@ export const PLAN_TEMPLATES: Record<string, PlanTemplate> = {
           sourceTrack: "hifz",
           defaultUnitsPerDay: 1,
           excludeTrailingWindow: 20,
+        },
+      },
+    ],
+  },
+  /**
+   * خطة أوراد نبض القلب الذكية (ADR 0078, #652) — Multi-track smart wird
+   * driven by Quran Heart memorization state and user preferences.
+   */
+  "heart-pulse": {
+    key: "heart-pulse",
+    missedDayPolicy: "cursor",
+    tracks: [
+      {
+        key: "hifz",
+        activity: "memorize",
+        unit: "page",
+        rule: {
+          kind: "cursor_advance",
+          defaultUnitsPerDay: 1,
+        },
+      },
+      {
+        key: "motafallit",
+        activity: "review",
+        unit: "page",
+        rule: {
+          kind: "cursor_advance",
+          defaultUnitsPerDay: 2,
+        },
+      },
+      {
+        key: "qareeb",
+        activity: "review",
+        unit: "page",
+        rule: {
+          kind: "trailing_window",
+          sourceTrack: "hifz",
+          windowSize: 5,
+        },
+      },
+      {
+        key: "tahdeer",
+        activity: "listen",
+        unit: "page",
+        rule: {
+          kind: "lookahead",
+          sourceTrack: "hifz",
+          repetitions: 3,
         },
       },
     ],
