@@ -42,7 +42,7 @@ async function postBatchMemorization(payload: BatchMemorizationUpdatePayload): P
   }
 }
 
-export function useMemorizationMap() {
+export function useMemorizationMap(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
 
   const {
@@ -55,6 +55,7 @@ export function useMemorizationMap() {
     queryKey: MEMORIZATION_QUERY_KEY,
     queryFn: fetchMemorizationMap,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: options?.enabled ?? true,
   });
 
   const mutation = useMutation({

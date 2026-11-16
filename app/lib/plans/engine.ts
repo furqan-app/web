@@ -218,10 +218,53 @@ const unitsPerDay = (
 const resolveFixedQuantity = (
   defaultPages: number,
   override: PlanQuantity | undefined,
-  unit: PlanUnit
+  unit: PlanUnit,
+  allowFractional = false
 ): number => {
-  if (typeof override === "number") return clampQuantity(override);
+  if (typeof override === "number") {
+    return allowFractional ? Math.max(0.5, override) : clampQuantity(override);
+  }
   return unit === "page" ? defaultPages : toVerseEquivalent(defaultPages);
+};
+
+/**
+ * Shared step-range helper for Heart-Pulse queue slicing on check-off
+ * (`progress/route.ts`) so fractional paces (`0.5`, `1.5`, etc.) stay
+ * 100% aligned with `heartPulseProgressState` in `engine.ts`.
+ */
+export const heartPulseStepRange = (
+  effectiveEntriesAfter: number,
+  dailyUnits: number
+): { startIndex: number; endIndex: number } => {
+  if (effectiveEntriesAfter <= 0) return { startIndex: 0, endIndex: 0 };
+  const startIndex = Math.floor((effectiveEntriesAfter - 1) * dailyUnits);
+  const endIndex = Math.floor(effectiveEntriesAfter * dailyUnits);
+  return { startIndex, endIndex };
+};
+
+/**
+ * Computes Heart-Pulse progress counts for a queue-driven track (`hifz` or `motafallit`)
+ * relative to `params.queueBaseline?.[trackKey]` so editing/re-snapshotting the queue
+ * never skips items and fractional paces (`0.5`, `1.5`, `2.5`) advance uniformly.
+ */
+const heartPulseProgressState = (
+  entries: ProgressLogEntry[],
+  params: UserPlanParams,
+  trackKey: string,
+  defaultUnitsPerDay: number
+): { dailyUnits: number; effectiveEntries: number; completedCount: number; todayCount: number } => {
+  const rawQty =
+    typeof params.quantities?.[trackKey] === "number"
+      ? (params.quantities[trackKey] as number)
+      : defaultUnitsPerDay;
+  const dailyUnits = Math.max(0.5, rawQty);
+  const baseline = Math.max(0, params.queueBaseline?.[trackKey] ?? 0);
+  const trackEntryCount = entries.filter((e) => e.track_key === trackKey).length;
+  const effectiveEntries = Math.max(0, trackEntryCount - baseline);
+  const completedCount = Math.floor(effectiveEntries * dailyUnits);
+  const nextCompleted = Math.floor((effectiveEntries + 1) * dailyUnits);
+  const todayCount = Math.max(1, nextCompleted - completedCount);
+  return { dailyUnits, effectiveEntries, completedCount, todayCount };
 };
 
 /**
@@ -297,7 +340,8 @@ const deriveSourceFreeTrack = (
   params: UserPlanParams,
   state: TrackState,
   unit: PlanUnit,
-  date: string
+  date: string,
+  entries: ProgressLogEntry[] = []
 ): TrackAssignment | null => {
   const already = todayEntryAssignment(track, params, state, unit);
   if (already) return already;
@@ -362,6 +406,35 @@ const deriveSourceFreeTrack = (
   }
 
   if (rule.kind === "cursor_advance") {
+    // Heart-pulse queue derivation (ADR 0078, #652)
+    if (template.key === "heart-pulse") {
+      const queue =
+        track.key === "hifz"
+          ? params.targetPages
+          : track.key === "motafallit"
+            ? params.slippingPages
+            : undefined;
+
+      if (!queue || queue.length === 0) return null;
+
+      const { completedCount, todayCount } = heartPulseProgressState(
+        entries,
+        params,
+        track.key,
+        rule.defaultUnitsPerDay
+      );
+
+      if (completedCount >= queue.length) return null;
+
+      const startIndex = completedCount;
+      const endIndex = Math.min(startIndex + todayCount - 1, queue.length - 1);
+      const slice = queue.slice(startIndex, endIndex + 1);
+      const rangeStart = Math.min(...slice);
+      const rangeEnd = Math.max(...slice);
+
+      return assignRange(track, rangeStart, rangeEnd, state, unit);
+    }
+
     const { targetStart, targetEnd } = cursorAdvanceTarget(params, unit, rule);
     // startPage is a fixed_cycle-only param by construction (only the 4 daily-wird templates send it), so no page->verse conversion is needed here.
     const start =
@@ -403,6 +476,9 @@ export const deriveAssignments = (
   // range math slices that source's own logged numbers directly.
   const unitOf = (trackKey: string) => resolveTrackUnit(template, params, trackKey);
 
+  const isTrackActive = (key: string) =>
+    template.key !== "heart-pulse" || !params.activeTracks || params.activeTracks.includes(key);
+
   const states = new Map<string, TrackState>();
   const sourceFree = new Map<string, TrackAssignment | null>();
 
@@ -412,6 +488,7 @@ export const deriveAssignments = (
   // Pass 1: source-free tracks (rule kinds with a sourceTrack may only
   // reference these, so two passes fully resolve the dependency graph).
   for (const track of template.tracks) {
+    if (!isTrackActive(track.key)) continue;
     if (track.rule.kind === "fixed_cycle" || track.rule.kind === "cursor_advance") {
       sourceFree.set(
         track.key,
@@ -421,7 +498,8 @@ export const deriveAssignments = (
           params,
           states.get(track.key)!,
           resolveTrackUnit(template, params, track.key),
-          date
+          date,
+          entries
         )
       );
     }
@@ -430,6 +508,7 @@ export const deriveAssignments = (
   const assignments: TrackAssignment[] = [];
 
   for (const track of template.tracks) {
+    if (!isTrackActive(track.key)) continue;
     const state = states.get(track.key)!;
     const rule = track.rule;
 
@@ -458,8 +537,27 @@ export const deriveAssignments = (
 
     if (rule.kind === "trailing_window") {
       if (!hasHistory) continue;
-      const windowSize = resolveFixedQuantity(rule.windowSize, params.quantities?.[track.key], unit);
-      const start = Math.max(source.minStart!, source.lastEnd! - windowSize + 1);
+      const windowSize = resolveFixedQuantity(
+        rule.windowSize,
+        params.quantities?.[track.key],
+        unit,
+        template.key === "heart-pulse"
+      );
+      if (template.key === "heart-pulse" && params.targetPages && params.targetPages.length > 0) {
+        const { completedCount } = heartPulseProgressState(entries, params, rule.sourceTrack, 1);
+        if (completedCount > 0) {
+          const winCount = Math.ceil(windowSize);
+          const winStartIdx = Math.max(0, completedCount - winCount);
+          const slice = params.targetPages.slice(winStartIdx, Math.min(completedCount, params.targetPages.length));
+          if (slice.length > 0) {
+            assignments.push(
+              assignRange(track, Math.min(...slice), Math.max(...slice), state, unit)
+            );
+          }
+        }
+        continue;
+      }
+      const start = Math.max(source.minStart!, source.lastEnd! - Math.ceil(windowSize) + 1);
       assignments.push(assignRange(track, start, source.lastEnd!, state, unit));
       continue;
     }
@@ -497,6 +595,28 @@ export const deriveAssignments = (
       ? Number(source.todayEntry.range_end)
       : sourceAssignment?.rangeEnd;
     if (sourceTodayEnd === undefined) continue;
+
+    if (template.key === "heart-pulse" && params.targetPages && params.targetPages.length > 0) {
+      const { dailyUnits: hifzQty, effectiveEntries, completedCount } = heartPulseProgressState(
+        entries,
+        params,
+        rule.sourceTrack,
+        1
+      );
+      const tomorrowEntries = effectiveEntries + (source.todayEntry ? 0 : 1);
+      const tomorrowIndex = source.todayEntry
+        ? completedCount
+        : Math.floor(tomorrowEntries * hifzQty);
+      const nextAfterTomorrow = Math.floor((tomorrowEntries + 1) * hifzQty);
+      const tomorrowStep = Math.max(1, nextAfterTomorrow - tomorrowIndex);
+      if (tomorrowIndex >= params.targetPages.length) continue;
+      const tomorrowSlice = params.targetPages.slice(tomorrowIndex, tomorrowIndex + tomorrowStep);
+      const start = Math.min(...tomorrowSlice);
+      const end = Math.max(...tomorrowSlice);
+      const repetitions = resolveRepetitions(rule.repetitions, params.quantities?.[track.key]);
+      assignments.push(assignRange(track, start, end, state, unit, repetitions));
+      continue;
+    }
 
     const sourceTrack = template.tracks.find((t) => t.key === rule.sourceTrack);
     if (!sourceTrack) continue;

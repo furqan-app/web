@@ -14,6 +14,7 @@ import {
 } from "@/app/constants/plans";
 import { MUSHAF_FIRST_VERSE, MUSHAF_LAST_VERSE } from "@/app/lib/plans/verse-index";
 import { isCustomPlanCompleted } from "@/app/lib/plans/custom-plan-completion";
+import { heartPulseStepRange } from "@/app/lib/plans/engine";
 
 export type PlanProgressHistoryEntry = {
   id: number;
@@ -160,6 +161,52 @@ export async function POST(
           where: { id: planId },
           data: { status: "completed" },
         });
+      }
+    }
+
+    // Heart-Pulse memorization sync (ADR 0078, #652)
+    if (
+      plan.template_key === "heart-pulse" &&
+      (track_key === "hifz" || track_key === "motafallit")
+    ) {
+      const paramsObj = (plan.params as UserPlanParams) || {};
+      const queue = track_key === "hifz" ? paramsObj.targetQueue : paramsObj.slippingQueue;
+      if (queue && Array.isArray(queue) && queue.length > 0) {
+        const defaultQty = track_key === "motafallit" ? 2 : 1;
+        const rawQty =
+          typeof paramsObj.quantities?.[track_key] === "number"
+            ? (paramsObj.quantities[track_key] as number)
+            : defaultQty;
+        const qty = Math.max(0.5, rawQty);
+        const baseline = Math.max(0, paramsObj.queueBaseline?.[track_key] ?? 0);
+        const totalCount = await tx.planProgressEntry.count({
+          where: { user_plan_id: planId, track_key },
+        });
+        const effectiveAfter = Math.max(0, totalCount - baseline);
+
+        if (effectiveAfter > 0) {
+          const { startIndex, endIndex } = heartPulseStepRange(effectiveAfter, qty);
+          const itemsToUpdate = endIndex > startIndex ? queue.slice(startIndex, endIndex) : [];
+
+          for (const item of itemsToUpdate) {
+            await tx.userSurahPageMemorization.upsert({
+              where: {
+                user_id_chapter_id_page_number: {
+                  user_id: user.id,
+                  chapter_id: item.chapterId,
+                  page_number: item.pageNumber,
+                },
+              },
+              update: { status: "mastered" },
+              create: {
+                user_id: user.id,
+                chapter_id: item.chapterId,
+                page_number: item.pageNumber,
+                status: "mastered",
+              },
+            });
+          }
+        }
       }
     }
 

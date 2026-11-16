@@ -9,6 +9,7 @@ import {
   Brain,
   Castle,
   Headphones,
+  Heart,
   RotateCcw,
   RefreshCw,
   Sparkles,
@@ -62,6 +63,13 @@ export const PLAN_TEMPLATE_UI: Record<
     defaultDescription: "A personalized goal with custom range and cadence.",
     icon: Sparkles,
   },
+  "heart-pulse": {
+    labelKey: "plans.templates.heartPulse.label",
+    defaultLabel: "Heart Pulse",
+    descriptionKey: "plans.templates.heartPulse.description",
+    defaultDescription: "A smart multi-track wird based on your heart's memorization state.",
+    icon: Heart,
+  },
 };
 
 export const PLAN_TRACK_UI: Record<string, { labelKey: string; defaultLabel: string; icon: LucideIcon }> = {
@@ -74,6 +82,7 @@ export const PLAN_TRACK_UI: Record<string, { labelKey: string; defaultLabel: str
   tahdeer: { labelKey: "plans.tracks.tahdeer", defaultLabel: "التحضير", icon: Headphones },
   qareeb: { labelKey: "plans.tracks.qareeb", defaultLabel: "مراجعة القريب", icon: RotateCcw },
   baeed: { labelKey: "plans.tracks.baeed", defaultLabel: "مراجعة البعيد", icon: RefreshCw },
+  motafallit: { labelKey: "plans.tracks.motafallit", defaultLabel: "مراجعة المتفلت", icon: RotateCcw },
   custom: { labelKey: "plans.templates.custom.label", defaultLabel: "Custom wird", icon: Sparkles },
 };
 
