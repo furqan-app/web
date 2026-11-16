@@ -1,8 +1,10 @@
 package app.furqan;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -16,12 +18,35 @@ import ee.forgr.capacitor.social.login.SocialLoginPlugin;
 
 public class MainActivity extends BridgeActivity implements ModifiedMainActivityForSocialLoginPlugin {
 
+    private final SystemBarInsetsHelper insetsHelper = new SystemBarInsetsHelper();
+
+    private int readFallbackStatusBarHeight() {
+        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        return resId > 0 ? getResources().getDimensionPixelSize(resId) : 0;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // SPIKE (#766): register before super.onCreate — the bridge is created
         // at the end of super.onCreate, so registering after would miss it.
         registerPlugin(StatusBarTogglePlugin.class);
         super.onCreate(savedInstanceState);
+
+        // Keep the window edge-to-edge across status-bar toggles on all Android
+        // versions so hiding/showing the status bar never resizes or letterboxes
+        // the root frame (#800).
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            getWindow().setAttributes(lp);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
 
         // Ensure window decor carries the brand navy background (#16232F)
         getWindow().getDecorView().setBackgroundColor(0xFF16232F);
@@ -36,18 +61,29 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         View contentView = findViewById(android.R.id.content);
         if (contentView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(contentView, (v, windowInsets) -> {
-                Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                // Use getInsetsIgnoringVisibility so hiding the status bar does
+                // not drop bars.top to 0 and shrink WebView height (#800).
+                Insets stableBars = windowInsets.getInsetsIgnoringVisibility(
+                    WindowInsetsCompat.Type.systemBars()
+                );
                 Insets cut = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
-                Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
                 boolean keyboardVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
-                // SPIKE (#766): topPadding is permanently anchored to the status-bar/cutout height.
-                // The status-bar toggles as a floating overlay above this reserved zone
-                // (matching mushaf paper color), keeping WebView height constant so
-                // space-between lines never jump.
-                int topPadding = Math.max(cut.top, bars.top);
-                int bottomPadding = keyboardVisible ? 0 : Math.max(bars.bottom, cut.bottom);
-                v.setPadding(Math.max(bars.left, cut.left), topPadding,
-                    Math.max(bars.right, cut.right), bottomPadding);
+                int orientation = getResources().getConfiguration().orientation;
+                SystemBarInsetsHelper.InsetsPadding padding = insetsHelper.resolve(
+                    orientation,
+                    stableBars.left,
+                    stableBars.top,
+                    stableBars.right,
+                    stableBars.bottom,
+                    cut.left,
+                    cut.top,
+                    cut.right,
+                    cut.bottom,
+                    StatusBarTogglePlugin.isStatusBarVisible(),
+                    keyboardVisible,
+                    readFallbackStatusBarHeight()
+                );
+                v.setPadding(padding.left, padding.top, padding.right, padding.bottom);
 
                 // Consume systemBars and displayCutout so WebView does not receive them and apply double padding in CSS
                 return new WindowInsetsCompat.Builder(windowInsets)
