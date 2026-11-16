@@ -136,29 +136,32 @@ export const SearchBar = () => {
                     <SheetDescription className="sr-only">
                         {t("search.description", "Search for a surah or verse by name or number.")}
                     </SheetDescription>
-                    {/* Input row */}
-                    <div className="flex items-center gap-2 h-14 px-3 border-b border-border shrink-0">
-                        <button
-                            onClick={() => setOpen(false)}
-                            className="fq-chrome-btn fq-focus-ring size-7"
-                            aria-label="Close search"
-                        >
-                            <ArrowLeft className="size-5" strokeWidth={1.7} />
-                        </button>
-                        <div className="relative flex-1">
-                            {isLoading && (
-                                <div className="absolute end-3 top-1/2 -translate-y-1/2 z-10">
-                                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                                </div>
-                            )}
-                            <Input
-                                ref={inputRef}
-                                type="text"
-                                value={query}
-                                onChange={(e) => handleQueryChange(e.target.value)}
-                                placeholder={t("search.placeholder", "Search the Quran...")}
-                                className="font-tajawal pe-9 bg-muted border-0 focus-visible:ring-0"
-                            />
+                    {/* Input row — outer wrapper absorbs safe-area / PWA fullscreen
+                        top clearance without compressing the inner h-14 row (#800). */}
+                    <div className="fq-search-sheet-header border-b border-border shrink-0 pt-[env(safe-area-inset-top,0px)]">
+                        <div className="flex items-center gap-2 h-14 px-3">
+                            <button
+                                onClick={() => setOpen(false)}
+                                className="fq-chrome-btn fq-focus-ring size-7"
+                                aria-label="Close search"
+                            >
+                                <ArrowLeft className="size-5" strokeWidth={1.7} />
+                            </button>
+                            <div className="relative flex-1">
+                                {isLoading && (
+                                    <div className="absolute end-3 top-1/2 -translate-y-1/2 z-10">
+                                        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                )}
+                                <Input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={query}
+                                    onChange={(e) => handleQueryChange(e.target.value)}
+                                    placeholder={t("search.placeholder", "Search the Quran...")}
+                                    className="font-tajawal pe-9 bg-muted border-0 focus-visible:ring-0"
+                                />
+                            </div>
                         </div>
                     </div>
                     {/* Four states, not one. Before this the overlay rendered
@@ -207,7 +210,7 @@ export const SearchBar = () => {
                         links: /search normally, /mushaf/[grant]/search under
                         a grant (ADR 0012). */}
                     {hasResults && (
-                        <div className="shrink-0 border-t border-border bg-background px-4 py-2">
+                        <div className="shrink-0 border-t border-border bg-background px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
                             <Link
                                 href={`${searchPath}?q=${encodeURIComponent(debouncedQuery)}`}
                                 onClick={(e) => {

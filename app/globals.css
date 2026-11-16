@@ -1490,6 +1490,9 @@ body,
     .fq-safha-header {
       padding-top: max(0.75rem, env(safe-area-inset-top, 0px)) !important;
     }
+    .fq-search-sheet-header {
+      padding-top: max(1rem, env(safe-area-inset-top, 0px)) !important;
+    }
   }
 
   /* Suppress the word `:hover` cue while a swipe drag is in progress (ADR 0023
