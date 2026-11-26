@@ -75,6 +75,9 @@ const config: CapacitorConfig = {
   },
   // Only Google is enabled; the Facebook SDK adds the AD_ID permission.
   plugins: {
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
     SocialLogin: {
       providers: { google: true, facebook: false, apple: false, twitter: false },
       logLevel: 1,

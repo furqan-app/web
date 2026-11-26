@@ -148,11 +148,13 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeDef> = {
 
   "system.test": {
     key: "system.test",
-    defaultChannels: ["push", "email"],
-    render: (payload: SystemTestPayload, { t }) => ({
+    defaultChannels: ["push", "email", "native_push"],
+    render: (payload: SystemTestPayload, { t, locale }) => ({
       title: t("notifications.types.systemTest.title", "Test notification"),
       body: payload.message ?? t("notifications.types.systemTest.body", "This is a test notification."),
-      url: "/",
+      // Keep D4 locale-path compliance so tapping a test notification navigates
+      // through NativePushTapListener (`isSafeLocalePath`) on Android.
+      url: locale === "en" || locale === "ar" ? `/${locale}` : "/ar",
     }),
     renderEmail: (payload: SystemTestPayload, { t }) => {
       const body = payload.message ?? t("notifications.types.systemTest.body", "This is a test notification.");

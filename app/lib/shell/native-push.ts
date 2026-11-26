@@ -17,24 +17,45 @@ type PushNotificationsPlugin =
 
 type ListenerHandle = { remove: () => void | Promise<void> };
 
+type LoadedNativePushPlugin = { plugin: PushNotificationsPlugin };
+
 // Cache the import promise itself: the plugin module is a process-wide
 // singleton, and concurrent callers must share one import (a second
 // simultaneous `import()` of the same mocked/side-effectful module is not
 // guaranteed to resolve to the same namespace).
-let pluginPromise: Promise<PushNotificationsPlugin | null> | null = null;
+//
+// Wrap the resolved plugin in `{ plugin }`: Capacitor's `registerPlugin` returns
+// a `Proxy` whose `get` trap synthesizes a native method wrapper for `.then`
+// (it only special-cases `$$typeof`, `toJSON`, `addListener`, `removeListener`).
+// Returning that `Proxy` directly from an `async`/`.then()` function triggers JS
+// Promise assimilation (`proxy.then(resolve, reject)`), where the Capacitor
+// wrapper ignores `(resolve, reject)` and returns a separate rejected Promise
+// (`"PushNotifications.then()" is not implemented on android`), leaving the outer
+// Promise permanently pending until reload.
+let pluginPromise: Promise<LoadedNativePushPlugin | null> | null = null;
 
-/** Resolve the Capacitor plugin, or null outside the native shell (or when the
- *  plugin module cannot be imported). Callers must handle null. */
-export const getNativePushPlugin =
-  async (): Promise<PushNotificationsPlugin | null> => {
-    if (!isNativePlatform()) return null;
-    if (!pluginPromise) {
-      pluginPromise = import("@capacitor/push-notifications")
-        .then(({ PushNotifications }) => PushNotifications ?? null)
-        .catch(() => null);
-    }
-    return pluginPromise;
-  };
+/** Resolve the wrapped Capacitor plugin, or null outside the native shell (or
+ *  when the plugin module cannot be imported). Clears cached failure so
+ *  transient network/chunk-load errors recover on retry. */
+export const loadNativePushPlugin = async (): Promise<LoadedNativePushPlugin | null> => {
+  if (!isNativePlatform()) return null;
+  if (!pluginPromise) {
+    const pending: Promise<LoadedNativePushPlugin | null> = import(
+      "@capacitor/push-notifications"
+    )
+      .then(({ PushNotifications }) =>
+        PushNotifications ? { plugin: PushNotifications } : null
+      )
+      .catch(() => {
+        if (pluginPromise === pending) {
+          pluginPromise = null;
+        }
+        return null;
+      });
+    pluginPromise = pending;
+  }
+  return pluginPromise;
+};
 
 const normalizePermission = (
   receive: string | undefined
@@ -47,7 +68,8 @@ const normalizePermission = (
 /** Current native permission state, or null when the plugin is unavailable. */
 export const getNativePushPermission =
   async (): Promise<NativePushPermission | null> => {
-    const plugin = await getNativePushPlugin();
+    const loaded = await loadNativePushPlugin();
+    const plugin = loaded?.plugin;
     if (!plugin) return null;
     try {
       const current = await plugin.checkPermissions();
@@ -58,7 +80,7 @@ export const getNativePushPermission =
   };
 
 export const isNativePushSupported = async (): Promise<boolean> =>
-  (await getNativePushPlugin()) !== null;
+  (await loadNativePushPlugin()) !== null;
 
 // Session-scoped hold of the last token this page registered, so toggle-off
 // can DELETE the exact row it created and rotated tokens replace atomically.
@@ -243,7 +265,8 @@ const registerAndAwaitToken = (
 export const subscribeNativePush = async (
   onToken: (token: string | null) => void
 ): Promise<boolean> => {
-  const plugin = await getNativePushPlugin();
+  const loaded = await loadNativePushPlugin();
+  const plugin = loaded?.plugin;
   if (!plugin) return false;
 
   let perm: { receive: string };
@@ -264,7 +287,8 @@ export const subscribeNativePush = async (
 export const refreshNativePushRegistration = async (
   onToken: (token: string | null) => void
 ): Promise<NativePushPermission> => {
-  const plugin = await getNativePushPlugin();
+  const loaded = await loadNativePushPlugin();
+  const plugin = loaded?.plugin;
   if (!plugin) return "prompt";
 
   let current: { receive: string };
