@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const pushMock = vi.hoisted(() => ({
   plugin: null as unknown,
+  throwOnce: false,
 }));
 
 // Capacitor 8 registers a plugin on the global only after its module is
@@ -9,6 +10,10 @@ const pushMock = vi.hoisted(() => ({
 // import — mocked here exactly like @capacitor/app in NativeAppLinkListener.
 vi.mock("@capacitor/push-notifications", () => ({
   get PushNotifications() {
+    if (pushMock.throwOnce) {
+      pushMock.throwOnce = false;
+      throw new Error("chunk load failed");
+    }
     return pushMock.plugin;
   },
 }));
@@ -16,6 +21,7 @@ vi.mock("@capacitor/push-notifications", () => ({
 import {
   NATIVE_PUSH_REGISTRATION_TIMEOUT_MS,
   _resetNativePushStateForTests,
+  getNativePushPermission,
   isNativePushSupported,
   subscribeNativePush,
   refreshNativePushRegistration,
@@ -90,6 +96,7 @@ describe("app/lib/shell/native-push", () => {
   beforeEach(() => {
     _resetNativePushStateForTests();
     pushMock.plugin = null;
+    pushMock.throwOnce = false;
     fetchCalls = [];
     fetchJson();
     stubWindow();
@@ -303,5 +310,47 @@ describe("app/lib/shell/native-push", () => {
     // Nothing was ever registered.
     expect(plugin.removeAllListeners).not.toHaveBeenCalled();
     expect(plugin.register).not.toHaveBeenCalled();
+  });
+
+  it("handles a Capacitor-style Proxy whose .then trap rejects without triggering assimilation", async () => {
+    const inner = makePlugin();
+    let thenAccessed = false;
+    const proxyPlugin = new Proxy(inner, {
+      get(target, prop, receiver) {
+        // Mirrors @capacitor/core registerPlugin: any unknown property
+        // (including `.then`) returns a function that invokes native and
+        // rejects with `"PushNotifications.<prop>() is not implemented"`.
+        if (prop === "then") {
+          thenAccessed = true;
+          return () => Promise.reject(new Error('"PushNotifications.then()" is not implemented on android'));
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+    setCapacitor(proxyPlugin);
+
+    await expect(isNativePushSupported()).resolves.toBe(true);
+    await expect(getNativePushPermission()).resolves.toBe("granted");
+    const onToken = vi.fn();
+    await expect(subscribeNativePush(onToken)).resolves.toBe(true);
+    expect(onToken).toHaveBeenCalledWith("native-token-9");
+    await expect(refreshNativePushRegistration(vi.fn())).resolves.toBe("granted");
+    expect(thenAccessed).toBe(false);
+  });
+
+  it("returns false / null cleanly when PushNotifications export is absent", async () => {
+    setCapacitor(null);
+
+    await expect(isNativePushSupported()).resolves.toBe(false);
+    await expect(getNativePushPermission()).resolves.toBeNull();
+  });
+
+  it("recovers on a later check after a transient plugin import failure", async () => {
+    const plugin = makePlugin();
+    setCapacitor(plugin);
+    pushMock.throwOnce = true;
+
+    await expect(isNativePushSupported()).resolves.toBe(false);
+    await expect(isNativePushSupported()).resolves.toBe(true);
   });
 });

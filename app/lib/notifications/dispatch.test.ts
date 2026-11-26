@@ -130,4 +130,33 @@ describe("dispatchNotification", () => {
     expect(NOTIFICATION_TYPES["plans.daily_reminder"]).toBeDefined();
     expect(NOTIFICATION_TYPES["system.test"]).toBeDefined();
   });
+
+  it("system.test targets push, email, and native_push by default with a locale tap URL", async () => {
+    const push = { key: "push" as const, send: vi.fn(async () => ({ status: "sent" as const })) };
+    const email = { key: "email" as const, send: vi.fn(async () => ({ status: "sent" as const })) };
+    const nativePush = {
+      key: "native_push" as const,
+      send: vi.fn(async () => ({ status: "skipped" as const, reason: "no_token" })),
+    };
+    const deps = baseDeps({ push, email, native_push: nativePush });
+
+    const outcome = await dispatchNotification(
+      { recipient, type: "system.test", payload: {} },
+      deps
+    );
+
+    expect(push.send).toHaveBeenCalledTimes(1);
+    expect(email.send).toHaveBeenCalledTimes(1);
+    expect(nativePush.send).toHaveBeenCalledTimes(1);
+    expect(nativePush.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({ url: "/en" }),
+      })
+    );
+    expect(outcome.results).toEqual({
+      push: { status: "sent" },
+      email: { status: "sent" },
+      native_push: { status: "skipped", reason: "no_token" },
+    });
+  });
 });

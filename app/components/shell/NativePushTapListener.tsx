@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { isNativePlatform } from "@/app/utils/platform";
 import { isSafeLocalePath } from "@/app/lib/shell/app-links";
-import { getNativePushPlugin } from "@/app/lib/shell/native-push";
+import { loadNativePushPlugin } from "@/app/lib/shell/native-push";
 
 /** Native push tap → deep link (ADR 0076): validates the notification's
  *  `data.url` against the D4 locale-path rules (same guard family as the App
@@ -18,7 +18,8 @@ export function NativePushTapListener() {
     let remove: (() => void) | undefined;
 
     void (async () => {
-      const plugin = await getNativePushPlugin();
+      const loaded = await loadNativePushPlugin();
+      const plugin = loaded?.plugin;
       if (!plugin || cancelled) {
         return;
       }
