@@ -123,13 +123,14 @@ own mushaf can be someone else's — which is why the self marks endpoint always
 attribution silently disappeared. Only `e2e/tests/shared-mushaf.spec.ts` caught it, because it
 encodes the actual behaviour rather than a restatement of it.
 
-Two things follow:
+Three things follow:
 
 - **A green review is not a substitute for CI.** Never report work as verified on a review verdict
   alone when the suite has not run against it.
 - **When the reviewer is given the constraints second-hand** — a subagent, or a delegated external
   CLI — it inherits whatever premises the brief carries. Point it at the ADRs and the specs, not
   only at the plan's summary of them.
+- **When embedding the diff into an inline brief** (instead of letting the reviewer inspect the repo directly), include full touched files or wide context (`git diff -U20`) rather than bare 3-line hunks so the reviewer does not report unchanged validation guards outside the hunk as missing.
 
 ### 4 — Next step
 

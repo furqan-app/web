@@ -7,7 +7,7 @@ import { Prisma } from "@/app/generated/quran-client";
 // `chapter.verses_count`). The full verse+chapter and the unused word text/index
 // fields (`text_uthmani`, `text`, `id`, `position`, `verse_id`) were dropped: they
 // were dead weight in the RSC payload + static JSON (ADR 0028). Keep in sync with
-// the `select` in get-page-words.ts and scripts/quran-json/generate.js.
+// `scripts/quran-static/generate.js`.
 //
 // `page_number` here is the DEFAULT edition's page — a stable canonical key for
 // mark storage that must not shift when the reader switches edition. It is NOT

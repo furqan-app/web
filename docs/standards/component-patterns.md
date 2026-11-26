@@ -52,7 +52,7 @@ Only memoize when there's a clear performance reason — not by default.
 
 ## Data Fetching
 
-- **Static page content:** Fetch via Prisma directly in Server Components (e.g. `getPageWords`, `getSurahs`). No API self-calls for static data.
+- **Static page content:** Read committed static JSON directly in Server Components (e.g. `getPageWords`, `getSurahs`, `getRubs`) via `fs/promises`. No API self-calls for static data.
 - **User-specific dynamic data:** Fetch via React Query hooks in Client Components (e.g. `useMarks`, `usePage`).
 - **Parallel fetches:** Always use `Promise.all` when fetching multiple independent resources server-side.
 
