@@ -2,7 +2,7 @@
 
 Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans-index.sh` ([ADR 0059](../architecture/adr/0059-plan-lifecycle-frontmatter-and-index.md)). Do not hand-edit — regenerate after adding or changing a plan.
 
-126 active plans.
+127 active plans.
 
 104 finished plans are archived — see [archive/INDEX.md](archive/INDEX.md). Never load an archived plan for background context; its durable content lives in `docs/architecture/decisions/*.md` + ADRs.
 
@@ -11,6 +11,7 @@ Generated from each plan's YAML frontmatter by `.claude/skills/scripts/gen-plans
 | a11y | [Fix Dialog Missing Title/Description A11y Warnings](fix-dialog-missing-description.md) | implemented | bug |
 | api | [Fix ByteString Crash on Non-ASCII Usernames in Auth Middleware](fix-arabic-username-auth-header.md) | implemented | bug |
 | api | [Fix RSC Cache Poisoning on Hostinger](fix-rsc-cache-poisoning.md) | implemented | bug |
+| api | [Reader and sidebar SSR + Quran API routes from static files](static-reader-and-quran-api.md) | implemented | feature |
 | awrad | [Batch small fixes 630–635 (custom-wird range, husun label, endDate validation, e2e/docs alignment, dialog close label)](batch-630-635-small-fixes.md) | ready-to-implement | bug |
 | awrad | [Awrad Dashboard: Dedicated motivation & progress hub with per-activity streaks](599-awrad-progress-dashboard.md) | implemented | feature |
 | awrad | [Awrad Notifications: turn on the daily wird reminder — enqueue layer, content-aware dispatch & per-user time picker](600-daily-wird-reminder.md) | implemented | feature |

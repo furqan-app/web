@@ -1,69 +1,54 @@
 import { NextRequest } from "next/server";
-import { quranPrisma } from "@/app/utils/db";
 import { jsonResponse } from "@/app/api/response";
+import {
+  getStaticPageBounds,
+  getStaticRubs,
+  getStaticVersePages,
+  getStaticVerses,
+  RUBS_PER_HIZB,
+  RUBS_PER_JUZ,
+} from "@/app/lib/quran/static-data";
 import {
   DEFAULT_MUSHAF_ID,
   MUSHAF_EDITIONS,
 } from "@/app/utils/mushaf-editions";
 
 // rub / hizb / juz are divisions of the TEXT, identical in every mushaf
-// edition, so they resolve from Verse columns. `page` is not — it is a property
-// of one printed edition — and is handled separately below. See ADR 0033.
+// edition, so they resolve from static verse division numbers. `page` is not —
+// it is a property of one printed edition — and reads that edition's
+// `verse-pages` and `page-bounds` indexes (ADR 0033).
 // `rub-first` returns the FIRST verse of the verse's rub instead of the last
-// (recitation-playback.md Addendum 12: the Start From picker's "Start of
-// Rub'" preset) — same edition-independence as the other text scopes.
-const SCOPE_FIELD = {
-  rub: "rub_el_hizb_number",
-  hizb: "hizb_number",
-  juz: "juz_number",
-} as const;
-
-type Scope = keyof typeof SCOPE_FIELD;
-const isTextScope = (scope: string): scope is Scope =>
-  Object.prototype.hasOwnProperty.call(SCOPE_FIELD, scope);
+// (recitation-playback.md Addendum 12).
+const isTextScope = (scope: string): scope is "rub" | "hizb" | "juz" =>
+  scope === "rub" || scope === "hizb" || scope === "juz";
 
 /**
  * Last verse of the page `verseKey` sits on, in the given mushaf edition.
  *
- * Resolved through `mushaf_word_layouts` rather than `Verse.page_number`, which
- * is only the default edition's page. Using it while reading another edition
- * ended playback at the wrong verse: starting an "end of page" recitation on
- * tajweed page 586 resolved the start verse to DEFAULT page 585 and stopped at
- * that page's last verse, cutting the safha short.
- *
- * A verse's page is the page holding its FIRST word — matching how the
- * per-edition verse-pages map is generated, so the two never disagree.
+ * A verse's page is the page holding its FIRST word — matching how
+ * `verse-pages/{mushafId}.json` is generated.
  */
 async function resolvePageStop(verseKey: string, mushafId: number) {
-  const firstWord = await quranPrisma.mushafWordLayout.findFirst({
-    where: { mushaf_id: mushafId, word: { verse_key: verseKey } },
-    orderBy: { word: { position: "asc" } },
-    select: { page_number: true },
-  });
-  if (!firstWord) return null;
+  const [versePages, pageBounds] = await Promise.all([
+    getStaticVersePages(mushafId),
+    getStaticPageBounds(mushafId),
+  ]);
 
-  const lastWord = await quranPrisma.mushafWordLayout.findFirst({
-    where: { mushaf_id: mushafId, page_number: firstWord.page_number },
-    orderBy: [{ word: { verse_id: "desc" } }, { word: { position: "desc" } }],
-    select: {
-      word: {
-        select: { verse_key: true, verse: { select: { chapter_id: true } } },
-      },
-    },
-  });
-  if (!lastWord) return null;
+  const pageNumber = versePages[verseKey];
+  if (pageNumber === undefined) return null;
+
+  const bounds = pageBounds[String(pageNumber)];
+  if (!bounds) return null;
 
   return {
-    verseKey: lastWord.word.verse_key,
-    chapterId: lastWord.word.verse.chapter_id,
+    verseKey: bounds.lastVerseKey,
+    chapterId: bounds.lastChapterId,
   };
 }
 
 // Resolves the last verse of the range startVerseKey belongs to, for the
 // given scope (page/rub/hizb/juz) — the verse that should end playback for
-// that stopPoint. May be in a later chapter than startVerseKey (e.g. a juz
-// or page can span a surah boundary) — see docs/plans/recitation-playback.md
-// Addendum 5.
+// that stopPoint.
 export async function GET(
   request: NextRequest,
   { params }: { params: { verseKey: string } },
@@ -72,22 +57,21 @@ export async function GET(
   const scope = request.nextUrl.searchParams.get("scope");
 
   if (scope === "rub-first") {
-    // Verse.verse_key is not @unique — findFirst, never findUnique.
-    const startVerse = await quranPrisma.verse.findFirst({
-      where: { verse_key: verseKey },
-    });
+    const [verses, rubs] = await Promise.all([getStaticVerses(), getStaticRubs()]);
+    const startVerse = verses[verseKey];
     if (!startVerse) {
       return jsonResponse({ code: 404, message: "Verse not found" });
     }
-    const firstVerse = await quranPrisma.verse.findFirst({
-      where: { rub_el_hizb_number: startVerse.rub_el_hizb_number },
-      orderBy: { id: "asc" },
-    });
-    if (!firstVerse) {
+    const rub = rubs[startVerse.rub_el_hizb_number - 1];
+    const firstVerse = rub ? verses[rub.startVerse.verse_key] : undefined;
+    if (!rub || !firstVerse) {
       return jsonResponse({ code: 404, message: "Start verse not found" });
     }
     return jsonResponse({
-      data: { verseKey: firstVerse.verse_key, chapterId: firstVerse.chapter_id },
+      data: {
+        verseKey: rub.startVerse.verse_key,
+        chapterId: firstVerse.chapter_id,
+      },
     });
   }
 
@@ -105,26 +89,28 @@ export async function GET(
     return jsonResponse({ data: stop });
   }
 
-  // Verse.verse_key is not @unique — findFirst, never findUnique.
-  const startVerse = await quranPrisma.verse.findFirst({
-    where: { verse_key: verseKey },
-  });
+  const [verses, rubs] = await Promise.all([getStaticVerses(), getStaticRubs()]);
+  const startVerse = verses[verseKey];
   if (!startVerse) {
     return jsonResponse({ code: 404, message: "Verse not found" });
   }
 
-  const field = SCOPE_FIELD[scope];
-  const scopeValue = startVerse[field];
+  const lastRubNumber =
+    scope === "rub"
+      ? startVerse.rub_el_hizb_number
+      : scope === "hizb"
+        ? startVerse.hizb_number * RUBS_PER_HIZB
+        : startVerse.juz_number * RUBS_PER_JUZ;
 
-  const lastVerse = await quranPrisma.verse.findFirst({
-    where: { [field]: scopeValue },
-    orderBy: { id: "desc" },
-  });
-  if (!lastVerse) {
+  const lastRub = rubs[lastRubNumber - 1];
+  if (!lastRub) {
     return jsonResponse({ code: 404, message: "Stop verse not found" });
   }
 
   return jsonResponse({
-    data: { verseKey: lastVerse.verse_key, chapterId: lastVerse.chapter_id },
+    data: {
+      verseKey: lastRub.endVerse.verse_key,
+      chapterId: lastRub.endVerse.chapter_id,
+    },
   });
 }
